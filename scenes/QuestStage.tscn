@@ -1,0 +1,47 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/QuestStage.gd" id="1"]
+
+[node name="QuestStage" type="Control"]
+size = Vector2(1080, 1920)
+script = ExtResource("1")
+
+[node name="Workspace" type="Node2D" parent="."]
+
+[node name="EvidenceManager" type="Node" parent="."]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="ActionBtn" type="Button" parent="UI"]
+offset_left = 60.0
+offset_top = 1600.0
+offset_right = 300.0
+offset_bottom = 1700.0
+disabled = true
+text = "Action"
+
+[node name="EvidencePanel" type="Panel" parent="UI"]
+offset_left = 760.0
+offset_top = 1540.0
+offset_right = 1040.0
+offset_bottom = 1880.0
+
+[node name="MagnifierBtn" type="Button" parent="UI/EvidencePanel"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 240.0
+offset_bottom = 100.0
+text = "Magnifier"
+
+[node name="PassportBtn" type="Button" parent="UI/EvidencePanel"]
+offset_left = 20.0
+offset_top = 120.0
+offset_right = 240.0
+offset_bottom = 200.0
+text = "Passport"
+
+[node name="JustificationMenu" type="PopupMenu" parent="UI"]
+
+[connection signal="pressed" from="UI/ActionBtn" to="." method="_on_action_btn_pressed"]
+[connection signal="pressed" from="UI/EvidencePanel/MagnifierBtn" to="." method="_on_evidence_clicked" binds=PackedStringArray("magnifier")]
+[connection signal="pressed" from="UI/EvidencePanel/PassportBtn" to="." method="_on_evidence_clicked" binds=PackedStringArray("passport")]

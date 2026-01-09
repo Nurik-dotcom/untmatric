@@ -12,7 +12,7 @@ func _ready():
 func _on_notebook_pressed():
 	# Go to investigation list (Exam mode)
 	GlobalMetrics.current_mode = GlobalMetrics.Mode.EXAM
-	get_tree().change_scene_to_file("res://scenes/CaseSelect.tscn")
+	get_tree().change_scene_to_file("res://scenes/QuestStage.tscn")
 
 func _on_papers_pressed():
 	# Go to learning (Phase 1: Atlas)

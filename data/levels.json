@@ -4,6 +4,7 @@
     "ideal_time": 100,
     "difficulty": "B",
     "description": "Компьютер не выводит изображение. Проверьте iGPU.",
+    "evidence_required": ["passport"],
     "tools_allowed": ["magnifier", "passport"],
     "correct_action_id": "plug_gpu",
     "correct_justification_id": "cpu_f_series_no_igpu"

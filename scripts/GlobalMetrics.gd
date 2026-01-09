@@ -42,3 +42,13 @@ func get_ie() -> float:
 # T_residual ("residual time")
 func get_t_residual() -> float:
 	return t_active_base - t_tech_tax - t_app_cost
+
+func load_level_data(level_id: String) -> Dictionary:
+	var file_path = "res://data/levels.json"
+	if FileAccess.file_exists(file_path):
+		var file = FileAccess.open(file_path, FileAccess.READ)
+		var json_text = file.get_as_text()
+		var data = JSON.parse_string(json_text)
+		if data is Dictionary:
+			return data.get(level_id, {})
+	return {}
