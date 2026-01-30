@@ -1,0 +1,94 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/Decryptor.gd" id="1_script"]
+
+[node name="Decryptor" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.05, 1)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="TopBar" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="LevelLabel" type="Label" parent="MainLayout/TopBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
+theme_override_font_sizes/font_size = 24
+text = "LVL 01"
+
+[node name="StabilityBar" type="ProgressBar" parent="MainLayout/TopBar"]
+custom_minimum_size = Vector2(200, 30)
+layout_mode = 2
+value = 100.0
+
+[node name="ScreenPanel" type="PanelContainer" parent="MainLayout"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/ScreenPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="TargetValue" type="Label" parent="MainLayout/ScreenPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
+theme_override_font_sizes/font_size = 64
+text = "000"
+horizontal_alignment = 1
+
+[node name="SystemLabel" type="Label" parent="MainLayout/ScreenPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0, 1)
+text = "SYSTEM: DEC"
+horizontal_alignment = 1
+
+[node name="BitLabelsContainer" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="SwitchesContainer" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="CheckButton" type="Button" parent="MainLayout"]
+custom_minimum_size = Vector2(200, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 24
+text = "CHECK"
+
+[node name="FeedbackPanel" type="PanelContainer" parent="MainLayout"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LogText" type="RichTextLabel" parent="MainLayout/FeedbackPanel"]
+layout_mode = 2
+bbcode_enabled = true
+scroll_following = true
+
+[connection signal="pressed" from="MainLayout/CheckButton" to="." method="_on_check_button_pressed"]
