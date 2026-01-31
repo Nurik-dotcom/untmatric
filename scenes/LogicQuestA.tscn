@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://logicquesta"]
+[gd_scene load_steps=2 format=3 uid="uid://dfe2en4emu02d"]
 
 [ext_resource type="Script" path="res://scenes/LogicQuestA.gd" id="1_script"]
 
@@ -22,6 +22,7 @@ color = Color(0, 0, 0, 1)
 
 [node name="StoryLabel" type="Label" parent="."]
 layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.05
 anchor_top = 0.05
 anchor_right = 0.95
@@ -35,6 +36,7 @@ autowrap_mode = 2
 
 [node name="BoardContainer" type="Control" parent="."]
 layout_mode = 1
+anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -68,22 +70,24 @@ begin_cap_mode = 2
 end_cap_mode = 2
 
 [node name="InputA_Btn" type="Button" parent="BoardContainer"]
-offset_left = 0.0
-offset_top = 40.0
-offset_right = 200.0
-offset_bottom = 120.0
+layout_mode = 0
+offset_left = 3.0
+offset_right = 203.0
+offset_bottom = 80.0
 theme_override_font_sizes/font_size = 22
 text = "Input A"
 
 [node name="InputB_Btn" type="Button" parent="BoardContainer"]
-offset_left = 0.0
-offset_top = 200.0
-offset_right = 200.0
-offset_bottom = 280.0
+layout_mode = 0
+offset_left = 3.0
+offset_top = 237.0
+offset_right = 203.0
+offset_bottom = 317.0
 theme_override_font_sizes/font_size = 22
 text = "Input B"
 
 [node name="GateSelector" type="OptionButton" parent="BoardContainer"]
+layout_mode = 0
 offset_left = 300.0
 offset_top = 120.0
 offset_right = 520.0
@@ -92,6 +96,7 @@ theme_override_font_sizes/font_size = 28
 flat = true
 
 [node name="Lamp" type="ColorRect" parent="BoardContainer"]
+layout_mode = 0
 offset_left = 740.0
 offset_top = 120.0
 offset_right = 820.0
@@ -112,6 +117,7 @@ vertical_alignment = 1
 
 [node name="ResultLabel" type="Label" parent="."]
 layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.1
 anchor_top = 0.82
 anchor_right = 0.9
@@ -123,6 +129,7 @@ vertical_alignment = 1
 
 [node name="BackButton" type="Button" parent="."]
 layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.02
 anchor_top = 0.02
 anchor_right = 0.12
@@ -130,5 +137,5 @@ anchor_bottom = 0.08
 theme_override_font_sizes/font_size = 20
 text = "Back"
 
-[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
 [connection signal="item_selected" from="BoardContainer/GateSelector" to="." method="_on_gate_selected"]
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
