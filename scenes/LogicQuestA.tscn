@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://dfe2en4emu02d"]
+[gd_scene load_steps=2 format=3 uid="uid://bj856hihjj58i"]
 
 [ext_resource type="Script" path="res://scenes/LogicQuestA.gd" id="1_script"]
 
@@ -45,27 +45,29 @@ offset_left = -420.0
 offset_top = -160.0
 offset_right = 420.0
 offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="WiresLayer" type="Node2D" parent="BoardContainer"]
 
 [node name="InputA_Wire" type="Line2D" parent="BoardContainer/WiresLayer"]
 points = PackedVector2Array(20, 80, 200, 80, 200, 130, 300, 130)
 width = 3.0
-default_color = Color(0.85, 0.85, 0.85, 1)
+default_color = Color(0.2, 0.2, 0.2, 1)
 begin_cap_mode = 2
 end_cap_mode = 2
 
 [node name="InputB_Wire" type="Line2D" parent="BoardContainer/WiresLayer"]
 points = PackedVector2Array(20, 240, 200, 240, 200, 190, 300, 190)
 width = 3.0
-default_color = Color(0.85, 0.85, 0.85, 1)
+default_color = Color(0.2, 0.2, 0.2, 1)
 begin_cap_mode = 2
 end_cap_mode = 2
 
 [node name="Output_Wire" type="Line2D" parent="BoardContainer/WiresLayer"]
 points = PackedVector2Array(520, 160, 740, 160)
 width = 3.0
-default_color = Color(0.85, 0.85, 0.85, 1)
+default_color = Color(0.2, 0.2, 0.2, 1)
 begin_cap_mode = 2
 end_cap_mode = 2
 
@@ -75,6 +77,7 @@ offset_left = 3.0
 offset_right = 203.0
 offset_bottom = 80.0
 theme_override_font_sizes/font_size = 22
+toggle_mode = true
 text = "Input A"
 
 [node name="InputB_Btn" type="Button" parent="BoardContainer"]
@@ -84,6 +87,7 @@ offset_top = 237.0
 offset_right = 203.0
 offset_bottom = 317.0
 theme_override_font_sizes/font_size = 22
+toggle_mode = true
 text = "Input B"
 
 [node name="GateSelector" type="OptionButton" parent="BoardContainer"]
@@ -121,11 +125,34 @@ anchors_preset = -1
 anchor_left = 0.1
 anchor_top = 0.82
 anchor_right = 0.9
-anchor_bottom = 0.95
+anchor_bottom = 0.9
 theme_override_font_sizes/font_size = 30
 text = "..."
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="HintLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.1
+anchor_top = 0.9
+anchor_right = 0.9
+anchor_bottom = 0.97
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NextButton" type="Button" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.82
+anchor_top = 0.02
+anchor_right = 0.98
+anchor_bottom = 0.08
+theme_override_font_sizes/font_size = 18
+text = "Next"
 
 [node name="BackButton" type="Button" parent="."]
 layout_mode = 1
@@ -137,5 +164,10 @@ anchor_bottom = 0.08
 theme_override_font_sizes/font_size = 20
 text = "Back"
 
+[node name="ClickPlayer" type="AudioStreamPlayer" parent="."]
+
+[connection signal="toggled" from="BoardContainer/InputA_Btn" to="." method="_on_input_a_toggled"]
+[connection signal="toggled" from="BoardContainer/InputB_Btn" to="." method="_on_input_b_toggled"]
 [connection signal="item_selected" from="BoardContainer/GateSelector" to="." method="_on_gate_selected"]
+[connection signal="pressed" from="NextButton" to="." method="_on_next_button_pressed"]
 [connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
