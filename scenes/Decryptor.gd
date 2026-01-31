@@ -4,12 +4,15 @@ extends Control
 @onready var lbl_level = $MainLayout/TopBar/LevelLabel
 @onready var progress_stability = $MainLayout/TopBar/StabilityBar
 @onready var lbl_target = $MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox/TargetValue
+@onready var lbl_preview = $MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox/PreviewValue
 @onready var lbl_system = $MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox/SystemLabel
 @onready var container_switches = $MainLayout/ContentContainer/RightPanel/SwitchesContainer
 @onready var container_labels = $MainLayout/ContentContainer/RightPanel/BitLabelsContainer
 @onready var btn_check = $MainLayout/ContentContainer/RightPanel/ControlButtons/CheckButton
 @onready var log_text = $MainLayout/FeedbackPanel/LogText
 
+# Modal References
+@onready var modal_selection = $ModeSelectionModal
 
 # Game State
 var current_target: int = 0
@@ -42,8 +45,8 @@ func _ready():
 		lbl.custom_minimum_size = Vector2(40, 0)
 		container_labels.add_child(lbl)
 
-	# Start immediately (difficulty selection happens in QuestSelect)
-	start_level(0)
+	# Start Game Immediately (Modal is now in QuestSelect)
+	start_level(GlobalMetrics.current_level_index)
 
 func start_level(level_idx):
 	GlobalMetrics.start_level(level_idx)
@@ -78,6 +81,9 @@ func start_level(level_idx):
 	log_message("Система инициализирована. Цель захвачена.", COLOR_NORMAL)
 	_on_stability_changed(100.0, 0)
 
+	# Reset preview
+	update_preview_display()
+
 func update_visuals_for_mode(mode):
 	var weights = []
 	if mode == "DEC":
@@ -93,6 +99,25 @@ func update_visuals_for_mode(mode):
 	for i in range(8):
 		labels[i].text = str(weights[i])
 
+func update_preview_display():
+	# Only visible for Complexity A (Levels 0-14)
+	if GlobalMetrics.current_level_index >= 15:
+		lbl_preview.visible = false
+		return
+
+	lbl_preview.visible = true
+	var mode = GlobalMetrics.current_mode
+	var preview_text = ""
+
+	if mode == "DEC":
+		preview_text = "ТЕКУЩЕЕ: %d" % current_input
+	elif mode == "OCT":
+		preview_text = "ТЕКУЩЕЕ: %o" % current_input
+	elif mode == "HEX":
+		preview_text = "ТЕКУЩЕЕ: %X" % current_input
+
+	lbl_preview.text = preview_text
+
 func _on_switch_toggled(pressed: bool, bit_index: int):
 	# Bit index 0 in UI is usually MSB (leftmost), but mathematically bit 0 is LSB.
 	# Let's assume UI is MSB -> LSB (Switch 0 is 128, Switch 7 is 1).
@@ -101,6 +126,8 @@ func _on_switch_toggled(pressed: bool, bit_index: int):
 		current_input |= (1 << power)
 	else:
 		current_input &= ~(1 << power)
+
+	update_preview_display()
 
 func _on_check_button_pressed():
 	if not is_level_active: return
@@ -164,5 +191,5 @@ func log_message(msg: String, color: Color):
 
 # --- Navigation ---
 func _on_menu_button_pressed():
-	# Back to quest selection
+	# Go back to Quest Select
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
