@@ -1,6 +1,12 @@
-[gd_scene load_steps=2 format=3 uid="uid://c6l2jvi53qwcf"]
+[gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://scenes/QuestSelect.gd" id="1"]
+[ext_resource type="Script" path="res://scenes/QuestSelect.gd" id="1_script"]
+[ext_resource type="Shader" path="res://scenes/Blur.gdshader" id="2_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1"]
+shader = ExtResource("2_shader")
+shader_parameter/lod = 2.5
+shader_parameter/modulate = Color(0, 0, 0, 0.8)
 
 [node name="QuestSelect" type="Control"]
 layout_mode = 3
@@ -9,7 +15,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1")
+script = ExtResource("1_script")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -18,91 +24,66 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.06, 0.06, 0.08, 1)
+color = Color(0.1, 0.1, 0.1, 1)
 
-[node name="Main" type="VBoxContainer" parent="."]
+[node name="MainLayout" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 40
 alignment = 1
 
-[node name="Title" type="Label" parent="Main"]
+[node name="Title" type="Label" parent="MainLayout"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.9, 1, 1)
-theme_override_font_sizes/font_size = 32
-text = "Quest Select"
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 64
+text = "ВЫБОР ЗАДАНИЯ"
 horizontal_alignment = 1
 
-[node name="GridCenter" type="CenterContainer" parent="Main"]
+[node name="QuestGrid" type="GridContainer" parent="MainLayout"]
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 30
+theme_override_constants/v_separation = 30
+columns = 3
 
-[node name="Grid" type="GridContainer" parent="Main/GridCenter"]
+[node name="QuestBtn" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(300, 200)
 layout_mode = 2
-theme_override_constants/h_separation = 12
-theme_override_constants/v_separation = 12
-columns = 4
+theme_override_font_sizes/font_size = 24
+text = "ДЕШИФРАТОР
+(Logic Engine)"
 
-[node name="CluesButton" type="Button" parent="Main/GridCenter/Grid"]
-custom_minimum_size = Vector2(260, 56)
+[node name="QuestBtn2" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(300, 200)
 layout_mode = 2
-size_flags_horizontal = 3
-text = "Clues"
+theme_override_font_sizes/font_size = 24
+text = "ДЕТЕКТОР ЛЖИ"
 
-[node name="RadioButton" type="Button" parent="Main/GridCenter/Grid"]
-custom_minimum_size = Vector2(260, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Radio"
+[node name="ModalLayer" type="CanvasLayer" parent="."]
 
-[node name="DecryptorButton" type="Button" parent="Main/GridCenter/Grid"]
-custom_minimum_size = Vector2(260, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Decryptor"
-
-[node name="LieDetectorButton" type="Button" parent="Main/GridCenter/Grid"]
-custom_minimum_size = Vector2(260, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Lie Detector"
-
-[node name="SuspectScriptButton" type="Button" parent="Main/GridCenter/Grid"]
-custom_minimum_size = Vector2(260, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Suspect Script"
-
-[node name="CityMapButton" type="Button" parent="Main/GridCenter/Grid"]
-custom_minimum_size = Vector2(260, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "City Map"
-
-[node name="DataArchiveButton" type="Button" parent="Main/GridCenter/Grid"]
-custom_minimum_size = Vector2(260, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Data Archive"
-
-[node name="FinalReportButton" type="Button" parent="Main/GridCenter/Grid"]
-custom_minimum_size = Vector2(260, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Final Report"
-
-[node name="StatusLabel" type="Label" parent="Main"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
-text = "Choose a topic"
-horizontal_alignment = 1
-
-[node name="ModeSelectionModal" type="Control" parent="."]
+[node name="ModeSelectionModal" type="Panel" parent="ModalLayer"]
 visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BackgroundDim" type="ColorRect" parent="ModalLayer/ModeSelectionModal"]
+material = SubResource("ShaderMaterial_1")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="ModalLayer/ModeSelectionModal"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -110,57 +91,45 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Dim" type="ColorRect" parent="ModeSelectionModal"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0, 0, 0, 0.6)
-
-[node name="ModalCenter" type="CenterContainer" parent="ModeSelectionModal"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="ModalBox" type="VBoxContainer" parent="ModeSelectionModal/ModalCenter"]
-custom_minimum_size = Vector2(640, 420)
+[node name="VBoxContainer" type="VBoxContainer" parent="ModalLayer/ModeSelectionModal/CenterContainer"]
+custom_minimum_size = Vector2(600, 400)
 layout_mode = 2
-theme_override_constants/separation = 20
-alignment = 1
+theme_override_constants/separation = 30
 
-[node name="ModalTitle" type="Label" parent="ModeSelectionModal/ModalCenter/ModalBox"]
+[node name="Title" type="Label" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 36
-text = "Select Difficulty"
+theme_override_font_sizes/font_size = 48
+text = "ВЫБОР ПРОТОКОЛА"
 horizontal_alignment = 1
 
-[node name="ModalHint" type="Label" parent="ModeSelectionModal/ModalCenter/ModalBox"]
+[node name="BtnComplexityA" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.8, 0.9, 1)
-text = "Recommended: A"
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 32
+text = "ПРОТОКОЛ А: ОСНОВЫ"
 
-[node name="BtnComplexityA" type="Button" parent="ModeSelectionModal/ModalCenter/ModalBox"]
+[node name="BtnComplexityB" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+disabled = true
+text = "ПРОТОКОЛ Б: КАСКАД"
+
+[node name="BtnComplexityC" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+disabled = true
+text = "ПРОТОКОЛ С: ДЕДУКЦИЯ"
+
+[node name="BtnClose" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
-text = "Complexity A"
+theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
+theme_override_font_sizes/font_size = 24
+text = "ОТМЕНА"
 
-[node name="BtnComplexityB" type="Button" parent="ModeSelectionModal/ModalCenter/ModalBox"]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-text = "Complexity B"
-
-[node name="BtnComplexityC" type="Button" parent="ModeSelectionModal/ModalCenter/ModalBox"]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-text = "Complexity C"
-
-[node name="BtnClose" type="Button" parent="ModeSelectionModal/ModalCenter/ModalBox"]
-custom_minimum_size = Vector2(0, 52)
-layout_mode = 2
-text = "Back"
+[connection signal="pressed" from="MainLayout/QuestGrid/QuestBtn" to="." method="_on_quest_button_pressed"]
+[connection signal="pressed" from="MainLayout/QuestGrid/QuestBtn2" to="." method="_on_lie_detector_pressed"]
+[connection signal="pressed" from="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnComplexityA" to="." method="_on_complexity_a_pressed"]
+[connection signal="pressed" from="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnClose" to="." method="_on_close_modal_pressed"]
