@@ -10,8 +10,6 @@ extends Control
 @onready var btn_check = $MainLayout/ContentContainer/RightPanel/ControlButtons/CheckButton
 @onready var log_text = $MainLayout/FeedbackPanel/LogText
 
-# Modal References
-@onready var modal_selection = $ModeSelectionModal
 
 # Game State
 var current_target: int = 0
@@ -44,12 +42,8 @@ func _ready():
 		lbl.custom_minimum_size = Vector2(40, 0)
 		container_labels.add_child(lbl)
 
-	# Show modal on start instead of starting immediately
-	show_mode_selection()
-
-func show_mode_selection():
-	modal_selection.visible = true
-	is_level_active = false
+	# Start immediately (difficulty selection happens in QuestSelect)
+	start_level(0)
 
 func start_level(level_idx):
 	GlobalMetrics.start_level(level_idx)
@@ -171,9 +165,5 @@ func log_message(msg: String, color: Color):
 # --- Modal & Menu Callbacks ---
 
 func _on_menu_button_pressed():
-	show_mode_selection()
-
-func _on_complexity_a_pressed():
-	modal_selection.visible = false
-	# Reset or Start Protocol A
-	start_level(0)
+	# Back to quest selection
+	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")

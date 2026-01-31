@@ -100,3 +100,67 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
 text = "Choose a topic"
 horizontal_alignment = 1
+
+[node name="ModeSelectionModal" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="ModeSelectionModal"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="ModalCenter" type="CenterContainer" parent="ModeSelectionModal"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ModalBox" type="VBoxContainer" parent="ModeSelectionModal/ModalCenter"]
+custom_minimum_size = Vector2(640, 420)
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="ModalTitle" type="Label" parent="ModeSelectionModal/ModalCenter/ModalBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "Select Difficulty"
+horizontal_alignment = 1
+
+[node name="ModalHint" type="Label" parent="ModeSelectionModal/ModalCenter/ModalBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.9, 1)
+text = "Recommended: A"
+horizontal_alignment = 1
+
+[node name="BtnComplexityA" type="Button" parent="ModeSelectionModal/ModalCenter/ModalBox"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "Complexity A"
+
+[node name="BtnComplexityB" type="Button" parent="ModeSelectionModal/ModalCenter/ModalBox"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "Complexity B"
+
+[node name="BtnComplexityC" type="Button" parent="ModeSelectionModal/ModalCenter/ModalBox"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "Complexity C"
+
+[node name="BtnClose" type="Button" parent="ModeSelectionModal/ModalCenter/ModalBox"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "Back"

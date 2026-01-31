@@ -13,6 +13,7 @@ signal hint_unlocked(level, text)
 var stability: float = 100.0
 var current_level_index: int = 0
 var current_mode: String = "DEC" # DEC, OCT, HEX
+var selected_complexity: String = "A"
 
 # Anti-Spam / Shields
 var check_timestamps: Array[float] = []

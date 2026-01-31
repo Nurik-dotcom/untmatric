@@ -14,6 +14,13 @@ const TOPIC_REPORT = "\u0424\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 \u0
 
 const STATUS_FORMAT = "\u00ab%s\u00bb \u043f\u043e\u043a\u0430 \u0432 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435."
 
+const MODAL_TITLE = "\u0412\u044b\u0431\u043e\u0440 \u0441\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u0438"
+const MODAL_HINT_FORMAT = "\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u0435\u043c: \u0441\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c %s"
+const COMPLEXITY_A_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c A"
+const COMPLEXITY_B_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c B"
+const COMPLEXITY_C_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c C"
+const MODAL_BACK_TEXT = "\u041d\u0430\u0437\u0430\u0434"
+
 @onready var title_label = $Main/Title
 @onready var status_label = $Main/StatusLabel
 
@@ -25,6 +32,17 @@ const STATUS_FORMAT = "\u00ab%s\u00bb \u043f\u043e\u043a\u0430 \u0432 \u0440\u04
 @onready var btn_city = $Main/GridCenter/Grid/CityMapButton
 @onready var btn_archive = $Main/GridCenter/Grid/DataArchiveButton
 @onready var btn_report = $Main/GridCenter/Grid/FinalReportButton
+
+@onready var modal = $ModeSelectionModal
+@onready var modal_title = $ModeSelectionModal/ModalCenter/ModalBox/ModalTitle
+@onready var modal_hint = $ModeSelectionModal/ModalCenter/ModalBox/ModalHint
+@onready var btn_complexity_a = $ModeSelectionModal/ModalCenter/ModalBox/BtnComplexityA
+@onready var btn_complexity_b = $ModeSelectionModal/ModalCenter/ModalBox/BtnComplexityB
+@onready var btn_complexity_c = $ModeSelectionModal/ModalCenter/ModalBox/BtnComplexityC
+@onready var btn_modal_close = $ModeSelectionModal/ModalCenter/ModalBox/BtnClose
+
+var pending_topic: String = ""
+var recommended_complexity: String = "A"
 
 func _ready():
 	title_label.text = TITLE_TEXT
@@ -39,6 +57,12 @@ func _ready():
 	btn_archive.text = TOPIC_ARCHIVE
 	btn_report.text = TOPIC_REPORT
 
+	modal_title.text = MODAL_TITLE
+	btn_complexity_a.text = COMPLEXITY_A_TEXT
+	btn_complexity_b.text = COMPLEXITY_B_TEXT
+	btn_complexity_c.text = COMPLEXITY_C_TEXT
+	btn_modal_close.text = MODAL_BACK_TEXT
+
 	btn_clues.pressed.connect(_on_topic_pressed.bind(TOPIC_CLUES))
 	btn_radio.pressed.connect(_on_topic_pressed.bind(TOPIC_RADIO))
 	btn_decryptor.pressed.connect(_on_topic_pressed.bind(TOPIC_DECRYPTOR))
@@ -48,9 +72,29 @@ func _ready():
 	btn_archive.pressed.connect(_on_topic_pressed.bind(TOPIC_ARCHIVE))
 	btn_report.pressed.connect(_on_topic_pressed.bind(TOPIC_REPORT))
 
+	btn_complexity_a.pressed.connect(_on_complexity_pressed.bind("A"))
+	btn_complexity_b.pressed.connect(_on_complexity_pressed.bind("B"))
+	btn_complexity_c.pressed.connect(_on_complexity_pressed.bind("C"))
+	btn_modal_close.pressed.connect(_hide_modal)
+
 func _on_topic_pressed(topic_name: String):
 	if topic_name == TOPIC_DECRYPTOR:
-		get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
+		pending_topic = topic_name
+		recommended_complexity = "A"
+		_show_modal()
 		return
 
 	status_label.text = STATUS_FORMAT % topic_name
+
+func _show_modal():
+	modal_hint.text = MODAL_HINT_FORMAT % recommended_complexity
+	modal.visible = true
+
+func _hide_modal():
+	modal.visible = false
+
+func _on_complexity_pressed(level: String):
+	GlobalMetrics.selected_complexity = level
+	_hide_modal()
+	# Only decryptor is implemented for now
+	get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
