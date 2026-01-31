@@ -10,6 +10,7 @@ extends Control
 @onready var btn_check = $MainLayout/ContentContainer/RightPanel/ControlButtons/CheckButton
 @onready var log_text = $MainLayout/FeedbackPanel/LogText
 
+
 # Game State
 var current_target: int = 0
 var current_input: int = 0
@@ -41,8 +42,8 @@ func _ready():
 		lbl.custom_minimum_size = Vector2(40, 0)
 		container_labels.add_child(lbl)
 
-	# Start Game Immediately (Modal is now in QuestSelect)
-	start_level(GlobalMetrics.current_level_index)
+	# Start immediately (difficulty selection happens in QuestSelect)
+	start_level(0)
 
 func start_level(level_idx):
 	GlobalMetrics.start_level(level_idx)
@@ -163,5 +164,5 @@ func log_message(msg: String, color: Color):
 
 # --- Navigation ---
 func _on_menu_button_pressed():
-	# Go back to Quest Select
+	# Back to quest selection
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")

@@ -2,14 +2,18 @@ extends Node
 
 # LogicEngine v6.2 Specification
 
+@warning_ignore("unused_signal")
 signal stability_changed(new_value, change)
+@warning_ignore("unused_signal")
 signal shield_triggered(shield_name, penalty)
+@warning_ignore("unused_signal")
 signal hint_unlocked(level, text)
 
 # Core Resources
 var stability: float = 100.0
 var current_level_index: int = 0
 var current_mode: String = "DEC" # DEC, OCT, HEX
+var selected_complexity: String = "A"
 
 # Anti-Spam / Shields
 var check_timestamps: Array[float] = []
@@ -153,7 +157,7 @@ func _record_input_history(val: int):
 	if last_checked_bits.size() > 10:
 		last_checked_bits.pop_front()
 
-func _generate_hints(target: int, input: int, hd: int) -> Dictionary:
+func _generate_hints(target: int, input: int, _hd: int) -> Dictionary:
 	# Level 1: Diagnosis
 	var diagnosis = "BIT_ERROR"
 	if target > input: diagnosis = "VALUE_LOW"
