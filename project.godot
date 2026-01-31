@@ -12,7 +12,7 @@ config_version=5
 
 config/name="UNTformatic"
 run/main_scene="res://scenes/MainMenu.tscn"
-config/features=PackedStringArray("4.5", "Mobile")
+config/features=PackedStringArray("4.3", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
@@ -21,8 +21,8 @@ GlobalMetrics="*res://scripts/GlobalMetrics.gd"
 
 [display]
 
-window/size/viewport_width=1080
-window/size/viewport_height=1920
+window/size/viewport_width=1152
+window/size/viewport_height=648
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
@@ -32,4 +32,4 @@ pointing/emulate_touch_from_mouse=true
 
 [rendering]
 
-renderer/rendering_method="compatibility"
+renderer/rendering_method="mobile"

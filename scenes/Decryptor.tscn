@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://bx4x0id1k60k4"]
 
 [ext_resource type="Script" path="res://scenes/Decryptor.gd" id="1_script"]
 

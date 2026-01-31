@@ -2,8 +2,11 @@ extends Node
 
 # LogicEngine v6.2 Specification
 
+@warning_ignore("unused_signal")
 signal stability_changed(new_value, change)
+@warning_ignore("unused_signal")
 signal shield_triggered(shield_name, penalty)
+@warning_ignore("unused_signal")
 signal hint_unlocked(level, text)
 
 # Core Resources
@@ -153,7 +156,7 @@ func _record_input_history(val: int):
 	if last_checked_bits.size() > 10:
 		last_checked_bits.pop_front()
 
-func _generate_hints(target: int, input: int, hd: int) -> Dictionary:
+func _generate_hints(target: int, input: int, _hd: int) -> Dictionary:
 	# Level 1: Diagnosis
 	var diagnosis = "BIT_ERROR"
 	if target > input: diagnosis = "VALUE_LOW"
