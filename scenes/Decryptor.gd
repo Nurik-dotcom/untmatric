@@ -3,11 +3,11 @@ extends Control
 # UI References
 @onready var lbl_level = $MainLayout/TopBar/LevelLabel
 @onready var progress_stability = $MainLayout/TopBar/StabilityBar
-@onready var lbl_target = $MainLayout/ScreenPanel/VBox/TargetValue
-@onready var lbl_system = $MainLayout/ScreenPanel/VBox/SystemLabel
-@onready var container_switches = $MainLayout/SwitchesContainer
-@onready var container_labels = $MainLayout/BitLabelsContainer
-@onready var btn_check = $MainLayout/CheckButton
+@onready var lbl_target = $MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox/TargetValue
+@onready var lbl_system = $MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox/SystemLabel
+@onready var container_switches = $MainLayout/ContentContainer/RightPanel/SwitchesContainer
+@onready var container_labels = $MainLayout/ContentContainer/RightPanel/BitLabelsContainer
+@onready var btn_check = $MainLayout/ContentContainer/RightPanel/ControlButtons/CheckButton
 @onready var log_text = $MainLayout/FeedbackPanel/LogText
 
 # Game State
@@ -37,6 +37,8 @@ func _ready():
 		lbl.name = "Label_%d" % i
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.text = "0"
+		# Ensure labels have min width to match switches somewhat or use size flags
+		lbl.custom_minimum_size = Vector2(40, 0)
 		container_labels.add_child(lbl)
 
 	# Start Game

@@ -29,7 +29,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Menu" type="VBoxContainer" parent="Center"]
-custom_minimum_size = Vector2(360, 0)
+custom_minimum_size = Vector2(420, 0)
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
@@ -42,17 +42,20 @@ text = "UNTformatic"
 horizontal_alignment = 1
 
 [node name="NotebookArea" type="Button" parent="Center/Menu"]
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(420, 52)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Start"
 
 [node name="PapersArea" type="Button" parent="Center/Menu"]
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(420, 52)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Learn"
 
 [node name="LaptopArea" type="Button" parent="Center/Menu"]
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(420, 52)
 layout_mode = 2
+size_flags_horizontal = 3
 disabled = true
 text = "Options (soon)"

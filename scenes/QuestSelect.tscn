@@ -34,57 +34,69 @@ alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.9, 1, 1)
 theme_override_font_sizes/font_size = 32
-text = "Выбор квеста"
+text = "Quest Select"
 horizontal_alignment = 1
 
-[node name="Grid" type="GridContainer" parent="Main"]
+[node name="GridCenter" type="CenterContainer" parent="Main"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Grid" type="GridContainer" parent="Main/GridCenter"]
 layout_mode = 2
 theme_override_constants/h_separation = 12
 theme_override_constants/v_separation = 12
-columns = 2
+columns = 4
 
-[node name="CluesButton" type="Button" parent="Main/Grid"]
-custom_minimum_size = Vector2(0, 56)
+[node name="CluesButton" type="Button" parent="Main/GridCenter/Grid"]
+custom_minimum_size = Vector2(260, 56)
 layout_mode = 2
-text = "Улики"
+size_flags_horizontal = 3
+text = "Clues"
 
-[node name="RadioButton" type="Button" parent="Main/Grid"]
-custom_minimum_size = Vector2(0, 56)
+[node name="RadioButton" type="Button" parent="Main/GridCenter/Grid"]
+custom_minimum_size = Vector2(260, 56)
 layout_mode = 2
-text = "Радиоперехват"
+size_flags_horizontal = 3
+text = "Radio"
 
-[node name="DecryptorButton" type="Button" parent="Main/Grid"]
-custom_minimum_size = Vector2(0, 56)
+[node name="DecryptorButton" type="Button" parent="Main/GridCenter/Grid"]
+custom_minimum_size = Vector2(260, 56)
 layout_mode = 2
-text = "Дешифрование"
+size_flags_horizontal = 3
+text = "Decryptor"
 
-[node name="LieDetectorButton" type="Button" parent="Main/Grid"]
-custom_minimum_size = Vector2(0, 56)
+[node name="LieDetectorButton" type="Button" parent="Main/GridCenter/Grid"]
+custom_minimum_size = Vector2(260, 56)
 layout_mode = 2
-text = "Детектор лжи"
+size_flags_horizontal = 3
+text = "Lie Detector"
 
-[node name="SuspectScriptButton" type="Button" parent="Main/Grid"]
-custom_minimum_size = Vector2(0, 56)
+[node name="SuspectScriptButton" type="Button" parent="Main/GridCenter/Grid"]
+custom_minimum_size = Vector2(260, 56)
 layout_mode = 2
-text = "Скрипт подозреваемого"
+size_flags_horizontal = 3
+text = "Suspect Script"
 
-[node name="CityMapButton" type="Button" parent="Main/Grid"]
-custom_minimum_size = Vector2(0, 56)
+[node name="CityMapButton" type="Button" parent="Main/GridCenter/Grid"]
+custom_minimum_size = Vector2(260, 56)
 layout_mode = 2
-text = "Карта города"
+size_flags_horizontal = 3
+text = "City Map"
 
-[node name="DataArchiveButton" type="Button" parent="Main/Grid"]
-custom_minimum_size = Vector2(0, 56)
+[node name="DataArchiveButton" type="Button" parent="Main/GridCenter/Grid"]
+custom_minimum_size = Vector2(260, 56)
 layout_mode = 2
-text = "Архив данных"
+size_flags_horizontal = 3
+text = "Data Archive"
 
-[node name="FinalReportButton" type="Button" parent="Main/Grid"]
-custom_minimum_size = Vector2(0, 56)
+[node name="FinalReportButton" type="Button" parent="Main/GridCenter/Grid"]
+custom_minimum_size = Vector2(260, 56)
 layout_mode = 2
-text = "Финальный отчет"
+size_flags_horizontal = 3
+text = "Final Report"
 
 [node name="StatusLabel" type="Label" parent="Main"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
-text = "Выберите тему"
+text = "Choose a topic"
 horizontal_alignment = 1
