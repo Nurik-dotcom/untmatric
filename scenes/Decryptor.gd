@@ -10,6 +10,9 @@ extends Control
 @onready var btn_check = $MainLayout/ContentContainer/RightPanel/ControlButtons/CheckButton
 @onready var log_text = $MainLayout/FeedbackPanel/LogText
 
+# Modal References
+@onready var modal_selection = $ModeSelectionModal
+
 # Game State
 var current_target: int = 0
 var current_input: int = 0
@@ -41,8 +44,12 @@ func _ready():
 		lbl.custom_minimum_size = Vector2(40, 0)
 		container_labels.add_child(lbl)
 
-	# Start Game
-	start_level(0)
+	# Show modal on start instead of starting immediately
+	show_mode_selection()
+
+func show_mode_selection():
+	modal_selection.visible = true
+	is_level_active = false
 
 func start_level(level_idx):
 	GlobalMetrics.start_level(level_idx)
@@ -160,3 +167,13 @@ func log_message(msg: String, color: Color):
 	log_text.push_color(color)
 	log_text.add_text("[%s] %s\n" % [time_str, msg])
 	log_text.pop()
+
+# --- Modal & Menu Callbacks ---
+
+func _on_menu_button_pressed():
+	show_mode_selection()
+
+func _on_complexity_a_pressed():
+	modal_selection.visible = false
+	# Reset or Start Protocol A
+	start_level(0)
