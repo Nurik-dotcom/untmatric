@@ -162,8 +162,7 @@ func log_message(msg: String, color: Color):
 	log_text.add_text("[%s] %s\n" % [time_str, msg])
 	log_text.pop()
 
-# --- Modal & Menu Callbacks ---
-
+# --- Navigation ---
 func _on_menu_button_pressed():
 	# Back to quest selection
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
