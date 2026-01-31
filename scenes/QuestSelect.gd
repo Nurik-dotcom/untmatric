@@ -17,8 +17,8 @@ const STATUS_FORMAT = "\u00ab%s\u00bb \u043f\u043e\u043a\u0430 \u0432 \u0440\u04
 const MODAL_TITLE = "\u0412\u044b\u0431\u043e\u0440 \u0441\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u0438"
 const MODAL_HINT_FORMAT = "\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u0435\u043c: \u0441\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c %s"
 const COMPLEXITY_A_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c A"
-const COMPLEXITY_B_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c B"
-const COMPLEXITY_C_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c C"
+const COMPLEXITY_B_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c B (\u0441\u043a\u043e\u0440\u043e)"
+const COMPLEXITY_C_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c C (\u0441\u043a\u043e\u0440\u043e)"
 const MODAL_BACK_TEXT = "\u041d\u0430\u0437\u0430\u0434"
 
 @onready var title_label = $Main/Title
@@ -62,6 +62,8 @@ func _ready():
 	btn_complexity_b.text = COMPLEXITY_B_TEXT
 	btn_complexity_c.text = COMPLEXITY_C_TEXT
 	btn_modal_close.text = MODAL_BACK_TEXT
+	btn_complexity_b.disabled = true
+	btn_complexity_c.disabled = true
 
 	btn_clues.pressed.connect(_on_topic_pressed.bind(TOPIC_CLUES))
 	btn_radio.pressed.connect(_on_topic_pressed.bind(TOPIC_RADIO))
@@ -78,7 +80,7 @@ func _ready():
 	btn_modal_close.pressed.connect(_hide_modal)
 
 func _on_topic_pressed(topic_name: String):
-	if topic_name == TOPIC_DECRYPTOR:
+	if topic_name == TOPIC_DECRYPTOR or topic_name == TOPIC_LIE:
 		pending_topic = topic_name
 		recommended_complexity = "A"
 		_show_modal()
@@ -96,5 +98,7 @@ func _hide_modal():
 func _on_complexity_pressed(level: String):
 	GlobalMetrics.selected_complexity = level
 	_hide_modal()
-	# Only decryptor is implemented for now
-	get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
+	if pending_topic == TOPIC_DECRYPTOR:
+		get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
+	elif pending_topic == TOPIC_LIE:
+		get_tree().change_scene_to_file("res://scenes/LogicQuestA.tscn")

@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://c6l2jvi53qwcf"]
+[gd_scene load_steps=4 format=3 uid="uid://c6l2jvi53qwcf"]
 
 [ext_resource type="Script" path="res://scenes/QuestSelect.gd" id="1"]
+[ext_resource type="Shader" path="res://shaders/blur.gdshader" id="2"]
+
+[sub_resource type="ShaderMaterial" id="1"]
+shader = ExtResource("2")
 
 [node name="QuestSelect" type="Control"]
 layout_mode = 3
@@ -103,6 +107,15 @@ horizontal_alignment = 1
 
 [node name="ModeSelectionModal" type="Control" parent="."]
 visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BlurRect" type="ColorRect" parent="ModeSelectionModal"]
+material = SubResource("1")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

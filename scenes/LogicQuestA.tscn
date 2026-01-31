@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://logicquesta"]
 
 [ext_resource type="Script" path="res://scenes/LogicQuestA.gd" id="1_script"]
 
@@ -20,114 +20,85 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 1)
 
-[node name="MainLayout" type="VBoxContainer" parent="."]
+[node name="StoryLabel" type="Label" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 20
-
-[node name="TopBar" type="HBoxContainer" parent="MainLayout"]
-custom_minimum_size = Vector2(0, 80)
-layout_mode = 2
-alignment = 1
-
-[node name="BackButton" type="Button" parent="MainLayout/TopBar"]
-custom_minimum_size = Vector2(120, 0)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "НАЗАД"
-
-[node name="Spacer" type="Control" parent="MainLayout/TopBar"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-
-[node name="Title" type="Label" parent="MainLayout/TopBar"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "СЛЕДСТВЕННЫЙ ЭКСПЕРИМЕНТ"
-
-[node name="ContentArea" type="VBoxContainer" parent="MainLayout"]
-layout_mode = 2
-size_flags_vertical = 3
-alignment = 1
-
-[node name="StoryLabel" type="Label" parent="MainLayout/ContentArea"]
-custom_minimum_size = Vector2(0, 100)
-layout_mode = 2
+anchor_left = 0.05
+anchor_top = 0.05
+anchor_right = 0.95
+anchor_bottom = 0.2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_font_sizes/font_size = 28
-text = "Свидетель утверждает..."
+theme_override_font_sizes/font_size = 26
+text = "Story text"
 horizontal_alignment = 1
+vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="CircuitBoard" type="Node2D" parent="MainLayout/ContentArea"]
-position = Vector2(960, 300)
+[node name="BoardContainer" type="Control" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -420.0
+offset_top = -160.0
+offset_right = 420.0
+offset_bottom = 160.0
 
-[node name="WiresLayer" type="Node2D" parent="MainLayout/ContentArea/CircuitBoard"]
+[node name="WiresLayer" type="Node2D" parent="BoardContainer"]
 
-[node name="InputA_Wire" type="Line2D" parent="MainLayout/ContentArea/CircuitBoard/WiresLayer"]
-points = PackedVector2Array(-300, -100, -100, -100, -100, -20, 0, -20)
-width = 4.0
-default_color = Color(0.8, 0.8, 0.8, 1)
+[node name="InputA_Wire" type="Line2D" parent="BoardContainer/WiresLayer"]
+points = PackedVector2Array(20, 80, 200, 80, 200, 130, 300, 130)
+width = 3.0
+default_color = Color(0.85, 0.85, 0.85, 1)
 begin_cap_mode = 2
 end_cap_mode = 2
 
-[node name="InputB_Wire" type="Line2D" parent="MainLayout/ContentArea/CircuitBoard/WiresLayer"]
-points = PackedVector2Array(-300, 100, -100, 100, -100, 20, 0, 20)
-width = 4.0
-default_color = Color(0.8, 0.8, 0.8, 1)
+[node name="InputB_Wire" type="Line2D" parent="BoardContainer/WiresLayer"]
+points = PackedVector2Array(20, 240, 200, 240, 200, 190, 300, 190)
+width = 3.0
+default_color = Color(0.85, 0.85, 0.85, 1)
 begin_cap_mode = 2
 end_cap_mode = 2
 
-[node name="Output_Wire" type="Line2D" parent="MainLayout/ContentArea/CircuitBoard/WiresLayer"]
-points = PackedVector2Array(100, 0, 300, 0)
-width = 4.0
-default_color = Color(0.8, 0.8, 0.8, 1)
+[node name="Output_Wire" type="Line2D" parent="BoardContainer/WiresLayer"]
+points = PackedVector2Array(520, 160, 740, 160)
+width = 3.0
+default_color = Color(0.85, 0.85, 0.85, 1)
 begin_cap_mode = 2
 end_cap_mode = 2
 
-[node name="InputA_Btn" type="Button" parent="MainLayout/ContentArea/CircuitBoard"]
-offset_left = -400.0
-offset_top = -140.0
-offset_right = -300.0
-offset_bottom = -60.0
-theme_override_font_sizes/font_size = 24
-text = "ВХОД А"
+[node name="InputA_Btn" type="Button" parent="BoardContainer"]
+offset_left = 0.0
+offset_top = 40.0
+offset_right = 200.0
+offset_bottom = 120.0
+theme_override_font_sizes/font_size = 22
+text = "Input A"
 
-[node name="InputB_Btn" type="Button" parent="MainLayout/ContentArea/CircuitBoard"]
-offset_left = -400.0
-offset_top = 60.0
-offset_right = -300.0
-offset_bottom = 140.0
-theme_override_font_sizes/font_size = 24
-text = "ВХОД Б"
+[node name="InputB_Btn" type="Button" parent="BoardContainer"]
+offset_left = 0.0
+offset_top = 200.0
+offset_right = 200.0
+offset_bottom = 280.0
+theme_override_font_sizes/font_size = 22
+text = "Input B"
 
-[node name="GateSelector" type="OptionButton" parent="MainLayout/ContentArea/CircuitBoard"]
-offset_left = -50.0
-offset_top = -40.0
-offset_right = 150.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 32
-flat = true
-item_count = 3
-popup/item_0/text = "ВЫБРАТЬ"
-popup/item_0/id = 0
-popup/item_1/text = "& (И)"
-popup/item_1/id = 1
-popup/item_2/text = "≥1 (ИЛИ)"
-popup/item_2/id = 2
-
-[node name="Lamp" type="ColorRect" parent="MainLayout/ContentArea/CircuitBoard"]
+[node name="GateSelector" type="OptionButton" parent="BoardContainer"]
 offset_left = 300.0
-offset_top = -50.0
-offset_right = 400.0
-offset_bottom = 50.0
-color = Color(0.2, 0.2, 0.2, 1)
+offset_top = 120.0
+offset_right = 520.0
+offset_bottom = 200.0
+theme_override_font_sizes/font_size = 28
+flat = true
 
-[node name="LampLabel" type="Label" parent="MainLayout/ContentArea/CircuitBoard/Lamp"]
+[node name="Lamp" type="ColorRect" parent="BoardContainer"]
+offset_left = 740.0
+offset_top = 120.0
+offset_right = 820.0
+offset_bottom = 200.0
+color = Color(0.15, 0.15, 0.15, 1)
+
+[node name="LampLabel" type="Label" parent="BoardContainer/Lamp"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -135,20 +106,29 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "ВЫХОД"
+text = "OUT"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ResultContainer" type="VBoxContainer" parent="MainLayout"]
-custom_minimum_size = Vector2(0, 150)
-layout_mode = 2
-alignment = 1
-
-[node name="ResultLabel" type="Label" parent="MainLayout/ResultContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
+[node name="ResultLabel" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.1
+anchor_top = 0.82
+anchor_right = 0.9
+anchor_bottom = 0.95
+theme_override_font_sizes/font_size = 30
 text = "..."
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[connection signal="pressed" from="MainLayout/TopBar/BackButton" to="." method="_on_back_button_pressed"]
-[connection signal="item_selected" from="MainLayout/ContentArea/CircuitBoard/GateSelector" to="." method="_on_gate_selected"]
+[node name="BackButton" type="Button" parent="."]
+layout_mode = 1
+anchor_left = 0.02
+anchor_top = 0.02
+anchor_right = 0.12
+anchor_bottom = 0.08
+theme_override_font_sizes/font_size = 20
+text = "Back"
+
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="item_selected" from="BoardContainer/GateSelector" to="." method="_on_gate_selected"]
