@@ -19,6 +19,11 @@ var current_target: int = 0
 var current_input: int = 0
 var is_level_active: bool = false
 
+const SWIPE_MIN: float = 60.0
+const SWIPE_MAX_Y: float = 40.0
+var _swipe_start_pos: Vector2 = Vector2.ZERO
+var _swipe_tracking: bool = false
+
 # System Colors
 const COLOR_NORMAL = Color("33ff33") # Green
 const COLOR_WARN = Color("ffcc00")   # Amber
@@ -48,12 +53,37 @@ func _ready():
 	# Start Game Immediately (Modal is now in QuestSelect)
 	start_level(GlobalMetrics.current_level_index)
 
+func _unhandled_input(event):
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			if _is_in_switches(event.position):
+				_swipe_start_pos = event.position
+				_swipe_tracking = true
+		else:
+			if _swipe_tracking:
+				var delta = event.position - _swipe_start_pos
+				if abs(delta.x) >= SWIPE_MIN and abs(delta.y) <= SWIPE_MAX_Y:
+					_apply_shift_left()
+				_swipe_tracking = false
+	elif event is InputEventMouseButton:
+		# Desktop swipe simulation with mouse drag
+		if event.pressed:
+			if _is_in_switches(event.position):
+				_swipe_start_pos = event.position
+				_swipe_tracking = true
+		else:
+			if _swipe_tracking:
+				var delta_mouse = event.position - _swipe_start_pos
+				if abs(delta_mouse.x) >= SWIPE_MIN and abs(delta_mouse.y) <= SWIPE_MAX_Y:
+					_apply_shift_left()
+				_swipe_tracking = false
+
 func start_level(level_idx):
 	GlobalMetrics.start_level(level_idx)
 	is_level_active = true
 
-	# Generate Target
-	current_target = randi_range(1, 255)
+	# Target from GlobalMetrics (A or B)
+	current_target = GlobalMetrics.current_target_value
 	current_input = 0
 
 	# Update UI for Mode
@@ -64,26 +94,21 @@ func start_level(level_idx):
 	for child in container_switches.get_children():
 		child.set_pressed_no_signal(false)
 
-	# Display Target
-	var display_text = ""
-	if mode == "DEC":
-		display_text = "%d" % current_target
-	elif mode == "OCT":
-		display_text = "%o" % current_target
-	elif mode == "HEX":
-		display_text = "%X" % current_target
+	# Display Target or Example
+	if level_idx >= 15:
+		lbl_target.text = _format_example(mode)
+	else:
+		lbl_target.text = _format_value(current_target, mode)
 
-	lbl_target.text = display_text
-	lbl_system.text = "СИСТЕМА: %s" % mode
-	lbl_level.text = "УРОВЕНЬ %02d" % (level_idx + 1)
-	btn_check.text = "ПРОВЕРИТЬ"
+	lbl_system.text = "SYSTEM: %s" % mode
+	lbl_level.text = "LEVEL %02d" % (level_idx + 1)
+	btn_check.text = "CHECK"
 
-	log_message("Система инициализирована. Цель захвачена.", COLOR_NORMAL)
+	log_message("System initialized. Target locked.", COLOR_NORMAL)
 	_on_stability_changed(100.0, 0)
 
 	# Reset preview
 	update_preview_display()
-
 func update_visuals_for_mode(mode):
 	var weights = []
 	if mode == "DEC":
@@ -100,24 +125,9 @@ func update_visuals_for_mode(mode):
 		labels[i].text = str(weights[i])
 
 func update_preview_display():
-	# Only visible for Complexity A (Levels 0-14)
-	if GlobalMetrics.current_level_index >= 15:
-		lbl_preview.visible = false
-		return
-
 	lbl_preview.visible = true
 	var mode = GlobalMetrics.current_mode
-	var preview_text = ""
-
-	if mode == "DEC":
-		preview_text = "ТЕКУЩЕЕ: %d" % current_input
-	elif mode == "OCT":
-		preview_text = "ТЕКУЩЕЕ: %o" % current_input
-	elif mode == "HEX":
-		preview_text = "ТЕКУЩЕЕ: %X" % current_input
-
-	lbl_preview.text = preview_text
-
+	lbl_preview.text = "INPUT: %s" % _format_value(current_input, mode)
 func _on_switch_toggled(pressed: bool, bit_index: int):
 	# Bit index 0 in UI is usually MSB (leftmost), but mathematically bit 0 is LSB.
 	# Let's assume UI is MSB -> LSB (Switch 0 is 128, Switch 7 is 1).
@@ -171,10 +181,9 @@ func _translate_hint(code: String) -> String:
 func _on_stability_changed(new_val, change):
 	progress_stability.value = new_val
 	if new_val <= 0:
-		log_message("КРИТИЧЕСКИЙ СБОЙ. БЛОКИРОВКА СИСТЕМЫ.", COLOR_ERROR)
 		is_level_active = false
 		btn_check.disabled = true
-
+		start_safe_mode_analysis()
 func _on_shield_triggered(name, duration):
 	log_message("ЩИТ БЕЗОПАСНОСТИ: %s. ЖДИТЕ %s с." % [name, duration], COLOR_WARN)
 	# Could disable button here
@@ -189,7 +198,97 @@ func log_message(msg: String, color: Color):
 	log_text.add_text("[%s] %s\n" % [time_str, msg])
 	log_text.pop()
 
+func _is_in_switches(pos: Vector2) -> bool:
+	return container_switches.get_global_rect().has_point(pos)
+
+func _apply_shift_left():
+	current_input = (current_input << 1) & 0xFF
+	_sync_switches_to_input()
+	update_preview_display()
+
+func _sync_switches_to_input():
+	var switches = container_switches.get_children()
+	for i in range(switches.size()):
+		var bit = 7 - i
+		var pressed = ((current_input >> bit) & 1) == 1
+		switches[i].set_pressed_no_signal(pressed)
+
+func _format_value(val: int, mode: String) -> String:
+	if mode == "DEC":
+		return "%d" % val
+	elif mode == "OCT":
+		return "%o" % val
+	elif mode == "HEX":
+		return "%X" % val
+	return "%d" % val
+
+func _format_example(mode: String) -> String:
+	var a = GlobalMetrics.current_reg_a
+	var b = GlobalMetrics.current_reg_b
+	var op = GlobalMetrics.current_operator
+	var a_txt = _format_value(a, mode)
+	var b_txt = _format_value(b, mode)
+	if op == GlobalMetrics.Operator.ADD:
+		return "%s + %s" % [a_txt, b_txt]
+	elif op == GlobalMetrics.Operator.SUB:
+		return "%s - %s" % [a_txt, b_txt]
+	else:
+		return "%s << %s" % [a_txt, b_txt]
+
+func start_safe_mode_analysis():
+	log_message("РЕЖИМ БЕЗОПАСНОСТИ: анализ переноса", COLOR_WARN)
+	if GlobalMetrics.current_level_index < 15:
+		log_message("Анализ доступен только для уровней арифметики.", COLOR_WARN)
+		return
+
+	var a = GlobalMetrics.current_reg_a
+	var b = GlobalMetrics.current_reg_b
+	var op = GlobalMetrics.current_operator
+
+	if op == GlobalMetrics.Operator.ADD:
+		var carry = 0
+		for bit in range(8):
+			var abit = (a >> bit) & 1
+			var bbit = (b >> bit) & 1
+			var sum = abit + bbit + carry
+			var res = sum & 1
+			var new_carry = (sum >> 1) & 1
+			log_message("Разряд %d: %d+%d+%d = %d, перенос %d" % [bit + 1, abit, bbit, carry, res, new_carry], COLOR_WARN)
+			var input_bit = (current_input >> bit) & 1
+			if input_bit != res:
+				log_message("Ошибка в %d-м разряде: %d+%d+%d=10, перенос -> %d" % [bit + 1, abit, bbit, carry, bit + 2], COLOR_ERROR)
+				break
+			carry = new_carry
+	elif op == GlobalMetrics.Operator.SUB:
+		var borrow = 0
+		for bit in range(8):
+			var abit = (a >> bit) & 1
+			var bbit = (b >> bit) & 1
+			var diff = abit - bbit - borrow
+			var used_borrow = borrow
+			if diff < 0:
+				diff += 2
+				borrow = 1
+				if bit == 3:
+					log_message("Заём из старшего полубайта", COLOR_WARN)
+			else:
+				borrow = 0
+			log_message("Разряд %d: %d-%d-%d = %d" % [bit + 1, abit, bbit, used_borrow, diff], COLOR_WARN)
+			var input_bit = (current_input >> bit) & 1
+			if input_bit != diff:
+				log_message("Ошибка в %d-м разряде: требуется заём" % [bit + 1], COLOR_ERROR)
+				break
+	else:
+		var shift = GlobalMetrics.current_reg_b
+		log_message("SHIFT << %d" % shift, COLOR_WARN)
+		for bit in range(8 - shift):
+			var src = (a >> bit) & 1
+			log_message("%d -> %d : %d" % [bit + 1, bit + 1 + shift, src], COLOR_WARN)
+
 # --- Navigation ---
 func _on_menu_button_pressed():
 	# Go back to Quest Select
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+
+func _on_complexity_a_pressed():
+	pass

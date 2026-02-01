@@ -10,6 +10,12 @@ signal hint_unlocked(level, text)
 var stability: float = 100.0
 var current_level_index: int = 0
 var current_mode: String = "DEC" # DEC, OCT, HEX
+var current_target_value: int = 0
+
+enum Operator { ADD, SUB, SHIFT_L }
+var current_reg_a: int = 0
+var current_reg_b: int = 0
+var current_operator: Operator = Operator.ADD
 
 # Anti-Spam / Shields
 var check_timestamps: Array[float] = []
@@ -18,7 +24,7 @@ var blocked_until: float = 0.0
 
 # Level Configuration (Complexity A)
 # 15 Levels: 1-5 DEC, 6-10 OCT, 11-15 HEX
-const MAX_LEVELS = 15
+const MAX_LEVELS = 30
 
 func _ready():
 	reset_engine()
@@ -26,6 +32,10 @@ func _ready():
 func reset_engine():
 	stability = 100.0
 	current_level_index = 0
+	current_target_value = 0
+	current_reg_a = 0
+	current_reg_b = 0
+	current_operator = Operator.ADD
 	check_timestamps.clear()
 	last_checked_bits.clear()
 	blocked_until = 0.0
@@ -37,7 +47,10 @@ func start_level(index: int):
 		current_mode = "DEC"
 	elif index < 10:
 		current_mode = "OCT"
+	elif index < 15:
+		current_mode = "HEX"
 	else:
+		# Complexity B uses a single system (HEX) for arithmetic focus
 		current_mode = "HEX"
 
 	# Reset shields for the new level/attempt if desired,
@@ -47,6 +60,11 @@ func start_level(index: int):
 	emit_signal("stability_changed", stability, 0)
 	check_timestamps.clear()
 	last_checked_bits.clear()
+
+	if index >= 15:
+		_generate_arithmetic_example()
+	else:
+		current_target_value = randi_range(1, 255)
 
 # Returns (success: bool, info: Dictionary)
 func check_solution(target_val: int, input_val: int) -> Dictionary:
@@ -134,19 +152,42 @@ func _update_frequency_log(time_sec: float):
 
 func _check_lazy_search(current_input: int, current_hd: int) -> bool:
 	if current_hd <= 2: return false
-	if last_checked_bits.size() < 3: return false
 
-	# Check last 3 inputs. If difference between consecutive inputs is small...
-	# TDD: "If 3 checks in a row player changes < 3 unique bits"
-	# Let's look at the last input only for simplicity or track full history
-	var last_input = last_checked_bits[-1]
-	var diff = _calculate_hamming_distance(current_input, last_input)
+	var inputs = last_checked_bits.duplicate()
+	inputs.append(current_input)
+	# Need at least 4 inputs to analyze 3 transitions
+	if inputs.size() < 4:
+		return false
 
-	# This is a simplified logic. Real logic would track the last 3 checks.
-	# For now, if change is small (<3 bits) and we are wrong, flag it.
-	if diff < 3:
-		return true
-	return false
+	var unique_changed: Dictionary = {}
+	var start = inputs.size() - 4
+	for i in range(start, inputs.size() - 1):
+		var diff = inputs[i] ^ inputs[i + 1]
+		for bit in range(8):
+			if (diff & (1 << bit)) != 0:
+				unique_changed[bit] = true
+
+	return unique_changed.size() < 3
+
+func _generate_arithmetic_example():
+	# Pick an operator for Complexity B
+	var op_pick = randi() % 3
+	current_operator = Operator.ADD if op_pick == 0 else Operator.SUB if op_pick == 1 else Operator.SHIFT_L
+
+	if current_operator == Operator.ADD:
+		current_reg_a = randi_range(0, 255)
+		current_reg_b = randi_range(0, 255 - current_reg_a)
+		current_target_value = current_reg_a + current_reg_b
+	elif current_operator == Operator.SUB:
+		current_reg_a = randi_range(0, 255)
+		current_reg_b = randi_range(0, current_reg_a)
+		current_target_value = current_reg_a - current_reg_b
+	else:
+		# SHIFT_L by 1..3, ensure result <= 255
+		current_reg_b = randi_range(1, 3)
+		var max_a = 255 >> current_reg_b
+		current_reg_a = randi_range(0, max_a)
+		current_target_value = current_reg_a << current_reg_b
 
 func _record_input_history(val: int):
 	last_checked_bits.append(val)

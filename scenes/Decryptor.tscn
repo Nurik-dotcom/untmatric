@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://bx4x0id1k60k4"]
+[gd_scene load_steps=3 format=3 uid="uid://bx4x0id1k60k4"]
 
 [ext_resource type="Script" path="res://scenes/Decryptor.gd" id="1_script"]
+
+[sub_resource type="SystemFont" id="SystemFont_1"]
+font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono")
 
 [node name="Decryptor" type="Control"]
 layout_mode = 3
@@ -82,6 +85,7 @@ alignment = 1
 [node name="TargetValue" type="Label" parent="MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 128
 text = "000"
 horizontal_alignment = 1
@@ -89,6 +93,7 @@ horizontal_alignment = 1
 [node name="PreviewValue" type="Label" parent="MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.4, 0.4, 0.4, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 48
 text = "ТЕКУЩЕЕ: 0"
 horizontal_alignment = 1

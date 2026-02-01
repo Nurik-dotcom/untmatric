@@ -36,7 +36,7 @@ const BTN_REPORT_TEXT = "\u0424\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 
 
 const MODAL_TITLE_TEXT = "\u0412\u044b\u0431\u043e\u0440 \u0441\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u0438"
 const COMPLEXITY_A_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c A"
-const COMPLEXITY_B_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c B (\u0441\u043a\u043e\u0440\u043e)"
+const COMPLEXITY_B_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c B"
 const COMPLEXITY_C_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c C (\u0441\u043a\u043e\u0440\u043e)"
 const BTN_CLOSE_TEXT = "\u041d\u0430\u0437\u0430\u0434"
 
@@ -87,15 +87,17 @@ func _disable_unready():
 	btn_city.disabled = true
 	btn_archive.disabled = true
 	btn_report.disabled = true
-	btn_complexity_b.disabled = true
 	btn_complexity_c.disabled = true
 
 func _on_decryptor_pressed():
 	selected_quest_type = QuestType.DECRYPTOR
+	btn_complexity_b.disabled = false
 	modal.visible = true
 
 func _on_lie_detector_pressed():
 	selected_quest_type = QuestType.LOGIC_GATE
+	btn_complexity_b.disabled = true
+	btn_complexity_c.disabled = true
 	modal.visible = true
 
 func _on_locked_pressed():
@@ -109,7 +111,10 @@ func _on_complexity_a_pressed():
 		get_tree().change_scene_to_file("res://scenes/LogicQuestA.tscn")
 
 func _on_complexity_b_pressed():
-	pass
+	if selected_quest_type != QuestType.DECRYPTOR:
+		return
+	GlobalMetrics.current_level_index = 15
+	get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
 
 func _on_complexity_c_pressed():
 	pass
