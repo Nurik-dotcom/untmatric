@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://bj856hihjj58i"]
+[gd_scene load_steps=3 format=3 uid="uid://bj856hihjj58i"]
 
 [ext_resource type="Script" path="res://scenes/LogicQuestA.gd" id="1_script"]
+
+[sub_resource type="SystemFont" id="SystemFont_1"]
+font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono")
 
 [node name="LogicQuestA" type="Control"]
 layout_mode = 3
@@ -20,16 +23,50 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 1)
 
-[node name="StoryLabel" type="Label" parent="."]
+[node name="StoryLabelSimple" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.05
 anchor_top = 0.05
 anchor_right = 0.95
 anchor_bottom = 0.2
-theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 26
-text = "Story text"
+text = "Story"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="StoryLabelCheat" type="Label" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.05
+anchor_right = 0.95
+anchor_bottom = 0.22
+theme_override_colors/font_color = Color(0.85, 0.85, 0.6, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "Cheat"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="StoryLabelNoir" type="Label" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.05
+anchor_right = 0.95
+anchor_bottom = 0.22
+theme_override_colors/font_color = Color(0.7, 1, 0.7, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.05, 0.05, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "Noir"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
@@ -126,7 +163,8 @@ anchor_left = 0.1
 anchor_top = 0.82
 anchor_right = 0.9
 anchor_bottom = 0.9
-theme_override_font_sizes/font_size = 30
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 28
 text = "..."
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -139,7 +177,8 @@ anchor_top = 0.9
 anchor_right = 0.9
 anchor_bottom = 0.97
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 vertical_alignment = 1
 
