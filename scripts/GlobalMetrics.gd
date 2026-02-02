@@ -12,6 +12,22 @@ var current_level_index: int = 0
 var current_mode: String = "DEC" # DEC, OCT, HEX
 var current_target_value: int = 0
 
+# Matrix (Complexity C)
+const MATRIX_SIZE := 5
+const MATRIX_WEIGHTS := [16, 8, 4, 2, 1]
+var matrix_quest: Dictionary = {}
+var matrix_target: Array = []
+var matrix_row_constraints: Array = []
+var matrix_col_constraints: Array = []
+var matrix_current: Array = []
+var matrix_changed_cells: Dictionary = {}
+var _solver_row_constraints: Array = []
+var _solver_col_targets: Array = []
+var _solver_col_parity: Array = []
+var _solver_visibility: Array = []
+var _solver_col_sums: Array = []
+var _solver_solutions: int = 0
+
 enum Operator { ADD, SUB, SHIFT_L }
 var current_reg_a: int = 0
 var current_reg_b: int = 0
@@ -27,6 +43,7 @@ var blocked_until: float = 0.0
 const MAX_LEVELS = 30
 
 func _ready():
+	randomize()
 	reset_engine()
 
 func reset_engine():
@@ -39,6 +56,12 @@ func reset_engine():
 	check_timestamps.clear()
 	last_checked_bits.clear()
 	blocked_until = 0.0
+	matrix_quest.clear()
+	matrix_target.clear()
+	matrix_row_constraints.clear()
+	matrix_col_constraints.clear()
+	matrix_current.clear()
+	matrix_changed_cells.clear()
 
 func start_level(index: int):
 	current_level_index = index
@@ -214,3 +237,323 @@ func _generate_hints(target: int, input: int, hd: int) -> Dictionary:
 		"diagnosis": diagnosis,
 		"zone": zone
 	}
+
+# --- Matrix (Complexity C) ---
+func start_matrix_quest():
+	# Reset shields and stability for a new matrix quest
+	stability = 100.0
+	emit_signal("stability_changed", stability, 0)
+	check_timestamps.clear()
+	last_checked_bits.clear()
+	blocked_until = 0.0
+	_generate_matrix_quest()
+	_init_matrix_current()
+	_clear_matrix_changes()
+
+func record_matrix_change(row: int, col: int):
+	var key = "%d,%d" % [row, col]
+	matrix_changed_cells[key] = true
+
+func validate_matrix_logic() -> Dictionary:
+	var hd_result = _calculate_matrix_hd()
+	return {
+		"hd": hd_result.hd,
+		"row_ok": hd_result.row_ok,
+		"col_ok": hd_result.col_ok
+	}
+
+func check_matrix_solution() -> Dictionary:
+	var current_time = Time.get_ticks_msec() / 1000.0
+
+	if current_time < blocked_until:
+		return {
+			"success": false,
+			"error": "SHIELD_ACTIVE",
+			"message": "System overheated. Wait.",
+			"penalty": 0
+		}
+
+	# 1. Frequency Shield
+	_update_frequency_log(current_time)
+	if check_timestamps.size() > 4:
+		blocked_until = current_time + 5.0
+		emit_signal("shield_triggered", "FREQUENCY", 5.0)
+		_clear_matrix_changes()
+		return {
+			"success": false,
+			"error": "SHIELD_FREQ",
+			"message": "Lockout: too frequent checks.",
+			"penalty": 0
+		}
+
+	# 2. Matrix HD
+	var hd_result = _calculate_matrix_hd()
+	var hd = hd_result.hd
+
+	# Lazy Search Shield (matrix)
+	if _check_lazy_search_matrix(hd):
+		blocked_until = current_time + 5.0
+		emit_signal("shield_triggered", "LAZY", 5.0)
+		_clear_matrix_changes()
+		return {
+			"success": false,
+			"error": "SHIELD_LAZY",
+			"message": "Lockout: insufficient exploration.",
+			"penalty": 0
+		}
+
+	_clear_matrix_changes()
+
+	if hd == 0:
+		return {
+			"success": true,
+			"message": "Access granted.",
+			"stability": stability
+		}
+
+	var penalty = 0.0
+	if hd == 1:
+		penalty = 15.0
+	elif hd == 2:
+		penalty = 25.0
+	else:
+		penalty = 40.0
+
+	stability = max(0.0, stability - penalty)
+	emit_signal("stability_changed", stability, -penalty)
+
+	return {
+		"success": false,
+		"error": "INCORRECT",
+		"hamming": hd,
+		"penalty": penalty,
+		"message": "Incorrect. HD: %d" % hd
+	}
+
+func _check_lazy_search_matrix(hd: int) -> bool:
+	if hd <= 2:
+		return false
+	return matrix_changed_cells.size() < 3
+
+func _calculate_matrix_hd() -> Dictionary:
+	var row_ok: Array = []
+	var col_ok: Array = []
+	var hd = 0
+
+	# Row checks (visible only)
+	for r in range(MATRIX_SIZE):
+		var row_constraint = matrix_row_constraints[r]
+		var visible = row_constraint.is_hex_visible
+		var row_has_unset = false
+		var row_value = 0
+		for c in range(MATRIX_SIZE):
+			var cell = matrix_current[r][c]
+			if cell == -1:
+				row_has_unset = true
+			elif cell == 1:
+				row_value += MATRIX_WEIGHTS[c]
+		var is_ok = false
+		if visible and not row_has_unset and row_value == row_constraint.hex_value:
+			is_ok = true
+		row_ok.append(is_ok)
+		if visible:
+			if row_has_unset or row_value != row_constraint.hex_value:
+				hd += 1
+
+	# Column checks (always visible)
+	for c in range(MATRIX_SIZE):
+		var col_constraint = matrix_col_constraints[c]
+		var col_has_unset = false
+		var ones = 0
+		for r in range(MATRIX_SIZE):
+			var cell = matrix_current[r][c]
+			if cell == -1:
+				col_has_unset = true
+			elif cell == 1:
+				ones += 1
+		var parity = ones % 2
+		var is_ok = (not col_has_unset
+			and ones == col_constraint.ones_count
+			and parity == col_constraint.parity)
+		col_ok.append(is_ok)
+		if col_has_unset or ones != col_constraint.ones_count:
+			hd += 1
+
+	return {
+		"hd": hd,
+		"row_ok": row_ok,
+		"col_ok": col_ok
+	}
+
+func _init_matrix_current():
+	matrix_current.clear()
+	for r in range(MATRIX_SIZE):
+		var row: Array = []
+		for _c in range(MATRIX_SIZE):
+			row.append(-1)
+		matrix_current.append(row)
+
+func _clear_matrix_changes():
+	matrix_changed_cells.clear()
+
+func _generate_matrix_quest():
+	var attempts = 0
+	while attempts < 200:
+		attempts += 1
+		var target = _random_matrix()
+		var row_constraints = _build_row_constraints(target)
+		var col_constraints = _build_col_constraints(target)
+
+		var visibility = _pick_row_visibility(row_constraints, col_constraints)
+		if visibility.size() == MATRIX_SIZE:
+			for r in range(MATRIX_SIZE):
+				row_constraints[r].is_hex_visible = visibility[r]
+
+			matrix_target = target
+			matrix_row_constraints = row_constraints
+			matrix_col_constraints = col_constraints
+			matrix_quest = {
+				"target_matrix": matrix_target,
+				"row_constraints": matrix_row_constraints,
+				"col_constraints": matrix_col_constraints
+			}
+			return
+
+	# Fallback: all rows visible
+	matrix_target = _random_matrix()
+	matrix_row_constraints = _build_row_constraints(matrix_target)
+	matrix_col_constraints = _build_col_constraints(matrix_target)
+	matrix_quest = {
+		"target_matrix": matrix_target,
+		"row_constraints": matrix_row_constraints,
+		"col_constraints": matrix_col_constraints
+	}
+
+func _random_matrix() -> Array:
+	var matrix: Array = []
+	for _r in range(MATRIX_SIZE):
+		var row: Array = []
+		for _c in range(MATRIX_SIZE):
+			row.append(randi() % 2)
+		matrix.append(row)
+	return matrix
+
+func _build_row_constraints(target: Array) -> Array:
+	var constraints: Array = []
+	for r in range(MATRIX_SIZE):
+		var row_value = _row_value_from_bits(target[r])
+		constraints.append({
+			"hex_value": row_value,
+			"is_hex_visible": true
+		})
+	return constraints
+
+func _build_col_constraints(target: Array) -> Array:
+	var constraints: Array = []
+	for c in range(MATRIX_SIZE):
+		var ones = 0
+		for r in range(MATRIX_SIZE):
+			ones += target[r][c]
+		var parity = ones % 2
+		constraints.append({
+			"ones_count": ones,
+			"parity": parity
+		})
+	return constraints
+
+func _row_value_from_bits(bits: Array) -> int:
+	var sum = 0
+	for c in range(MATRIX_SIZE):
+		if bits[c] == 1:
+			sum += MATRIX_WEIGHTS[c]
+	return sum
+
+func _row_bits_from_value(value: int) -> Array:
+	var bits: Array = []
+	for c in range(MATRIX_SIZE):
+		bits.append(1 if (value & MATRIX_WEIGHTS[c]) != 0 else 0)
+	return bits
+
+func _pick_row_visibility(row_constraints: Array, col_constraints: Array) -> Array:
+	var rows = [0, 1, 2, 3, 4]
+	for hide_count in [2, 1]:
+		var combos = _combinations(rows, hide_count)
+		combos.shuffle()
+		for combo in combos:
+			var visibility: Array = []
+			for r in rows:
+				visibility.append(not combo.has(r))
+			if _count_matrix_solutions(row_constraints, col_constraints, visibility) == 1:
+				return visibility
+	return []
+
+func _count_matrix_solutions(row_constraints: Array, col_constraints: Array, visibility: Array) -> int:
+	_solver_row_constraints = row_constraints
+	_solver_col_targets = []
+	_solver_col_parity = []
+	for c in range(MATRIX_SIZE):
+		_solver_col_targets.append(col_constraints[c].ones_count)
+		_solver_col_parity.append(col_constraints[c].parity)
+	_solver_visibility = visibility
+	_solver_col_sums = [0, 0, 0, 0, 0]
+	_solver_solutions = 0
+
+	_solver_backtrack(0)
+	return _solver_solutions
+
+func _solver_row_fits(bits: Array, row_idx: int) -> bool:
+	var remaining = MATRIX_SIZE - (row_idx + 1)
+	for c in range(MATRIX_SIZE):
+		var new_sum = _solver_col_sums[c] + bits[c]
+		if new_sum > _solver_col_targets[c]:
+			return false
+		if new_sum + remaining < _solver_col_targets[c]:
+			return false
+	return true
+
+func _solver_backtrack(row_idx: int) -> void:
+	if _solver_solutions > 1:
+		return
+	if row_idx >= MATRIX_SIZE:
+		for c in range(MATRIX_SIZE):
+			if _solver_col_sums[c] != _solver_col_targets[c]:
+				return
+			if (_solver_col_sums[c] % 2) != _solver_col_parity[c]:
+				return
+		_solver_solutions += 1
+		return
+
+	if _solver_visibility[row_idx]:
+		var bits = _row_bits_from_value(_solver_row_constraints[row_idx].hex_value)
+		if _solver_row_fits(bits, row_idx):
+			for c in range(MATRIX_SIZE):
+				_solver_col_sums[c] += bits[c]
+			_solver_backtrack(row_idx + 1)
+			for c in range(MATRIX_SIZE):
+				_solver_col_sums[c] -= bits[c]
+	else:
+		for mask in range(32):
+			var bits: Array = []
+			for c in range(MATRIX_SIZE):
+				var bit = 1 if (mask & MATRIX_WEIGHTS[c]) != 0 else 0
+				bits.append(bit)
+			if not _solver_row_fits(bits, row_idx):
+				continue
+			for c in range(MATRIX_SIZE):
+				_solver_col_sums[c] += bits[c]
+			_solver_backtrack(row_idx + 1)
+			for c in range(MATRIX_SIZE):
+				_solver_col_sums[c] -= bits[c]
+
+func _combinations(items: Array, count: int) -> Array:
+	var results: Array = []
+	if count == 1:
+		for item in items:
+			results.append([item])
+		return results
+	if count == 2:
+		for i in range(items.size()):
+			for j in range(i + 1, items.size()):
+				results.append([items[i], items[j]])
+		return results
+	return results
