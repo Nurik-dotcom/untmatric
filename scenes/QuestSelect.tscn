@@ -63,6 +63,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "ДЕТЕКТОР ЛЖИ"
 
+[node name="QuestBtn3" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(300, 200)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "РАДИОПЕРЕХВАТ"
+
 [node name="ModalLayer" type="CanvasLayer" parent="."]
 
 [node name="ModeSelectionModal" type="Panel" parent="ModalLayer"]
@@ -131,5 +137,6 @@ text = "ОТМЕНА"
 
 [connection signal="pressed" from="MainLayout/QuestGrid/QuestBtn" to="." method="_on_quest_button_pressed"]
 [connection signal="pressed" from="MainLayout/QuestGrid/QuestBtn2" to="." method="_on_lie_detector_pressed"]
+[connection signal="pressed" from="MainLayout/QuestGrid/QuestBtn3" to="." method="_on_radio_intercept_pressed"]
 [connection signal="pressed" from="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnComplexityA" to="." method="_on_complexity_a_pressed"]
 [connection signal="pressed" from="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnClose" to="." method="_on_close_modal_pressed"]

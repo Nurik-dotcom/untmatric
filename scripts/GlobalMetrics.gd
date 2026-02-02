@@ -16,6 +16,11 @@ var check_timestamps: Array[float] = []
 var last_checked_bits: Array = [] # History of bit arrays
 var blocked_until: float = 0.0
 
+# Session metrics (reset every case)
+var trials_log: Array = []
+var t_active_base: float = 0.0
+var t_penalty: float = 0.0
+
 # Level Configuration (Complexity A)
 # 15 Levels: 1-5 DEC, 6-10 OCT, 11-15 HEX
 const MAX_LEVELS = 15
@@ -29,6 +34,7 @@ func reset_engine():
 	check_timestamps.clear()
 	last_checked_bits.clear()
 	blocked_until = 0.0
+	trials_log.clear()
 
 func start_level(index: int):
 	current_level_index = index
@@ -47,6 +53,19 @@ func start_level(index: int):
 	emit_signal("stability_changed", stability, 0)
 	check_timestamps.clear()
 	last_checked_bits.clear()
+
+func register_trial(payload: Dictionary):
+	trials_log.append(payload)
+	print("[GlobalMetrics] Trial Registered: ", payload)
+	# Logic to adjust stability or other metrics could go here
+	if payload.get("is_correct", false) == false:
+		# Example penalty for wrong radio answer
+		stability = max(0, stability - 10)
+		emit_signal("stability_changed", stability, -10)
+	elif payload.get("is_overkill", false) == true:
+		# Smaller penalty for overkill
+		stability = max(0, stability - 5)
+		emit_signal("stability_changed", stability, -5)
 
 # Returns (success: bool, info: Dictionary)
 func check_solution(target_val: int, input_val: int) -> Dictionary:
