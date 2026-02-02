@@ -2,6 +2,7 @@ extends Control
 
 # UI References
 @onready var lbl_level = $MainLayout/TopBar/LevelLabel
+@onready var lbl_rank = $MainLayout/TopBar/RankLabel
 @onready var progress_stability = $MainLayout/TopBar/StabilityBar
 @onready var lbl_target = $MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox/TargetValue
 @onready var lbl_preview = $MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox/PreviewValue
@@ -102,6 +103,9 @@ func start_level(level_idx):
 
 	lbl_system.text = "SYSTEM: %s" % mode
 	lbl_level.text = "LEVEL %02d" % (level_idx + 1)
+	var rank = GlobalMetrics.get_rank_info()
+	lbl_rank.text = rank.name
+	lbl_rank.add_theme_color_override("font_color", rank.color)
 	btn_check.text = "CHECK"
 
 	log_message("System initialized. Target locked.", COLOR_NORMAL)
@@ -129,6 +133,7 @@ func update_preview_display():
 	var mode = GlobalMetrics.current_mode
 	lbl_preview.text = "INPUT: %s" % _format_value(current_input, mode)
 func _on_switch_toggled(pressed: bool, bit_index: int):
+	AudioManager.play("click")
 	# Bit index 0 in UI is usually MSB (leftmost), but mathematically bit 0 is LSB.
 	# Let's assume UI is MSB -> LSB (Switch 0 is 128, Switch 7 is 1).
 	var power = 7 - bit_index
@@ -145,6 +150,7 @@ func _on_check_button_pressed():
 	var result = GlobalMetrics.check_solution(current_target, current_input)
 
 	if result.success:
+		AudioManager.play("relay")
 		log_message("ДОСТУП РАЗРЕШЕН.", COLOR_NORMAL)
 		is_level_active = false
 
@@ -155,6 +161,7 @@ func _on_check_button_pressed():
 		else:
 			log_message("МИССИЯ ВЫПОЛНЕНА.", COLOR_NORMAL)
 	else:
+		AudioManager.play("error")
 		if result.has("error"):
 			if result.error == "SHIELD_FREQ":
 				log_message(result.message, COLOR_WARN)

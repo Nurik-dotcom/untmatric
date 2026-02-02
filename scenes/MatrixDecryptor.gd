@@ -24,6 +24,8 @@ var _col_label_nodes: Array = []
 var _mono_font: Font
 var _input_locked: bool = false
 var _safe_mode_active: bool = false
+var _last_row_ok: Array = []
+var _last_col_ok: Array = []
 
 func _ready():
 	GlobalMetrics.stability_changed.connect(_on_stability_changed)
@@ -44,9 +46,13 @@ func _ready():
 	log_message("Matrix initialized.", COLOR_NORMAL)
 
 func _setup_fonts():
-	var font = SystemFont.new()
-	font.font_names = PackedStringArray(["Courier New", "Consolas", "Liberation Mono"])
-	_mono_font = font
+	var font = load("res://fonts/IBMPlexMono-Medium.ttf")
+	if font:
+		_mono_font = font
+	else:
+		var fallback = SystemFont.new()
+		fallback.font_names = PackedStringArray(["Courier New", "Consolas", "Liberation Mono"])
+		_mono_font = fallback
 
 func _build_row_labels():
 	_row_label_nodes.clear()
@@ -126,6 +132,7 @@ func _update_cell_visual(row: int, col: int):
 func _on_cell_pressed(row: int, col: int):
 	if _input_locked:
 		return
+	AudioManager.play("click")
 	var current = GlobalMetrics.matrix_current[row][col]
 	var next_state = STATE_ZERO if current == STATE_UNSET else (STATE_ONE if current == STATE_ZERO else STATE_UNSET)
 	GlobalMetrics.matrix_current[row][col] = next_state
@@ -137,19 +144,29 @@ func _update_status_highlights():
 	var result = GlobalMetrics.validate_matrix_logic()
 	var row_ok = result.row_ok
 	var col_ok = result.col_ok
+	var play_ok_sound = false
 
 	for r in range(MATRIX_SIZE):
 		var constraint = GlobalMetrics.matrix_row_constraints[r]
 		if constraint.is_hex_visible and row_ok[r]:
 			_row_label_nodes[r].add_theme_color_override("font_color", COLOR_NORMAL)
+			if _last_row_ok.size() == MATRIX_SIZE and not _last_row_ok[r]:
+				play_ok_sound = true
 		else:
 			_row_label_nodes[r].add_theme_color_override("font_color", COLOR_DIM)
 
 	for c in range(MATRIX_SIZE):
 		if col_ok[c]:
 			_col_label_nodes[c].add_theme_color_override("font_color", COLOR_NORMAL)
+			if _last_col_ok.size() == MATRIX_SIZE and not _last_col_ok[c]:
+				play_ok_sound = true
 		else:
 			_col_label_nodes[c].add_theme_color_override("font_color", COLOR_DIM)
+
+	_last_row_ok = row_ok.duplicate()
+	_last_col_ok = col_ok.duplicate()
+	if play_ok_sound:
+		AudioManager.play("click")
 
 func _on_check_pressed():
 	if _input_locked:
@@ -171,6 +188,7 @@ func _on_check_pressed():
 				log_message(result.message, COLOR_ERROR)
 
 func _on_shield_triggered(name, duration):
+	AudioManager.play("error")
 	log_message("SHIELD: %s. WAIT %s s." % [name, duration], COLOR_WARN)
 	_set_input_enabled(false)
 	await get_tree().create_timer(duration).timeout

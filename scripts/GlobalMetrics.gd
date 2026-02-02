@@ -5,9 +5,17 @@ extends Node
 signal stability_changed(new_value, change)
 signal shield_triggered(shield_name, penalty)
 signal hint_unlocked(level, text)
+signal game_over
 
 # Core Resources
-var stability: float = 100.0
+var _stability: float = 100.0
+var stability: float:
+	get:
+		return _stability
+	set(value):
+		_stability = clamp(value, 0.0, 100.0)
+		if _stability <= 0.0:
+			game_over.emit()
 var current_level_index: int = 0
 var current_mode: String = "DEC" # DEC, OCT, HEX
 var current_target_value: int = 0
@@ -237,6 +245,18 @@ func _generate_hints(target: int, input: int, hd: int) -> Dictionary:
 		"diagnosis": diagnosis,
 		"zone": zone
 	}
+
+func get_rank_info() -> Dictionary:
+	var idx = current_level_index
+	if idx < 5:
+		return {"name": "СТАЖЕР", "color": Color("888888")}
+	if idx < 10:
+		return {"name": "ТЕХНИК СВЯЗИ", "color": Color("33ff33")}
+	if idx < 15:
+		return {"name": "КРИПТО-АНАЛИТИК", "color": Color("33aaff")}
+	if idx < 30:
+		return {"name": "ИНЖЕНЕР СИСТЕМ", "color": Color("ffcc00")}
+	return {"name": "МАСТЕР МОНОЛИТА", "color": Color("ff33ff")}
 
 # --- Matrix (Complexity C) ---
 func start_matrix_quest():

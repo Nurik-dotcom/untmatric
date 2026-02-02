@@ -205,8 +205,56 @@ text = "Back"
 
 [node name="ClickPlayer" type="AudioStreamPlayer" parent="."]
 
+[node name="GameOverPanel" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Overlay" type="ColorRect" parent="GameOverPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0, 0, 0.85)
+
+[node name="CenterContainer" type="CenterContainer" parent="GameOverPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="GameOverPanel/CenterContainer"]
+custom_minimum_size = Vector2(700, 300)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="GameOverPanel/CenterContainer/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.7, 0.7, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 26
+text = "GAME OVER"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="RestartButton" type="Button" parent="GameOverPanel/CenterContainer/VBox"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "                     "
+
 [connection signal="toggled" from="BoardContainer/InputA_Btn" to="." method="_on_input_a_toggled"]
 [connection signal="toggled" from="BoardContainer/InputB_Btn" to="." method="_on_input_b_toggled"]
 [connection signal="item_selected" from="BoardContainer/GateSelector" to="." method="_on_gate_selected"]
 [connection signal="pressed" from="NextButton" to="." method="_on_next_button_pressed"]
 [connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="GameOverPanel/CenterContainer/VBox/RestartButton" to="." method="_on_restart_pressed"]

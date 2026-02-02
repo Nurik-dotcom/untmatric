@@ -53,6 +53,12 @@ theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
 theme_override_font_sizes/font_size = 32
 text = "LVL 01"
 
+[node name="RankLabel" type="Label" parent="MainLayout/TopBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 24
+text = "СТАЖЕР"
+
 [node name="Spacer" type="Control" parent="MainLayout/TopBar"]
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
