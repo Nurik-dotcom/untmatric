@@ -189,6 +189,8 @@ func load_case(idx: int):
 	journal_label.text = "LOG: SYSTEM READY"
 
 	# Reset Inputs
+	input_a_btn.disabled = false
+	input_b_btn.disabled = false
 	input_a_btn.button_pressed = false
 	input_b_btn.button_pressed = false
 	_update_input_labels()
@@ -197,6 +199,7 @@ func load_case(idx: int):
 	if current_case.gate == GATE_NOT:
 		input_b_btn.visible = false
 		wire_b.visible = false
+		input_b_btn.disabled = true
 	else:
 		input_b_btn.visible = true
 		wire_b.visible = true
