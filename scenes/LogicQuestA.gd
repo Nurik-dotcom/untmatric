@@ -375,8 +375,7 @@ func _enter_safe_mode():
 		GATE_NAND: gate_symbol = "| (NAND)"
 		GATE_NOR: gate_symbol = "↓ (NOR)"
 
-	status_label.text = "SAFE MODE: правильный вентиль — %s. Система сброшена." % gate_symbol
-	_show_feedback("SAFE MODE ACTIVATED", Color(1, 0.5, 0))
+	_show_feedback("SAFE MODE: правильный вентиль — %s. Система сброшена." % gate_symbol, Color(1, 0.5, 0))
 
 func _show_feedback(msg: String, col: Color):
 	feedback_label.text = msg
