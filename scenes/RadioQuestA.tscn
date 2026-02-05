@@ -9,7 +9,7 @@ font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
 shader = ExtResource("2_shader")
 shader_parameter/lod = 0.8
-shader_parameter/modulate = Color(1, 1, 1, 1)
+shader_parameter/modulate = Color(0, 0, 0, 0)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
 bg_color = Color(0.05, 0.05, 0.05, 1)
@@ -84,7 +84,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(1, 1, 1, 0)
+color = Color(0, 0, 0, 0)
 mouse_filter = 2
 
 [node name="MainLayout" type="VBoxContainer" parent="."]
@@ -369,40 +369,201 @@ custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 alignment = 1
 
-[node name="Trial1" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+[node name="TrialSlot1" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Trial2" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot1"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 16
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot2" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Trial3" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot2"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 16
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot3" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Trial4" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot3"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 16
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot4" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot4"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Trial5" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot4"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 16
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot5" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot5"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Trial6" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot5"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 16
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot6" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot6"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Trial7" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot6"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 16
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot7" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot7"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot7"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 16
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ControlsBox" type="HBoxContainer" parent="MainLayout/BottomPanel/Margin/VBox"]
 layout_mode = 2

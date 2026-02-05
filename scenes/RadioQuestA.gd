@@ -58,7 +58,7 @@ const TRAPS = [10, 50, 1000, 2000] # 100, 500 are anchors
 # Trial
 var trial_active: bool = false
 var hint_used: bool = false
-var trial_history_ui: Array = [] # Stores ColorRects
+var trial_history_ui: Array = [] # Stores trial slot Controls
 var current_trial_idx: int = 0
 
 const COLOR_GRAY = Color(0.2, 0.2, 0.2)
@@ -82,9 +82,13 @@ func _ready():
 
 func _init_sampling_bar():
 	trial_history_ui.clear()
-	for child in sampling_bar.get_children():
-		child.color = COLOR_GRAY
-		trial_history_ui.append(child)
+	for slot in sampling_bar.get_children():
+		var bg = slot.get_node("BG")
+		var mark = slot.get_node("AnchorMark")
+		if bg and mark:
+			bg.color = COLOR_GRAY
+			mark.visible = false
+			trial_history_ui.append(slot)
 	current_trial_idx = 0
 
 func _update_stability_ui(val, _change):
@@ -298,18 +302,21 @@ func _finish_trial(is_timeout: bool):
 
 	# Update Sampling Bar UI
 	if current_trial_idx < trial_history_ui.size():
-		var rect = trial_history_ui[current_trial_idx]
-		if not is_fit:
-			rect.color = COLOR_RED
-		elif is_minimal:
-			rect.color = COLOR_GREEN
-		elif is_overkill:
-			rect.color = COLOR_YELLOW
+		var slot = trial_history_ui[current_trial_idx]
+		var bg = slot.get_node("BG")
+		var mark = slot.get_node("AnchorMark")
 
+		if not is_fit:
+			bg.color = COLOR_RED
+		elif is_minimal:
+			bg.color = COLOR_GREEN
+		elif is_overkill:
+			bg.color = COLOR_YELLOW
+
+		# Show Anchor Mark if applicable
 		if pool_type == "ANCHOR":
-			# Add visual marker for anchor (simple border or distinct shade?)
-			# For now, just a slight tint or maybe a border node could be added
-			pass
+			mark.visible = true
+
 		current_trial_idx = (current_trial_idx + 1) % 7
 
 	# Calculate Metrics vars
