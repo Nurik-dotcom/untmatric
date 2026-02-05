@@ -147,7 +147,6 @@ size_flags_horizontal = 3
 alignment = 1
 
 [node name="ModeLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/ModeInfoBox"]
-visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
@@ -204,19 +203,18 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 24
-text = "2^i = 128"
+text = "2^i = —"
 
 [node name="BigFitLabel" type="Label" parent="MainLayout/ControlsZone/FeedbackRow"]
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 24
-text = "FIT: YES"
+text = "ПОМЕЩАЕТСЯ: —"
 
 [node name="BigRiskLabel" type="Label" parent="MainLayout/ControlsZone"]
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
-text = "РИСК: СРЕДНИЙ"
 horizontal_alignment = 1
 
 [node name="SliderContainer" type="MarginContainer" parent="MainLayout/ControlsZone"]
