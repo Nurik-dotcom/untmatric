@@ -88,6 +88,7 @@ text = "CASE: 01"
 [node name="StoryPanel" type="PanelContainer" parent="MainLayout"]
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_controls")
 
 [node name="StoryMargin" type="MarginContainer" parent="MainLayout/StoryPanel"]
 layout_mode = 2
