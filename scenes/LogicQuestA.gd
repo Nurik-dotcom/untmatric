@@ -28,7 +28,7 @@ const CASES = [
 		"id": "A1_02", "phase": PHASE_TRAINING, "gate": GATE_OR,
 		"a_text": "ДОЖДЬ", "b_text": "СНЕГ",
 		"witness_text": "Я промокну, если пойдет ДОЖДЬ [b]ИЛИ[/b] если пойдет СНЕГ.",
-		"min_seen": 2, "hints": ["Хотя бы одно условие истинно.", "Это дизъюнкция (1/v)."]
+		"min_seen": 2, "hints": ["Хотя бы одно условие истинно.", "Это дизъюнкция (v)."]
 	},
 	{
 		"id": "A1_03", "phase": PHASE_TRAINING, "gate": GATE_NOT,
@@ -53,7 +53,7 @@ const CASES = [
 	{
 		"id": "A2_02", "phase": PHASE_TRANSLATION, "gate": GATE_OR,
 		"a_text": "A", "b_text": "B",
-		"witness_text": "На схеме стоит [b]1[/b] (или v). Это Дизъюнкция.",
+		"witness_text": "На схеме стоит [b]v[/b] (OR). Это Дизъюнкция.",
 		"min_seen": 2, "hints": ["ИЛИ.", "Дает 1, если есть хоть одна 1."]
 	},
 	{
@@ -139,6 +139,7 @@ var seen_combinations: Dictionary = {}
 var case_attempts: int = 0
 var hints_used: int = 0
 var start_time_msec: int = 0
+var is_game_over_case: bool = false
 
 var last_verdict_time: float = 0.0
 var verdict_timer: Timer = null
@@ -161,6 +162,7 @@ func _ready():
 	verdict_timer.timeout.connect(_on_verdict_unlock)
 	add_child(verdict_timer)
 
+	GlobalMetrics.game_over.connect(_handle_game_over_case)
 	load_case(0)
 
 func _setup_gate_selector():
@@ -168,7 +170,7 @@ func _setup_gate_selector():
 	gate_selector.add_item(" ... ", 0) # ID 0 = None
 	# Using strict ENT symbols as requested
 	gate_selector.add_item(" &  (AND)", 1)
-	gate_selector.add_item(" 1  (OR)", 2)
+	gate_selector.add_item(" v  (OR)", 2)
 	gate_selector.add_item(" ¬  (NOT)", 3)
 	gate_selector.add_item(" ⊕  (XOR)", 4)
 	gate_selector.add_item(" |  (NAND)", 5)
@@ -197,11 +199,21 @@ func load_case(idx: int):
 	hints_used = 0
 	start_time_msec = Time.get_ticks_msec()
 	is_safe_mode = false
+	is_game_over_case = false
+	game_over_panel.visible = false
+
+	# Re-enable UI after previous case disabled it
+	input_a_btn.disabled = false
+	input_b_btn.disabled = false
+	gate_selector.disabled = false
+	btn_hint.disabled = false
+	btn_verdict.disabled = false
 
 	# Update UI Text
 	story_text.text = current_case.witness_text
 	_update_stats_ui()
 	journal_label.text = "LOG: SYSTEM READY"
+	_update_journal_log()
 
 	# Reset Inputs
 	input_a_btn.button_pressed = false
@@ -215,17 +227,17 @@ func load_case(idx: int):
 	if current_case.gate == GATE_NOT:
 		input_b_btn.visible = false
 		wire_b.visible = false
+		input_b_btn.disabled = true
 	else:
 		input_b_btn.visible = true
 		wire_b.visible = true
+		input_b_btn.disabled = false
 
 	# Reset Selector & Output
 	gate_selector.selected = 0
-	gate_selector.disabled = false
 
 	# Reset Controls
 	btn_verdict.visible = true
-	btn_verdict.disabled = false
 	btn_next.visible = false
 	feedback_label.text = ""
 
@@ -289,7 +301,11 @@ func _calculate_gate_output(a: bool, b: bool, type: String) -> bool:
 	return false
 
 func _update_journal_log():
-	var txt = "LOG:\n"
+	if seen_combinations.size() == 0:
+		journal_label.text = "Журнал проверок:\n(Пусто)"
+		return
+
+	var txt = "Журнал проверок:\n"
 	for k in seen_combinations:
 		var res = "1" if seen_combinations[k] else "0"
 		txt += "%s -> F=%s | " % [k, res]
@@ -337,6 +353,7 @@ func _on_verdict_pressed():
 		if case_attempts == 2: penalty = 15.0
 		elif case_attempts >= 3: penalty = 25.0
 
+		var penalty = 10.0 + (case_attempts * 5.0)
 		_apply_penalty(penalty)
 		_show_feedback("ACCESS DENIED (-%d)" % int(penalty), Color(1, 0, 0))
 
@@ -417,6 +434,28 @@ func _on_game_over():
 func _on_system_failure():
 	# Deprecated by Safe Mode logic, but kept as fallback/extreme fail
 	_enter_safe_mode()
+	stats_label.text = "CASE: %02d | Attempts: %d | Seen: %d" % [
+		current_case_index + 1,
+		case_attempts,
+		seen_combinations.size()
+	]
+
+func _on_system_failure():
+	_handle_game_over_case()
+
+func _handle_game_over_case() -> void:
+	if is_game_over_case:
+		return
+	is_game_over_case = true
+
+	game_over_panel.visible = false
+	_disable_controls()
+	btn_verdict.disabled = true
+	btn_verdict.visible = true
+	btn_next.visible = true
+
+	var gate_name = current_case.get("gate", "UNKNOWN")
+	_show_feedback("SAFE MODE: стабильность на нуле. Правильный ответ: %s" % gate_name, Color(1, 0.7, 0.2))
 
 func _on_restart_pressed():
 	# Legacy restart, might not be needed if Safe Mode handles everything
