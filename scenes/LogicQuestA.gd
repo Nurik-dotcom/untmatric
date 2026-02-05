@@ -12,6 +12,9 @@ const GATE_XOR = "XOR"
 const GATE_NAND = "NAND"
 const GATE_NOR = "NOR"
 
+const MAX_ATTEMPTS = 3
+const VERDICT_LOCK_TIME = 2.0
+
 # Cases Data
 const CASES = [
 	# --- PHASE 1: TRAINING (Words -> Logic) ---
@@ -138,6 +141,10 @@ var hints_used: int = 0
 var start_time_msec: int = 0
 var is_game_over_case: bool = false
 
+var last_verdict_time: float = 0.0
+var verdict_timer: Timer = null
+var is_safe_mode: bool = false
+
 # Colors for Wires/Effects
 const COLOR_WIRE_OFF = Color(0.15, 0.15, 0.15, 1) # Dark Grey
 const COLOR_WIRE_ON = Color(1.2, 1.2, 1.2, 1)     # Glowing White (HDR)
@@ -148,6 +155,13 @@ func _ready():
 	_setup_gate_selector()
 	_update_stability_ui(GlobalMetrics.stability, 0)
 	GlobalMetrics.stability_changed.connect(_update_stability_ui)
+	GlobalMetrics.game_over.connect(_on_game_over)
+
+	verdict_timer = Timer.new()
+	verdict_timer.one_shot = true
+	verdict_timer.timeout.connect(_on_verdict_unlock)
+	add_child(verdict_timer)
+
 	GlobalMetrics.game_over.connect(_handle_game_over_case)
 	load_case(0)
 
@@ -184,6 +198,7 @@ func load_case(idx: int):
 	case_attempts = 0
 	hints_used = 0
 	start_time_msec = Time.get_ticks_msec()
+	is_safe_mode = false
 	is_game_over_case = false
 	game_over_panel.visible = false
 
@@ -197,11 +212,15 @@ func load_case(idx: int):
 	# Update UI Text
 	story_text.text = current_case.witness_text
 	_update_stats_ui()
+	journal_label.text = "LOG: SYSTEM READY"
 	_update_journal_log()
 
 	# Reset Inputs
 	input_a_btn.button_pressed = false
 	input_b_btn.button_pressed = false
+	input_a_btn.disabled = false
+	input_b_btn.disabled = false
+	btn_hint.disabled = false
 	_update_input_labels()
 
 	# Handle NOT gate (Single input)
@@ -300,6 +319,16 @@ func _on_gate_selected(index):
 		_play_click()
 
 func _on_verdict_pressed():
+	if is_safe_mode: return
+
+	# Anti-spam
+	var current_time = Time.get_ticks_msec() / 1000.0
+	if current_time - last_verdict_time < 0.8:
+		_show_feedback("Не тыкай. Проверь факты.", Color(1, 0.5, 0))
+		_lock_verdict(3.0)
+		return
+	last_verdict_time = current_time
+
 	if selected_gate_guess == "":
 		_show_feedback("SELECT GATE FIRST", Color(1, 1, 0))
 		return
@@ -308,6 +337,7 @@ func _on_verdict_pressed():
 	if seen_combinations.size() < min_seen:
 		_show_feedback("INSUFFICIENT DATA (%d/%d)" % [seen_combinations.size(), min_seen], Color(1, 0.5, 0))
 		_apply_penalty(2.0)
+		_lock_verdict(2.0)
 		return
 
 	if selected_gate_guess == current_case.gate:
@@ -318,12 +348,52 @@ func _on_verdict_pressed():
 	else:
 		case_attempts += 1
 		_update_stats_ui()
+
+		var penalty = 10.0
+		if case_attempts == 2: penalty = 15.0
+		elif case_attempts >= 3: penalty = 25.0
+
 		var penalty = 10.0 + (case_attempts * 5.0)
 		_apply_penalty(penalty)
 		_show_feedback("ACCESS DENIED (-%d)" % int(penalty), Color(1, 0, 0))
 
-		if GlobalMetrics.stability <= 0:
-			_on_system_failure()
+		if case_attempts >= MAX_ATTEMPTS:
+			_enter_safe_mode()
+
+func _lock_verdict(duration: float):
+	if is_safe_mode: return
+	btn_verdict.disabled = true
+	verdict_timer.start(duration)
+
+func _on_verdict_unlock():
+	if is_safe_mode: return
+	if GlobalMetrics.stability > 0:
+		btn_verdict.disabled = false
+
+func _enter_safe_mode():
+	is_safe_mode = true
+	_disable_controls()
+	btn_verdict.disabled = true
+	btn_next.visible = true
+
+	# Auto-select correct gate
+	for i in range(gate_selector.item_count):
+		if gate_selector.get_item_metadata(i) == current_case.gate:
+			gate_selector.select(i)
+			gate_selector.disabled = true
+			break
+
+	var gate_symbol = "?"
+	match current_case.gate:
+		GATE_AND: gate_symbol = "& (AND)"
+		GATE_OR: gate_symbol = "1 (OR)"
+		GATE_NOT: gate_symbol = "¬ (NOT)"
+		GATE_XOR: gate_symbol = "⊕ (XOR)"
+		GATE_NAND: gate_symbol = "| (NAND)"
+		GATE_NOR: gate_symbol = "↓ (NOR)"
+
+	status_label.text = "SAFE MODE: правильный вентиль — %s. Система сброшена." % gate_symbol
+	_show_feedback("SAFE MODE ACTIVATED", Color(1, 0.5, 0))
 
 func _show_feedback(msg: String, col: Color):
 	feedback_label.text = msg
@@ -333,9 +403,6 @@ func _show_feedback(msg: String, col: Color):
 func _apply_penalty(amount):
 	GlobalMetrics.stability = max(0.0, GlobalMetrics.stability - amount)
 	GlobalMetrics.stability_changed.emit(GlobalMetrics.stability, -amount)
-
-	if GlobalMetrics.stability <= 0:
-		_on_system_failure()
 
 func _update_stability_ui(val, _change):
 	stability_label.text = "STABILITY: %d%%" % int(val)
@@ -347,6 +414,26 @@ func _update_stability_ui(val, _change):
 		stability_label.add_theme_color_override("font_color", Color(0, 1, 0))
 
 func _update_stats_ui():
+	var min_seen = current_case.get("min_seen", 2)
+	stats_label.text = "CASE: %02d | ATT: %d/%d | FACTS: %d/%d" % [
+		current_case_index + 1,
+		case_attempts,
+		MAX_ATTEMPTS,
+		seen_combinations.size(),
+		min_seen
+	]
+
+func _on_game_over():
+	_enter_safe_mode()
+	# The original game over panel is now redundant if we want "Safe Mode" style instead
+	# But per instructions, if stability drops to 0, we enter Safe Mode.
+	# We can keep the glitch effect if desired, but "Safe Mode" implies continuing.
+	# Let's hide the old game over panel if it pops up via other paths, or just not use it.
+	game_over_panel.visible = false
+
+func _on_system_failure():
+	# Deprecated by Safe Mode logic, but kept as fallback/extreme fail
+	_enter_safe_mode()
 	stats_label.text = "CASE: %02d | Attempts: %d | Seen: %d" % [
 		current_case_index + 1,
 		case_attempts,
@@ -371,14 +458,11 @@ func _handle_game_over_case() -> void:
 	_show_feedback("SAFE MODE: стабильность на нуле. Правильный ответ: %s" % gate_name, Color(1, 0.7, 0.2))
 
 func _on_restart_pressed():
+	# Legacy restart, might not be needed if Safe Mode handles everything
 	GlobalMetrics.stability = 100.0
 	GlobalMetrics.stability_changed.emit(100.0, 0)
 	game_over_panel.visible = false
-	input_a_btn.disabled = false
-	input_b_btn.disabled = false
-	gate_selector.disabled = false
-	btn_verdict.disabled = false
-	load_case(current_case_index) # Retry current
+	load_case(current_case_index)
 
 func _on_back_button_pressed():
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
