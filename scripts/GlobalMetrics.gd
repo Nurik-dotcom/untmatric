@@ -28,11 +28,22 @@ func register_trial(data: Dictionary):
 	# Педагогический лог в консоль для отладки
 	var match_key = data.get("match_key", "UNKNOWN")
 	var is_correct = data.get("is_correct", false)
-	var duration = data.get("duration", 0.0)
+	# Use elapsed_ms if available (Radio Quest), else duration (Legacy)
+	var duration = data.get("duration", data.get("elapsed_ms", 0.0) / 1000.0)
 	print("MATCH: ", match_key, " | Correct: ", is_correct, " | Time: ", duration)
 
-	# Если ответ неверный — бьем по стабильности
-	if not is_correct:
+	# Logic for Stage A (Radio): Penalty only if FIT is false. Overkill is acceptable.
+	var is_fit = data.get("is_fit", null)
+	var penalty_condition = false
+
+	if is_fit != null:
+		# New schema: punish only if not fit
+		penalty_condition = (is_fit == false)
+	else:
+		# Fallback for old schema
+		penalty_condition = (is_correct == false)
+
+	if penalty_condition:
 		stability = max(0.0, stability - 10.0)
 		emit_signal("stability_changed", stability, -10.0)
 
