@@ -1,0 +1,183 @@
+[gd_scene load_steps=7 format=3 uid="uid://radioquest_a_12345"]
+
+[ext_resource type="Script" path="res://scenes/RadioQuestA.gd" id="1_script"]
+[ext_resource type="Shader" path="res://scenes/Blur.gdshader" id="2_shader"]
+
+[sub_resource type="SystemFont" id="SystemFont_1"]
+font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
+shader = ExtResource("2_shader")
+shader_parameter/lod = 0.8
+shader_parameter/modulate = Color(1, 1, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
+bg_color = Color(0.05, 0.05, 0.05, 1)
+border_width_bottom = 2
+border_color = Color(0.0, 0.8, 0.0, 1)
+
+[sub_resource type="Environment" id="Environment_glow"]
+background_mode = 3
+glow_enabled = true
+glow_intensity = 0.8
+glow_strength = 1.0
+glow_blend_mode = 1
+
+[node name="RadioQuestA" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0, 0.05, 0.0, 1)
+
+[node name="OscilloscopeLayer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Grid" type="ColorRect" parent="OscilloscopeLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.3)
+
+[node name="WaveLine" type="Line2D" parent="OscilloscopeLayer"]
+position = Vector2(0, 300)
+points = PackedVector2Array()
+width = 3.0
+default_color = Color(0.2, 1, 0.2, 1)
+
+[node name="CRT_Overlay" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_crt")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0)
+mouse_filter = 2
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HeaderPanel" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_header")
+
+[node name="HeaderMargin" type="MarginContainer" parent="MainLayout/HeaderPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
+
+[node name="HeaderHBox" type="HBoxContainer" parent="MainLayout/HeaderPanel/HeaderMargin"]
+layout_mode = 2
+
+[node name="BtnBack" type="Button" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "<"
+
+[node name="StabilityLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "STABILITY: 100%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TaskInfo" type="Label" parent="MainLayout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.0, 0.8, 0.0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "ALPHABET POWER: N=..."
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ControlsPanel" type="VBoxContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="BitSlider" type="HSlider" parent="MainLayout/ControlsPanel"]
+custom_minimum_size = Vector2(300, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+min_value = 1.0
+max_value = 12.0
+value = 1.0
+
+[node name="BitLabel" type="Label" parent="MainLayout/ControlsPanel"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "BITS: 1"
+horizontal_alignment = 1
+
+[node name="ActionArea" type="HBoxContainer" parent="MainLayout/ControlsPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="BtnCapture" type="Button" parent="MainLayout/ControlsPanel/ActionArea"]
+custom_minimum_size = Vector2(200, 60)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "CAPTURE"
+
+[node name="BtnNext" type="Button" parent="MainLayout/ControlsPanel/ActionArea"]
+visible = false
+custom_minimum_size = Vector2(200, 60)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "NEXT SIGNAL"
+
+[node name="FeedbackLabel" type="Label" parent="MainLayout/ControlsPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = ""
+horizontal_alignment = 1
+
+[node name="BottomSpacer" type="Control" parent="MainLayout"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_glow")
+
+[connection signal="pressed" from="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/BtnBack" to="." method="_on_back_pressed"]
+[connection signal="value_changed" from="MainLayout/ControlsPanel/BitSlider" to="." method="_on_bit_slider_value_changed"]
+[connection signal="pressed" from="MainLayout/ControlsPanel/ActionArea/BtnCapture" to="." method="_on_capture_pressed"]
+[connection signal="pressed" from="MainLayout/ControlsPanel/ActionArea/BtnNext" to="." method="_on_next_pressed"]
