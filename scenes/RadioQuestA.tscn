@@ -16,6 +16,18 @@ bg_color = Color(0.05, 0.05, 0.05, 1)
 border_width_bottom = 2
 border_color = Color(0.0, 0.8, 0.0, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.02, 0.02, 0.02, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.8, 0.2, 0.3)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
 [sub_resource type="Environment" id="Environment_glow"]
 background_mode = 3
 glow_enabled = true
@@ -39,7 +51,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0, 0.05, 0.0, 1)
+color = Color(0, 0.02, 0, 1)
 
 [node name="OscilloscopeLayer" type="Control" parent="."]
 layout_mode = 1
@@ -56,7 +68,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.3)
+color = Color(0, 0, 0, 0)
 
 [node name="WaveLine" type="Line2D" parent="OscilloscopeLayer"]
 position = Vector2(0, 300)
@@ -103,81 +115,333 @@ layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 text = "<"
 
-[node name="StabilityLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+[node name="TitleLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "РАДИОПЕРЕХВАТ // ЭТАП A"
+
+[node name="Spacer1" type="Control" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="ModeLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "РЕЖИМ: БЕЗ ВРЕМЕНИ"
+
+[node name="ForcedLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.5, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "[ПРИНУДИТЕЛЬНО]"
+
+[node name="TimerLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "ОСТАЛОСЬ: 00:00"
+
+[node name="Spacer2" type="Control" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StabilityLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
-text = "STABILITY: 100%"
-horizontal_alignment = 1
-vertical_alignment = 1
+text = "СТАБИЛЬНОСТЬ: 100%"
+horizontal_alignment = 2
 
-[node name="TaskInfo" type="Label" parent="MainLayout"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.0, 0.8, 0.0, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 24
-text = "ALPHABET POWER: N=..."
-horizontal_alignment = 1
-
-[node name="Spacer" type="Control" parent="MainLayout"]
+[node name="WorkArea" type="HBoxContainer" parent="MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ControlsPanel" type="VBoxContainer" parent="MainLayout"]
+[node name="LeftPanel" type="PanelContainer" parent="MainLayout/WorkArea"]
+custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="BitSlider" type="HSlider" parent="MainLayout/ControlsPanel"]
-custom_minimum_size = Vector2(300, 40)
+[node name="Margin" type="MarginContainer" parent="MainLayout/WorkArea/LeftPanel"]
 layout_mode = 2
-size_flags_horizontal = 4
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/WorkArea/LeftPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="LabelTitle" type="Label" parent="MainLayout/WorkArea/LeftPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "ЦЕЛЬ ПЕРЕХВАТА"
+horizontal_alignment = 1
+
+[node name="TargetInfo" type="Label" parent="MainLayout/WorkArea/LeftPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "Обнаружен алфавит:\nN = ..."
+autowrap_mode = 2
+
+[node name="Instruction" type="Label" parent="MainLayout/WorkArea/LeftPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 12
+text = "Задача: выбери минимальную битность i, чтобы 2^i >= N"
+autowrap_mode = 2
+
+[node name="Formula" type="Label" parent="MainLayout/WorkArea/LeftPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 14
+text = "Формула: N = 2^i"
+horizontal_alignment = 1
+
+[node name="CenterSpacer" type="Control" parent="MainLayout/WorkArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="RightPanel" type="PanelContainer" parent="MainLayout/WorkArea"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="MainLayout/WorkArea/RightPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/WorkArea/RightPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LabelTitle" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "ДЕКОДЕР"
+horizontal_alignment = 1
+
+[node name="CurrentBitsLabel" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "Глубина i = 1 бит"
+horizontal_alignment = 1
+
+[node name="BitSlider" type="HSlider" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+layout_mode = 2
 min_value = 1.0
 max_value = 12.0
 value = 1.0
 
-[node name="BitLabel" type="Label" parent="MainLayout/ControlsPanel"]
+[node name="HSeparator" type="HSeparator" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+layout_mode = 2
+columns = 2
+
+[node name="L_N" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 20
-text = "BITS: 1"
+text = "N:"
+
+[node name="V_N" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "---"
+horizontal_alignment = 2
+
+[node name="L_Target" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "Цель i:"
+
+[node name="V_Target" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "---"
+horizontal_alignment = 2
+
+[node name="L_Pow" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "2^i:"
+
+[node name="V_Pow" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "2"
+horizontal_alignment = 2
+
+[node name="L_Fit" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "Помещается:"
+
+[node name="V_Fit" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "НЕТ"
+horizontal_alignment = 2
+
+[node name="L_Min" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "Минимально:"
+
+[node name="V_Min" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "ДА"
+horizontal_alignment = 2
+
+[node name="HSeparator2" type="HSeparator" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+layout_mode = 2
+
+[node name="RiskLabel" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "РИСК: НИЗКИЙ"
 horizontal_alignment = 1
 
-[node name="ActionArea" type="HBoxContainer" parent="MainLayout/ControlsPanel"]
+[node name="RiskBar" type="ProgressBar" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+layout_mode = 2
+step = 1.0
+
+[node name="LampsBox" type="VBoxContainer" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="LampWarmup" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/LampsBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "● ПРОГРЕВ"
+
+[node name="LampReady" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/LampsBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "● ГОТОВО"
+
+[node name="LampLost" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/LampsBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "● СВЯЗЬ СОРВАНА"
+
+[node name="LampOverkill" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/LampsBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "● ИЗБЫТОЧНО"
+
+[node name="BottomPanel" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="MainLayout/BottomPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/BottomPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SamplingBar" type="HBoxContainer" parent="MainLayout/BottomPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 alignment = 1
 
-[node name="BtnCapture" type="Button" parent="MainLayout/ControlsPanel/ActionArea"]
-custom_minimum_size = Vector2(200, 60)
+[node name="Trial1" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Trial2" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Trial3" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Trial4" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Trial5" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Trial6" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Trial7" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="ControlsBox" type="HBoxContainer" parent="MainLayout/BottomPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BtnHint" type="Button" parent="MainLayout/BottomPanel/Margin/VBox/ControlsBox"]
+custom_minimum_size = Vector2(120, 50)
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 24
-text = "CAPTURE"
+text = "ПОДСКАЗКА"
 
-[node name="BtnNext" type="Button" parent="MainLayout/ControlsPanel/ActionArea"]
+[node name="BtnCapture" type="Button" parent="MainLayout/BottomPanel/Margin/VBox/ControlsBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "ЗАФИКСИРОВАТЬ"
+
+[node name="BtnNext" type="Button" parent="MainLayout/BottomPanel/Margin/VBox/ControlsBox"]
 visible = false
-custom_minimum_size = Vector2(200, 60)
+custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 24
-text = "NEXT SIGNAL"
+theme_override_font_sizes/font_size = 20
+text = "СЛЕДУЮЩИЙ СИГНАЛ"
 
-[node name="FeedbackLabel" type="Label" parent="MainLayout/ControlsPanel"]
+[node name="StatusLabel" type="Label" parent="MainLayout/BottomPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = ""
+text = "СТАТУС: ОЖИДАНИЕ ВВОДА..."
 horizontal_alignment = 1
-
-[node name="BottomSpacer" type="Control" parent="MainLayout"]
-custom_minimum_size = Vector2(0, 40)
-layout_mode = 2
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_glow")
 
 [connection signal="pressed" from="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/BtnBack" to="." method="_on_back_pressed"]
-[connection signal="value_changed" from="MainLayout/ControlsPanel/BitSlider" to="." method="_on_bit_slider_value_changed"]
-[connection signal="pressed" from="MainLayout/ControlsPanel/ActionArea/BtnCapture" to="." method="_on_capture_pressed"]
-[connection signal="pressed" from="MainLayout/ControlsPanel/ActionArea/BtnNext" to="." method="_on_next_pressed"]
+[connection signal="value_changed" from="MainLayout/WorkArea/RightPanel/Margin/VBox/BitSlider" to="." method="_on_bit_slider_value_changed"]
+[connection signal="pressed" from="MainLayout/BottomPanel/Margin/VBox/ControlsBox/BtnHint" to="." method="_on_hint_pressed"]
+[connection signal="pressed" from="MainLayout/BottomPanel/Margin/VBox/ControlsBox/BtnCapture" to="." method="_on_capture_pressed"]
+[connection signal="pressed" from="MainLayout/BottomPanel/Margin/VBox/ControlsBox/BtnNext" to="." method="_on_next_pressed"]
