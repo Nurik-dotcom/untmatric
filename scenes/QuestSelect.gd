@@ -18,7 +18,7 @@ extends Control
 @onready var btn_close = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnClose
 @onready var modal_title = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/ModalTitle
 
-enum QuestType { DECRYPTOR, LOGIC_GATE }
+enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO }
 var selected_quest_type = QuestType.DECRYPTOR
 
 const TITLE_TEXT = "\u0412\u044b\u0431\u043e\u0440 \u043a\u0432\u0435\u0441\u0442\u0430"
@@ -26,7 +26,7 @@ const STATUS_READY = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043a\u0
 const STATUS_LOCKED = "\u042d\u0442\u043e\u0442 \u043a\u0432\u0435\u0441\u0442 \u043f\u043e\u043a\u0430 \u043d\u0435 \u0433\u043e\u0442\u043e\u0432"
 
 const BTN_CLUES_TEXT = "\u0423\u043b\u0438\u043a\u0438 (c\u043a\u043e\u0440\u043e)"
-const BTN_RADIO_TEXT = "\u0420\u0430\u0434\u0438\u043e\u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442 (c\u043a\u043e\u0440\u043e)"
+const BTN_RADIO_TEXT = "\u0420\u0430\u0434\u0438\u043e\u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442"
 const BTN_DECRYPTOR_TEXT = "\u0414\u0435\u0448\u0438\u0444\u0440\u043e\u0432\u0430\u043d\u0438\u0435"
 const BTN_LIE_TEXT = "\u0414\u0435\u0442\u0435\u043a\u0442\u043e\u0440 \u043b\u0436\u0438"
 const BTN_SCRIPT_TEXT = "\u0421\u043a\u0440\u0438\u043f\u0442 \u043f\u043e\u0434\u043e\u0437\u0440\u0435\u0432\u0430\u0435\u043c\u043e\u0433\u043e (c\u043a\u043e\u0440\u043e)"
@@ -68,8 +68,8 @@ func _set_modal_labels():
 func _connect_buttons():
 	btn_decryptor.pressed.connect(_on_decryptor_pressed)
 	btn_lie.pressed.connect(_on_lie_detector_pressed)
+	btn_radio.pressed.connect(_on_radio_pressed)
 	btn_clues.pressed.connect(_on_locked_pressed)
-	btn_radio.pressed.connect(_on_locked_pressed)
 	btn_script.pressed.connect(_on_locked_pressed)
 	btn_city.pressed.connect(_on_locked_pressed)
 	btn_archive.pressed.connect(_on_locked_pressed)
@@ -82,7 +82,7 @@ func _connect_buttons():
 
 func _disable_unready():
 	btn_clues.disabled = true
-	btn_radio.disabled = true
+	btn_radio.disabled = false
 	btn_script.disabled = true
 	btn_city.disabled = true
 	btn_archive.disabled = true
@@ -101,6 +101,12 @@ func _on_lie_detector_pressed():
 	btn_complexity_c.disabled = true
 	modal.visible = true
 
+func _on_radio_pressed():
+	selected_quest_type = QuestType.RADIO
+	btn_complexity_b.disabled = true
+	btn_complexity_c.disabled = true
+	modal.visible = true
+
 func _on_locked_pressed():
 	status_label.text = STATUS_LOCKED
 
@@ -110,6 +116,8 @@ func _on_complexity_a_pressed():
 		get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
 	elif selected_quest_type == QuestType.LOGIC_GATE:
 		get_tree().change_scene_to_file("res://scenes/LogicQuestA.tscn")
+	elif selected_quest_type == QuestType.RADIO:
+		get_tree().change_scene_to_file("res://scenes/RadioQuestA.tscn")
 
 func _on_complexity_b_pressed():
 	if selected_quest_type != QuestType.DECRYPTOR:
