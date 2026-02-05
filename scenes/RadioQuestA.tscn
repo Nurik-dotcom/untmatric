@@ -17,16 +17,16 @@ border_width_bottom = 2
 border_color = Color(0.0, 0.8, 0.0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.02, 0.02, 0.02, 0.8)
+bg_color = Color(0.08, 0.08, 0.08, 0.95)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.2, 0.8, 0.2, 0.3)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+border_color = Color(0.3, 0.3, 0.3, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [sub_resource type="Environment" id="Environment_glow"]
 background_mode = 3
@@ -55,9 +55,9 @@ color = Color(0, 0.02, 0, 1)
 
 [node name="OscilloscopeLayer" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = 15
+anchor_top = 0.1
 anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -71,10 +71,34 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0)
 
 [node name="WaveLine" type="Line2D" parent="OscilloscopeLayer"]
-position = Vector2(0, 300)
+position = Vector2(0, 150)
 points = PackedVector2Array()
-width = 3.0
+width = 4.0
 default_color = Color(0.2, 1, 0.2, 1)
+
+[node name="TaskOverlay" type="VBoxContainer" parent="OscilloscopeLayer"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 20.0
+offset_top = 10.0
+offset_right = -20.0
+offset_bottom = 80.0
+grow_horizontal = 2
+
+[node name="BigTargetN" type="Label" parent="OscilloscopeLayer/TaskOverlay"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "АЛФАВИТ: N = 128"
+
+[node name="Instruction" type="Label" parent="OscilloscopeLayer/TaskOverlay"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 16
+text = "Найди мин. i, чтобы 2^i >= N"
 
 [node name="CRT_Overlay" type="ColorRect" parent="."]
 material = SubResource("ShaderMaterial_crt")
@@ -96,284 +120,143 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="HeaderPanel" type="PanelContainer" parent="MainLayout"]
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_header")
 
 [node name="HeaderMargin" type="MarginContainer" parent="MainLayout/HeaderPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 5
 
 [node name="HeaderHBox" type="HBoxContainer" parent="MainLayout/HeaderPanel/HeaderMargin"]
 layout_mode = 2
+theme_override_constants/separation = 15
 
 [node name="BtnBack" type="Button" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
-custom_minimum_size = Vector2(40, 40)
+custom_minimum_size = Vector2(50, 50)
 layout_mode = 2
+size_flags_vertical = 4
 theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
 text = "<"
 
-[node name="TitleLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "РАДИОПЕРЕХВАТ // ЭТАП A"
-
-[node name="Spacer1" type="Control" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+[node name="ModeInfoBox" type="VBoxContainer" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+alignment = 1
 
-[node name="ModeLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+[node name="ModeLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/ModeInfoBox"]
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = "РЕЖИМ: БЕЗ ВРЕМЕНИ"
+text = "РЕЖИМ"
 
-[node name="ForcedLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
-visible = false
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.5, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "[ПРИНУДИТЕЛЬНО]"
-
-[node name="TimerLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+[node name="TimerLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/ModeInfoBox"]
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = "ОСТАЛОСЬ: 00:00"
+theme_override_font_sizes/font_size = 20
+text = "00:25"
 
-[node name="Spacer2" type="Control" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+[node name="ForcedLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/ModeInfoBox"]
+visible = false
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.5, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 12
+text = "ПРИНУДИТЕЛЬНО"
 
 [node name="StabilityLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
-text = "СТАБИЛЬНОСТЬ: 100%"
+text = "87%"
 horizontal_alignment = 2
 
-[node name="WorkArea" type="HBoxContainer" parent="MainLayout"]
+[node name="SpacerOsc" type="Control" parent="MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3
+size_flags_stretch_ratio = 0.8
 
-[node name="LeftPanel" type="PanelContainer" parent="MainLayout/WorkArea"]
-custom_minimum_size = Vector2(250, 0)
+[node name="ControlsZone" type="VBoxContainer" parent="MainLayout"]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
-
-[node name="Margin" type="MarginContainer" parent="MainLayout/WorkArea/LeftPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
-
-[node name="VBox" type="VBoxContainer" parent="MainLayout/WorkArea/LeftPanel/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 15
-
-[node name="LabelTitle" type="Label" parent="MainLayout/WorkArea/LeftPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "ЦЕЛЬ ПЕРЕХВАТА"
-horizontal_alignment = 1
-
-[node name="TargetInfo" type="Label" parent="MainLayout/WorkArea/LeftPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "Обнаружен алфавит:\nN = ..."
-autowrap_mode = 2
-
-[node name="Instruction" type="Label" parent="MainLayout/WorkArea/LeftPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 12
-text = "Задача: выбери минимальную битность i, чтобы 2^i >= N"
-autowrap_mode = 2
-
-[node name="Formula" type="Label" parent="MainLayout/WorkArea/LeftPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.5, 0.8, 1, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 14
-text = "Формула: N = 2^i"
-horizontal_alignment = 1
-
-[node name="CenterSpacer" type="Control" parent="MainLayout/WorkArea"]
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 2
-
-[node name="RightPanel" type="PanelContainer" parent="MainLayout/WorkArea"]
-custom_minimum_size = Vector2(300, 0)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
-
-[node name="Margin" type="MarginContainer" parent="MainLayout/WorkArea/RightPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
-
-[node name="VBox" type="VBoxContainer" parent="MainLayout/WorkArea/RightPanel/Margin"]
-layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="LabelTitle" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "ДЕКОДЕР"
-horizontal_alignment = 1
-
-[node name="CurrentBitsLabel" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+[node name="BigBitsLabel" type="Label" parent="MainLayout/ControlsZone"]
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 18
-text = "Глубина i = 1 бит"
+theme_override_font_sizes/font_size = 40
+text = "i = 7 бит"
 horizontal_alignment = 1
 
-[node name="BitSlider" type="HSlider" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+[node name="FeedbackRow" type="HBoxContainer" parent="MainLayout/ControlsZone"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="BigPowLabel" type="Label" parent="MainLayout/ControlsZone/FeedbackRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "2^i = 128"
+
+[node name="BigFitLabel" type="Label" parent="MainLayout/ControlsZone/FeedbackRow"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "FIT: YES"
+
+[node name="BigRiskLabel" type="Label" parent="MainLayout/ControlsZone"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "РИСК: СРЕДНИЙ"
+horizontal_alignment = 1
+
+[node name="SliderContainer" type="MarginContainer" parent="MainLayout/ControlsZone"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_right = 30
+
+[node name="BitSlider" type="HSlider" parent="MainLayout/ControlsZone/SliderContainer"]
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 min_value = 1.0
 max_value = 12.0
 value = 1.0
 
-[node name="HSeparator" type="HSeparator" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
+[node name="DetailsBtnContainer" type="CenterContainer" parent="MainLayout/ControlsZone"]
 layout_mode = 2
 
-[node name="GridContainer" type="GridContainer" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
-layout_mode = 2
-columns = 2
-
-[node name="L_N" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+[node name="BtnDetails" type="Button" parent="MainLayout/ControlsZone/DetailsBtnContainer"]
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = "N:"
+text = "Подробнее ▾"
+flat = true
 
-[node name="V_N" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
+[node name="ActionsZone" type="VBoxContainer" parent="MainLayout"]
 layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "---"
-horizontal_alignment = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.6
+theme_override_constants/separation = 15
 
-[node name="L_Target" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "Цель i:"
-
-[node name="V_Target" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "---"
-horizontal_alignment = 2
-
-[node name="L_Pow" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "2^i:"
-
-[node name="V_Pow" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "2"
-horizontal_alignment = 2
-
-[node name="L_Fit" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "Помещается:"
-
-[node name="V_Fit" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "НЕТ"
-horizontal_alignment = 2
-
-[node name="L_Min" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "Минимально:"
-
-[node name="V_Min" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/GridContainer"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "ДА"
-horizontal_alignment = 2
-
-[node name="HSeparator2" type="HSeparator" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
-layout_mode = 2
-
-[node name="RiskLabel" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "РИСК: НИЗКИЙ"
-horizontal_alignment = 1
-
-[node name="RiskBar" type="ProgressBar" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
-layout_mode = 2
-step = 1.0
-
-[node name="LampsBox" type="VBoxContainer" parent="MainLayout/WorkArea/RightPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 5
-
-[node name="LampWarmup" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/LampsBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "● ПРОГРЕВ"
-
-[node name="LampReady" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/LampsBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "● ГОТОВО"
-
-[node name="LampLost" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/LampsBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "● СВЯЗЬ СОРВАНА"
-
-[node name="LampOverkill" type="Label" parent="MainLayout/WorkArea/RightPanel/Margin/VBox/LampsBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "● ИЗБЫТОЧНО"
-
-[node name="BottomPanel" type="PanelContainer" parent="MainLayout"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
-
-[node name="Margin" type="MarginContainer" parent="MainLayout/BottomPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
-
-[node name="VBox" type="VBoxContainer" parent="MainLayout/BottomPanel/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="SamplingBar" type="HBoxContainer" parent="MainLayout/BottomPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 30)
+[node name="SamplingBar" type="HBoxContainer" parent="MainLayout/ActionsZone"]
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 alignment = 1
+theme_override_constants/separation = 8
 
-[node name="TrialSlot1" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
-custom_minimum_size = Vector2(24, 24)
+[node name="TrialSlot1" type="Control" parent="MainLayout/ActionsZone/SamplingBar"]
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 
-[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot1"]
+[node name="BG" type="ColorRect" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot1"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -382,7 +265,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot1"]
+[node name="AnchorMark" type="Label" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot1"]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -391,218 +274,337 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 16
-text = "Я"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TrialSlot2" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-
-[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot2"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.2, 0.2, 0.2, 1)
-
-[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot2"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 16
-text = "Я"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TrialSlot3" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-
-[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot3"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.2, 0.2, 0.2, 1)
-
-[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot3"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 16
-text = "Я"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TrialSlot4" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-
-[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot4"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.2, 0.2, 0.2, 1)
-
-[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot4"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 16
-text = "Я"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TrialSlot5" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-
-[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot5"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.2, 0.2, 0.2, 1)
-
-[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot5"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 16
-text = "Я"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TrialSlot6" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-
-[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot6"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.2, 0.2, 0.2, 1)
-
-[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot6"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 16
-text = "Я"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TrialSlot7" type="Control" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-
-[node name="BG" type="ColorRect" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot7"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.2, 0.2, 0.2, 1)
-
-[node name="AnchorMark" type="Label" parent="MainLayout/BottomPanel/Margin/VBox/SamplingBar/TrialSlot7"]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 16
-text = "Я"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ControlsBox" type="HBoxContainer" parent="MainLayout/BottomPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 20
-alignment = 1
-
-[node name="BtnHint" type="Button" parent="MainLayout/BottomPanel/Margin/VBox/ControlsBox"]
-custom_minimum_size = Vector2(120, 50)
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-text = "ПОДСКАЗКА"
-
-[node name="BtnCapture" type="Button" parent="MainLayout/BottomPanel/Margin/VBox/ControlsBox"]
-custom_minimum_size = Vector2(200, 50)
-layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot2" type="Control" parent="MainLayout/ActionsZone/SamplingBar"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot2"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot3" type="Control" parent="MainLayout/ActionsZone/SamplingBar"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot3"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot4" type="Control" parent="MainLayout/ActionsZone/SamplingBar"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot4"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot4"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot5" type="Control" parent="MainLayout/ActionsZone/SamplingBar"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot5"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot5"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot6" type="Control" parent="MainLayout/ActionsZone/SamplingBar"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot6"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot6"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot7" type="Control" parent="MainLayout/ActionsZone/SamplingBar"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot7"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="MainLayout/ActionsZone/SamplingBar/TrialSlot7"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Я"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ButtonsRow" type="HBoxContainer" parent="MainLayout/ActionsZone"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 15
+
+[node name="BtnHint" type="Button" parent="MainLayout/ActionsZone/ButtonsRow"]
+custom_minimum_size = Vector2(100, 64)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 22
+text = "?"
+
+[node name="BtnCapture" type="Button" parent="MainLayout/ActionsZone/ButtonsRow"]
+custom_minimum_size = Vector2(240, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 22
 text = "ЗАФИКСИРОВАТЬ"
 
-[node name="BtnNext" type="Button" parent="MainLayout/BottomPanel/Margin/VBox/ControlsBox"]
+[node name="BtnNext" type="Button" parent="MainLayout/ActionsZone/ButtonsRow"]
 visible = false
-custom_minimum_size = Vector2(200, 50)
+custom_minimum_size = Vector2(240, 64)
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 20
-text = "СЛЕДУЮЩИЙ СИГНАЛ"
+theme_override_font_sizes/font_size = 22
+text = "СЛЕДУЮЩИЙ >>"
 
-[node name="StatusLabel" type="Label" parent="MainLayout/BottomPanel/Margin/VBox"]
+[node name="StatusLabel" type="Label" parent="MainLayout/ActionsZone"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = "СТАТУС: ОЖИДАНИЕ ВВОДА..."
+theme_override_font_sizes/font_size = 18
+text = "ОЖИДАНИЕ ВВОДА..."
 horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Dimmer" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="DetailsSheet" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -400.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="DetailsSheet"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="DetailsSheet/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="Title" type="Label" parent="DetailsSheet/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "ПОДРОБНОСТИ"
+horizontal_alignment = 1
+
+[node name="Grid" type="GridContainer" parent="DetailsSheet/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="L_N" type="Label" parent="DetailsSheet/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "N:"
+
+[node name="V_N" type="Label" parent="DetailsSheet/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "---"
+horizontal_alignment = 2
+
+[node name="L_Target" type="Label" parent="DetailsSheet/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Цель i:"
+
+[node name="V_Target" type="Label" parent="DetailsSheet/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "---"
+horizontal_alignment = 2
+
+[node name="L_Pow" type="Label" parent="DetailsSheet/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "2^i:"
+
+[node name="V_Pow" type="Label" parent="DetailsSheet/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "---"
+horizontal_alignment = 2
+
+[node name="L_Min" type="Label" parent="DetailsSheet/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Минимально:"
+
+[node name="V_Min" type="Label" parent="DetailsSheet/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "---"
+horizontal_alignment = 2
+
+[node name="L_Anchor" type="Label" parent="DetailsSheet/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Якорная:"
+
+[node name="V_Anchor" type="Label" parent="DetailsSheet/Margin/VBox/Grid"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "---"
+horizontal_alignment = 2
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_glow")
 
 [connection signal="pressed" from="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/BtnBack" to="." method="_on_back_pressed"]
-[connection signal="value_changed" from="MainLayout/WorkArea/RightPanel/Margin/VBox/BitSlider" to="." method="_on_bit_slider_value_changed"]
-[connection signal="pressed" from="MainLayout/BottomPanel/Margin/VBox/ControlsBox/BtnHint" to="." method="_on_hint_pressed"]
-[connection signal="pressed" from="MainLayout/BottomPanel/Margin/VBox/ControlsBox/BtnCapture" to="." method="_on_capture_pressed"]
-[connection signal="pressed" from="MainLayout/BottomPanel/Margin/VBox/ControlsBox/BtnNext" to="." method="_on_next_pressed"]
+[connection signal="value_changed" from="MainLayout/ControlsZone/SliderContainer/BitSlider" to="." method="_on_bit_slider_value_changed"]
+[connection signal="pressed" from="MainLayout/ControlsZone/DetailsBtnContainer/BtnDetails" to="." method="_on_details_toggle"]
+[connection signal="pressed" from="MainLayout/ActionsZone/ButtonsRow/BtnHint" to="." method="_on_hint_pressed"]
+[connection signal="pressed" from="MainLayout/ActionsZone/ButtonsRow/BtnCapture" to="." method="_on_capture_pressed"]
+[connection signal="pressed" from="MainLayout/ActionsZone/ButtonsRow/BtnNext" to="." method="_on_next_pressed"]
+[connection signal="gui_input" from="Dimmer" to="." method="_on_dimmer_gui_input"]
