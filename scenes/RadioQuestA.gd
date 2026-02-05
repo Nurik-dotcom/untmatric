@@ -53,7 +53,7 @@ var time_remaining: float = 0.0
 var anchor_countdown: int = 0
 const ANCHOR_POOL = [100, 500, 1000]
 const POWERS_OF_2 = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
-const TRAPS = [10, 50, 1000, 2000]
+const TRAPS = [10, 50, 2000] # Removed 1000 to avoid anchor conflict
 
 # Trial
 var trial_active: bool = false
@@ -93,6 +93,10 @@ func _init_sampling_bar():
 			trial_history_ui.append(slot)
 	current_trial_idx = 0
 
+func mark_first_action():
+	if first_action_timestamp < 0:
+		first_action_timestamp = Time.get_ticks_msec() / 1000.0
+
 func _update_stability_ui(val, _change):
 	stability_label.text = "%d%%" % int(val)
 	var col = Color(0, 1, 0)
@@ -128,14 +132,13 @@ func generate_task():
 		timer_label.visible = false
 
 	# Select N
-	anchor_countdown -= 1
-	pool_type = "NORMAL"
-
-	if anchor_countdown <= 0:
+	if anchor_countdown == 0:
 		target_n = ANCHOR_POOL.pick_random()
 		pool_type = "ANCHOR"
 		anchor_countdown = randi_range(7, 10)
 	else:
+		pool_type = "NORMAL"
+		anchor_countdown -= 1
 		var p = []
 		p.append_array(POWERS_OF_2)
 		p.append_array(TRAPS)
@@ -167,29 +170,38 @@ func _process(delta):
 
 func _update_oscilloscope():
 	var points = PackedVector2Array()
-	var width = get_viewport_rect().size.x
+	var layer_size = wave_line.get_parent().size # Get size from OscilloscopeLayer
+	var width = layer_size.x
+	var center_y = layer_size.y * 0.5
+
+	# Update wave line position to be relative to parent if needed,
+	# but typically Line2D draws in local coords.
+	# We assume Line2D is at (0,0) or we offset points.
+	# Let's offset points to center_y.
+	wave_line.position = Vector2.ZERO
 
 	var noise_amp = 0.0
 	var color = Color(0.2, 1.0, 0.2)
 
 	if current_bits < target_bits:
 		var diff = target_bits - current_bits
-		noise_amp = (float(diff) / target_bits) * 80.0 # Adjusted amplitude for new height
+		# Scale noise by height
+		var max_amp = layer_size.y * 0.35
+		noise_amp = (float(diff) / target_bits) * max_amp
 
 	wave_line.default_color = color
 
 	# Draw slightly lower resolution for performance if needed, but 5 step is fine
 	for x in range(0, int(width) + 10, 5):
 		var t = (float(x) / width) * 10.0 + time_accum
-		var base_y = sin(t) * 80.0 # Amplitude 80
+		var base_y = sin(t) * (layer_size.y * 0.25) # Amplitude ~25% of height
 		var noise = randf_range(-noise_amp, noise_amp)
-		points.append(Vector2(x, base_y + noise))
+		points.append(Vector2(x, center_y + base_y + noise))
 
 	wave_line.points = points
 
 func _on_bit_slider_value_changed(value):
-	if first_action_timestamp < 0:
-		first_action_timestamp = Time.get_ticks_msec() / 1000.0
+	mark_first_action()
 	current_bits = int(value)
 	_update_decoder_ui()
 
@@ -231,6 +243,7 @@ func _update_decoder_ui():
 	val_min.text = "ДА" if is_minimal else "НЕТ"
 
 func _on_capture_pressed():
+	mark_first_action()
 	if not trial_active: return
 	_finish_trial(false)
 
@@ -314,6 +327,7 @@ func _on_next_pressed():
 	generate_task()
 
 func _on_hint_pressed():
+	mark_first_action()
 	hint_used = true
 	status_label.text = "ПОДСКАЗКА: Формула N = 2^i. Ищи степень двойки >= N."
 	status_label.add_theme_color_override("font_color", Color(0.5, 0.8, 1))
@@ -322,11 +336,12 @@ func _on_back_pressed():
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _on_details_toggle():
+	mark_first_action()
 	var is_open = not details_sheet.visible
 	details_sheet.visible = is_open
 	dimmer.visible = is_open
 	btn_details.text = "Скрыть ▴" if is_open else "Подробнее ▾"
 
 func _on_dimmer_gui_input(event):
-	if event is InputEventMouseButton and event.pressed:
-		_on_details_toggle() # Close on click
+	if (event is InputEventMouseButton and event.pressed) or (event is InputEventScreenTouch and event.pressed):
+		_on_details_toggle() # Close on click/tap
