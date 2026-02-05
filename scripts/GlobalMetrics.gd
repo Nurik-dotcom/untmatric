@@ -20,6 +20,22 @@ var current_level_index: int = 0
 var current_mode: String = "DEC" # DEC, OCT, HEX
 var current_target_value: int = 0
 
+# Analysis History
+var session_history: Array = []
+
+func register_trial(data: Dictionary):
+	session_history.append(data)
+	# Педагогический лог в консоль для отладки
+	var match_key = data.get("match_key", "UNKNOWN")
+	var is_correct = data.get("is_correct", false)
+	var duration = data.get("duration", 0.0)
+	print("MATCH: ", match_key, " | Correct: ", is_correct, " | Time: ", duration)
+
+	# Если ответ неверный — бьем по стабильности
+	if not is_correct:
+		stability = max(0.0, stability - 10.0)
+		emit_signal("stability_changed", stability, -10.0)
+
 # Matrix (Complexity C)
 const MATRIX_SIZE := 5
 const MATRIX_WEIGHTS := [16, 8, 4, 2, 1]
