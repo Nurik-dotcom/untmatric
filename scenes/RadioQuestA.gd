@@ -1,36 +1,34 @@
 extends Control
 
-# UI Nodes - Re-mapped for Mobile Layout
-@onready var wave_line = $OscilloscopeLayer/WaveLine
-@onready var mode_label = $MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/ModeInfoBox/ModeLabel
-@onready var timer_label = $MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/ModeInfoBox/TimerLabel
-@onready var forced_label = $MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/ModeInfoBox/ForcedLabel
-@onready var stability_label = $MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/StabilityLabel
+# UI Nodes - V3 Hierarchy
+@onready var wave_line = $SafeArea/MainVBox/OscPanel/OscLayer/WaveLine
+@onready var mode_label = $SafeArea/MainVBox/Header/ModeLabel
+@onready var timer_label = $SafeArea/MainVBox/Header/TimerLabel
+@onready var forced_label = $SafeArea/MainVBox/Header/ForcedBadge
+@onready var stability_label = $SafeArea/MainVBox/Header/StabilityLabel
 
-@onready var big_target_n = $OscilloscopeLayer/TaskOverlay/BigTargetN
-@onready var instruction_label = $OscilloscopeLayer/TaskOverlay/Instruction
+@onready var task_main_label = $SafeArea/MainVBox/TaskCard/TaskVBox/TaskMain
+@onready var task_sub_label = $SafeArea/MainVBox/TaskCard/TaskVBox/TaskHintRow/TaskSub
 
-@onready var big_bits_label = $MainLayout/ControlsZone/BigBitsLabel
-@onready var big_pow_label = $MainLayout/ControlsZone/FeedbackRow/BigPowLabel
-@onready var big_fit_label = $MainLayout/ControlsZone/FeedbackRow/BigFitLabel
-@onready var big_risk_label = $MainLayout/ControlsZone/BigRiskLabel
-@onready var bit_slider = $MainLayout/ControlsZone/SliderContainer/BitSlider
-@onready var btn_details = $MainLayout/ControlsZone/DetailsBtnContainer/BtnDetails
+@onready var bit_knob = $SafeArea/MainVBox/ControlCard/ControlHBox/KnobStack/BitKnob
+@onready var big_i_label = $SafeArea/MainVBox/ControlCard/ControlHBox/KnobStack/BigILabel
+@onready var pow_label = $SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack/PowLabel
+@onready var fit_label = $SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack/FitLabel
+@onready var risk_label = $SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack/RiskRow/RiskLabel
+@onready var risk_bar = $SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack/RiskRow/RiskBar
 
-# Detailed Sheet Nodes
+@onready var sample_strip = $SafeArea/MainVBox/Bottom/SampleStrip
+@onready var btn_hint = $SafeArea/MainVBox/Bottom/ActionsRow/BtnHint
+@onready var btn_capture = $SafeArea/MainVBox/Bottom/ActionsRow/BtnCapture
+@onready var btn_next = $SafeArea/MainVBox/Bottom/ActionsRow/BtnNext
+@onready var status_label = $SafeArea/MainVBox/Bottom/StatusLabel
+@onready var btn_details_main = $SafeArea/MainVBox/Bottom/DetailsRow/BtnDetails
+
+# Details Sheet
 @onready var details_sheet = $DetailsSheet
 @onready var dimmer = $Dimmer
-@onready var val_n = $DetailsSheet/Margin/VBox/Grid/V_N
-@onready var val_target = $DetailsSheet/Margin/VBox/Grid/V_Target
-@onready var val_pow = $DetailsSheet/Margin/VBox/Grid/V_Pow
-@onready var val_min = $DetailsSheet/Margin/VBox/Grid/V_Min
-@onready var val_anchor = $DetailsSheet/Margin/VBox/Grid/V_Anchor
-
-@onready var sampling_bar = $MainLayout/ActionsZone/SamplingBar
-@onready var btn_hint = $MainLayout/ActionsZone/ButtonsRow/BtnHint
-@onready var btn_capture = $MainLayout/ActionsZone/ButtonsRow/BtnCapture
-@onready var btn_next = $MainLayout/ActionsZone/ButtonsRow/BtnNext
-@onready var status_label = $MainLayout/ActionsZone/StatusLabel
+@onready var details_text = $DetailsSheet/Margin/DetailsVBox/DetailsText
+@onready var btn_close_details = $DetailsSheet/Margin/DetailsVBox/BtnCloseDetails
 
 # Game State
 var target_n: int = 0
@@ -53,7 +51,7 @@ var time_remaining: float = 0.0
 var anchor_countdown: int = 0
 const ANCHOR_POOL = [100, 500, 1000]
 const POWERS_OF_2 = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
-const TRAPS = [10, 50, 2000] # Removed 1000 to avoid anchor conflict
+const TRAPS = [10, 50, 2000]
 
 # Trial
 var trial_active: bool = false
@@ -70,9 +68,7 @@ func _ready():
 	GlobalMetrics.stability_changed.connect(_update_stability_ui)
 	_update_stability_ui(GlobalMetrics.stability, 0)
 
-	# Center osc roughly in its layer (handled by layout, but y offset helps)
-	# WaveLine is in OscilloscopeLayer which is Top-to-Center.
-	# Center Y is roughly 150px relative to that control if it's ~300px high.
+	# Center osc roughly in its layer (handled by layout logic in process)
 
 	_init_sampling_bar()
 	anchor_countdown = randi_range(7, 10)
@@ -84,7 +80,7 @@ func _ready():
 
 func _init_sampling_bar():
 	trial_history_ui.clear()
-	for slot in sampling_bar.get_children():
+	for slot in sample_strip.get_children():
 		var bg = slot.get_node("BG")
 		var mark = slot.get_node("AnchorMark")
 		if bg and mark:
@@ -114,7 +110,8 @@ func generate_task():
 	btn_capture.disabled = false
 	btn_next.visible = false
 	btn_hint.disabled = false
-	bit_slider.editable = true
+
+	# Reset status
 	status_label.text = "СТАТУС: ОЖИДАНИЕ ВВОДА..."
 	status_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
@@ -146,15 +143,16 @@ func generate_task():
 
 	target_bits = ceil(log(target_n) / log(2.0))
 
-	# Update Displays
-	big_target_n.text = "АЛФАВИТ: N = %d" % target_n
-	val_n.text = str(target_n)
-	val_target.text = str(target_bits)
-	val_anchor.text = "ДА" if pool_type == "ANCHOR" else "НЕТ"
+	# Update Task UI
+	task_main_label.text = "АЛФАВИТ: N = %d" % target_n
 
+	# Reset Knob
 	current_bits = 1
-	bit_slider.value = 1
-	_update_decoder_ui()
+	bit_knob.value = 1
+	apply_user_bits(1)
+
+	# Reset timestamp AFTER ui update so init doesn't count as action
+	first_action_timestamp = -1.0
 
 func _process(delta):
 	time_accum += delta * 5.0
@@ -170,14 +168,11 @@ func _process(delta):
 
 func _update_oscilloscope():
 	var points = PackedVector2Array()
-	var layer_size = wave_line.get_parent().size # Get size from OscilloscopeLayer
+	var layer = wave_line.get_parent() # OscLayer
+	var layer_size = layer.size
 	var width = layer_size.x
 	var center_y = layer_size.y * 0.5
 
-	# Update wave line position to be relative to parent if needed,
-	# but typically Line2D draws in local coords.
-	# We assume Line2D is at (0,0) or we offset points.
-	# Let's offset points to center_y.
 	wave_line.position = Vector2.ZERO
 
 	var noise_amp = 0.0
@@ -185,7 +180,7 @@ func _update_oscilloscope():
 
 	if current_bits < target_bits:
 		var diff = target_bits - current_bits
-		# Scale noise by height
+		# Scale noise by height (max 35%)
 		var max_amp = layer_size.y * 0.35
 		noise_amp = (float(diff) / target_bits) * max_amp
 
@@ -194,53 +189,66 @@ func _update_oscilloscope():
 	# Draw slightly lower resolution for performance if needed, but 5 step is fine
 	for x in range(0, int(width) + 10, 5):
 		var t = (float(x) / width) * 10.0 + time_accum
-		var base_y = sin(t) * (layer_size.y * 0.25) # Amplitude ~25% of height
+		var base_y = sin(t) * (layer_size.y * 0.25)
 		var noise = randf_range(-noise_amp, noise_amp)
 		points.append(Vector2(x, center_y + base_y + noise))
 
 	wave_line.points = points
 
-func _on_bit_slider_value_changed(value):
+# Unified Logic Updater
+func apply_user_bits(i: int):
 	mark_first_action()
-	current_bits = int(value)
-	_update_decoder_ui()
+	current_bits = i
 
-func _update_decoder_ui():
-	# Big UI
-	big_bits_label.text = "i = %d бит" % current_bits
-	var pow_val = pow(2, current_bits)
-	big_pow_label.text = "2^i = %d" % pow_val
-
+	# 1. Calc Logic
+	var pow_val = int(pow(2, current_bits))
 	var is_fit = (pow_val >= target_n)
 	var is_minimal = (current_bits == target_bits)
 	var is_overkill = (is_fit and not is_minimal)
 
-	if is_fit:
-		big_fit_label.text = "ПОМЕЩАЕТСЯ: ДА"
-		big_fit_label.add_theme_color_override("font_color", Color(0, 1, 0))
-	else:
-		big_fit_label.text = "ПОМЕЩАЕТСЯ: НЕТ"
-		big_fit_label.add_theme_color_override("font_color", Color(1, 0, 0))
+	# 2. Update Knob/Big Labels
+	big_i_label.text = "i = %d бит" % current_bits
+	pow_label.text = "2^i = %d" % pow_val
 
-	# Risk UI
+	if is_fit:
+		fit_label.text = "ПОМЕЩАЕТСЯ: ДА"
+		fit_label.add_theme_color_override("font_color", Color(0, 1, 0))
+	else:
+		fit_label.text = "ПОМЕЩАЕТСЯ: НЕТ"
+		fit_label.add_theme_color_override("font_color", Color(1, 0, 0))
+
+	# 3. Risk UI
 	if is_overkill:
 		var excess = current_bits - target_bits
 		var risk_pct = min(100, excess * 25.0)
+		risk_bar.value = risk_pct
 		if risk_pct < 40:
-			big_risk_label.text = "РИСК: НИЗКИЙ"
-			big_risk_label.add_theme_color_override("font_color", Color(0, 1, 0))
+			risk_label.text = "РИСК: НИЗКИЙ"
+			risk_label.add_theme_color_override("font_color", Color(0, 1, 0))
+			risk_bar.modulate = Color(0, 1, 0)
 		elif risk_pct < 80:
-			big_risk_label.text = "РИСК: СРЕДНИЙ"
-			big_risk_label.add_theme_color_override("font_color", Color(1, 1, 0))
+			risk_label.text = "РИСК: СРЕДНИЙ"
+			risk_label.add_theme_color_override("font_color", Color(1, 1, 0))
+			risk_bar.modulate = Color(1, 1, 0)
 		else:
-			big_risk_label.text = "РИСК: ВЫСОКИЙ"
-			big_risk_label.add_theme_color_override("font_color", Color(1, 0, 0))
+			risk_label.text = "РИСК: ВЫСОКИЙ"
+			risk_label.add_theme_color_override("font_color", Color(1, 0, 0))
+			risk_bar.modulate = Color(1, 0, 0)
 	else:
-		big_risk_label.text = ""
+		risk_label.text = "РИСК: НЕТ"
+		risk_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+		risk_bar.value = 0
+		risk_bar.modulate = Color(0.2, 0.2, 0.2)
 
-	# Detailed Sheet UI
-	val_pow.text = str(pow_val)
-	val_min.text = "ДА" if is_minimal else "НЕТ"
+	# 4. Update Details Text (for the sheet)
+	details_text.text = "N: %d\nЦель i: %d\n2^i: %d\nМинимально: %s\nЯкорная: %s\nРежим: %s" % [
+		target_n,
+		target_bits,
+		pow_val,
+		"ДА" if is_minimal else "НЕТ",
+		"ДА" if pool_type == "ANCHOR" else "НЕТ",
+		"TIMED" if is_timed_mode else "UNTIMED"
+	]
 
 func _on_capture_pressed():
 	mark_first_action()
@@ -253,7 +261,11 @@ func _force_fail_timeout():
 
 func _finish_trial(is_timeout: bool):
 	trial_active = false
-	bit_slider.editable = false
+	# Lock knob interaction by removing input processing if needed,
+	# but setting a flag in BitKnob is better. For now we just ignore inputs in logic?
+	# Or disabling the knob node:
+	bit_knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 	btn_capture.visible = false
 	btn_next.visible = true
 	btn_hint.disabled = true
@@ -324,11 +336,16 @@ func _finish_trial(is_timeout: bool):
 	GlobalMetrics.register_trial(payload)
 
 func _on_next_pressed():
+	# Unlock knob
+	bit_knob.mouse_filter = Control.MOUSE_FILTER_STOP
 	generate_task()
 
 func _on_hint_pressed():
 	mark_first_action()
 	hint_used = true
+	# Show hint in status or open details?
+	# Spec says just "ПОДСКАЗКА" button.
+	# Let's show in status for now.
 	status_label.text = "ПОДСКАЗКА: Формула N = 2^i. Ищи степень двойки >= N."
 	status_label.add_theme_color_override("font_color", Color(0.5, 0.8, 1))
 
@@ -340,8 +357,8 @@ func _on_details_toggle():
 	var is_open = not details_sheet.visible
 	details_sheet.visible = is_open
 	dimmer.visible = is_open
-	btn_details.text = "Скрыть ▴" if is_open else "Подробнее ▾"
+	btn_details_main.text = "Скрыть ▴" if is_open else "Подробнее ▾"
 
 func _on_dimmer_gui_input(event):
 	if (event is InputEventMouseButton and event.pressed) or (event is InputEventScreenTouch and event.pressed):
-		_on_details_toggle() # Close on click/tap
+		_on_details_toggle()
