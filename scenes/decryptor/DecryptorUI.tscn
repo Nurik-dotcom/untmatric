@@ -1,0 +1,330 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4p1o1h01r4g6"]
+
+[ext_resource type="Theme" path="res://ui/theme_untformatic.tres" id="1_theme"]
+
+[node name="DecryptorUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Main" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HeaderBar" type="PanelContainer" parent="SafeArea/Main"]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+theme_type_variation = "HeaderPanel"
+
+[node name="HeaderContent" type="HBoxContainer" parent="SafeArea/Main/HeaderBar"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="BtnBack" type="Button" parent="SafeArea/Main/HeaderBar/HeaderContent"]
+custom_minimum_size = Vector2(60, 52)
+layout_mode = 2
+text = "<"
+
+[node name="ModeChip" type="PanelContainer" parent="SafeArea/Main/HeaderBar/HeaderContent"]
+custom_minimum_size = Vector2(72, 40)
+layout_mode = 2
+
+[node name="ModeLabel" type="Label" parent="SafeArea/Main/HeaderBar/HeaderContent/ModeChip"]
+layout_mode = 2
+text = "DEC"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Spacer1" type="Control" parent="SafeArea/Main/HeaderBar/HeaderContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LevelLabel" type="Label" parent="SafeArea/Main/HeaderBar/HeaderContent"]
+layout_mode = 2
+text = "PROTOCOL A-1"
+
+[node name="Spacer2" type="Control" parent="SafeArea/Main/HeaderBar/HeaderContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StabilityGroup" type="VBoxContainer" parent="SafeArea/Main/HeaderBar/HeaderContent"]
+layout_mode = 2
+
+[node name="StabilityText" type="Label" parent="SafeArea/Main/HeaderBar/HeaderContent/StabilityGroup"]
+layout_mode = 2
+text = "STABILITY: 100%"
+
+[node name="StabilityBar" type="ProgressBar" parent="SafeArea/Main/HeaderBar/HeaderContent/StabilityGroup"]
+custom_minimum_size = Vector2(160, 18)
+layout_mode = 2
+min_value = 0.0
+max_value = 100.0
+value = 100.0
+percent_visible = false
+
+[node name="Shields" type="HBoxContainer" parent="SafeArea/Main/HeaderBar/HeaderContent"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ShieldFreq" type="Label" parent="SafeArea/Main/HeaderBar/HeaderContent/Shields"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+text = "F"
+
+[node name="ShieldLazy" type="Label" parent="SafeArea/Main/HeaderBar/HeaderContent/Shields"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+text = "L"
+
+[node name="BtnDetails" type="Button" parent="SafeArea/Main/HeaderBar/HeaderContent"]
+custom_minimum_size = Vector2(64, 48)
+layout_mode = 2
+text = "LOG"
+
+[node name="InstrumentArea" type="VBoxContainer" parent="SafeArea/Main"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TargetPanel" type="PanelContainer" parent="SafeArea/Main/InstrumentArea"]
+layout_mode = 2
+
+[node name="TargetContent" type="VBoxContainer" parent="SafeArea/Main/InstrumentArea/TargetPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TargetTitle" type="Label" parent="SafeArea/Main/InstrumentArea/TargetPanel/TargetContent"]
+layout_mode = 2
+text = "TARGET"
+
+[node name="TargetValueBig" type="Label" parent="SafeArea/Main/InstrumentArea/TargetPanel/TargetContent"]
+layout_mode = 2
+text = "00"
+theme_override_font_sizes/font_size = 36
+horizontal_alignment = 1
+
+[node name="TargetSub" type="Label" parent="SafeArea/Main/InstrumentArea/TargetPanel/TargetContent"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+
+[node name="InputPanel" type="PanelContainer" parent="SafeArea/Main/InstrumentArea"]
+layout_mode = 2
+
+[node name="InputContent" type="VBoxContainer" parent="SafeArea/Main/InstrumentArea/InputPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="InputBin" type="Label" parent="SafeArea/Main/InstrumentArea/InputPanel/InputContent"]
+layout_mode = 2
+text = "BIN: 0000 0000"
+
+[node name="InputBasesRow" type="HBoxContainer" parent="SafeArea/Main/InstrumentArea/InputPanel/InputContent"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="InputDec" type="Label" parent="SafeArea/Main/InstrumentArea/InputPanel/InputContent/InputBasesRow"]
+layout_mode = 2
+text = "DEC: 0"
+
+[node name="InputOct" type="Label" parent="SafeArea/Main/InstrumentArea/InputPanel/InputContent/InputBasesRow"]
+layout_mode = 2
+text = "OCT: 0"
+
+[node name="InputHex" type="Label" parent="SafeArea/Main/InstrumentArea/InputPanel/InputContent/InputBasesRow"]
+layout_mode = 2
+text = "HEX: 0"
+
+[node name="SwitchesPanel" type="PanelContainer" parent="SafeArea/Main/InstrumentArea"]
+layout_mode = 2
+
+[node name="SwitchesContent" type="VBoxContainer" parent="SafeArea/Main/InstrumentArea/SwitchesPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="NibblesRow" type="HBoxContainer" parent="SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="UpperNibble" type="VBoxContainer" parent="SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent/NibblesRow"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="UpperTitle" type="Label" parent="SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent/NibblesRow/UpperNibble"]
+layout_mode = 2
+text = "HIGH"
+
+[node name="UpperBits" type="HBoxContainer" parent="SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent/NibblesRow/UpperNibble"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LowerNibble" type="VBoxContainer" parent="SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent/NibblesRow"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="LowerTitle" type="Label" parent="SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent/NibblesRow/LowerNibble"]
+layout_mode = 2
+text = "LOW"
+
+[node name="LowerBits" type="HBoxContainer" parent="SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent/NibblesRow/LowerNibble"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="WeightsRow" type="HBoxContainer" parent="SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BottomBar" type="PanelContainer" parent="SafeArea/Main"]
+layout_mode = 2
+theme_type_variation = "HeaderPanel"
+
+[node name="Actions" type="HBoxContainer" parent="SafeArea/Main/BottomBar"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="BtnHint" type="Button" parent="SafeArea/Main/BottomBar/Actions"]
+custom_minimum_size = Vector2(120, 56)
+layout_mode = 2
+text = "HINT"
+
+[node name="BtnCheck" type="Button" parent="SafeArea/Main/BottomBar/Actions"]
+custom_minimum_size = Vector2(160, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "CHECK"
+theme_type_variation = "PrimaryButton"
+
+[node name="BtnReset" type="Button" parent="SafeArea/Main/BottomBar/Actions"]
+custom_minimum_size = Vector2(120, 56)
+layout_mode = 2
+text = "RESET"
+
+[node name="ToastLayer" type="CanvasLayer" parent="."]
+
+[node name="Toast" type="PanelContainer" parent="ToastLayer"]
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -180
+offset_top = -120
+offset_right = 180
+offset_bottom = -60
+
+[node name="ToastLabel" type="Label" parent="ToastLayer/Toast"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DetailsSheet" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 13
+anchor_left = 0.0
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -360
+offset_bottom = 0
+
+[node name="DetailsContent" type="VBoxContainer" parent="DetailsSheet"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DetailsHeader" type="HBoxContainer" parent="DetailsSheet/DetailsContent"]
+layout_mode = 2
+
+[node name="DetailsTitle" type="Label" parent="DetailsSheet/DetailsContent/DetailsHeader"]
+layout_mode = 2
+text = "DETAILS"
+
+[node name="BtnCloseDetails" type="Button" parent="DetailsSheet/DetailsContent/DetailsHeader"]
+custom_minimum_size = Vector2(80, 40)
+layout_mode = 2
+text = "CLOSE"
+
+[node name="DetailsScroll" type="ScrollContainer" parent="DetailsSheet/DetailsContent"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 260)
+
+[node name="DetailsText" type="RichTextLabel" parent="DetailsSheet/DetailsContent/DetailsScroll"]
+layout_mode = 2
+bbcode_enabled = true
+text = ""
+
+[node name="SafeModeOverlay" type="CanvasLayer" parent="."]
+visible = false
+
+[node name="Dim" type="ColorRect" parent="SafeModeOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="CenterContainer" type="CenterContainer" parent="SafeModeOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SafePanel" type="PanelContainer" parent="SafeModeOverlay/CenterContainer"]
+custom_minimum_size = Vector2(0, 360)
+layout_mode = 2
+
+[node name="SafeContent" type="VBoxContainer" parent="SafeModeOverlay/CenterContainer/SafePanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SafeTitle" type="Label" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
+layout_mode = 2
+text = "SAFE MODE: ERROR ANALYSIS"
+
+[node name="SafeSummary" type="RichTextLabel" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 80)
+bbcode_enabled = true
+text = ""
+
+[node name="SafeBitsRow" type="HBoxContainer" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SafeActions" type="HBoxContainer" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnRetry" type="Button" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeActions"]
+custom_minimum_size = Vector2(120, 56)
+layout_mode = 2
+text = "RETRY"
+
+[node name="BtnContinue" type="Button" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeActions"]
+custom_minimum_size = Vector2(120, 56)
+layout_mode = 2
+text = "CONTINUE"

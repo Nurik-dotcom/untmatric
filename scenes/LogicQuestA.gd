@@ -17,91 +17,97 @@ const VERDICT_LOCK_TIME = 2.0
 
 # Cases Data
 const CASES = [
-	# --- PHASE 1: TRAINING (Words -> Logic) ---
 	{
 		"id": "A1_01", "phase": PHASE_TRAINING, "gate": GATE_AND,
-		"a_text": "КЛЮЧ", "b_text": "КНОПКА",
-		"witness_text": "Машина заводится только когда вставлен КЛЮЧ [b]И[/b] нажата КНОПКА.",
-		"min_seen": 2, "hints": ["Оба условия должны быть 1.", "Это конъюнкция (&)."]
+		"a_text": "КЛЮЧ", "b_text": "СТАРТ",
+		"witness_text": "Машина заведется, если есть КЛЮЧ и нажата кнопка СТАРТ.",
+		"min_seen": 2, "hints": ["Нужны оба условия.", "Это AND (И)."]
 	},
 	{
 		"id": "A1_02", "phase": PHASE_TRAINING, "gate": GATE_OR,
 		"a_text": "ДОЖДЬ", "b_text": "СНЕГ",
-		"witness_text": "Я промокну, если пойдет ДОЖДЬ [b]ИЛИ[/b] если пойдет СНЕГ.",
-		"min_seen": 2, "hints": ["Хотя бы одно условие истинно.", "Это дизъюнкция (1/v)."]
+		"witness_text": "Вы промокнете, если идет ДОЖДЬ или СНЕГ (зонта нет).",
+		"min_seen": 2, "hints": ["Достаточно одного условия.", "Это OR (ИЛИ)."]
 	},
 	{
-		"id": "A1_03", "phase": PHASE_TRAINING, "gate": GATE_NOT,
-		"a_text": "СВЕТ", "b_text": "---",
-		"witness_text": "Датчик работает наоборот: если СВЕТ есть, сигнала [b]НЕТ[/b].",
-		"min_seen": 2, "hints": ["Инверсия: 1->0, 0->1.", "Это НЕ (¬)."]
+		"id": "A1_03", "phase": PHASE_TRAINING, "gate": GATE_AND,
+		"a_text": "ПАРОЛЬ", "b_text": "ТЕЛЕФОН",
+		"witness_text": "Вход в почту разрешен, если введен ПАРОЛЬ и пройден ТЕЛЕФОН.",
+		"min_seen": 2, "hints": ["Нужны оба условия.", "Это AND (И)."]
 	},
 	{
-		"id": "A1_04", "phase": PHASE_TRAINING, "gate": GATE_XOR,
-		"a_text": "РЫЧАГ A", "b_text": "РЫЧАГ B",
-		"witness_text": "Дверь открывается, если нажат [b]ТОЛЬКО ОДИН[/b] из рычагов.",
-		"min_seen": 3, "hints": ["Разные входы дают 1.", "Исключающее ИЛИ (⊕)."]
+		"id": "A1_04", "phase": PHASE_TRAINING, "gate": GATE_OR,
+		"a_text": "ВЫКЛ_1", "b_text": "ВЫКЛ_2",
+		"witness_text": "Свет в коридоре горит, если включен ВЫКЛ_1 или ВЫКЛ_2.",
+		"min_seen": 2, "hints": ["Достаточно одного выключателя.", "Это OR (ИЛИ)."]
 	},
-
-	# --- PHASE 2: TRANSLATION (Symbols) ---
+	{
+		"id": "A1_05", "phase": PHASE_TRAINING, "gate": GATE_NOT,
+		"a_text": "СИГНАЛ", "b_text": "---",
+		"witness_text": "Детектор лжи инвертирует сигнал: если на входе НЕТ, на выходе ДА.",
+		"min_seen": 2, "hints": ["Инверсия: 1->0, 0->1.", "Это NOT (НЕ)."]
+	},
 	{
 		"id": "A2_01", "phase": PHASE_TRANSLATION, "gate": GATE_AND,
 		"a_text": "A", "b_text": "B",
-		"witness_text": "В документации указан символ [b]&[/b]. Проверь, как он работает.",
-		"min_seen": 2, "hints": ["& означает И.", "Только 1 & 1 = 1."]
+		"witness_text": "Логическое И обозначается символом &. Найдите его.",
+		"min_seen": 2, "hints": ["& это И.", "Конъюнкция."]
 	},
 	{
 		"id": "A2_02", "phase": PHASE_TRANSLATION, "gate": GATE_OR,
 		"a_text": "A", "b_text": "B",
-		"witness_text": "На схеме стоит [b]1[/b] (или v). Это Дизъюнкция.",
-		"min_seen": 2, "hints": ["ИЛИ.", "Дает 1, если есть хоть одна 1."]
+		"witness_text": "Логическое ИЛИ обозначается символом ∨. Найдите его.",
+		"min_seen": 2, "hints": ["∨ это ИЛИ.", "Дизъюнкция."]
 	},
 	{
 		"id": "A2_03", "phase": PHASE_TRANSLATION, "gate": GATE_NOT,
 		"a_text": "A", "b_text": "---",
-		"witness_text": "Символ [b]¬[/b] означает инверсию.",
-		"min_seen": 2, "hints": ["Меняет значение на обратное.", "НЕ."]
+		"witness_text": "Инверсия обозначается символом ¬. Найдите его.",
+		"min_seen": 2, "hints": ["¬ это НЕ.", "Отрицание."]
 	},
 	{
 		"id": "A2_04", "phase": PHASE_TRANSLATION, "gate": GATE_XOR,
 		"a_text": "A", "b_text": "B",
-		"witness_text": "Символ [b]⊕[/b] — сумма по модулю 2.",
-		"min_seen": 3, "hints": ["Разные — 1, одинаковые — 0.", "XOR."]
+		"witness_text": "Исключающее ИЛИ обозначается символом ⊕. Найдите его.",
+		"min_seen": 2, "hints": ["⊕ это XOR.", "Истина при разных входах."]
 	},
-
-	# --- PHASE 3: DETECTION (Pure Logic) ---
 	{
-		"id": "A3_01", "phase": PHASE_DETECTION, "gate": GATE_NAND,
-		"a_text": "X", "b_text": "Y",
-		"witness_text": "Лампа погасла (0) только тогда, когда включили [b]ОБА[/b] рубильника.",
-		"min_seen": 3, "hints": ["0 только при (1,1).", "NAND (Штрих Шеффера)."]
+		"id": "A2_05", "phase": PHASE_TRANSLATION, "gate": GATE_NOR,
+		"a_text": "A", "b_text": "B",
+		"witness_text": "Стрелка Пирса (ИЛИ-НЕ) обозначается символом ⊽.",
+		"min_seen": 2, "hints": ["Это инверсия ИЛИ.", "NOR."]
+	},
+	{
+		"id": "A3_01", "phase": PHASE_DETECTION, "gate": GATE_NOR,
+		"a_text": "КОД_1", "b_text": "КОД_2",
+		"witness_text": "Сейф открылся (1), когда оба кода были неверны (0,0).",
+		"min_seen": 3, "hints": ["Выход 1 только при 0,0.", "Это NOR."]
 	},
 	{
 		"id": "A3_02", "phase": PHASE_DETECTION, "gate": GATE_XOR,
-		"a_text": "S1", "b_text": "S2",
-		"witness_text": "Аномалия регистрируется, когда сигналы [b]РАЗЛИЧАЮТСЯ[/b].",
-		"min_seen": 3, "hints": ["0,1 -> 1; 1,0 -> 1.", "XOR."]
+		"a_text": "ДАТЧИК_1", "b_text": "ДАТЧИК_2",
+		"witness_text": "Сигнализация молчит (0), только когда сигналы совпадают.",
+		"min_seen": 3, "hints": ["Истина при разных входах.", "Это XOR."]
 	},
 	{
 		"id": "A3_03", "phase": PHASE_DETECTION, "gate": GATE_NOR,
-		"a_text": "SENSE_A", "b_text": "SENSE_B",
-		"witness_text": "Система спокойна (1), только если [b]ОБА[/b] датчика молчат (0).",
-		"min_seen": 3, "hints": ["1 только при (0,0).", "NOR (Стрелка Пирса)."]
+		"a_text": "РЫЧАГ_1", "b_text": "РЫЧАГ_2",
+		"witness_text": "Замок заклинит (0), если нажать хотя бы один рычаг.",
+		"min_seen": 3, "hints": ["Выход 1 только при 0,0.", "Это NOR."]
 	},
 	{
-		"id": "A3_04", "phase": PHASE_DETECTION, "gate": GATE_AND,
-		"a_text": "KEY_1", "b_text": "KEY_2",
-		"witness_text": "Сейф открылся (1). Значит, [b]ОБА[/b] ключа повернули.",
-		"min_seen": 2, "hints": ["Нужны оба.", "AND."]
+		"id": "A3_04", "phase": PHASE_DETECTION, "gate": GATE_XOR,
+		"a_text": "ЧАСТОТА_1", "b_text": "ЧАСТОТА_2",
+		"witness_text": "Перехват данных (1) идет только при разных частотах.",
+		"min_seen": 3, "hints": ["Разные входы дают 1.", "Это XOR."]
 	},
 	{
-		"id": "A3_05", "phase": PHASE_DETECTION, "gate": GATE_OR,
-		"a_text": "BTN_1", "b_text": "BTN_2",
-		"witness_text": "Лифт поехал (1). Кто-то нажал кнопку [b]ЗДЕСЬ[/b] или [b]ТАМ[/b].",
-		"min_seen": 2, "hints": ["Хватит одной кнопки.", "OR."]
+		"id": "A3_05", "phase": PHASE_DETECTION, "gate": GATE_NAND,
+		"a_text": "X", "b_text": "Y",
+		"witness_text": "Нужен вентиль, дающий ЛОЖЬ только при двух ИСТИНАХ.",
+		"min_seen": 3, "hints": ["0 только при 1,1.", "Это NAND."]
 	}
 ]
-
 # --- UI NODES ---
 @onready var stability_label = $MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/StabilityLabel
 @onready var stats_label = $MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/StatsLabel
@@ -169,10 +175,10 @@ func _setup_gate_selector():
 	# Using strict ENT symbols as requested
 	gate_selector.add_item(" &  (AND)", 1)
 	gate_selector.add_item(" 1  (OR)", 2)
-	gate_selector.add_item(" ¬  (NOT)", 3)
-	gate_selector.add_item(" ⊕  (XOR)", 4)
+	gate_selector.add_item(" ﾂｬ  (NOT)", 3)
+	gate_selector.add_item(" 竓・ (XOR)", 4)
 	gate_selector.add_item(" |  (NAND)", 5)
-	gate_selector.add_item(" ↓  (NOR)", 6)
+	gate_selector.add_item(" 竊・ (NOR)", 6)
 
 	gate_selector.set_item_metadata(1, GATE_AND)
 	gate_selector.set_item_metadata(2, GATE_OR)
@@ -308,7 +314,7 @@ func _on_verdict_pressed():
 	# Anti-spam
 	var current_time = Time.get_ticks_msec() / 1000.0
 	if current_time - last_verdict_time < 0.8:
-		_show_feedback("Не тыкай. Проверь факты.", Color(1, 0.5, 0))
+		_show_feedback("ﾐ斷ｵ ﾑび巾ｺﾐｰﾐｹ. ﾐ湲ﾐｾﾐｲﾐｵﾑﾑ・ﾑ・ｰﾐｺﾑび・", Color(1, 0.5, 0))
 		_lock_verdict(3.0)
 		return
 	last_verdict_time = current_time
@@ -370,12 +376,12 @@ func _enter_safe_mode():
 	match current_case.gate:
 		GATE_AND: gate_symbol = "& (AND)"
 		GATE_OR: gate_symbol = "1 (OR)"
-		GATE_NOT: gate_symbol = "¬ (NOT)"
-		GATE_XOR: gate_symbol = "⊕ (XOR)"
+		GATE_NOT: gate_symbol = "ﾂｬ (NOT)"
+		GATE_XOR: gate_symbol = "竓・(XOR)"
 		GATE_NAND: gate_symbol = "| (NAND)"
-		GATE_NOR: gate_symbol = "↓ (NOR)"
+		GATE_NOR: gate_symbol = "竊・(NOR)"
 
-	_show_feedback("SAFE MODE: правильный вентиль — %s. Система сброшена." % gate_symbol, Color(1, 0.5, 0))
+	_show_feedback("SAFE MODE: ﾐｿﾑﾐｰﾐｲﾐｸﾐｻﾑ糊ｽﾑ巾ｹ ﾐｲﾐｵﾐｽﾑひｸﾐｻﾑ・窶・%s. ﾐ｡ﾐｸﾑ・ひｵﾐｼﾐｰ ﾑ・ｱﾑﾐｾﾑ威ｵﾐｽﾐｰ." % gate_symbol, Color(1, 0.5, 0))
 
 func _show_feedback(msg: String, col: Color):
 	feedback_label.text = msg
