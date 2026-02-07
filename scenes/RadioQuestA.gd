@@ -19,6 +19,7 @@ extends Control
 
 @onready var sample_strip = $SafeArea/MainVBox/Bottom/SampleStrip
 @onready var btn_hint = $SafeArea/MainVBox/Bottom/ActionsRow/BtnHint
+@onready var btn_analyze = $SafeArea/MainVBox/Bottom/ActionsRow/BtnAnalyze
 @onready var btn_capture = $SafeArea/MainVBox/Bottom/ActionsRow/BtnCapture
 @onready var btn_next = $SafeArea/MainVBox/Bottom/ActionsRow/BtnNext
 @onready var status_label = $SafeArea/MainVBox/Bottom/StatusLabel
@@ -36,6 +37,17 @@ var target_bits: int = 0
 var current_bits: int = 1
 var pool_type: String = "NORMAL"
 
+enum Phase { TUNE, ANALYZE, DONE }
+var trial_phase: Phase = Phase.TUNE
+
+# Tracking Metrics
+var analyze_count: int = 0
+var knob_change_count: int = 0
+var direction_change_count: int = 0
+var cross_target_count: int = 0
+var last_diff_sign: int = 0 # -1, 0, 1
+var last_change_time: float = 0.0
+
 # Time & Forced Sampling
 var start_time: float = 0.0
 var time_accum: float = 0.0
@@ -47,6 +59,10 @@ var forced_sampling: bool = false
 var trial_duration: float = 30.0
 var time_remaining: float = 0.0
 
+# Analysis Timer
+var analysis_timer: float = 0.0
+const ANALYSIS_DURATION: float = 1.5
+
 # Anchors
 var anchor_countdown: int = 0
 const ANCHOR_POOL = [100, 500, 1000]
@@ -54,7 +70,6 @@ const POWERS_OF_2 = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 const TRAPS = [10, 50, 2000]
 
 # Trial
-var trial_active: bool = false
 var hint_used: bool = false
 var trial_history_ui: Array = []
 var current_trial_idx: int = 0
@@ -67,8 +82,6 @@ const COLOR_RED = Color(1, 0, 0)
 func _ready():
 	GlobalMetrics.stability_changed.connect(_update_stability_ui)
 	_update_stability_ui(GlobalMetrics.stability, 0)
-
-	# Center osc roughly in its layer (handled by layout logic in process)
 
 	_init_sampling_bar()
 	anchor_countdown = randi_range(7, 10)
@@ -101,18 +114,27 @@ func _update_stability_ui(val, _change):
 	stability_label.add_theme_color_override("font_color", col)
 
 func generate_task():
-	trial_active = true
+	trial_phase = Phase.TUNE
 	hint_used = false
 	start_time = Time.get_ticks_msec() / 1000.0
 	first_action_timestamp = -1.0
 
+	# Reset Metrics
+	analyze_count = 0
+	knob_change_count = 0
+	direction_change_count = 0
+	cross_target_count = 0
+	last_diff_sign = 0
+	last_change_time = start_time
+
 	btn_capture.visible = true
-	btn_capture.disabled = false
+	btn_capture.disabled = true # Disabled until Analyze
+	btn_analyze.disabled = false
 	btn_next.visible = false
 	btn_hint.disabled = false
+	bit_knob.mouse_filter = Control.MOUSE_FILTER_STOP # Enable knob
 
-	# Reset status
-	status_label.text = "СТАТУС: ОЖИДАНИЕ ВВОДА..."
+	status_label.text = "СТАТУС: Настрой частоту, затем нажми «АНАЛИЗ»."
 	status_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
 	# Mode Logic
@@ -146,69 +168,106 @@ func generate_task():
 	# Update Task UI
 	task_main_label.text = "АЛФАВИТ: N = %d" % target_n
 
-	# Reset Knob
+	# Reset Knob logic
 	current_bits = 1
 	bit_knob.value = 1
-	apply_user_bits(1)
 
-	# Reset timestamp AFTER ui update so init doesn't count as action
+	# Initial UI update (doesn't count as action)
+	_update_ui_state(1)
+
+	# Reset timestamp again to be safe
 	first_action_timestamp = -1.0
 
 func _process(delta):
 	time_accum += delta * 5.0
 
-	if trial_active and is_timed_mode:
+	if trial_phase != Phase.DONE and is_timed_mode:
 		time_remaining -= delta
 		var secs = int(ceil(time_remaining))
 		timer_label.text = "00:%02d" % max(0, secs)
 		if time_remaining <= 0:
 			_force_fail_timeout()
 
+	if trial_phase == Phase.ANALYZE:
+		analysis_timer -= delta
+		if analysis_timer <= 0:
+			_complete_analysis()
+
 	_update_oscilloscope()
 
 func _update_oscilloscope():
 	var points = PackedVector2Array()
-	var layer = wave_line.get_parent() # OscLayer
+	var layer = wave_line.get_parent()
 	var layer_size = layer.size
 	var width = layer_size.x
 	var center_y = layer_size.y * 0.5
 
 	wave_line.position = Vector2.ZERO
 
-	var noise_amp = 0.0
 	var color = Color(0.2, 1.0, 0.2)
 
-	if current_bits < target_bits:
-		var diff = target_bits - current_bits
-		# Scale noise by height (max 35%)
-		var max_amp = layer_size.y * 0.35
-		noise_amp = (float(diff) / target_bits) * max_amp
+	# TUNE Phase: Static Noise (generic)
+	if trial_phase == Phase.TUNE:
+		# Use time-based seed but not dependent on bits
+		for x in range(0, int(width) + 10, 5):
+			# Just noise
+			var noise = randf_range(-40.0, 40.0)
+			points.append(Vector2(x, center_y + noise))
+
+	# ANALYZE / DONE Phase: True Result
+	else:
+		var noise_amp = 0.0
+		if current_bits < target_bits:
+			var diff = target_bits - current_bits
+			var max_amp = layer_size.y * 0.35
+			noise_amp = (float(diff) / target_bits) * max_amp
+
+		for x in range(0, int(width) + 10, 5):
+			var t = (float(x) / width) * 10.0 + time_accum
+			var base_y = sin(t) * (layer_size.y * 0.25)
+			var noise = randf_range(-noise_amp, noise_amp)
+			points.append(Vector2(x, center_y + base_y + noise))
 
 	wave_line.default_color = color
-
-	# Draw slightly lower resolution for performance if needed, but 5 step is fine
-	for x in range(0, int(width) + 10, 5):
-		var t = (float(x) / width) * 10.0 + time_accum
-		var base_y = sin(t) * (layer_size.y * 0.25)
-		var noise = randf_range(-noise_amp, noise_amp)
-		points.append(Vector2(x, center_y + base_y + noise))
-
 	wave_line.points = points
 
-# Unified Logic Updater
+# Called by Knob signal
 func apply_user_bits(i: int):
+	if trial_phase != Phase.TUNE: return # Should be blocked by mouse_filter, but safe check
+
 	mark_first_action()
+
+	# Metrics Tracking
+	knob_change_count += 1
+	var current_diff_sign = sign(i - current_bits)
+	if current_diff_sign != 0:
+		if last_diff_sign != 0 and current_diff_sign != last_diff_sign:
+			direction_change_count += 1
+		last_diff_sign = current_diff_sign
+
+	# Check crossing target (basic heuristic: sign of (bits - target) flipped)
+	var old_side = sign(current_bits - target_bits)
+	var new_side = sign(i - target_bits)
+	if old_side != 0 and new_side != 0 and old_side != new_side:
+		cross_target_count += 1
+
+	last_change_time = Time.get_ticks_msec() / 1000.0
 	current_bits = i
 
-	# 1. Calc Logic
-	var pow_val = int(pow(2, current_bits))
-	var is_fit = (pow_val >= target_n)
-	var is_minimal = (current_bits == target_bits)
-	var is_overkill = (is_fit and not is_minimal)
+	# Reset Analyze state
+	btn_capture.disabled = true
 
-	# 2. Update Knob/Big Labels
-	big_i_label.text = "i = %d бит" % current_bits
+	_update_ui_state(i)
+
+func _update_ui_state(i: int):
+	# Update Labels
+	big_i_label.text = "i = %d бит" % i
+	var pow_val = int(pow(2, i))
 	pow_label.text = "2^i = %d" % pow_val
+
+	var is_fit = (pow_val >= target_n)
+	var is_minimal = (i == target_bits)
+	var is_overkill = (is_fit and not is_minimal)
 
 	if is_fit:
 		fit_label.text = "ПОМЕЩАЕТСЯ: ДА"
@@ -217,30 +276,21 @@ func apply_user_bits(i: int):
 		fit_label.text = "ПОМЕЩАЕТСЯ: НЕТ"
 		fit_label.add_theme_color_override("font_color", Color(1, 0, 0))
 
-	# 3. Risk UI
 	if is_overkill:
-		var excess = current_bits - target_bits
+		var excess = i - target_bits
 		var risk_pct = min(100, excess * 25.0)
 		risk_bar.value = risk_pct
-		if risk_pct < 40:
-			risk_label.text = "РИСК: НИЗКИЙ"
-			risk_label.add_theme_color_override("font_color", Color(0, 1, 0))
-			risk_bar.modulate = Color(0, 1, 0)
-		elif risk_pct < 80:
-			risk_label.text = "РИСК: СРЕДНИЙ"
-			risk_label.add_theme_color_override("font_color", Color(1, 1, 0))
-			risk_bar.modulate = Color(1, 1, 0)
-		else:
-			risk_label.text = "РИСК: ВЫСОКИЙ"
-			risk_label.add_theme_color_override("font_color", Color(1, 0, 0))
-			risk_bar.modulate = Color(1, 0, 0)
+		risk_label.text = "РИСК: ВЫСОКИЙ" if risk_pct >= 80 else ("РИСК: СРЕДНИЙ" if risk_pct >= 40 else "РИСК: НИЗКИЙ")
+		var r_col = Color(1, 0, 0) if risk_pct >= 80 else (Color(1, 1, 0) if risk_pct >= 40 else Color(0, 1, 0))
+		risk_label.add_theme_color_override("font_color", r_col)
+		risk_bar.modulate = r_col
 	else:
 		risk_label.text = "РИСК: НЕТ"
 		risk_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
 		risk_bar.value = 0
 		risk_bar.modulate = Color(0.2, 0.2, 0.2)
 
-	# 4. Update Details Text (for the sheet)
+	# Update Details
 	details_text.text = "N: %d\nЦель i: %d\n2^i: %d\nМинимально: %s\nЯкорная: %s\nРежим: %s" % [
 		target_n,
 		target_bits,
@@ -250,23 +300,72 @@ func apply_user_bits(i: int):
 		"TIMED" if is_timed_mode else "UNTIMED"
 	]
 
+func _on_analyze_pressed():
+	mark_first_action()
+	if trial_phase != Phase.TUNE: return
+
+	analyze_count += 1
+	trial_phase = Phase.ANALYZE
+	analysis_timer = ANALYSIS_DURATION
+
+	# Lock Inputs
+	bit_knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn_analyze.disabled = true
+	btn_capture.disabled = true
+	btn_hint.disabled = true
+
+	status_label.text = "СТАТУС: Снятие показаний..."
+	status_label.add_theme_color_override("font_color", Color(1, 1, 0))
+
+func _complete_analysis():
+	# Unlock for Capture or Retuning
+	trial_phase = Phase.TUNE # Logically we are back to tuning state, but now we know result
+	# Actually, visual spec says: show result for 1.5s then...
+	# "После анализа: ... ЗАФИКСИРОВАТЬ enabled".
+	# If player moves knob, Capture disabled again.
+
+	# We can stay in TUNE phase but just keep the visual result?
+	# "В режиме TUNE: всегда статический шум".
+	# If we go back to TUNE immediately, the osc will flicker back to noise.
+	# Let's say we enter a sub-state "POST_ANALYZE" or just handle it in update_osc.
+	# "в ANALYZE на 2 сек реальный сигнал, потом обратно в TUNE".
+	# Okay, so visual goes back to noise. But Capture is enabled.
+
+	bit_knob.mouse_filter = Control.MOUSE_FILTER_STOP
+	btn_analyze.disabled = false
+	btn_capture.disabled = false
+	btn_hint.disabled = false
+
+	# Set Status based on current result
+	var pow_val = pow(2, current_bits)
+	var is_fit = (pow_val >= target_n)
+	var is_minimal = (current_bits == target_bits)
+	var is_overkill = (is_fit and not is_minimal)
+
+	if not is_fit:
+		status_label.text = "СТАТУС: Связь сорвана. Недостаточно бит."
+		status_label.add_theme_color_override("font_color", Color(1, 0, 0))
+	elif is_minimal:
+		status_label.text = "СТАТУС: Частота стабилизирована."
+		status_label.add_theme_color_override("font_color", Color(0, 1, 0))
+	elif is_overkill:
+		status_label.text = "СТАТУС: Сигнал чистый, но избыточная битность (риск)."
+		status_label.add_theme_color_override("font_color", Color(1, 1, 0))
+
 func _on_capture_pressed():
 	mark_first_action()
-	if not trial_active: return
+	if trial_phase != Phase.TUNE: return # Or post-analyze
 	_finish_trial(false)
 
 func _force_fail_timeout():
-	if not trial_active: return
+	if trial_phase == Phase.DONE: return
 	_finish_trial(true)
 
 func _finish_trial(is_timeout: bool):
-	trial_active = false
-	# Lock knob interaction by removing input processing if needed,
-	# but setting a flag in BitKnob is better. For now we just ignore inputs in logic?
-	# Or disabling the knob node:
+	trial_phase = Phase.DONE
 	bit_knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
 	btn_capture.visible = false
+	btn_analyze.disabled = true
 	btn_next.visible = true
 	btn_hint.disabled = true
 
@@ -282,32 +381,15 @@ func _finish_trial(is_timeout: bool):
 		is_fit = false
 		is_minimal = false
 		is_overkill = false
-
-	if not is_fit:
-		status_label.text = "СТАТУС: Связь сорвана. Недостаточно бит."
+		status_label.text = "СТАТУС: ВРЕМЯ ИСТЕКЛО."
 		status_label.add_theme_color_override("font_color", Color(1, 0, 0))
-	elif is_minimal:
-		status_label.text = "СТАТУС: Частота стабилизирована. Канал чистый."
-		status_label.add_theme_color_override("font_color", Color(0, 1, 0))
-	elif is_overkill:
-		status_label.text = "СТАТУС: Сигнал чистый, но есть риск демаскировки."
-		status_label.add_theme_color_override("font_color", Color(1, 1, 0))
 
-	# Sampling Bar Update
-	if current_trial_idx < trial_history_ui.size():
-		var slot = trial_history_ui[current_trial_idx]
-		var bg = slot.get_node("BG")
-		var mark = slot.get_node("AnchorMark")
+	# Certainty Logic
+	var is_low_certainty = false
+	if cross_target_count >= 2 or direction_change_count >= 3 or analyze_count >= 3 or knob_change_count >= 6:
+		is_low_certainty = true
 
-		if not is_fit: bg.color = COLOR_RED
-		elif is_minimal: bg.color = COLOR_GREEN
-		elif is_overkill: bg.color = COLOR_YELLOW
-
-		if pool_type == "ANCHOR":
-			mark.visible = true
-
-		current_trial_idx = (current_trial_idx + 1) % 7
-
+	# Payload
 	if first_action_timestamp > 0:
 		prev_time_to_first_action = first_action_timestamp - start_time
 	else:
@@ -329,23 +411,40 @@ func _finish_trial(is_timeout: bool):
 		"mode": "TIMED" if is_timed_mode else "UNTIMED",
 		"forced_sampling": forced_sampling,
 		"hint_used": hint_used,
+		"analyze_count": analyze_count,
+		"knob_change_count": knob_change_count,
+		"direction_change_count": direction_change_count,
+		"cross_target_count": cross_target_count,
+		"certainty": "low" if is_low_certainty else "high",
+		"analysis_required": true,
 		"valid_for_diagnostics": true,
-		"valid_for_mastery": (not hint_used and is_minimal)
+		"valid_for_mastery": (not hint_used and is_minimal and not is_low_certainty)
 	}
 
 	GlobalMetrics.register_trial(payload)
 
+	# Sampling Bar Update
+	if current_trial_idx < trial_history_ui.size():
+		var slot = trial_history_ui[current_trial_idx]
+		var bg = slot.get_node("BG")
+		var mark = slot.get_node("AnchorMark")
+
+		if not is_fit: bg.color = COLOR_RED
+		elif is_minimal: bg.color = COLOR_GREEN
+		elif is_overkill: bg.color = COLOR_YELLOW
+
+		if pool_type == "ANCHOR":
+			mark.visible = true
+
+		current_trial_idx = (current_trial_idx + 1) % 7
+
 func _on_next_pressed():
-	# Unlock knob
 	bit_knob.mouse_filter = Control.MOUSE_FILTER_STOP
 	generate_task()
 
 func _on_hint_pressed():
 	mark_first_action()
 	hint_used = true
-	# Show hint in status or open details?
-	# Spec says just "ПОДСКАЗКА" button.
-	# Let's show in status for now.
 	status_label.text = "ПОДСКАЗКА: Формула N = 2^i. Ищи степень двойки >= N."
 	status_label.add_theme_color_override("font_color", Color(0.5, 0.8, 1))
 
