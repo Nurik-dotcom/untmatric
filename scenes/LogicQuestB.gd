@@ -34,26 +34,9 @@ const CASES = [
 	{
 		"id": "B_03",
 		"layout": LAYOUT_CASCADE_TOP,
-		"story": "Запуск (1): Нужен [b]КОД_А[/b] и [b]КОД_B[/b], но [b]БЛОКИРОВКА[/b] должна быть снята (0).",
-		"labels": ["КОД А", "КОД B", "БЛОК"],
-		# A and B -> Res. Res and (NOT C)? Wait, we don't have a NOT gate on wire C in layout.
-		# We must use logic gates. "And NOT C" is impossible without a NOT gate or specific logic.
-		# Maybe "Res AND Block" where Block is 0? No, that gives 0.
-		# Maybe we use a specific gate combination?
-		# Or rely on "Blocking is OFF (0)" implies we need a gate that gives 1 when C=0.
-		# Example: (A AND B) ... C. If C=0, we want 1. If C=1, we want 0.
-		# (Res) AND (NOT C) -> If we can't place NOT, maybe we use a gate like...
-		# Actually, let's keep it simple for now or assume NOT is available as a chip.
-		# Case: "Code A XOR Code B" then "OR Key".
-		"correct_gates": [GATE_AND, GATE_XOR], # Just a placeholder logic for now to match story roughly or change story.
-		# Let's change story to fit standard gates:
-		# "Launch if (A and B) are same, OR if C is active."
-		"story": "Запуск (1): Если [b]СИГНАЛ_А[/b] и [b]СИГНАЛ_B[/b] совпадают, ИЛИ если [b]АВАРИЙНЫЙ[/b] тумблер включен.",
-		"labels": ["СИГНАЛ А", "СИГНАЛ B", "АВАРИЯ"],
-		"correct_gates": [GATE_XOR, GATE_NAND], # Same = NOT XOR? Or XNOR? We don't have XNOR.
-		# Let's use simple logic: (A OR B) AND C.
+		"story": "Доступ (1): Достаточно одного из ключей ([b]КЛЮЧ_А[/b] или [b]КЛЮЧ_B[/b]), но [b]РУБИЛЬНИК[/b] должен быть включен.",
+		"labels": ["КЛЮЧ А", "КЛЮЧ B", "РУБИЛЬНИК"],
 		"correct_gates": [GATE_OR, GATE_AND],
-		"story": "Доступ (1): Достаточно одного из ключей ([b]А[/b] или [b]B[/b]), но [b]РУБИЛЬНИК[/b] должен быть включен.",
 		"hint": "Ключи через ИЛИ, результат с рубильником через И."
 	},
 	{
