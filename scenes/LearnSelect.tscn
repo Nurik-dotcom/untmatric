@@ -1,0 +1,100 @@
+﻿[gd_scene load_steps=2 format=3 uid="uid://d2r81qjl2u0td"]
+
+[ext_resource type="Script" path="res://scenes/LearnSelect.gd" id="1_script"]
+
+[node name="LearnSelect" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.09, 0.12, 1)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 30
+alignment = 1
+
+[node name="Title" type="Label" parent="MainLayout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 54
+text = "Обучение"
+horizontal_alignment = 1
+
+[node name="QuestGrid" type="GridContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 4
+
+[node name="CluesButton" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(260, 160)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Улики"
+
+[node name="RadioButton" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(260, 160)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Радиоперехват"
+
+[node name="DecryptorButton" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(260, 160)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Дешифрование"
+
+[node name="LieDetectorButton" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(260, 160)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Детектор лжи"
+
+[node name="SuspectScriptButton" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(260, 160)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Скрипт"
+
+[node name="CityMapButton" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(260, 160)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Карта"
+
+[node name="DataArchiveButton" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(260, 160)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Архив"
+
+[node name="FinalReportButton" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(260, 160)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Отчет"
+
+[node name="StatusLabel" type="Label" parent="MainLayout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 20
+text = "Выберите модуль обучения"
+horizontal_alignment = 1
