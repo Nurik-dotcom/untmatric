@@ -98,7 +98,7 @@ func _on_decryptor_pressed():
 func _on_lie_detector_pressed():
 	selected_quest_type = QuestType.LOGIC_GATE
 	btn_complexity_b.disabled = false
-	btn_complexity_c.disabled = true
+	btn_complexity_c.disabled = false
 	modal.visible = true
 
 func _on_locked_pressed():
@@ -119,9 +119,10 @@ func _on_complexity_b_pressed():
 		get_tree().change_scene_to_file("res://scenes/LogicQuestB.tscn")
 
 func _on_complexity_c_pressed():
-	if selected_quest_type != QuestType.DECRYPTOR:
-		return
-	get_tree().change_scene_to_file("res://scenes/MatrixDecryptor.tscn")
+	if selected_quest_type == QuestType.DECRYPTOR:
+		get_tree().change_scene_to_file("res://scenes/MatrixDecryptor.tscn")
+	elif selected_quest_type == QuestType.LOGIC_GATE:
+		get_tree().change_scene_to_file("res://scenes/LogicQuestC.tscn")
 
 func _on_close_modal_pressed():
 	modal.visible = false
