@@ -109,10 +109,20 @@ func generate_task() -> void:
 	start_time = Time.get_ticks_msec() / 1000.0
 	first_action_timestamp = -1.0
 
+	# Reset Metrics
+	analyze_count = 0
+	knob_change_count = 0
+	direction_change_count = 0
+	cross_target_count = 0
+	last_diff_sign = 0
+	last_change_time = start_time
+
 	btn_capture.visible = true
-	btn_capture.disabled = false
+	btn_capture.disabled = true # Disabled until Analyze
+	btn_analyze.disabled = false
 	btn_next.visible = false
 	btn_hint.disabled = false
+	bit_knob.mouse_filter = Control.MOUSE_FILTER_STOP # Enable knob
 
 	status_label.text = "STATUS: Configure bits and capture signal."
 	status_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
@@ -162,6 +172,10 @@ func apply_user_bits(i: int, from_user: bool = true) -> void:
 
 	big_i_label.text = "i = %d bit" % current_bits
 	pow_label.text = "2^i = %d" % pow_val
+
+	var is_fit = (pow_val >= target_n)
+	var is_minimal = (i == target_bits)
+	var is_overkill = (is_fit and not is_minimal)
 
 	if is_fit:
 		fit_label.text = "FIT: YES"
@@ -239,6 +253,7 @@ func _force_fail_timeout() -> void:
 func _finish_trial(is_timeout: bool) -> void:
 	trial_active = false
 	btn_capture.visible = false
+	btn_analyze.disabled = true
 	btn_next.visible = true
 	btn_hint.disabled = true
 

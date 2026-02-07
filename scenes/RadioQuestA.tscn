@@ -473,6 +473,14 @@ theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
 text = "HINT"
 
+[node name="BtnAnalyze" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
+custom_minimum_size = Vector2(140, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "АНАЛИЗ"
+
 [node name="BtnCapture" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
 custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
@@ -561,6 +569,7 @@ environment = SubResource("Environment_glow")
 [connection signal="value_changed" from="SafeArea/MainVBox/ControlCard/ControlHBox/KnobStack/BitKnob" to="." method="apply_user_bits"]
 [connection signal="pressed" from="SafeArea/MainVBox/Bottom/DetailsRow/BtnDetails" to="." method="_on_details_toggle"]
 [connection signal="pressed" from="SafeArea/MainVBox/Bottom/ActionsRow/BtnHint" to="." method="_on_hint_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/Bottom/ActionsRow/BtnAnalyze" to="." method="_on_analyze_pressed"]
 [connection signal="pressed" from="SafeArea/MainVBox/Bottom/ActionsRow/BtnCapture" to="." method="_on_capture_pressed"]
 [connection signal="pressed" from="SafeArea/MainVBox/Bottom/ActionsRow/BtnNext" to="." method="_on_next_pressed"]
 [connection signal="gui_input" from="Dimmer" to="." method="_on_dimmer_gui_input"]
