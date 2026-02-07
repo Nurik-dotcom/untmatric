@@ -25,7 +25,7 @@ var session_history: Array = []
 
 func register_trial(data: Dictionary):
 	session_history.append(data)
-	# ﾐ渙ｵﾐｴﾐｰﾐｳﾐｾﾐｳﾐｸﾑ・ｵﾑ・ｺﾐｸﾐｹ ﾐｻﾐｾﾐｳ ﾐｲ ﾐｺﾐｾﾐｽﾑ・ｾﾐｻﾑ・ﾐｴﾐｻﾑ・ﾐｾﾑひｻﾐｰﾐｴﾐｺﾐｸ
+	# Педагогический лог в консоль для отладки
 	var match_key = data.get("match_key", "UNKNOWN")
 	var is_correct = data.get("is_correct", false)
 	# Use elapsed_ms if available (Radio Quest), else duration (Legacy)
@@ -132,7 +132,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_ACTIVE",
-			"message": "ﾐ｡ﾐｸﾑ・ひｵﾐｼﾐｰ ﾐｿﾐｵﾑﾐｵﾐｳﾑﾐｵﾑひｰ. ﾐ孟ｴﾐｸﾑひｵ...",
+			"message": "Система перегрета. Ждите...",
 			"penalty": 0
 		}
 
@@ -144,7 +144,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_FREQ",
-			"message": "ﾐ岱ｻﾐｾﾐｺﾐｸﾑﾐｾﾐｲﾐｺﾐｰ: ﾐ｡ﾐｻﾐｸﾑ威ｺﾐｾﾐｼ ﾑ・ｰﾑ・ひｾ",
+			"message": "Блокировка: Слишком часто",
 			"penalty": 0
 		}
 
@@ -165,7 +165,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 	if hd == 0:
 		return {
 			"success": true,
-			"message": "ﾐ頒ｾﾑ・びσｿ ﾑﾐｰﾐｷﾑﾐｵﾑ威ｵﾐｽ",
+			"message": "Доступ разрешен",
 			"stability": stability
 		}
 	else:
@@ -190,7 +190,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 			"hamming": hd,
 			"penalty": penalty,
 			"hints": hints,
-			"message": "ﾐ樮威ｸﾐｱﾐｺﾐｰ ﾐｴﾐｾﾑ・びσｿﾐｰ. HD: %d" % hd
+			"message": "Ошибка доступа. HD: %d" % hd
 		}
 
 func _calculate_hamming_distance(a: int, b: int) -> int:
@@ -276,14 +276,14 @@ func _generate_hints(target: int, input: int, hd: int) -> Dictionary:
 func get_rank_info() -> Dictionary:
 	var idx = current_level_index
 	if idx < 5:
-		return {"name": "TRAINEE", "color": Color("888888")}
+		return {"name": "СТАЖЕР", "color": Color("888888")}
 	if idx < 10:
-		return {"name": "SIGNAL TECH", "color": Color("33ff33")}
+		return {"name": "ТЕХНИК СВЯЗИ", "color": Color("33ff33")}
 	if idx < 15:
-		return {"name": "CRYPTO ANALYST", "color": Color("33aaff")}
+		return {"name": "КРИПТО-АНАЛИТИК", "color": Color("33aaff")}
 	if idx < 30:
-		return {"name": "SYSTEMS ENGINEER", "color": Color("ffcc00")}
-	return {"name": "MONOLITH MASTER", "color": Color("ff33ff")}
+		return {"name": "ИНЖЕНЕР СИСТЕМ", "color": Color("ffcc00")}
+	return {"name": "МАСТЕР МОНОЛИТА", "color": Color("ff33ff")}
 
 # --- Matrix (Complexity C) ---
 func start_matrix_quest():

@@ -1,7 +1,9 @@
 [gd_scene load_steps=3 format=3 uid="uid://bx4x0id1k60k4"]
 
 [ext_resource type="Script" path="res://scenes/Decryptor.gd" id="1_script"]
-[ext_resource type="PackedScene" uid="uid://c4p1o1h01r4g6" path="res://scenes/decryptor/DecryptorUI.tscn" id="2_ui"]
+
+[sub_resource type="SystemFont" id="SystemFont_1"]
+font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono")
 
 [node name="Decryptor" type="Control"]
 layout_mode = 3
@@ -12,5 +14,185 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="UI" parent="." instance=ExtResource("2_ui")]
+[node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.05, 1)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="TopBar" type="HBoxContainer" parent="MainLayout"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+alignment = 1
+
+[node name="MenuButton" type="Button" parent="MainLayout/TopBar"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "МЕНЮ"
+
+[node name="SpacerLeft" type="Control" parent="MainLayout/TopBar"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+
+[node name="LevelLabel" type="Label" parent="MainLayout/TopBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
+theme_override_font_sizes/font_size = 32
+text = "LVL 01"
+
+[node name="RankLabel" type="Label" parent="MainLayout/TopBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 24
+text = "СТАЖЕР"
+
+[node name="Spacer" type="Control" parent="MainLayout/TopBar"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+
+[node name="StabilityBar" type="ProgressBar" parent="MainLayout/TopBar"]
+custom_minimum_size = Vector2(400, 40)
+layout_mode = 2
+size_flags_vertical = 4
+value = 100.0
+
+[node name="ContentContainer" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="LeftPanel" type="VBoxContainer" parent="MainLayout/ContentContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="ScreenPanel" type="PanelContainer" parent="MainLayout/ContentContainer/LeftPanel"]
+custom_minimum_size = Vector2(0, 300)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/ContentContainer/LeftPanel/ScreenPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="TargetValue" type="Label" parent="MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 128
+text = "000"
+horizontal_alignment = 1
+
+[node name="PreviewValue" type="Label" parent="MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.4, 0.4, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 48
+text = "ТЕКУЩЕЕ: 0"
+horizontal_alignment = 1
+
+[node name="SystemLabel" type="Label" parent="MainLayout/ContentContainer/LeftPanel/ScreenPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0, 1)
+theme_override_font_sizes/font_size = 32
+text = "SYSTEM: DEC"
+horizontal_alignment = 1
+
+[node name="RightPanel" type="VBoxContainer" parent="MainLayout/ContentContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="BitLabelsContainer" type="HBoxContainer" parent="MainLayout/ContentContainer/RightPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="SwitchesContainer" type="HBoxContainer" parent="MainLayout/ContentContainer/RightPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="ControlButtons" type="HBoxContainer" parent="MainLayout/ContentContainer/RightPanel"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+alignment = 1
+
+[node name="CheckButton" type="Button" parent="MainLayout/ContentContainer/RightPanel/ControlButtons"]
+custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "CHECK"
+
+[node name="FeedbackPanel" type="PanelContainer" parent="MainLayout"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+
+[node name="LogText" type="RichTextLabel" parent="MainLayout/FeedbackPanel"]
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+scroll_following = true
+
+[node name="ModeSelectionModal" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="ModeSelectionModal"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ModeSelectionModal/CenterContainer"]
+custom_minimum_size = Vector2(600, 400)
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="Title" type="Label" parent="ModeSelectionModal/CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "ВЫБОР ПРОТОКОЛА"
+horizontal_alignment = 1
+
+[node name="BtnComplexityA" type="Button" parent="ModeSelectionModal/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "ПРОТОКОЛ А: ОСНОВЫ"
+
+[node name="BtnComplexityB" type="Button" parent="ModeSelectionModal/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+disabled = true
+text = "ПРОТОКОЛ Б: КАСКАД (СКОРО)"
+
+[node name="BtnComplexityC" type="Button" parent="ModeSelectionModal/CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+disabled = true
+text = "ПРОТОКОЛ С: ДЕДУКЦИЯ (СКОРО)"
+
+[connection signal="pressed" from="MainLayout/TopBar/MenuButton" to="." method="_on_menu_button_pressed"]
+[connection signal="pressed" from="MainLayout/ContentContainer/RightPanel/ControlButtons/CheckButton" to="." method="_on_check_button_pressed"]
+[connection signal="pressed" from="ModeSelectionModal/CenterContainer/VBoxContainer/BtnComplexityA" to="." method="_on_complexity_a_pressed"]
