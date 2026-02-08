@@ -1,0 +1,252 @@
+[gd_scene load_steps=5 format=3 uid="uid://suspectquest_a"]
+
+[ext_resource type="Script" path="res://scripts/SuspectQuestA.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
+[ext_resource type="Shader" path="res://scenes/Blur.gdshader" id="3_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
+shader = ExtResource("3_shader")
+shader_parameter/modulate = Color(0, 0, 0, 0)
+
+[node name="SuspectQuestA" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="CRT_Overlay" type="ColorRect" parent="CanvasLayer"]
+material = SubResource("ShaderMaterial_crt")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Header" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="LblClueTitle" type="Label" parent="MainLayout/Header"]
+layout_mode = 2
+text = "CLUE #A-01"
+horizontal_alignment = 1
+
+[node name="LblSessionId" type="Label" parent="MainLayout/Header"]
+layout_mode = 2
+size_flags_horizontal = 10
+text = "SESSION INIT"
+horizontal_alignment = 2
+
+[node name="BarsRow" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="DecryptBar" type="ProgressBar" parent="MainLayout/BarsRow"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+size_flags_horizontal = 3
+value = 0.0
+show_percentage = false
+
+[node name="EnergyBar" type="ProgressBar" parent="MainLayout/BarsRow"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+size_flags_horizontal = 3
+value = 100.0
+show_percentage = false
+
+[node name="TerminalFrame" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MainLayout/TerminalFrame"]
+layout_mode = 2
+
+[node name="CodeLabel" type="RichTextLabel" parent="MainLayout/TerminalFrame/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+text = "[code]Initializing...[/code]"
+fit_content = true
+
+[node name="StatusRow" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="LblStatus" type="Label" parent="MainLayout/StatusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ACCESS PENDING"
+
+[node name="LblAttempts" type="Label" parent="MainLayout/StatusRow"]
+layout_mode = 2
+text = "ERR: 0/3"
+
+[node name="InputFrame" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+
+[node name="InputDisplay" type="Label" parent="MainLayout/InputFrame"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "----"
+horizontal_alignment = 1
+
+[node name="Numpad" type="GridContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.6
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 3
+
+[node name="Btn7" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "7"
+
+[node name="Btn8" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "8"
+
+[node name="Btn9" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "9"
+
+[node name="Btn4" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "4"
+
+[node name="Btn5" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "5"
+
+[node name="Btn6" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "6"
+
+[node name="Btn1" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "1"
+
+[node name="Btn2" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "2"
+
+[node name="Btn3" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "3"
+
+[node name="BtnClr" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "CLR"
+
+[node name="Btn0" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "0"
+
+[node name="BtnBack" type="Button" parent="MainLayout/Numpad"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "<-"
+
+[node name="Actions" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="BtnAnalyze" type="Button" parent="MainLayout/Actions"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ANALYZE"
+
+[node name="BtnEnter" type="Button" parent="MainLayout/Actions"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "ENTER"
+
+[node name="BtnNext" type="Button" parent="MainLayout/Actions"]
+visible = false
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "NEXT"
+
+[node name="DiagnosticsPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DiagnosticsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Label" type="Label" parent="DiagnosticsPanel/VBoxContainer"]
+layout_mode = 2
+text = "DIAGNOSTIC TRACE"
+horizontal_alignment = 1
+
+[node name="ExplainList" type="RichTextLabel" parent="DiagnosticsPanel/VBoxContainer"]
+layout_mode = 2
+fit_content = true
+
+[node name="TraceList" type="RichTextLabel" parent="DiagnosticsPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "Trace log..."
+
+[node name="BtnCloseDiag" type="Button" parent="DiagnosticsPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "CLOSE"
