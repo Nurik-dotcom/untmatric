@@ -1,6 +1,6 @@
 extends Node
 
-# LogicEngine v6.2 Specification
+# LogicEngine v6.4
 
 signal stability_changed(new_value, change)
 signal shield_triggered(shield_name, penalty)
@@ -25,23 +25,17 @@ var session_history: Array = []
 
 func register_trial(data: Dictionary):
 	session_history.append(data)
-	# ﾐ渙ｵﾐｴﾐｰﾐｳﾐｾﾐｳﾐｸﾑ・ｵﾑ・ｺﾐｸﾐｹ ﾐｻﾐｾﾐｳ ﾐｲ ﾐｺﾐｾﾐｽﾑ・ｾﾐｻﾑ・ﾐｴﾐｻﾑ・ﾐｾﾑひｻﾐｰﾐｴﾐｺﾐｸ
-	var match_key = data.get("match_key", "UNKNOWN")
-	var is_correct = data.get("is_correct", false)
-	# Use elapsed_ms if available (Radio Quest), else duration (Legacy)
-	var duration = data.get("duration", data.get("elapsed_ms", 0.0) / 1000.0)
+	var match_key: String = str(data.get("match_key", "UNKNOWN"))
+	var is_correct: bool = bool(data.get("is_correct", false))
+	var duration: float = float(data.get("duration", float(data.get("elapsed_ms", 0.0)) / 1000.0))
 	print("MATCH: ", match_key, " | Correct: ", is_correct, " | Time: ", duration)
 
-	# Logic for Stage A (Radio): Penalty only if FIT is false. Overkill is acceptable.
-	var is_fit = data.get("is_fit", null)
-	var penalty_condition = false
-
-	if is_fit != null:
-		# New schema: punish only if not fit
-		penalty_condition = (is_fit == false)
+	# For radio tasks, penalize only when fit is false. Legacy fallback uses is_correct.
+	var penalty_condition: bool = false
+	if data.has("is_fit"):
+		penalty_condition = (not bool(data.get("is_fit", true)))
 	else:
-		# Fallback for old schema
-		penalty_condition = (is_correct == false)
+		penalty_condition = (not is_correct)
 
 	if penalty_condition:
 		stability = max(0.0, stability - 10.0)
@@ -62,11 +56,15 @@ var _solver_col_parity: Array = []
 var _solver_visibility: Array = []
 var _solver_col_sums: Array = []
 var _solver_solutions: int = 0
+var matrix_deductive_mode: bool = true
 
 enum Operator { ADD, SUB, SHIFT_L }
 var current_reg_a: int = 0
 var current_reg_b: int = 0
 var current_operator: Operator = Operator.ADD
+var current_overflow: bool = false
+var current_full_result: int = 0
+var current_borrow_bits: Array[int] = []
 
 # Anti-Spam / Shields
 var check_timestamps: Array[float] = []
@@ -88,6 +86,9 @@ func reset_engine():
 	current_reg_a = 0
 	current_reg_b = 0
 	current_operator = Operator.ADD
+	current_overflow = false
+	current_full_result = 0
+	current_borrow_bits.clear()
 	check_timestamps.clear()
 	last_checked_bits.clear()
 	blocked_until = 0.0
@@ -100,7 +101,6 @@ func reset_engine():
 
 func start_level(index: int):
 	current_level_index = index
-	# Determine mode based on level index (0-based)
 	if index < 5:
 		current_mode = "DEC"
 	elif index < 10:
@@ -108,94 +108,104 @@ func start_level(index: int):
 	elif index < 15:
 		current_mode = "HEX"
 	else:
-		# Complexity B uses a single system (HEX) for arithmetic focus
+		# Complexity B uses one system to focus on arithmetic algorithm.
 		current_mode = "HEX"
 
-	# Reset shields for the new level/attempt if desired,
-	# but typically stability persists or resets per level depending on design.
-	# TDD says: "Stability begins with 100% on each level"
 	stability = 100.0
 	emit_signal("stability_changed", stability, 0)
 	check_timestamps.clear()
 	last_checked_bits.clear()
+	blocked_until = 0.0
+
+	current_overflow = false
+	current_full_result = 0
+	current_borrow_bits.clear()
 
 	if index >= 15:
 		_generate_arithmetic_example()
 	else:
 		current_target_value = randi_range(1, 255)
 
-# Returns (success: bool, info: Dictionary)
 func check_solution(target_val: int, input_val: int) -> Dictionary:
-	var current_time = Time.get_ticks_msec() / 1000.0
-	
+	var current_time: float = Time.get_ticks_msec() / 1000.0
+
 	if current_time < blocked_until:
 		return {
 			"success": false,
 			"error": "SHIELD_ACTIVE",
-			"message": "ﾐ｡ﾐｸﾑ・ひｵﾐｼﾐｰ ﾐｿﾐｵﾑﾐｵﾐｳﾑﾐｵﾑひｰ. ﾐ孟ｴﾐｸﾑひｵ...",
+			"message": "Shield is active. Please wait.",
 			"penalty": 0
 		}
 
-	# 1. Frequency Shield
 	_update_frequency_log(current_time)
-	if check_timestamps.size() > 4:
-		blocked_until = current_time + 5.0 # Block for 5 seconds
+	if check_timestamps.size() >= 4:
+		blocked_until = current_time + 5.0
 		emit_signal("shield_triggered", "FREQUENCY", 5.0)
 		return {
 			"success": false,
 			"error": "SHIELD_FREQ",
-			"message": "ﾐ岱ｻﾐｾﾐｺﾐｸﾑﾐｾﾐｲﾐｺﾐｰ: ﾐ｡ﾐｻﾐｸﾑ威ｺﾐｾﾐｼ ﾑ・ｰﾑ・ひｾ",
+			"message": "Frequency shield triggered: too many checks in 15 seconds.",
 			"penalty": 0
 		}
 
-	# 2. Logic Check
-	var hd = _calculate_hamming_distance(target_val, input_val)
+	var expected_target: int = target_val
+	var analysis: Dictionary = {}
+	if current_level_index >= 15:
+		expected_target = current_target_value
+		if (current_operator == Operator.ADD or current_operator == Operator.SHIFT_L) and current_overflow:
+			analysis["overflow_warning"] = "Overflow detected: high carry bit was discarded in 8-bit register."
+		if current_operator == Operator.SUB and current_borrow_bits.size() > 0:
+			analysis["borrow_chain_bits"] = current_borrow_bits.duplicate()
 
-	# Lazy Search Shield Check (if HD > 2 and user is making small changes)
-	# (Simplified implementation: check if input changed little from last time)
+	var hd: int = _calculate_hamming_distance(expected_target, input_val)
 	if _check_lazy_search(input_val, hd):
-		# Apply delay penalty
 		blocked_until = current_time + 3.0
 		emit_signal("shield_triggered", "LAZY", 3.0)
-		# We still process the error but maybe with extra penalty?
-		# TDD says "penalty delay". We just blocked.
 
 	_record_input_history(input_val)
 
 	if hd == 0:
-		return {
+		var success_result: Dictionary = {
 			"success": true,
-			"message": "ﾐ頒ｾﾑ・びσｿ ﾑﾐｰﾐｷﾑﾐｵﾑ威ｵﾐｽ",
+			"message": "Access granted.",
 			"stability": stability
 		}
-	else:
-		# Calculate Penalty
-		var penalty = 0.0
-		if hd == 1: penalty = 10.0
-		elif hd == 2: penalty = 15.0
-		elif hd == 3: penalty = 25.0
-		elif hd == 4: penalty = 35.0
-		elif hd >= 5: penalty = 50.0 # Chaos
-		else: penalty = 50.0 # Fallback
+		if analysis.size() > 0:
+			success_result["analysis"] = analysis
+		return success_result
 
-		stability = max(0.0, stability - penalty)
-		emit_signal("stability_changed", stability, -penalty)
+	var penalty: float = 50.0
+	if hd == 1:
+		penalty = 10.0
+	elif hd == 2:
+		penalty = 15.0
+	elif hd == 3:
+		penalty = 25.0
+	elif hd == 4:
+		penalty = 35.0
 
-		# Generate Hints
-		var hints = _generate_hints(target_val, input_val, hd)
+	stability = max(0.0, stability - penalty)
+	emit_signal("stability_changed", stability, -penalty)
 
-		return {
-			"success": false,
-			"error": "INCORRECT",
-			"hamming": hd,
-			"penalty": penalty,
-			"hints": hints,
-			"message": "ﾐ樮威ｸﾐｱﾐｺﾐｰ ﾐｴﾐｾﾑ・びσｿﾐｰ. HD: %d" % hd
-		}
+	var hints: Dictionary = _generate_hints(expected_target, input_val, hd)
+	if current_level_index >= 15 and current_operator == Operator.SUB and _has_borrow_chain_error(input_val):
+		analysis["borrow_warning"] = "Ошибка в цепочке заёма разрядов"
+
+	var failure_result: Dictionary = {
+		"success": false,
+		"error": "INCORRECT",
+		"hamming": hd,
+		"penalty": penalty,
+		"hints": hints,
+		"message": "Incorrect value. HD: %d" % hd
+	}
+	if analysis.size() > 0:
+		failure_result["analysis"] = analysis
+	return failure_result
 
 func _calculate_hamming_distance(a: int, b: int) -> int:
-	var x = a ^ b
-	var dist = 0
+	var x: int = a ^ b
+	var dist: int = 0
 	while x > 0:
 		dist += 1
 		x &= x - 1
@@ -203,56 +213,93 @@ func _calculate_hamming_distance(a: int, b: int) -> int:
 
 func _update_frequency_log(time_sec: float):
 	check_timestamps.append(time_sec)
-	# Remove checks older than 15 seconds
-	var cutoff = time_sec - 15.0
+	var cutoff: float = time_sec - 15.0
 	while check_timestamps.size() > 0 and check_timestamps[0] < cutoff:
 		check_timestamps.pop_front()
 
 func _check_lazy_search(current_input: int, current_hd: int) -> bool:
-	if current_hd <= 2: return false
+	if current_hd <= 2:
+		return false
 
-	var inputs = last_checked_bits.duplicate()
+	var inputs: Array = last_checked_bits.duplicate()
 	inputs.append(current_input)
-	# Need at least 4 inputs to analyze 3 transitions
 	if inputs.size() < 4:
 		return false
 
 	var unique_changed: Dictionary = {}
-	var start = inputs.size() - 4
+	var start: int = inputs.size() - 4
 	for i in range(start, inputs.size() - 1):
-		var diff = inputs[i] ^ inputs[i + 1]
+		var diff: int = int(inputs[i]) ^ int(inputs[i + 1])
 		for bit in range(8):
 			if (diff & (1 << bit)) != 0:
 				unique_changed[bit] = true
-
 	return unique_changed.size() < 3
 
 func _generate_arithmetic_example():
-	# Pick an operator for Complexity B
-	var op_pick = randi() % 3
+	var op_pick: int = randi() % 3
 	current_operator = Operator.ADD if op_pick == 0 else Operator.SUB if op_pick == 1 else Operator.SHIFT_L
+	current_overflow = false
+	current_borrow_bits.clear()
 
 	if current_operator == Operator.ADD:
 		current_reg_a = randi_range(0, 255)
-		current_reg_b = randi_range(0, 255 - current_reg_a)
-		current_target_value = current_reg_a + current_reg_b
+		current_reg_b = randi_range(0, 255)
+		current_full_result = current_reg_a + current_reg_b
+		current_overflow = current_full_result > 255
+		current_target_value = current_full_result & 0xFF
 	elif current_operator == Operator.SUB:
 		current_reg_a = randi_range(0, 255)
 		current_reg_b = randi_range(0, current_reg_a)
-		current_target_value = current_reg_a - current_reg_b
+		var sub_data: Dictionary = _compute_subtraction_details(current_reg_a, current_reg_b)
+		current_target_value = int(sub_data["result"])
+		current_full_result = current_target_value
+		current_borrow_bits.clear()
+		for bit in sub_data["borrow_bits"]:
+			current_borrow_bits.append(int(bit))
 	else:
-		# SHIFT_L by 1..3, ensure result <= 255
+		current_reg_a = randi_range(0, 255)
 		current_reg_b = randi_range(1, 3)
-		var max_a = 255 >> current_reg_b
-		current_reg_a = randi_range(0, max_a)
-		current_target_value = current_reg_a << current_reg_b
+		current_full_result = current_reg_a << current_reg_b
+		current_overflow = current_full_result > 255
+		current_target_value = current_full_result & 0xFF
+
+func _compute_subtraction_details(a: int, b: int) -> Dictionary:
+	var borrow: int = 0
+	var result: int = 0
+	var borrow_bits: Array[int] = []
+	for bit in range(8):
+		var a_bit: int = (a >> bit) & 1
+		var b_bit: int = (b >> bit) & 1
+		var need: int = b_bit + borrow
+		var out_bit: int = 0
+		if a_bit < need:
+			borrow = 1
+			borrow_bits.append(bit)
+			out_bit = a_bit + 2 - need
+		else:
+			borrow = 0
+			out_bit = a_bit - need
+		result |= (out_bit << bit)
+	return {
+		"result": result & 0xFF,
+		"borrow_bits": borrow_bits
+	}
+
+func _has_borrow_chain_error(input_val: int) -> bool:
+	if current_borrow_bits.size() == 0:
+		return false
+	var xor_mask: int = input_val ^ current_target_value
+	for bit in current_borrow_bits:
+		if (xor_mask & (1 << bit)) != 0:
+			return true
+	return false
 
 func _record_input_history(val: int):
 	last_checked_bits.append(val)
 	if last_checked_bits.size() > 10:
 		last_checked_bits.pop_front()
 
-func _generate_hints(target: int, input: int, hd: int) -> Dictionary:
+func _generate_hints(target: int, input: int, _hd: int) -> Dictionary:
 	# Level 1: Diagnosis
 	var diagnosis = "BIT_ERROR"
 	if target > input: diagnosis = "VALUE_LOW"
@@ -293,6 +340,7 @@ func start_matrix_quest():
 	check_timestamps.clear()
 	last_checked_bits.clear()
 	blocked_until = 0.0
+	matrix_deductive_mode = true
 	_generate_matrix_quest()
 	_init_matrix_current()
 	_clear_matrix_changes()
@@ -322,7 +370,7 @@ func check_matrix_solution() -> Dictionary:
 
 	# 1. Frequency Shield
 	_update_frequency_log(current_time)
-	if check_timestamps.size() > 4:
+	if check_timestamps.size() >= 4:
 		blocked_until = current_time + 5.0
 		emit_signal("shield_triggered", "FREQUENCY", 5.0)
 		_clear_matrix_changes()
@@ -502,9 +550,12 @@ func _build_col_constraints(target: Array) -> Array:
 		for r in range(MATRIX_SIZE):
 			ones += target[r][c]
 		var parity = ones % 2
+		var ones_hidden = randf() < 0.30
 		constraints.append({
 			"ones_count": ones,
-			"parity": parity
+			"parity": parity,
+			"is_ones_visible": not ones_hidden,
+			"ones_display": "?" if ones_hidden else str(ones)
 		})
 	return constraints
 
