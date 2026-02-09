@@ -10,7 +10,7 @@ var optimal_path_example: Array = []
 var current_node: String = ""
 var path: Array = []
 var trust: float = 100.0
-var time_elapsed: float = 0.0
+var t_elapsed_seconds: int = 0
 var is_game_over: bool = false
 var first_attempt_edge: Variant = null # String or null
 
@@ -44,18 +44,31 @@ func _ready():
 	_load_level_data("res://data/city_map/level_6_1.json")
 	_calculate_optimal_path()
 	_build_graph_ui()
+	_setup_deterministic_timer()
 	_reset_game_state()
 
-func _process(delta):
-	if is_game_over:
-		return
+func _setup_deterministic_timer():
+	var timer = Timer.new()
+	timer.name = "ResearchTimer"
+	timer.wait_time = 1.0
+	timer.autostart = true
+	timer.timeout.connect(_on_timer_tick)
+	add_child(timer)
 
-	time_elapsed += delta
+func _on_timer_tick():
+	if is_game_over: return
+	t_elapsed_seconds += 1
 	_update_timer_display()
-
 	# Check overtime penalty dynamically
-	if time_elapsed > level_data.time_limit_sec:
+	if t_elapsed_seconds > level_data.time_limit_sec:
 		_update_trust()
+
+func _notification(what):
+	if has_node("ResearchTimer"):
+		if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+			get_node("ResearchTimer").paused = true
+		elif what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
+			get_node("ResearchTimer").paused = false
 
 func _load_level_data(path: String):
 	var file = FileAccess.open(path, FileAccess.READ)
@@ -226,7 +239,7 @@ func _on_node_pressed(node_id: String):
 	if adjacency.has(current_node) and adjacency[current_node].has(node_id):
 
 		# Capture first attempt edge
-		if path.size() == 1 and first_attempt_edge == null and n_reset == 0:
+		if first_attempt_edge == null:
 			first_attempt_edge = current_node + "->" + node_id
 
 		path.append(node_id)
@@ -275,43 +288,37 @@ func _on_submit_pressed():
 		_update_trust()
 
 func _judge_solution(input_text: String) -> String:
-	# 1. INCOMPLETE
+	# 1. Structural Check (Fuse)
+	var real_sum = 0
+	for i in range(path.size() - 1):
+		if not adjacency.has(path[i]) or not adjacency[path[i]].has(path[i+1]):
+			return "ERR_PATH_INVALID" # No penalty N_calc/N_opt
+		real_sum += adjacency[path[i]][path[i+1]]
+
 	if level_data.rules.require_end_node_to_submit:
 		if current_node != level_data.end_node:
 			return "INCOMPLETE"
 
-	# 2. INVALID_PATH (Should be prevented by UI, but check anyway)
-	var real_sum = 0
-	for i in range(path.size() - 1):
-		var u = path[i]
-		var v = path[i+1]
-		if not adjacency.has(u) or not adjacency[u].has(v):
-			return "INVALID_PATH"
-		real_sum += adjacency[u][v]
-
-	# 3. PARSE_ERROR
-	var regex = RegEx.new()
-	regex.compile(level_data.rules.input_regex)
-	if not regex.search(input_text):
+	# 2. Input Validation
+	if not input_text.is_valid_int() or int(input_text) < 0:
 		n_parse += 1
 		return "PARSE_ERROR"
 
-	# 4. CALC_MISMATCH
-	var input_val = int(input_text)
-	if input_val != real_sum:
+	# 3. Arithmetic (Axis 1)
+	if int(input_text) != real_sum:
 		n_calc += 1
 		return "CALC_MISMATCH"
 
-	# 5. NON_OPTIMAL
+	# 4. Optimality (Axis 2)
 	if real_sum > min_sum:
 		n_opt += 1
 		return "NON_OPTIMAL"
 
-	# 6. OPTIMAL
+	# 5. Optimal
 	return "OPTIMAL"
 
 func _update_trust():
-	var t_overtime = max(0, time_elapsed - level_data.time_limit_sec)
+	var t_overtime = max(0, t_elapsed_seconds - level_data.time_limit_sec)
 	var penalty_overtime = floor(t_overtime / 2.0)
 
 	var penalties = (n_calc * level_data.trust.penalty_calc) + \
@@ -337,48 +344,53 @@ func _game_over_trust():
 	_log_attempt("", "FAIL_TRUST")
 
 func _update_timer_display():
-	var minutes = int(time_elapsed / 60)
-	var seconds = int(time_elapsed) % 60
+	var minutes = int(t_elapsed_seconds / 60)
+	var seconds = int(t_elapsed_seconds) % 60
 	timer_label.text = "%02d:%02d" % [minutes, seconds]
-	if time_elapsed > level_data.time_limit_sec:
+	if t_elapsed_seconds > level_data.time_limit_sec:
 		timer_label.add_theme_color_override("font_color", Color.RED)
 	else:
 		timer_label.add_theme_color_override("font_color", Color.WHITE)
 
-func _log_attempt(input_sum: String, verdict: String):
-	# Calculate real sum for logging
-	var real_sum = 0
+func _log_attempt(input_sum_raw: String, verdict: String):
+	var user_input_int = -1
+	var input_valid = false
+
+	# Normalization for log
+	var norm_input = input_sum_raw.strip_edges()
+	if norm_input.is_valid_int():
+		user_input_int = int(norm_input)
+		input_valid = true
+
+	# Calculate ACTUAL sum of traversed path (always)
+	var real_path_sum = 0
+	var is_structurally_valid = true
 	for i in range(path.size() - 1):
-		var u = path[i]
-		var v = path[i+1]
-		if adjacency.has(u) and adjacency[u].has(v):
-			real_sum += adjacency[u][v]
+		if adjacency.has(path[i]) and adjacency[path[i]].has(path[i+1]):
+			real_path_sum += adjacency[path[i]][path[i+1]]
+		else:
+			is_structurally_valid = false
 
 	var log_data = {
 		"level_id": level_data.level_id,
-		"attempt_no": GlobalMetrics.session_history.size() + 1, # Approx
-		"calc_ok": (verdict != "CALC_MISMATCH"),
-		"optimal_ok": (verdict == "OPTIMAL"),
+		# RESEARCH AXES (Snapshot)
+		"calc_ok": (user_input_int == real_path_sum) if input_valid else false,
+		"optimal_ok": (real_path_sum == min_sum),
+		"path_valid": is_structurally_valid,
+		# DATA
 		"first_attempt_edge": first_attempt_edge,
-		"t_elapsed_seconds": int(time_elapsed),
+		"t_elapsed_seconds": t_elapsed_seconds,
 		"path": path,
-		"real_sum": real_sum,
-		"entered_sum": input_sum,
+		"entered_sum": norm_input,
+		"real_sum": real_path_sum,
 		"min_sum": min_sum,
 		"N_calc": n_calc,
 		"N_opt": n_opt,
-		"N_parse": n_parse,
-		"N_reset": n_reset,
-		"trust_final": int(trust),
 		"verdict_code": verdict,
 		"config_hash": "TODO_HASH" # Optional for now
 	}
 
 	# 1. Append to GlobalMetrics
-	# Note: GlobalMetrics.register_trial expects specific keys for its internal logic?
-	# The memory says: "Quest completion data must be sent to GlobalMetrics.register_trial(data)"
-	# And: "The logging contract... requires... is_correct, is_fit..."
-	# I should adapt keys to make GlobalMetrics happy while keeping my specific fields.
 	log_data["is_correct"] = (verdict == "OPTIMAL")
 	log_data["is_fit"] = (verdict == "OPTIMAL")
 
