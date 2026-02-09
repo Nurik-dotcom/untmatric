@@ -3,22 +3,7 @@ extends Control
 @onready var modal = $ModalLayer/ModeSelectionModal
 @onready var status_label = $MainLayout/StatusLabel
 
-@onready var btn_clues = $MainLayout/QuestGrid/CluesButton
-@onready var btn_radio = $MainLayout/QuestGrid/RadioButton
-@onready var btn_decryptor = $MainLayout/QuestGrid/DecryptorButton
-@onready var btn_lie = $MainLayout/QuestGrid/LieDetectorButton
-@onready var btn_script = $MainLayout/QuestGrid/SuspectScriptButton
-@onready var btn_city = $MainLayout/QuestGrid/CityMapButton
-@onready var btn_archive = $MainLayout/QuestGrid/DataArchiveButton
-@onready var btn_report = $MainLayout/QuestGrid/FinalReportButton
-
-@onready var btn_complexity_a = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnComplexityA
-@onready var btn_complexity_b = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnComplexityB
-@onready var btn_complexity_c = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnComplexityC
-@onready var btn_close = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnClose
-@onready var modal_title = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/ModalTitle
-
-enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO, SUSPECT }
+enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO_INTERCEPT }
 var selected_quest_type = QuestType.DECRYPTOR
 
 const TITLE_TEXT = "\u0412\u044b\u0431\u043e\u0440 \u043a\u0432\u0435\u0441\u0442\u0430"
@@ -101,20 +86,14 @@ func _on_lie_detector_pressed():
 	btn_complexity_c.disabled = false
 	modal.visible = true
 
-func _on_radio_pressed():
-	selected_quest_type = QuestType.RADIO
-	btn_complexity_b.disabled = true
-	btn_complexity_c.disabled = true
+func _on_radio_intercept_pressed():
+	# Radio Intercept
+	selected_quest_type = QuestType.RADIO_INTERCEPT
+	# Radio Intercept uses its own logic or maybe starts directly?
+	# Assuming it uses the same complexity modal for consistency, or starts directly.
+	# The plan implies we route it. Let's start it directly or via modal A.
+	# "Route it to scenes/radio_intercept/RadioQuestA.tscn" implies direct start or via "Protocol A".
 	modal.visible = true
-
-func _on_script_pressed():
-	selected_quest_type = QuestType.SUSPECT
-	btn_complexity_b.disabled = true
-	btn_complexity_c.disabled = true
-	modal.visible = true
-
-func _on_locked_pressed():
-	status_label.text = STATUS_LOCKED
 
 func _on_complexity_a_pressed():
 	GlobalMetrics.current_level_index = 0
@@ -122,10 +101,8 @@ func _on_complexity_a_pressed():
 		get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
 	elif selected_quest_type == QuestType.LOGIC_GATE:
 		get_tree().change_scene_to_file("res://scenes/LogicQuestA.tscn")
-	elif selected_quest_type == QuestType.RADIO:
-		get_tree().change_scene_to_file("res://scenes/RadioQuestA.tscn")
-	elif selected_quest_type == QuestType.SUSPECT:
-		get_tree().change_scene_to_file("res://scenes/SuspectQuestA.tscn")
+	elif selected_quest_type == QuestType.RADIO_INTERCEPT:
+		get_tree().change_scene_to_file("res://scenes/radio_intercept/RadioQuestA.tscn")
 
 func _on_complexity_b_pressed():
 	if selected_quest_type == QuestType.DECRYPTOR:

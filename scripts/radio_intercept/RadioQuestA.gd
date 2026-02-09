@@ -1,121 +1,161 @@
-﻿extends Control
+extends Control
 
-const N_VALUES = [32, 64, 100, 128, 200, 256]
-const POINT_COUNT = 96
-const MAX_NOISE = 24.0
-
-@onready var task_label = $RootPanel/VBox/TaskLabel
-@onready var oscillo_area = $RootPanel/VBox/OscilloBox/OscilloArea
+# UI References
+@onready var task_label = $RootPanel/VBox/HeaderBar/TaskLabel
+@onready var osc_area = $RootPanel/VBox/OscilloBox/OscilloArea
 @onready var osc_line = $RootPanel/VBox/OscilloBox/OscilloArea/OscilloNode/OscLine
 @onready var bits_label = $RootPanel/VBox/TunerRow/BitsLabel
 @onready var bits_slider = $RootPanel/VBox/TunerRow/BitsSlider
-@onready var hint_button = $RootPanel/VBox/ButtonsRow/HintButton
-@onready var confirm_button = $RootPanel/VBox/ButtonsRow/ConfirmButton
 @onready var hint_label = $RootPanel/VBox/HintLabel
 
-var current_n: int = 0
-var i_min: int = 0
+# Game Logic
+var target_n: int = 32
+var start_time: int = 0
 var used_hint: bool = false
 var forced_sampling: bool = false
-var started_at: int = 0
-var first_action_at: int = 0
-var _phase: float = 0.0
-var _animate: bool = true
+var first_action_time: int = -1
+
+# Possible N values for quests
+var n_options = [32, 64, 100, 128, 200, 256]
+
+# Oscilloscope State
+var time_phase: float = 0.0
 
 func _ready():
-	_start_new_task()
-	_draw_signal()
+	start_time = Time.get_ticks_msec()
+	_pick_new_target()
+	_update_oscilloscope()
 
-func _process(delta: float) -> void:
-	if _animate:
-		_phase += delta * 2.0
-		_draw_signal()
+	# Start a timer for forced sampling check (8 seconds)
+	get_tree().create_timer(8.0).timeout.connect(_check_forced_sampling)
 
-	if not forced_sampling and first_action_at == 0:
-		var elapsed = Time.get_ticks_msec() - started_at
-		if elapsed >= 8000:
-			forced_sampling = true
-			hint_label.text = "Режим принудительного замера активирован."
+func _process(delta):
+	time_phase += delta * 5.0
+	_update_oscilloscope()
 
-func _start_new_task():
-	current_n = N_VALUES[randi() % N_VALUES.size()]
-	i_min = int(ceil(log(float(current_n)) / log(2.0)))
-	used_hint = false
-	forced_sampling = false
-	started_at = Time.get_ticks_msec()
-	first_action_at = 0
+func _pick_new_target():
+	target_n = n_options.pick_random()
+	task_label.text = "Перехват... Мощность алфавита: %d. Настройте глубину кодирования." % target_n
 
-	task_label.text = "Перехват... Мощность алфавита: %d символов. Настройте глубину кодирования." % current_n
-	bits_slider.value = 1
-	bits_label.text = "Биты: %d" % int(bits_slider.value)
-	hint_label.text = ""
+func _get_i_min(n: int) -> int:
+	# i_min = ceil(log2(N))
+	if n <= 1: return 1
+	var val = ceil(log(float(n)) / log(2.0))
+	return int(val)
 
-func _on_bits_slider_value_changed(value: float) -> void:
-	if first_action_at == 0:
-		first_action_at = Time.get_ticks_msec()
+func _update_oscilloscope():
+	if not is_instance_valid(osc_area) or not is_instance_valid(osc_line):
+		return
+
+	var width = osc_area.size.x
+	var height = osc_area.size.y
+	var mid_y = height / 2.0
+	var points = PackedVector2Array()
+
+	var i_chosen = int(bits_slider.value)
+	var i_min = _get_i_min(target_n)
+	var capacity = pow(2, i_chosen)
+
+	var is_correct = (capacity >= target_n)
+	var is_overkill = is_correct and (i_chosen > i_min)
+
+	# Drawing Logic
+	# Points count
+	var steps = 100
+	for step in range(steps):
+		var x = (float(step) / float(steps)) * width
+
+		# Base Sine Wave
+		var y_offset = sin((step * 0.2) + time_phase) * (height * 0.3)
+
+		# Noise Calculation
+		var noise = 0.0
+		if not is_correct:
+			# Strong noise
+			noise = randf_range(-1.0, 1.0) * (height * 0.4)
+		elif is_overkill:
+			# Minimal "sterile" noise (optional)
+			noise = randf_range(-0.1, 0.1) * (height * 0.05)
+		else:
+			# Correct and optimal (i_min) -> Clean signal
+			noise = 0.0
+
+		points.append(Vector2(x, mid_y + y_offset + noise))
+
+	osc_line.points = points
+
+func _on_slider_value_changed(value):
 	bits_label.text = "Биты: %d" % int(value)
-	_draw_signal()
+	if first_action_time == -1:
+		first_action_time = Time.get_ticks_msec()
+	# Line is updated in _process, so no explicit redraw needed here usually,
+	# but we can force one if _process is disabled. It's enabled, so fine.
 
-func _on_hint_button_pressed() -> void:
+func _on_hint_pressed():
 	used_hint = true
-	var hint = "Формула Хартли: N = 2^i\nМинимум i для %d: %d" % [current_n, i_min]
-	hint_label.text = hint
+	var i_min = _get_i_min(target_n)
+	hint_label.text = "Подсказка: N <= 2^i. Для N=%d минимальное i = %d." % [target_n, i_min]
 
-func _on_confirm_button_pressed() -> void:
-	var chosen_i = int(bits_slider.value)
-	var capacity = int(pow(2.0, chosen_i))
-	var correct = capacity >= current_n
-	var overkill = correct and chosen_i > i_min
-	var elapsed_ms = Time.get_ticks_msec() - started_at
+func _on_confirm_pressed():
+	var end_time = Time.get_ticks_msec()
+	var elapsed_ms = end_time - start_time
+
+	var i_chosen = int(bits_slider.value)
+	var i_min = _get_i_min(target_n)
+	var capacity = int(pow(2, i_chosen))
+
+	var is_correct = (capacity >= target_n)
+	var is_overkill = is_correct and (i_chosen > i_min)
 
 	var payload = {
 		"quest": "radio_intercept",
 		"stage": "A",
-		"N": current_n,
+		"N": target_n,
 		"i_min": i_min,
-		"chosen_i": chosen_i,
+		"chosen_i": i_chosen,
 		"capacity": capacity,
-		"is_correct": correct,
-		"is_overkill": overkill,
+		"is_correct": is_correct,
+		"is_overkill": is_overkill,
 		"used_hint": used_hint,
 		"forced_sampling": forced_sampling,
 		"elapsed_ms": elapsed_ms
 	}
-	GlobalMetrics.register_trial(payload)
 
-	_start_new_task()
-	_draw_signal()
-
-func _draw_signal():
-	if not is_instance_valid(oscillo_area):
-		return
-	var size = oscillo_area.size
-	if size.x <= 1 or size.y <= 1:
-		return
-
-	var chosen_i = int(bits_slider.value)
-	var capacity = int(pow(2.0, chosen_i))
-	var correct = capacity >= current_n
-	var overkill = correct and chosen_i > i_min
-
-	var noise_strength = 0.0
-	if not correct:
-		noise_strength = MAX_NOISE
-	elif overkill:
-		noise_strength = MAX_NOISE * 0.12
+	# Log to GlobalMetrics
+	if GlobalMetrics.has_method("register_trial"):
+		GlobalMetrics.register_trial(payload)
 	else:
-		noise_strength = 0.0
+		print("GlobalMetrics.register_trial not found. Payload: ", payload)
 
-	var points := PackedVector2Array()
-	points.resize(POINT_COUNT)
-	var mid_y = size.y * 0.5
-	var amp = size.y * 0.35
-	for i in range(POINT_COUNT):
-		var t = float(i) / float(POINT_COUNT - 1)
-		var x = t * size.x
-		var y = mid_y + sin(t * TAU * 2.0 + _phase) * amp
-		if noise_strength > 0.0:
-			y += randf_range(-noise_strength, noise_strength)
-		points[i] = Vector2(x, y)
+	# Feedback
+	if is_correct and not is_overkill:
+		hint_label.add_theme_color_override("font_color", Color.GREEN)
+		hint_label.text = "Сигнал стабилен! Переход..."
+		await get_tree().create_timer(1.0).timeout
+		_pick_new_target()
+		_reset_round()
+	elif is_overkill:
+		hint_label.add_theme_color_override("font_color", Color.YELLOW)
+		hint_label.text = "Избыточность! Сигнал чист, но ресурсы потрачены."
+		await get_tree().create_timer(1.0).timeout
+		_pick_new_target()
+		_reset_round()
+	else:
+		hint_label.add_theme_color_override("font_color", Color.RED)
+		hint_label.text = "Помехи! Недостаточная глубина."
 
-	osc_line.points = points
+func _check_forced_sampling():
+	if first_action_time == -1 and not used_hint:
+		forced_sampling = true
+		hint_label.text = "Режим принудительного замера активирован."
+
+func _reset_round():
+	start_time = Time.get_ticks_msec()
+	first_action_time = -1
+	used_hint = false
+	forced_sampling = false
+	hint_label.text = ""
+	hint_label.add_theme_color_override("font_color", Color(1, 0.8, 0.2, 1))
+
+func _on_back_pressed():
+	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
