@@ -53,7 +53,13 @@ func start_level(level_idx):
 	is_level_active = true
 
 	# Generate Target
-	current_target = randi_range(1, 255)
+	if GlobalMetrics.current_operator != GlobalMetrics.Operator.NONE:
+		# Protocol B (Arithmetic)
+		current_target = GlobalMetrics.arithmetic_target
+	else:
+		# Protocol A (Simple)
+		current_target = randi_range(1, 255)
+
 	current_input = 0
 
 	# Update UI for Mode
@@ -66,17 +72,28 @@ func start_level(level_idx):
 
 	# Display Target
 	var display_text = ""
-	if mode == "DEC":
-		display_text = "%d" % current_target
-	elif mode == "OCT":
-		display_text = "%o" % current_target
-	elif mode == "HEX":
-		display_text = "%X" % current_target
+	if GlobalMetrics.current_operator != GlobalMetrics.Operator.NONE:
+		# Display Arithmetic Equation
+		var op_char = ""
+		if GlobalMetrics.current_operator == GlobalMetrics.Operator.ADD: op_char = "+"
+		elif GlobalMetrics.current_operator == GlobalMetrics.Operator.SUB: op_char = "-"
+		elif GlobalMetrics.current_operator == GlobalMetrics.Operator.SHIFT: op_char = "<<"
+
+		display_text = "%X %s %X" % [GlobalMetrics.operand_a, op_char, GlobalMetrics.operand_b]
+	else:
+		# Standard Display
+		if mode == "DEC":
+			display_text = "%d" % current_target
+		elif mode == "OCT":
+			display_text = "%o" % current_target
+		elif mode == "HEX":
+			display_text = "%X" % current_target
 
 	lbl_target.text = display_text
 	lbl_system.text = "СИСТЕМА: %s" % mode
 	lbl_level.text = "УРОВЕНЬ %02d" % (level_idx + 1)
 	btn_check.text = "ПРОВЕРИТЬ"
+	btn_check.disabled = false
 
 	log_message("Система инициализирована. Цель захвачена.", COLOR_NORMAL)
 	_on_stability_changed(100.0, 0)
@@ -136,6 +153,9 @@ func _on_check_button_pressed():
 
 	if result.success:
 		log_message("ДОСТУП РАЗРЕШЕН.", COLOR_NORMAL)
+		if result.get("is_overflow", false):
+			log_message("ВНИМАНИЕ: Обнаружено переполнение регистра!", COLOR_WARN)
+
 		is_level_active = false
 
 		# Wait and go next
@@ -152,9 +172,21 @@ func _on_check_button_pressed():
 				log_message(result.message, COLOR_ERROR)
 			else:
 				log_message(result.message, COLOR_ERROR)
+
+				# Borrow Warning Logic
+				if result.get("borrow_warning", false):
+					log_message("ВНИМАНИЕ: Ошибка в каскадном заёме разрядов", COLOR_WARN)
+
 				if result.has("hints"):
 					var h = result.hints
-					var msg = "ПОДСКАЗКА: %s | ЗОНА: %s" % [_translate_hint(h.diagnosis), _translate_hint(h.zone)]
+					# Hint Ladder Logic: Zone hint only if stability <= 50%
+					var show_zone = GlobalMetrics.stability <= 50.0
+					var msg = ""
+					if show_zone:
+						msg = "ПОДСКАЗКА: %s | ЗОНА: %s" % [_translate_hint(h.diagnosis), _translate_hint(h.zone)]
+					else:
+						msg = "ПОДСКАЗКА: %s (ЗОНА СКРЫТА > 50%%)" % [_translate_hint(h.diagnosis)]
+
 					log_message(msg, COLOR_WARN)
 
 func _translate_hint(code: String) -> String:
@@ -171,9 +203,33 @@ func _translate_hint(code: String) -> String:
 func _on_stability_changed(new_val, change):
 	progress_stability.value = new_val
 	if new_val <= 0:
-		log_message("КРИТИЧЕСКИЙ СБОЙ. БЛОКИРОВКА СИСТЕМЫ.", COLOR_ERROR)
-		is_level_active = false
-		btn_check.disabled = true
+		log_message("КРИТИЧЕСКИЙ СБОЙ. АКТИВАЦИЯ БЕЗОПАСНОГО РЕЖИМА...", COLOR_ERROR)
+		_show_safe_mode()
+		is_level_active = false # Pause regular checks?
+		btn_check.disabled = true # Lock check button in safe mode? Assuming yes, or needs specific safe mode interaction.
+		# For now, locking until restart or manual intervention logic (not fully defined, just showing diag).
+
+func _show_safe_mode():
+	# Identify wrong bits
+	var xor_val = current_input ^ current_target
+	var wrong_bits = []
+	for i in range(8):
+		if (xor_val & (1 << i)) != 0:
+			wrong_bits.append(i)
+
+	if wrong_bits.size() > 0:
+		var random_bit_idx = wrong_bits.pick_random()
+		# UI index is 7 - bit_index
+		var ui_idx = 7 - random_bit_idx
+
+		# Highlight ONLY this bit
+		var switches = container_switches.get_children()
+		switches[ui_idx].modulate = Color(1, 0, 0) # Red highlight
+
+		log_message("БЕЗОПАСНЫЙ РЕЖИМ: Обнаружено %d ошибок." % wrong_bits.size(), COLOR_ERROR)
+		log_message("КРИТИЧЕСКАЯ ТОЧКА: Бит #%d (значение %d)" % [random_bit_idx, 1 << random_bit_idx], COLOR_ERROR)
+	else:
+		log_message("БЕЗОПАСНЫЙ РЕЖИМ: Ошибок не обнаружено??", COLOR_WARN)
 
 func _on_shield_triggered(name, duration):
 	log_message("ЩИТ БЕЗОПАСНОСТИ: %s. ЖДИТЕ %s с." % [name, duration], COLOR_WARN)
