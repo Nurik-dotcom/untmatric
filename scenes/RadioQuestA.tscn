@@ -1,36 +1,33 @@
-[gd_scene load_steps=7 format=3 uid="uid://radioquest_a_12345"]
+[gd_scene load_steps=8 format=3 uid="uid://0cly34ihte2u"]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestA.gd" id="1_script"]
 [ext_resource type="Shader" path="res://scenes/Blur.gdshader" id="2_shader"]
 [ext_resource type="Script" path="res://scenes/BitKnob.gd" id="3_knob"]
-
-[sub_resource type="SystemFont" id="SystemFont_1"]
-font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
 shader = ExtResource("2_shader")
 shader_parameter/lod = 0.8
 shader_parameter/modulate = Color(0, 0, 0, 0)
 
-[sub_resource type="Environment" id="Environment_glow"]
-background_mode = 3
-glow_enabled = true
-glow_intensity = 0.8
-glow_strength = 1.0
-glow_blend_mode = 1
+[sub_resource type="SystemFont" id="SystemFont_1"]
+font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
 bg_color = Color(0.08, 0.08, 0.08, 0.95)
-border_width_all = 1
 border_color = Color(0.25, 0.25, 0.25, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-content_margin_left = 10
-content_margin_top = 10
-content_margin_right = 10
-content_margin_bottom = 10
+
+[sub_resource type="Environment" id="Environment_glow"]
+background_mode = 3
+glow_enabled = true
+glow_blend_mode = 1
 
 [node name="RadioQuestA" type="Control"]
 layout_mode = 3
@@ -175,7 +172,6 @@ size_flags_vertical = 3
 layout_mode = 2
 
 [node name="WaveLine" type="Line2D" parent="SafeArea/MainVBox/OscPanel/OscLayer"]
-points = PackedVector2Array()
 width = 3.0
 default_color = Color(0.2, 1, 0.2, 1)
 
@@ -515,7 +511,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 color = Color(0, 0, 0, 0.35)
 
 [node name="DetailsSheet" type="PanelContainer" parent="."]
