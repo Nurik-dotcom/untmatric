@@ -1,0 +1,37 @@
+{
+  "contract_version": "1.0",
+  "level_id": "6_1",
+  "directed": true,
+  "time_limit_sec": 120,
+  "start_node": "A",
+  "end_node": "E",
+  "nodes": [
+    {"id": "A", "label": "A", "pos": {"x": 100, "y": 300}},
+    {"id": "B", "label": "B", "pos": {"x": 300, "y": 150}},
+    {"id": "C", "label": "C", "pos": {"x": 300, "y": 450}},
+    {"id": "D", "label": "D", "pos": {"x": 500, "y": 450}},
+    {"id": "E", "label": "E", "pos": {"x": 700, "y": 300}}
+  ],
+  "edges": [
+    {"id": "e1", "from": "A", "to": "B", "w": 5},
+    {"id": "e2", "from": "A", "to": "C", "w": 3},
+    {"id": "e3", "from": "C", "to": "B", "w": 1},
+    {"id": "e4", "from": "C", "to": "D", "w": 4},
+    {"id": "e5", "from": "B", "to": "E", "w": 8},
+    {"id": "e6", "from": "D", "to": "E", "w": 2}
+  ],
+  "rules": {
+    "input_regex": "^[0-9]+$",
+    "require_end_node_to_submit": true
+  },
+  "trust": {
+    "initial": 100,
+    "penalty_calc": 25,
+    "penalty_opt": 25,
+    "penalty_parse": 5,
+    "penalty_reset": 5
+  },
+  "analytics": {
+    "enabled": true
+  }
+}

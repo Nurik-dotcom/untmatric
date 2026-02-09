@@ -18,7 +18,7 @@ extends Control
 @onready var btn_close = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnClose
 @onready var modal_title = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/ModalTitle
 
-enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO, SUSPECT }
+enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO, SUSPECT, CITY_MAP }
 var selected_quest_type = QuestType.DECRYPTOR
 
 const TITLE_TEXT = "\u0412\u044b\u0431\u043e\u0440 \u043a\u0432\u0435\u0441\u0442\u0430"
@@ -71,7 +71,7 @@ func _connect_buttons():
 	btn_radio.pressed.connect(_on_radio_pressed)
 	btn_clues.pressed.connect(_on_locked_pressed)
 	btn_script.pressed.connect(_on_script_pressed)
-	btn_city.pressed.connect(_on_locked_pressed)
+	btn_city.pressed.connect(_on_city_pressed)
 	btn_archive.pressed.connect(_on_locked_pressed)
 	btn_report.pressed.connect(_on_locked_pressed)
 
@@ -84,7 +84,7 @@ func _disable_unready():
 	btn_clues.disabled = true
 	btn_radio.disabled = false
 	btn_script.disabled = false
-	btn_city.disabled = true
+	btn_city.disabled = false
 	btn_archive.disabled = true
 	btn_report.disabled = true
 	btn_complexity_c.disabled = true
@@ -113,6 +113,12 @@ func _on_script_pressed():
 	btn_complexity_c.disabled = true
 	modal.visible = true
 
+func _on_city_pressed():
+	selected_quest_type = QuestType.CITY_MAP
+	btn_complexity_b.disabled = true
+	btn_complexity_c.disabled = true
+	modal.visible = true
+
 func _on_locked_pressed():
 	status_label.text = STATUS_LOCKED
 
@@ -126,6 +132,8 @@ func _on_complexity_a_pressed():
 		get_tree().change_scene_to_file("res://scenes/RadioQuestA.tscn")
 	elif selected_quest_type == QuestType.SUSPECT:
 		get_tree().change_scene_to_file("res://scenes/SuspectQuestA.tscn")
+	elif selected_quest_type == QuestType.CITY_MAP:
+		get_tree().change_scene_to_file("res://scenes/CityMapQuestA.tscn")
 
 func _on_complexity_b_pressed():
 	if selected_quest_type == QuestType.DECRYPTOR:
