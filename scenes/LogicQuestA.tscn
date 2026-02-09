@@ -2,6 +2,26 @@
 
 [ext_resource type="Script" path="res://scenes/LogicQuestA.gd" id="1_script"]
 
+[sub_resource type="SystemFont" id="SystemFont_1"]
+font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
+bg_color = Color(0.1, 0.1, 0.1, 1)
+border_width_bottom = 2
+border_color = Color(0.3, 0.3, 0.3, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_controls"]
+bg_color = Color(0.1, 0.1, 0.1, 1)
+border_width_top = 2
+border_color = Color(0.3, 0.3, 0.3, 1)
+
+[sub_resource type="Environment" id="Environment_glow"]
+background_mode = 3
+glow_enabled = true
+glow_intensity = 0.8
+glow_strength = 1.0
+glow_blend_mode = 1
+
 [node name="LogicQuestA" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -18,7 +38,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 1)
+color = Color(0.05, 0.05, 0.05, 1)
 
 [node name="MainLayout" type="VBoxContainer" parent="."]
 layout_mode = 1

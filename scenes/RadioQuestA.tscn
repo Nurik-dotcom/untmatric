@@ -1,0 +1,576 @@
+[gd_scene load_steps=7 format=3 uid="uid://radioquest_a_12345"]
+
+[ext_resource type="Script" path="res://scenes/RadioQuestA.gd" id="1_script"]
+[ext_resource type="Shader" path="res://scenes/Blur.gdshader" id="2_shader"]
+[ext_resource type="Script" path="res://scenes/BitKnob.gd" id="3_knob"]
+
+[sub_resource type="SystemFont" id="SystemFont_1"]
+font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
+shader = ExtResource("2_shader")
+shader_parameter/lod = 0.8
+shader_parameter/modulate = Color(0, 0, 0, 0)
+
+[sub_resource type="Environment" id="Environment_glow"]
+background_mode = 3
+glow_enabled = true
+glow_intensity = 0.8
+glow_strength = 1.0
+glow_blend_mode = 1
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.08, 0.08, 0.08, 0.95)
+border_width_all = 1
+border_color = Color(0.25, 0.25, 0.25, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 10
+content_margin_top = 10
+content_margin_right = 10
+content_margin_bottom = 10
+
+[node name="RadioQuestA" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0.02, 0, 1)
+
+[node name="CRT_Overlay" type="ColorRect" parent="."]
+visible = false
+material = SubResource("ShaderMaterial_crt")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="MainVBox" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+alignment = 1
+
+[node name="BtnBack" type="Button" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "<"
+
+[node name="HeaderSpacerLeft" type="Control" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ModeLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "MODE: RADIO INTERCEPT"
+
+[node name="ForcedBadge" type="Label" parent="SafeArea/MainVBox/Header"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.5, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "FORCED SAMPLE"
+
+[node name="TimerLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 22
+text = "00:25"
+
+[node name="HeaderSpacerRight" type="Control" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StabilityLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 22
+text = "100%"
+
+[node name="TaskCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 92)
+layout_mode = 2
+
+[node name="TaskVBox" type="VBoxContainer" parent="SafeArea/MainVBox/TaskCard"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TaskTitle" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "TASK"
+
+[node name="TaskMain" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 32
+text = "ALPHABET: N = 10"
+
+[node name="TaskHintRow" type="HBoxContainer" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+layout_mode = 2
+
+[node name="TaskSub" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox/TaskHintRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Choose minimal i such that 2^i >= N"
+autowrap_mode = 2
+
+[node name="BtnFormula" type="Button" parent="SafeArea/MainVBox/TaskCard/TaskVBox/TaskHintRow"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "?"
+
+[node name="OscPanel" type="PanelContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="OscLayer" type="Control" parent="SafeArea/MainVBox/OscPanel"]
+layout_mode = 2
+
+[node name="WaveLine" type="Line2D" parent="SafeArea/MainVBox/OscPanel/OscLayer"]
+points = PackedVector2Array()
+width = 3.0
+default_color = Color(0.2, 1, 0.2, 1)
+
+[node name="ControlCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+
+[node name="ControlHBox" type="HBoxContainer" parent="SafeArea/MainVBox/ControlCard"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="KnobStack" type="VBoxContainer" parent="SafeArea/MainVBox/ControlCard/ControlHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="KnobTitle" type="Label" parent="SafeArea/MainVBox/ControlCard/ControlHBox/KnobStack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "BIT DEPTH"
+horizontal_alignment = 1
+
+[node name="BitKnob" type="Control" parent="SafeArea/MainVBox/ControlCard/ControlHBox/KnobStack"]
+custom_minimum_size = Vector2(180, 180)
+layout_mode = 2
+size_flags_horizontal = 4
+script = ExtResource("3_knob")
+
+[node name="BigILabel" type="Label" parent="SafeArea/MainVBox/ControlCard/ControlHBox/KnobStack"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 40
+text = "i = 1 bit"
+horizontal_alignment = 1
+
+[node name="ReadoutStack" type="VBoxContainer" parent="SafeArea/MainVBox/ControlCard/ControlHBox"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+alignment = 1
+
+[node name="PowLabel" type="Label" parent="SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 26
+text = "2^i = 2"
+
+[node name="FitLabel" type="Label" parent="SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 26
+text = "FIT: NO"
+
+[node name="RiskRow" type="HBoxContainer" parent="SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack"]
+layout_mode = 2
+
+[node name="RiskLabel" type="Label" parent="SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack/RiskRow"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "RISK LEVEL"
+
+[node name="RiskBar" type="ProgressBar" parent="SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack/RiskRow"]
+custom_minimum_size = Vector2(100, 20)
+layout_mode = 2
+size_flags_horizontal = 3
+step = 1.0
+show_percentage = false
+
+[node name="Bottom" type="VBoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DetailsRow" type="HBoxContainer" parent="SafeArea/MainVBox/Bottom"]
+layout_mode = 2
+
+[node name="BtnDetails" type="Button" parent="SafeArea/MainVBox/Bottom/DetailsRow"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "Details"
+
+[node name="SampleStrip" type="HBoxContainer" parent="SafeArea/MainVBox/Bottom"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="TrialSlot1" type="Control" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot1"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot2" type="Control" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot2"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot3" type="Control" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot3"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot4" type="Control" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot4"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot4"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot5" type="Control" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot5"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot5"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot6" type="Control" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot6"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot6"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TrialSlot7" type="Control" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot7"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/Bottom/SampleStrip/TrialSlot7"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ActionsRow" type="HBoxContainer" parent="SafeArea/MainVBox/Bottom"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BtnHint" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
+custom_minimum_size = Vector2(100, 64)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "HINT"
+
+[node name="BtnAnalyze" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
+custom_minimum_size = Vector2(140, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "АНАЛИЗ"
+
+[node name="BtnCapture" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 22
+text = "CAPTURE"
+
+[node name="BtnNext" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
+visible = false
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 22
+text = "NEXT TASK"
+
+[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/Bottom"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "STATUS: ..."
+autowrap_mode = 2
+
+[node name="Dimmer" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.35)
+
+[node name="DetailsSheet" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -320.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="DetailsSheet"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="DetailsVBox" type="VBoxContainer" parent="DetailsSheet/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DetailsTitle" type="Label" parent="DetailsSheet/Margin/DetailsVBox"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "DETAILS"
+horizontal_alignment = 1
+
+[node name="DetailsText" type="Label" parent="DetailsSheet/Margin/DetailsVBox"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "Details..."
+autowrap_mode = 2
+
+[node name="BtnCloseDetails" type="Button" parent="DetailsSheet/Margin/DetailsVBox"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+text = "CLOSE"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_glow")
+
+[connection signal="pressed" from="SafeArea/MainVBox/Header/BtnBack" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/TaskCard/TaskVBox/TaskHintRow/BtnFormula" to="." method="_on_details_toggle"]
+[connection signal="value_changed" from="SafeArea/MainVBox/ControlCard/ControlHBox/KnobStack/BitKnob" to="." method="apply_user_bits"]
+[connection signal="pressed" from="SafeArea/MainVBox/Bottom/DetailsRow/BtnDetails" to="." method="_on_details_toggle"]
+[connection signal="pressed" from="SafeArea/MainVBox/Bottom/ActionsRow/BtnHint" to="." method="_on_hint_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/Bottom/ActionsRow/BtnAnalyze" to="." method="_on_analyze_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/Bottom/ActionsRow/BtnCapture" to="." method="_on_capture_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/Bottom/ActionsRow/BtnNext" to="." method="_on_next_pressed"]
+[connection signal="gui_input" from="Dimmer" to="." method="_on_dimmer_gui_input"]
+[connection signal="pressed" from="DetailsSheet/Margin/DetailsVBox/BtnCloseDetails" to="." method="_on_details_toggle"]

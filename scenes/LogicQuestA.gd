@@ -25,6 +25,53 @@ var quests = [
 		"a": true, "b": false, "target": false, "hint": "Ищи инверсию или исключение."
 	}
 ]
+# --- UI NODES ---
+@onready var stability_label = $MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/StabilityLabel
+@onready var stats_label = $MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/StatsLabel
+@onready var story_text = $MainLayout/StoryPanel/StoryMargin/StoryText
+@onready var journal_label = $MainLayout/BoardContainer/JournalLabel
+
+@onready var input_a_btn = $MainLayout/BoardContainer/InputA_Btn
+@onready var input_b_btn = $MainLayout/BoardContainer/InputB_Btn
+@onready var gate_selector = $MainLayout/BoardContainer/GateSelector
+@onready var lamp_rect = $MainLayout/BoardContainer/Lamp
+@onready var lamp_label = $MainLayout/BoardContainer/Lamp/LampLabel
+
+@onready var wire_a = $MainLayout/BoardContainer/WiresLayer/InputA_Wire
+@onready var wire_b = $MainLayout/BoardContainer/WiresLayer/InputB_Wire
+@onready var wire_out = $MainLayout/BoardContainer/WiresLayer/Output_Wire
+
+@onready var feedback_label = $MainLayout/ControlsPanel/ControlsMargin/HBox/FeedbackLabel
+@onready var btn_verdict = $MainLayout/ControlsPanel/ControlsMargin/HBox/BtnVerdict
+@onready var btn_next = $MainLayout/ControlsPanel/ControlsMargin/HBox/BtnNext
+@onready var btn_hint = $MainLayout/ControlsPanel/ControlsMargin/HBox/BtnHint
+
+@onready var game_over_panel = $GameOverPanel
+@onready var game_over_label = $GameOverPanel/CenterContainer/VBox/Title
+@onready var click_player = $ClickPlayer
+
+# --- STATE ---
+var current_case_index: int = 0
+var current_case: Dictionary = {}
+
+var input_a: bool = false
+var input_b: bool = false
+var selected_gate_guess: String = ""
+
+var seen_combinations: Dictionary = {}
+var case_attempts: int = 0
+var hints_used: int = 0
+var start_time_msec: int = 0
+
+var last_verdict_time: float = 0.0
+var verdict_timer: Timer = null
+var is_safe_mode: bool = false
+
+# Colors for Wires/Effects
+const COLOR_WIRE_OFF = Color(0.15, 0.15, 0.15, 1) # Dark Grey
+const COLOR_WIRE_ON = Color(1.2, 1.2, 1.2, 1)     # Glowing White (HDR)
+const COLOR_LAMP_OFF = Color(0.1, 0.1, 0.1, 1)
+const COLOR_LAMP_ON = Color(1.5, 1.5, 1.3, 1)     # Bright Warm White
 
 func _ready():
 	_setup_gate_selector()
