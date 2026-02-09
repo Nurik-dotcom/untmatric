@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://c6l2jvi53qwcf"]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scenes/QuestSelect.gd" id="1_script"]
 [ext_resource type="Shader" path="res://scenes/Blur.gdshader" id="2_shader"]
@@ -33,77 +33,35 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 30
+theme_override_constants/separation = 40
 alignment = 1
 
 [node name="Title" type="Label" parent="MainLayout"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_font_sizes/font_size = 54
-text = "Quest Select"
+theme_override_font_sizes/font_size = 64
+text = "ВЫБОР ЗАДАНИЯ"
 horizontal_alignment = 1
 
 [node name="QuestGrid" type="GridContainer" parent="MainLayout"]
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_constants/h_separation = 20
-theme_override_constants/v_separation = 20
-columns = 4
+theme_override_constants/h_separation = 30
+theme_override_constants/v_separation = 30
+columns = 3
 
-[node name="CluesButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="QuestBtn" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(300, 200)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Clues"
+theme_override_font_sizes/font_size = 24
+text = "ДЕШИФРАТОР
+(Logic Engine)"
 
-[node name="RadioButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="QuestBtn2" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(300, 200)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Radio"
-
-[node name="DecryptorButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Decryptor"
-
-[node name="LieDetectorButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Lie Detector"
-
-[node name="SuspectScriptButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Suspect Script"
-
-[node name="CityMapButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "City Map"
-
-[node name="DataArchiveButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Data Archive"
-
-[node name="FinalReportButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Final Report"
-
-[node name="StatusLabel" type="Label" parent="MainLayout"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_font_sizes/font_size = 20
-text = "Choose a quest"
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+text = "ДЕТЕКТОР ЛЖИ"
 
 [node name="QuestBtn3" type="Button" parent="MainLayout/QuestGrid"]
 custom_minimum_size = Vector2(300, 200)
@@ -144,31 +102,31 @@ custom_minimum_size = Vector2(600, 400)
 layout_mode = 2
 theme_override_constants/separation = 30
 
-[node name="ModalTitle" type="Label" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
+[node name="Title" type="Label" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
-text = "Select Difficulty"
+theme_override_font_sizes/font_size = 48
+text = "ВЫБОР ПРОТОКОЛА"
 horizontal_alignment = 1
 
 [node name="BtnComplexityA" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
-text = "Complexity A"
+text = "ПРОТОКОЛ А: ОСНОВЫ"
 
 [node name="BtnComplexityB" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 disabled = true
-text = "Complexity B"
+text = "ПРОТОКОЛ Б: КАСКАД"
 
 [node name="BtnComplexityC" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 disabled = true
-text = "Complexity C"
+text = "ПРОТОКОЛ С: ДЕДУКЦИЯ"
 
 [node name="BtnClose" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 60)
