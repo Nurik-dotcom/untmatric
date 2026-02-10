@@ -538,16 +538,7 @@ func _on_next_pressed():
 # --- UTILS ---
 
 func _play_sound(stream):
-	# Simple audio player instantiation or usage of global audio
-	# If AudioManager exists, use it. But I see "AudioManager.gd" in list.
-	# Let's try to use AudioManager if available, else simple.
-	# The list_files showed scripts/radio_intercept/AudioManager.gd
-	# I will just create a local AudioStreamPlayer for simplicity as spec says "Standard UI Godot"
-	var player = AudioStreamPlayer.new()
-	player.stream = stream
-	add_child(player)
-	player.play()
-	player.finished.connect(player.queue_free)
+	AudioManager.play_stream(stream)
 
 func _shake_screen():
 	var tween = create_tween()
