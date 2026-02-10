@@ -121,7 +121,7 @@ func _on_city_pressed():
 
 func _on_archive_pressed():
 	selected_quest_type = QuestType.DATA_ARCHIVE
-	btn_complexity_b.disabled = true
+	btn_complexity_b.disabled = false
 	btn_complexity_c.disabled = true
 	modal.visible = true
 
@@ -149,6 +149,8 @@ func _on_complexity_b_pressed():
 		get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
 	elif selected_quest_type == QuestType.LOGIC_GATE:
 		get_tree().change_scene_to_file("res://scenes/LogicQuestB.tscn")
+	elif selected_quest_type == QuestType.DATA_ARCHIVE:
+		get_tree().change_scene_to_file("res://scenes/case_07/da7_data_archive_b.tscn")
 
 func _on_complexity_c_pressed():
 	if selected_quest_type == QuestType.DECRYPTOR:
