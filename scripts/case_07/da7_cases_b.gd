@@ -68,10 +68,6 @@ const CASES_B: Array = [
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Система: Выберите записи с рейтингом 'B' или выше (A, S...)",
-		# Logic: 'B' or higher implies lexicographical check if chars, or explicit list.
-		# Let's use numeric Rank for clarity: Rank >= 2 (where 1=C, 2=B, 3=A)
-		# Or better: "Select events with Severity >= 2"
 		"prompt": "Система: Отфильтруйте инциденты с уровнем угрозы (Sev) 2 и выше.",
 		"predicate": {
 			"field_col_id": "c_sev",
@@ -93,13 +89,6 @@ const CASES_B: Array = [
 			]
 		},
 		"answer_row_ids": ["r2", "r3"],
-		"boundary_row_ids": ["r2"], # Wait, boundary is usually the value itself. If included in answer, it's checked via logic.
-		# Logic check:
-		# If operator is >=, boundary (==2) IS correct. So r2 is in answer_row_ids.
-		# boundary_row_ids is just identifying WHICH rows are boundary for specific error checks (EXCLUDED_BOUNDARY).
-		# In >= case: boundary rows ARE in answer.
-		# In > case: boundary rows are NOT in answer.
-		# So r2 is both answer and boundary.
 		"boundary_row_ids": ["r2"],
 		"opposite_row_ids": ["r1", "r4"],
 		"unrelated_row_ids": [],
