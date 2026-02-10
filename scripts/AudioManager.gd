@@ -6,10 +6,23 @@ var sounds = {
 	"error": load("res://audio/error.wav")
 }
 
+var pool = []
+
 func play(sound_name: String):
 	if sounds.has(sound_name):
-		var player = AudioStreamPlayer.new()
-		add_child(player)
-		player.stream = sounds[sound_name]
-		player.play()
-		player.finished.connect(player.queue_free)
+		play_stream(sounds[sound_name])
+
+func play_stream(stream: AudioStream):
+	var player = _get_available_player()
+	player.stream = stream
+	player.play()
+
+func _get_available_player() -> AudioStreamPlayer:
+	for player in pool:
+		if not player.playing:
+			return player
+
+	var player = AudioStreamPlayer.new()
+	add_child(player)
+	pool.append(player)
+	return player
