@@ -115,7 +115,7 @@ func _on_script_pressed():
 
 func _on_city_pressed():
 	selected_quest_type = QuestType.CITY_MAP
-	btn_complexity_b.disabled = true
+	btn_complexity_b.disabled = false
 	btn_complexity_c.disabled = true
 	modal.visible = true
 
