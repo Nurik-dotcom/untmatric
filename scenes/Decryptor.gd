@@ -13,6 +13,7 @@ extends Control
 @onready var target_title = $UI/SafeArea/Main/InstrumentArea/TargetPanel/TargetContent/TargetTitle
 @onready var target_value = $UI/SafeArea/Main/InstrumentArea/TargetPanel/TargetContent/TargetValueBig
 @onready var target_sub = $UI/SafeArea/Main/InstrumentArea/TargetPanel/TargetContent/TargetSub
+@onready var guide_label = $UI/SafeArea/Main/InstrumentArea/GuideRow/GuideLabel
 
 @onready var input_panel = $UI/SafeArea/Main/InstrumentArea/InputPanel
 @onready var input_bin = $UI/SafeArea/Main/InstrumentArea/InputPanel/InputContent/InputBin
@@ -44,6 +45,11 @@ extends Control
 const COLOR_OK = Color(0.2, 1.0, 0.6, 1)
 const COLOR_WARN = Color(1.0, 0.75, 0.2, 1)
 const COLOR_ERR = Color(1.0, 0.3, 0.3, 1)
+const GROUP_COLORS = [
+	Color(0.42, 0.74, 1.0, 1.0),
+	Color(0.58, 0.95, 0.64, 1.0),
+	Color(1.0, 0.76, 0.42, 1.0)
+]
 
 const SWIPE_MIN: float = 60.0
 const SWIPE_MAX_Y: float = 40.0
@@ -51,6 +57,7 @@ const SWIPE_MAX_Y: float = 40.0
 var current_target: int = 0
 var current_input: int = 0
 var is_level_active: bool = false
+var current_mode: String = "DEC"
 
 var bit_buttons: Array[Button] = []
 var weight_labels: Array[Label] = []
@@ -62,6 +69,8 @@ var last_hint_text: String = ""
 var details_open: bool = false
 var _swipe_start_pos: Vector2 = Vector2.ZERO
 var _swipe_tracking: bool = false
+
+const DETAILS_SHEET_HEIGHT: float = 420.0
 
 func _ready():
 	_build_bit_buttons()
@@ -103,8 +112,9 @@ func _build_bit_buttons() -> void:
 		var bit_index = 7 - i
 		var btn = Button.new()
 		btn.toggle_mode = true
+		btn.theme_type_variation = "BitToggle"
 		btn.text = "0"
-		btn.custom_minimum_size = Vector2(0, 64)
+		btn.custom_minimum_size = Vector2(0, 72)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.toggled.connect(_on_bit_toggled.bind(bit_index))
 		if i < 4:
@@ -120,7 +130,7 @@ func _build_weight_labels() -> void:
 
 	for _i in range(8):
 		var lbl = Label.new()
-		lbl.custom_minimum_size = Vector2(0, 18)
+		lbl.custom_minimum_size = Vector2(0, 24)
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		weights_row.add_child(lbl)
@@ -147,11 +157,13 @@ func start_level(level_idx: int) -> void:
 	current_input = 0
 	last_hint_text = ""
 
-	var mode = GlobalMetrics.current_mode
+	var mode: String = GlobalMetrics.current_mode
+	current_mode = mode
 	mode_label.text = mode
 	_update_level_label(level_idx)
 	_update_weights_for_mode(mode)
 	_update_target_display(level_idx, mode)
+	_apply_mode_grouping(mode)
 	_reset_bit_buttons()
 	_update_input_display()
 	_log_message("System initialized. Target locked.", COLOR_OK)
@@ -164,7 +176,11 @@ func _update_target_display(level_idx: int, mode: String) -> void:
 	if level_idx >= 15:
 		target_title.text = "EXAMPLE"
 		target_value.text = _format_example(mode)
-		target_sub.text = "MODE: %s" % mode
+		var suffix: String = "MODE: %s" % mode
+		if GlobalMetrics.current_overflow:
+			suffix += " | OVERFLOW"
+		target_sub.text = suffix
+		guide_label.text = "Set the 8-bit result of this expression using toggles below."
 	else:
 		target_title.text = "TARGET"
 		target_value.text = _format_value(current_target, mode)
@@ -172,6 +188,7 @@ func _update_target_display(level_idx: int, mode: String) -> void:
 			target_sub.text = ""
 		else:
 			target_sub.text = "DEC: %d" % current_target
+		guide_label.text = "Build %s (%s) using the toggle panel below." % [_format_value(current_target, mode), mode]
 
 	_pulse_panel(target_panel, Color(0.8, 0.9, 1.0, 1.0))
 func _update_weights_for_mode(mode: String) -> void:
@@ -179,12 +196,34 @@ func _update_weights_for_mode(mode: String) -> void:
 	if mode == "DEC":
 		weights = [128, 64, 32, 16, 8, 4, 2, 1]
 	elif mode == "OCT":
-		weights = [2, 1, 4, 2, 1, 4, 2, 1]
+		weights = [4, 2, 1, 4, 2, 1, 2, 1]
 	else:
 		weights = [8, 4, 2, 1, 8, 4, 2, 1]
 
 	for i in range(8):
 		weight_labels[i].text = str(weights[i])
+
+func _apply_mode_grouping(mode: String) -> void:
+	for i in range(8):
+		var bit_idx: int = 7 - i
+		var group_idx: int = _group_index_for_bit(mode, bit_idx)
+		var color: Color = GROUP_COLORS[group_idx]
+
+		bit_buttons[bit_idx].add_theme_color_override("font_color", color)
+		bit_buttons[bit_idx].add_theme_color_override("font_color_hover", color.lightened(0.15))
+		bit_buttons[bit_idx].add_theme_color_override("font_color_pressed", Color(1, 1, 1, 1))
+		weight_labels[i].add_theme_color_override("font_color", color)
+
+func _group_index_for_bit(mode: String, bit_idx: int) -> int:
+	if mode == "OCT":
+		if bit_idx >= 5:
+			return 0
+		if bit_idx >= 2:
+			return 1
+		return 2
+	if mode == "HEX":
+		return 0 if bit_idx >= 4 else 1
+	return 0
 
 func _reset_bit_buttons() -> void:
 	for i in range(8):
@@ -194,8 +233,7 @@ func _reset_bit_buttons() -> void:
 		btn.modulate = Color(1, 1, 1, 1)
 
 func _update_input_display() -> void:
-	var bin = String.num_int64(current_input, 2).pad_zeros(8)
-	input_bin.text = "BIN: %s %s" % [bin.substr(0, 4), bin.substr(4, 4)]
+	input_bin.text = "BIN: %s" % _format_grouped_bin(current_input, current_mode)
 	input_dec.text = "DEC: %d" % current_input
 	input_oct.text = "OCT: %o" % current_input
 	input_hex.text = "HEX: %X" % current_input
@@ -217,24 +255,40 @@ func _on_check_pressed() -> void:
 		return
 
 	var result: Dictionary = GlobalMetrics.check_solution(current_target, current_input)
+	var error_code: String = str(result.get("error", ""))
 
 	if result.success:
 		AudioManager.play("relay")
 		_show_toast("SUCCESS", COLOR_OK)
 		_pulse_panel(input_panel, COLOR_OK)
+		if result.has("analysis"):
+			var success_analysis: Dictionary = result.analysis
+			if success_analysis.has("overflow_warning"):
+				_log_message(str(success_analysis["overflow_warning"]), COLOR_WARN)
 		is_level_active = false
 		await get_tree().create_timer(1.0).timeout
 		if GlobalMetrics.current_level_index < GlobalMetrics.MAX_LEVELS - 1:
 			start_level(GlobalMetrics.current_level_index + 1)
 		else:
 			_log_message("ALL LEVELS COMPLETE.", COLOR_OK)
+	elif error_code.begins_with("SHIELD"):
+		_log_message(str(result.get("message", "Shield active.")), COLOR_WARN)
 	else:
 		AudioManager.play("error")
 		_pulse_panel(input_panel, COLOR_ERR)
 		if result.has("hints"):
-			var h = result.hints
-			last_hint_text = "Diagnosis: %s | Zone: %s" % [_translate_hint(h.diagnosis), _translate_hint(h.zone)]
+			var h: Dictionary = result.hints
+			last_hint_text = "Diagnosis: %s" % _translate_hint(str(h.get("diagnosis", "BIT_ERROR")))
+			# Hint ladder: zone is shown only under low stability.
+			if GlobalMetrics.stability <= 50.0:
+				last_hint_text += " | Zone: %s" % _translate_hint(str(h.get("zone", "NONE")))
 			_log_message(last_hint_text, COLOR_WARN)
+		if result.has("analysis"):
+			var analysis: Dictionary = result.analysis
+			if analysis.has("overflow_warning"):
+				_log_message(str(analysis["overflow_warning"]), COLOR_WARN)
+			if analysis.has("borrow_warning"):
+				_log_message(str(analysis["borrow_warning"]), COLOR_ERR)
 		_show_toast("INCORRECT", COLOR_ERR)
 		_apply_error_highlight(current_input ^ current_target)
 func _on_hint_pressed() -> void:
@@ -291,22 +345,27 @@ func _show_safe_mode() -> void:
 	btn_check.disabled = true
 	btn_hint.disabled = true
 
-	var xor_val = current_input ^ current_target
-	var wrong_bits = 0
+	var xor_val: int = current_input ^ current_target
+	var wrong_bits: Array[int] = []
 	for bit in range(8):
 		if (xor_val & (1 << bit)) != 0:
-			wrong_bits += 1
+			wrong_bits.append(bit)
 
-	safe_summary.text = "Target: %s\nInput: %s\nWrong bits: %d" % [
+	var critical_bit: int = -1
+	if wrong_bits.size() > 0:
+		critical_bit = int(wrong_bits[randi() % wrong_bits.size()])
+
+	safe_summary.text = "Target: %s\nInput: %s\nWrong bits: %d\nCritical point: %s" % [
 		_format_value(current_target, GlobalMetrics.current_mode),
 		_format_value(current_input, GlobalMetrics.current_mode),
-		wrong_bits
+		wrong_bits.size(),
+		("bit %d" % critical_bit) if critical_bit >= 0 else "none"
 	]
 
 	for i in range(8):
-		var bit_index = 7 - i
-		var lbl = safe_bit_labels[i]
-		if (xor_val & (1 << bit_index)) != 0:
+		var bit_index: int = 7 - i
+		var lbl: Label = safe_bit_labels[i]
+		if bit_index == critical_bit:
 			lbl.modulate = Color(1, 0.3, 0.3, 1)
 		else:
 			lbl.modulate = Color(0.7, 0.7, 0.7, 1)
@@ -336,21 +395,26 @@ func _set_details_open(open: bool, immediate: bool) -> void:
 	if open:
 		details_sheet.visible = true
 
-	var target_offset = -details_sheet.size.y if open else 0.0
+	var target_top: float = -DETAILS_SHEET_HEIGHT if open else 0.0
+	var target_bottom: float = 0.0 if open else DETAILS_SHEET_HEIGHT
 	if immediate:
-		details_sheet.offset_top = target_offset
+		details_sheet.offset_top = target_top
+		details_sheet.offset_bottom = target_bottom
 		if not open:
 			details_sheet.visible = false
 		return
 
 	var tween = create_tween()
-	tween.tween_property(details_sheet, "offset_top", target_offset, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(details_sheet, "offset_top", target_top, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(details_sheet, "offset_bottom", target_bottom, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if not open:
 		tween.tween_callback(func(): details_sheet.visible = false)
 func _hide_overlays() -> void:
 	toast_panel.visible = false
 	safe_overlay.visible = false
 	details_sheet.visible = false
+	details_sheet.offset_top = 0.0
+	details_sheet.offset_bottom = DETAILS_SHEET_HEIGHT
 
 func _show_toast(msg: String, color: Color) -> void:
 	toast_label.text = msg
@@ -383,7 +447,7 @@ func _translate_hint(code: String) -> String:
 		"UPPER_NIBBLE": return "Errors in upper nibble (bits 4-7)"
 		"NONE": return "No mismatch"
 	return code
-func _log_message(msg: String, color: Color) -> void:
+func _log_message(msg: String, _color: Color) -> void:
 	var time_str = Time.get_time_string_from_system()
 	var line = "[%s] %s" % [time_str, msg]
 	log_lines.append(line)
@@ -397,15 +461,21 @@ func _format_value(val: int, mode: String) -> String:
 	elif mode == "OCT":
 		return "%o" % val
 	elif mode == "HEX":
-		return "%X" % val
+		return "%02X" % val
 	return "%d" % val
 
+func _format_grouped_bin(val: int, mode: String) -> String:
+	var bin: String = String.num_int64(val, 2).pad_zeros(8)
+	if mode == "OCT":
+		return "%s %s %s" % [bin.substr(0, 3), bin.substr(3, 3), bin.substr(6, 2)]
+	return "%s %s" % [bin.substr(0, 4), bin.substr(4, 4)]
+
 func _format_example(mode: String) -> String:
-	var a = GlobalMetrics.current_reg_a
-	var b = GlobalMetrics.current_reg_b
-	var op = GlobalMetrics.current_operator
-	var a_txt = _format_value(a, mode)
-	var b_txt = _format_value(b, mode)
+	var a: int = GlobalMetrics.current_reg_a
+	var b: int = GlobalMetrics.current_reg_b
+	var op: int = GlobalMetrics.current_operator
+	var a_txt: String = _format_value(a, mode)
+	var b_txt: String = _format_value(b, mode)
 	if op == GlobalMetrics.Operator.ADD:
 		return "%s + %s" % [a_txt, b_txt]
 	elif op == GlobalMetrics.Operator.SUB:

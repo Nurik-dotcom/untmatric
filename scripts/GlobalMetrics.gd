@@ -1,6 +1,6 @@
 extends Node
 
-# LogicEngine v6.2 Specification
+# LogicEngine v6.4
 
 signal stability_changed(new_value, change)
 signal shield_triggered(shield_name, penalty)
@@ -25,31 +25,25 @@ var session_history: Array = []
 
 func register_trial(data: Dictionary):
 	session_history.append(data)
-	# ﾐ渙ｵﾐｴﾐｰﾐｳﾐｾﾐｳﾐｸﾑ・ｵﾑ・ｺﾐｸﾐｹ ﾐｻﾐｾﾐｳ ﾐｲ ﾐｺﾐｾﾐｽﾑ・ｾﾐｻﾑ・ﾐｴﾐｻﾑ・ﾐｾﾑひｻﾐｰﾐｴﾐｺﾐｸ
-	var match_key = data.get("match_key", "UNKNOWN")
-	var is_correct = data.get("is_correct", false)
-	# Use elapsed_ms if available (Radio Quest), else duration (Legacy)
-	var duration = data.get("duration", data.get("elapsed_ms", 0.0) / 1000.0)
+	var match_key: String = str(data.get("match_key", "UNKNOWN"))
+	var is_correct: bool = bool(data.get("is_correct", false))
+	var duration: float = float(data.get("duration", float(data.get("elapsed_ms", 0.0)) / 1000.0))
 	print("MATCH: ", match_key, " | Correct: ", is_correct, " | Time: ", duration)
 
-	# Logic for Stage A (Radio): Penalty only if FIT is false. Overkill is acceptable.
-	var is_fit = data.get("is_fit", null)
-	var penalty_condition = false
-
-	if is_fit != null:
-		# New schema: punish only if not fit
-		penalty_condition = (is_fit == false)
+	# For radio tasks, penalize only when fit is false. Legacy fallback uses is_correct.
+	var penalty_condition: bool = false
+	if data.has("is_fit"):
+		penalty_condition = (not bool(data.get("is_fit", true)))
 	else:
-		# Fallback for old schema
-		penalty_condition = (is_correct == false)
+		penalty_condition = (not is_correct)
 
 	if penalty_condition:
 		stability = max(0.0, stability - 10.0)
 		emit_signal("stability_changed", stability, -10.0)
 
 # Matrix (Complexity C)
-const MATRIX_SIZE := 5
-const MATRIX_WEIGHTS := [16, 8, 4, 2, 1]
+const MATRIX_SIZE := 6
+const MATRIX_WEIGHTS := [32, 16, 8, 4, 2, 1]
 var matrix_quest: Dictionary = {}
 var matrix_target: Array = []
 var matrix_row_constraints: Array = []
@@ -62,11 +56,17 @@ var _solver_col_parity: Array = []
 var _solver_visibility: Array = []
 var _solver_col_sums: Array = []
 var _solver_solutions: int = 0
+var matrix_deductive_mode: bool = true
+var matrix_difficulty: String = "STALKER"
+var _row_bitsets: Array = []
 
 enum Operator { ADD, SUB, SHIFT_L }
 var current_reg_a: int = 0
 var current_reg_b: int = 0
 var current_operator: Operator = Operator.ADD
+var current_overflow: bool = false
+var current_full_result: int = 0
+var current_borrow_bits: Array[int] = []
 
 # Anti-Spam / Shields
 var check_timestamps: Array[float] = []
@@ -88,6 +88,9 @@ func reset_engine():
 	current_reg_a = 0
 	current_reg_b = 0
 	current_operator = Operator.ADD
+	current_overflow = false
+	current_full_result = 0
+	current_borrow_bits.clear()
 	check_timestamps.clear()
 	last_checked_bits.clear()
 	blocked_until = 0.0
@@ -97,10 +100,10 @@ func reset_engine():
 	matrix_col_constraints.clear()
 	matrix_current.clear()
 	matrix_changed_cells.clear()
+	_row_bitsets.clear()
 
 func start_level(index: int):
 	current_level_index = index
-	# Determine mode based on level index (0-based)
 	if index < 5:
 		current_mode = "DEC"
 	elif index < 10:
@@ -108,94 +111,104 @@ func start_level(index: int):
 	elif index < 15:
 		current_mode = "HEX"
 	else:
-		# Complexity B uses a single system (HEX) for arithmetic focus
+		# Complexity B uses one system to focus on arithmetic algorithm.
 		current_mode = "HEX"
 
-	# Reset shields for the new level/attempt if desired,
-	# but typically stability persists or resets per level depending on design.
-	# TDD says: "Stability begins with 100% on each level"
 	stability = 100.0
 	emit_signal("stability_changed", stability, 0)
 	check_timestamps.clear()
 	last_checked_bits.clear()
+	blocked_until = 0.0
+
+	current_overflow = false
+	current_full_result = 0
+	current_borrow_bits.clear()
 
 	if index >= 15:
 		_generate_arithmetic_example()
 	else:
 		current_target_value = randi_range(1, 255)
 
-# Returns (success: bool, info: Dictionary)
 func check_solution(target_val: int, input_val: int) -> Dictionary:
-	var current_time = Time.get_ticks_msec() / 1000.0
-	
+	var current_time: float = Time.get_ticks_msec() / 1000.0
+
 	if current_time < blocked_until:
 		return {
 			"success": false,
 			"error": "SHIELD_ACTIVE",
-			"message": "ﾐ｡ﾐｸﾑ・ひｵﾐｼﾐｰ ﾐｿﾐｵﾑﾐｵﾐｳﾑﾐｵﾑひｰ. ﾐ孟ｴﾐｸﾑひｵ...",
+			"message": "Shield is active. Please wait.",
 			"penalty": 0
 		}
 
-	# 1. Frequency Shield
 	_update_frequency_log(current_time)
-	if check_timestamps.size() > 4:
-		blocked_until = current_time + 5.0 # Block for 5 seconds
+	if check_timestamps.size() >= 4:
+		blocked_until = current_time + 5.0
 		emit_signal("shield_triggered", "FREQUENCY", 5.0)
 		return {
 			"success": false,
 			"error": "SHIELD_FREQ",
-			"message": "ﾐ岱ｻﾐｾﾐｺﾐｸﾑﾐｾﾐｲﾐｺﾐｰ: ﾐ｡ﾐｻﾐｸﾑ威ｺﾐｾﾐｼ ﾑ・ｰﾑ・ひｾ",
+			"message": "Frequency shield triggered: too many checks in 15 seconds.",
 			"penalty": 0
 		}
 
-	# 2. Logic Check
-	var hd = _calculate_hamming_distance(target_val, input_val)
+	var expected_target: int = target_val
+	var analysis: Dictionary = {}
+	if current_level_index >= 15:
+		expected_target = current_target_value
+		if (current_operator == Operator.ADD or current_operator == Operator.SHIFT_L) and current_overflow:
+			analysis["overflow_warning"] = "Overflow detected: high carry bit was discarded in 8-bit register."
+		if current_operator == Operator.SUB and current_borrow_bits.size() > 0:
+			analysis["borrow_chain_bits"] = current_borrow_bits.duplicate()
 
-	# Lazy Search Shield Check (if HD > 2 and user is making small changes)
-	# (Simplified implementation: check if input changed little from last time)
+	var hd: int = _calculate_hamming_distance(expected_target, input_val)
 	if _check_lazy_search(input_val, hd):
-		# Apply delay penalty
 		blocked_until = current_time + 3.0
 		emit_signal("shield_triggered", "LAZY", 3.0)
-		# We still process the error but maybe with extra penalty?
-		# TDD says "penalty delay". We just blocked.
 
 	_record_input_history(input_val)
 
 	if hd == 0:
-		return {
+		var success_result: Dictionary = {
 			"success": true,
-			"message": "ﾐ頒ｾﾑ・びσｿ ﾑﾐｰﾐｷﾑﾐｵﾑ威ｵﾐｽ",
+			"message": "Access granted.",
 			"stability": stability
 		}
-	else:
-		# Calculate Penalty
-		var penalty = 0.0
-		if hd == 1: penalty = 10.0
-		elif hd == 2: penalty = 15.0
-		elif hd == 3: penalty = 25.0
-		elif hd == 4: penalty = 35.0
-		elif hd >= 5: penalty = 50.0 # Chaos
-		else: penalty = 50.0 # Fallback
+		if analysis.size() > 0:
+			success_result["analysis"] = analysis
+		return success_result
 
-		stability = max(0.0, stability - penalty)
-		emit_signal("stability_changed", stability, -penalty)
+	var penalty: float = 50.0
+	if hd == 1:
+		penalty = 10.0
+	elif hd == 2:
+		penalty = 15.0
+	elif hd == 3:
+		penalty = 25.0
+	elif hd == 4:
+		penalty = 35.0
 
-		# Generate Hints
-		var hints = _generate_hints(target_val, input_val, hd)
+	stability = max(0.0, stability - penalty)
+	emit_signal("stability_changed", stability, -penalty)
 
-		return {
-			"success": false,
-			"error": "INCORRECT",
-			"hamming": hd,
-			"penalty": penalty,
-			"hints": hints,
-			"message": "ﾐ樮威ｸﾐｱﾐｺﾐｰ ﾐｴﾐｾﾑ・びσｿﾐｰ. HD: %d" % hd
-		}
+	var hints: Dictionary = _generate_hints(expected_target, input_val, hd)
+	if current_level_index >= 15 and current_operator == Operator.SUB and _has_borrow_chain_error(input_val):
+		analysis["borrow_warning"] = "Error in borrow chain across bit positions."
+
+	var failure_result: Dictionary = {
+		"success": false,
+		"error": "INCORRECT",
+		"hamming": hd,
+		"penalty": penalty,
+		"hints": hints,
+		"message": "Incorrect value. HD: %d" % hd
+	}
+	if analysis.size() > 0:
+		failure_result["analysis"] = analysis
+	return failure_result
 
 func _calculate_hamming_distance(a: int, b: int) -> int:
-	var x = a ^ b
-	var dist = 0
+	var x: int = a ^ b
+	var dist: int = 0
 	while x > 0:
 		dist += 1
 		x &= x - 1
@@ -203,56 +216,93 @@ func _calculate_hamming_distance(a: int, b: int) -> int:
 
 func _update_frequency_log(time_sec: float):
 	check_timestamps.append(time_sec)
-	# Remove checks older than 15 seconds
-	var cutoff = time_sec - 15.0
+	var cutoff: float = time_sec - 15.0
 	while check_timestamps.size() > 0 and check_timestamps[0] < cutoff:
 		check_timestamps.pop_front()
 
 func _check_lazy_search(current_input: int, current_hd: int) -> bool:
-	if current_hd <= 2: return false
+	if current_hd <= 2:
+		return false
 
-	var inputs = last_checked_bits.duplicate()
+	var inputs: Array = last_checked_bits.duplicate()
 	inputs.append(current_input)
-	# Need at least 4 inputs to analyze 3 transitions
 	if inputs.size() < 4:
 		return false
 
 	var unique_changed: Dictionary = {}
-	var start = inputs.size() - 4
+	var start: int = inputs.size() - 4
 	for i in range(start, inputs.size() - 1):
-		var diff = inputs[i] ^ inputs[i + 1]
+		var diff: int = int(inputs[i]) ^ int(inputs[i + 1])
 		for bit in range(8):
 			if (diff & (1 << bit)) != 0:
 				unique_changed[bit] = true
-
 	return unique_changed.size() < 3
 
 func _generate_arithmetic_example():
-	# Pick an operator for Complexity B
-	var op_pick = randi() % 3
+	var op_pick: int = randi() % 3
 	current_operator = Operator.ADD if op_pick == 0 else Operator.SUB if op_pick == 1 else Operator.SHIFT_L
+	current_overflow = false
+	current_borrow_bits.clear()
 
 	if current_operator == Operator.ADD:
 		current_reg_a = randi_range(0, 255)
-		current_reg_b = randi_range(0, 255 - current_reg_a)
-		current_target_value = current_reg_a + current_reg_b
+		current_reg_b = randi_range(0, 255)
+		current_full_result = current_reg_a + current_reg_b
+		current_overflow = current_full_result > 255
+		current_target_value = current_full_result & 0xFF
 	elif current_operator == Operator.SUB:
 		current_reg_a = randi_range(0, 255)
 		current_reg_b = randi_range(0, current_reg_a)
-		current_target_value = current_reg_a - current_reg_b
+		var sub_data: Dictionary = _compute_subtraction_details(current_reg_a, current_reg_b)
+		current_target_value = int(sub_data["result"])
+		current_full_result = current_target_value
+		current_borrow_bits.clear()
+		for bit in sub_data["borrow_bits"]:
+			current_borrow_bits.append(int(bit))
 	else:
-		# SHIFT_L by 1..3, ensure result <= 255
+		current_reg_a = randi_range(0, 255)
 		current_reg_b = randi_range(1, 3)
-		var max_a = 255 >> current_reg_b
-		current_reg_a = randi_range(0, max_a)
-		current_target_value = current_reg_a << current_reg_b
+		current_full_result = current_reg_a << current_reg_b
+		current_overflow = current_full_result > 255
+		current_target_value = current_full_result & 0xFF
+
+func _compute_subtraction_details(a: int, b: int) -> Dictionary:
+	var borrow: int = 0
+	var result: int = 0
+	var borrow_bits: Array[int] = []
+	for bit in range(8):
+		var a_bit: int = (a >> bit) & 1
+		var b_bit: int = (b >> bit) & 1
+		var need: int = b_bit + borrow
+		var out_bit: int = 0
+		if a_bit < need:
+			borrow = 1
+			borrow_bits.append(bit)
+			out_bit = a_bit + 2 - need
+		else:
+			borrow = 0
+			out_bit = a_bit - need
+		result |= (out_bit << bit)
+	return {
+		"result": result & 0xFF,
+		"borrow_bits": borrow_bits
+	}
+
+func _has_borrow_chain_error(input_val: int) -> bool:
+	if current_borrow_bits.size() == 0:
+		return false
+	var xor_mask: int = input_val ^ current_target_value
+	for bit in current_borrow_bits:
+		if (xor_mask & (1 << bit)) != 0:
+			return true
+	return false
 
 func _record_input_history(val: int):
 	last_checked_bits.append(val)
 	if last_checked_bits.size() > 10:
 		last_checked_bits.pop_front()
 
-func _generate_hints(target: int, input: int, hd: int) -> Dictionary:
+func _generate_hints(target: int, input: int, _hd: int) -> Dictionary:
 	# Level 1: Diagnosis
 	var diagnosis = "BIT_ERROR"
 	if target > input: diagnosis = "VALUE_LOW"
@@ -286,13 +336,16 @@ func get_rank_info() -> Dictionary:
 	return {"name": "MONOLITH MASTER", "color": Color("ff33ff")}
 
 # --- Matrix (Complexity C) ---
-func start_matrix_quest():
+func start_matrix_quest(difficulty: String = ""):
 	# Reset shields and stability for a new matrix quest
 	stability = 100.0
 	emit_signal("stability_changed", stability, 0)
 	check_timestamps.clear()
 	last_checked_bits.clear()
 	blocked_until = 0.0
+	if difficulty != "":
+		matrix_difficulty = difficulty
+	matrix_deductive_mode = true
 	_generate_matrix_quest()
 	_init_matrix_current()
 	_clear_matrix_changes()
@@ -322,7 +375,7 @@ func check_matrix_solution() -> Dictionary:
 
 	# 1. Frequency Shield
 	_update_frequency_log(current_time)
-	if check_timestamps.size() > 4:
+	if check_timestamps.size() >= 4:
 		blocked_until = current_time + 5.0
 		emit_signal("shield_triggered", "FREQUENCY", 5.0)
 		_clear_matrix_changes()
@@ -444,14 +497,19 @@ func _clear_matrix_changes():
 	matrix_changed_cells.clear()
 
 func _generate_matrix_quest():
+	_ensure_row_bitsets()
+	var hide_counts = _get_hide_count_candidates()
 	var attempts = 0
-	while attempts < 200:
+	var max_attempts = 200
+	if hide_counts.has(3):
+		max_attempts = 400
+	while attempts < max_attempts:
 		attempts += 1
 		var target = _random_matrix()
 		var row_constraints = _build_row_constraints(target)
 		var col_constraints = _build_col_constraints(target)
 
-		var visibility = _pick_row_visibility(row_constraints, col_constraints)
+		var visibility = _pick_row_visibility(row_constraints, col_constraints, hide_counts)
 		if visibility.size() == MATRIX_SIZE:
 			for r in range(MATRIX_SIZE):
 				row_constraints[r].is_hex_visible = visibility[r]
@@ -491,6 +549,7 @@ func _build_row_constraints(target: Array) -> Array:
 		var row_value = _row_value_from_bits(target[r])
 		constraints.append({
 			"hex_value": row_value,
+			"hex_display": "%02X" % row_value,
 			"is_hex_visible": true
 		})
 	return constraints
@@ -504,7 +563,9 @@ func _build_col_constraints(target: Array) -> Array:
 		var parity = ones % 2
 		constraints.append({
 			"ones_count": ones,
-			"parity": parity
+			"parity": parity,
+			"is_ones_visible": true,
+			"ones_display": str(ones)
 		})
 	return constraints
 
@@ -521,9 +582,11 @@ func _row_bits_from_value(value: int) -> Array:
 		bits.append(1 if (value & MATRIX_WEIGHTS[c]) != 0 else 0)
 	return bits
 
-func _pick_row_visibility(row_constraints: Array, col_constraints: Array) -> Array:
-	var rows = [0, 1, 2, 3, 4]
-	for hide_count in [2, 1]:
+func _pick_row_visibility(row_constraints: Array, col_constraints: Array, hide_counts: Array) -> Array:
+	var rows: Array = []
+	for r in range(MATRIX_SIZE):
+		rows.append(r)
+	for hide_count in hide_counts:
 		var combos = _combinations(rows, hide_count)
 		combos.shuffle()
 		for combo in combos:
@@ -542,7 +605,9 @@ func _count_matrix_solutions(row_constraints: Array, col_constraints: Array, vis
 		_solver_col_targets.append(col_constraints[c].ones_count)
 		_solver_col_parity.append(col_constraints[c].parity)
 	_solver_visibility = visibility
-	_solver_col_sums = [0, 0, 0, 0, 0]
+	_solver_col_sums = []
+	for _c in range(MATRIX_SIZE):
+		_solver_col_sums.append(0)
 	_solver_solutions = 0
 
 	_solver_backtrack(0)
@@ -571,7 +636,7 @@ func _solver_backtrack(row_idx: int) -> void:
 		return
 
 	if _solver_visibility[row_idx]:
-		var bits = _row_bits_from_value(_solver_row_constraints[row_idx].hex_value)
+		var bits = _row_bitsets[int(_solver_row_constraints[row_idx].hex_value)]
 		if _solver_row_fits(bits, row_idx):
 			for c in range(MATRIX_SIZE):
 				_solver_col_sums[c] += bits[c]
@@ -579,11 +644,8 @@ func _solver_backtrack(row_idx: int) -> void:
 			for c in range(MATRIX_SIZE):
 				_solver_col_sums[c] -= bits[c]
 	else:
-		for mask in range(32):
-			var bits: Array = []
-			for c in range(MATRIX_SIZE):
-				var bit = 1 if (mask & MATRIX_WEIGHTS[c]) != 0 else 0
-				bits.append(bit)
+		for mask in range(1 << MATRIX_SIZE):
+			var bits: Array = _row_bitsets[mask]
 			if not _solver_row_fits(bits, row_idx):
 				continue
 			for c in range(MATRIX_SIZE):
@@ -594,13 +656,33 @@ func _solver_backtrack(row_idx: int) -> void:
 
 func _combinations(items: Array, count: int) -> Array:
 	var results: Array = []
-	if count == 1:
-		for item in items:
-			results.append([item])
-		return results
-	if count == 2:
-		for i in range(items.size()):
-			for j in range(i + 1, items.size()):
-				results.append([items[i], items[j]])
-		return results
+	_combinations_recursive(items, count, 0, [], results)
 	return results
+
+func _combinations_recursive(items: Array, count: int, start: int, path: Array, out: Array) -> void:
+	if count == 0:
+		out.append(path.duplicate())
+		return
+	for i in range(start, items.size() - count + 1):
+		path.append(items[i])
+		_combinations_recursive(items, count - 1, i + 1, path, out)
+		path.pop_back()
+
+func _get_hide_count_candidates() -> Array:
+	match matrix_difficulty:
+		"NEWBIE":
+			return [1]
+		"MASTER":
+			return [3]
+	return [2]
+
+func _ensure_row_bitsets() -> void:
+	if _row_bitsets.size() == (1 << MATRIX_SIZE):
+		return
+	_row_bitsets.clear()
+	for mask in range(1 << MATRIX_SIZE):
+		var bits: Array = []
+		for c in range(MATRIX_SIZE):
+			var bit = 1 if (mask & MATRIX_WEIGHTS[c]) != 0 else 0
+			bits.append(bit)
+		_row_bitsets.append(bits)
