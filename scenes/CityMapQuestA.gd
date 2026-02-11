@@ -4,7 +4,8 @@ extends Control
 var level_data: Dictionary = {}
 var adjacency: Dictionary = {} # source -> {target: weight}
 var min_sum: int = 0
-var optimal_path_example: Array = []
+var input_regex: RegEx
+var config_hash: String = ""
 
 # State
 var current_node: String = ""
@@ -77,12 +78,21 @@ func _load_level_data(path: String):
 		return
 
 	var content = file.get_as_text()
+	config_hash = content.sha256_text() # Simple SHA256 of raw JSON
+
 	var json = JSON.new()
 	var error = json.parse(content)
 	if error == OK:
 		level_data = json.data
 	else:
 		push_error("JSON Parse Error: " + json.get_error_message())
+
+	# Compile Regex
+	input_regex = RegEx.new()
+	if level_data.has("rules") and level_data.rules.has("input_regex"):
+		input_regex.compile(level_data.rules.input_regex)
+	else:
+		input_regex.compile("^[0-9]+$") # Fallback
 
 	# Build adjacency list for logic
 	for edge in level_data.edges:
@@ -129,8 +139,6 @@ func _calculate_optimal_path():
 					prev[v] = u
 
 	min_sum = dist[end_node]
-	# Reconstruct path? Not strictly needed for logic, just min_sum is needed for Judge.
-	# But good for debugging.
 
 func _build_graph_ui():
 	# Clear existing
@@ -160,6 +168,20 @@ func _build_graph_ui():
 			line.gradient = gradient
 
 			edges_layer.add_child(line)
+
+			# Arrow Head (Triangle)
+			var dir = (end_pos - start_pos).normalized()
+			var arrow_size = 15.0
+			# Position arrow slightly before the end node to avoid overlap (assume node radius ~25)
+			var arrow_pos = end_pos - (dir * 30.0)
+
+			var polygon = Polygon2D.new()
+			var p1 = arrow_pos + (dir * arrow_size)
+			var p2 = arrow_pos + (dir.rotated(2.5) * arrow_size)
+			var p3 = arrow_pos + (dir.rotated(-2.5) * arrow_size)
+			polygon.polygon = [p1, p2, p3]
+			polygon.color = Color(0.6, 0.6, 1.0, 1.0) # Match bright end
+			edges_layer.add_child(polygon)
 
 			# Weight Label
 			var mid_pos = (start_pos + end_pos) / 2
@@ -275,7 +297,7 @@ func _on_submit_pressed():
 		btn_reset.disabled = true
 		_update_trust() # Final update
 		# Victory?
-	elif verdict == "FAIL_TRUST":
+	elif trust <= 10: # Only if judge triggered trust update that killed us
 		status_label.text = "MISSION FAILED: Trust Depleted."
 		status_label.add_theme_color_override("font_color", Color.RED)
 		is_game_over = true
@@ -299,8 +321,8 @@ func _judge_solution(input_text: String) -> String:
 		if current_node != level_data.end_node:
 			return "INCOMPLETE"
 
-	# 2. Input Validation
-	if not input_text.is_valid_int() or int(input_text) < 0:
+	# 2. Input Validation (Strict Regex)
+	if not input_regex.search(input_text):
 		n_parse += 1
 		return "PARSE_ERROR"
 
@@ -358,7 +380,7 @@ func _log_attempt(input_sum_raw: String, verdict: String):
 
 	# Normalization for log
 	var norm_input = input_sum_raw.strip_edges()
-	if norm_input.is_valid_int():
+	if input_regex.search(norm_input):
 		user_input_int = int(norm_input)
 		input_valid = true
 
@@ -371,30 +393,46 @@ func _log_attempt(input_sum_raw: String, verdict: String):
 		else:
 			is_structurally_valid = false
 
+	# Calculate overtime and attempt no (approximate)
+	var t_overtime = max(0, t_elapsed_seconds - level_data.time_limit_sec)
+	# Attempt number is GlobalMetrics history size + 1 (local calculation)
+	var attempt_no = GlobalMetrics.session_history.size() + 1
+
 	var log_data = {
+		"contract_version": level_data.get("contract_version", "1.0"),
 		"level_id": level_data.level_id,
+		"config_hash": config_hash,
+		"attempt_no": attempt_no,
+
 		# RESEARCH AXES (Snapshot)
 		"calc_ok": (user_input_int == real_path_sum) if input_valid else false,
-		"optimal_ok": (real_path_sum == min_sum),
+		"optimal_ok": (is_structurally_valid and current_node == level_data.end_node and real_path_sum == min_sum),
 		"path_valid": is_structurally_valid,
+		"reached_end": (current_node == level_data.end_node),
+
 		# DATA
 		"first_attempt_edge": first_attempt_edge,
 		"t_elapsed_seconds": t_elapsed_seconds,
+		"t_overtime_seconds": t_overtime,
+		"trust_final": int(trust),
 		"path": path,
-		"entered_sum": norm_input,
+
+		"entered_sum_raw": norm_input,
+		"entered_sum_int": user_input_int if input_valid else null,
 		"real_sum": real_path_sum,
 		"min_sum": min_sum,
+
 		"N_calc": n_calc,
 		"N_opt": n_opt,
-		"verdict_code": verdict,
-		"config_hash": "TODO_HASH" # Optional for now
+		"N_parse": n_parse,
+		"N_reset": n_reset,
+
+		"verdict_code": verdict
 	}
 
-	# 1. Append to GlobalMetrics
-	log_data["is_correct"] = (verdict == "OPTIMAL")
-	log_data["is_fit"] = (verdict == "OPTIMAL")
-
-	GlobalMetrics.register_trial(log_data)
+	# 1. Append to GlobalMetrics SAFELY (No side effects)
+	# Do NOT call register_trial to avoid stability penalties
+	GlobalMetrics.session_history.append(log_data)
 
 	# 2. Save to file
 	_save_json_log(log_data)
