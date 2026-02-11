@@ -13,6 +13,7 @@ extends Control
 @onready var target_title = $UI/SafeArea/Main/InstrumentArea/TargetPanel/TargetContent/TargetTitle
 @onready var target_value = $UI/SafeArea/Main/InstrumentArea/TargetPanel/TargetContent/TargetValueBig
 @onready var target_sub = $UI/SafeArea/Main/InstrumentArea/TargetPanel/TargetContent/TargetSub
+@onready var guide_label = $UI/SafeArea/Main/InstrumentArea/GuideRow/GuideLabel
 
 @onready var input_panel = $UI/SafeArea/Main/InstrumentArea/InputPanel
 @onready var input_bin = $UI/SafeArea/Main/InstrumentArea/InputPanel/InputContent/InputBin
@@ -69,6 +70,8 @@ var details_open: bool = false
 var _swipe_start_pos: Vector2 = Vector2.ZERO
 var _swipe_tracking: bool = false
 
+const DETAILS_SHEET_HEIGHT: float = 420.0
+
 func _ready():
 	_build_bit_buttons()
 	_build_weight_labels()
@@ -109,8 +112,9 @@ func _build_bit_buttons() -> void:
 		var bit_index = 7 - i
 		var btn = Button.new()
 		btn.toggle_mode = true
+		btn.theme_type_variation = "BitToggle"
 		btn.text = "0"
-		btn.custom_minimum_size = Vector2(0, 64)
+		btn.custom_minimum_size = Vector2(0, 72)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.toggled.connect(_on_bit_toggled.bind(bit_index))
 		if i < 4:
@@ -126,7 +130,7 @@ func _build_weight_labels() -> void:
 
 	for _i in range(8):
 		var lbl = Label.new()
-		lbl.custom_minimum_size = Vector2(0, 18)
+		lbl.custom_minimum_size = Vector2(0, 24)
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		weights_row.add_child(lbl)
@@ -176,6 +180,7 @@ func _update_target_display(level_idx: int, mode: String) -> void:
 		if GlobalMetrics.current_overflow:
 			suffix += " | OVERFLOW"
 		target_sub.text = suffix
+		guide_label.text = "Set the 8-bit result of this expression using toggles below."
 	else:
 		target_title.text = "TARGET"
 		target_value.text = _format_value(current_target, mode)
@@ -183,6 +188,7 @@ func _update_target_display(level_idx: int, mode: String) -> void:
 			target_sub.text = ""
 		else:
 			target_sub.text = "DEC: %d" % current_target
+		guide_label.text = "Build %s (%s) using the toggle panel below." % [_format_value(current_target, mode), mode]
 
 	_pulse_panel(target_panel, Color(0.8, 0.9, 1.0, 1.0))
 func _update_weights_for_mode(mode: String) -> void:
@@ -249,6 +255,7 @@ func _on_check_pressed() -> void:
 		return
 
 	var result: Dictionary = GlobalMetrics.check_solution(current_target, current_input)
+	var error_code: String = str(result.get("error", ""))
 
 	if result.success:
 		AudioManager.play("relay")
@@ -264,6 +271,8 @@ func _on_check_pressed() -> void:
 			start_level(GlobalMetrics.current_level_index + 1)
 		else:
 			_log_message("ALL LEVELS COMPLETE.", COLOR_OK)
+	elif error_code.begins_with("SHIELD"):
+		_log_message(str(result.get("message", "Shield active.")), COLOR_WARN)
 	else:
 		AudioManager.play("error")
 		_pulse_panel(input_panel, COLOR_ERR)
@@ -386,21 +395,26 @@ func _set_details_open(open: bool, immediate: bool) -> void:
 	if open:
 		details_sheet.visible = true
 
-	var target_offset = -details_sheet.size.y if open else 0.0
+	var target_top: float = -DETAILS_SHEET_HEIGHT if open else 0.0
+	var target_bottom: float = 0.0 if open else DETAILS_SHEET_HEIGHT
 	if immediate:
-		details_sheet.offset_top = target_offset
+		details_sheet.offset_top = target_top
+		details_sheet.offset_bottom = target_bottom
 		if not open:
 			details_sheet.visible = false
 		return
 
 	var tween = create_tween()
-	tween.tween_property(details_sheet, "offset_top", target_offset, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(details_sheet, "offset_top", target_top, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(details_sheet, "offset_bottom", target_bottom, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if not open:
 		tween.tween_callback(func(): details_sheet.visible = false)
 func _hide_overlays() -> void:
 	toast_panel.visible = false
 	safe_overlay.visible = false
 	details_sheet.visible = false
+	details_sheet.offset_top = 0.0
+	details_sheet.offset_bottom = DETAILS_SHEET_HEIGHT
 
 func _show_toast(msg: String, color: Color) -> void:
 	toast_label.text = msg

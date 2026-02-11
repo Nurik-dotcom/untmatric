@@ -33,7 +33,7 @@ const CASES_B: Array = [
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Терминал: Найдите всех агентов с уровнем допуска (Access) СТРОГО выше 3.",
+		"prompt": "Terminal: select agents with Access strictly greater than 3.",
 		"predicate": {
 			"field_col_id": "c_access",
 			"operator": ">",
@@ -68,7 +68,7 @@ const CASES_B: Array = [
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Система: Отфильтруйте инциденты с уровнем угрозы (Sev) 2 и выше.",
+		"prompt": "System: select incidents with Sev >= 2.",
 		"predicate": {
 			"field_col_id": "c_sev",
 			"operator": ">=",
@@ -103,7 +103,7 @@ const CASES_B: Array = [
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Поиск: Выберите все записи со статусом 'ERROR'.",
+		"prompt": "Search: select all rows with status ERROR.",
 		"predicate": {
 			"field_col_id": "c_stat",
 			"operator": "==",
@@ -124,13 +124,13 @@ const CASES_B: Array = [
 			]
 		},
 		"answer_row_ids": ["r2", "r4"],
-		"boundary_row_ids": [], # Equality has no boundary in >/< sense, unless fuzzy.
-		"opposite_row_ids": ["r1", "r3"], # Everything else is opposite/unrelated.
+		"boundary_row_ids": [],
+		"opposite_row_ids": ["r1", "r3"],
 		"unrelated_row_ids": [],
 		"anti_cheat": {"shuffle_rows": true, "shuffle_options": false},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
-	# --- 4. FILTER_ROWS (Mixed garbage) ---
+	# --- 4. FILTER_ROWS (Strict <) ---
 	{
 		"id": "DA7-B-04",
 		"schema_version": "DA7.B.v1",
@@ -138,7 +138,7 @@ const CASES_B: Array = [
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Фильтр: Найти транзакции суммой менее 100.",
+		"prompt": "Filter: find transactions with Amount < 100.",
 		"predicate": {
 			"field_col_id": "c_sum",
 			"operator": "<",
@@ -173,7 +173,7 @@ const CASES_B: Array = [
 		"topic": "DB_RELATIONSHIPS",
 		"case_kind": "RELATION_TYPE",
 		"interaction_type": "RELATIONSHIP_CHOICE",
-		"prompt": "Схема: Определите тип связи между таблицами 'Users' и 'Posts'.",
+		"prompt": "Schema: determine relation between Users and Posts.",
 		"schema_visual": {
 			"left_table": {
 				"title": "Users",
@@ -214,7 +214,7 @@ const CASES_B: Array = [
 		"topic": "DB_RELATIONSHIPS",
 		"case_kind": "RELATION_TYPE",
 		"interaction_type": "RELATIONSHIP_CHOICE",
-		"prompt": "Схема: Как связаны 'Employee' и 'Passport_Details' (при условии уникальности паспорта)?",
+		"prompt": "Schema: determine relation between Employee and Passport_Details (unique passport).",
 		"schema_visual": {
 			"left_table": {
 				"title": "Employee",
@@ -254,25 +254,10 @@ static func validate_case_b(c: Dictionary) -> bool:
 		return false
 
 	if c.interaction_type == "MULTI_SELECT_ROWS":
-		# Validation for disjoint sets
-		# A, B, O, U must be disjoint.
-		# Note: In strict >=, boundary IS in answer.
-		# So disjoint check applies to: (A \ B), (B \ A), (A ∩ B), O, U?
-		# Spec says: "Sets must be disjoint" but also "answer contains boundary if non-strict".
-		# This implies the logical sets defined in JSON should be disjoint in ID listing if we interpret them as:
-		# "Strictly Correct", "Strictly Boundary", "Strictly Opposite", "Unrelated"
-		# BUT the fields are named `answer_row_ids` etc.
-		# Let's check overlap carefully.
-
-		# For strict logic, A and B should be disjoint.
-		# For non-strict logic, A contains B.
-
-		# Let's perform basic existence check first.
+		# Validation for disjoint sets (basic existence checks).
 		if not c.has("answer_row_ids") or not c.has("boundary_row_ids"):
 			push_error("Case %s missing sets" % c.id)
 			return false
-
-		# Check options/predicate existence
 		if not c.has("predicate"):
 			push_error("Case %s missing predicate" % c.id)
 			return false

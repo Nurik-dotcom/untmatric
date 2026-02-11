@@ -42,8 +42,8 @@ func register_trial(data: Dictionary):
 		emit_signal("stability_changed", stability, -10.0)
 
 # Matrix (Complexity C)
-const MATRIX_SIZE := 5
-const MATRIX_WEIGHTS := [16, 8, 4, 2, 1]
+const MATRIX_SIZE := 6
+const MATRIX_WEIGHTS := [32, 16, 8, 4, 2, 1]
 var matrix_quest: Dictionary = {}
 var matrix_target: Array = []
 var matrix_row_constraints: Array = []
@@ -57,6 +57,8 @@ var _solver_visibility: Array = []
 var _solver_col_sums: Array = []
 var _solver_solutions: int = 0
 var matrix_deductive_mode: bool = true
+var matrix_difficulty: String = "STALKER"
+var _row_bitsets: Array = []
 
 enum Operator { ADD, SUB, SHIFT_L }
 var current_reg_a: int = 0
@@ -98,6 +100,7 @@ func reset_engine():
 	matrix_col_constraints.clear()
 	matrix_current.clear()
 	matrix_changed_cells.clear()
+	_row_bitsets.clear()
 
 func start_level(index: int):
 	current_level_index = index
@@ -189,7 +192,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 
 	var hints: Dictionary = _generate_hints(expected_target, input_val, hd)
 	if current_level_index >= 15 and current_operator == Operator.SUB and _has_borrow_chain_error(input_val):
-		analysis["borrow_warning"] = "Ошибка в цепочке заёма разрядов"
+		analysis["borrow_warning"] = "Error in borrow chain across bit positions."
 
 	var failure_result: Dictionary = {
 		"success": false,
@@ -333,13 +336,15 @@ func get_rank_info() -> Dictionary:
 	return {"name": "MONOLITH MASTER", "color": Color("ff33ff")}
 
 # --- Matrix (Complexity C) ---
-func start_matrix_quest():
+func start_matrix_quest(difficulty: String = ""):
 	# Reset shields and stability for a new matrix quest
 	stability = 100.0
 	emit_signal("stability_changed", stability, 0)
 	check_timestamps.clear()
 	last_checked_bits.clear()
 	blocked_until = 0.0
+	if difficulty != "":
+		matrix_difficulty = difficulty
 	matrix_deductive_mode = true
 	_generate_matrix_quest()
 	_init_matrix_current()
@@ -492,14 +497,19 @@ func _clear_matrix_changes():
 	matrix_changed_cells.clear()
 
 func _generate_matrix_quest():
+	_ensure_row_bitsets()
+	var hide_counts = _get_hide_count_candidates()
 	var attempts = 0
-	while attempts < 200:
+	var max_attempts = 200
+	if hide_counts.has(3):
+		max_attempts = 400
+	while attempts < max_attempts:
 		attempts += 1
 		var target = _random_matrix()
 		var row_constraints = _build_row_constraints(target)
 		var col_constraints = _build_col_constraints(target)
 
-		var visibility = _pick_row_visibility(row_constraints, col_constraints)
+		var visibility = _pick_row_visibility(row_constraints, col_constraints, hide_counts)
 		if visibility.size() == MATRIX_SIZE:
 			for r in range(MATRIX_SIZE):
 				row_constraints[r].is_hex_visible = visibility[r]
@@ -539,6 +549,7 @@ func _build_row_constraints(target: Array) -> Array:
 		var row_value = _row_value_from_bits(target[r])
 		constraints.append({
 			"hex_value": row_value,
+			"hex_display": "%02X" % row_value,
 			"is_hex_visible": true
 		})
 	return constraints
@@ -550,12 +561,11 @@ func _build_col_constraints(target: Array) -> Array:
 		for r in range(MATRIX_SIZE):
 			ones += target[r][c]
 		var parity = ones % 2
-		var ones_hidden = randf() < 0.30
 		constraints.append({
 			"ones_count": ones,
 			"parity": parity,
-			"is_ones_visible": not ones_hidden,
-			"ones_display": "?" if ones_hidden else str(ones)
+			"is_ones_visible": true,
+			"ones_display": str(ones)
 		})
 	return constraints
 
@@ -572,9 +582,11 @@ func _row_bits_from_value(value: int) -> Array:
 		bits.append(1 if (value & MATRIX_WEIGHTS[c]) != 0 else 0)
 	return bits
 
-func _pick_row_visibility(row_constraints: Array, col_constraints: Array) -> Array:
-	var rows = [0, 1, 2, 3, 4]
-	for hide_count in [2, 1]:
+func _pick_row_visibility(row_constraints: Array, col_constraints: Array, hide_counts: Array) -> Array:
+	var rows: Array = []
+	for r in range(MATRIX_SIZE):
+		rows.append(r)
+	for hide_count in hide_counts:
 		var combos = _combinations(rows, hide_count)
 		combos.shuffle()
 		for combo in combos:
@@ -593,7 +605,9 @@ func _count_matrix_solutions(row_constraints: Array, col_constraints: Array, vis
 		_solver_col_targets.append(col_constraints[c].ones_count)
 		_solver_col_parity.append(col_constraints[c].parity)
 	_solver_visibility = visibility
-	_solver_col_sums = [0, 0, 0, 0, 0]
+	_solver_col_sums = []
+	for _c in range(MATRIX_SIZE):
+		_solver_col_sums.append(0)
 	_solver_solutions = 0
 
 	_solver_backtrack(0)
@@ -622,7 +636,7 @@ func _solver_backtrack(row_idx: int) -> void:
 		return
 
 	if _solver_visibility[row_idx]:
-		var bits = _row_bits_from_value(_solver_row_constraints[row_idx].hex_value)
+		var bits = _row_bitsets[int(_solver_row_constraints[row_idx].hex_value)]
 		if _solver_row_fits(bits, row_idx):
 			for c in range(MATRIX_SIZE):
 				_solver_col_sums[c] += bits[c]
@@ -630,11 +644,8 @@ func _solver_backtrack(row_idx: int) -> void:
 			for c in range(MATRIX_SIZE):
 				_solver_col_sums[c] -= bits[c]
 	else:
-		for mask in range(32):
-			var bits: Array = []
-			for c in range(MATRIX_SIZE):
-				var bit = 1 if (mask & MATRIX_WEIGHTS[c]) != 0 else 0
-				bits.append(bit)
+		for mask in range(1 << MATRIX_SIZE):
+			var bits: Array = _row_bitsets[mask]
 			if not _solver_row_fits(bits, row_idx):
 				continue
 			for c in range(MATRIX_SIZE):
@@ -645,13 +656,33 @@ func _solver_backtrack(row_idx: int) -> void:
 
 func _combinations(items: Array, count: int) -> Array:
 	var results: Array = []
-	if count == 1:
-		for item in items:
-			results.append([item])
-		return results
-	if count == 2:
-		for i in range(items.size()):
-			for j in range(i + 1, items.size()):
-				results.append([items[i], items[j]])
-		return results
+	_combinations_recursive(items, count, 0, [], results)
 	return results
+
+func _combinations_recursive(items: Array, count: int, start: int, path: Array, out: Array) -> void:
+	if count == 0:
+		out.append(path.duplicate())
+		return
+	for i in range(start, items.size() - count + 1):
+		path.append(items[i])
+		_combinations_recursive(items, count - 1, i + 1, path, out)
+		path.pop_back()
+
+func _get_hide_count_candidates() -> Array:
+	match matrix_difficulty:
+		"NEWBIE":
+			return [1]
+		"MASTER":
+			return [3]
+	return [2]
+
+func _ensure_row_bitsets() -> void:
+	if _row_bitsets.size() == (1 << MATRIX_SIZE):
+		return
+	_row_bitsets.clear()
+	for mask in range(1 << MATRIX_SIZE):
+		var bits: Array = []
+		for c in range(MATRIX_SIZE):
+			var bit = 1 if (mask & MATRIX_WEIGHTS[c]) != 0 else 0
+			bits.append(bit)
+		_row_bitsets.append(bits)

@@ -132,7 +132,7 @@ func _render_filter_ui():
 
 	var cols = current_case.table.columns
 	data_tree.columns = cols.size() + 1 # +1 for Checkbox
-	data_tree.set_column_title(0, "✓")
+	data_tree.set_column_title(0, "SEL")
 	for i in range(cols.size()):
 		data_tree.set_column_title(i+1, cols[i].title)
 	data_tree.column_titles_visible = true
@@ -475,8 +475,15 @@ func _log_trial(is_correct: bool, f_reason: String, data: Dictionary, stability_
 
 # --- Utils ---
 func _update_stability_ui():
-	stability_bar.value = GlobalMetrics.stability
-	stability_label.text = "STABILITY: %d%%" % int(GlobalMetrics.stability)
+	if not is_instance_valid(stability_bar):
+		stability_bar = get_node_or_null("RootLayout/Footer/StabilityBar")
+	if not is_instance_valid(stability_label):
+		stability_label = get_node_or_null("RootLayout/Footer/StabilityLabel")
+
+	if is_instance_valid(stability_bar):
+		stability_bar.value = GlobalMetrics.stability
+	if is_instance_valid(stability_label):
+		stability_label.text = "STABILITY: %d%%" % int(GlobalMetrics.stability)
 
 func _start_typewriter():
 	typewriter_timer.stop()
