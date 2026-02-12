@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://da7archive001"]
 
 [ext_resource type="Script" path="res://scripts/case_07/da7_data_archive_a.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
 
 [node name="DA7_DataArchiveQuestA" type="Control"]
 layout_mode = 3
@@ -55,11 +55,6 @@ size_flags_vertical = 3
 
 [node name="DesktopLayout" type="HSplitContainer" parent="RootLayout/Body"]
 layout_mode = 2
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 split_offset = 400
 
 [node name="TableSection" type="VBoxContainer" parent="RootLayout/Body/DesktopLayout"]
@@ -101,11 +96,6 @@ columns = 2
 [node name="MobileLayout" type="VBoxContainer" parent="RootLayout/Body"]
 visible = false
 layout_mode = 2
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="Footer" type="HBoxContainer" parent="RootLayout"]
 layout_mode = 2

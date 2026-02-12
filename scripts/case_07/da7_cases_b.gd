@@ -5,15 +5,13 @@ const LEVEL = "B"
 
 # --- F_REASON Constants (Ladder Priority) ---
 const F_REASON_FILTER = [
-	"EMPTY_SUBMIT",        # 1. No rows selected
-	"OVERSELECT_ALL",      # 2. Selected > 80% of rows (and wrong)
-	"SIGN_REVERSAL",       # 3. Selected only opposite rows
-	"SIGN_MIXED",          # 4. Mixed opposite + others (no correct)
-	"INCLUDED_BOUNDARY",   # 5. Strict mode but boundary selected
-	"EXCLUDED_BOUNDARY",   # 6. Non-strict mode but boundary missed
-	"FALSE_POSITIVE",      # 7. Selected extra (unrelated) rows
-	"OMISSION",            # 8. Missed some correct rows
-	"CORRECT"              # 9. Perfect match
+	"EMPTY_SELECTION",
+	"PURE_OPPOSITE",
+	"INCLUDED_BOUNDARY",
+	"OVERSELECT_DECOY",
+	"PARTIAL_OMISSION",
+	"MIXED_ERROR",
+	"NONE"
 ]
 
 const F_REASON_RELATION = [
@@ -56,7 +54,9 @@ const CASES_B: Array = [
 		"answer_row_ids": ["r2", "r4"],
 		"boundary_row_ids": ["r3"],
 		"opposite_row_ids": ["r1"],
+		"decoy_row_ids": [],
 		"unrelated_row_ids": [],
+		"difficulty_tags": ["strict_inequality", "boundary_case"],
 		"anti_cheat": {"shuffle_rows": true, "shuffle_options": false},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
@@ -91,7 +91,9 @@ const CASES_B: Array = [
 		"answer_row_ids": ["r2", "r3"],
 		"boundary_row_ids": ["r2"],
 		"opposite_row_ids": ["r1", "r4"],
+		"decoy_row_ids": [],
 		"unrelated_row_ids": [],
+		"difficulty_tags": ["non_strict_inequality", "boundary_in_answer"],
 		"anti_cheat": {"shuffle_rows": true, "shuffle_options": false},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
@@ -126,7 +128,9 @@ const CASES_B: Array = [
 		"answer_row_ids": ["r2", "r4"],
 		"boundary_row_ids": [],
 		"opposite_row_ids": ["r1", "r3"],
+		"decoy_row_ids": [],
 		"unrelated_row_ids": [],
+		"difficulty_tags": ["equality_filter"],
 		"anti_cheat": {"shuffle_rows": true, "shuffle_options": false},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
@@ -161,7 +165,9 @@ const CASES_B: Array = [
 		"answer_row_ids": ["r1", "r4"],
 		"boundary_row_ids": ["r2"],
 		"opposite_row_ids": ["r3"],
+		"decoy_row_ids": [],
 		"unrelated_row_ids": [],
+		"difficulty_tags": ["strict_inequality", "boundary_case"],
 		"anti_cheat": {"shuffle_rows": true, "shuffle_options": false},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},

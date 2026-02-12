@@ -1,9 +1,12 @@
 extends Control
 
 # Data & Config
+const CasesHub = preload("res://scripts/case_07/da7_cases.gd")
 const CasesModuleB = preload("res://scripts/case_07/da7_cases_b.gd")
-const BREAKPOINT_PX = 820
+const BREAKPOINT_PX = 800
 const SESSION_CASE_COUNT = 6
+const LAYOUT_MOBILE = "mobile"
+const LAYOUT_DESKTOP = "desktop"
 
 # State
 var session_cases: Array = []
@@ -25,6 +28,7 @@ var toggle_count: int = 0
 var unique_rows_toggled: Dictionary = {} # row_id -> bool
 var click_timestamps: Array[float] = []
 var lag_compensation_ms: float = 0.0
+var current_layout_mode: String = LAYOUT_DESKTOP
 
 # Nodes
 @onready var filter_mode_root = $RootLayout/Body/FilterModeRoot
@@ -36,19 +40,28 @@ var lag_compensation_ms: float = 0.0
 @onready var prompt_label: RichTextLabel = $RootLayout/Body/FilterModeRoot/TaskSection/PromptLabel
 @onready var btn_submit = $RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnSubmit
 @onready var btn_clear = $RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnClear
+@onready var filter_table_section = $RootLayout/Body/FilterModeRoot/TableSection
+@onready var filter_task_section = $RootLayout/Body/FilterModeRoot/TaskSection
+var filter_mobile_layout: VBoxContainer
 
 # Relation Mode Nodes
 @onready var rel_prompt = $RootLayout/Body/RelationModeRoot/PromptLabelRel
+@onready var relation_schema_container = $RootLayout/Body/RelationModeRoot/SchemaContainer
 @onready var rel_tree_l = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable/TreeL
 @onready var rel_tree_r = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable/TreeR
 @onready var rel_title_l = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable/Title
 @onready var rel_title_r = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable/Title
 @onready var rel_link_label = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector/HintLabel
+@onready var rel_arrow_label = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector/ArrowLabel
+@onready var rel_left_table = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable
+@onready var rel_center_connector = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector
+@onready var rel_right_table = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable
 @onready var rel_options_row = $RootLayout/Body/RelationModeRoot/OptionsRow
+var relation_mobile_schema: VBoxContainer
 
 # Common Nodes
-@onready var stability_bar = $RootLayout/Footer/StabilityBar
-@onready var stability_label = $RootLayout/Footer/StabilityLabel
+@onready var stability_bar: ProgressBar = get_node_or_null("RootLayout/Footer/StabilityBar")
+@onready var stability_label: Label = get_node_or_null("RootLayout/Footer/StabilityLabel")
 @onready var title_label = $RootLayout/Header/Margin/Title
 @onready var sfx_error = $Runtime/Audio/SfxError
 @onready var sfx_relay = $Runtime/Audio/SfxRelay
@@ -56,6 +69,7 @@ var lag_compensation_ms: float = 0.0
 
 func _ready():
 	randomize()
+	_build_mobile_containers()
 	# Connect Filter Buttons
 	btn_submit.pressed.connect(_on_submit_pressed)
 	btn_submit.pressed.connect(_register_interaction)
@@ -75,7 +89,7 @@ func _process(delta):
 			lag_compensation_ms += delta * 1000.0
 
 func _init_session():
-	var all_cases = CasesModuleB.CASES_B.duplicate(true)
+	var all_cases = CasesHub.get_cases("B")
 	var valid_cases = []
 	for c in all_cases:
 		if CasesModuleB.validate_case_b(c):
@@ -114,6 +128,7 @@ func _load_next_case():
 		mode = "FILTER"
 		filter_mode_root.visible = true
 		relation_mode_root.visible = false
+		_set_filter_input_locked(false)
 		_render_filter_ui()
 	elif current_case.interaction_type == "RELATIONSHIP_CHOICE":
 		mode = "RELATION"
@@ -121,6 +136,7 @@ func _load_next_case():
 		relation_mode_root.visible = true
 		_render_relation_ui()
 
+	_on_viewport_size_changed()
 	_start_typewriter()
 
 # --- Render Logic ---
@@ -143,6 +159,8 @@ func _render_filter_ui():
 		data_tree.item_edited.connect(_on_tree_item_edited)
 	if not data_tree.item_selected.is_connected(_on_tree_item_selected):
 		data_tree.item_selected.connect(_on_tree_item_selected)
+	if not data_tree.gui_input.is_connected(_on_data_tree_gui_input):
+		data_tree.gui_input.connect(_on_data_tree_gui_input)
 
 	var rows = current_case.table.rows.duplicate()
 	if current_case.anti_cheat.get("shuffle_rows", false):
@@ -180,6 +198,7 @@ func _render_relation_ui():
 	rel_title_r.text = schema.right_table.title
 
 	rel_link_label.text = schema.link.hint_label
+	rel_arrow_label.text = "=>"
 	rel_prompt.text = current_case.prompt
 	rel_prompt.visible_characters = 0
 
@@ -192,6 +211,8 @@ func _render_relation_ui():
 		var btn = Button.new()
 		btn.text = opt.text
 		btn.name = "Btn_" + opt.id
+		btn.custom_minimum_size = Vector2(0, 56)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.pressed.connect(_register_interaction)
 		btn.pressed.connect(_on_relation_option_selected.bind(opt))
 		rel_options_row.add_child(btn)
@@ -247,6 +268,12 @@ func _on_tree_item_selected():
 	# Just noise action
 	_register_interaction()
 
+func _on_data_tree_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and (event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+		scroll_used = true
+	elif event is InputEventScreenDrag:
+		scroll_used = true
+
 func _on_clear_pressed():
 	if not is_trial_active: return
 	clear_used = true
@@ -261,6 +288,7 @@ func _on_clear_pressed():
 func _on_submit_pressed():
 	if not is_trial_active: return
 	is_trial_active = false
+	_set_filter_input_locked(true)
 	typewriter_timer.stop()
 	prompt_label.visible_characters = -1
 
@@ -274,7 +302,7 @@ func _on_submit_pressed():
 			item = item.get_next()
 
 	var analysis = _calculate_f_reason_filter(selected_ids)
-	var is_correct = (analysis.reason == "CORRECT")
+	var is_correct = (analysis.reason == "NONE")
 
 	_handle_result(is_correct, analysis.reason, analysis)
 
@@ -317,91 +345,49 @@ func _handle_result(is_correct: bool, reason: String, extra_data: Dictionary):
 # --- Logic Ladder ---
 
 func _calculate_f_reason_filter(selected: Array) -> Dictionary:
-	var S = selected
-	var A = current_case.answer_row_ids
-	var B = current_case.boundary_row_ids
-	var O = current_case.opposite_row_ids
-	var U = current_case.unrelated_row_ids
+	var S: Array = selected.duplicate()
+	var A: Array = current_case.get("answer_row_ids", [])
+	var B: Array = current_case.get("boundary_row_ids", [])
+	var O: Array = current_case.get("opposite_row_ids", [])
+	var D: Array = current_case.get("decoy_row_ids", current_case.get("unrelated_row_ids", []))
 
-	# Helpers
-	var s_set = {}
-	for id in S: s_set[id] = true
+	var missing_ids: Array = _array_diff(A, S)
+	var extra_ids: Array = _array_diff(S, A)
+	var boundary_selected: Array = _array_intersection(S, B)
+	var opposite_selected: Array = _array_intersection(S, O)
+	var decoy_selected: Array = _array_intersection(S, D)
 
-	var intersection = func(arr1, arr2):
-		var res = []
-		for x in arr1:
-			if x in arr2: res.append(x)
-		return res
+	var has_omission: bool = missing_ids.size() > 0
+	var has_overselect: bool = extra_ids.size() > 0
+	var reason: String = "NONE"
 
-	var diff = func(arr1, arr2):
-		var res = []
-		for x in arr1:
-			if not (x in arr2): res.append(x)
-		return res
+	if S.is_empty():
+		reason = "EMPTY_SELECTION"
+	elif _is_subset(S, O):
+		reason = "PURE_OPPOSITE"
+	elif boundary_selected.size() > 0 and _array_intersection(S, A).size() > 0:
+		reason = "INCLUDED_BOUNDARY"
+	elif decoy_selected.size() > 0:
+		reason = "OVERSELECT_DECOY"
+	elif has_omission and not has_overselect:
+		reason = "PARTIAL_OMISSION"
+	elif has_omission and has_overselect:
+		reason = "MIXED_ERROR"
+	elif _sets_equal(S, A):
+		reason = "NONE"
+	elif has_overselect:
+		reason = "MIXED_ERROR"
 
-	var is_subset = func(arr1, arr2):
-		for x in arr1:
-			if not (x in arr2): return false
-		return true
-
-	var missing = diff.call(A, S)
-	var union_AB = []
-	union_AB.append_array(A)
-	union_AB.append_array(B)
-	var extra = diff.call(S, union_AB)
-
-	var boundary_selected = intersection.call(S, B)
-	var opposite_selected = intersection.call(S, O)
-
-	var all_rows_count = current_case.table.rows.size()
-
-	var result = {
-		"reason": "CORRECT",
+	return {
+		"reason": reason,
 		"sets": {
-			"missing": missing,
-			"extra": extra,
+			"missing_ids": missing_ids,
+			"extra_ids": extra_ids,
 			"boundary_selected": boundary_selected,
-			"opposite_selected": opposite_selected
+			"opposite_selected": opposite_selected,
+			"decoy_selected": decoy_selected
 		}
 	}
-
-	# Ladder
-	if S.size() == 0:
-		result.reason = "EMPTY_SUBMIT"
-		return result
-
-	if float(S.size()) / float(all_rows_count) >= 0.8 and missing.size() > 0:
-		result.reason = "OVERSELECT_ALL"
-		return result
-
-	if S.size() > 0 and is_subset.call(S, O):
-		result.reason = "SIGN_REVERSAL"
-		return result
-
-	if opposite_selected.size() > 0 and intersection.call(S, A).size() == 0:
-		result.reason = "SIGN_MIXED"
-		return result
-
-	var strict = current_case.predicate.strict_expected
-	if strict and boundary_selected.size() > 0:
-		result.reason = "INCLUDED_BOUNDARY"
-		return result
-
-	if not strict and is_subset.call(B, A) and not is_subset.call(B, S):
-		# Non-strict means boundary SHOULD be selected. B is subset of A.
-		# If B is not subset of S, we missed boundary.
-		result.reason = "EXCLUDED_BOUNDARY"
-		return result
-
-	if extra.size() > 0:
-		result.reason = "FALSE_POSITIVE"
-		return result
-
-	if missing.size() > 0:
-		result.reason = "OMISSION"
-		return result
-
-	return result
 
 # --- Telemetry ---
 
@@ -429,6 +415,7 @@ func _log_trial(is_correct: bool, f_reason: String, data: Dictionary, stability_
 			"is_correct": is_correct,
 			"f_reason": f_reason,
 		},
+		"layout_mode": current_layout_mode,
 		"telemetry": {
 			"time_to_first_action_ms": time_to_first_action_ms,
 			"time_to_first_toggle_ms": time_to_first_toggle_ms,
@@ -440,8 +427,13 @@ func _log_trial(is_correct: bool, f_reason: String, data: Dictionary, stability_
 			"unique_rows_toggled_count": unique_rows_toggled.size(),
 			"clear_used": clear_used,
 			"scroll_used": scroll_used,
+			"had_scroll": scroll_used,
 			"rapid_toggle_burst": burst,
 			"over_soft_limit": over_soft
+		},
+		"ui_flags": {
+			"silent_reading_possible": (time_to_first_action_ms >= 30000 and not scroll_used),
+			"had_scroll": scroll_used
 		},
 		"stability": {
 			"start": stability_start,
@@ -465,6 +457,11 @@ func _log_trial(is_correct: bool, f_reason: String, data: Dictionary, stability_
 					selected_ids.append(item.get_metadata(0))
 				item = item.get_next()
 		payload["answer"]["selected_row_ids"] = selected_ids
+		payload["answer"]["missing_ids"] = data.get("sets", {}).get("missing_ids", [])
+		payload["answer"]["extra_ids"] = data.get("sets", {}).get("extra_ids", [])
+		payload["answer"]["boundary_selected"] = data.get("sets", {}).get("boundary_selected", [])
+		payload["answer"]["opposite_selected"] = data.get("sets", {}).get("opposite_selected", [])
+		payload["answer"]["decoy_selected"] = data.get("sets", {}).get("decoy_selected", [])
 
 	elif mode == "RELATION":
 		payload["schema_visual"] = {"link": current_case.schema_visual.link}
@@ -475,11 +472,6 @@ func _log_trial(is_correct: bool, f_reason: String, data: Dictionary, stability_
 
 # --- Utils ---
 func _update_stability_ui():
-	if not is_instance_valid(stability_bar):
-		stability_bar = get_node_or_null("RootLayout/Footer/StabilityBar")
-	if not is_instance_valid(stability_label):
-		stability_label = get_node_or_null("RootLayout/Footer/StabilityLabel")
-
 	if is_instance_valid(stability_bar):
 		stability_bar.value = GlobalMetrics.stability
 	if is_instance_valid(stability_label):
@@ -503,18 +495,12 @@ func _on_typewriter_tick():
 
 func _on_viewport_size_changed():
 	var win_size = get_viewport_rect().size
-	# Adjust layout if needed (B spec says "Table scrolls separately", buttons available).
-	# Layout is VBox with HSplit. HSplit collapses if too small?
-	# Let's keep it simple: FilterModeRoot is HSplit.
-	# If small, change split to vertical or Reparent.
-	# For now, relying on default behavior or minimal tweaks.
-	if win_size.x < BREAKPOINT_PX:
-		filter_mode_root.dragger_visibility = SplitContainer.DRAGGER_HIDDEN
-		# Force vertical or just rely on containers.
-		# HSplit isn't great for mobile. Ideally VBox.
-		# Not implementing full reactive switch here to keep it safe as per strict plan.
-	else:
-		filter_mode_root.dragger_visibility = SplitContainer.DRAGGER_VISIBLE
+	var is_mobile = win_size.x < BREAKPOINT_PX
+	current_layout_mode = LAYOUT_MOBILE if is_mobile else LAYOUT_DESKTOP
+	filter_mode_root.split_offset = int(win_size.x * 0.48)
+	filter_mode_root.dragger_visibility = SplitContainer.DRAGGER_HIDDEN if is_mobile else SplitContainer.DRAGGER_VISIBLE
+	_apply_filter_layout_mode(is_mobile)
+	_apply_relation_layout_mode(is_mobile)
 
 func _finish_session():
 	is_game_over = true
@@ -542,3 +528,111 @@ func _game_over():
 	btn_exit.text = "EXIT"
 	btn_exit.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn"))
 	$RootLayout/Footer.add_child(btn_exit)
+
+func _build_mobile_containers() -> void:
+	filter_mobile_layout = VBoxContainer.new()
+	filter_mobile_layout.name = "FilterMobileLayout"
+	filter_mobile_layout.visible = false
+	filter_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	filter_mobile_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	filter_mobile_layout.set("theme_override_constants/separation", 10)
+	body_container.add_child(filter_mobile_layout)
+
+	relation_mobile_schema = VBoxContainer.new()
+	relation_mobile_schema.name = "RelationMobileSchema"
+	relation_mobile_schema.visible = false
+	relation_mobile_schema.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	relation_mobile_schema.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	relation_mobile_schema.set("theme_override_constants/separation", 8)
+	relation_mode_root.add_child(relation_mobile_schema)
+	relation_mode_root.move_child(relation_mobile_schema, 1)
+
+func _apply_filter_layout_mode(is_mobile: bool) -> void:
+	if is_mobile:
+		if filter_table_section.get_parent() != filter_mobile_layout:
+			filter_table_section.reparent(filter_mobile_layout)
+		if filter_task_section.get_parent() != filter_mobile_layout:
+			filter_task_section.reparent(filter_mobile_layout)
+		filter_mobile_layout.move_child(filter_table_section, 0)
+		filter_mobile_layout.move_child(filter_task_section, 1)
+		filter_mode_root.visible = false
+		filter_mobile_layout.visible = (mode == "FILTER")
+	else:
+		if filter_table_section.get_parent() != filter_mode_root:
+			filter_table_section.reparent(filter_mode_root)
+		if filter_task_section.get_parent() != filter_mode_root:
+			filter_task_section.reparent(filter_mode_root)
+		filter_mode_root.move_child(filter_table_section, 0)
+		filter_mode_root.move_child(filter_task_section, 1)
+		filter_mode_root.visible = (mode == "FILTER")
+		filter_mobile_layout.visible = false
+
+func _apply_relation_layout_mode(is_mobile: bool) -> void:
+	if is_mobile:
+		if rel_left_table.get_parent() != relation_mobile_schema:
+			rel_left_table.reparent(relation_mobile_schema)
+		if rel_center_connector.get_parent() != relation_mobile_schema:
+			rel_center_connector.reparent(relation_mobile_schema)
+		if rel_right_table.get_parent() != relation_mobile_schema:
+			rel_right_table.reparent(relation_mobile_schema)
+		relation_mobile_schema.move_child(rel_left_table, 0)
+		relation_mobile_schema.move_child(rel_center_connector, 1)
+		relation_mobile_schema.move_child(rel_right_table, 2)
+		relation_schema_container.visible = false
+		relation_mobile_schema.visible = (mode == "RELATION")
+	else:
+		if rel_left_table.get_parent() != relation_schema_container:
+			rel_left_table.reparent(relation_schema_container)
+		if rel_center_connector.get_parent() != relation_schema_container:
+			rel_center_connector.reparent(relation_schema_container)
+		if rel_right_table.get_parent() != relation_schema_container:
+			rel_right_table.reparent(relation_schema_container)
+		relation_schema_container.move_child(rel_left_table, 0)
+		relation_schema_container.move_child(rel_center_connector, 1)
+		relation_schema_container.move_child(rel_right_table, 2)
+		relation_schema_container.visible = (mode == "RELATION")
+		relation_mobile_schema.visible = false
+
+func _set_filter_input_locked(locked: bool) -> void:
+	btn_submit.disabled = locked
+	btn_clear.disabled = locked
+	var root = data_tree.get_root()
+	if root:
+		var item = root.get_first_child()
+		while item:
+			item.set_editable(0, not locked)
+			item = item.get_next()
+
+func _array_intersection(arr1: Array, arr2: Array) -> Array:
+	var lookup := {}
+	for x in arr2:
+		lookup[x] = true
+	var out: Array = []
+	for x in arr1:
+		if lookup.has(x):
+			out.append(x)
+	return out
+
+func _array_diff(arr1: Array, arr2: Array) -> Array:
+	var lookup := {}
+	for x in arr2:
+		lookup[x] = true
+	var out: Array = []
+	for x in arr1:
+		if not lookup.has(x):
+			out.append(x)
+	return out
+
+func _is_subset(subset_arr: Array, set_arr: Array) -> bool:
+	var lookup := {}
+	for x in set_arr:
+		lookup[x] = true
+	for x in subset_arr:
+		if not lookup.has(x):
+			return false
+	return true
+
+func _sets_equal(arr1: Array, arr2: Array) -> bool:
+	if arr1.size() != arr2.size():
+		return false
+	return _is_subset(arr1, arr2) and _is_subset(arr2, arr1)

@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://da7archive002"]
 
 [ext_resource type="Script" path="res://scripts/case_07/da7_data_archive_b.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
 
 [node name="DA7_DataArchiveQuestB" type="Control"]
 layout_mode = 3
@@ -49,9 +49,10 @@ fit_content = true
 scroll_active = false
 autowrap_mode = 0
 
-[node name="Body" type="Container" parent="RootLayout"]
+[node name="Body" type="VBoxContainer" parent="RootLayout"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 0
 
 [node name="FilterModeRoot" type="HSplitContainer" parent="RootLayout/Body"]
 layout_mode = 2
@@ -94,12 +95,12 @@ theme_override_constants/separation = 20
 alignment = 1
 
 [node name="BtnClear" type="Button" parent="RootLayout/Body/FilterModeRoot/TaskSection/ControlRow"]
-custom_minimum_size = Vector2(120, 48)
+custom_minimum_size = Vector2(140, 56)
 layout_mode = 2
 text = "CLEAR [X]"
 
 [node name="BtnSubmit" type="Button" parent="RootLayout/Body/FilterModeRoot/TaskSection/ControlRow"]
-custom_minimum_size = Vector2(150, 48)
+custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
 text = "SUBMIT [ENTER]"
 
@@ -140,7 +141,7 @@ alignment = 1
 
 [node name="ArrowLabel" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
 layout_mode = 2
-text = "-------->"
+text = "=>"
 
 [node name="HintLabel" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
 layout_mode = 2
@@ -165,7 +166,6 @@ hide_root = true
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
-# Buttons added dynamically
 
 [node name="Footer" type="HBoxContainer" parent="RootLayout"]
 layout_mode = 2
