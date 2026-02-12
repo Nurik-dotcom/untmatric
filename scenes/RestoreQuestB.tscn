@@ -1,0 +1,156 @@
+[gd_scene load_steps=5 format=3 uid="uid://restorequest_b"]
+
+[ext_resource type="Script" path="res://scripts/RestoreQuestB.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
+[ext_resource type="PackedScene" uid="uid://diagnostics_panel_b" path="res://scenes/ui/DiagnosticsPanelB.tscn" id="3_panel"]
+[ext_resource type="Script" path="res://scripts/ui/DropZone.gd" id="4_dropzone"]
+
+[node name="RestoreQuestB" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.05, 1)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Header" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="LblClueTitle" type="Label" parent="MainLayout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "RESTORE B-01"
+
+[node name="LblSessionId" type="Label" parent="MainLayout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "SESSION INIT"
+horizontal_alignment = 2
+
+[node name="BarsRow" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="DecryptBar" type="ProgressBar" parent="MainLayout/BarsRow"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+size_flags_horizontal = 3
+show_percentage = false
+
+[node name="EnergyBar" type="ProgressBar" parent="MainLayout/BarsRow"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+size_flags_horizontal = 3
+value = 100.0
+show_percentage = false
+
+[node name="TargetDisplay" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+theme_type_variation = &"HeaderPanel"
+
+[node name="LblTarget" type="Label" parent="MainLayout/TargetDisplay"]
+layout_mode = 2
+text = "TARGET: s = ?"
+horizontal_alignment = 1
+
+[node name="TerminalFrame" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CodeScroll" type="ScrollContainer" parent="MainLayout/TerminalFrame"]
+layout_mode = 2
+
+[node name="CodeDisplay" type="RichTextLabel" parent="MainLayout/TerminalFrame/CodeScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+text = "Loading code..."
+fit_content = true
+
+[node name="SlotRow" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="DropZone" type="PanelContainer" parent="MainLayout/SlotRow"]
+custom_minimum_size = Vector2(80, 64)
+layout_mode = 2
+script = ExtResource("4_dropzone")
+
+[node name="Label" type="Label" parent="MainLayout/SlotRow/DropZone"]
+layout_mode = 2
+text = "[SLOT]"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LblSlotHint" type="Label" parent="MainLayout/SlotRow"]
+layout_mode = 2
+text = "<-- Drag block here"
+
+[node name="InventoryFrame" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.5
+
+[node name="InventoryScroll" type="ScrollContainer" parent="MainLayout/InventoryFrame"]
+layout_mode = 2
+
+[node name="BlocksContainer" type="HBoxContainer" parent="MainLayout/InventoryFrame/InventoryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="BtnAnalyze" type="Button" parent="MainLayout/Actions"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ANALYZE"
+
+[node name="BtnSubmit" type="Button" parent="MainLayout/Actions"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+disabled = true
+text = "CHECK"
+
+[node name="BtnNext" type="Button" parent="MainLayout/Actions"]
+visible = false
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "NEXT"
+
+[node name="DiagnosticsPanelB" parent="." instance=ExtResource("3_panel")]
+layout_mode = 1
+visible = false

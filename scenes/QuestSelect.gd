@@ -109,7 +109,7 @@ func _on_radio_pressed():
 
 func _on_script_pressed():
 	selected_quest_type = QuestType.SUSPECT
-	btn_complexity_b.disabled = true
+	btn_complexity_b.disabled = false
 	btn_complexity_c.disabled = true
 	modal.visible = true
 
@@ -133,6 +133,8 @@ func _on_complexity_b_pressed():
 		get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
 	elif selected_quest_type == QuestType.LOGIC_GATE:
 		get_tree().change_scene_to_file("res://scenes/LogicQuestB.tscn")
+	elif selected_quest_type == QuestType.SUSPECT:
+		get_tree().change_scene_to_file("res://scenes/RestoreQuestB.tscn")
 
 func _on_complexity_c_pressed():
 	if selected_quest_type == QuestType.DECRYPTOR:
