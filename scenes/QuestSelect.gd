@@ -108,7 +108,7 @@ func _on_lie_detector_pressed():
 
 func _on_radio_pressed():
 	selected_quest_type = QuestType.RADIO
-	btn_complexity_b.disabled = true
+	btn_complexity_b.disabled = false
 	btn_complexity_c.disabled = true
 	modal.visible = true
 
