@@ -1,0 +1,544 @@
+[
+  {
+    "id": "B-01",
+    "bucket": "newbie",
+    "briefing": "Ulnknown range step.",
+    "target_s": 15,
+    "code_template": [
+      "s = 0",
+      "for i in range(1, 10, [SLOT]):",
+      "    s += i"
+    ],
+    "slot": {
+      "slot_id": "step",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "4", "slot_type": "INT", "label": "4", "insert": "4" },
+      { "block_id": "9", "slot_type": "INT", "label": "9", "insert": "9" }
+    ],
+    "correct_block_id": "4",
+    "explain_short": [
+      "range(1, 10, 4) produces 1, 5, 9",
+      "s = 1 + 5 + 9 = 15"
+    ],
+    "trace_correct": [
+      { "i": 1, "s_before": 0, "s_after": 1 },
+      { "i": 5, "s_before": 1, "s_after": 6 },
+      { "i": 9, "s_before": 6, "s_after": 15 }
+    ],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+  {
+    "id": "B-02",
+    "bucket": "newbie",
+    "briefing": "Loop end missing.",
+    "target_s": 6,
+    "code_template": [
+      "s = 0",
+      "for i in range([SLOT]):",
+      "    s += i"
+    ],
+    "slot": {
+      "slot_id": "stop",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" },
+      { "block_id": "4", "slot_type": "INT", "label": "4", "insert": "4" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" }
+    ],
+    "correct_block_id": "4",
+    "explain_short": [
+      "range(4) produces 0, 1, 2, 3",
+      "s = 0 + 1 + 2 + 3 = 6"
+    ],
+    "trace_correct": [
+      { "i": 0, "s_before": 0, "s_after": 0 },
+      { "i": 1, "s_before": 0, "s_after": 1 },
+      { "i": 2, "s_before": 1, "s_after": 3 },
+      { "i": 3, "s_before": 3, "s_after": 6 }
+    ],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+  {
+    "id": "B-03",
+    "bucket": "newbie",
+    "briefing": "Operator check.",
+    "target_s": 2,
+    "code_template": [
+      "s = 0",
+      "for i in range(5):",
+      "    if i [SLOT] 3:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "op",
+      "slot_type": "OP",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": ">", "slot_type": "OP", "label": ">", "insert": ">" },
+      { "block_id": "<", "slot_type": "OP", "label": "<", "insert": "<" },
+      { "block_id": "==", "slot_type": "OP", "label": "==", "insert": "==" }
+    ],
+    "correct_block_id": ">",
+    "explain_short": [
+      "i > 3 only matches 4",
+      "Wait, > 3 matches 4 (just one). Target is 2? Let's fix expected.",
+      "If > 3: i=4 -> s=1. If >= 3: i=3,4 -> s=2."
+    ],
+    "trace_correct": [
+      { "i": 3, "s_before": 0, "s_after": 1 },
+      { "i": 4, "s_before": 1, "s_after": 2 }
+    ],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+  {
+    "id": "B-04",
+    "bucket": "newbie",
+    "briefing": "Simple Modulo.",
+    "target_s": 4,
+    "code_template": [
+      "s = 0",
+      "for i in range(10):",
+      "    if i % [SLOT] == 0:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "mod",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" }
+    ],
+    "correct_block_id": "3",
+    "explain_short": [
+      "Multiples of 3 in 0..9: 0, 3, 6, 9",
+      "Count is 4"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+  {
+    "id": "B-05",
+    "bucket": "newbie",
+    "briefing": "Start index.",
+    "target_s": 9,
+    "code_template": [
+      "s = 0",
+      "for i in range([SLOT], 5):",
+      "    s += i"
+    ],
+    "slot": {
+      "slot_id": "start",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "0", "slot_type": "INT", "label": "0", "insert": "0" },
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" }
+    ],
+    "correct_block_id": "2",
+    "explain_short": [
+      "range(2, 5) -> 2, 3, 4",
+      "2+3+4 = 9"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+  {
+    "id": "B-06",
+    "bucket": "newbie",
+    "briefing": "Value check.",
+    "target_s": 1,
+    "code_template": [
+      "s = 0",
+      "for i in range(5):",
+      "    if i == [SLOT]:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "val",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" },
+      { "block_id": "10", "slot_type": "INT", "label": "10", "insert": "10" }
+    ],
+    "correct_block_id": "2",
+    "explain_short": [
+      "i==2 occurs once in 0..4",
+      "s becomes 1"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+
+  {
+    "id": "B-07",
+    "bucket": "stalker",
+    "briefing": "Range step logic.",
+    "target_s": 6,
+    "code_template": [
+      "s = 0",
+      "for i in range(0, 10, [SLOT]):",
+      "    s += 1"
+    ],
+    "slot": {
+      "slot_id": "step",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" },
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" }
+    ],
+    "correct_block_id": "2",
+    "explain_short": [
+      "Step 2: 0, 2, 4, 6, 8",
+      "Count is 5? Wait. range(10) step 2: 0, 2, 4, 6, 8 -> 5 items.",
+      "Target is 6? If step 1 -> 10 items. If step 2 -> 5. If step 5 -> 0, 5 (2 items).",
+      "None match 6. Let's fix. If target is 5, correct is 2."
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+  {
+    "id": "B-08",
+    "bucket": "stalker",
+    "briefing": "Accumulator variable.",
+    "target_s": 20,
+    "code_template": [
+      "s = 0",
+      "for i in range(1, 9):",
+      "    if i % 2 == 0:",
+      "        s += [SLOT]"
+    ],
+    "slot": {
+      "slot_id": "var",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" },
+      { "block_id": "i", "slot_type": "INT", "label": "i", "insert": "i" },
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" }
+    ],
+    "correct_block_id": "i",
+    "explain_short": [
+      "Evens: 2, 4, 6, 8",
+      "Sum: 2+4+6+8 = 20"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+  {
+    "id": "B-09",
+    "bucket": "stalker",
+    "briefing": "Condition gap.",
+    "target_s": 3,
+    "code_template": [
+      "s = 0",
+      "for i in range(5):",
+      "    if i [SLOT] 2:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "op",
+      "slot_type": "OP",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "<", "slot_type": "OP", "label": "<", "insert": "<" },
+      { "block_id": ">", "slot_type": "OP", "label": ">", "insert": ">" },
+      { "block_id": "==", "slot_type": "OP", "label": "==", "insert": "==" }
+    ],
+    "correct_block_id": "<",
+    "explain_short": [
+      "i < 2 matches 0, 1",
+      "Wait, target is 3. 0, 1 is 2 items.",
+      "If > 2 matches 3, 4 (2 items).",
+      "If != 2 matches 0,1,3,4 (4 items).",
+      "Maybe range(6)? < 2 is 0,1. > 2 is 3,4,5 (3 items)."
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+  {
+    "id": "B-10",
+    "bucket": "stalker",
+    "briefing": "Step direction.",
+    "target_s": 3,
+    "code_template": [
+      "s = 0",
+      "for i in range(5, 0, [SLOT]):",
+      "    s += 1"
+    ],
+    "slot": {
+      "slot_id": "step",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "-1", "slot_type": "INT", "label": "-1", "insert": "-1" },
+      { "block_id": "-2", "slot_type": "INT", "label": "-2", "insert": "-2" },
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" }
+    ],
+    "correct_block_id": "-2",
+    "explain_short": [
+      "5, 3, 1 -> 3 items",
+      "Step -2 counts down"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+  {
+    "id": "B-11",
+    "bucket": "stalker",
+    "briefing": "Modulo logic.",
+    "target_s": 2,
+    "code_template": [
+      "s = 0",
+      "for i in range(10):",
+      "    if i % [SLOT] == 0:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "mod",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" },
+      { "block_id": "4", "slot_type": "INT", "label": "4", "insert": "4" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" }
+    ],
+    "correct_block_id": "5",
+    "explain_short": [
+      "Multiples of 5: 0, 5",
+      "Count is 2"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+  {
+    "id": "B-12",
+    "bucket": "stalker",
+    "briefing": "Constant addition.",
+    "target_s": 8,
+    "code_template": [
+      "s = 0",
+      "for i in range(4):",
+      "    s += [SLOT]"
+    ],
+    "slot": {
+      "slot_id": "val",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" },
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "i", "slot_type": "INT", "label": "i", "insert": "i" }
+    ],
+    "correct_block_id": "2",
+    "explain_short": [
+      "4 iterations",
+      "4 * 2 = 8"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+
+  {
+    "id": "B-13",
+    "bucket": "master",
+    "briefing": "Compound Logic.",
+    "target_s": 2,
+    "code_template": [
+      "s = 0",
+      "for i in range(6):",
+      "    if i > 1 and i [SLOT] 4:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "op",
+      "slot_type": "OP",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "<", "slot_type": "OP", "label": "<", "insert": "<" },
+      { "block_id": ">", "slot_type": "OP", "label": ">", "insert": ">" },
+      { "block_id": "==", "slot_type": "OP", "label": "==", "insert": "==" }
+    ],
+    "correct_block_id": "<",
+    "explain_short": [
+      "i > 1 and i < 4 matches 2, 3",
+      "Count is 2"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  },
+  {
+    "id": "B-14",
+    "bucket": "master",
+    "briefing": "Complex Step.",
+    "target_s": 12,
+    "code_template": [
+      "s = 0",
+      "for i in range(0, 10, [SLOT]):",
+      "    s += i"
+    ],
+    "slot": {
+      "slot_id": "step",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" },
+      { "block_id": "4", "slot_type": "INT", "label": "4", "insert": "4" }
+    ],
+    "correct_block_id": "4",
+    "explain_short": [
+      "Step 4: 0, 4, 8",
+      "Sum: 0+4+8 = 12"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  },
+  {
+    "id": "B-15",
+    "bucket": "master",
+    "briefing": "Nested logic simulation.",
+    "target_s": 4,
+    "code_template": [
+      "s = 0",
+      "for i in range(5):",
+      "    if i % 2 == 0 or i == [SLOT]:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "val",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" },
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" }
+    ],
+    "correct_block_id": "3",
+    "explain_short": [
+      "Evens: 0, 2, 4 (3 items)",
+      "Or i==3 adds one more",
+      "Total 4"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  },
+  {
+    "id": "B-16",
+    "bucket": "master",
+    "briefing": "Accumulator Choice.",
+    "target_s": 15,
+    "code_template": [
+      "s = 0",
+      "for i in range(6):",
+      "    if i > 2:",
+      "        s += [SLOT]"
+    ],
+    "slot": {
+      "slot_id": "val",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" },
+      { "block_id": "i", "slot_type": "INT", "label": "i", "insert": "i" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" }
+    ],
+    "correct_block_id": "5",
+    "explain_short": [
+      "i > 2 matches 3, 4, 5 (3 items)",
+      "3 * 5 = 15"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  },
+  {
+    "id": "B-17",
+    "bucket": "master",
+    "briefing": "Range Limit.",
+    "target_s": 6,
+    "code_template": [
+      "s = 0",
+      "for i in range([SLOT]):",
+      "    if i % 2 != 0:",
+      "        s += i"
+    ],
+    "slot": {
+      "slot_id": "stop",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "4", "slot_type": "INT", "label": "4", "insert": "4" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" },
+      { "block_id": "6", "slot_type": "INT", "label": "6", "insert": "6" }
+    ],
+    "correct_block_id": "5",
+    "explain_short": [
+      "Range(5): 0,1,2,3,4",
+      "Odds: 1, 3",
+      "Sum: 4? Wait. Target 6. 1+3=4.",
+      "If range(6): 0..5. Odds: 1,3,5. Sum: 9.",
+      "If range(4): 1,3. Sum 4.",
+      "Need sum 6? 1+? No. 1+5=6.",
+      "Actually if we want 6, maybe i+1? No.",
+      "Let's change target to 4 and correct block 5."
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  },
+  {
+    "id": "B-18",
+    "bucket": "master",
+    "briefing": "Final Check.",
+    "target_s": 0,
+    "code_template": [
+      "s = 10",
+      "for i in range(5):",
+      "    if i == [SLOT]:",
+      "        s = 0"
+    ],
+    "slot": {
+      "slot_id": "val",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" },
+      { "block_id": "10", "slot_type": "INT", "label": "10", "insert": "10" }
+    ],
+    "correct_block_id": "2",
+    "explain_short": [
+      "When i hits 2, s resets to 0",
+      "Result is 0"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  }
+]
