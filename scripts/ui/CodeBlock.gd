@@ -1,0 +1,38 @@
+extends Button
+
+var data: Dictionary = {}
+
+func setup(block_data: Dictionary):
+	data = block_data
+	text = str(data.get("label", "???"))
+	custom_minimum_size = Vector2(80, 64) # Ensure touch friendly
+
+	# Optional: Differentiate types visually
+	if data.get("slot_type") == "OP":
+		modulate = Color(1.0, 0.9, 0.7)
+	else:
+		modulate = Color(1.0, 1.0, 1.0)
+
+func _get_drag_data(at_position: Vector2):
+	# Create a visual preview
+	var preview = Button.new()
+	preview.text = text
+	preview.custom_minimum_size = size
+	preview.modulate = Color(1, 1, 1, 0.8)
+	# Remove stylebox if needed or just let it use default theme
+
+	# Center the preview
+	var ctrl = Control.new()
+	ctrl.add_child(preview)
+	preview.position = -size / 2
+	set_drag_preview(ctrl)
+
+	# Return data strictly as per spec
+	return {
+		"kind": "CODE_BLOCK",
+		"block_id": data.get("block_id"),
+		"slot_type": data.get("slot_type"),
+		"label": data.get("label"),
+		"insert": data.get("insert"),
+		"source_path": get_path()
+	}
