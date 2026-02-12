@@ -1,0 +1,413 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/RadioQuestB.gd" id="1_script"]
+
+[sub_resource type="SystemFont" id="SystemFont_1"]
+font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+bg_color = Color(0.08, 0.08, 0.08, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.25, 0.25, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="Environment" id="Environment_glow"]
+background_mode = 3
+glow_enabled = true
+glow_blend_mode = 1
+
+[node name="RadioQuestB" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0.02, 0, 1)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="MainVBox" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+alignment = 1
+
+[node name="BtnBack" type="Button" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "<"
+
+[node name="SpacerL" type="Control" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ModeLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "РЕЖИМ: БЕЗ ВРЕМЕНИ"
+
+[node name="TimerLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 22
+text = "00:35"
+
+[node name="SpacerR" type="Control" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StabilityLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 22
+text = "СТАБИЛЬНОСТЬ: 100%"
+
+[node name="TaskCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="TaskVBox" type="VBoxContainer" parent="SafeArea/MainVBox/TaskCard"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TaskTitle" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "ЗАДАНИЕ"
+
+[node name="IInfoLabel" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Глубина кодирования: i = — бит"
+
+[node name="KInfoLabel" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "Длина сообщения: K = — символов"
+
+[node name="GoalLabel" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "Найди I = K·i (в битах) и выбери носитель"
+autowrap_mode = 2
+
+[node name="CalcCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="CalcVBox" type="VBoxContainer" parent="SafeArea/MainVBox/CalcCard"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CalcTitle" type="Label" parent="SafeArea/MainVBox/CalcCard/CalcVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "РАСЧЁТ"
+
+[node name="IBitsRow" type="HBoxContainer" parent="SafeArea/MainVBox/CalcCard/CalcVBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="IBitsLabel" type="Label" parent="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "I (бит):"
+
+[node name="BtnMinus" type="Button" parent="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "-"
+
+[node name="IBitsValue" type="Label" parent="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 32
+text = "0"
+horizontal_alignment = 1
+
+[node name="BtnPlus" type="Button" parent="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 24
+text = "+"
+
+[node name="BtnCheckCalc" type="Button" parent="SafeArea/MainVBox/CalcCard/CalcVBox"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "ПРОВЕРИТЬ РАСЧЁТ"
+
+[node name="StorageCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="StorageVBox" type="VBoxContainer" parent="SafeArea/MainVBox/StorageCard"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StorageTitle" type="Label" parent="SafeArea/MainVBox/StorageCard/StorageVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "ВЫБОР НОСИТЕЛЯ"
+
+[node name="StorageGrid" type="GridContainer" parent="SafeArea/MainVBox/StorageCard/StorageVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 2
+
+[node name="StorageBtn1" type="Button" parent="SafeArea/MainVBox/StorageCard/StorageVBox/StorageGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+toggle_mode = true
+text = "Option 1"
+text_overrun_behavior = 3
+clip_text = true
+
+[node name="StorageBtn2" type="Button" parent="SafeArea/MainVBox/StorageCard/StorageVBox/StorageGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+toggle_mode = true
+text = "Option 2"
+text_overrun_behavior = 3
+clip_text = true
+
+[node name="StorageBtn3" type="Button" parent="SafeArea/MainVBox/StorageCard/StorageVBox/StorageGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+toggle_mode = true
+text = "Option 3"
+text_overrun_behavior = 3
+clip_text = true
+
+[node name="StorageBtn4" type="Button" parent="SafeArea/MainVBox/StorageCard/StorageVBox/StorageGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+toggle_mode = true
+text = "Option 4"
+text_overrun_behavior = 3
+clip_text = true
+
+[node name="BottomVBox" type="VBoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SampleStrip" type="HBoxContainer" parent="SafeArea/MainVBox/BottomVBox"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="TrialSlot1" type="Control" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/TrialSlot1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="TrialSlot2" type="Control" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/TrialSlot2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="TrialSlot3" type="Control" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/TrialSlot3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="TrialSlot4" type="Control" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/TrialSlot4"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="TrialSlot5" type="Control" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/TrialSlot5"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="TrialSlot6" type="Control" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/TrialSlot6"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="TrialSlot7" type="Control" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/TrialSlot7"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="ActionsRow" type="HBoxContainer" parent="SafeArea/MainVBox/BottomVBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BtnConverter" type="Button" parent="SafeArea/MainVBox/BottomVBox/ActionsRow"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "КОНВЕРТЕР"
+
+[node name="BtnCapture" type="Button" parent="SafeArea/MainVBox/BottomVBox/ActionsRow"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+disabled = true
+text = "ЗАФИКСИРОВАТЬ"
+
+[node name="BtnNext" type="Button" parent="SafeArea/MainVBox/BottomVBox/ActionsRow"]
+visible = false
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 20
+text = "СЛЕДУЮЩИЙ СИГНАЛ"
+
+[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomVBox"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_fonts/font = SubResource("SystemFont_1")
+theme_override_font_sizes/font_size = 18
+text = "СТАТУС: ..."
+autowrap_mode = 2
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_glow")
+
+[connection signal="pressed" from="SafeArea/MainVBox/Header/BtnBack" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow/BtnMinus" to="." method="_on_minus_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow/BtnPlus" to="." method="_on_plus_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/CalcCard/CalcVBox/BtnCheckCalc" to="." method="_on_check_calc_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/BottomVBox/ActionsRow/BtnConverter" to="." method="_on_converter_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/BottomVBox/ActionsRow/BtnCapture" to="." method="_on_capture_pressed"]
+[connection signal="pressed" from="SafeArea/MainVBox/BottomVBox/ActionsRow/BtnNext" to="." method="_on_next_pressed"]

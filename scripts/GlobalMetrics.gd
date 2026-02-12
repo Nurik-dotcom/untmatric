@@ -127,7 +127,7 @@ func start_level(index: int):
 # Returns (success: bool, info: Dictionary)
 func check_solution(target_val: int, input_val: int) -> Dictionary:
 	var current_time = Time.get_ticks_msec() / 1000.0
-	
+
 	if current_time < blocked_until:
 		return {
 			"success": false,

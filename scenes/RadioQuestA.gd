@@ -29,6 +29,7 @@ const COLOR_RED := Color(1.0, 0.0, 0.0)
 
 @onready var sample_strip: HBoxContainer = $SafeArea/MainVBox/Bottom/SampleStrip
 @onready var btn_hint: Button = $SafeArea/MainVBox/Bottom/ActionsRow/BtnHint
+@onready var btn_analyze: Button = $SafeArea/MainVBox/Bottom/ActionsRow/BtnAnalyze
 @onready var btn_capture: Button = $SafeArea/MainVBox/Bottom/ActionsRow/BtnCapture
 @onready var btn_next: Button = $SafeArea/MainVBox/Bottom/ActionsRow/BtnNext
 @onready var status_label: Label = $SafeArea/MainVBox/Bottom/StatusLabel
@@ -57,6 +58,12 @@ var time_remaining: float = 0.0
 var current_trial_idx: int = 0
 var anchor_countdown: int = 0
 var osc_phase: float = 0.0
+var analyze_count: int = 0
+var knob_change_count: int = 0
+var direction_change_count: int = 0
+var cross_target_count: int = 0
+var last_diff_sign: int = 0
+var last_change_time: float = 0.0
 
 func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_update_stability_ui):
@@ -170,12 +177,17 @@ func apply_user_bits(i: int, from_user: bool = true) -> void:
 	var is_minimal: bool = current_bits == target_bits
 	var is_overkill: bool = is_fit and not is_minimal
 
+	if from_user:
+		knob_change_count += 1
+		var diff_sign: int = signi(target_bits - current_bits)
+		if last_diff_sign != 0 and diff_sign != 0 and diff_sign != last_diff_sign:
+			direction_change_count += 1
+			cross_target_count += 1
+		last_diff_sign = diff_sign
+		last_change_time = Time.get_ticks_msec() / 1000.0
+
 	big_i_label.text = "i = %d bit" % current_bits
 	pow_label.text = "2^i = %d" % pow_val
-
-	var is_fit = (pow_val >= target_n)
-	var is_minimal = (i == target_bits)
-	var is_overkill = (is_fit and not is_minimal)
 
 	if is_fit:
 		fit_label.text = "FIT: YES"
@@ -244,6 +256,26 @@ func _on_capture_pressed() -> void:
 	if not trial_active:
 		return
 	_finish_trial(false)
+
+func _on_analyze_pressed() -> void:
+	mark_first_action()
+	if not trial_active:
+		return
+
+	analyze_count += 1
+	btn_analyze.disabled = true
+	btn_capture.disabled = false
+
+	var capacity: int = int(pow(2.0, current_bits))
+	if capacity < target_n:
+		status_label.text = "ANALYZE: increase i. Current capacity is below N."
+		status_label.add_theme_color_override("font_color", COLOR_YELLOW)
+	elif current_bits > target_bits:
+		status_label.text = "ANALYZE: fit reached, but use fewer bits for minimal depth."
+		status_label.add_theme_color_override("font_color", COLOR_YELLOW)
+	else:
+		status_label.text = "ANALYZE: exact minimal fit. Capture the signal."
+		status_label.add_theme_color_override("font_color", COLOR_GREEN)
 
 func _force_fail_timeout() -> void:
 	if not trial_active:

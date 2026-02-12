@@ -10,6 +10,7 @@
 @onready var btn_city = $MainLayout/QuestGrid/CityMapButton
 @onready var btn_archive = $MainLayout/QuestGrid/DataArchiveButton
 @onready var btn_report = $MainLayout/QuestGrid/FinalReportButton
+@onready var btn_network_trace = $MainLayout/QuestGrid/NetworkTraceButton
 
 const TITLE_TEXT = "Обучение"
 const STATUS_READY = "Выберите модуль обучения"
@@ -23,6 +24,7 @@ const BTN_SCRIPT_TEXT = "Скрипт подозреваемого (скоро)"
 const BTN_CITY_TEXT = "Карта города (скоро)"
 const BTN_ARCHIVE_TEXT = "Архив данных (скоро)"
 const BTN_REPORT_TEXT = "Финальный отчет (скоро)"
+const BTN_NETWORK_TRACE_TEXT = "Сетевой след (скоро)"
 
 func _ready():
 	$MainLayout/Title.text = TITLE_TEXT
@@ -40,6 +42,7 @@ func _set_button_labels():
 	btn_city.text = BTN_CITY_TEXT
 	btn_archive.text = BTN_ARCHIVE_TEXT
 	btn_report.text = BTN_REPORT_TEXT
+	btn_network_trace.text = BTN_NETWORK_TRACE_TEXT
 
 func _connect_buttons():
 	btn_decryptor.pressed.connect(_on_decryptor_pressed)
@@ -50,6 +53,7 @@ func _connect_buttons():
 	btn_city.pressed.connect(_on_locked_pressed)
 	btn_archive.pressed.connect(_on_locked_pressed)
 	btn_report.pressed.connect(_on_locked_pressed)
+	btn_network_trace.pressed.connect(_on_locked_pressed)
 
 func _disable_unready():
 	btn_clues.disabled = true
@@ -58,6 +62,7 @@ func _disable_unready():
 	btn_city.disabled = true
 	btn_archive.disabled = true
 	btn_report.disabled = true
+	btn_network_trace.disabled = true
 
 func _on_decryptor_pressed():
 	GlobalMetrics.current_level_index = 0

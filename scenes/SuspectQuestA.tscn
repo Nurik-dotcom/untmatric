@@ -2,11 +2,14 @@
 
 [ext_resource type="Script" path="res://scripts/SuspectQuestA.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
-[ext_resource type="Shader" path="res://scenes/Blur.gdshader" id="3_shader"]
+[ext_resource type="Shader" path="res://ui/shaders/crt_overlay.gdshader" id="3_shader"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
 shader = ExtResource("3_shader")
-shader_parameter/modulate = Color(0, 0, 0, 0)
+shader_parameter/tint_color = Color(0, 1, 0.254902, 1)
+shader_parameter/intensity = 0.14
+shader_parameter/fx_quality = 0
+shader_parameter/glitch_strength = 0.0
 
 [node name="SuspectQuestA" type="Control"]
 layout_mode = 3
@@ -17,6 +20,15 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0509804, 0.0509804, 0.0509804, 1)
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 layer = 100
@@ -29,7 +41,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0)
+color = Color(1, 1, 1, 1)
 
 [node name="MainLayout" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -55,6 +67,27 @@ layout_mode = 2
 size_flags_horizontal = 10
 text = "SESSION INIT"
 horizontal_alignment = 2
+
+[node name="SettingsRow" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="PaletteTitle" type="Label" parent="MainLayout/SettingsRow"]
+layout_mode = 2
+text = "PALETTE"
+
+[node name="PaletteSelect" type="OptionButton" parent="MainLayout/SettingsRow"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+
+[node name="FxTitle" type="Label" parent="MainLayout/SettingsRow"]
+layout_mode = 2
+text = "FX"
+
+[node name="FxSelect" type="OptionButton" parent="MainLayout/SettingsRow"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
 
 [node name="BarsRow" type="HBoxContainer" parent="MainLayout"]
 layout_mode = 2
@@ -88,7 +121,7 @@ size_flags_vertical = 3
 theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
 text = "[code]Initializing...[/code]"
-fit_content = true
+fit_content = false
 
 [node name="StatusRow" type="HBoxContainer" parent="MainLayout"]
 layout_mode = 2
@@ -107,6 +140,7 @@ text = "ERR: 0/3"
 layout_mode = 2
 
 [node name="InputDisplay" type="Label" parent="MainLayout/InputFrame"]
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "----"
@@ -121,72 +155,84 @@ theme_override_constants/v_separation = 8
 columns = 3
 
 [node name="Btn7" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "7"
 
 [node name="Btn8" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "8"
 
 [node name="Btn9" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "9"
 
 [node name="Btn4" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "4"
 
 [node name="Btn5" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "5"
 
 [node name="Btn6" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "6"
 
 [node name="Btn1" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "1"
 
 [node name="Btn2" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "2"
 
 [node name="Btn3" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "3"
 
 [node name="BtnClr" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "CLR"
 
 [node name="Btn0" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "0"
 
 [node name="BtnBack" type="Button" parent="MainLayout/Numpad"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -198,13 +244,13 @@ theme_override_constants/separation = 16
 alignment = 1
 
 [node name="BtnAnalyze" type="Button" parent="MainLayout/Actions"]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ANALYZE"
 
 [node name="BtnEnter" type="Button" parent="MainLayout/Actions"]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
@@ -212,7 +258,7 @@ text = "ENTER"
 
 [node name="BtnNext" type="Button" parent="MainLayout/Actions"]
 visible = false
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
@@ -238,13 +284,15 @@ horizontal_alignment = 1
 
 [node name="ExplainList" type="RichTextLabel" parent="DiagnosticsPanel/VBoxContainer"]
 layout_mode = 2
-fit_content = true
+fit_content = false
+size_flags_vertical = 1
 
 [node name="TraceList" type="RichTextLabel" parent="DiagnosticsPanel/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
 text = "Trace log..."
+fit_content = false
 
 [node name="BtnCloseDiag" type="Button" parent="DiagnosticsPanel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 48)
