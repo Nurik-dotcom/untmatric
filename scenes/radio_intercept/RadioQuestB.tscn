@@ -1,0 +1,202 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/radio_intercept/RadioQuestB.gd" id="1_script"]
+
+[node name="RadioQuestB" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="RootPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="RootPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="HeaderBar" type="HBoxContainer" parent="RootPanel/VBox"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+alignment = 1
+
+[node name="BackBtn" type="Button" parent="RootPanel/VBox/HeaderBar"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "НАЗАД"
+
+[node name="Spacer" type="Control" parent="RootPanel/VBox/HeaderBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TimerLabel" type="Label" parent="RootPanel/VBox/HeaderBar"]
+layout_mode = 2
+text = "--:--"
+
+[node name="Spacer2" type="Control" parent="RootPanel/VBox/HeaderBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StabilityLabel" type="Label" parent="RootPanel/VBox/HeaderBar"]
+layout_mode = 2
+text = "STABILITY: 100%"
+
+[node name="TaskCard" type="PanelContainer" parent="RootPanel/VBox"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="RootPanel/VBox/TaskCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxTask" type="VBoxContainer" parent="RootPanel/VBox/TaskCard/Margin"]
+layout_mode = 2
+
+[node name="TaskTitle" type="Label" parent="RootPanel/VBox/TaskCard/Margin/VBoxTask"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8, 0, 1)
+text = "ЗАДАНИЕ"
+
+[node name="TaskInfo" type="Label" parent="RootPanel/VBox/TaskCard/Margin/VBoxTask"]
+layout_mode = 2
+text = "i = 7 бит | K = 1000 симв."
+autowrap_mode = 2
+
+[node name="TaskGoal" type="Label" parent="RootPanel/VBox/TaskCard/Margin/VBoxTask"]
+layout_mode = 2
+text = "Найди I = K·i и выбери носитель"
+autowrap_mode = 2
+
+[node name="CalcCard" type="PanelContainer" parent="RootPanel/VBox"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="RootPanel/VBox/CalcCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxCalc" type="VBoxContainer" parent="RootPanel/VBox/CalcCard/Margin"]
+layout_mode = 2
+alignment = 1
+
+[node name="CalcLabel" type="Label" parent="RootPanel/VBox/CalcCard/Margin/VBoxCalc"]
+layout_mode = 2
+text = "I (в битах): 0"
+horizontal_alignment = 1
+
+[node name="StepperRow" type="HBoxContainer" parent="RootPanel/VBox/CalcCard/Margin/VBoxCalc"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 15
+
+[node name="BtnDiv8" type="Button" parent="RootPanel/VBox/CalcCard/Margin/VBoxCalc/StepperRow"]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+text = "/8"
+
+[node name="BtnMinus" type="Button" parent="RootPanel/VBox/CalcCard/Margin/VBoxCalc/StepperRow"]
+custom_minimum_size = Vector2(60, 50)
+layout_mode = 2
+text = "-"
+
+[node name="BtnPlus" type="Button" parent="RootPanel/VBox/CalcCard/Margin/VBoxCalc/StepperRow"]
+custom_minimum_size = Vector2(60, 50)
+layout_mode = 2
+text = "+"
+
+[node name="BtnMul8" type="Button" parent="RootPanel/VBox/CalcCard/Margin/VBoxCalc/StepperRow"]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+text = "x8"
+
+[node name="BtnReset" type="Button" parent="RootPanel/VBox/CalcCard/Margin/VBoxCalc/StepperRow"]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+text = "R"
+
+[node name="CheckCalcBtn" type="Button" parent="RootPanel/VBox/CalcCard/Margin/VBoxCalc"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "ПРОВЕРИТЬ РАСЧЁТ"
+
+[node name="StorageBay" type="PanelContainer" parent="RootPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Margin" type="MarginContainer" parent="RootPanel/VBox/StorageBay"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Grid" type="GridContainer" parent="RootPanel/VBox/StorageBay/Margin"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 2
+
+[node name="BottomPanel" type="PanelContainer" parent="RootPanel/VBox"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="RootPanel/VBox/BottomPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxBot" type="VBoxContainer" parent="RootPanel/VBox/BottomPanel/Margin"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="RootPanel/VBox/BottomPanel/Margin/VBoxBot"]
+layout_mode = 2
+text = "СТАТУС: Вычисли I и проверь расчёт."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ActionRow" type="HBoxContainer" parent="RootPanel/VBox/BottomPanel/Margin/VBoxBot"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="ConvertBtn" type="Button" parent="RootPanel/VBox/BottomPanel/Margin/VBoxBot/ActionRow"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+text = "КОНВЕРТЕР"
+
+[node name="SubmitBtn" type="Button" parent="RootPanel/VBox/BottomPanel/Margin/VBoxBot/ActionRow"]
+custom_minimum_size = Vector2(180, 50)
+layout_mode = 2
+disabled = true
+text = "ЗАФИКСИРОВАТЬ"
+
+[connection signal="pressed" from="RootPanel/VBox/HeaderBar/BackBtn" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="RootPanel/VBox/CalcCard/Margin/VBoxCalc/StepperRow/BtnDiv8" to="." method="_on_div8_pressed"]
+[connection signal="pressed" from="RootPanel/VBox/CalcCard/Margin/VBoxCalc/StepperRow/BtnMinus" to="." method="_on_minus_pressed"]
+[connection signal="pressed" from="RootPanel/VBox/CalcCard/Margin/VBoxCalc/StepperRow/BtnPlus" to="." method="_on_plus_pressed"]
+[connection signal="pressed" from="RootPanel/VBox/CalcCard/Margin/VBoxCalc/StepperRow/BtnMul8" to="." method="_on_mul8_pressed"]
+[connection signal="pressed" from="RootPanel/VBox/CalcCard/Margin/VBoxCalc/StepperRow/BtnReset" to="." method="_on_reset_pressed"]
+[connection signal="pressed" from="RootPanel/VBox/CalcCard/Margin/VBoxCalc/CheckCalcBtn" to="." method="_on_check_calc_pressed"]
+[connection signal="pressed" from="RootPanel/VBox/BottomPanel/Margin/VBoxBot/ActionRow/ConvertBtn" to="." method="_on_convert_pressed"]
+[connection signal="pressed" from="RootPanel/VBox/BottomPanel/Margin/VBoxBot/ActionRow/SubmitBtn" to="." method="_on_submit_pressed"]
