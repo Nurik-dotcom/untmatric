@@ -154,6 +154,8 @@ func _on_complexity_b_pressed():
 		get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
 	elif selected_quest_type == QuestType.LOGIC_GATE:
 		get_tree().change_scene_to_file("res://scenes/LogicQuestB.tscn")
+	elif selected_quest_type == QuestType.RADIO:
+		get_tree().change_scene_to_file("res://scenes/RadioQuestB.tscn")
 	elif selected_quest_type == QuestType.CITY_MAP:
 		get_tree().change_scene_to_file("res://scenes/CityMapQuestB.tscn")
 	elif selected_quest_type == QuestType.DATA_ARCHIVE:
