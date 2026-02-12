@@ -98,6 +98,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Final Report"
 
+[node name="NetworkTraceButton" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(260, 160)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Network Trace"
+
 [node name="StatusLabel" type="Label" parent="MainLayout"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)

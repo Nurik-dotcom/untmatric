@@ -11,6 +11,7 @@ extends Control
 @onready var btn_city = $MainLayout/QuestGrid/CityMapButton
 @onready var btn_archive = $MainLayout/QuestGrid/DataArchiveButton
 @onready var btn_report = $MainLayout/QuestGrid/FinalReportButton
+@onready var btn_network_trace = $MainLayout/QuestGrid/NetworkTraceButton
 
 @onready var btn_complexity_a = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnComplexityA
 @onready var btn_complexity_b = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnComplexityB
@@ -33,6 +34,7 @@ const BTN_SCRIPT_TEXT = "\u0421\u043a\u0440\u0438\u043f\u0442 \u043f\u043e\u0434
 const BTN_CITY_TEXT = "\u041a\u0430\u0440\u0442\u0430 \u0433\u043e\u0440\u043e\u0434\u0430 (c\u043a\u043e\u0440\u043e)"
 const BTN_ARCHIVE_TEXT = "\u0410\u0440\u0445\u0438\u0432 \u0434\u0430\u043d\u043d\u044b\u0445"
 const BTN_REPORT_TEXT = "\u0424\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 \u043e\u0442\u0447\u0435\u0442 (c\u043a\u043e\u0440\u043e)"
+const BTN_NETWORK_TRACE_TEXT = "\u0421\u0435\u0442\u0435\u0432\u043e\u0439 \u0441\u043b\u0435\u0434 (c\u043a\u043e\u0440\u043e)"
 
 const MODAL_TITLE_TEXT = "\u0412\u044b\u0431\u043e\u0440 \u0441\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u0438"
 const COMPLEXITY_A_TEXT = "\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c A"
@@ -57,6 +59,7 @@ func _set_button_labels():
 	btn_city.text = BTN_CITY_TEXT
 	btn_archive.text = BTN_ARCHIVE_TEXT
 	btn_report.text = BTN_REPORT_TEXT
+	btn_network_trace.text = BTN_NETWORK_TRACE_TEXT
 
 func _set_modal_labels():
 	modal_title.text = MODAL_TITLE_TEXT
@@ -74,6 +77,7 @@ func _connect_buttons():
 	btn_city.pressed.connect(_on_city_pressed)
 	btn_archive.pressed.connect(_on_archive_pressed)
 	btn_report.pressed.connect(_on_locked_pressed)
+	btn_network_trace.pressed.connect(_on_locked_pressed)
 
 	btn_complexity_a.pressed.connect(_on_complexity_a_pressed)
 	btn_complexity_b.pressed.connect(_on_complexity_b_pressed)
@@ -87,6 +91,7 @@ func _disable_unready():
 	btn_city.disabled = false
 	btn_archive.disabled = false
 	btn_report.disabled = true
+	btn_network_trace.disabled = true
 	btn_complexity_c.disabled = true
 
 func _on_decryptor_pressed():
