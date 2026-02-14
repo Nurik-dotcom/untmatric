@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://rr4uj50uqt2r"]
+[gd_scene load_steps=2 format=3 uid="uid://c3m4tr1x0d3c5"]
 
 [ext_resource type="Script" path="res://scenes/MatrixDecryptor.gd" id="1_script"]
 
@@ -69,24 +69,24 @@ alignment = 1
 [node name="RowLabels" type="VBoxContainer" parent="MainLayout/Content"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
-theme_override_constants/separation = 8
 alignment = 1
+theme_override_constants/separation = 8
 
 [node name="MatrixArea" type="VBoxContainer" parent="MainLayout/Content"]
 layout_mode = 2
-theme_override_constants/separation = 8
 alignment = 1
+theme_override_constants/separation = 8
 
 [node name="ColumnLabels" type="HBoxContainer" parent="MainLayout/Content/MatrixArea"]
 layout_mode = 2
-theme_override_constants/separation = 8
 alignment = 1
+theme_override_constants/separation = 8
 
 [node name="Grid" type="GridContainer" parent="MainLayout/Content/MatrixArea"]
 layout_mode = 2
+columns = 5
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
-columns = 5
 
 [node name="Actions" type="HBoxContainer" parent="MainLayout"]
 custom_minimum_size = Vector2(0, 80)
