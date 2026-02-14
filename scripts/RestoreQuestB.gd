@@ -77,7 +77,7 @@ func _connect_signals():
 	# Connect close button of diag panel if exposed, or rely on internal logic.
 	# But DiagnosticsPanelB script handles close button internally hiding self.
 	# We want to track analyze_close event though.
-	diag_panel.visible_changed.connect(_on_diag_visibility_changed)
+	diag_panel.visibility_changed.connect(_on_diag_visibility_changed)
 
 func _start_level(idx):
 	if idx >= levels.size():

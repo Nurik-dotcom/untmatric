@@ -51,6 +51,9 @@ func _reset_state():
 	lbl_hint.text = "[SLOT]"
 	_start_breathing()
 
+func reset() -> void:
+	_reset_state()
+
 func get_block_id():
 	if current_block_data:
 		return current_block_data.get("block_id")
