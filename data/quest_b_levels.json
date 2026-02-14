@@ -2,7 +2,7 @@
   {
     "id": "B-01",
     "bucket": "newbie",
-    "briefing": "Ulnknown range step.",
+    "briefing": "Unknown range step.",
     "target_s": 15,
     "code_template": [
       "s = 0",
@@ -29,6 +29,10 @@
       { "i": 5, "s_before": 1, "s_after": 6 },
       { "i": 9, "s_before": 6, "s_after": 15 }
     ],
+    "distractor_feedback": {
+      "2": { "s_final": 25, "hint": "Step is too small: loop adds too many values." },
+      "9": { "s_final": 1, "hint": "Step is too large: loop almost never runs." }
+    },
     "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
   },
   {
