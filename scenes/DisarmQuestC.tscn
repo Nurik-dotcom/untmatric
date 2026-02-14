@@ -1,0 +1,197 @@
+[gd_scene load_steps=8 format=3 uid="uid://disarmquest_c"]
+
+[ext_resource type="Script" path="res://scripts/DisarmQuestC.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
+[ext_resource type="Shader" path="res://scenes/Blur.gdshader" id="3_shader"]
+[ext_resource type="PackedScene" uid="uid://fix_menu_c" path="res://scenes/ui/FixMenuC.tscn" id="4_fixmenu"]
+[ext_resource type="PackedScene" uid="uid://diagnostics_panel_c" path="res://scenes/ui/DiagnosticsPanelC.tscn" id="5_diag"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
+shader = ExtResource("3_shader")
+shader_parameter/modulate = Color(0, 0, 0, 0)
+
+[sub_resource type="CodeHighlighter" id="CodeHighlighter_term"]
+number_color = Color(0.4, 0.4, 0.4, 1)
+symbol_color = Color(0.6, 0.8, 0.6, 1)
+function_color = Color(0.4, 0.9, 0.4, 1)
+member_variable_color = Color(0.8, 0.8, 0.8, 1)
+
+[node name="DisarmQuestC" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.05, 1)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="CRT_Overlay" type="ColorRect" parent="CanvasLayer"]
+material = SubResource("ShaderMaterial_crt")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="HeaderRow" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="LblClueTitle" type="Label" parent="MainLayout/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "CASE C: DISARM"
+
+[node name="LblSession" type="Label" parent="MainLayout/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "SESSION: ..."
+horizontal_alignment = 2
+
+[node name="StatusMonitor" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+theme_type_variation = &"HeaderPanel"
+
+[node name="MonitorsRow" type="HBoxContainer" parent="MainLayout/StatusMonitor"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="ExpectedPanel" type="PanelContainer" parent="MainLayout/StatusMonitor/MonitorsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="LblExpectedTitle" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 14
+text = "EXPECTED"
+horizontal_alignment = 1
+
+[node name="LblExpectedValue" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 0.25, 1)
+theme_override_font_sizes/font_size = 24
+text = "s = 20"
+horizontal_alignment = 1
+
+[node name="ActualPanel" type="PanelContainer" parent="MainLayout/StatusMonitor/MonitorsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/StatusMonitor/MonitorsRow/ActualPanel"]
+layout_mode = 2
+alignment = 1
+
+[node name="LblActualTitle" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ActualPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 14
+text = "ACTUAL"
+horizontal_alignment = 1
+
+[node name="LblActualValue" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ActualPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 24
+text = "s = 15"
+horizontal_alignment = 1
+
+[node name="BodyRow" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CodeFrame" type="PanelContainer" parent="MainLayout/BodyRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="CodeView" type="CodeEdit" parent="MainLayout/BodyRow/CodeFrame"]
+layout_mode = 2
+editable = false
+caret_draw_when_editable_disabled = true
+gutters_draw_line_numbers = true
+gutters_zero_pad_line_numbers = true
+syntax_highlighter = SubResource("CodeHighlighter_term")
+minimap_draw = false
+
+[node name="SideInfo" type="VBoxContainer" parent="MainLayout/BodyRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="LblHint" type="Label" parent="MainLayout/BodyRow/SideInfo"]
+layout_mode = 2
+text = "Find the buggy line..."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="MisclickCounter" type="Label" parent="MainLayout/BodyRow/SideInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+text = "MISCLICKS: 0"
+horizontal_alignment = 1
+
+[node name="ActionsRow" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="BtnAnalyze" type="Button" parent="MainLayout/ActionsRow"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ANALYZE"
+
+[node name="BtnVerify" type="Button" parent="MainLayout/ActionsRow"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+disabled = true
+text = "VERIFY FIX"
+
+[node name="BtnNext" type="Button" parent="MainLayout/ActionsRow"]
+visible = false
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "NEXT CASE"
+
+[node name="FixMenuC" parent="." instance=ExtResource("4_fixmenu")]
+visible = false
+
+[node name="DiagnosticsPanelC" parent="." instance=ExtResource("5_diag")]
+layout_mode = 1
+visible = false

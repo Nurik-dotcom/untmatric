@@ -1,0 +1,45 @@
+[gd_scene load_steps=3 format=3 uid="uid://fix_menu_c"]
+
+[ext_resource type="Script" path="res://scripts/ui/FixMenuC.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
+
+[node name="FixMenuC" type="PopupPanel"]
+title = "SYSTEM PATCH"
+initial_position = 2
+size = Vector2i(400, 350)
+visible = false
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Root" type="VBoxContainer" parent="."]
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 396.0
+offset_bottom = 346.0
+theme_override_constants/separation = 12
+
+[node name="LblTitle" type="Label" parent="Root"]
+layout_mode = 2
+text = "SELECT FIX"
+horizontal_alignment = 1
+
+[node name="LblOriginal" type="Label" parent="Root"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+text = "original: ..."
+autowrap_mode = 3
+
+[node name="Options" type="VBoxContainer" parent="Root"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="BtnApply" type="Button" parent="Root"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "APPLY PATCH"
+
+[node name="BtnClose" type="Button" parent="Root"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "CANCEL"

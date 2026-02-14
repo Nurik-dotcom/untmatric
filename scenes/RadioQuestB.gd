@@ -12,9 +12,9 @@ const COLOR_RED = Color(1.0, 0.0, 0.0)
 const COLOR_YELLOW = Color(1.0, 1.0, 0.0)
 const COLOR_GRAY = Color(0.2, 0.2, 0.2)
 
-const STATUS_CALC_PROMPT = "??????: ????????? I ? ??????? "????????? ??????"."
-const STATUS_CALC_OK = "??????: ?????? ??????. ???????? ????????."
-const STATUS_CALC_BAD = "??????: ?????? ????????. ?????????? ??? ??? ??? ????????? ???????? (????? ???????????????)."
+const STATUS_CALC_PROMPT = "STATUS: Calculate I and press \"CHECK CALC\"."
+const STATUS_CALC_OK = "STATUS: Calculation is correct. Choose storage."
+const STATUS_CALC_BAD = "STATUS: Calculation is wrong. Try again or choose storage (diagnostic mode)."
 
 # Nodes
 @onready var stability_label = $SafeArea/MainVBox/Header/StabilityLabel
@@ -75,7 +75,7 @@ func _ready():
 	anchor_countdown = randi() % 4 + 7
 	start_trial()
 
-func _update_stability_ui(val, _change):
+func _update_stability_ui(val: float, _change: float) -> void:
 	stability_label.text = "STABILITY: %d%%" % int(val)
 	if val < 30:
 		stability_label.add_theme_color_override("font_color", COLOR_RED)
@@ -109,12 +109,12 @@ func start_trial():
 	i_bits_true = k_symbols * i_bits
 	_generate_storage_options()
 
-	i_info_label.text = "???????????: i = %d ???" % i_bits
-	k_info_label.text = "?????????: K = %d ????????" % k_symbols
+	i_info_label.text = "Encoding depth: i = %d bits" % i_bits
+	k_info_label.text = "Message length: K = %d symbols" % k_symbols
 
 	i_bits_value_label.text = str(i_bits_user)
 	i_bits_value_label.add_theme_color_override("font_color", Color.WHITE)
-	calc_step_label.text = "???: %d ??? (?????????: ?%d)" % [STEP_NORMAL, STEP_FAST]
+	calc_step_label.text = "Step: %d bit (fast: +/- %d)" % [STEP_NORMAL, STEP_FAST]
 
 	btn_check_calc.disabled = false
 	btn_minus_fast.disabled = false
@@ -210,7 +210,7 @@ func _pick_over_capacity(best_cap: int) -> int:
 func _format_storage_btn(opt: Dictionary) -> String:
 	return "%d %s" % [int(opt.display_size), str(opt.display_unit)]
 
-func _register_action():
+func _register_action() -> void:
 	if first_action_ms < 0:
 		first_action_ms = Time.get_ticks_msec()
 
@@ -269,7 +269,7 @@ func _on_check_calc_pressed():
 		status_label.add_theme_color_override("font_color", COLOR_YELLOW)
 		i_bits_value_label.add_theme_color_override("font_color", COLOR_YELLOW)
 
-func _on_storage_selected(idx):
+func _on_storage_selected(idx: int) -> void:
 	_register_action()
 	if phase != "SELECT":
 		return
@@ -286,7 +286,7 @@ func _on_storage_selected(idx):
 
 	btn_capture.disabled = false
 
-func _on_converter_pressed():
+func _on_converter_pressed() -> void:
 	_register_action()
 	used_converter = true
 
@@ -296,10 +296,10 @@ func _on_converter_pressed():
 	if i_bits_true % 8192 == 0:
 		msg += " = %d KB" % int(i_bits_true / 8192)
 
-	status_label.text = "?????????: " + msg
+	status_label.text = "Converter: " + msg
 	status_label.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
 
-func _on_capture_pressed():
+func _on_capture_pressed() -> void:
 	_register_action()
 	if selected_storage_idx == -1:
 		return
@@ -392,35 +392,35 @@ func _finish_trial():
 	btn_next.visible = true
 
 	if is_best_fit and calc_correct:
-		status_label.text = "??????: ???????! ?????? ? ????? ???????? ??????."
+		status_label.text = "STATUS: Perfect. Calc and storage choice are correct."
 		status_label.add_theme_color_override("font_color", COLOR_GREEN)
 		_update_sample_strip(COLOR_GREEN)
 	elif not is_fit:
-		status_label.text = "??????: ??????. ???????? ??????? ???."
+		status_label.text = "STATUS: Error. Storage is too small."
 		status_label.add_theme_color_override("font_color", COLOR_RED)
 		_update_sample_strip(COLOR_RED)
 	elif not calc_correct:
-		status_label.text = "??????: ?????? ???????."
+		status_label.text = "STATUS: Calculation is incorrect."
 		status_label.add_theme_color_override("font_color", COLOR_RED)
 		_update_sample_strip(COLOR_RED)
 	elif is_overkill:
-		status_label.text = "??????: ???????? ????????, ?? ????? ??????????."
+		status_label.text = "STATUS: Storage fits, but choice is overkill."
 		status_label.add_theme_color_override("font_color", COLOR_YELLOW)
 		_update_sample_strip(COLOR_YELLOW)
 	else:
-		status_label.text = "??????: ??????? ? ???????????."
+		status_label.text = "STATUS: Accepted with notes."
 		status_label.add_theme_color_override("font_color", COLOR_YELLOW)
 		_update_sample_strip(COLOR_YELLOW)
 
-func _update_sample_strip(color):
+func _update_sample_strip(color: Color) -> void:
 	if current_trial_idx < sample_strip.get_child_count():
 		var slot = sample_strip.get_child(current_trial_idx)
 		var bg: ColorRect = slot.get_node("BG")
 		bg.color = color
 		current_trial_idx = (current_trial_idx + 1) % sample_strip.get_child_count()
 
-func _on_next_pressed():
+func _on_next_pressed() -> void:
 	start_trial()
 
-func _on_back_pressed():
+func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
