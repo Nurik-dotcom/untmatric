@@ -1,6 +1,6 @@
 extends Node
 
-const SCHEMA_VERSION := "DA7.A.v1"
+const SCHEMA_VERSION := "DA7.A.v2"
 const LEVEL := "A"
 
 const CASES_A: Array = [
@@ -9,6 +9,7 @@ const CASES_A: Array = [
 		"schema_version": SCHEMA_VERSION,
 		"level": LEVEL,
 		"topic": "DB_BASICS",
+		"interaction_type": "SINGLE_CHOICE",
 		"prompt": "Select IDs where Access >= 3.",
 		"table": {
 			"columns": [
@@ -23,18 +24,20 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "101"},
-			{"id": "opt_2", "text": "102, 103"},
-			{"id": "opt_3", "text": "101, 102, 103"},
-			{"id": "opt_4", "text": "103 only"}
+			{"id": "opt_1", "text": "101", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "102, 103", "f_reason": null},
+			{"id": "opt_3", "text": "101, 102, 103", "f_reason": "MISSED_ROW"},
+			{"id": "opt_4", "text": "103 only", "f_reason": "MISSED_ROW"}
 		],
-		"answer_id": "opt_2"
+		"answer_id": "opt_2",
+		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
 		"id": "DA7-A-02",
 		"schema_version": SCHEMA_VERSION,
 		"level": LEVEL,
 		"topic": "DB_BASICS",
+		"interaction_type": "SINGLE_CHOICE",
 		"prompt": "Select rows where Status == ERROR.",
 		"table": {
 			"columns": [
@@ -49,18 +52,20 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "09:00, 09:10"},
-			{"id": "opt_2", "text": "09:05, 09:15"},
-			{"id": "opt_3", "text": "09:05 only"},
-			{"id": "opt_4", "text": "All rows"}
+			{"id": "opt_1", "text": "09:00, 09:10", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "09:05, 09:15", "f_reason": null},
+			{"id": "opt_3", "text": "09:05 only", "f_reason": "MISSED_ROW"},
+			{"id": "opt_4", "text": "All rows", "f_reason": "COUNT_HEADER_AS_RECORD"}
 		],
-		"answer_id": "opt_2"
+		"answer_id": "opt_2",
+		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
 		"id": "DA7-A-03",
 		"schema_version": SCHEMA_VERSION,
 		"level": LEVEL,
 		"topic": "DB_BASICS",
+		"interaction_type": "SINGLE_CHOICE",
 		"prompt": "Which relation matches: One user can write many posts?",
 		"table": {
 			"columns": [
@@ -73,18 +78,20 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "1:1"},
-			{"id": "opt_2", "text": "1:M"},
-			{"id": "opt_3", "text": "M:M"},
-			{"id": "opt_4", "text": "No relation"}
+			{"id": "opt_1", "text": "1:1", "f_reason": "CONFUSED_PK_FIELD"},
+			{"id": "opt_2", "text": "1:M", "f_reason": null},
+			{"id": "opt_3", "text": "M:M", "f_reason": "CONFUSED_ROW_COLUMN"},
+			{"id": "opt_4", "text": "No relation", "f_reason": "CONFUSED_PK_FIELD"}
 		],
-		"answer_id": "opt_2"
+		"answer_id": "opt_2",
+		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
 		"id": "DA7-A-04",
 		"schema_version": SCHEMA_VERSION,
 		"level": LEVEL,
 		"topic": "DB_BASICS",
+		"interaction_type": "SINGLE_CHOICE",
 		"prompt": "Select orders where Amount < 100.",
 		"table": {
 			"columns": [
@@ -99,18 +106,20 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "A-11, A-12"},
-			{"id": "opt_2", "text": "A-11, A-12, A-13"},
-			{"id": "opt_3", "text": "A-10 only"},
-			{"id": "opt_4", "text": "A-13 only"}
+			{"id": "opt_1", "text": "A-11, A-12", "f_reason": null},
+			{"id": "opt_2", "text": "A-11, A-12, A-13", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_3", "text": "A-10 only", "f_reason": "MISSED_ROW"},
+			{"id": "opt_4", "text": "A-13 only", "f_reason": "MISSED_COLUMN"}
 		],
-		"answer_id": "opt_1"
+		"answer_id": "opt_1",
+		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
 		"id": "DA7-A-05",
 		"schema_version": SCHEMA_VERSION,
 		"level": LEVEL,
 		"topic": "DB_BASICS",
+		"interaction_type": "SINGLE_CHOICE",
 		"prompt": "Which operator is correct for 'not equal to CLOSED'?",
 		"table": {
 			"columns": [
@@ -124,18 +133,20 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "status == CLOSED"},
-			{"id": "opt_2", "text": "status != CLOSED"},
-			{"id": "opt_3", "text": "status > CLOSED"},
-			{"id": "opt_4", "text": "status <= CLOSED"}
+			{"id": "opt_1", "text": "status == CLOSED", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "status != CLOSED", "f_reason": null},
+			{"id": "opt_3", "text": "status > CLOSED", "f_reason": "CONFUSED_ROW_COLUMN"},
+			{"id": "opt_4", "text": "status <= CLOSED", "f_reason": "CONFUSED_ROW_COLUMN"}
 		],
-		"answer_id": "opt_2"
+		"answer_id": "opt_2",
+		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
 		"id": "DA7-A-06",
 		"schema_version": SCHEMA_VERSION,
 		"level": LEVEL,
 		"topic": "DB_BASICS",
+		"interaction_type": "SINGLE_CHOICE",
 		"prompt": "Select customers with City == Almaty.",
 		"table": {
 			"columns": [
@@ -149,11 +160,12 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "C2 only"},
-			{"id": "opt_2", "text": "C1, C3"},
-			{"id": "opt_3", "text": "All rows"},
-			{"id": "opt_4", "text": "No rows"}
+			{"id": "opt_1", "text": "C2 only", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "C1, C3", "f_reason": null},
+			{"id": "opt_3", "text": "All rows", "f_reason": "COUNT_HEADER_AS_RECORD"},
+			{"id": "opt_4", "text": "No rows", "f_reason": "MISSED_ROW"}
 		],
-		"answer_id": "opt_2"
+		"answer_id": "opt_2",
+		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	}
 ]

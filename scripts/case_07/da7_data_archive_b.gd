@@ -62,6 +62,7 @@ var filter_mobile_layout: VBoxContainer
 @onready var rel_center_connector: VBoxContainer = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector
 @onready var rel_right_table: VBoxContainer = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable
 @onready var rel_options_row: HBoxContainer = $RootLayout/Body/RelationModeRoot/OptionsRow
+@onready var connector_overlay: Control = $RootLayout/Body/RelationModeRoot/ConnectorOverlay
 var relation_mobile_schema: VBoxContainer
 
 # Common Nodes
@@ -105,7 +106,10 @@ func _process(delta):
 func _init_session():
 	var all_cases: Array = CasesHub.get_cases("B")
 	var valid_cases: Array = []
-	for c in all_cases:
+	for c_v in all_cases:
+		if typeof(c_v) != TYPE_DICTIONARY:
+			continue
+		var c: Dictionary = c_v as Dictionary
 		if CasesModuleB.validate_case_b(c):
 			valid_cases.append(c)
 
@@ -122,7 +126,7 @@ func _load_next_case():
 		_finish_session()
 		return
 
-	current_case = session_cases[current_case_index]
+	current_case = session_cases[current_case_index] as Dictionary
 	is_trial_active = true
 
 	# Reset Telemetry
@@ -162,8 +166,8 @@ func _render_filter_ui():
 	var root: TreeItem = data_tree.create_item()
 	data_tree.hide_root = true
 
-	var table_data: Dictionary = current_case.get("table", {})
-	var cols: Array = table_data.get("columns", [])
+	var table_data: Dictionary = current_case.get("table", {}) as Dictionary
+	var cols: Array = table_data.get("columns", []) as Array
 	data_tree.columns = cols.size() + 1 # +1 for Checkbox
 	data_tree.set_column_title(0, "SEL")
 	for i in range(cols.size()):
@@ -181,14 +185,14 @@ func _render_filter_ui():
 		data_tree.gui_input.connect(_on_data_tree_gui_input)
 
 	var rows: Array = (table_data.get("rows", []) as Array).duplicate()
-	var anti_cheat: Dictionary = current_case.get("anti_cheat", {})
+	var anti_cheat: Dictionary = current_case.get("anti_cheat", {}) as Dictionary
 	if bool(anti_cheat.get("shuffle_rows", false)):
 		rows.shuffle()
 
 	for row_data in rows:
 		if typeof(row_data) != TYPE_DICTIONARY:
 			continue
-		var row_dict: Dictionary = row_data
+		var row_dict: Dictionary = row_data as Dictionary
 		var item: TreeItem = data_tree.create_item(root)
 		item.set_metadata(0, str(row_dict.get("row_id", "")))
 
@@ -201,7 +205,7 @@ func _render_filter_ui():
 		for i in range(cols.size()):
 			var col_def: Dictionary = cols[i]
 			var col_id: String = str(col_def.get("col_id", ""))
-			var cells: Dictionary = row_dict.get("cells", {})
+			var cells: Dictionary = row_dict.get("cells", {}) as Dictionary
 			item.set_text(i+1, str(cells.get(col_id, "")))
 			# Only column 0 is editable (checkbox)
 
@@ -214,10 +218,10 @@ func _render_relation_ui():
 	for child in rel_options_row.get_children():
 		child.queue_free()
 
-	var schema: Dictionary = current_case.get("schema_visual", {})
-	var left_table: Dictionary = schema.get("left_table", {})
-	var right_table: Dictionary = schema.get("right_table", {})
-	var link: Dictionary = schema.get("link", {})
+	var schema: Dictionary = current_case.get("schema_visual", {}) as Dictionary
+	var left_table: Dictionary = schema.get("left_table", {}) as Dictionary
+	var right_table: Dictionary = schema.get("right_table", {}) as Dictionary
+	var link: Dictionary = schema.get("link", {}) as Dictionary
 
 	_fill_mini_tree(rel_tree_l, left_table)
 	rel_title_l.text = str(left_table.get("title", "Left"))
@@ -226,20 +230,21 @@ func _render_relation_ui():
 	rel_title_r.text = str(right_table.get("title", "Right"))
 
 	rel_link_label.text = str(link.get("hint_label", "FK Reference"))
-	rel_arrow_label.text = "->"
+	rel_arrow_label.text = ""
 	rel_prompt.text = str(current_case.get("prompt", ""))
 	rel_prompt.visible_characters = 0
+	_update_relation_connector()
 
 	# Options
 	var opts: Array = (current_case.get("options", []) as Array).duplicate()
-	var anti_cheat: Dictionary = current_case.get("anti_cheat", {})
+	var anti_cheat: Dictionary = current_case.get("anti_cheat", {}) as Dictionary
 	if bool(anti_cheat.get("shuffle_options", false)):
 		opts.shuffle()
 
 	for opt in opts:
 		if typeof(opt) != TYPE_DICTIONARY:
 			continue
-		var opt_data: Dictionary = opt
+		var opt_data: Dictionary = opt as Dictionary
 		var btn: Button = Button.new()
 		btn.text = str(opt_data.get("text", "OPTION"))
 		btn.name = "Btn_" + str(opt_data.get("id", ""))
@@ -254,24 +259,24 @@ func _fill_mini_tree(tree: Tree, table_def: Dictionary):
 	var root: TreeItem = tree.create_item()
 	tree.hide_root = true
 
-	var cols: Array = table_def.get("columns", [])
+	var cols: Array = table_def.get("columns", []) as Array
 	tree.columns = cols.size()
 	for i in range(cols.size()):
 		var col_def: Dictionary = cols[i]
 		tree.set_column_title(i, str(col_def.get("title", "COL")))
 	tree.column_titles_visible = true
 
-	var preview_rows: Array = table_def.get("rows_preview", [])
+	var preview_rows: Array = table_def.get("rows_preview", []) as Array
 	# Limit preview? Spec says 6.
 	for i in range(min(preview_rows.size(), 6)):
 		if typeof(preview_rows[i]) != TYPE_DICTIONARY:
 			continue
-		var row_data: Dictionary = preview_rows[i]
+		var row_data: Dictionary = preview_rows[i] as Dictionary
 		var item: TreeItem = tree.create_item(root)
 		for j in range(cols.size()):
 			var col_def: Dictionary = cols[j]
 			var col_id: String = str(col_def.get("col_id", ""))
-			var row_cells: Dictionary = row_data.get("cells", {})
+			var row_cells: Dictionary = row_data.get("cells", {}) as Dictionary
 			item.set_text(j, str(row_cells.get(col_id, "")))
 
 # --- Interactions ---
@@ -340,8 +345,6 @@ func _on_clear_pressed():
 func _on_submit_pressed():
 	if not is_trial_active:
 		return
-	if _selected_count() == 0:
-		return
 	is_trial_active = false
 	_set_filter_input_locked(true)
 	_stop_typewriter()
@@ -358,8 +361,8 @@ func _on_submit_pressed():
 	var analysis: Dictionary = _calculate_f_reason_filter(selected_ids)
 	analysis["selected_row_ids"] = selected_ids
 	var is_correct: bool = str(analysis.get("reason", "MIXED_ERROR")) == "NONE"
-
-	_handle_result(is_correct, str(analysis.get("reason", "MIXED_ERROR")), analysis)
+	var reason_value: Variant = null if is_correct else str(analysis.get("reason", "MIXED_ERROR"))
+	_handle_result(is_correct, reason_value, analysis)
 
 func _on_relation_option_selected(opt: Dictionary):
 	if not is_trial_active:
@@ -370,7 +373,7 @@ func _on_relation_option_selected(opt: Dictionary):
 	var selected_option_id: String = str(opt.get("id", ""))
 	var answer_id: String = str(current_case.get("answer_id", ""))
 	var is_correct: bool = selected_option_id == answer_id
-	var reason: String = "CORRECT"
+	var reason: Variant = null
 	if not is_correct:
 		reason = str(opt.get("f_reason", "WRONG_RELATION"))
 
@@ -381,7 +384,7 @@ func _on_relation_option_selected(opt: Dictionary):
 
 	_handle_result(is_correct, reason, {"selected_option_id": selected_option_id})
 
-func _handle_result(is_correct: bool, reason: String, extra_data: Dictionary):
+func _handle_result(is_correct: bool, reason: Variant, extra_data: Dictionary):
 	if not is_correct:
 		if sfx_error:
 			sfx_error.play()
@@ -403,11 +406,12 @@ func _handle_result(is_correct: bool, reason: String, extra_data: Dictionary):
 
 func _calculate_f_reason_filter(selected: Array) -> Dictionary:
 	var S: Array = selected.duplicate()
-	var A: Array = current_case.get("answer_row_ids", [])
-	var B: Array = current_case.get("boundary_row_ids", [])
-	var O: Array = current_case.get("opposite_row_ids", [])
-	var D: Array = current_case.get("decoy_row_ids", current_case.get("unrelated_row_ids", []))
-	var predicate: Dictionary = current_case.get("predicate", {})
+	var A: Array = current_case.get("answer_row_ids", []) as Array
+	var B: Array = current_case.get("boundary_row_ids", []) as Array
+	var O: Array = current_case.get("opposite_row_ids", []) as Array
+	var U: Array = current_case.get("unrelated_row_ids", []) as Array
+	var D: Array = current_case.get("decoy_row_ids", []) as Array
+	var predicate: Dictionary = current_case.get("predicate", {}) as Dictionary
 	var strict_expected: bool = bool(predicate.get("strict_expected", false))
 
 	var missing_ids: Array = _array_diff(A, S)
@@ -415,10 +419,10 @@ func _calculate_f_reason_filter(selected: Array) -> Dictionary:
 	var boundary_selected: Array = _array_intersection(S, B)
 	var opposite_selected: Array = _array_intersection(S, O)
 	var decoy_selected: Array = _array_intersection(S, D)
+	var unrelated_selected: Array = _array_intersection(S, U)
+	var extra_outside_main: Array = _array_diff(_array_diff(_array_diff(_array_diff(S, A), B), O), D)
 
 	var has_omission: bool = missing_ids.size() > 0
-	var overselect_rows: Array = _array_diff(_array_diff(S, A), B)
-	var has_overselect: bool = overselect_rows.size() > 0
 	var reason: String = "NONE"
 
 	if S.is_empty():
@@ -427,16 +431,14 @@ func _calculate_f_reason_filter(selected: Array) -> Dictionary:
 		reason = "PURE_OPPOSITE"
 	elif strict_expected and boundary_selected.size() > 0:
 		reason = "INCLUDED_BOUNDARY"
-	elif has_overselect:
+	elif decoy_selected.size() > 0:
 		reason = "OVERSELECT_DECOY"
-	elif has_omission and not has_overselect:
-		reason = "PARTIAL_OMISSION"
-	elif has_omission and has_overselect:
-		reason = "MIXED_ERROR"
+	elif unrelated_selected.size() > 0 or extra_outside_main.size() > 0:
+		reason = "FALSE_POSITIVE"
+	elif has_omission:
+		reason = "OMISSION"
 	elif _sets_equal(S, A):
 		reason = "NONE"
-	elif has_overselect:
-		reason = "MIXED_ERROR"
 
 	return {
 		"reason": reason,
@@ -446,17 +448,18 @@ func _calculate_f_reason_filter(selected: Array) -> Dictionary:
 			"boundary_selected": boundary_selected,
 			"opposite_selected": opposite_selected,
 			"decoy_selected": decoy_selected,
-			"overselect_rows": overselect_rows
+			"unrelated_selected": unrelated_selected,
+			"extra_outside_main": extra_outside_main
 		}
 	}
 
 # --- Telemetry ---
 
-func _log_trial(is_correct: bool, f_reason: String, data: Dictionary):
+func _log_trial(is_correct: bool, f_reason: Variant, data: Dictionary):
 	var now_ms: int = Time.get_ticks_msec()
 	var raw_elapsed_ms: int = now_ms - ui_ready_ts
 	var effective_elapsed_ms: int = int(max(0.0, raw_elapsed_ms - lag_compensation_ms))
-	var timing_policy: Dictionary = current_case.get("timing_policy", {})
+	var timing_policy: Dictionary = current_case.get("timing_policy", {}) as Dictionary
 	var limit_sec: int = int(timing_policy.get("limit_sec", 120))
 	var over_soft: bool = effective_elapsed_ms > (limit_sec * 1000)
 
@@ -521,7 +524,7 @@ func _log_trial(is_correct: bool, f_reason: String, data: Dictionary):
 	}
 
 	if mode == "FILTER":
-		var sets: Dictionary = data.get("sets", {})
+		var sets: Dictionary = data.get("sets", {}) as Dictionary
 		var selected_ids: Array = data.get("selected_row_ids", []) as Array
 		payload["task"] = {"predicate": current_case.get("predicate", {})}
 		payload["answer"] = {
@@ -531,17 +534,21 @@ func _log_trial(is_correct: bool, f_reason: String, data: Dictionary):
 			"extra_ids": sets.get("extra_ids", []),
 			"boundary_selected": sets.get("boundary_selected", []),
 			"opposite_selected": sets.get("opposite_selected", []),
-			"decoy_selected": sets.get("decoy_selected", [])
+			"decoy_selected": sets.get("decoy_selected", []),
+			"unrelated_selected": sets.get("unrelated_selected", []),
+			"extra_outside_main": sets.get("extra_outside_main", [])
 		}
 		payload["expected"] = {
 			"answer_row_ids": current_case.get("answer_row_ids", []),
 			"boundary_row_ids": current_case.get("boundary_row_ids", []),
 			"opposite_row_ids": current_case.get("opposite_row_ids", []),
+			"unrelated_row_ids": current_case.get("unrelated_row_ids", []),
 			"decoy_row_ids": current_case.get("decoy_row_ids", [])
 		}
 
 	elif mode == "RELATION":
-		payload["schema_visual"] = {"link": current_case.get("schema_visual", {}).get("link", {})}
+		var schema_visual: Dictionary = current_case.get("schema_visual", {}) as Dictionary
+		payload["schema_visual"] = {"link": schema_visual.get("link", {})}
 		payload["answer"] = {
 			"selected_option_id": str(data.get("selected_option_id", ""))
 		}
@@ -673,6 +680,17 @@ func _apply_relation_layout_mode(is_mobile: bool) -> void:
 		relation_schema_container.move_child(rel_right_table, 2)
 		relation_schema_container.visible = (mode == "RELATION")
 		relation_mobile_schema.visible = false
+	_update_relation_connector()
+
+func _update_relation_connector() -> void:
+	if not is_instance_valid(connector_overlay):
+		return
+	if mode != "RELATION":
+		connector_overlay.visible = false
+		return
+	connector_overlay.visible = true
+	if connector_overlay.has_method("set_endpoints"):
+		connector_overlay.call_deferred("set_endpoints", rel_left_table, rel_right_table, relation_mode_root)
 
 func _set_filter_input_locked(locked: bool) -> void:
 	if locked:
@@ -708,7 +726,7 @@ func _selected_count() -> int:
 	return count
 
 func _array_intersection(arr1: Array, arr2: Array) -> Array:
-	var lookup := {}
+	var lookup: Dictionary = {}
 	for x in arr2:
 		lookup[x] = true
 	var out: Array = []
@@ -718,7 +736,7 @@ func _array_intersection(arr1: Array, arr2: Array) -> Array:
 	return out
 
 func _array_diff(arr1: Array, arr2: Array) -> Array:
-	var lookup := {}
+	var lookup: Dictionary = {}
 	for x in arr2:
 		lookup[x] = true
 	var out: Array = []
@@ -728,7 +746,7 @@ func _array_diff(arr1: Array, arr2: Array) -> Array:
 	return out
 
 func _is_subset(subset_arr: Array, set_arr: Array) -> bool:
-	var lookup := {}
+	var lookup: Dictionary = {}
 	for x in set_arr:
 		lookup[x] = true
 	for x in subset_arr:

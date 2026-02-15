@@ -9,8 +9,8 @@ const F_REASON_FILTER = [
 	"PURE_OPPOSITE",
 	"INCLUDED_BOUNDARY",
 	"OVERSELECT_DECOY",
-	"PARTIAL_OMISSION",
-	"MIXED_ERROR",
+	"FALSE_POSITIVE",
+	"OMISSION",
 	"NONE"
 ]
 
@@ -255,25 +255,70 @@ const CASES_B: Array = [
 ]
 
 static func validate_case_b(c: Dictionary) -> bool:
-	if c.schema_version != SCHEMA_VERSION:
-		push_error("Case %s bad schema" % c.id)
+	var case_id: String = str(c.get("id", "UNKNOWN"))
+	if str(c.get("schema_version", "")) != SCHEMA_VERSION:
+		push_error("Case %s bad schema" % case_id)
 		return false
 
-	if c.interaction_type == "MULTI_SELECT_ROWS":
+	if str(c.get("interaction_type", "")) == "MULTI_SELECT_ROWS":
 		# Validation for disjoint sets (basic existence checks).
-		if not c.has("answer_row_ids") or not c.has("boundary_row_ids"):
-			push_error("Case %s missing sets" % c.id)
+		if not c.has("answer_row_ids") or not c.has("boundary_row_ids") or not c.has("opposite_row_ids") or not c.has("unrelated_row_ids") or not c.has("decoy_row_ids"):
+			push_error("Case %s missing sets" % case_id)
 			return false
 		if not c.has("predicate"):
-			push_error("Case %s missing predicate" % c.id)
+			push_error("Case %s missing predicate" % case_id)
+			return false
+		if not c.has("table"):
+			push_error("Case %s missing table" % case_id)
+			return false
+		var table: Dictionary = c.get("table", {}) as Dictionary
+		var rows: Array = table.get("rows", []) as Array
+		var all_row_ids: Dictionary = {}
+		for row_v in rows:
+			if typeof(row_v) != TYPE_DICTIONARY:
+				continue
+			var row_id: String = str((row_v as Dictionary).get("row_id", ""))
+			if row_id == "":
+				continue
+			all_row_ids[row_id] = true
+		var answer_ids: Array = c.get("answer_row_ids", []) as Array
+		var boundary_ids: Array = c.get("boundary_row_ids", []) as Array
+		var opposite_ids: Array = c.get("opposite_row_ids", []) as Array
+		var unrelated_ids: Array = c.get("unrelated_row_ids", []) as Array
+		var decoy_ids: Array = c.get("decoy_row_ids", []) as Array
+		if not _all_exist_in(answer_ids, all_row_ids) or not _all_exist_in(boundary_ids, all_row_ids) or not _all_exist_in(opposite_ids, all_row_ids) or not _all_exist_in(unrelated_ids, all_row_ids) or not _all_exist_in(decoy_ids, all_row_ids):
+			push_error("Case %s has unknown row ids in sets" % case_id)
+			return false
+		if not _are_disjoint([answer_ids, boundary_ids, opposite_ids, unrelated_ids, decoy_ids]):
+			push_error("Case %s has intersecting sets (A/B/O/U/D)" % case_id)
 			return false
 
-	elif c.interaction_type == "RELATIONSHIP_CHOICE":
+	elif str(c.get("interaction_type", "")) == "RELATIONSHIP_CHOICE":
 		if not c.has("schema_visual"):
-			push_error("Case %s missing schema_visual" % c.id)
+			push_error("Case %s missing schema_visual" % case_id)
 			return false
 		if not c.has("options"):
-			push_error("Case %s missing options" % c.id)
+			push_error("Case %s missing options" % case_id)
 			return false
 
+	return true
+
+static func _all_exist_in(ids: Array, allowed: Dictionary) -> bool:
+	for id_v in ids:
+		var row_id: String = str(id_v)
+		if not allowed.has(row_id):
+			return false
+	return true
+
+static func _are_disjoint(grouped_ids: Array) -> bool:
+	var seen: Dictionary = {}
+	for group_v in grouped_ids:
+		if typeof(group_v) != TYPE_ARRAY:
+			continue
+		var group: Array = group_v
+		for id_v in group:
+			var key: String = str(id_v)
+			if seen.has(key):
+				return false
+			seen[key] = true
 	return true

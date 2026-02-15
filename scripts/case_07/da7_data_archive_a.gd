@@ -76,8 +76,8 @@ func _render_case() -> void:
 	prompt_label.bbcode_enabled = true
 	prompt_label.text = "[b]%s[/b]" % str(current_case.get("prompt", ""))
 
-	_render_table(current_case.get("table", {}))
-	_render_options(current_case.get("options", []))
+	_render_table(current_case.get("table", {}) as Dictionary)
+	_render_options(current_case.get("options", []) as Array)
 	call_deferred("_update_silent_reading_possible_flag")
 
 func _render_table(table_def: Dictionary) -> void:
@@ -86,7 +86,7 @@ func _render_table(table_def: Dictionary) -> void:
 	data_tree.hide_root = true
 	data_tree.select_mode = Tree.SELECT_ROW
 
-	var cols: Array = table_def.get("columns", [])
+	var cols: Array = table_def.get("columns", []) as Array
 	if cols.is_empty():
 		data_tree.columns = 1
 		data_tree.set_column_title(0, "Data")
@@ -99,13 +99,13 @@ func _render_table(table_def: Dictionary) -> void:
 		data_tree.set_column_title(i, str(col.get("title", "COL")))
 	data_tree.column_titles_visible = true
 
-	var rows: Array = table_def.get("rows", [])
+	var rows: Array = table_def.get("rows", []) as Array
 	for row_v in rows:
 		if typeof(row_v) != TYPE_DICTIONARY:
 			continue
-		var row_data: Dictionary = row_v
+		var row_data: Dictionary = row_v as Dictionary
 		var row_item: TreeItem = data_tree.create_item(root)
-		var cells: Dictionary = row_data.get("cells", {})
+		var cells: Dictionary = row_data.get("cells", {}) as Dictionary
 		for i in range(cols.size()):
 			var col: Dictionary = cols[i]
 			var col_id: String = str(col.get("col_id", ""))
@@ -118,7 +118,7 @@ func _render_options(options: Array) -> void:
 	for opt_v in options:
 		if typeof(opt_v) != TYPE_DICTIONARY:
 			continue
-		var opt: Dictionary = opt_v
+		var opt: Dictionary = opt_v as Dictionary
 		var btn: Button = Button.new()
 		btn.custom_minimum_size = Vector2(0, 56)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -162,6 +162,8 @@ func _log_trial(selected_id: String, answer_id: String, is_correct: bool) -> voi
 		first_action_ms = first_action_ts - case_started_ts
 	var silent_reading_possible: bool = (not prompt_has_scroll and not scroll_used and first_action_ms >= 30000)
 	var case_id: String = str(current_case.get("id", "DA7-A-00"))
+	var selected_option: Dictionary = _find_option(selected_id)
+	var f_reason: Variant = null if is_correct else selected_option.get("f_reason", "WRONG_OPTION_GENERIC")
 	var payload: Dictionary = {
 		"question_id": case_id,
 		"case_id": case_id,
@@ -174,7 +176,7 @@ func _log_trial(selected_id: String, answer_id: String, is_correct: bool) -> voi
 		"schema_version": str(current_case.get("schema_version", "DA7.A.v1")),
 		"match_key": "DA7_A|%s" % case_id,
 		"is_correct": is_correct,
-		"f_reason": "NONE" if is_correct else "WRONG_OPTION",
+		"f_reason": f_reason,
 		"elapsed_ms": elapsed_ms,
 		"duration": float(elapsed_ms) / 1000.0,
 		"timing": {
@@ -200,6 +202,16 @@ func _log_trial(selected_id: String, answer_id: String, is_correct: bool) -> voi
 		}
 	}
 	GlobalMetrics.register_trial(payload)
+
+func _find_option(selected_id: String) -> Dictionary:
+	var options: Array = current_case.get("options", []) as Array
+	for opt_v in options:
+		if typeof(opt_v) != TYPE_DICTIONARY:
+			continue
+		var opt: Dictionary = opt_v as Dictionary
+		if str(opt.get("id", "")) == selected_id:
+			return opt
+	return {}
 
 func _register_first_action() -> void:
 	if first_action_ts < 0:

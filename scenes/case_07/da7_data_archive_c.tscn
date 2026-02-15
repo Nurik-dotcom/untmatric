@@ -1,0 +1,171 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/case_07/da7_data_archive_c.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
+[ext_resource type="AudioStream" path="res://audio/click.wav" id="3_click"]
+[ext_resource type="AudioStream" path="res://audio/error.wav" id="4_error"]
+[ext_resource type="AudioStream" path="res://audio/relay.wav" id="5_relay"]
+
+[node name="DA7_DataArchiveQuestC" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.05, 1)
+
+[node name="SafeArea" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="SafeArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Root" type="VBoxContainer" parent="SafeArea/Margin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Header" type="PanelContainer" parent="SafeArea/Margin/Root"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HeaderVBox" type="VBoxContainer" parent="SafeArea/Margin/Root/Header"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="SafeArea/Margin/Root/Header/HeaderVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "CASE #7: MASTER SQL"
+
+[node name="TimerRow" type="HBoxContainer" parent="SafeArea/Margin/Root/Header/HeaderVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StabilityLabel" type="Label" parent="SafeArea/Margin/Root/Header/HeaderVBox/TimerRow"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+text = "Stability: 100%"
+
+[node name="TimerBar" type="ProgressBar" parent="SafeArea/Margin/Root/Header/HeaderVBox/TimerRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 120.0
+value = 120.0
+show_percentage = false
+
+[node name="TimerLabel" type="Label" parent="SafeArea/Margin/Root/Header/HeaderVBox/TimerRow"]
+custom_minimum_size = Vector2(78, 0)
+layout_mode = 2
+text = "02:00"
+horizontal_alignment = 2
+
+[node name="Prompt" type="RichTextLabel" parent="SafeArea/Margin/Root"]
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+bbcode_enabled = true
+text = "Loading case..."
+fit_content = false
+autowrap_mode = 2
+
+[node name="CodePanel" type="PanelContainer" parent="SafeArea/Margin/Root"]
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CodeArea" type="HFlowContainer" parent="SafeArea/Margin/Root/CodePanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="ControlsRow" type="HBoxContainer" parent="SafeArea/Margin/Root"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnUndo" type="Button" parent="SafeArea/Margin/Root/ControlsRow"]
+custom_minimum_size = Vector2(120, 56)
+layout_mode = 2
+text = "UNDO"
+
+[node name="BtnClear" type="Button" parent="SafeArea/Margin/Root/ControlsRow"]
+custom_minimum_size = Vector2(120, 56)
+layout_mode = 2
+text = "CLEAR"
+
+[node name="BtnSubmit" type="Button" parent="SafeArea/Margin/Root/ControlsRow"]
+custom_minimum_size = Vector2(180, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "SUBMIT"
+
+[node name="BtnNext" type="Button" parent="SafeArea/Margin/Root/ControlsRow"]
+visible = false
+custom_minimum_size = Vector2(160, 56)
+layout_mode = 2
+text = "NEXT"
+
+[node name="StatusLabel" type="Label" parent="SafeArea/Margin/Root"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+text = "Compose query tokens and submit."
+autowrap_mode = 2
+
+[node name="RepoPanel" type="PanelContainer" parent="SafeArea/Margin/Root"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="RepoScroll" type="ScrollContainer" parent="SafeArea/Margin/Root/RepoPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BlockRepository" type="GridContainer" parent="SafeArea/Margin/Root/RepoPanel/RepoScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 4
+
+[node name="SFX" type="Node" parent="."]
+
+[node name="SfxClick" type="AudioStreamPlayer" parent="SFX"]
+stream = ExtResource("3_click")
+
+[node name="SfxError" type="AudioStreamPlayer" parent="SFX"]
+stream = ExtResource("4_error")
+
+[node name="SfxRelay" type="AudioStreamPlayer" parent="SFX"]
+stream = ExtResource("5_relay")

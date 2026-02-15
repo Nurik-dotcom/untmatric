@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://da7archive002"]
+[gd_scene load_steps=6 format=3 uid="uid://da7archive002"]
 
 [ext_resource type="Script" path="res://scripts/case_07/da7_data_archive_b.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
 [ext_resource type="AudioStream" path="res://audio/error.wav" id="3_error"]
 [ext_resource type="AudioStream" path="res://audio/relay.wav" id="4_relay"]
+[ext_resource type="Script" path="res://scripts/ui/ConnectorOverlay.gd" id="5_connector"]
 
 [node name="DA7_DataArchiveQuestB" type="Control"]
 layout_mode = 3
@@ -184,6 +185,16 @@ hide_root = true
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
+
+[node name="ConnectorOverlay" type="Control" parent="RootLayout/Body/RelationModeRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5_connector")
 
 [node name="Footer" type="HBoxContainer" parent="RootLayout"]
 layout_mode = 2

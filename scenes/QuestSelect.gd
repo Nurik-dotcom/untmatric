@@ -127,7 +127,7 @@ func _on_city_pressed():
 func _on_archive_pressed():
 	selected_quest_type = QuestType.DATA_ARCHIVE
 	btn_complexity_b.disabled = false
-	btn_complexity_c.disabled = true
+	btn_complexity_c.disabled = false
 	modal.visible = true
 
 func _on_network_trace_pressed():
@@ -184,6 +184,8 @@ func _on_complexity_c_pressed():
 		get_tree().change_scene_to_file("res://scenes/DisarmQuestC.tscn")
 	elif selected_quest_type == QuestType.CITY_MAP:
 		get_tree().change_scene_to_file("res://scenes/CityMapQuestC.tscn")
+	elif selected_quest_type == QuestType.DATA_ARCHIVE:
+		get_tree().change_scene_to_file("res://scenes/case_07/da7_data_archive_c.tscn")
 	elif selected_quest_type == QuestType.NETWORK_TRACE:
 		get_tree().change_scene_to_file("res://scenes/NetworkTraceQuestC.tscn")
 
