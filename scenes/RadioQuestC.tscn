@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://dmd28rj5m2f34"]
+[gd_scene load_steps=4 format=3 uid="uid://dmd28rj5m2f34"]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestC.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_untformatic.tres" id="2_theme"]
+[ext_resource type="Script" path="res://scenes/TimeKnob.gd" id="3_knob_script"]
 
 [node name="RadioQuestC" type="Control"]
 layout_mode = 3
@@ -20,7 +21,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.07, 0.07, 0.08, 1)
+color = Color(0.06, 0.07, 0.08, 1)
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -28,9 +29,9 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
-offset_top = 16.0
+offset_top = 12.0
 offset_right = -16.0
-offset_bottom = -16.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -38,302 +39,467 @@ grow_vertical = 2
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Header" type="HBoxContainer" parent="SafeArea/MainVBox"]
-custom_minimum_size = Vector2(0, 64)
+[node name="HeaderBar" type="HBoxContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BtnBack" type="Button" parent="SafeArea/MainVBox/Header"]
+[node name="BtnBack" type="Button" parent="SafeArea/MainVBox/HeaderBar"]
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 text = "<-"
 
-[node name="Spacer" type="Control" parent="SafeArea/MainVBox/Header"]
+[node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/HeaderBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "РАДИОПЕРЕХВАТ • C"
+
+[node name="Spacer" type="Control" parent="SafeArea/MainVBox/HeaderBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ModeLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+[node name="ModeChip" type="Label" parent="SafeArea/MainVBox/HeaderBar"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "РЕЖИМ: C"
+theme_override_font_sizes/font_size = 16
+text = "РЕЖИМ: БЕЗ ВРЕМЕНИ"
 
-[node name="StabilityLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+[node name="StabilityLabel" type="Label" parent="SafeArea/MainVBox/HeaderBar"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 16
 text = "СТАБИЛЬНОСТЬ: 100%"
 
-[node name="TaskCard" type="PanelContainer" parent="SafeArea/MainVBox"]
-custom_minimum_size = Vector2(0, 120)
+[node name="MissionCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 138)
 layout_mode = 2
 
-[node name="TaskVBox" type="VBoxContainer" parent="SafeArea/MainVBox/TaskCard"]
+[node name="MissionMargin" type="MarginContainer" parent="SafeArea/MainVBox/MissionCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="MissionVBox" type="VBoxContainer" parent="SafeArea/MainVBox/MissionCard/MissionMargin"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+[node name="MissionTitle" type="Label" parent="SafeArea/MainVBox/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "ЭКСТРЕННАЯ ПЕРЕДАЧА"
 
-[node name="FileLabel" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+[node name="TaskLine1" type="Label" parent="SafeArea/MainVBox/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "ОБЪЁМ ПАКЕТА: -"
+theme_override_font_sizes/font_size = 19
+text = "Объём пакета: -"
 
-[node name="SpeedLabel" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+[node name="TaskLine2" type="Label" parent="SafeArea/MainVBox/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "СКОРОСТЬ КАНАЛА: -"
+theme_override_font_sizes/font_size = 19
+text = "Скорость канала: -"
 
-[node name="DetectLabel" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
+[node name="TaskLine3" type="Label" parent="SafeArea/MainVBox/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "ДО ПЕЛЕНГАЦИИ: -"
+theme_override_colors/font_color = Color(1, 0.75, 0.22, 1)
+theme_override_font_sizes/font_size = 19
+text = "До пеленгации: -"
 
-[node name="MonitorCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="MicroHint" type="Label" parent="SafeArea/MainVBox/MissionCard/MissionMargin/MissionVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.72, 0.72, 1)
+theme_override_font_sizes/font_size = 14
+text = "Сначала оцени t. Потом АНАЛИЗ. Потом решение."
+
+[node name="BodyRow" type="VBoxContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 10
 
-[node name="MonVBox" type="VBoxContainer" parent="SafeArea/MainVBox/MonitorCard"]
+[node name="EstimateCard" type="PanelContainer" parent="SafeArea/MainVBox/BodyRow"]
+custom_minimum_size = Vector2(0, 320)
+layout_mode = 2
+
+[node name="EstMargin" type="MarginContainer" parent="SafeArea/MainVBox/BodyRow/EstimateCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="EstVBox" type="VBoxContainer" parent="SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="MonTitle" type="Label" parent="SafeArea/MainVBox/MonitorCard/MonVBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "РИСК-МОНИТОР"
-
-[node name="DetectBlock" type="VBoxContainer" parent="SafeArea/MainVBox/MonitorCard/MonVBox"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="DetectTitle" type="Label" parent="SafeArea/MainVBox/MonitorCard/MonVBox/DetectBlock"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "ПЕЛЕНГАЦИЯ"
-
-[node name="DetectionTimer" type="ProgressBar" parent="SafeArea/MainVBox/MonitorCard/MonVBox/DetectBlock"]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-value = 0.0
-show_percentage = false
-
-[node name="DetectCountdown" type="Label" parent="SafeArea/MainVBox/MonitorCard/MonVBox/DetectBlock"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 28
-text = "- с"
-
-[node name="TransferBlock" type="VBoxContainer" parent="SafeArea/MainVBox/MonitorCard/MonVBox"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="TransferTitle" type="Label" parent="SafeArea/MainVBox/MonitorCard/MonVBox/TransferBlock"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "ПЕРЕДАЧА"
-
-[node name="TransferProgress" type="ProgressBar" parent="SafeArea/MainVBox/MonitorCard/MonVBox/TransferBlock"]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-value = 0.0
-show_percentage = false
-
-[node name="TransferCountdown" type="Label" parent="SafeArea/MainVBox/MonitorCard/MonVBox/TransferBlock"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 28
-text = "-"
-
-[node name="EstimateCard" type="PanelContainer" parent="SafeArea/MainVBox"]
-custom_minimum_size = Vector2(0, 140)
-layout_mode = 2
-
-[node name="EstVBox" type="VBoxContainer" parent="SafeArea/MainVBox/EstimateCard"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="EstTitle" type="Label" parent="SafeArea/MainVBox/EstimateCard/EstVBox"]
+[node name="EstimateTitle" type="Label" parent="SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "ПРОГНОЗ ВРЕМЕНИ"
 
-[node name="EstValue" type="Label" parent="SafeArea/MainVBox/EstimateCard/EstVBox"]
+[node name="EstimateValue" type="Label" parent="SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
-text = "0.0 с"
+text = "t = 0.0 с"
 horizontal_alignment = 1
 
-[node name="EstBtns" type="HBoxContainer" parent="SafeArea/MainVBox/EstimateCard/EstVBox"]
+[node name="TimeKnob" type="Control" parent="SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox"]
+custom_minimum_size = Vector2(220, 220)
+layout_mode = 2
+size_flags_horizontal = 4
+script = ExtResource("3_knob_script")
+
+[node name="FineButtonsRow" type="HBoxContainer" parent="SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BtnMinus1" type="Button" parent="SafeArea/MainVBox/EstimateCard/EstVBox/EstBtns"]
+[node name="BtnMinus1" type="Button" parent="SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/FineButtonsRow"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "-1"
 
-[node name="BtnMinus01" type="Button" parent="SafeArea/MainVBox/EstimateCard/EstVBox/EstBtns"]
+[node name="BtnMinus01" type="Button" parent="SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/FineButtonsRow"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "-0.1"
 
-[node name="BtnPlus01" type="Button" parent="SafeArea/MainVBox/EstimateCard/EstVBox/EstBtns"]
+[node name="BtnPlus01" type="Button" parent="SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/FineButtonsRow"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "+0.1"
 
-[node name="BtnPlus1" type="Button" parent="SafeArea/MainVBox/EstimateCard/EstVBox/EstBtns"]
+[node name="BtnPlus1" type="Button" parent="SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/FineButtonsRow"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "+1"
 
-[node name="BtnCheck" type="Button" parent="SafeArea/MainVBox/EstimateCard/EstVBox"]
-custom_minimum_size = Vector2(0, 56)
+[node name="MonitorCard" type="PanelContainer" parent="SafeArea/MainVBox/BodyRow"]
+custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "ПРОВЕРИТЬ ПРОГНОЗ"
 
-[node name="Bottom" type="VBoxContainer" parent="SafeArea/MainVBox"]
+[node name="MonMargin" type="MarginContainer" parent="SafeArea/MainVBox/BodyRow/MonitorCard"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
 
-[node name="SampleStrip" type="HBoxContainer" parent="SafeArea/MainVBox/Bottom"]
+[node name="MonVBox" type="VBoxContainer" parent="SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Sample1" type="PanelContainer" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
-custom_minimum_size = Vector2(30, 18)
+[node name="MonitorTitle" type="Label" parent="SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "РИСК ПЕЛЕНГАЦИИ"
 
-[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/Sample1"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.18, 0.18, 0.18, 1)
-
-[node name="Sample2" type="PanelContainer" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
-custom_minimum_size = Vector2(30, 18)
+[node name="DetectionTitle" type="Label" parent="SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "ПЕЛЕНГАЦИЯ"
 
-[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/Sample2"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.18, 0.18, 0.18, 1)
-
-[node name="Sample3" type="PanelContainer" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
-custom_minimum_size = Vector2(30, 18)
+[node name="DetectionBar" type="ProgressBar" parent="SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox"]
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
-size_flags_horizontal = 3
+show_percentage = false
 
-[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/Sample3"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.18, 0.18, 0.18, 1)
-
-[node name="Sample4" type="PanelContainer" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
-custom_minimum_size = Vector2(30, 18)
+[node name="DetectCountdown" type="Label" parent="SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "— с"
 
-[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/Sample4"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.18, 0.18, 0.18, 1)
-
-[node name="Sample5" type="PanelContainer" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
-custom_minimum_size = Vector2(30, 18)
+[node name="TransferTitle" type="Label" parent="SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "ПЕРЕДАЧА"
 
-[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/Sample5"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.18, 0.18, 0.18, 1)
-
-[node name="Sample6" type="PanelContainer" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
-custom_minimum_size = Vector2(30, 18)
+[node name="TransferBar" type="ProgressBar" parent="SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox"]
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
-size_flags_horizontal = 3
+show_percentage = false
 
-[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/Sample6"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.18, 0.18, 0.18, 1)
-
-[node name="Sample7" type="PanelContainer" parent="SafeArea/MainVBox/Bottom/SampleStrip"]
-custom_minimum_size = Vector2(30, 18)
+[node name="TransferCountdown" type="Label" parent="SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "—"
 
-[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/Bottom/SampleStrip/Sample7"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.18, 0.18, 0.18, 1)
+[node name="RiskLabel" type="Label" parent="SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Риск: НЕИЗВЕСТЕН"
 
-[node name="ActionsRow" type="HBoxContainer" parent="SafeArea/MainVBox/Bottom"]
+[node name="BottomVBox" type="VBoxContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BtnUnits" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
+[node name="SampleStrip" type="HBoxContainer" parent="SafeArea/MainVBox/BottomVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Sample1" type="PanelContainer" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(34, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.18, 0.18, 0.18, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample1"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -6.5
+offset_top = -8.0
+offset_right = 6.5
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 15
+text = "Я"
+horizontal_alignment = 1
+
+[node name="Sample2" type="PanelContainer" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(34, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.18, 0.18, 0.18, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample2"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -6.5
+offset_top = -8.0
+offset_right = 6.5
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 15
+text = "Я"
+horizontal_alignment = 1
+
+[node name="Sample3" type="PanelContainer" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(34, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.18, 0.18, 0.18, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample3"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -6.5
+offset_top = -8.0
+offset_right = 6.5
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 15
+text = "Я"
+horizontal_alignment = 1
+
+[node name="Sample4" type="PanelContainer" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(34, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample4"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.18, 0.18, 0.18, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample4"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -6.5
+offset_top = -8.0
+offset_right = 6.5
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 15
+text = "Я"
+horizontal_alignment = 1
+
+[node name="Sample5" type="PanelContainer" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(34, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample5"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.18, 0.18, 0.18, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample5"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -6.5
+offset_top = -8.0
+offset_right = 6.5
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 15
+text = "Я"
+horizontal_alignment = 1
+
+[node name="Sample6" type="PanelContainer" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(34, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample6"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.18, 0.18, 0.18, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample6"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -6.5
+offset_top = -8.0
+offset_right = 6.5
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 15
+text = "Я"
+horizontal_alignment = 1
+
+[node name="Sample7" type="PanelContainer" parent="SafeArea/MainVBox/BottomVBox/SampleStrip"]
+custom_minimum_size = Vector2(34, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BG" type="ColorRect" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample7"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.18, 0.18, 0.18, 1)
+
+[node name="AnchorMark" type="Label" parent="SafeArea/MainVBox/BottomVBox/SampleStrip/Sample7"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -6.5
+offset_top = -8.0
+offset_right = 6.5
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 15
+text = "Я"
+horizontal_alignment = 1
+
+[node name="ActionsRow" type="HBoxContainer" parent="SafeArea/MainVBox/BottomVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnUnits" type="Button" parent="SafeArea/MainVBox/BottomVBox/ActionsRow"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "КАЛЬКУЛЯТОР ЕДИНИЦ"
+text = "ЕДИНИЦЫ"
 
-[node name="BtnRisk" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
+[node name="BtnAnalyze" type="Button" parent="SafeArea/MainVBox/BottomVBox/ActionsRow"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "АНАЛИЗ"
+
+[node name="BtnRisk" type="Button" parent="SafeArea/MainVBox/BottomVBox/ActionsRow"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "РИСКНУТЬ"
 
-[node name="BtnAbort" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
+[node name="BtnAbort" type="Button" parent="SafeArea/MainVBox/BottomVBox/ActionsRow"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "СБРОС"
 
-[node name="BtnNext" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
+[node name="BtnNext" type="Button" parent="SafeArea/MainVBox/BottomVBox/ActionsRow"]
 visible = false
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "СЛЕДУЮЩИЙ СИГНАЛ"
+text = "ДАЛЕЕ"
 
-[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/Bottom"]
+[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "СТАТУС: ..."
