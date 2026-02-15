@@ -35,17 +35,20 @@ const TXT_MODE := "\u0420\u0415\u0416\u0418\u041c: \u0411\u0415\u0417 \u0412\u04
 const TXT_TITLE := "\u0420\u0410\u0414\u0418\u041e\u041f\u0415\u0420\u0415\u0425\u0412\u0410\u0422 \u2022 C"
 const TXT_MISSION := "\u042d\u041a\u0421\u0422\u0420\u0415\u041d\u041d\u0410\u042f \u041f\u0415\u0420\u0415\u0414\u0410\u0427\u0410"
 const TXT_HINT := "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u043e\u0446\u0435\u043d\u0438 t. \u041f\u043e\u0442\u043e\u043c \u0410\u041d\u0410\u041b\u0418\u0417. \u041f\u043e\u0442\u043e\u043c \u0440\u0435\u0448\u0435\u043d\u0438\u0435."
-const TXT_EST_TITLE := "\u041f\u0420\u041e\u0413\u041d\u041e\u0417 \u0412\u0420\u0415\u041c\u0415\u041d\u0418"
-const TXT_MON_TITLE := "\u0420\u0418\u0421\u041a \u041f\u0415\u041b\u0415\u041d\u0413\u0410\u0426\u0418\u0418"
+const TXT_STEP_1 := "\u0428\u0410\u0413 1: \u041d\u0430\u0441\u0442\u0440\u043e\u0439\u0442\u0435 \u043e\u0446\u0435\u043d\u043a\u0443 \u0432\u0440\u0435\u043c\u0435\u043d\u0438"
+const TXT_STEP_2 := "\u0428\u0410\u0413 2: \u041a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0440\u0438\u0441\u043a\u0430"
+const TXT_STEP_3 := "\u0428\u0410\u0413 3: \u041f\u0440\u0438\u043d\u044f\u0442\u044c \u0440\u0435\u0448\u0435\u043d\u0438\u0435"
 const TXT_DETECT_TITLE := "\u041f\u0415\u041b\u0415\u041d\u0413\u0410\u0426\u0418\u042f"
 const TXT_TRANSFER_TITLE := "\u041f\u0415\u0420\u0415\u0414\u0410\u0427\u0410"
-const TXT_STATUS_PREFIX := "\u0421\u0422\u0410\u0422\u0423\u0421: "
 
-const TXT_BTN_UNITS := "\u0415\u0414\u0418\u041d\u0418\u0426\u042b"
+const TXT_BTN_UNITS := "\u041f\u041e\u0414\u0421\u041a\u0410\u0417\u041a\u0410 (\u0435\u0434\u0438\u043d\u0438\u0446\u044b)"
 const TXT_BTN_ANALYZE := "\u0410\u041d\u0410\u041b\u0418\u0417"
 const TXT_BTN_RISK := "\u0420\u0418\u0421\u041a\u041d\u0423\u0422\u042c"
 const TXT_BTN_ABORT := "\u0421\u0411\u0420\u041e\u0421"
 const TXT_BTN_NEXT := "\u0414\u0410\u041b\u0415\u0415"
+const TXT_BTN_DETAILS := "\u041f\u041e\u0414\u0420\u041e\u0411\u041d\u0415\u0415 \u25be"
+const TXT_DETAILS_TITLE := "\u041f\u041e\u042f\u0421\u041d\u0415\u041d\u0418\u0415"
+const TXT_DETAILS_CLOSE := "\u0417\u0410\u041a\u0420\u042b\u0422\u042c"
 
 const TXT_RISK_UNKNOWN := "\u0420\u0438\u0441\u043a: \u041d\u0415\u0418\u0417\u0412\u0415\u0421\u0422\u0415\u041d"
 const TXT_RISK_LOW := "\u041d\u0418\u0417\u041a\u0418\u0419"
@@ -57,7 +60,7 @@ const TXT_ANALYZED_OK := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0440\u04
 const TXT_ANALYZED_MID := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0440\u043e\u0433\u043d\u043e\u0437 \u0431\u043b\u0438\u0437\u043a\u0438\u0439. \u0420\u0435\u0448\u0435\u043d\u0438\u0435 \u0440\u0438\u0441\u043a\u043e\u0432\u0430\u043d\u043d\u043e."
 const TXT_ANALYZED_BAD := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0440\u043e\u0433\u043d\u043e\u0437 \u043d\u0435\u0442\u043e\u0447\u043d\u044b\u0439. \u0420\u0435\u0448\u0435\u043d\u0438\u0435 \u0440\u0438\u0441\u043a\u043e\u0432\u0430\u043d\u043d\u043e."
 const TXT_EXEC_STARTED := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0435\u0440\u0435\u0434\u0430\u0447\u0430 \u0437\u0430\u043f\u0443\u0449\u0435\u043d\u0430."
-const TXT_UNITS_HINT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041c\u0411->\u041c\u0431\u0438\u0442: x8, \u0413\u0411->\u041c\u0411: x1024, t = I / v."
+const TXT_UNITS_HINT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041c\u0411 -> \u041c\u0431\u0438\u0442: x8, \u0413\u0411 -> \u041c\u0411: x1024, t = I / v."
 
 const TXT_OUT_SUCCESS := "\u0421\u0422\u0410\u0422\u0423\u0421: \u0423\u0421\u041f\u0415\u0425. \u041f\u0430\u043a\u0435\u0442 \u0443\u0448\u0451\u043b \u0434\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438."
 const TXT_OUT_INTERCEPT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0420\u041e\u0412\u0410\u041b. \u0412\u0430\u0441 \u0437\u0430\u0441\u0435\u043a\u043b\u0438."
@@ -74,41 +77,52 @@ const COLOR_SAMPLE_SUCCESS: Color = Color(0.20, 0.90, 0.30, 1.0)
 const COLOR_SAMPLE_FAIL: Color = Color(0.95, 0.25, 0.25, 1.0)
 const COLOR_SAMPLE_WARN: Color = Color(0.95, 0.75, 0.20, 1.0)
 
-@onready var title_label: Label = $SafeArea/MainVBox/HeaderBar/TitleLabel
-@onready var mode_chip: Label = $SafeArea/MainVBox/HeaderBar/ModeChip
-@onready var stability_label: Label = $SafeArea/MainVBox/HeaderBar/StabilityLabel
-@onready var btn_back: Button = $SafeArea/MainVBox/HeaderBar/BtnBack
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var body_split: HSplitContainer = $SafeArea/RootVBox/BodyHSplit
 
-@onready var mission_title: Label = $SafeArea/MainVBox/MissionCard/MissionMargin/MissionVBox/MissionTitle
-@onready var task_line_1: Label = $SafeArea/MainVBox/MissionCard/MissionMargin/MissionVBox/TaskLine1
-@onready var task_line_2: Label = $SafeArea/MainVBox/MissionCard/MissionMargin/MissionVBox/TaskLine2
-@onready var task_line_3: Label = $SafeArea/MainVBox/MissionCard/MissionMargin/MissionVBox/TaskLine3
-@onready var micro_hint: Label = $SafeArea/MainVBox/MissionCard/MissionMargin/MissionVBox/MicroHint
+@onready var title_label: Label = $SafeArea/RootVBox/TopBar/TopBarHBox/TitleLabel
+@onready var mode_chip: Label = $SafeArea/RootVBox/TopBar/TopBarHBox/ModeChip
+@onready var stability_label: Label = $SafeArea/RootVBox/TopBar/TopBarHBox/StabilityLabel
+@onready var btn_back: Button = $SafeArea/RootVBox/TopBar/TopBarHBox/BtnBack
 
-@onready var estimate_title: Label = $SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/EstimateTitle
-@onready var estimate_value_label: Label = $SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/EstimateValue
-@onready var time_knob: Node = $SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/TimeKnob
-@onready var btn_minus_1: Button = $SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/FineButtonsRow/BtnMinus1
-@onready var btn_minus_01: Button = $SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/FineButtonsRow/BtnMinus01
-@onready var btn_plus_01: Button = $SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/FineButtonsRow/BtnPlus01
-@onready var btn_plus_1: Button = $SafeArea/MainVBox/BodyRow/EstimateCard/EstMargin/EstVBox/FineButtonsRow/BtnPlus1
+@onready var mission_title: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox/MissionTitle
+@onready var task_line_1: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox/TaskLine1
+@onready var task_line_2: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox/TaskLine2
+@onready var task_line_3: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox/TaskLine3
+@onready var micro_hint: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox/MicroHint
 
-@onready var monitor_title: Label = $SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox/MonitorTitle
-@onready var detection_title: Label = $SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox/DetectionTitle
-@onready var detection_bar: ProgressBar = $SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox/DetectionBar
-@onready var detect_countdown: Label = $SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox/DetectCountdown
-@onready var transfer_title: Label = $SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox/TransferTitle
-@onready var transfer_bar: ProgressBar = $SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox/TransferBar
-@onready var transfer_countdown: Label = $SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox/TransferCountdown
-@onready var risk_label: Label = $SafeArea/MainVBox/BodyRow/MonitorCard/MonMargin/MonVBox/RiskLabel
+@onready var step_1_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/Step1Label
+@onready var estimate_value_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/EstimateValue
+@onready var time_knob: Control = $SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/KnobCenter/TimeKnob
+@onready var btn_minus_1: Button = $SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/FineButtonsRow/BtnMinus1
+@onready var btn_minus_01: Button = $SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/FineButtonsRow/BtnMinus01
+@onready var btn_plus_01: Button = $SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/FineButtonsRow/BtnPlus01
+@onready var btn_plus_1: Button = $SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/FineButtonsRow/BtnPlus1
+@onready var btn_analyze: Button = $SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/BtnAnalyze
 
-@onready var sample_strip: HBoxContainer = $SafeArea/MainVBox/BottomVBox/SampleStrip
-@onready var btn_units: Button = $SafeArea/MainVBox/BottomVBox/ActionsRow/BtnUnits
-@onready var btn_analyze: Button = $SafeArea/MainVBox/BottomVBox/ActionsRow/BtnAnalyze
-@onready var btn_risk: Button = $SafeArea/MainVBox/BottomVBox/ActionsRow/BtnRisk
-@onready var btn_abort: Button = $SafeArea/MainVBox/BottomVBox/ActionsRow/BtnAbort
-@onready var btn_next: Button = $SafeArea/MainVBox/BottomVBox/ActionsRow/BtnNext
-@onready var status_label: Label = $SafeArea/MainVBox/BottomVBox/StatusLabel
+@onready var status_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/StatusCard/StatusMargin/StatusLabel
+
+@onready var step_2_label: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/Step2Label
+@onready var detection_title: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/DetectionTitle
+@onready var detection_bar: ProgressBar = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/DetectionBar
+@onready var detect_countdown: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/DetectCountdown
+@onready var transfer_title: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/TransferTitle
+@onready var transfer_bar: ProgressBar = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/TransferBar
+@onready var transfer_countdown: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/TransferCountdown
+@onready var risk_label: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/RiskLabel
+
+@onready var step_3_label: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/Step3Label
+@onready var btn_units: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow/BtnUnits
+@onready var btn_details: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow/BtnDetails
+@onready var btn_risk: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow/BtnRisk
+@onready var btn_abort: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow/BtnAbort
+@onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow/BtnNext
+@onready var sample_strip: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip
+
+@onready var details_overlay: Control = $DetailsOverlay
+@onready var details_sheet_title: Label = $DetailsOverlay/BottomSheet/SheetMargin/SheetVBox/SheetTitle
+@onready var details_sheet_text: RichTextLabel = $DetailsOverlay/BottomSheet/SheetMargin/SheetVBox/SheetText
+@onready var btn_close_details: Button = $DetailsOverlay/BottomSheet/SheetMargin/SheetVBox/BtnCloseDetails
 
 @onready var alarm_flash: ColorRect = $AlarmFlash
 
@@ -144,6 +158,7 @@ var _last_move_sign: int = 0
 
 var sample_cursor: int = 0
 var sample_refs: Array = []
+var _ui_ready: bool = false
 
 func _ready() -> void:
 	randomize()
@@ -151,6 +166,9 @@ func _ready() -> void:
 	_connect_signals()
 	_collect_sample_refs()
 	_reset_sample_strip()
+	_apply_safe_area_padding()
+	_configure_layout()
+	_set_details_visible(false)
 
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
@@ -158,6 +176,12 @@ func _ready() -> void:
 
 	anchor_countdown = randi_range(7, 10)
 	_start_trial()
+	_ui_ready = true
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and _ui_ready:
+		_apply_safe_area_padding()
+		_configure_layout()
 
 func _process(delta: float) -> void:
 	if state != State.ANALYZED and state != State.EXEC:
@@ -189,16 +213,20 @@ func _apply_static_texts() -> void:
 	mode_chip.text = TXT_MODE
 	mission_title.text = TXT_MISSION
 	micro_hint.text = TXT_HINT
-	estimate_title.text = TXT_EST_TITLE
-	monitor_title.text = TXT_MON_TITLE
+	step_1_label.text = TXT_STEP_1
+	step_2_label.text = TXT_STEP_2
+	step_3_label.text = TXT_STEP_3
 	detection_title.text = TXT_DETECT_TITLE
 	transfer_title.text = TXT_TRANSFER_TITLE
 
 	btn_units.text = TXT_BTN_UNITS
+	btn_details.text = TXT_BTN_DETAILS
 	btn_analyze.text = TXT_BTN_ANALYZE
 	btn_risk.text = TXT_BTN_RISK
 	btn_abort.text = TXT_BTN_ABORT
 	btn_next.text = TXT_BTN_NEXT
+	details_sheet_title.text = TXT_DETAILS_TITLE
+	btn_close_details.text = TXT_DETAILS_CLOSE
 
 func _connect_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -207,6 +235,8 @@ func _connect_signals() -> void:
 	btn_plus_01.pressed.connect(_on_plus_01_pressed)
 	btn_plus_1.pressed.connect(_on_plus_1_pressed)
 	btn_units.pressed.connect(_on_units_pressed)
+	btn_details.pressed.connect(_on_details_pressed)
+	btn_close_details.pressed.connect(_on_details_close_pressed)
 	btn_analyze.pressed.connect(_on_analyze_pressed)
 	btn_risk.pressed.connect(_on_risk_pressed)
 	btn_abort.pressed.connect(_on_abort_pressed)
@@ -215,6 +245,39 @@ func _connect_signals() -> void:
 	var knob_callback: Callable = Callable(self, "_on_knob_value_changed")
 	if not time_knob.is_connected("value_changed", knob_callback):
 		time_knob.connect("value_changed", knob_callback)
+
+func _apply_safe_area_padding() -> void:
+	if safe_area == null:
+		return
+
+	var base_left: float = 16.0
+	var base_top: float = 12.0
+	var base_right: float = 16.0
+	var base_bottom: float = 12.0
+
+	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
+	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
+		var viewport_size: Vector2 = get_viewport_rect().size
+		base_left = maxf(base_left, float(safe_rect.position.x))
+		base_top = maxf(base_top, float(safe_rect.position.y))
+		base_right = maxf(base_right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
+		base_bottom = maxf(base_bottom, viewport_size.y - float(safe_rect.position.y + safe_rect.size.y))
+
+	safe_area.add_theme_constant_override("margin_left", int(round(base_left)))
+	safe_area.add_theme_constant_override("margin_top", int(round(base_top)))
+	safe_area.add_theme_constant_override("margin_right", int(round(base_right)))
+	safe_area.add_theme_constant_override("margin_bottom", int(round(base_bottom)))
+
+func _configure_layout() -> void:
+	if body_split == null or time_knob == null:
+		return
+
+	var size: Vector2 = get_viewport_rect().size
+	body_split.split_offset = int(size.x * 0.56)
+	if size.x < 1500.0:
+		time_knob.custom_minimum_size = Vector2(280, 280)
+	else:
+		time_knob.custom_minimum_size = Vector2(320, 320)
 
 func _collect_sample_refs() -> void:
 	sample_refs.clear()
@@ -261,6 +324,7 @@ func _start_trial() -> void:
 
 	time_knob.call("set_knob_value", 0.0, false)
 	_set_estimate(0.0)
+	_update_details_text()
 
 func _generate_trial() -> void:
 	var generated: Dictionary = {}
@@ -431,6 +495,7 @@ func _reset_runtime_ui() -> void:
 
 func _set_tune_state_ui() -> void:
 	state = State.TUNE
+	_set_knob_interactive(true)
 	btn_analyze.disabled = false
 	btn_risk.disabled = true
 	btn_abort.disabled = true
@@ -440,6 +505,7 @@ func _set_tune_state_ui() -> void:
 
 func _set_analyzed_state_ui() -> void:
 	state = State.ANALYZED
+	_set_knob_interactive(false)
 	btn_analyze.disabled = true
 	btn_risk.disabled = false
 	btn_abort.disabled = false
@@ -458,6 +524,7 @@ func _set_analyzed_state_ui() -> void:
 
 func _set_exec_state_ui() -> void:
 	state = State.EXEC
+	_set_knob_interactive(false)
 	btn_analyze.disabled = true
 	btn_risk.disabled = true
 	btn_abort.disabled = true
@@ -466,11 +533,19 @@ func _set_exec_state_ui() -> void:
 
 func _set_done_state_ui() -> void:
 	state = State.DONE
+	_set_knob_interactive(false)
 	btn_analyze.disabled = true
 	btn_risk.disabled = true
 	btn_abort.disabled = true
 	btn_units.disabled = true
 	btn_next.visible = true
+
+func _set_knob_interactive(is_enabled: bool) -> void:
+	time_knob.mouse_filter = Control.MOUSE_FILTER_STOP if is_enabled else Control.MOUSE_FILTER_IGNORE
+	btn_minus_1.disabled = not is_enabled
+	btn_minus_01.disabled = not is_enabled
+	btn_plus_01.disabled = not is_enabled
+	btn_plus_1.disabled = not is_enabled
 
 func _on_knob_value_changed(new_value: float, delta: float) -> void:
 	if state != State.TUNE:
@@ -514,6 +589,7 @@ func _apply_estimate_delta(delta: float) -> void:
 func _set_estimate(value_sec: float) -> void:
 	t_est = clampf(value_sec, MIN_ESTIMATE, MAX_ESTIMATE)
 	estimate_value_label.text = "t = %s %s" % [_format_num(t_est), SYMBOL_SEC]
+	_update_details_text()
 
 func _register_first_action() -> void:
 	if first_action_ms < 0:
@@ -538,6 +614,7 @@ func _on_analyze_pressed() -> void:
 	detection_elapsed = 0.0
 	transfer_elapsed = 0.0
 	_set_analyzed_state_ui()
+	_update_details_text()
 
 func _on_risk_pressed() -> void:
 	if state != State.ANALYZED and state != State.EXEC:
@@ -553,6 +630,7 @@ func _on_risk_pressed() -> void:
 	transfer_elapsed = 0.0
 	_set_exec_state_ui()
 	status_label.text = TXT_EXEC_STARTED
+	_update_details_text()
 
 func _on_abort_pressed() -> void:
 	if state != State.ANALYZED and state != State.EXEC:
@@ -573,6 +651,16 @@ func _on_units_pressed() -> void:
 	_register_first_action()
 	used_units = true
 	status_label.text = TXT_UNITS_HINT
+	_update_details_text()
+
+func _on_details_pressed() -> void:
+	_set_details_visible(true)
+
+func _on_details_close_pressed() -> void:
+	_set_details_visible(false)
+
+func _set_details_visible(is_visible: bool) -> void:
+	details_overlay.visible = is_visible
 
 func _on_next_pressed() -> void:
 	_start_trial()
@@ -625,11 +713,12 @@ func _finalize_trial(result: Outcome, decision_label: String) -> void:
 			status_label.text = TXT_OUT_MISSED
 			sample_color = COLOR_SAMPLE_WARN
 		_:
-			status_label.text = TXT_STATUS_PREFIX + "\u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u043e"
+			status_label.text = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u043e"
 			sample_color = COLOR_SAMPLE_FAIL
 
 	_update_sample_slot(sample_color)
 	_send_trial_payload(is_success, decision_label)
+	_update_details_text()
 
 func _update_sample_slot(color: Color) -> void:
 	if sample_refs.is_empty():
@@ -746,6 +835,23 @@ func _outcome_to_text(current_outcome: Outcome) -> String:
 			return "MISSED_WINDOW"
 		_:
 			return "NONE"
+
+func _update_details_text() -> void:
+	var lines: Array[String] = []
+	lines.append("\u0424\u043e\u0440\u043c\u0443\u043b\u0430: t = I / v")
+	lines.append("I (%s): %s" % [file_size_unit, _format_num(file_size_value)])
+	lines.append("v (%s): %s" % [UNIT_MBIT_SEC, _format_num(speed_mbit)])
+	lines.append("T_detect: %s %s" % [_format_num(t_detect), SYMBOL_SEC])
+	lines.append("t_est: %s %s" % [_format_num(t_est), SYMBOL_SEC])
+	if used_units:
+		lines.append("\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0430 \u0435\u0434\u0438\u043d\u0438\u0446 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0430.")
+	if state == State.DONE:
+		lines.append("t_true: %s %s" % [_format_num(t_true), SYMBOL_SEC])
+		lines.append("outcome: %s" % _outcome_to_text(outcome))
+	else:
+		lines.append("t_true: \u0441\u043a\u0440\u044b\u0442\u043e \u0434\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0438\u044f")
+	lines.append("anchor: %s (%s)" % ["yes" if pool_type == "ANCHOR" else "no", anchor_type])
+	details_sheet_text.text = "\n".join(lines)
 
 func _format_num(value: float) -> String:
 	return "%.1f" % value

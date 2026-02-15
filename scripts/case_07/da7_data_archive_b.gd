@@ -7,6 +7,8 @@ const BREAKPOINT_PX = 800
 const SESSION_CASE_COUNT = 6
 const LAYOUT_MOBILE = "mobile"
 const LAYOUT_DESKTOP = "desktop"
+const TYPEWRITER_INTERVAL_SEC := 0.06
+const SUBMIT_BASE_TEXT := "SUBMIT [ENTER]"
 
 # State
 var session_cases: Array = []
@@ -18,9 +20,9 @@ var mode: String = "" # "FILTER" or "RELATION"
 
 # Telemetry State
 var stability_start: float = 0.0
-var ui_ready_ts: float = 0.0
-var time_to_first_action_ms: float = -1.0
-var time_to_first_toggle_ms: float = -1.0
+var ui_ready_ts: int = 0
+var time_to_first_action_ms: int = -1
+var time_to_first_toggle_ms: int = -1
 var scroll_used: bool = false
 var clear_used: bool = false
 var clear_count: int = 0
@@ -29,43 +31,45 @@ var unique_rows_toggled: Dictionary = {} # row_id -> bool
 var click_timestamps: Array[float] = []
 var lag_compensation_ms: float = 0.0
 var current_layout_mode: String = LAYOUT_DESKTOP
+var _suppress_tree_edited: bool = false
+var _typewriter_active: bool = false
+var _typewriter_accum: float = 0.0
 
 # Nodes
-@onready var filter_mode_root = $RootLayout/Body/FilterModeRoot
-@onready var relation_mode_root = $RootLayout/Body/RelationModeRoot
-@onready var body_container = $RootLayout/Body
+@onready var filter_mode_root: HSplitContainer = $RootLayout/Body/FilterModeRoot
+@onready var relation_mode_root: VBoxContainer = $RootLayout/Body/RelationModeRoot
+@onready var body_container: VBoxContainer = $RootLayout/Body
 
 # Filter Mode Nodes
 @onready var data_tree: Tree = $RootLayout/Body/FilterModeRoot/TableSection/DataTree
 @onready var prompt_label: RichTextLabel = $RootLayout/Body/FilterModeRoot/TaskSection/PromptLabel
-@onready var btn_submit = $RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnSubmit
-@onready var btn_clear = $RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnClear
-@onready var filter_table_section = $RootLayout/Body/FilterModeRoot/TableSection
-@onready var filter_task_section = $RootLayout/Body/FilterModeRoot/TaskSection
+@onready var btn_submit: Button = $RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnSubmit
+@onready var btn_clear: Button = $RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnClear
+@onready var filter_table_section: VBoxContainer = $RootLayout/Body/FilterModeRoot/TableSection
+@onready var filter_task_section: VBoxContainer = $RootLayout/Body/FilterModeRoot/TaskSection
 var filter_mobile_layout: VBoxContainer
 
 # Relation Mode Nodes
-@onready var rel_prompt = $RootLayout/Body/RelationModeRoot/PromptLabelRel
-@onready var relation_schema_container = $RootLayout/Body/RelationModeRoot/SchemaContainer
-@onready var rel_tree_l = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable/TreeL
-@onready var rel_tree_r = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable/TreeR
-@onready var rel_title_l = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable/Title
-@onready var rel_title_r = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable/Title
-@onready var rel_link_label = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector/HintLabel
-@onready var rel_arrow_label = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector/ArrowLabel
-@onready var rel_left_table = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable
-@onready var rel_center_connector = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector
-@onready var rel_right_table = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable
-@onready var rel_options_row = $RootLayout/Body/RelationModeRoot/OptionsRow
+@onready var rel_prompt: RichTextLabel = $RootLayout/Body/RelationModeRoot/PromptLabelRel
+@onready var relation_schema_container: HBoxContainer = $RootLayout/Body/RelationModeRoot/SchemaContainer
+@onready var rel_tree_l: Tree = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable/TreeL
+@onready var rel_tree_r: Tree = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable/TreeR
+@onready var rel_title_l: Label = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable/Title
+@onready var rel_title_r: Label = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable/Title
+@onready var rel_link_label: Label = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector/HintLabel
+@onready var rel_arrow_label: Label = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector/ArrowLabel
+@onready var rel_left_table: VBoxContainer = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable
+@onready var rel_center_connector: VBoxContainer = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector
+@onready var rel_right_table: VBoxContainer = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable
+@onready var rel_options_row: HBoxContainer = $RootLayout/Body/RelationModeRoot/OptionsRow
 var relation_mobile_schema: VBoxContainer
 
 # Common Nodes
 @onready var stability_bar: ProgressBar = get_node_or_null("RootLayout/Footer/StabilityBar")
 @onready var stability_label: Label = get_node_or_null("RootLayout/Footer/StabilityLabel")
-@onready var title_label = $RootLayout/Header/Margin/Title
-@onready var sfx_error = $Runtime/Audio/SfxError
-@onready var sfx_relay = $Runtime/Audio/SfxRelay
-@onready var typewriter_timer = $Runtime/TypewriterTimer
+@onready var title_label: RichTextLabel = $RootLayout/Header/Margin/Title
+@onready var sfx_error: AudioStreamPlayer = $Runtime/Audio/SfxError
+@onready var sfx_relay: AudioStreamPlayer = $Runtime/Audio/SfxRelay
 
 func _ready():
 	randomize()
@@ -87,10 +91,20 @@ func _process(delta):
 	if is_trial_active:
 		if delta > 0.25:
 			lag_compensation_ms += delta * 1000.0
+	if _typewriter_active:
+		_typewriter_accum += delta
+		while _typewriter_accum >= TYPEWRITER_INTERVAL_SEC and _typewriter_active:
+			_typewriter_accum -= TYPEWRITER_INTERVAL_SEC
+			var lbl: RichTextLabel = _get_active_prompt_label()
+			if lbl.visible_characters < lbl.get_total_character_count():
+				lbl.visible_characters += 1
+			else:
+				lbl.visible_characters = -1
+				_typewriter_active = false
 
 func _init_session():
-	var all_cases = CasesHub.get_cases("B")
-	var valid_cases = []
+	var all_cases: Array = CasesHub.get_cases("B")
+	var valid_cases: Array = []
 	for c in all_cases:
 		if CasesModuleB.validate_case_b(c):
 			valid_cases.append(c)
@@ -113,8 +127,8 @@ func _load_next_case():
 
 	# Reset Telemetry
 	ui_ready_ts = Time.get_ticks_msec()
-	time_to_first_action_ms = -1.0
-	time_to_first_toggle_ms = -1.0
+	time_to_first_action_ms = -1
+	time_to_first_toggle_ms = -1
 	scroll_used = false
 	clear_used = false
 	clear_count = 0
@@ -123,14 +137,16 @@ func _load_next_case():
 	click_timestamps.clear()
 	lag_compensation_ms = 0.0
 	stability_start = GlobalMetrics.stability
+	_suppress_tree_edited = false
 
-	if current_case.interaction_type == "MULTI_SELECT_ROWS":
+	var interaction_type: String = str(current_case.get("interaction_type", ""))
+	if interaction_type == "MULTI_SELECT_ROWS":
 		mode = "FILTER"
 		filter_mode_root.visible = true
 		relation_mode_root.visible = false
 		_set_filter_input_locked(false)
 		_render_filter_ui()
-	elif current_case.interaction_type == "RELATIONSHIP_CHOICE":
+	elif interaction_type == "RELATIONSHIP_CHOICE":
 		mode = "RELATION"
 		filter_mode_root.visible = false
 		relation_mode_root.visible = true
@@ -143,14 +159,16 @@ func _load_next_case():
 
 func _render_filter_ui():
 	data_tree.clear()
-	var root = data_tree.create_item()
+	var root: TreeItem = data_tree.create_item()
 	data_tree.hide_root = true
 
-	var cols = current_case.table.columns
+	var table_data: Dictionary = current_case.get("table", {})
+	var cols: Array = table_data.get("columns", [])
 	data_tree.columns = cols.size() + 1 # +1 for Checkbox
 	data_tree.set_column_title(0, "SEL")
 	for i in range(cols.size()):
-		data_tree.set_column_title(i+1, cols[i].title)
+		var col_def: Dictionary = cols[i]
+		data_tree.set_column_title(i+1, str(col_def.get("title", "COL")))
 	data_tree.column_titles_visible = true
 
 	# Connect item_edited only once? No, signals are per object.
@@ -162,13 +180,17 @@ func _render_filter_ui():
 	if not data_tree.gui_input.is_connected(_on_data_tree_gui_input):
 		data_tree.gui_input.connect(_on_data_tree_gui_input)
 
-	var rows = current_case.table.rows.duplicate()
-	if current_case.anti_cheat.get("shuffle_rows", false):
+	var rows: Array = (table_data.get("rows", []) as Array).duplicate()
+	var anti_cheat: Dictionary = current_case.get("anti_cheat", {})
+	if bool(anti_cheat.get("shuffle_rows", false)):
 		rows.shuffle()
 
 	for row_data in rows:
-		var item = data_tree.create_item(root)
-		item.set_metadata(0, row_data.row_id)
+		if typeof(row_data) != TYPE_DICTIONARY:
+			continue
+		var row_dict: Dictionary = row_data
+		var item: TreeItem = data_tree.create_item(root)
+		item.set_metadata(0, str(row_dict.get("row_id", "")))
 
 		# Checkbox setup
 		item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
@@ -177,64 +199,80 @@ func _render_filter_ui():
 		item.set_text(0, "") # No text next to checkbox
 
 		for i in range(cols.size()):
-			var val = row_data.cells.get(cols[i].col_id, "")
-			item.set_text(i+1, val)
+			var col_def: Dictionary = cols[i]
+			var col_id: String = str(col_def.get("col_id", ""))
+			var cells: Dictionary = row_dict.get("cells", {})
+			item.set_text(i+1, str(cells.get(col_id, "")))
 			# Only column 0 is editable (checkbox)
 
-	prompt_label.text = current_case.prompt
+	prompt_label.text = str(current_case.get("prompt", ""))
 	prompt_label.visible_characters = 0
+	_refresh_submit_enabled()
 
 func _render_relation_ui():
 	# Clear previous options
 	for child in rel_options_row.get_children():
 		child.queue_free()
 
-	var schema = current_case.schema_visual
+	var schema: Dictionary = current_case.get("schema_visual", {})
+	var left_table: Dictionary = schema.get("left_table", {})
+	var right_table: Dictionary = schema.get("right_table", {})
+	var link: Dictionary = schema.get("link", {})
 
-	_fill_mini_tree(rel_tree_l, schema.left_table)
-	rel_title_l.text = schema.left_table.title
+	_fill_mini_tree(rel_tree_l, left_table)
+	rel_title_l.text = str(left_table.get("title", "Left"))
 
-	_fill_mini_tree(rel_tree_r, schema.right_table)
-	rel_title_r.text = schema.right_table.title
+	_fill_mini_tree(rel_tree_r, right_table)
+	rel_title_r.text = str(right_table.get("title", "Right"))
 
-	rel_link_label.text = schema.link.hint_label
-	rel_arrow_label.text = "=>"
-	rel_prompt.text = current_case.prompt
+	rel_link_label.text = str(link.get("hint_label", "FK Reference"))
+	rel_arrow_label.text = "->"
+	rel_prompt.text = str(current_case.get("prompt", ""))
 	rel_prompt.visible_characters = 0
 
 	# Options
-	var opts = current_case.options.duplicate()
-	if current_case.anti_cheat.get("shuffle_options", false):
+	var opts: Array = (current_case.get("options", []) as Array).duplicate()
+	var anti_cheat: Dictionary = current_case.get("anti_cheat", {})
+	if bool(anti_cheat.get("shuffle_options", false)):
 		opts.shuffle()
 
 	for opt in opts:
-		var btn = Button.new()
-		btn.text = opt.text
-		btn.name = "Btn_" + opt.id
+		if typeof(opt) != TYPE_DICTIONARY:
+			continue
+		var opt_data: Dictionary = opt
+		var btn: Button = Button.new()
+		btn.text = str(opt_data.get("text", "OPTION"))
+		btn.name = "Btn_" + str(opt_data.get("id", ""))
 		btn.custom_minimum_size = Vector2(0, 56)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.pressed.connect(_register_interaction)
-		btn.pressed.connect(_on_relation_option_selected.bind(opt))
+		btn.pressed.connect(_on_relation_option_selected.bind(opt_data))
 		rel_options_row.add_child(btn)
 
 func _fill_mini_tree(tree: Tree, table_def: Dictionary):
 	tree.clear()
-	var root = tree.create_item()
+	var root: TreeItem = tree.create_item()
 	tree.hide_root = true
 
-	var cols = table_def.columns
+	var cols: Array = table_def.get("columns", [])
 	tree.columns = cols.size()
 	for i in range(cols.size()):
-		tree.set_column_title(i, cols[i].title)
+		var col_def: Dictionary = cols[i]
+		tree.set_column_title(i, str(col_def.get("title", "COL")))
 	tree.column_titles_visible = true
 
-	var preview_rows = table_def.get("rows_preview", [])
+	var preview_rows: Array = table_def.get("rows_preview", [])
 	# Limit preview? Spec says 6.
 	for i in range(min(preview_rows.size(), 6)):
-		var row_data = preview_rows[i]
-		var item = tree.create_item(root)
+		if typeof(preview_rows[i]) != TYPE_DICTIONARY:
+			continue
+		var row_data: Dictionary = preview_rows[i]
+		var item: TreeItem = tree.create_item(root)
 		for j in range(cols.size()):
-			item.set_text(j, row_data.cells.get(cols[j].col_id, ""))
+			var col_def: Dictionary = cols[j]
+			var col_id: String = str(col_def.get("col_id", ""))
+			var row_cells: Dictionary = row_data.get("cells", {})
+			item.set_text(j, str(row_cells.get(col_id, "")))
 
 # --- Interactions ---
 
@@ -243,97 +281,116 @@ func _register_interaction():
 	if time_to_first_action_ms < 0:
 		time_to_first_action_ms = Time.get_ticks_msec() - ui_ready_ts
 
-	var now = Time.get_ticks_msec()
+	var now: float = float(Time.get_ticks_msec())
 	click_timestamps.append(now)
 	while click_timestamps.size() > 5:
 		click_timestamps.pop_front()
 
 func _on_tree_item_edited():
 	# Fired when checkbox is toggled
-	if not is_trial_active: return
-	_register_interaction()
+	if not is_trial_active:
+		return
+	if _suppress_tree_edited:
+		return
+	var edited_column: int = data_tree.get_edited_column()
+	if edited_column != 0:
+		return
 
-	var item = data_tree.get_edited()
-	if not item: return
+	var item: TreeItem = data_tree.get_edited()
+	if not item:
+		return
+	_register_interaction()
 
 	# Detect toggle
 	toggle_count += 1
-	var row_id = item.get_metadata(0)
+	var row_id: String = str(item.get_metadata(0))
 	unique_rows_toggled[row_id] = true
 
 	if time_to_first_toggle_ms < 0:
 		time_to_first_toggle_ms = Time.get_ticks_msec() - ui_ready_ts
+	_refresh_submit_enabled()
 
 func _on_tree_item_selected():
-	# Just noise action
-	_register_interaction()
+	pass
 
 func _on_data_tree_gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and (event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN):
-		scroll_used = true
+	if event is InputEventMouseButton:
+		var mouse_event: InputEventMouseButton = event
+		if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP or mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			scroll_used = true
 	elif event is InputEventScreenDrag:
 		scroll_used = true
 
 func _on_clear_pressed():
-	if not is_trial_active: return
+	if not is_trial_active:
+		return
 	clear_used = true
 	clear_count += 1
-	var root = data_tree.get_root()
+	_suppress_tree_edited = true
+	var root: TreeItem = data_tree.get_root()
 	if root:
-		var item = root.get_first_child()
-		while item:
-			item.set_checked(0, false)
-			item = item.get_next()
-
-func _on_submit_pressed():
-	if not is_trial_active: return
-	is_trial_active = false
-	_set_filter_input_locked(true)
-	typewriter_timer.stop()
-	prompt_label.visible_characters = -1
-
-	var selected_ids = []
-	var root = data_tree.get_root()
-	if root:
-		var item = root.get_first_child()
+		var item: TreeItem = root.get_first_child()
 		while item:
 			if item.is_checked(0):
-				selected_ids.append(item.get_metadata(0))
+				item.set_checked(0, false)
+			item = item.get_next()
+	_suppress_tree_edited = false
+	_refresh_submit_enabled()
+
+func _on_submit_pressed():
+	if not is_trial_active:
+		return
+	if _selected_count() == 0:
+		return
+	is_trial_active = false
+	_set_filter_input_locked(true)
+	_stop_typewriter()
+
+	var selected_ids: Array = []
+	var root: TreeItem = data_tree.get_root()
+	if root:
+		var item: TreeItem = root.get_first_child()
+		while item:
+			if item.is_checked(0):
+				selected_ids.append(str(item.get_metadata(0)))
 			item = item.get_next()
 
-	var analysis = _calculate_f_reason_filter(selected_ids)
-	var is_correct = (analysis.reason == "NONE")
+	var analysis: Dictionary = _calculate_f_reason_filter(selected_ids)
+	analysis["selected_row_ids"] = selected_ids
+	var is_correct: bool = str(analysis.get("reason", "MIXED_ERROR")) == "NONE"
 
-	_handle_result(is_correct, analysis.reason, analysis)
+	_handle_result(is_correct, str(analysis.get("reason", "MIXED_ERROR")), analysis)
 
 func _on_relation_option_selected(opt: Dictionary):
-	if not is_trial_active: return
+	if not is_trial_active:
+		return
 	is_trial_active = false
-	typewriter_timer.stop()
-	rel_prompt.visible_characters = -1
+	_stop_typewriter()
 
-	var is_correct = (opt.id == current_case.answer_id)
-	var reason = "CORRECT"
+	var selected_option_id: String = str(opt.get("id", ""))
+	var answer_id: String = str(current_case.get("answer_id", ""))
+	var is_correct: bool = selected_option_id == answer_id
+	var reason: String = "CORRECT"
 	if not is_correct:
-		reason = opt.f_reason
+		reason = str(opt.get("f_reason", "WRONG_RELATION"))
 
 	# Disable buttons
 	for child in rel_options_row.get_children():
-		child.disabled = true
+		if child is Button:
+			(child as Button).disabled = true
 
-	_handle_result(is_correct, reason, {"selected_option_id": opt.id})
+	_handle_result(is_correct, reason, {"selected_option_id": selected_option_id})
 
 func _handle_result(is_correct: bool, reason: String, extra_data: Dictionary):
-	var stability_end = GlobalMetrics.stability
 	if not is_correct:
-		GlobalMetrics.stability = max(0, GlobalMetrics.stability - 10.0)
-		stability_end = GlobalMetrics.stability
-		if sfx_error: sfx_error.play()
+		if sfx_error:
+			sfx_error.play()
 	else:
-		if sfx_relay: sfx_relay.play()
+		if sfx_relay:
+			sfx_relay.play()
 
+	_log_trial(is_correct, reason, extra_data)
 	_update_stability_ui()
-	_log_trial(is_correct, reason, extra_data, stability_end)
 
 	await get_tree().create_timer(1.0).timeout
 
@@ -350,6 +407,8 @@ func _calculate_f_reason_filter(selected: Array) -> Dictionary:
 	var B: Array = current_case.get("boundary_row_ids", [])
 	var O: Array = current_case.get("opposite_row_ids", [])
 	var D: Array = current_case.get("decoy_row_ids", current_case.get("unrelated_row_ids", []))
+	var predicate: Dictionary = current_case.get("predicate", {})
+	var strict_expected: bool = bool(predicate.get("strict_expected", false))
 
 	var missing_ids: Array = _array_diff(A, S)
 	var extra_ids: Array = _array_diff(S, A)
@@ -358,16 +417,17 @@ func _calculate_f_reason_filter(selected: Array) -> Dictionary:
 	var decoy_selected: Array = _array_intersection(S, D)
 
 	var has_omission: bool = missing_ids.size() > 0
-	var has_overselect: bool = extra_ids.size() > 0
+	var overselect_rows: Array = _array_diff(_array_diff(S, A), B)
+	var has_overselect: bool = overselect_rows.size() > 0
 	var reason: String = "NONE"
 
 	if S.is_empty():
 		reason = "EMPTY_SELECTION"
 	elif _is_subset(S, O):
 		reason = "PURE_OPPOSITE"
-	elif boundary_selected.size() > 0 and _array_intersection(S, A).size() > 0:
+	elif strict_expected and boundary_selected.size() > 0:
 		reason = "INCLUDED_BOUNDARY"
-	elif decoy_selected.size() > 0:
+	elif has_overselect:
 		reason = "OVERSELECT_DECOY"
 	elif has_omission and not has_overselect:
 		reason = "PARTIAL_OMISSION"
@@ -385,88 +445,110 @@ func _calculate_f_reason_filter(selected: Array) -> Dictionary:
 			"extra_ids": extra_ids,
 			"boundary_selected": boundary_selected,
 			"opposite_selected": opposite_selected,
-			"decoy_selected": decoy_selected
+			"decoy_selected": decoy_selected,
+			"overselect_rows": overselect_rows
 		}
 	}
 
 # --- Telemetry ---
 
-func _log_trial(is_correct: bool, f_reason: String, data: Dictionary, stability_end: float):
-	var now = Time.get_ticks_msec()
-	var raw_elapsed = now - ui_ready_ts
-	var effective_elapsed = raw_elapsed - lag_compensation_ms
-	var over_soft = effective_elapsed > (current_case.timing_policy.limit_sec * 1000)
+func _log_trial(is_correct: bool, f_reason: String, data: Dictionary):
+	var now_ms: int = Time.get_ticks_msec()
+	var raw_elapsed_ms: int = now_ms - ui_ready_ts
+	var effective_elapsed_ms: int = int(max(0.0, raw_elapsed_ms - lag_compensation_ms))
+	var timing_policy: Dictionary = current_case.get("timing_policy", {})
+	var limit_sec: int = int(timing_policy.get("limit_sec", 120))
+	var over_soft: bool = effective_elapsed_ms > (limit_sec * 1000)
 
-	var burst = false
-	if click_timestamps.size() >= 4:
-		if (click_timestamps[-1] - click_timestamps[0]) <= 700:
-			burst = true
+	var burst: bool = false
+	if click_timestamps.size() >= 4 and (click_timestamps[-1] - click_timestamps[0]) <= 700.0:
+		burst = true
 
-	var payload = {
-		"quest_id": "CASE_07_DATA_ARCHIVE",
-		"case_id": current_case.id,
-		"schema_version": current_case.schema_version,
-		"level": current_case.level,
-		"topic": current_case.topic,
-		"case_kind": current_case.case_kind,
-		"interaction_type": current_case.interaction_type,
-
-		"answer": {
-			"is_correct": is_correct,
-			"f_reason": f_reason,
+	var case_id: String = str(current_case.get("id", "DA7-B-00"))
+	var schema_version: String = str(current_case.get("schema_version", "DA7.B.v1"))
+	var estimated_end_stability: float = stability_start if is_correct else max(0.0, stability_start - 10.0)
+	var payload: Dictionary = {
+		"question_id": case_id,
+		"case_id": case_id,
+		"quest_id": "DA7",
+		"quest": "data_archive",
+		"stage": "B",
+		"level": str(current_case.get("level", "B")),
+		"schema_version": schema_version,
+		"topic": str(current_case.get("topic", "DB_FILTERING")),
+		"case_kind": str(current_case.get("case_kind", "")),
+		"interaction_type": str(current_case.get("interaction_type", "")),
+		"match_key": "DA7_B|%s|%s" % [case_id, mode],
+		"is_correct": is_correct,
+		"f_reason": f_reason,
+		"elapsed_ms": effective_elapsed_ms,
+		"duration": float(effective_elapsed_ms) / 1000.0,
+		"timing": {
+			"effective_elapsed_ms": effective_elapsed_ms,
+			"time_to_first_action_ms": time_to_first_action_ms,
+			"time_to_first_toggle_ms": time_to_first_toggle_ms,
+			"policy_mode": str(timing_policy.get("mode", "LEARNING")),
+			"limit_sec": limit_sec
 		},
+		"answer": {},
+		"expected": {},
+		"flags": {
+			"silent_reading_possible": (time_to_first_action_ms >= 30000 and not scroll_used),
+			"had_scroll": scroll_used
+		},
+		"anti_cheat": current_case.get("anti_cheat", {}),
 		"layout_mode": current_layout_mode,
 		"telemetry": {
 			"time_to_first_action_ms": time_to_first_action_ms,
 			"time_to_first_toggle_ms": time_to_first_toggle_ms,
-			"time_to_submit_ms": raw_elapsed, # roughly same as elapsed
-			"raw_elapsed_ms": raw_elapsed,
+			"time_to_submit_ms": raw_elapsed_ms,
+			"raw_elapsed_ms": raw_elapsed_ms,
 			"lag_compensation_ms": lag_compensation_ms,
-			"effective_elapsed_time_ms": effective_elapsed,
+			"effective_elapsed_ms": effective_elapsed_ms,
 			"toggle_count": toggle_count,
 			"unique_rows_toggled_count": unique_rows_toggled.size(),
 			"clear_used": clear_used,
+			"clear_count": clear_count,
 			"scroll_used": scroll_used,
-			"had_scroll": scroll_used,
 			"rapid_toggle_burst": burst,
 			"over_soft_limit": over_soft
 		},
-		"ui_flags": {
-			"silent_reading_possible": (time_to_first_action_ms >= 30000 and not scroll_used),
-			"had_scroll": scroll_used
-		},
 		"stability": {
 			"start": stability_start,
-			"end": stability_end,
-			"delta": stability_end - stability_start
+			"end": estimated_end_stability,
+			"delta": estimated_end_stability - stability_start
 		}
 	}
 
 	if mode == "FILTER":
-		payload["task"] = {"predicate": current_case.predicate}
-		payload["answer"]["diagnostic_sets"] = data.get("sets", {})
-		# selected_row_ids not explicitly passed in logic, recover from logic or store?
-		# Re-gathering selected IDs for log is okay or passing via extra_data.
-		# Let's assume we want selected rows.
-		var selected_ids = []
-		var root = data_tree.get_root()
-		if root:
-			var item = root.get_first_child()
-			while item:
-				if item.is_checked(0):
-					selected_ids.append(item.get_metadata(0))
-				item = item.get_next()
-		payload["answer"]["selected_row_ids"] = selected_ids
-		payload["answer"]["missing_ids"] = data.get("sets", {}).get("missing_ids", [])
-		payload["answer"]["extra_ids"] = data.get("sets", {}).get("extra_ids", [])
-		payload["answer"]["boundary_selected"] = data.get("sets", {}).get("boundary_selected", [])
-		payload["answer"]["opposite_selected"] = data.get("sets", {}).get("opposite_selected", [])
-		payload["answer"]["decoy_selected"] = data.get("sets", {}).get("decoy_selected", [])
+		var sets: Dictionary = data.get("sets", {})
+		var selected_ids: Array = data.get("selected_row_ids", []) as Array
+		payload["task"] = {"predicate": current_case.get("predicate", {})}
+		payload["answer"] = {
+			"selected_row_ids": selected_ids,
+			"diagnostic_sets": sets,
+			"missing_ids": sets.get("missing_ids", []),
+			"extra_ids": sets.get("extra_ids", []),
+			"boundary_selected": sets.get("boundary_selected", []),
+			"opposite_selected": sets.get("opposite_selected", []),
+			"decoy_selected": sets.get("decoy_selected", [])
+		}
+		payload["expected"] = {
+			"answer_row_ids": current_case.get("answer_row_ids", []),
+			"boundary_row_ids": current_case.get("boundary_row_ids", []),
+			"opposite_row_ids": current_case.get("opposite_row_ids", []),
+			"decoy_row_ids": current_case.get("decoy_row_ids", [])
+		}
 
 	elif mode == "RELATION":
-		payload["schema_visual"] = {"link": current_case.schema_visual.link}
-		payload["answer"]["selected_option_id"] = data.get("selected_option_id")
-		payload["expected_relation"] = current_case.get("expected_relation")
+		payload["schema_visual"] = {"link": current_case.get("schema_visual", {}).get("link", {})}
+		payload["answer"] = {
+			"selected_option_id": str(data.get("selected_option_id", ""))
+		}
+		payload["expected"] = {
+			"answer_id": str(current_case.get("answer_id", "")),
+			"expected_relation": str(current_case.get("expected_relation", ""))
+		}
 
 	GlobalMetrics.register_trial(payload)
 
@@ -478,24 +560,23 @@ func _update_stability_ui():
 		stability_label.text = "STABILITY: %d%%" % int(GlobalMetrics.stability)
 
 func _start_typewriter():
-	typewriter_timer.stop()
-	if typewriter_timer.is_connected("timeout", _on_typewriter_tick):
-		typewriter_timer.timeout.disconnect(_on_typewriter_tick)
+	var lbl: RichTextLabel = _get_active_prompt_label()
+	lbl.visible_characters = 0
+	_typewriter_accum = 0.0
+	_typewriter_active = true
 
-	typewriter_timer.wait_time = 0.03
-	typewriter_timer.timeout.connect(_on_typewriter_tick)
-	typewriter_timer.start()
+func _stop_typewriter() -> void:
+	_typewriter_active = false
+	_typewriter_accum = 0.0
+	var lbl: RichTextLabel = _get_active_prompt_label()
+	lbl.visible_characters = -1
 
-func _on_typewriter_tick():
-	var lbl = prompt_label if mode == "FILTER" else rel_prompt
-	if lbl.visible_characters < lbl.get_total_character_count():
-		lbl.visible_characters += 1
-	else:
-		typewriter_timer.stop()
+func _get_active_prompt_label() -> RichTextLabel:
+	return prompt_label if mode == "FILTER" else rel_prompt
 
 func _on_viewport_size_changed():
-	var win_size = get_viewport_rect().size
-	var is_mobile = win_size.x < BREAKPOINT_PX
+	var win_size: Vector2 = get_viewport_rect().size
+	var is_mobile: bool = win_size.x < BREAKPOINT_PX
 	current_layout_mode = LAYOUT_MOBILE if is_mobile else LAYOUT_DESKTOP
 	filter_mode_root.split_offset = int(win_size.x * 0.48)
 	filter_mode_root.dragger_visibility = SplitContainer.DRAGGER_HIDDEN if is_mobile else SplitContainer.DRAGGER_VISIBLE
@@ -514,7 +595,7 @@ func _finish_session():
 	else:
 		rel_options_row.queue_free()
 
-	var btn_exit = Button.new()
+	var btn_exit: Button = Button.new()
 	btn_exit.text = "EXIT"
 	btn_exit.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn"))
 
@@ -524,7 +605,7 @@ func _finish_session():
 func _game_over():
 	is_game_over = true
 	title_label.text = "MISSION FAILED"
-	var btn_exit = Button.new()
+	var btn_exit: Button = Button.new()
 	btn_exit.text = "EXIT"
 	btn_exit.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn"))
 	$RootLayout/Footer.add_child(btn_exit)
@@ -594,14 +675,37 @@ func _apply_relation_layout_mode(is_mobile: bool) -> void:
 		relation_mobile_schema.visible = false
 
 func _set_filter_input_locked(locked: bool) -> void:
-	btn_submit.disabled = locked
+	if locked:
+		btn_submit.disabled = true
+	else:
+		_refresh_submit_enabled()
 	btn_clear.disabled = locked
-	var root = data_tree.get_root()
+	var root: TreeItem = data_tree.get_root()
 	if root:
-		var item = root.get_first_child()
+		var item: TreeItem = root.get_first_child()
 		while item:
 			item.set_editable(0, not locked)
 			item = item.get_next()
+
+func _refresh_submit_enabled() -> void:
+	if mode != "FILTER" or not is_trial_active:
+		btn_submit.disabled = true
+		btn_submit.text = SUBMIT_BASE_TEXT
+		return
+	var selected_count: int = _selected_count()
+	btn_submit.disabled = selected_count == 0
+	btn_submit.text = "%s (%d)" % [SUBMIT_BASE_TEXT, selected_count]
+
+func _selected_count() -> int:
+	var count: int = 0
+	var root: TreeItem = data_tree.get_root()
+	if root:
+		var item: TreeItem = root.get_first_child()
+		while item:
+			if item.is_checked(0):
+				count += 1
+			item = item.get_next()
+	return count
 
 func _array_intersection(arr1: Array, arr2: Array) -> Array:
 	var lookup := {}

@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://da7archive001"]
+[gd_scene load_steps=5 format=3 uid="uid://da7archive001"]
 
 [ext_resource type="Script" path="res://scripts/case_07/da7_data_archive_a.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
+[ext_resource type="AudioStream" path="res://audio/error.wav" id="3_error"]
+[ext_resource type="AudioStream" path="res://audio/relay.wav" id="4_relay"]
 
 [node name="DA7_DataArchiveQuestA" type="Control"]
 layout_mode = 3
@@ -27,6 +29,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
@@ -34,6 +40,7 @@ theme_override_constants/separation = 10
 [node name="Header" type="PanelContainer" parent="RootLayout"]
 layout_mode = 2
 size_flags_vertical = 0
+size_flags_horizontal = 3
 
 [node name="Margin" type="MarginContainer" parent="RootLayout/Header"]
 layout_mode = 2
@@ -49,12 +56,19 @@ fit_content = true
 scroll_active = false
 autowrap_mode = 0
 
-[node name="Body" type="Container" parent="RootLayout"]
+[node name="Body" type="MarginContainer" parent="RootLayout"]
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
 
 [node name="DesktopLayout" type="HSplitContainer" parent="RootLayout/Body"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 split_offset = 400
 
 [node name="TableSection" type="VBoxContainer" parent="RootLayout/Body/DesktopLayout"]
@@ -96,9 +110,12 @@ columns = 2
 [node name="MobileLayout" type="VBoxContainer" parent="RootLayout/Body"]
 visible = false
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="Footer" type="HBoxContainer" parent="RootLayout"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 20
 
 [node name="StabilityLabel" type="Label" parent="RootLayout/Footer"]
@@ -120,8 +137,10 @@ value = 100.0
 [node name="SfxClick" type="AudioStreamPlayer" parent="Runtime/Audio"]
 
 [node name="SfxError" type="AudioStreamPlayer" parent="Runtime/Audio"]
+stream = ExtResource("3_error")
 
 [node name="SfxRelay" type="AudioStreamPlayer" parent="Runtime/Audio"]
+stream = ExtResource("4_relay")
 
 [node name="TypewriterTimer" type="Timer" parent="Runtime"]
 one_shot = true

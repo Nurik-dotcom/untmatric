@@ -9,7 +9,10 @@ var session_cases: Array = []
 var current_case_index: int = -1
 var current_case: Dictionary = {}
 var case_started_ts: int = 0
+var first_action_ts: int = -1
 var trial_locked: bool = false
+var scroll_used: bool = false
+var prompt_has_scroll: bool = false
 var exit_btn: Button
 
 @onready var title_label: RichTextLabel = $RootLayout/Header/Margin/Title
@@ -30,6 +33,10 @@ func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	if not data_tree.gui_input.is_connected(_on_scroll_input):
+		data_tree.gui_input.connect(_on_scroll_input)
+	if not prompt_label.gui_input.is_connected(_on_scroll_input):
+		prompt_label.gui_input.connect(_on_scroll_input)
 
 	_init_session()
 	call_deferred("_on_viewport_size_changed")
@@ -58,6 +65,9 @@ func _load_next_case() -> void:
 
 	current_case = (session_cases[current_case_index] as Dictionary).duplicate(true)
 	case_started_ts = Time.get_ticks_msec()
+	first_action_ts = -1
+	scroll_used = false
+	prompt_has_scroll = false
 	trial_locked = false
 	_render_case()
 
@@ -68,6 +78,7 @@ func _render_case() -> void:
 
 	_render_table(current_case.get("table", {}))
 	_render_options(current_case.get("options", []))
+	call_deferred("_update_silent_reading_possible_flag")
 
 func _render_table(table_def: Dictionary) -> void:
 	data_tree.clear()
@@ -108,7 +119,7 @@ func _render_options(options: Array) -> void:
 		if typeof(opt_v) != TYPE_DICTIONARY:
 			continue
 		var opt: Dictionary = opt_v
-		var btn := Button.new()
+		var btn: Button = Button.new()
 		btn.custom_minimum_size = Vector2(0, 56)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.text = str(opt.get("text", "Option"))
@@ -118,6 +129,7 @@ func _render_options(options: Array) -> void:
 func _on_option_selected(selected_id: String) -> void:
 	if trial_locked:
 		return
+	_register_first_action()
 	trial_locked = true
 
 	var answer_id: String = str(current_case.get("answer_id", ""))
@@ -143,24 +155,72 @@ func _on_option_selected(selected_id: String) -> void:
 		_load_next_case()
 
 func _log_trial(selected_id: String, answer_id: String, is_correct: bool) -> void:
-	var elapsed_ms: int = Time.get_ticks_msec() - case_started_ts
+	var now_ms: int = Time.get_ticks_msec()
+	var elapsed_ms: int = now_ms - case_started_ts
+	var first_action_ms: int = elapsed_ms
+	if first_action_ts >= case_started_ts:
+		first_action_ms = first_action_ts - case_started_ts
+	var silent_reading_possible: bool = (not prompt_has_scroll and not scroll_used and first_action_ms >= 30000)
+	var case_id: String = str(current_case.get("id", "DA7-A-00"))
 	var payload: Dictionary = {
-		"quest_id": "CASE_07_DATA_ARCHIVE",
+		"question_id": case_id,
+		"case_id": case_id,
+		"quest_id": "DA7",
 		"quest": "data_archive",
 		"stage": "A",
 		"level": "A",
-		"case_id": str(current_case.get("id", "DA7-A-00")),
 		"topic": str(current_case.get("topic", "DB_BASICS")),
 		"interaction_type": "SINGLE_CHOICE",
-		"match_key": "DA7_A|%s" % str(current_case.get("id", "DA7-A-00")),
+		"schema_version": str(current_case.get("schema_version", "DA7.A.v1")),
+		"match_key": "DA7_A|%s" % case_id,
 		"is_correct": is_correct,
+		"f_reason": "NONE" if is_correct else "WRONG_OPTION",
 		"elapsed_ms": elapsed_ms,
+		"duration": float(elapsed_ms) / 1000.0,
+		"timing": {
+			"effective_elapsed_ms": elapsed_ms,
+			"time_to_first_action_ms": first_action_ms,
+			"policy_mode": "LEARNING",
+			"limit_sec": 120
+		},
 		"answer": {
-			"selected_option_id": selected_id,
+			"selected_option_id": selected_id
+		},
+		"expected": {
 			"answer_id": answer_id
+		},
+		"flags": {
+			"silent_reading_possible": silent_reading_possible,
+			"scroll_used": scroll_used
+		},
+		"anti_cheat": current_case.get("anti_cheat", {}),
+		"telemetry": {
+			"time_to_first_action_ms": first_action_ms,
+			"scroll_used": scroll_used
 		}
 	}
 	GlobalMetrics.register_trial(payload)
+
+func _register_first_action() -> void:
+	if first_action_ts < 0:
+		first_action_ts = Time.get_ticks_msec()
+
+func _update_silent_reading_possible_flag() -> void:
+	if not is_instance_valid(prompt_label):
+		return
+	var v_scroll: VScrollBar = prompt_label.get_v_scroll_bar()
+	if is_instance_valid(v_scroll):
+		prompt_has_scroll = v_scroll.max_value > 0.0 and v_scroll.page < v_scroll.max_value
+	else:
+		prompt_has_scroll = false
+
+func _on_scroll_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse_event: InputEventMouseButton = event
+		if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP or mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			scroll_used = true
+	elif event is InputEventScreenDrag:
+		scroll_used = true
 
 func _set_options_locked(locked: bool) -> void:
 	for child in options_grid.get_children():
