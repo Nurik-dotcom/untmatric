@@ -26,7 +26,7 @@ const TITLE_TEXT = "\u0412\u044b\u0431\u043e\u0440 \u043a\u0432\u0435\u0441\u044
 const STATUS_READY = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043a\u0432\u0435\u0441\u0442"
 const STATUS_LOCKED = "\u042d\u0442\u043e\u0442 \u043a\u0432\u0435\u0441\u0442 \u043f\u043e\u043a\u0430 \u043d\u0435 \u0433\u043e\u0442\u043e\u0432"
 
-const BTN_CLUES_TEXT = "Улики"
+const BTN_CLUES_TEXT = "\u0426\u0438\u0444\u0440\u043e\u0432\u0430\u044f \u0440\u0435\u0430\u043d\u0438\u043c\u0430\u0446\u0438\u044f"
 const BTN_RADIO_TEXT = "\u0420\u0430\u0434\u0438\u043e\u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442"
 const BTN_DECRYPTOR_TEXT = "\u0414\u0435\u0448\u0438\u0444\u0440\u043e\u0432\u0430\u043d\u0438\u0435"
 const BTN_LIE_TEXT = "\u0414\u0435\u0442\u0435\u043a\u0442\u043e\u0440 \u043b\u0436\u0438"
@@ -162,7 +162,7 @@ func _on_complexity_a_pressed():
 	elif selected_quest_type == QuestType.NETWORK_TRACE:
 		get_tree().change_scene_to_file("res://scenes/NetworkTraceQuestA.tscn")
 	elif selected_quest_type == QuestType.CLUES:
-		get_tree().change_scene_to_file("res://scenes/case_01/CluesQuestA.tscn")
+		get_tree().change_scene_to_file("res://scenes/case_01/DigitalResusQuestA.tscn")
 
 func _on_complexity_b_pressed():
 	if selected_quest_type == QuestType.DECRYPTOR:

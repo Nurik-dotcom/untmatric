@@ -1,32 +1,68 @@
 [
   {
-    "id": "CL-A-01",
+    "id": "RESUS-A-01",
     "bucket": "newbie",
-    "briefing": "Отсортируйте улики по категориям: ВВОД / ВЫВОД / ПАМЯТЬ.",
+    "briefing": "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u0435 \u0441\u0438\u0441\u0442\u0435\u043c\u0443: \u0440\u0430\u0441\u043f\u0440\u0435\u0434\u0435\u043b\u0438\u0442\u0435 \u0434\u0435\u0442\u0430\u043b\u0438 \u043f\u043e \u0437\u043e\u043d\u0430\u043c INPUT / OUTPUT / MEMORY. GPU \u043d\u0443\u0436\u043d\u0430 \u0434\u043b\u044f \u0441\u0438\u0433\u043d\u0430\u043b\u0430, RAM \u2014 \u0434\u043b\u044f \u0447\u0442\u0435\u043d\u0438\u044f \u043f\u0430\u043c\u044f\u0442\u0438, CACHE \u2014 \u0434\u043b\u044f \u0431\u044b\u0441\u0442\u0440\u043e\u0439 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438.",
     "format": "MATCHING",
     "buckets": [
-      { "bucket_id": "INPUT", "label": "ВВОД" },
-      { "bucket_id": "OUTPUT", "label": "ВЫВОД" },
-      { "bucket_id": "MEMORY", "label": "ПАМЯТЬ" }
+      { "bucket_id": "INPUT", "label": "\u0412\u0445\u043e\u0434" },
+      { "bucket_id": "OUTPUT", "label": "\u0412\u044b\u0445\u043e\u0434" },
+      { "bucket_id": "MEMORY", "label": "\u041f\u0430\u043c\u044f\u0442\u044c" }
     ],
     "items": [
-      { "item_id": "mouse", "label": "Мышь", "correct_bucket_id": "INPUT" },
-      { "item_id": "keyboard", "label": "Клавиатура", "correct_bucket_id": "INPUT" },
-      { "item_id": "printer_mfu", "label": "МФУ", "correct_bucket_id": "OUTPUT" },
-      { "item_id": "monitor", "label": "Монитор", "correct_bucket_id": "OUTPUT" },
-      { "item_id": "ram", "label": "ОЗУ", "correct_bucket_id": "MEMORY" },
-      { "item_id": "ssd", "label": "SSD", "correct_bucket_id": "MEMORY" },
-      { "item_id": "speaker", "label": "Колонки", "correct_bucket_id": "OUTPUT" },
-      { "item_id": "mic", "label": "Микрофон", "correct_bucket_id": "INPUT" }
+      { "item_id": "keyboard", "label": "Keyboard", "correct_bucket_id": "INPUT" },
+      { "item_id": "mouse", "label": "Mouse", "correct_bucket_id": "INPUT" },
+      { "item_id": "microphone", "label": "Microphone", "correct_bucket_id": "INPUT" },
+      { "item_id": "gpu", "label": "GPU", "correct_bucket_id": "OUTPUT" },
+      { "item_id": "monitor", "label": "Monitor", "correct_bucket_id": "OUTPUT" },
+      { "item_id": "speaker", "label": "Speaker", "correct_bucket_id": "OUTPUT" },
+      { "item_id": "ram", "label": "RAM", "correct_bucket_id": "MEMORY" },
+      { "item_id": "cache", "label": "Cache", "correct_bucket_id": "MEMORY" }
     ],
-    "scoring_rules": [
-      { "min_correct": 8, "points": 2, "stability_delta": 0 },
-      { "min_correct": 6, "points": 1, "stability_delta": -10 },
-      { "min_correct": 0, "points": 0, "stability_delta": -30 }
-    ],
-    "ui": {
-      "theme": "amber",
-      "show_pool_zone": true
+    "scoring_model": {
+      "rules": [
+        { "code": "PERFECT", "min_correct": 8, "points": 2, "stability_delta": 0, "verdict_code": "PERFECT" },
+        { "code": "PARTIAL", "min_correct": 6, "points": 1, "stability_delta": -10, "verdict_code": "PARTIAL" },
+        { "code": "FAIL", "min_correct": 0, "points": 0, "stability_delta": -30, "verdict_code": "FAIL" }
+      ],
+      "default_rule": {
+        "code": "EMPTY_CONFIRM",
+        "points": 0,
+        "stability_delta": -50,
+        "verdict_code": "EMPTY"
+      }
+    },
+    "feedback_rules": {
+      "NO_GPU": {
+        "status": "\u041d\u0435\u0442 GPU \u0432 OUTPUT: \u043c\u043e\u043d\u0438\u0442\u043e\u0440 \u0431\u0435\u0437 \u0441\u0438\u0433\u043d\u0430\u043b\u0430.",
+        "monitor": "NO SIGNAL"
+      },
+      "NO_RAM": {
+        "status": "\u041d\u0435\u0442 RAM \u0432 MEMORY: \u043e\u0448\u0438\u0431\u043a\u0430 \u0447\u0442\u0435\u043d\u0438\u044f \u043f\u0430\u043c\u044f\u0442\u0438.",
+        "console_lines": [
+          "[ERR] Memory Read Error",
+          "[SYS] Retrying memory bus...",
+          "[ERR] Memory Read Error",
+          "[SYS] Boot halted"
+        ]
+      },
+      "NO_CACHE": {
+        "status": "\u041a\u044d\u0448 \u043d\u0435 \u043e\u0431\u043d\u0430\u0440\u0443\u0436\u0435\u043d: \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u0438\u0434\u0451\u0442 \u043c\u0435\u0434\u043b\u0435\u043d\u043d\u043e."
+      },
+      "HEALTHY": {
+        "status": "\u0421\u0438\u0441\u0442\u0435\u043c\u0430 \u0441\u0442\u0430\u0431\u0438\u043b\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u043d\u0430. \u0413\u043e\u0442\u043e\u0432\u043e \u043a \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0435."
+      }
+    },
+    "system_state_rules": {
+      "monitor_on_if": { "item_id": "gpu", "zone_id": "OUTPUT" },
+      "ram_ok_if": { "item_id": "ram", "zone_id": "MEMORY" },
+      "fast_type_if": { "item_id": "cache", "zone_id": "MEMORY" },
+      "boot_ok_lines": [
+        "[SYS] Power rails: OK",
+        "[SYS] Memory map: READY",
+        "[SYS] PCIe devices: DETECTED",
+        "[SYS] Boot sequence complete"
+      ]
     }
   }
 ]
