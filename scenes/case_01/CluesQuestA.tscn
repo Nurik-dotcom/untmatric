@@ -1,0 +1,239 @@
+[gd_scene load_steps=5 format=3 uid="uid://cluesquesta"]
+
+[ext_resource type="Script" path="res://scenes/case_01/CluesQuestA.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
+[ext_resource type="Script" path="res://scripts/ui/ClueBucketZone.gd" id="3_bucket"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dimmer"]
+bg_color = Color(0, 0, 0, 0.7)
+
+[node name="CluesQuestA" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.07, 0.08, 1)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="MainVBox" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+
+[node name="BtnBack" type="Button" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+text = " < "
+
+[node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ДЕЛО №1: УЛИКИ В МУСОРЕ"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StageLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+text = "ЭТАП A"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="StabilityBar" type="ProgressBar" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(200, 30)
+layout_mode = 2
+size_flags_vertical = 4
+value = 100.0
+show_percentage = false
+
+[node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+
+[node name="BriefingLabel" type="Label" parent="SafeArea/MainVBox/BriefingCard"]
+layout_mode = 2
+text = "Briefing..."
+autowrap_mode = 3
+
+[node name="WorkArea" type="HBoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+
+[node name="PoolCard" type="PanelContainer" parent="SafeArea/MainVBox/WorkArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.6
+script = ExtResource("3_bucket")
+
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/WorkArea/PoolCard"]
+layout_mode = 2
+
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/WorkArea/PoolCard/VBox"]
+layout_mode = 2
+text = "СВАЛКА"
+horizontal_alignment = 1
+
+[node name="ItemsFlow" type="GridContainer" parent="SafeArea/MainVBox/WorkArea/PoolCard/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 2
+
+[node name="BucketsCard" type="PanelContainer" parent="SafeArea/MainVBox/WorkArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BucketsVBox" type="VBoxContainer" parent="SafeArea/MainVBox/WorkArea/BucketsCard"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BucketInput" type="PanelContainer" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_bucket")
+
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox/BucketInput"]
+layout_mode = 2
+
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox/BucketInput/VBox"]
+layout_mode = 2
+text = "ВВОД"
+
+[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox/BucketInput/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BucketOutput" type="PanelContainer" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_bucket")
+
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox/BucketOutput"]
+layout_mode = 2
+
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox/BucketOutput/VBox"]
+layout_mode = 2
+text = "ВЫВОД"
+
+[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox/BucketOutput/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BucketMemory" type="PanelContainer" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_bucket")
+
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox/BucketMemory"]
+layout_mode = 2
+
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox/BucketMemory/VBox"]
+layout_mode = 2
+text = "ПАМЯТЬ"
+
+[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/WorkArea/BucketsCard/BucketsVBox/BucketMemory/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BottomBar" type="HBoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "STATUS"
+vertical_alignment = 1
+
+[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(120, 60)
+layout_mode = 2
+text = "СБРОС"
+
+[node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(160, 60)
+layout_mode = 2
+text = "ПОДТВЕРДИТЬ"
+
+[node name="Dimmer" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_dimmer")
+
+[node name="ResultPopup" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -120.0
+offset_right = 150.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="ResultPopup"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="VerdictLabel" type="Label" parent="ResultPopup/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "VERDICT"
+horizontal_alignment = 1
+
+[node name="ScoreLabel" type="Label" parent="ResultPopup/VBox"]
+layout_mode = 2
+text = "SCORE"
+horizontal_alignment = 1
+
+[node name="StabilityLabel" type="Label" parent="ResultPopup/VBox"]
+layout_mode = 2
+text = "STABILITY"
+horizontal_alignment = 1
+
+[node name="HBox" type="HBoxContainer" parent="ResultPopup/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="BtnRetry" type="Button" parent="ResultPopup/VBox/HBox"]
+custom_minimum_size = Vector2(100, 50)
+layout_mode = 2
+text = "ПОВТОРИТЬ"
+
+[node name="BtnBack" type="Button" parent="ResultPopup/VBox/HBox"]
+custom_minimum_size = Vector2(100, 50)
+layout_mode = 2
+text = "В МЕНЮ"

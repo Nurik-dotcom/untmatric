@@ -33,19 +33,25 @@ func register_trial(data: Dictionary):
 	print("MATCH: ", match_key, " | Correct: ", is_correct, " | Time: ", duration)
 
 	# Logic for Stage A (Radio): Penalty only if FIT is false. Overkill is acceptable.
-	var is_fit = data.get("is_fit", null)
-	var penalty_condition = false
+	var stability_delta = data.get("stability_delta", null)
 
-	if is_fit != null:
-		# New schema: punish only if not fit
-		penalty_condition = (is_fit == false)
+	if stability_delta != null:
+		stability = max(0.0, stability + float(stability_delta))
+		emit_signal("stability_changed", stability, float(stability_delta))
 	else:
-		# Fallback for old schema
-		penalty_condition = (is_correct == false)
+		var is_fit = data.get("is_fit", null)
+		var penalty_condition = false
 
-	if penalty_condition:
-		stability = max(0.0, stability - 10.0)
-		emit_signal("stability_changed", stability, -10.0)
+		if is_fit != null:
+			# New schema: punish only if not fit
+			penalty_condition = (is_fit == false)
+		else:
+			# Fallback for old schema
+			penalty_condition = (is_correct == false)
+
+		if penalty_condition:
+			stability = max(0.0, stability - 10.0)
+			emit_signal("stability_changed", stability, -10.0)
 
 # Matrix (Complexity C)
 const MATRIX_SIZE := 5
