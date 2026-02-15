@@ -114,21 +114,21 @@ layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 0.5
 
-[node name="InventoryScroll" type="ScrollContainer" parent="MainLayout/InventoryFrame"]
+[node name="InventoryMargin" type="MarginContainer" parent="MainLayout/InventoryFrame"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="InventoryScroll" type="ScrollContainer" parent="MainLayout/InventoryFrame/InventoryMargin"]
 layout_mode = 2
 
-[node name="InventoryPadding" type="MarginContainer" parent="MainLayout/InventoryFrame/InventoryScroll"]
+[node name="BlocksContainer" type="HBoxContainer" parent="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll"]
 layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 12
-
-[node name="BlocksContainer" type="HBoxContainer" parent="MainLayout/InventoryFrame/InventoryScroll/InventoryPadding"]
-layout_mode = 2
-theme_override_constants/separation = 14
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_constants/separation = 14
 alignment = 1
 
 [node name="Actions" type="HBoxContainer" parent="MainLayout"]
@@ -156,7 +156,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "NEXT"
 
-[node name="DiagDimmer" type="ColorRect" parent="."]
+[node name="DiagnosticsBlocker" type="ColorRect" parent="."]
 visible = false
 layout_mode = 1
 anchors_preset = 15

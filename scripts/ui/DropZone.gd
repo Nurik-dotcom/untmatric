@@ -1,9 +1,10 @@
 extends PanelContainer
 
-signal block_dropped(previous_block_id, block_data)
+signal block_dropped(block_data)
 
 var required_type: String = "INT"
 var current_block_data = null
+var last_prev_block_id = null
 var breathing_tween: Tween
 
 @onready var lbl_hint = $Label
@@ -22,12 +23,11 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	return false
 
 func _drop_data(at_position: Vector2, data: Variant) -> void:
-	var previous_block_id = get_block_id()
-
 	# Stop breathing
 	if breathing_tween:
 		breathing_tween.kill()
 
+	last_prev_block_id = get_block_id()
 	current_block_data = data
 	lbl_hint.text = str(data.get("label", "ERROR"))
 
@@ -37,7 +37,7 @@ func _drop_data(at_position: Vector2, data: Variant) -> void:
 	tween.tween_property(self, "scale", Vector2(1.1, 1.1), 0.1)
 	tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.1)
 
-	block_dropped.emit(previous_block_id, data)
+	block_dropped.emit(data)
 
 func _start_breathing():
 	if breathing_tween:
@@ -50,6 +50,7 @@ func _start_breathing():
 
 func _reset_state():
 	current_block_data = null
+	last_prev_block_id = null
 	lbl_hint.text = "[SLOT]"
 	_start_breathing()
 
@@ -62,4 +63,9 @@ func get_block_id():
 	return null
 
 func get_block_data():
-	return current_block_data
+	if current_block_data == null:
+		return null
+	return current_block_data.duplicate(true)
+
+func get_last_prev_block_id():
+	return last_prev_block_id

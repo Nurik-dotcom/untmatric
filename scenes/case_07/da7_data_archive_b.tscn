@@ -1,0 +1,199 @@
+[gd_scene load_steps=3 format=3 uid="uid://da7archive002"]
+
+[ext_resource type="Script" path="res://scripts/case_07/da7_data_archive_b.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
+
+[node name="DA7_DataArchiveQuestB" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.05, 1)
+
+[node name="RootLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="PanelContainer" parent="RootLayout"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Margin" type="MarginContainer" parent="RootLayout/Header"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
+
+[node name="Title" type="RichTextLabel" parent="RootLayout/Header/Margin"]
+layout_mode = 2
+text = "CASE #7: SECRET ARCHIVE [LEVEL B]"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+
+[node name="Body" type="VBoxContainer" parent="RootLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+
+[node name="FilterModeRoot" type="HSplitContainer" parent="RootLayout/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 400
+
+[node name="TableSection" type="VBoxContainer" parent="RootLayout/Body/FilterModeRoot"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TableTitle" type="Label" parent="RootLayout/Body/FilterModeRoot/TableSection"]
+layout_mode = 2
+text = "FILTER VIEW // MULTI-SELECT"
+
+[node name="DataTree" type="Tree" parent="RootLayout/Body/FilterModeRoot/TableSection"]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 3
+hide_root = true
+select_mode = 1
+
+[node name="TaskSection" type="VBoxContainer" parent="RootLayout/Body/FilterModeRoot"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PromptLabel" type="RichTextLabel" parent="RootLayout/Body/FilterModeRoot/TaskSection"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+text = "Loading case parameters..."
+fit_content = true
+
+[node name="ControlRow" type="HBoxContainer" parent="RootLayout/Body/FilterModeRoot/TaskSection"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BtnClear" type="Button" parent="RootLayout/Body/FilterModeRoot/TaskSection/ControlRow"]
+custom_minimum_size = Vector2(140, 56)
+layout_mode = 2
+text = "CLEAR [X]"
+
+[node name="BtnSubmit" type="Button" parent="RootLayout/Body/FilterModeRoot/TaskSection/ControlRow"]
+custom_minimum_size = Vector2(180, 56)
+layout_mode = 2
+text = "SUBMIT [ENTER]"
+
+[node name="RelationModeRoot" type="VBoxContainer" parent="RootLayout/Body"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PromptLabelRel" type="RichTextLabel" parent="RootLayout/Body/RelationModeRoot"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+text = "Analyze relationship..."
+fit_content = true
+
+[node name="SchemaContainer" type="HBoxContainer" parent="RootLayout/Body/RelationModeRoot"]
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1
+
+[node name="LeftTable" type="VBoxContainer" parent="RootLayout/Body/RelationModeRoot/SchemaContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable"]
+layout_mode = 2
+text = "Table A"
+horizontal_alignment = 1
+
+[node name="TreeL" type="Tree" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable"]
+layout_mode = 2
+size_flags_vertical = 3
+hide_root = true
+
+[node name="CenterConnector" type="VBoxContainer" parent="RootLayout/Body/RelationModeRoot/SchemaContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="ArrowLabel" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
+layout_mode = 2
+text = "=>"
+
+[node name="HintLabel" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+text = "FK Reference"
+
+[node name="RightTable" type="VBoxContainer" parent="RootLayout/Body/RelationModeRoot/SchemaContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable"]
+layout_mode = 2
+text = "Table B"
+horizontal_alignment = 1
+
+[node name="TreeR" type="Tree" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable"]
+layout_mode = 2
+size_flags_vertical = 3
+hide_root = true
+
+[node name="OptionsRow" type="HBoxContainer" parent="RootLayout/Body/RelationModeRoot"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Footer" type="HBoxContainer" parent="RootLayout"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="StabilityLabel" type="Label" parent="RootLayout/Footer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "STABILITY: 100%"
+
+[node name="StabilityBar" type="ProgressBar" parent="RootLayout/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+step = 1.0
+value = 100.0
+
+[node name="Runtime" type="Node" parent="."]
+
+[node name="Audio" type="Node" parent="Runtime"]
+
+[node name="SfxClick" type="AudioStreamPlayer" parent="Runtime/Audio"]
+
+[node name="SfxError" type="AudioStreamPlayer" parent="Runtime/Audio"]
+
+[node name="SfxRelay" type="AudioStreamPlayer" parent="Runtime/Audio"]
+
+[node name="TypewriterTimer" type="Timer" parent="Runtime"]
+one_shot = true
+
+[node name="TelemetryTimer" type="Timer" parent="Runtime"]

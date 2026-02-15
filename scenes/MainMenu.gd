@@ -11,4 +11,4 @@ func _on_start_pressed():
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _on_learn_pressed():
-	print("Learn mode not implemented yet.")
+	get_tree().change_scene_to_file("res://scenes/LearnSelect.tscn")

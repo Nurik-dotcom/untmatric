@@ -1,286 +1,440 @@
 extends Control
 
-# --- CONFIGURATION ---
-const LEVELS_PATH = "res://data/quest_c_levels.json"
-const DIAGNOSTICS_SCENE = preload("res://scenes/ui/DiagnosticsPanelC.tscn")
+const LEVELS_PATH := "res://data/quest_c_levels.json"
 
-enum State { INIT, LINE_SELECT, FIX_MENU, READY_TO_VERIFY, VERIFY, FEEDBACK_SUCCESS, FEEDBACK_FAIL, DIAGNOSTIC, SAFE_MODE }
+enum State {
+	INIT,
+	LINE_SELECT,
+	FIX_MENU,
+	READY_TO_VERIFY,
+	VERIFY,
+	FEEDBACK_SUCCESS,
+	FEEDBACK_FAIL,
+	DIAGNOSTIC
+}
 
-# --- NODES ---
-@onready var lbl_clue_title = $MainLayout/HeaderRow/LblClueTitle
-@onready var lbl_session = $MainLayout/HeaderRow/LblSession
-@onready var expected_panel = $MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel
-@onready var lbl_expected_val = $MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/VBox/LblExpectedValue
-@onready var actual_panel = $MainLayout/StatusMonitor/MonitorsRow/ActualPanel
-@onready var lbl_actual_val = $MainLayout/StatusMonitor/MonitorsRow/ActualPanel/VBox/LblActualValue
-@onready var code_view = $MainLayout/BodyRow/CodeFrame/CodeView
-@onready var lbl_hint = $MainLayout/BodyRow/SideInfo/LblHint
-@onready var misclick_label = $MainLayout/BodyRow/SideInfo/MisclickCounter
-@onready var btn_analyze = $MainLayout/ActionsRow/BtnAnalyze
-@onready var btn_verify = $MainLayout/ActionsRow/BtnVerify
-@onready var btn_next = $MainLayout/ActionsRow/BtnNext
-@onready var fix_menu = $FixMenuC
-@onready var diag_panel = $DiagnosticsPanelC
+@onready var lbl_clue_title: Label = $MainLayout/HeaderRow/LblClueTitle
+@onready var lbl_session: Label = $MainLayout/HeaderRow/LblSession
+@onready var expected_panel: PanelContainer = $MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel
+@onready var actual_panel: PanelContainer = $MainLayout/StatusMonitor/MonitorsRow/ActualPanel
+@onready var lbl_expected_value: Label = $MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox/LblExpectedValue
+@onready var lbl_actual_value: Label = $MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox/LblActualValue
+@onready var code_view: CodeEdit = $MainLayout/BodyRow/CodeFrame/CodeRoot/CodeView
+@onready var line_highlight: ColorRect = $MainLayout/BodyRow/CodeFrame/CodeRoot/LineHighlight
+@onready var lbl_hint: Label = $MainLayout/BodyRow/SideInfo/LblHint
+@onready var lbl_misclicks: Label = $MainLayout/BodyRow/SideInfo/MisclickCounter
+@onready var btn_analyze: Button = $MainLayout/ActionsRow/BtnAnalyze
+@onready var btn_verify: Button = $MainLayout/ActionsRow/BtnVerify
+@onready var btn_next: Button = $MainLayout/ActionsRow/BtnNext
+@onready var diagnostics_blocker: ColorRect = $DiagnosticsBlocker
+@onready var fix_menu: PopupPanel = $FixMenuC
+@onready var diagnostics_panel: PanelContainer = $DiagnosticsPanelC
 
-# --- AUDIO ---
-const AUDIO_CLICK = preload("res://audio/click.wav")
-const AUDIO_ERROR = preload("res://audio/error.wav")
-const AUDIO_RELAY = preload("res://audio/relay.wav")
-
-# --- DATA ---
-var levels = []
-var current_level_idx = 0
+var levels: Array = []
+var current_level_idx := 0
 var current_task: Dictionary = {}
-var state = State.INIT
-var task_started_at = 0
-var task_session = {}
-var misclicks_before_correct = 0
-var wrong_fix_attempts_before_correct = 0
-var selected_line_index = -1
-var selected_fix_option_id = null
-var variant_hash = ""
+var state: State = State.INIT
+var variant_hash := ""
+var task_started_ticks := 0
+var hint_open_ticks := 0
+var hint_total_ms := 0
+var selected_line_index := -1
+var selected_option_id := ""
+var misclicks_before_correct := 0
+var wrong_fix_attempts_before_correct := 0
+var has_selected_correct_line := false
+var level_result_sent := false
+var suppress_caret_event := false
+var highlight_tween: Tween
+var task_session: Dictionary = {}
 
-func _ready():
-	_load_levels_from_json()
+func _ready() -> void:
+	_configure_code_view()
 	_connect_signals()
-
-	current_level_idx = GlobalMetrics.current_level_index
-	if current_level_idx >= levels.size():
-		current_level_idx = 0
-
-	if levels.size() > 0:
-		_start_level(current_level_idx)
-	else:
-		lbl_hint.text = "No levels loaded."
-
-func _load_levels_from_json():
-	if not FileAccess.file_exists(LEVELS_PATH):
-		push_error("Levels file not found: " + LEVELS_PATH)
+	_load_levels()
+	if levels.is_empty():
+		lbl_hint.text = "No C-level data loaded."
 		return
 
-	var file = FileAccess.open(LEVELS_PATH, FileAccess.READ)
-	var content = file.get_as_text()
-	var json = JSON.new()
-	var error = json.parse(content)
-	if error == OK:
-		levels = json.data
-	else:
-		push_error("JSON Parse Error: " + json.get_error_message())
+	var idx: int = int(GlobalMetrics.current_level_index)
+	if idx < 0 or idx >= levels.size():
+		idx = 0
+	_start_level(idx)
 
-func _connect_signals():
-	code_view.caret_changed.connect(_on_caret_changed)
-	# Also handle gui_input for clicks if needed, but caret_changed is usually enough for selection
-	fix_menu.option_selected.connect(_on_fix_option_selected)
-	btn_verify.pressed.connect(_on_verify_pressed)
+func _configure_code_view() -> void:
+	code_view.editable = false
+	_try_set_control_property("caret_draw_when_editable_disabled", true)
+	_try_set_control_property("gutters_draw_line_numbers", true)
+	_try_set_control_property("gutter_draw_line_numbers", true)
+	_try_set_control_property("gutters_zero_pad_line_numbers", true)
+	_try_set_control_property("gutter_zero_pad_line_numbers", true)
+
+	line_highlight.visible = false
+	line_highlight.color = Color(0.0, 1.0, 0.25, 0.16)
+
+func _try_set_control_property(prop_name: String, value: Variant) -> void:
+	for prop_var in code_view.get_property_list():
+		if typeof(prop_var) != TYPE_DICTIONARY:
+			continue
+		var prop: Dictionary = prop_var
+		if str(prop.get("name", "")) == prop_name:
+			code_view.set(prop_name, value)
+			return
+
+func _connect_signals() -> void:
+	code_view.caret_changed.connect(_on_code_caret_changed)
 	btn_analyze.pressed.connect(_on_analyze_pressed)
+	btn_verify.pressed.connect(_on_verify_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
+	diagnostics_panel.visibility_changed.connect(_on_diagnostics_visibility_changed)
+	fix_menu.option_selected.connect(_on_fix_option_selected)
+	fix_menu.apply_requested.connect(_on_fix_apply_requested)
+	fix_menu.canceled.connect(_on_fix_menu_canceled)
 
-func _start_level(idx):
+func _load_levels() -> void:
+	levels.clear()
+	if not FileAccess.file_exists(LEVELS_PATH):
+		push_error("DisarmQuestC levels file missing: " + LEVELS_PATH)
+		return
+
+	var file: FileAccess = FileAccess.open(LEVELS_PATH, FileAccess.READ)
+	if file == null:
+		push_error("Unable to open " + LEVELS_PATH)
+		return
+
+	var json := JSON.new()
+	if json.parse(file.get_as_text()) != OK:
+		push_error("JSON parse error in quest_c_levels.json: " + json.get_error_message())
+		return
+
+	if typeof(json.data) != TYPE_ARRAY:
+		push_error("quest_c_levels.json must be an array.")
+		return
+
+	for level_var in json.data:
+		if typeof(level_var) != TYPE_DICTIONARY:
+			continue
+		var level: Dictionary = level_var
+		if _validate_level(level):
+			levels.append(level)
+		else:
+			push_warning("Skipping invalid C level: " + str(level.get("id", "UNKNOWN")))
+
+func _validate_level(level: Dictionary) -> bool:
+	var required := [
+		"id",
+		"bucket",
+		"briefing",
+		"expected_s",
+		"actual_s",
+		"code_lines",
+		"bug"
+	]
+	for key in required:
+		if not level.has(key):
+			return false
+
+	if typeof(level.get("code_lines", [])) != TYPE_ARRAY:
+		return false
+
+	var bug: Dictionary = level.get("bug", {})
+	if typeof(bug) != TYPE_DICTIONARY:
+		return false
+	var fix_options: Array = bug.get("fix_options", [])
+	if fix_options.size() != 3:
+		return false
+
+	var ids: Array[String] = []
+	for fix_var in fix_options:
+		if typeof(fix_var) != TYPE_DICTIONARY:
+			return false
+		var fix: Dictionary = fix_var
+		var option_id := str(fix.get("option_id", ""))
+		if option_id == "":
+			return false
+		ids.append(option_id)
+	return ids.has(str(bug.get("correct_option_id", "")))
+
+func build_variant_key(level: Dictionary) -> String:
+	var bug: Dictionary = level.get("bug", {})
+	var code_blob := "\n".join(level.get("code_lines", []))
+	var fix_parts: Array[String] = []
+	for fix_var in bug.get("fix_options", []):
+		if typeof(fix_var) != TYPE_DICTIONARY:
+			continue
+		var fix: Dictionary = fix_var
+		fix_parts.append("%s:%s:%s" % [
+			str(fix.get("option_id", "")),
+			str(fix.get("replace_line", "")),
+			str(fix.get("result_s", ""))
+		])
+	fix_parts.sort()
+	return "%s|%s|line:%s|opts:%s" % [
+		str(level.get("id", "")),
+		code_blob,
+		str(bug.get("correct_line_index", -1)),
+		",".join(fix_parts)
+	]
+
+func _start_level(idx: int) -> void:
 	if idx >= levels.size():
 		idx = 0
-
 	current_level_idx = idx
-	current_task = levels[idx].duplicate()
-
-	task_started_at = Time.get_ticks_msec()
-	task_session = {
-		"task_id": current_task.id,
-		"variant_hash": str(hash(str(current_task))),
-		"started_at_ticks": task_started_at,
-		"attempts": [],
-		"events": []
-	}
-	variant_hash = task_session.variant_hash
-
-	# Reset State
-	state = State.LINE_SELECT
+	current_task = (levels[idx] as Dictionary).duplicate(true)
+	variant_hash = str(hash(build_variant_key(current_task)))
+	task_started_ticks = Time.get_ticks_msec()
+	hint_open_ticks = 0
+	hint_total_ms = 0
+	selected_line_index = -1
+	selected_option_id = ""
 	misclicks_before_correct = 0
 	wrong_fix_attempts_before_correct = 0
-	selected_line_index = -1
-	selected_fix_option_id = null
+	has_selected_correct_line = false
+	level_result_sent = false
+	state = State.LINE_SELECT
 
-	# UI Reset
-	lbl_clue_title.text = "CASE " + current_task.id + ": DISARM"
-	lbl_session.text = "SESS " + str(randi() % 9000 + 1000)
-	lbl_expected_val.text = "s = " + str(current_task.expected_s)
-	lbl_actual_val.text = "s = " + str(current_task.actual_s)
-	lbl_actual_val.modulate = Color(1, 0.2, 0.2) # Red
-	lbl_expected_val.modulate = Color(0, 1, 0.25) # Green
+	task_session = {
+		"task_id": str(current_task.get("id", "C-00")),
+		"variant_hash": variant_hash,
+		"started_at_ticks": task_started_ticks,
+		"ended_at_ticks": 0,
+		"attempts": [],
+		"events": [],
+		"hint_total_ms": 0
+	}
 
-	# Reset Panels Color (overrides)
-	# Assuming themes are used, we can just set modulate or stylebox override if needed
-	actual_panel.modulate = Color(1, 1, 1)
-
-	misclick_label.text = "MISCLICKS: 0"
-	lbl_hint.text = current_task.briefing
-
-	code_view.text = ""
-	code_view.clear_executing_lines()
-	code_view.text = "\n".join(current_task.code_lines)
+	lbl_clue_title.text = "CASE C: DISARM"
+	lbl_session.text = "SESSION: %s" % str(current_task.get("id", "C-00"))
+	lbl_expected_value.text = "s = %s" % str(current_task.get("expected_s", "?"))
+	lbl_actual_value.text = "s = %s" % str(current_task.get("actual_s", "?"))
+	lbl_hint.text = "Tap the buggy line, then choose a fix."
+	_update_misclick_label()
 
 	btn_verify.disabled = true
 	btn_next.visible = false
-	btn_analyze.disabled = false
+	diagnostics_blocker.visible = false
+	diagnostics_panel.visible = false
+	fix_menu.hide()
+	_render_code()
+	_set_actual_panel_error(false)
+	_log_event("task_start", {"bucket": str(current_task.get("bucket", "unknown"))})
 
-	_log_event("task_start", {})
+func _render_code() -> void:
+	suppress_caret_event = true
+	code_view.text = "\n".join(current_task.get("code_lines", []))
+	code_view.set_caret_line(0)
+	code_view.set_caret_column(0)
+	line_highlight.visible = false
+	suppress_caret_event = false
 
-func _on_caret_changed():
-	if state != State.LINE_SELECT and state != State.READY_TO_VERIFY:
+func _on_code_caret_changed() -> void:
+	if suppress_caret_event:
+		return
+	if state == State.FEEDBACK_SUCCESS:
 		return
 
-	var line = code_view.get_caret_line()
-	# Debounce or check valid
-	if line < 0 or line >= current_task.code_lines.size():
-		return
+	selected_line_index = code_view.get_caret_line()
+	_log_event("line_clicked", {"line": selected_line_index})
 
-	_handle_line_click(line)
-
-func _handle_line_click(line_idx):
-	_log_event("line_clicked", {"line": line_idx})
-
-	# Only process click if we are selecting lines
-	if state != State.LINE_SELECT and state != State.READY_TO_VERIFY:
-		return
-
-	var correct_line = int(current_task.bug.correct_line_index)
-	if line_idx == correct_line:
-		# Correct line found
-		selected_line_index = line_idx
-		_play_sound(AUDIO_CLICK)
-		_open_fix_menu()
-	else:
-		# Wrong line
+	var correct_line := int(current_task.get("bug", {}).get("correct_line_index", -1))
+	if selected_line_index == correct_line:
+		has_selected_correct_line = true
+	elif not has_selected_correct_line:
 		misclicks_before_correct += 1
-		misclick_label.text = "MISCLICKS: " + str(misclicks_before_correct)
-		_play_sound(AUDIO_ERROR)
-		_flash_error()
+		_update_misclick_label()
 
-func _open_fix_menu():
+	_update_line_highlight()
+	_open_fix_menu()
+
+func _update_line_highlight() -> void:
+	if selected_line_index < 0:
+		line_highlight.visible = false
+		return
+
+	var line_height := 26
+	if code_view.has_method("get_line_height"):
+		line_height = int(code_view.call("get_line_height"))
+
+	line_highlight.position = Vector2(6, 6 + (selected_line_index * line_height))
+	line_highlight.size = Vector2(code_view.size.x - 12, float(line_height))
+	line_highlight.visible = true
+
+	if highlight_tween != null:
+		highlight_tween.kill()
+	highlight_tween = create_tween().set_loops()
+	highlight_tween.tween_property(line_highlight, "modulate:a", 0.26, 0.28)
+	highlight_tween.tween_property(line_highlight, "modulate:a", 0.12, 0.28)
+
+func _open_fix_menu() -> void:
+	if selected_line_index < 0:
+		return
+
+	var lines: Array = current_task.get("code_lines", [])
+	var original_line := ""
+	if selected_line_index >= 0 and selected_line_index < lines.size():
+		original_line = str(lines[selected_line_index])
+
+	fix_menu.call(
+		"setup",
+		selected_line_index + 1,
+		original_line,
+		current_task.get("bug", {}).get("fix_options", []),
+		selected_option_id
+	)
 	state = State.FIX_MENU
-	var line_text = current_task.code_lines[selected_line_index]
-	fix_menu.setup(line_text, current_task.bug.fix_options)
-	fix_menu.popup_centered()
-	_log_event("fix_menu_open", {})
+	_log_event("fix_menu_open", {"line": selected_line_index})
+	fix_menu.popup_centered_ratio(0.68)
 
-func _on_fix_option_selected(option_id):
-	selected_fix_option_id = option_id
+func _on_fix_option_selected(option_id: String) -> void:
+	_log_event("fix_selected", {"option_id": option_id, "line": selected_line_index})
+
+func _on_fix_apply_requested(option_id: String) -> void:
+	selected_option_id = option_id
+	btn_verify.disabled = selected_line_index < 0 or selected_option_id == ""
 	state = State.READY_TO_VERIFY
-	btn_verify.disabled = false
+	_log_event("fix_applied", {"option_id": option_id, "line": selected_line_index})
 
-	lbl_hint.text = "Patch ready. Verify?"
-	_log_event("fix_selected", {"option_id": option_id})
+func _on_fix_menu_canceled() -> void:
+	if state != State.FEEDBACK_SUCCESS:
+		state = State.LINE_SELECT
 
-func _on_verify_pressed():
-	if state != State.READY_TO_VERIFY: return
+func _on_verify_pressed() -> void:
+	if btn_verify.disabled:
+		return
+	if selected_line_index < 0 or selected_option_id == "":
+		return
 
 	state = State.VERIFY
-	btn_verify.disabled = true
+	_log_event("verify_pressed", {"line": selected_line_index, "option_id": selected_option_id})
 
-	var correct_line = int(current_task.bug.correct_line_index)
-	var correct_opt = str(current_task.bug.correct_option_id)
+	var bug: Dictionary = current_task.get("bug", {})
+	var correct_line := int(bug.get("correct_line_index", -1))
+	var correct_option := str(bug.get("correct_option_id", ""))
+	var is_correct := (selected_line_index == correct_line and selected_option_id == correct_option)
+	var effective_time_ms := _effective_elapsed_ms(Time.get_ticks_msec())
 
-	var is_correct = (selected_line_index == correct_line and selected_fix_option_id == correct_opt)
+	if selected_line_index == correct_line and selected_option_id != correct_option:
+		wrong_fix_attempts_before_correct += 1
 
-	var now = Time.get_ticks_msec()
-	var attempt = {
+	var attempt := {
 		"kind": "debugging",
-		"task_id": current_task.id,
+		"task_id": str(current_task.get("id", "C-00")),
 		"variant_hash": variant_hash,
 		"selected_line_index": selected_line_index,
-		"fix_option_id": selected_fix_option_id,
+		"fix_option_id": selected_option_id,
 		"correct": is_correct,
-		"effective_time_ms": now - task_started_at,
+		"effective_time_ms": effective_time_ms,
 		"misclicks_before_correct": misclicks_before_correct,
 		"wrong_fix_attempts_before_correct": wrong_fix_attempts_before_correct
 	}
-
-	task_session.attempts.append(attempt)
-	_log_event("verify_pressed", {"correct": is_correct})
+	(task_session["attempts"] as Array).append(attempt)
 
 	if is_correct:
 		_handle_success()
 	else:
-		_handle_fail()
+		_handle_fail(correct_line)
 
-func _handle_success():
+func _handle_success() -> void:
 	state = State.FEEDBACK_SUCCESS
-	_play_sound(AUDIO_RELAY)
-
-	# Visuals
-	lbl_actual_val.text = "s = " + str(current_task.expected_s)
-	lbl_actual_val.modulate = Color(0, 1, 0.25)
-	lbl_hint.text = "ACCESS GRANTED. SYSTEM STABILIZED."
-
-	# Apply fix to code view visual
-	var options = current_task.bug.fix_options
-	var new_line = ""
-	for opt in options:
-		if opt.option_id == selected_fix_option_id:
-			new_line = opt.replace_line
-
-	# Safety check if line valid
-	if selected_line_index >= 0 and selected_line_index < code_view.get_line_count():
-		code_view.set_line(selected_line_index, new_line)
-		# Highlight green
-		code_view.set_line_background_color(selected_line_index, Color(0, 0.5, 0.1, 0.3))
-
-	btn_next.visible = true
-
-	# Metrics
-	var result_data = {
-		"is_correct": true,
-		"is_fit": true,
-		"task_id": current_task.id,
-		"variant_hash": variant_hash,
-		"time_ms": Time.get_ticks_msec() - task_started_at,
-		"task_session": task_session
-	}
-	GlobalMetrics.register_trial(result_data)
-
-func _handle_fail():
-	wrong_fix_attempts_before_correct += 1
-	_play_sound(AUDIO_ERROR)
-
-	# Get result s for explanation
-	var actual_result = "?"
-	for opt in current_task.bug.fix_options:
-		if opt.option_id == selected_fix_option_id:
-			actual_result = str(opt.get("result_s", "?"))
-
-	lbl_actual_val.text = "s = " + actual_result
-	_flash_error()
-
-	lbl_hint.text = "Patch failed. Result: " + actual_result + ". Try another fix."
-
-	# Return to line selection to try again
-	state = State.LINE_SELECT
-	selected_fix_option_id = null
+	lbl_actual_value.text = "s = %s" % str(current_task.get("expected_s", "?"))
+	lbl_hint.text = "ACCESS GRANTED"
 	btn_verify.disabled = true
+	btn_next.visible = true
+	_set_actual_panel_error(false)
+	_register_result(true)
 
-func _on_analyze_pressed():
-	diag_panel.setup(current_task.explain_short)
-	diag_panel.visible = true
+func _handle_fail(correct_line: int) -> void:
+	state = State.FEEDBACK_FAIL
+	_set_actual_panel_error(true)
 
-func _on_next_pressed():
-	_log_event("task_end", {})
+	var selected_result: Variant = _get_selected_fix_result()
+	if selected_line_index == correct_line and selected_result != null:
+		lbl_actual_value.text = "s = %s" % str(selected_result)
+		lbl_hint.text = "Wrong fix: result mismatch."
+	else:
+		lbl_hint.text = "Wrong line selected."
+
+func _set_actual_panel_error(is_error: bool) -> void:
+	if is_error:
+		actual_panel.modulate = Color(1.0, 0.55, 0.55, 1.0)
+		var tw := create_tween()
+		tw.tween_property(actual_panel, "modulate", Color(1.0, 0.3, 0.3, 1.0), 0.12)
+		tw.tween_property(actual_panel, "modulate", Color(1.0, 0.55, 0.55, 1.0), 0.14)
+		tw.tween_property(actual_panel, "modulate", Color(1.0, 0.3, 0.3, 1.0), 0.14)
+		tw.tween_property(actual_panel, "modulate", Color(1.0, 0.55, 0.55, 1.0), 0.16)
+	else:
+		actual_panel.modulate = Color(0.45, 1.0, 0.45, 1.0)
+
+func _get_selected_fix_result() -> Variant:
+	var fix_options: Array = current_task.get("bug", {}).get("fix_options", [])
+	for fix_var in fix_options:
+		if typeof(fix_var) != TYPE_DICTIONARY:
+			continue
+		var fix: Dictionary = fix_var
+		if str(fix.get("option_id", "")) == selected_option_id:
+			return fix.get("result_s", null)
+	return null
+
+func _on_analyze_pressed() -> void:
+	if diagnostics_panel.visible:
+		return
+	diagnostics_panel.call("setup", "ANALYSIS", current_task.get("explain_short", []))
+	diagnostics_panel.visible = true
+
+func _on_diagnostics_visibility_changed() -> void:
+	if diagnostics_panel.visible:
+		diagnostics_blocker.visible = true
+		hint_open_ticks = Time.get_ticks_msec()
+		_log_event("analyze_open", {})
+		state = State.DIAGNOSTIC
+	else:
+		diagnostics_blocker.visible = false
+		if hint_open_ticks > 0:
+			var delta := Time.get_ticks_msec() - hint_open_ticks
+			hint_total_ms += delta
+			task_session["hint_total_ms"] = hint_total_ms
+			_log_event("analyze_close", {"duration_ms": delta})
+			hint_open_ticks = 0
+		if state != State.FEEDBACK_SUCCESS:
+			state = State.LINE_SELECT
+
+func _on_next_pressed() -> void:
+	_log_event("task_end", {"status": "next_pressed"})
 	_start_level(current_level_idx + 1)
 
-func _log_event(name, payload):
-	var ev = {
-		"name": name,
-		"t_ms": Time.get_ticks_msec() - task_started_at,
-		"payload": payload
+func _register_result(is_correct: bool) -> void:
+	if level_result_sent:
+		return
+	level_result_sent = true
+	var end_ticks := Time.get_ticks_msec()
+	task_session["ended_at_ticks"] = end_ticks
+	task_session["hint_total_ms"] = hint_total_ms
+	_log_event("task_end", {"status": "complete", "is_correct": is_correct})
+
+	var elapsed_ms := _effective_elapsed_ms(end_ticks)
+	var payload := {
+		"match_key": "DISARM_C|%s" % str(current_task.get("id", "C-00")),
+		"is_correct": is_correct,
+		"is_fit": is_correct,
+		"elapsed_ms": elapsed_ms,
+		"duration": float(elapsed_ms) / 1000.0,
+		"task_id": str(current_task.get("id", "C-00")),
+		"variant_hash": variant_hash,
+		"task_session": task_session
 	}
-	task_session.events.append(ev)
+	GlobalMetrics.register_trial(payload)
 
-func _play_sound(stream):
-	var player = AudioStreamPlayer.new()
-	player.stream = stream
-	add_child(player)
-	player.play()
-	player.finished.connect(player.queue_free)
+func _effective_elapsed_ms(now_ticks: int) -> int:
+	return maxi(0, (now_ticks - task_started_ticks) - hint_total_ms)
 
-func _flash_error():
-	var tween = create_tween()
-	actual_panel.modulate = Color(2, 0.5, 0.5)
-	tween.tween_property(actual_panel, "modulate", Color(1, 1, 1), 0.3)
+func _log_event(name: String, payload: Dictionary) -> void:
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": name,
+		"t_ms": _effective_elapsed_ms(Time.get_ticks_msec()),
+		"payload": payload
+	})
+	task_session["events"] = events
+
+func _update_misclick_label() -> void:
+	lbl_misclicks.text = "MISCLICKS: %d" % misclicks_before_correct

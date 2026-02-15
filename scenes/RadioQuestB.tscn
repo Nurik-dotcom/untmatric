@@ -154,13 +154,6 @@ theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 18
 text = "РАСЧЁТ"
 
-[node name="CalcStepLabel" type="Label" parent="SafeArea/MainVBox/CalcCard/CalcVBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 16
-text = "Step: 1 bit"
-
 [node name="IBitsRow" type="HBoxContainer" parent="SafeArea/MainVBox/CalcCard/CalcVBox"]
 layout_mode = 2
 theme_override_constants/separation = 16
@@ -171,13 +164,6 @@ layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 24
 text = "I (бит):"
-
-[node name="BtnMinusFast" type="Button" parent="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow"]
-custom_minimum_size = Vector2(56, 56)
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 20
-text = "-8"
 
 [node name="BtnMinus" type="Button" parent="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow"]
 custom_minimum_size = Vector2(56, 56)
@@ -200,13 +186,6 @@ layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 24
 text = "+"
-
-[node name="BtnPlusFast" type="Button" parent="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow"]
-custom_minimum_size = Vector2(56, 56)
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_1")
-theme_override_font_sizes/font_size = 20
-text = "+8"
 
 [node name="BtnCheckCalc" type="Button" parent="SafeArea/MainVBox/CalcCard/CalcVBox"]
 custom_minimum_size = Vector2(0, 56)
@@ -426,10 +405,8 @@ autowrap_mode = 2
 environment = SubResource("Environment_glow")
 
 [connection signal="pressed" from="SafeArea/MainVBox/Header/BtnBack" to="." method="_on_back_pressed"]
-[connection signal="pressed" from="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow/BtnMinusFast" to="." method="_on_minus_fast_pressed"]
 [connection signal="pressed" from="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow/BtnMinus" to="." method="_on_minus_pressed"]
 [connection signal="pressed" from="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow/BtnPlus" to="." method="_on_plus_pressed"]
-[connection signal="pressed" from="SafeArea/MainVBox/CalcCard/CalcVBox/IBitsRow/BtnPlusFast" to="." method="_on_plus_fast_pressed"]
 [connection signal="pressed" from="SafeArea/MainVBox/CalcCard/CalcVBox/BtnCheckCalc" to="." method="_on_check_calc_pressed"]
 [connection signal="pressed" from="SafeArea/MainVBox/BottomVBox/ActionsRow/BtnConverter" to="." method="_on_converter_pressed"]
 [connection signal="pressed" from="SafeArea/MainVBox/BottomVBox/ActionsRow/BtnCapture" to="." method="_on_capture_pressed"]

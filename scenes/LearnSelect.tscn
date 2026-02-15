@@ -1,4 +1,4 @@
-﻿[gd_scene load_steps=2 format=3 uid="uid://d2r81qjl2u0td"]
+[gd_scene load_steps=2 format=3 uid="uid://d2r81qjl2u0td"]
 
 [ext_resource type="Script" path="res://scenes/LearnSelect.gd" id="1_script"]
 
@@ -91,6 +91,12 @@ custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Отчет"
+
+[node name="NetworkTraceButton" type="Button" parent="MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(260, 160)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Сетевой след"
 
 [node name="StatusLabel" type="Label" parent="MainLayout"]
 layout_mode = 2

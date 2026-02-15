@@ -1,59 +1,91 @@
 extends PopupPanel
 
-signal option_selected(option_id)
+signal option_selected(option_id: String)
+signal apply_requested(option_id: String)
+signal canceled
 
-@onready var root_container = $Root
-@onready var lbl_title = $Root/LblTitle
-@onready var lbl_original = $Root/LblOriginal
-@onready var options_container = $Root/Options
-@onready var btn_apply = $Root/BtnApply
-@onready var btn_close = $Root/BtnClose
+@onready var lbl_title: Label = $Root/LblTitle
+@onready var lbl_original: Label = $Root/LblOriginal
+@onready var btn_opt_a: Button = $Root/Options/BtnOptA
+@onready var btn_opt_b: Button = $Root/Options/BtnOptB
+@onready var btn_opt_c: Button = $Root/Options/BtnOptC
+@onready var btn_apply: Button = $Root/Actions/BtnApply
+@onready var btn_close: Button = $Root/Actions/BtnClose
 
-var current_options = []
-var selected_option_id = null
+var selected_option_id := ""
+var options_by_id: Dictionary = {}
 
-func _ready():
-	btn_close.pressed.connect(_on_close_pressed)
+func _ready() -> void:
+	btn_opt_a.pressed.connect(_on_option_pressed.bind("A"))
+	btn_opt_b.pressed.connect(_on_option_pressed.bind("B"))
+	btn_opt_c.pressed.connect(_on_option_pressed.bind("C"))
 	btn_apply.pressed.connect(_on_apply_pressed)
+	btn_close.pressed.connect(_on_close_pressed)
 	btn_apply.disabled = true
 
-func setup(original_line: String, options: Array):
-	lbl_original.text = "ORIGINAL: " + original_line
-	current_options = options
-	selected_option_id = null
-	btn_apply.disabled = true
+func setup(line_number_1_based: int, original_line: String, fix_options: Array, preselected_option_id: String = "") -> void:
+	lbl_title.text = "FIX LINE %02d" % line_number_1_based
+	lbl_original.text = "original: %s" % original_line
 
-	# Clear old options
-	for child in options_container.get_children():
-		child.queue_free()
+	options_by_id.clear()
+	var option_buttons := {
+		"A": btn_opt_a,
+		"B": btn_opt_b,
+		"C": btn_opt_c
+	}
+	var ordered_ids := ["A", "B", "C"]
 
-	# Create buttons for options
-	for opt in options:
-		var btn = Button.new()
-		btn.text = opt.option_id + ") " + opt.replace_line
-		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		btn.toggle_mode = true
-		btn.custom_minimum_size = Vector2(0, 40)
-		# Connect press
-		btn.pressed.connect(func(): _on_option_pressed(btn, opt.option_id))
-		options_container.add_child(btn)
+	for option_id in ordered_ids:
+		var btn: Button = option_buttons[option_id]
+		btn.text = "%s) --" % option_id
+		btn.disabled = true
 
-func _on_option_pressed(btn: Button, opt_id):
-	# Manual radio behavior: unpress others
-	for child in options_container.get_children():
-		if child != btn:
-			child.set_pressed_no_signal(false)
+	for opt_var in fix_options:
+		if typeof(opt_var) != TYPE_DICTIONARY:
+			continue
+		var opt: Dictionary = opt_var
+		var option_id := str(opt.get("option_id", ""))
+		if not option_buttons.has(option_id):
+			continue
+		options_by_id[option_id] = opt
+		var btn: Button = option_buttons[option_id]
+		btn.disabled = false
+		btn.text = "%s) %s  ->  s=%s" % [
+			option_id,
+			str(opt.get("replace_line", "")),
+			str(opt.get("result_s", "?"))
+		]
 
-	# Ensure self is pressed (toggle mode could unpress)
-	btn.set_pressed_no_signal(true)
+	selected_option_id = preselected_option_id if options_by_id.has(preselected_option_id) else ""
+	_refresh_selection_visuals()
 
-	selected_option_id = opt_id
-	btn_apply.disabled = false
+func _on_option_pressed(option_id: String) -> void:
+	if not options_by_id.has(option_id):
+		return
+	selected_option_id = option_id
+	_refresh_selection_visuals()
+	option_selected.emit(option_id)
 
-func _on_apply_pressed():
-	if selected_option_id:
-		option_selected.emit(selected_option_id)
-		visible = false
+func _refresh_selection_visuals() -> void:
+	var map := {
+		"A": btn_opt_a,
+		"B": btn_opt_b,
+		"C": btn_opt_c
+	}
+	for option_id in map.keys():
+		var btn: Button = map[option_id]
+		if option_id == selected_option_id:
+			btn.modulate = Color(0.3, 1.0, 0.35, 1.0)
+		else:
+			btn.modulate = Color(1, 1, 1, 1)
+	btn_apply.disabled = selected_option_id == ""
 
-func _on_close_pressed():
-	visible = false
+func _on_apply_pressed() -> void:
+	if selected_option_id == "":
+		return
+	apply_requested.emit(selected_option_id)
+	hide()
+
+func _on_close_pressed() -> void:
+	canceled.emit()
+	hide()

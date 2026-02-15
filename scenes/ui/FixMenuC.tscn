@@ -1,45 +1,60 @@
-[gd_scene load_steps=3 format=3 uid="uid://fix_menu_c"]
+[gd_scene load_steps=3 format=3 uid="uid://fix_menu_c_new"]
 
 [ext_resource type="Script" path="res://scripts/ui/FixMenuC.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
 
 [node name="FixMenuC" type="PopupPanel"]
-title = "SYSTEM PATCH"
-initial_position = 2
-size = Vector2i(400, 350)
-visible = false
+initial_position = 1
+size = Vector2i(860, 420)
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
 [node name="Root" type="VBoxContainer" parent="."]
-offset_left = 4.0
-offset_top = 4.0
-offset_right = 396.0
-offset_bottom = 346.0
+layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="LblTitle" type="Label" parent="Root"]
 layout_mode = 2
-text = "SELECT FIX"
+theme_override_font_sizes/font_size = 28
+text = "FIX LINE 01"
 horizontal_alignment = 1
 
 [node name="LblOriginal" type="Label" parent="Root"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-text = "original: ..."
-autowrap_mode = 3
+autowrap_mode = 2
+text = "original: if i > 3:"
 
 [node name="Options" type="VBoxContainer" parent="Root"]
 layout_mode = 2
-size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="BtnApply" type="Button" parent="Root"]
-custom_minimum_size = Vector2(0, 40)
+[node name="BtnOptA" type="Button" parent="Root/Options"]
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
-text = "APPLY PATCH"
+text = "A) --"
 
-[node name="BtnClose" type="Button" parent="Root"]
-custom_minimum_size = Vector2(0, 40)
+[node name="BtnOptB" type="Button" parent="Root/Options"]
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
+text = "B) --"
+
+[node name="BtnOptC" type="Button" parent="Root/Options"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+text = "C) --"
+
+[node name="Actions" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BtnApply" type="Button" parent="Root/Actions"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "APPLY"
+
+[node name="BtnClose" type="Button" parent="Root/Actions"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
 text = "CANCEL"

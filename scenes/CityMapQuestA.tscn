@@ -1,0 +1,125 @@
+[gd_scene load_steps=3 format=3 uid="uid://citymapquest001"]
+
+[ext_resource type="Script" path="res://scenes/CityMapQuestA.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/theme_untformatic.tres" id="2_theme"]
+
+[node name="CityMapQuestA" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.1, 1)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Header" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="BtnBack" type="Button" parent="MainLayout/Header"]
+custom_minimum_size = Vector2(100, 50)
+layout_mode = 2
+text = "Back"
+
+[node name="TitleLabel" type="Label" parent="MainLayout/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Case 6.1: City Map"
+
+[node name="Spacer" type="Control" parent="MainLayout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TrustLabel" type="Label" parent="MainLayout/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 0.4, 1)
+theme_override_font_sizes/font_size = 24
+text = "Trust: 100%"
+
+[node name="TimerLabel" type="Label" parent="MainLayout/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "00:00"
+
+[node name="GraphContainer" type="Control" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EdgesLayer" type="Control" parent="MainLayout/GraphContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="NodesLayer" type="Control" parent="MainLayout/GraphContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Footer" type="VBoxContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PathDisplay" type="Label" parent="MainLayout/Footer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_font_sizes/font_size = 18
+text = "Path: A"
+horizontal_alignment = 1
+
+[node name="InputRow" type="HBoxContainer" parent="MainLayout/Footer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="SumLabel" type="Label" parent="MainLayout/Footer/InputRow"]
+layout_mode = 2
+text = "Total Weight:"
+
+[node name="SumInput" type="LineEdit" parent="MainLayout/Footer/InputRow"]
+custom_minimum_size = Vector2(150, 50)
+layout_mode = 2
+placeholder_text = "0"
+alignment = 1
+max_length = 5
+
+[node name="BtnReset" type="Button" parent="MainLayout/Footer/InputRow"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+text = "Reset"
+
+[node name="BtnSubmit" type="Button" parent="MainLayout/Footer/InputRow"]
+custom_minimum_size = Vector2(120, 50)
+layout_mode = 2
+theme_type_variation = &"PrimaryButton"
+text = "Submit"
+
+[node name="StatusLabel" type="Label" parent="MainLayout/Footer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
+text = ""
+horizontal_alignment = 1

@@ -157,4 +157,3 @@ const CASES_A: Array = [
 		"answer_id": "opt_2"
 	}
 ]
-

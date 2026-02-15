@@ -1,17 +1,18 @@
 extends PanelContainer
 
-@onready var explain_label = $VBoxContainer/ExplainList
-@onready var btn_close = $VBoxContainer/BtnClose
+@onready var lbl_title: Label = $Root/LblTitle
+@onready var text_body: RichTextLabel = $Root/Body
+@onready var btn_close: Button = $Root/BtnClose
 
-func _ready():
+func _ready() -> void:
 	btn_close.pressed.connect(_on_close_pressed)
 
-func setup(explain_lines: Array):
-	# Explain
-	var txt = "[b]DEBUG REPORT:[/b]\n"
-	for line in explain_lines:
-		txt += "- " + str(line) + "\n"
-	explain_label.text = txt
+func setup(title: String, lines: Array) -> void:
+	lbl_title.text = title
+	var out := ""
+	for line_var in lines:
+		out += "- %s\n" % str(line_var)
+	text_body.text = out
 
-func _on_close_pressed():
+func _on_close_pressed() -> void:
 	visible = false
