@@ -12,7 +12,7 @@ var case_started_ts: int = 0
 var first_action_ts: int = -1
 var trial_locked: bool = false
 var scroll_used: bool = false
-var prompt_has_scroll: bool = false
+var table_has_scroll: bool = false
 var exit_btn: Button
 
 @onready var title_label: RichTextLabel = $RootLayout/Header/Margin/Title
@@ -67,7 +67,7 @@ func _load_next_case() -> void:
 	case_started_ts = Time.get_ticks_msec()
 	first_action_ts = -1
 	scroll_used = false
-	prompt_has_scroll = false
+	table_has_scroll = false
 	trial_locked = false
 	_render_case()
 
@@ -160,7 +160,7 @@ func _log_trial(selected_id: String, answer_id: String, is_correct: bool) -> voi
 	var first_action_ms: int = elapsed_ms
 	if first_action_ts >= case_started_ts:
 		first_action_ms = first_action_ts - case_started_ts
-	var silent_reading_possible: bool = (not prompt_has_scroll and not scroll_used and first_action_ms >= 30000)
+	var silent_reading_possible: bool = (not table_has_scroll and not scroll_used and first_action_ms >= 30000)
 	var case_id: String = str(current_case.get("id", "DA7-A-00"))
 	var selected_option: Dictionary = _find_option(selected_id)
 	var f_reason: Variant = null if is_correct else selected_option.get("f_reason", "WRONG_OPTION_GENERIC")
@@ -218,13 +218,20 @@ func _register_first_action() -> void:
 		first_action_ts = Time.get_ticks_msec()
 
 func _update_silent_reading_possible_flag() -> void:
-	if not is_instance_valid(prompt_label):
-		return
-	var v_scroll: VScrollBar = prompt_label.get_v_scroll_bar()
-	if is_instance_valid(v_scroll):
-		prompt_has_scroll = v_scroll.max_value > 0.0 and v_scroll.page < v_scroll.max_value
-	else:
-		prompt_has_scroll = false
+	table_has_scroll = _tree_has_vertical_scroll(data_tree)
+
+func _tree_has_vertical_scroll(tree: Tree) -> bool:
+	if not is_instance_valid(tree):
+		return false
+	var stack: Array = [tree]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back() as Node
+		if node is VScrollBar:
+			var bar: VScrollBar = node as VScrollBar
+			return bar.max_value > 0.0 and bar.page < bar.max_value
+		for child in node.get_children():
+			stack.append(child)
+	return false
 
 func _on_scroll_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:

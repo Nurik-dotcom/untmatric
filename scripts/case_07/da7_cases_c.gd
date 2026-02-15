@@ -1,6 +1,6 @@
 extends Node
 
-const SCHEMA_VERSION := "DA7.C.v1"
+const SCHEMA_VERSION := "DA7.C.v2"
 const LEVEL := "C"
 
 const CASES_C: Array = [
@@ -13,26 +13,31 @@ const CASES_C: Array = [
 		"interaction_type": "ASSEMBLE_BLOCKS",
 		"prompt": "Build a query that selects user names where id = 5.",
 		"available_blocks": [
-			{"id": "b1", "text": "SELECT", "role": "KW_MAIN", "group": "KW", "is_distractor": false},
-			{"id": "b2", "text": "name", "role": "FIELD", "group": "ID", "is_distractor": false},
-			{"id": "b3", "text": "FROM", "role": "KW_FROM", "group": "KW", "is_distractor": false},
-			{"id": "b4", "text": "Users", "role": "TABLE", "group": "ID", "is_distractor": false},
-			{"id": "b5", "text": "WHERE", "role": "KW_WHERE", "group": "KW", "is_distractor": false},
-			{"id": "b6", "text": "id=5", "role": "COND", "group": "COND", "is_distractor": false},
-			{"id": "b7", "text": "DELETE", "role": "KW_DELETE", "group": "KW", "is_distractor": true},
-			{"id": "b8", "text": "ORDER BY", "role": "KW_ORDER", "group": "KW", "is_distractor": true},
-			{"id": "b9", "text": "DESC", "role": "ORDER_DIR", "group": "KW", "is_distractor": true}
+			{"id": "b1", "text": "SELECT", "role": "KW_MAIN"},
+			{"id": "b2", "text": "name", "role": "IDENT_FIELD"},
+			{"id": "b3", "text": "FROM", "role": "KW_FROM"},
+			{"id": "b4", "text": "Users", "role": "IDENT_TABLE"},
+			{"id": "b5", "text": "WHERE", "role": "KW_WHERE"},
+			{"id": "b6", "text": "id=5", "role": "COND_WHERE"},
+			{"id": "b7", "text": "DELETE", "role": "KW_DISTRACTOR"},
+			{"id": "b8", "text": "TABLE", "role": "KW_DISTRACTOR"}
 		],
-		"constraints": {
-			"required_roles": ["KW_MAIN", "FIELD", "KW_FROM", "TABLE", "KW_WHERE", "COND"],
-			"forbidden_roles": ["DDL_OBJ", "KW_DELETE"],
-			"skeleton_order": ["KW_MAIN", "FIELD", "KW_FROM", "TABLE", "KW_WHERE", "COND"],
-			"allow_repeat_roles": [],
-			"min_tokens": 6,
-			"max_tokens": 8
-		},
 		"correct_sequence_ids": ["b1", "b2", "b3", "b4", "b5", "b6"],
-		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "FAIL_TASK"},
+		"rules": {
+			"required_roles": ["KW_MAIN", "KW_FROM", "IDENT_TABLE"],
+			"min_tokens": 6,
+			"allow_repeat_roles": [],
+			"forbidden_block_ids": ["b7", "b8"],
+			"forbidden_roles": ["KW_DISTRACTOR"],
+			"skeleton_roles": ["KW_MAIN", "KW_FROM", "IDENT_TABLE"],
+			"order_rules": [
+				{"before": "KW_FROM", "after": "KW_MAIN"},
+				{"before": "IDENT_TABLE", "after": "KW_FROM"},
+				{"before": "KW_WHERE", "after": "IDENT_TABLE"},
+				{"before": "COND_WHERE", "after": "KW_WHERE"}
+			]
+		},
+		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "TIMEOUT"},
 		"anti_cheat": {"shuffle_blocks": true}
 	},
 	{
@@ -44,25 +49,32 @@ const CASES_C: Array = [
 		"interaction_type": "ASSEMBLE_BLOCKS",
 		"prompt": "Build UPDATE query: set role='admin' for user id = 5.",
 		"available_blocks": [
-			{"id": "b1", "text": "UPDATE", "role": "KW_MAIN", "group": "KW", "is_distractor": false},
-			{"id": "b2", "text": "Users", "role": "TABLE", "group": "ID", "is_distractor": false},
-			{"id": "b3", "text": "SET", "role": "KW_SET", "group": "KW", "is_distractor": false},
-			{"id": "b4", "text": "role='admin'", "role": "ASSIGN", "group": "COND", "is_distractor": false},
-			{"id": "b5", "text": "WHERE", "role": "KW_WHERE", "group": "KW", "is_distractor": false},
-			{"id": "b6", "text": "id=5", "role": "COND", "group": "COND", "is_distractor": false},
-			{"id": "b7", "text": "FROM", "role": "KW_FROM", "group": "KW", "is_distractor": true},
-			{"id": "b8", "text": "DROP", "role": "KW_DROP", "group": "KW", "is_distractor": true}
+			{"id": "b1", "text": "UPDATE", "role": "KW_MAIN"},
+			{"id": "b2", "text": "Users", "role": "IDENT_TABLE"},
+			{"id": "b3", "text": "SET", "role": "KW_SET"},
+			{"id": "b4", "text": "role='admin'", "role": "ASSIGN"},
+			{"id": "b5", "text": "WHERE", "role": "KW_WHERE"},
+			{"id": "b6", "text": "id=5", "role": "COND_WHERE"},
+			{"id": "b7", "text": "FROM", "role": "KW_DISTRACTOR"},
+			{"id": "b8", "text": "DROP", "role": "KW_DISTRACTOR"}
 		],
-		"constraints": {
-			"required_roles": ["KW_MAIN", "TABLE", "KW_SET", "ASSIGN", "KW_WHERE", "COND"],
-			"forbidden_roles": ["DDL_OBJ", "KW_DROP", "KW_FROM"],
-			"skeleton_order": ["KW_MAIN", "TABLE", "KW_SET", "ASSIGN", "KW_WHERE", "COND"],
-			"allow_repeat_roles": [],
-			"min_tokens": 6,
-			"max_tokens": 8
-		},
 		"correct_sequence_ids": ["b1", "b2", "b3", "b4", "b5", "b6"],
-		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "FAIL_TASK"},
+		"rules": {
+			"required_roles": ["KW_MAIN", "IDENT_TABLE", "KW_SET", "ASSIGN"],
+			"min_tokens": 6,
+			"allow_repeat_roles": [],
+			"forbidden_block_ids": ["b7", "b8"],
+			"forbidden_roles": ["KW_DISTRACTOR"],
+			"skeleton_roles": ["KW_MAIN", "IDENT_TABLE", "KW_SET"],
+			"order_rules": [
+				{"before": "IDENT_TABLE", "after": "KW_MAIN"},
+				{"before": "KW_SET", "after": "IDENT_TABLE"},
+				{"before": "ASSIGN", "after": "KW_SET"},
+				{"before": "KW_WHERE", "after": "ASSIGN"},
+				{"before": "COND_WHERE", "after": "KW_WHERE"}
+			]
+		},
+		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "TIMEOUT"},
 		"anti_cheat": {"shuffle_blocks": true}
 	},
 	{
@@ -74,24 +86,30 @@ const CASES_C: Array = [
 		"interaction_type": "ASSEMBLE_BLOCKS",
 		"prompt": "Delete DEBUG logs from Logs table.",
 		"available_blocks": [
-			{"id": "b1", "text": "DELETE", "role": "KW_MAIN", "group": "KW", "is_distractor": false},
-			{"id": "b2", "text": "FROM", "role": "KW_FROM", "group": "KW", "is_distractor": false},
-			{"id": "b3", "text": "Logs", "role": "TABLE", "group": "ID", "is_distractor": false},
-			{"id": "b4", "text": "WHERE", "role": "KW_WHERE", "group": "KW", "is_distractor": false},
-			{"id": "b5", "text": "level='DEBUG'", "role": "COND", "group": "COND", "is_distractor": false},
-			{"id": "b6", "text": "TABLE", "role": "DDL_OBJ", "group": "KW", "is_distractor": true},
-			{"id": "b7", "text": "CREATE", "role": "KW_CREATE", "group": "KW", "is_distractor": true}
+			{"id": "b1", "text": "DELETE", "role": "KW_MAIN"},
+			{"id": "b2", "text": "FROM", "role": "KW_FROM"},
+			{"id": "b3", "text": "Logs", "role": "IDENT_TABLE"},
+			{"id": "b4", "text": "WHERE", "role": "KW_WHERE"},
+			{"id": "b5", "text": "level='DEBUG'", "role": "COND_WHERE"},
+			{"id": "b6", "text": "TABLE", "role": "DDL_TARGET"},
+			{"id": "b7", "text": "CREATE", "role": "KW_DISTRACTOR"}
 		],
-		"constraints": {
-			"required_roles": ["KW_MAIN", "KW_FROM", "TABLE", "KW_WHERE", "COND"],
-			"forbidden_roles": ["DDL_OBJ", "KW_CREATE"],
-			"skeleton_order": ["KW_MAIN", "KW_FROM", "TABLE", "KW_WHERE", "COND"],
-			"allow_repeat_roles": [],
-			"min_tokens": 5,
-			"max_tokens": 7
-		},
 		"correct_sequence_ids": ["b1", "b2", "b3", "b4", "b5"],
-		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "FAIL_TASK"},
+		"rules": {
+			"required_roles": ["KW_MAIN", "KW_FROM", "IDENT_TABLE"],
+			"min_tokens": 5,
+			"allow_repeat_roles": [],
+			"forbidden_block_ids": ["b6", "b7"],
+			"forbidden_roles": ["DDL_TARGET", "KW_DISTRACTOR"],
+			"skeleton_roles": ["KW_MAIN", "KW_FROM", "IDENT_TABLE"],
+			"order_rules": [
+				{"before": "KW_FROM", "after": "KW_MAIN"},
+				{"before": "IDENT_TABLE", "after": "KW_FROM"},
+				{"before": "KW_WHERE", "after": "IDENT_TABLE"},
+				{"before": "COND_WHERE", "after": "KW_WHERE"}
+			]
+		},
+		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "TIMEOUT"},
 		"anti_cheat": {"shuffle_blocks": true}
 	},
 	{
@@ -103,24 +121,31 @@ const CASES_C: Array = [
 		"interaction_type": "ASSEMBLE_BLOCKS",
 		"prompt": "Insert user (7, 'Neo') into Users table.",
 		"available_blocks": [
-			{"id": "b1", "text": "INSERT", "role": "KW_MAIN", "group": "KW", "is_distractor": false},
-			{"id": "b2", "text": "INTO", "role": "KW_INTO", "group": "KW", "is_distractor": false},
-			{"id": "b3", "text": "Users", "role": "TABLE", "group": "ID", "is_distractor": false},
-			{"id": "b4", "text": "(id,name)", "role": "FIELD_LIST", "group": "ID", "is_distractor": false},
-			{"id": "b5", "text": "VALUES", "role": "KW_VALUES", "group": "KW", "is_distractor": false},
-			{"id": "b6", "text": "(7,'Neo')", "role": "VALUE_LIST", "group": "COND", "is_distractor": false},
-			{"id": "b7", "text": "WHERE", "role": "KW_WHERE", "group": "KW", "is_distractor": true}
+			{"id": "b1", "text": "INSERT", "role": "KW_MAIN"},
+			{"id": "b2", "text": "INTO", "role": "KW_INTO"},
+			{"id": "b3", "text": "Users", "role": "IDENT_TABLE"},
+			{"id": "b4", "text": "(id,name)", "role": "FIELD_LIST"},
+			{"id": "b5", "text": "VALUES", "role": "KW_VALUES"},
+			{"id": "b6", "text": "(7,'Neo')", "role": "VALUE_LIST"},
+			{"id": "b7", "text": "WHERE", "role": "KW_DISTRACTOR"}
 		],
-		"constraints": {
-			"required_roles": ["KW_MAIN", "KW_INTO", "TABLE", "FIELD_LIST", "KW_VALUES", "VALUE_LIST"],
-			"forbidden_roles": ["KW_WHERE", "DDL_OBJ"],
-			"skeleton_order": ["KW_MAIN", "KW_INTO", "TABLE", "FIELD_LIST", "KW_VALUES", "VALUE_LIST"],
-			"allow_repeat_roles": [],
-			"min_tokens": 6,
-			"max_tokens": 8
-		},
 		"correct_sequence_ids": ["b1", "b2", "b3", "b4", "b5", "b6"],
-		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "FAIL_TASK"},
+		"rules": {
+			"required_roles": ["KW_MAIN", "KW_INTO", "IDENT_TABLE", "KW_VALUES"],
+			"min_tokens": 6,
+			"allow_repeat_roles": [],
+			"forbidden_block_ids": ["b7"],
+			"forbidden_roles": ["KW_DISTRACTOR"],
+			"skeleton_roles": ["KW_MAIN", "KW_INTO", "IDENT_TABLE"],
+			"order_rules": [
+				{"before": "KW_INTO", "after": "KW_MAIN"},
+				{"before": "IDENT_TABLE", "after": "KW_INTO"},
+				{"before": "FIELD_LIST", "after": "IDENT_TABLE"},
+				{"before": "KW_VALUES", "after": "FIELD_LIST"},
+				{"before": "VALUE_LIST", "after": "KW_VALUES"}
+			]
+		},
+		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "TIMEOUT"},
 		"anti_cheat": {"shuffle_blocks": true}
 	},
 	{
@@ -132,23 +157,28 @@ const CASES_C: Array = [
 		"interaction_type": "ASSEMBLE_BLOCKS",
 		"prompt": "Create table Archive with a single INT id column.",
 		"available_blocks": [
-			{"id": "b1", "text": "CREATE", "role": "KW_MAIN", "group": "KW", "is_distractor": false},
-			{"id": "b2", "text": "TABLE", "role": "DDL_OBJ", "group": "KW", "is_distractor": false},
-			{"id": "b3", "text": "Archive", "role": "TABLE", "group": "ID", "is_distractor": false},
-			{"id": "b4", "text": "(id INT)", "role": "DDL_DEF", "group": "COND", "is_distractor": false},
-			{"id": "b5", "text": "WHERE", "role": "KW_WHERE", "group": "KW", "is_distractor": true},
-			{"id": "b6", "text": "DELETE", "role": "KW_DELETE", "group": "KW", "is_distractor": true}
+			{"id": "b1", "text": "CREATE", "role": "KW_MAIN"},
+			{"id": "b2", "text": "TABLE", "role": "DDL_TARGET"},
+			{"id": "b3", "text": "Archive", "role": "IDENT_TABLE"},
+			{"id": "b4", "text": "(id INT)", "role": "DDL_DEF"},
+			{"id": "b5", "text": "WHERE", "role": "KW_DISTRACTOR"},
+			{"id": "b6", "text": "DELETE", "role": "KW_DISTRACTOR"}
 		],
-		"constraints": {
-			"required_roles": ["KW_MAIN", "DDL_OBJ", "TABLE", "DDL_DEF"],
-			"forbidden_roles": ["KW_WHERE", "KW_DELETE"],
-			"skeleton_order": ["KW_MAIN", "DDL_OBJ", "TABLE", "DDL_DEF"],
-			"allow_repeat_roles": [],
-			"min_tokens": 4,
-			"max_tokens": 6
-		},
 		"correct_sequence_ids": ["b1", "b2", "b3", "b4"],
-		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "FAIL_TASK"},
+		"rules": {
+			"required_roles": ["KW_MAIN", "DDL_TARGET", "IDENT_TABLE", "DDL_DEF"],
+			"min_tokens": 4,
+			"allow_repeat_roles": [],
+			"forbidden_block_ids": ["b5", "b6"],
+			"forbidden_roles": ["KW_DISTRACTOR"],
+			"skeleton_roles": ["KW_MAIN", "DDL_TARGET", "IDENT_TABLE"],
+			"order_rules": [
+				{"before": "DDL_TARGET", "after": "KW_MAIN"},
+				{"before": "IDENT_TABLE", "after": "DDL_TARGET"},
+				{"before": "DDL_DEF", "after": "IDENT_TABLE"}
+			]
+		},
+		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "TIMEOUT"},
 		"anti_cheat": {"shuffle_blocks": true}
 	},
 	{
@@ -160,22 +190,26 @@ const CASES_C: Array = [
 		"interaction_type": "ASSEMBLE_BLOCKS",
 		"prompt": "Create database ArchiveDB.",
 		"available_blocks": [
-			{"id": "b1", "text": "CREATE", "role": "KW_MAIN", "group": "KW", "is_distractor": false},
-			{"id": "b2", "text": "DATABASE", "role": "DDL_OBJ", "group": "KW", "is_distractor": false},
-			{"id": "b3", "text": "ArchiveDB", "role": "DB_NAME", "group": "ID", "is_distractor": false},
-			{"id": "b4", "text": "TABLE", "role": "KW_TABLE", "group": "KW", "is_distractor": true},
-			{"id": "b5", "text": "FROM", "role": "KW_FROM", "group": "KW", "is_distractor": true}
+			{"id": "b1", "text": "CREATE", "role": "KW_MAIN"},
+			{"id": "b2", "text": "DATABASE", "role": "DDL_TARGET"},
+			{"id": "b3", "text": "ArchiveDB", "role": "IDENT_DB"},
+			{"id": "b4", "text": "TABLE", "role": "KW_DISTRACTOR"},
+			{"id": "b5", "text": "FROM", "role": "KW_DISTRACTOR"}
 		],
-		"constraints": {
-			"required_roles": ["KW_MAIN", "DDL_OBJ", "DB_NAME"],
-			"forbidden_roles": ["KW_TABLE", "KW_FROM"],
-			"skeleton_order": ["KW_MAIN", "DDL_OBJ", "DB_NAME"],
-			"allow_repeat_roles": [],
-			"min_tokens": 3,
-			"max_tokens": 5
-		},
 		"correct_sequence_ids": ["b1", "b2", "b3"],
-		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "FAIL_TASK"},
+		"rules": {
+			"required_roles": ["KW_MAIN", "DDL_TARGET", "IDENT_DB"],
+			"min_tokens": 3,
+			"allow_repeat_roles": [],
+			"forbidden_block_ids": ["b4", "b5"],
+			"forbidden_roles": ["KW_DISTRACTOR"],
+			"skeleton_roles": ["KW_MAIN", "DDL_TARGET", "IDENT_DB"],
+			"order_rules": [
+				{"before": "DDL_TARGET", "after": "KW_MAIN"},
+				{"before": "IDENT_DB", "after": "DDL_TARGET"}
+			]
+		},
+		"timing_policy": {"mode": "EXAM", "limit_sec": 120, "on_timeout": "TIMEOUT"},
 		"anti_cheat": {"shuffle_blocks": true}
 	}
 ]
@@ -188,24 +222,63 @@ static func validate_case_c(case_data: Dictionary) -> bool:
 	if str(case_data.get("interaction_type", "")) != "ASSEMBLE_BLOCKS":
 		push_error("Case %s bad interaction_type" % case_id)
 		return false
+
 	var blocks: Array = case_data.get("available_blocks", []) as Array
-	var constraints: Dictionary = case_data.get("constraints", {}) as Dictionary
+	var rules: Dictionary = case_data.get("rules", {}) as Dictionary
 	var correct_ids: Array = case_data.get("correct_sequence_ids", []) as Array
-	if blocks.is_empty() or constraints.is_empty() or correct_ids.is_empty():
-		push_error("Case %s missing blocks/constraints/correct ids" % case_id)
+	if blocks.is_empty() or rules.is_empty() or correct_ids.is_empty():
+		push_error("Case %s missing blocks/rules/correct ids" % case_id)
 		return false
-	var block_ids: Dictionary = {}
+
+	var block_by_id: Dictionary = {}
 	for block_v in blocks:
 		if typeof(block_v) != TYPE_DICTIONARY:
-			continue
+			push_error("Case %s has non-dictionary block" % case_id)
+			return false
 		var block_data: Dictionary = block_v as Dictionary
 		var block_id: String = str(block_data.get("id", ""))
-		if block_id == "" or block_ids.has(block_id):
-			push_error("Case %s has invalid block ids" % case_id)
+		var block_text: String = str(block_data.get("text", ""))
+		var block_role: String = str(block_data.get("role", ""))
+		if block_id == "" or block_text == "" or block_role == "" or block_by_id.has(block_id):
+			push_error("Case %s has invalid block contract" % case_id)
 			return false
-		block_ids[block_id] = true
+		block_by_id[block_id] = block_data
+
+	var required_roles: Array = rules.get("required_roles", []) as Array
+	var allow_repeat_roles: Array = rules.get("allow_repeat_roles", []) as Array
+	var forbidden_block_ids: Array = rules.get("forbidden_block_ids", []) as Array
+	var forbidden_roles: Array = rules.get("forbidden_roles", []) as Array
+	var skeleton_roles: Array = rules.get("skeleton_roles", []) as Array
+	var order_rules: Array = rules.get("order_rules", []) as Array
+	var min_tokens: int = int(rules.get("min_tokens", 0))
+	if min_tokens <= 0:
+		push_error("Case %s has invalid min_tokens" % case_id)
+		return false
+	if required_roles.is_empty() or skeleton_roles.is_empty():
+		push_error("Case %s rules missing required/skeleton roles" % case_id)
+		return false
+	if typeof(allow_repeat_roles) != TYPE_ARRAY or typeof(forbidden_block_ids) != TYPE_ARRAY or typeof(forbidden_roles) != TYPE_ARRAY:
+		push_error("Case %s rules arrays are malformed" % case_id)
+		return false
+	for block_id_v in forbidden_block_ids:
+		if not block_by_id.has(str(block_id_v)):
+			push_error("Case %s forbidden block id %s is unknown" % [case_id, str(block_id_v)])
+			return false
+	for order_rule_v in order_rules:
+		if typeof(order_rule_v) != TYPE_DICTIONARY:
+			push_error("Case %s has malformed order rule" % case_id)
+			return false
+		var order_rule: Dictionary = order_rule_v as Dictionary
+		if str(order_rule.get("before", "")) == "" or str(order_rule.get("after", "")) == "":
+			push_error("Case %s has incomplete order rule" % case_id)
+			return false
+
 	for id_v in correct_ids:
-		if not block_ids.has(str(id_v)):
+		if not block_by_id.has(str(id_v)):
 			push_error("Case %s correct_sequence_ids contains unknown block id %s" % [case_id, str(id_v)])
 			return false
+	if correct_ids.size() < min_tokens:
+		push_error("Case %s correct sequence shorter than min_tokens" % case_id)
+		return false
+
 	return true

@@ -24,6 +24,7 @@ var ui_ready_ts: int = 0
 var time_to_first_action_ms: int = -1
 var time_to_first_toggle_ms: int = -1
 var scroll_used: bool = false
+var table_has_scroll: bool = false
 var clear_used: bool = false
 var clear_count: int = 0
 var toggle_count: int = 0
@@ -134,6 +135,7 @@ func _load_next_case():
 	time_to_first_action_ms = -1
 	time_to_first_toggle_ms = -1
 	scroll_used = false
+	table_has_scroll = false
 	clear_used = false
 	clear_count = 0
 	toggle_count = 0
@@ -212,6 +214,7 @@ func _render_filter_ui():
 	prompt_label.text = str(current_case.get("prompt", ""))
 	prompt_label.visible_characters = 0
 	_refresh_submit_enabled()
+	call_deferred("_update_table_scroll_flag")
 
 func _render_relation_ui():
 	# Clear previous options
@@ -329,17 +332,20 @@ func _on_data_tree_gui_input(event: InputEvent) -> void:
 func _on_clear_pressed():
 	if not is_trial_active:
 		return
-	clear_used = true
-	clear_count += 1
+	var cleared_any: bool = false
 	_suppress_tree_edited = true
 	var root: TreeItem = data_tree.get_root()
 	if root:
 		var item: TreeItem = root.get_first_child()
 		while item:
 			if item.is_checked(0):
+				cleared_any = true
 				item.set_checked(0, false)
 			item = item.get_next()
 	_suppress_tree_edited = false
+	if cleared_any:
+		clear_used = true
+		clear_count += 1
 	_refresh_submit_enabled()
 
 func _on_submit_pressed():
@@ -496,8 +502,9 @@ func _log_trial(is_correct: bool, f_reason: Variant, data: Dictionary):
 		"answer": {},
 		"expected": {},
 		"flags": {
-			"silent_reading_possible": (time_to_first_action_ms >= 30000 and not scroll_used),
-			"had_scroll": scroll_used
+			"silent_reading_possible": (time_to_first_action_ms >= 30000 and not scroll_used and not table_has_scroll),
+			"had_scroll": scroll_used,
+			"table_has_scroll": table_has_scroll
 		},
 		"anti_cheat": current_case.get("anti_cheat", {}),
 		"layout_mode": current_layout_mode,
@@ -589,6 +596,8 @@ func _on_viewport_size_changed():
 	filter_mode_root.dragger_visibility = SplitContainer.DRAGGER_HIDDEN if is_mobile else SplitContainer.DRAGGER_VISIBLE
 	_apply_filter_layout_mode(is_mobile)
 	_apply_relation_layout_mode(is_mobile)
+	if mode == "FILTER":
+		call_deferred("_update_table_scroll_flag")
 
 func _finish_session():
 	is_game_over = true
@@ -689,7 +698,17 @@ func _update_relation_connector() -> void:
 		connector_overlay.visible = false
 		return
 	connector_overlay.visible = true
-	if connector_overlay.has_method("set_endpoints"):
+	var orientation: String = "vertical" if current_layout_mode == LAYOUT_MOBILE else "horizontal"
+	var schema_visual: Dictionary = current_case.get("schema_visual", {}) as Dictionary
+	var links_config: Array = schema_visual.get("links", []) as Array
+	if links_config.size() > 0 and connector_overlay.has_method("set_links"):
+		var overlay_links: Array = []
+		for _link in links_config:
+			overlay_links.append({"from": rel_left_table, "to": rel_right_table})
+		connector_overlay.call_deferred("set_links", overlay_links, relation_mode_root, "edge", orientation)
+	elif connector_overlay.has_method("set_endpoints"):
+		if connector_overlay.has_method("set_anchor_mode"):
+			connector_overlay.call("set_anchor_mode", "edge", orientation)
 		connector_overlay.call_deferred("set_endpoints", rel_left_table, rel_right_table, relation_mode_root)
 
 func _set_filter_input_locked(locked: bool) -> void:
@@ -724,6 +743,22 @@ func _selected_count() -> int:
 				count += 1
 			item = item.get_next()
 	return count
+
+func _update_table_scroll_flag() -> void:
+	table_has_scroll = _tree_has_vertical_scroll(data_tree)
+
+func _tree_has_vertical_scroll(tree: Tree) -> bool:
+	if not is_instance_valid(tree):
+		return false
+	var stack: Array = [tree]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back() as Node
+		if node is VScrollBar:
+			var bar: VScrollBar = node as VScrollBar
+			return bar.max_value > 0.0 and bar.page < bar.max_value
+		for child in node.get_children():
+			stack.append(child)
+	return false
 
 func _array_intersection(arr1: Array, arr2: Array) -> Array:
 	var lookup: Dictionary = {}

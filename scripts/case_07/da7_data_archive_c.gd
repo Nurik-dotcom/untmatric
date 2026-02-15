@@ -35,6 +35,7 @@ var reorder_count: int = 0
 var undo_count: int = 0
 var block_pick_count: int = 0
 var clear_used: bool = false
+var unique_blocks_used: Dictionary = {}
 
 @onready var title_label: Label = $SafeArea/Margin/Root/Header/HeaderVBox/Title
 @onready var stability_label: Label = $SafeArea/Margin/Root/Header/HeaderVBox/TimerRow/StabilityLabel
@@ -84,7 +85,8 @@ func _process(delta: float) -> void:
 	_update_timer_ui()
 	if time_left_sec <= 0.0 and not timed_out:
 		timed_out = true
-		_finish_trial(false, "INCOMPLETE_QUERY", {"timed_out": true})
+		var timeout_eval: Dictionary = _evaluate_sequence(selected_sequence_ids, true)
+		_finish_trial(false, "TIMEOUT", timeout_eval, "TIMEOUT")
 
 func _init_session() -> void:
 	var all_cases: Array = CasesHub.get_cases("C")
@@ -117,6 +119,7 @@ func _load_next_case() -> void:
 	undo_count = 0
 	block_pick_count = 0
 	clear_used = false
+	unique_blocks_used.clear()
 	selected_sequence_ids.clear()
 	repo_button_by_id.clear()
 	block_by_id.clear()
@@ -135,7 +138,8 @@ func _render_case() -> void:
 	prompt_label.visible_characters = 0
 	typewriter_active = true
 	typewriter_accum = 0.0
-	allow_repeat_roles = ((current_case.get("constraints", {}) as Dictionary).get("allow_repeat_roles", []) as Array)
+	var rules: Dictionary = _active_rules()
+	allow_repeat_roles = (rules.get("allow_repeat_roles", []) as Array).duplicate()
 	_build_block_repository()
 	_rebuild_code_area()
 	_set_input_locked(false)
@@ -144,6 +148,12 @@ func _render_case() -> void:
 	status_label.text = "Compose query tokens and submit."
 	_update_timer_ui()
 	_update_stability_ui()
+
+func _active_rules() -> Dictionary:
+	var rules: Dictionary = current_case.get("rules", {}) as Dictionary
+	if rules.is_empty():
+		rules = current_case.get("constraints", {}) as Dictionary
+	return rules
 
 func _build_block_repository() -> void:
 	for child in block_repository.get_children():
@@ -180,6 +190,7 @@ func _on_block_pressed(block_id: String) -> void:
 		return
 	selected_sequence_ids.append(block_id)
 	block_pick_count += 1
+	unique_blocks_used[block_id] = true
 	var btn: Button = repo_button_by_id.get(block_id, null) as Button
 	if is_instance_valid(btn):
 		btn.disabled = true
@@ -270,6 +281,8 @@ func _on_undo_pressed() -> void:
 func _on_clear_pressed() -> void:
 	if trial_locked or not is_trial_active:
 		return
+	if selected_sequence_ids.is_empty():
+		return
 	clear_used = true
 	selected_sequence_ids.clear()
 	for block_id in repo_button_by_id.keys():
@@ -285,10 +298,11 @@ func _on_submit_pressed() -> void:
 	_register_interaction()
 	var eval_result: Dictionary = _evaluate_sequence(selected_sequence_ids)
 	var is_correct: bool = bool(eval_result.get("is_correct", false))
-	var f_reason: Variant = null if is_correct else str(eval_result.get("f_reason", "LOGIC_MISMATCH"))
-	_finish_trial(is_correct, f_reason, eval_result)
+	var f_reason: Variant = eval_result.get("f_reason", null)
+	var end_state: String = "SUCCESS" if is_correct else "FAIL"
+	_finish_trial(is_correct, f_reason, eval_result, end_state)
 
-func _finish_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary) -> void:
+func _finish_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary, end_state: String) -> void:
 	trial_locked = true
 	is_trial_active = false
 	typewriter_active = false
@@ -302,113 +316,169 @@ func _finish_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary)
 		status_label.text = "FAILED: %s" % str(f_reason)
 		if is_instance_valid(sfx_error):
 			sfx_error.play()
-	_log_trial(is_correct, f_reason, eval_result)
+	_log_trial(is_correct, f_reason, eval_result, end_state)
 	_update_stability_ui()
 	btn_next.visible = true
 
-func _evaluate_sequence(selected_ids: Array[String]) -> Dictionary:
-	var constraints: Dictionary = current_case.get("constraints", {}) as Dictionary
-	var required_roles: Array = constraints.get("required_roles", []) as Array
-	var forbidden_roles: Array = constraints.get("forbidden_roles", []) as Array
-	var skeleton_order: Array = constraints.get("skeleton_order", []) as Array
-	var min_tokens: int = int(constraints.get("min_tokens", 1))
-	var max_tokens: int = int(constraints.get("max_tokens", 64))
-	var correct_ids: Array = current_case.get("correct_sequence_ids", []) as Array
+func _evaluate_sequence(selected_ids: Array[String], force_timeout: bool = false) -> Dictionary:
+	var rules: Dictionary = _active_rules()
+	var required_roles: Array = rules.get("required_roles", []) as Array
+	var forbidden_roles: Array = rules.get("forbidden_roles", []) as Array
+	var forbidden_block_ids: Array = rules.get("forbidden_block_ids", []) as Array
+	var skeleton_roles: Array = rules.get("skeleton_roles", []) as Array
+	var order_rules: Array = rules.get("order_rules", []) as Array
+	var min_tokens: int = int(rules.get("min_tokens", 1))
+	var correct_ids: Array[String] = _to_string_array(current_case.get("correct_sequence_ids", []) as Array)
+
+	var selected_roles: Array[String] = _roles_for_ids(selected_ids)
+	var missing_roles: Array[String] = _missing_required_roles(selected_roles, required_roles)
+	var diff: Dictionary = _build_diff(selected_ids, correct_ids)
+
+	if force_timeout:
+		return _build_eval("TIMEOUT", selected_roles, missing_roles, diff)
 	if selected_ids == correct_ids:
-		return {
-			"is_correct": true,
-			"f_reason": null,
-			"missing_roles": [],
-			"selected_roles": _roles_for_ids(selected_ids)
-		}
-
-	var selected_roles: Array = _roles_for_ids(selected_ids)
-	var missing_roles: Array = _missing_required_roles(selected_roles, required_roles)
+		return _build_eval("SUCCESS", selected_roles, [], diff)
+	if _has_forbidden_tokens(selected_ids, selected_roles, forbidden_block_ids, forbidden_roles):
+		return _build_eval("SQL_SYNTAX_ERROR", selected_roles, missing_roles, diff)
 	if selected_ids.size() < min_tokens or not missing_roles.is_empty():
-		return {
-			"is_correct": false,
-			"f_reason": "INCOMPLETE_QUERY",
-			"missing_roles": missing_roles,
-			"selected_roles": selected_roles
-		}
+		return _build_eval("INCOMPLETE_QUERY", selected_roles, missing_roles, diff)
+	if _violates_order_rules(selected_roles, order_rules) or _violates_skeleton_order(selected_roles, skeleton_roles):
+		return _build_eval("KEYWORD_ORDER", selected_roles, missing_roles, diff)
+	if _same_multiset(selected_ids, correct_ids) and selected_ids != correct_ids:
+		return _build_eval("KEYWORD_ORDER", selected_roles, missing_roles, diff)
+	if (diff.get("extra_ids", []) as Array).size() > 0:
+		return _build_eval("EXTRA_TOKENS", selected_roles, missing_roles, diff)
+	return _build_eval("LOGIC_MISMATCH", selected_roles, missing_roles, diff)
 
-	if _contains_any_role(selected_roles, forbidden_roles):
-		return {
-			"is_correct": false,
-			"f_reason": "SQL_SYNTAX_ERROR",
-			"missing_roles": missing_roles,
-			"selected_roles": selected_roles
-		}
-
-	if not _roles_follow_order(selected_roles, skeleton_order):
-		return {
-			"is_correct": false,
-			"f_reason": "KEYWORD_ORDER",
-			"missing_roles": missing_roles,
-			"selected_roles": selected_roles
-		}
-
-	if selected_ids.size() > max_tokens or _has_extra_tokens(selected_ids, correct_ids):
-		return {
-			"is_correct": false,
-			"f_reason": "EXTRA_TOKENS",
-			"missing_roles": missing_roles,
-			"selected_roles": selected_roles
-		}
-
+func _build_eval(reason: String, selected_roles: Array[String], missing_roles: Array[String], diff: Dictionary) -> Dictionary:
+	var is_correct: bool = reason == "SUCCESS"
+	var final_reason: Variant = null if is_correct else reason
 	return {
-		"is_correct": false,
-		"f_reason": "LOGIC_MISMATCH",
+		"is_correct": is_correct,
+		"f_reason": final_reason,
+		"selected_roles": selected_roles,
 		"missing_roles": missing_roles,
-		"selected_roles": selected_roles
+		"diff": diff
 	}
 
-func _roles_for_ids(ids: Array[String]) -> Array:
-	var roles: Array = []
+func _to_string_array(values: Array) -> Array[String]:
+	var out: Array[String] = []
+	for value_v in values:
+		out.append(str(value_v))
+	return out
+
+func _roles_for_ids(ids: Array[String]) -> Array[String]:
+	var roles: Array[String] = []
 	for id in ids:
 		var block_data: Dictionary = block_by_id.get(id, {}) as Dictionary
 		roles.append(str(block_data.get("role", "")))
 	return roles
 
-func _missing_required_roles(selected_roles: Array, required_roles: Array) -> Array:
+func _missing_required_roles(selected_roles: Array[String], required_roles: Array) -> Array[String]:
 	var lookup: Dictionary = {}
 	for role_v in selected_roles:
 		lookup[str(role_v)] = true
-	var missing: Array = []
+	var missing: Array[String] = []
 	for role_v in required_roles:
 		var role: String = str(role_v)
 		if not lookup.has(role):
 			missing.append(role)
 	return missing
 
-func _contains_any_role(selected_roles: Array, forbidden_roles: Array) -> bool:
-	var forbidden_lookup: Dictionary = {}
+func _has_forbidden_tokens(selected_ids: Array[String], selected_roles: Array[String], forbidden_block_ids: Array, forbidden_roles: Array) -> bool:
+	var forbidden_block_lookup: Dictionary = {}
+	for block_id_v in forbidden_block_ids:
+		forbidden_block_lookup[str(block_id_v)] = true
+	for selected_id in selected_ids:
+		if forbidden_block_lookup.has(selected_id):
+			return true
+
+	var forbidden_role_lookup: Dictionary = {}
 	for role_v in forbidden_roles:
-		forbidden_lookup[str(role_v)] = true
-	for role_v in selected_roles:
-		if forbidden_lookup.has(str(role_v)):
+		forbidden_role_lookup[str(role_v)] = true
+	for selected_role in selected_roles:
+		if forbidden_role_lookup.has(selected_role):
 			return true
 	return false
 
-func _roles_follow_order(selected_roles: Array, skeleton_order: Array) -> bool:
-	var cursor: int = -1
-	for required_role_v in skeleton_order:
-		var required_role: String = str(required_role_v)
-		var found_idx: int = -1
-		for i in range(cursor + 1, selected_roles.size()):
-			if str(selected_roles[i]) == required_role:
-				found_idx = i
-				break
-		if found_idx < 0:
-			return false
-		cursor = found_idx
-	return true
-
-func _has_extra_tokens(selected_ids: Array[String], correct_ids: Array) -> bool:
-	for id in selected_ids:
-		if not correct_ids.has(id):
+func _violates_order_rules(selected_roles: Array[String], order_rules: Array) -> bool:
+	for rule_v in order_rules:
+		if typeof(rule_v) != TYPE_DICTIONARY:
+			continue
+		var rule: Dictionary = rule_v as Dictionary
+		var before_role: String = str(rule.get("before", ""))
+		var after_role: String = str(rule.get("after", ""))
+		if before_role == "" or after_role == "":
+			continue
+		var before_idx: int = _first_role_index(selected_roles, before_role)
+		var after_idx: int = _first_role_index(selected_roles, after_role)
+		if before_idx < 0 or after_idx < 0:
+			continue
+		if before_idx <= after_idx:
 			return true
-	return selected_ids.size() > correct_ids.size()
+	return false
+
+func _violates_skeleton_order(selected_roles: Array[String], skeleton_roles: Array) -> bool:
+	var cursor: int = -1
+	for role_v in skeleton_roles:
+		var role: String = str(role_v)
+		var idx: int = _first_role_index(selected_roles, role)
+		if idx < 0:
+			continue
+		if idx < cursor:
+			return true
+		cursor = idx
+	return false
+
+func _first_role_index(selected_roles: Array[String], role: String) -> int:
+	for idx in range(selected_roles.size()):
+		if selected_roles[idx] == role:
+			return idx
+	return -1
+
+func _build_diff(selected_ids: Array[String], correct_ids: Array[String]) -> Dictionary:
+	var selected_counts: Dictionary = _counts(selected_ids)
+	var correct_counts: Dictionary = _counts(correct_ids)
+
+	var missing_ids: Array[String] = []
+	for key_v in correct_counts.keys():
+		var key: String = str(key_v)
+		var need: int = int(correct_counts[key]) - int(selected_counts.get(key, 0))
+		for _i in range(max(0, need)):
+			missing_ids.append(key)
+
+	var extra_ids: Array[String] = []
+	for key_v in selected_counts.keys():
+		var key: String = str(key_v)
+		var extra: int = int(selected_counts[key]) - int(correct_counts.get(key, 0))
+		for _j in range(max(0, extra)):
+			extra_ids.append(key)
+
+	var first_mismatch_index: int = -1
+	var max_len: int = max(selected_ids.size(), correct_ids.size())
+	for idx in range(max_len):
+		var selected_id: String = selected_ids[idx] if idx < selected_ids.size() else "<none>"
+		var correct_id: String = correct_ids[idx] if idx < correct_ids.size() else "<none>"
+		if selected_id != correct_id:
+			first_mismatch_index = idx
+			break
+
+	return {
+		"missing_ids": missing_ids,
+		"extra_ids": extra_ids,
+		"first_mismatch_index": first_mismatch_index
+	}
+
+func _counts(ids: Array[String]) -> Dictionary:
+	var out: Dictionary = {}
+	for id in ids:
+		out[id] = int(out.get(id, 0)) + 1
+	return out
+
+func _same_multiset(a: Array[String], b: Array[String]) -> bool:
+	if a.size() != b.size():
+		return false
+	return _counts(a) == _counts(b)
 
 func _role_is_single_use(role: String) -> bool:
 	return not allow_repeat_roles.has(role)
@@ -424,11 +494,16 @@ func _register_interaction() -> void:
 	if time_to_first_action_ms < 0:
 		time_to_first_action_ms = Time.get_ticks_msec() - case_started_ts
 
-func _log_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary) -> void:
+func _log_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary, end_state: String) -> void:
 	var now_ms: int = Time.get_ticks_msec()
 	var elapsed_ms: int = now_ms - case_started_ts
+	var effective_first_action_ms: int = max(0, time_to_first_action_ms)
+	if time_to_first_action_ms < 0:
+		effective_first_action_ms = elapsed_ms
+
 	var timing_policy: Dictionary = current_case.get("timing_policy", {}) as Dictionary
-	var constraints: Dictionary = current_case.get("constraints", {}) as Dictionary
+	var rules: Dictionary = _active_rules()
+	var diff: Dictionary = eval_result.get("diff", {}) as Dictionary
 	var payload: Dictionary = {
 		"quest_id": "DA7",
 		"level": "C",
@@ -441,27 +516,38 @@ func _log_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary) ->
 		"match_key": "DA7_C|%s" % str(current_case.get("id", "DA7-C-00")),
 		"is_correct": is_correct,
 		"f_reason": f_reason,
+		"end_state": end_state,
 		"elapsed_ms": elapsed_ms,
 		"duration": float(elapsed_ms) / 1000.0,
 		"timing": {
 			"policy_mode": str(timing_policy.get("mode", "EXAM")),
 			"limit_sec": int(timing_policy.get("limit_sec", limit_sec)),
 			"effective_elapsed_ms": elapsed_ms,
-			"time_to_first_action_ms": max(0, time_to_first_action_ms)
+			"time_to_first_action_ms": effective_first_action_ms
 		},
 		"answer": {
-			"selected_sequence_ids": selected_sequence_ids.duplicate(),
+			"user_sequence_ids": selected_sequence_ids.duplicate(),
 			"selected_roles": eval_result.get("selected_roles", [])
 		},
 		"expected": {
-			"correct_sequence_ids": current_case.get("correct_sequence_ids", []),
-			"required_roles": constraints.get("required_roles", []),
-			"skeleton_order": constraints.get("skeleton_order", [])
+			"correct_sequence_ids": _to_string_array(current_case.get("correct_sequence_ids", []) as Array),
+			"required_roles": rules.get("required_roles", []),
+			"skeleton_roles": rules.get("skeleton_roles", []),
+			"order_rules": rules.get("order_rules", [])
+		},
+		"diff": {
+			"missing_ids": diff.get("missing_ids", []),
+			"extra_ids": diff.get("extra_ids", []),
+			"first_mismatch_index": int(diff.get("first_mismatch_index", -1))
 		},
 		"telemetry": {
+			"time_to_first_action_ms": effective_first_action_ms,
+			"pick_count": block_pick_count,
+			"block_pick_count": block_pick_count,
+			"unique_blocks_used": unique_blocks_used.size(),
+			"unique_blocks_used_ids": unique_blocks_used.keys(),
 			"reorder_count": reorder_count,
 			"undo_count": undo_count,
-			"block_pick_count": block_pick_count,
 			"clear_used": clear_used
 		},
 		"flags": {
