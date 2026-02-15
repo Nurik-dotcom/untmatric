@@ -1,0 +1,32 @@
+[
+  {
+    "id": "CL-A-01",
+    "bucket": "newbie",
+    "briefing": "Отсортируйте улики по категориям: ВВОД / ВЫВОД / ПАМЯТЬ.",
+    "format": "MATCHING",
+    "buckets": [
+      { "bucket_id": "INPUT", "label": "ВВОД" },
+      { "bucket_id": "OUTPUT", "label": "ВЫВОД" },
+      { "bucket_id": "MEMORY", "label": "ПАМЯТЬ" }
+    ],
+    "items": [
+      { "item_id": "mouse", "label": "Мышь", "correct_bucket_id": "INPUT" },
+      { "item_id": "keyboard", "label": "Клавиатура", "correct_bucket_id": "INPUT" },
+      { "item_id": "printer_mfu", "label": "МФУ", "correct_bucket_id": "OUTPUT" },
+      { "item_id": "monitor", "label": "Монитор", "correct_bucket_id": "OUTPUT" },
+      { "item_id": "ram", "label": "ОЗУ", "correct_bucket_id": "MEMORY" },
+      { "item_id": "ssd", "label": "SSD", "correct_bucket_id": "MEMORY" },
+      { "item_id": "speaker", "label": "Колонки", "correct_bucket_id": "OUTPUT" },
+      { "item_id": "mic", "label": "Микрофон", "correct_bucket_id": "INPUT" }
+    ],
+    "scoring_rules": [
+      { "min_correct": 8, "points": 2, "stability_delta": 0 },
+      { "min_correct": 6, "points": 1, "stability_delta": -10 },
+      { "min_correct": 0, "points": 0, "stability_delta": -30 }
+    ],
+    "ui": {
+      "theme": "amber",
+      "show_pool_zone": true
+    }
+  }
+]

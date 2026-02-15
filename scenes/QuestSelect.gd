@@ -19,14 +19,14 @@ extends Control
 @onready var btn_close = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnClose
 @onready var modal_title = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/ModalTitle
 
-enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO, SUSPECT, CITY_MAP, DATA_ARCHIVE, NETWORK_TRACE }
+enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO, SUSPECT, CITY_MAP, DATA_ARCHIVE, NETWORK_TRACE, CLUES }
 var selected_quest_type = QuestType.DECRYPTOR
 
 const TITLE_TEXT = "\u0412\u044b\u0431\u043e\u0440 \u043a\u0432\u0435\u0441\u0442\u0430"
 const STATUS_READY = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043a\u0432\u0435\u0441\u0442"
 const STATUS_LOCKED = "\u042d\u0442\u043e\u0442 \u043a\u0432\u0435\u0441\u0442 \u043f\u043e\u043a\u0430 \u043d\u0435 \u0433\u043e\u0442\u043e\u0432"
 
-const BTN_CLUES_TEXT = "\u0423\u043b\u0438\u043a\u0438 (c\u043a\u043e\u0440\u043e)"
+const BTN_CLUES_TEXT = "Улики"
 const BTN_RADIO_TEXT = "\u0420\u0430\u0434\u0438\u043e\u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442"
 const BTN_DECRYPTOR_TEXT = "\u0414\u0435\u0448\u0438\u0444\u0440\u043e\u0432\u0430\u043d\u0438\u0435"
 const BTN_LIE_TEXT = "\u0414\u0435\u0442\u0435\u043a\u0442\u043e\u0440 \u043b\u0436\u0438"
@@ -72,7 +72,7 @@ func _connect_buttons():
 	btn_decryptor.pressed.connect(_on_decryptor_pressed)
 	btn_lie.pressed.connect(_on_lie_detector_pressed)
 	btn_radio.pressed.connect(_on_radio_pressed)
-	btn_clues.pressed.connect(_on_locked_pressed)
+	btn_clues.pressed.connect(_on_clues_pressed)
 	btn_script.pressed.connect(_on_script_pressed)
 	btn_city.pressed.connect(_on_city_pressed)
 	btn_archive.pressed.connect(_on_archive_pressed)
@@ -85,7 +85,7 @@ func _connect_buttons():
 	btn_close.pressed.connect(_on_close_modal_pressed)
 
 func _disable_unready():
-	btn_clues.disabled = true
+	btn_clues.disabled = false
 	btn_radio.disabled = false
 	btn_script.disabled = false
 	btn_city.disabled = false
@@ -110,6 +110,12 @@ func _on_radio_pressed():
 	selected_quest_type = QuestType.RADIO
 	btn_complexity_b.disabled = false
 	btn_complexity_c.disabled = false
+	modal.visible = true
+
+func _on_clues_pressed():
+	selected_quest_type = QuestType.CLUES
+	btn_complexity_b.disabled = true
+	btn_complexity_c.disabled = true
 	modal.visible = true
 
 func _on_script_pressed():
@@ -155,6 +161,8 @@ func _on_complexity_a_pressed():
 		get_tree().change_scene_to_file("res://scenes/case_07/da7_data_archive_a.tscn")
 	elif selected_quest_type == QuestType.NETWORK_TRACE:
 		get_tree().change_scene_to_file("res://scenes/NetworkTraceQuestA.tscn")
+	elif selected_quest_type == QuestType.CLUES:
+		get_tree().change_scene_to_file("res://scenes/case_01/CluesQuestA.tscn")
 
 func _on_complexity_b_pressed():
 	if selected_quest_type == QuestType.DECRYPTOR:
