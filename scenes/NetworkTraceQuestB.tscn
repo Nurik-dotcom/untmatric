@@ -1,0 +1,109 @@
+[gd_scene load_steps=3 format=3 uid="uid://bc7hh137v5i1q"]
+
+[ext_resource type="Script" path="res://scenes/NetworkTraceQuest.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/theme_untformatic.tres" id="2_theme"]
+
+[node name="NetworkTraceQuestB" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+complexity_name = "B"
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.08, 0.08, 1)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Header" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BtnBack" type="Button" parent="MainLayout/Header"]
+custom_minimum_size = Vector2(120, 52)
+layout_mode = 2
+text = "Back"
+
+[node name="TitleLabel" type="Label" parent="MainLayout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+text = "Сетевой след — Сложность B"
+
+[node name="DescriptionLabel" type="Label" parent="MainLayout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 20
+text = "Заглушка квеста. Кнопки пока пустые."
+horizontal_alignment = 1
+
+[node name="PlaceholderGrid" type="GridContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+columns = 2
+
+[node name="ActionBtn1" type="Button" parent="MainLayout/PlaceholderGrid"]
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[node name="ActionBtn2" type="Button" parent="MainLayout/PlaceholderGrid"]
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[node name="ActionBtn3" type="Button" parent="MainLayout/PlaceholderGrid"]
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[node name="ActionBtn4" type="Button" parent="MainLayout/PlaceholderGrid"]
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[node name="ActionBtn5" type="Button" parent="MainLayout/PlaceholderGrid"]
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[node name="ActionBtn6" type="Button" parent="MainLayout/PlaceholderGrid"]
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[node name="StatusLabel" type="Label" parent="MainLayout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_font_sizes/font_size = 18
+text = "Сложность B: шаблон готов."
+horizontal_alignment = 1

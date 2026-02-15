@@ -50,6 +50,8 @@ var suppress_caret_event := false
 var line_pick_armed := false
 var highlight_tween: Tween
 var task_session: Dictionary = {}
+var cached_line_height := 26
+var last_scroll_vertical := -1
 
 func _ready() -> void:
 	_configure_code_view()
@@ -66,6 +68,8 @@ func _ready() -> void:
 
 func _configure_code_view() -> void:
 	code_view.editable = false
+	_try_set_control_property("wrap_mode", 0)
+	_try_set_control_property("line_wrapping_mode", 0)
 	_try_set_control_property("caret_draw_when_editable_disabled", true)
 	_try_set_control_property("gutters_draw_line_numbers", true)
 	_try_set_control_property("gutter_draw_line_numbers", true)
@@ -74,6 +78,8 @@ func _configure_code_view() -> void:
 
 	line_highlight.visible = false
 	line_highlight.color = Color(0.0, 1.0, 0.25, 0.16)
+	if code_view.has_method("get_line_height"):
+		cached_line_height = int(code_view.call("get_line_height"))
 
 func _try_set_control_property(prop_name: String, value: Variant) -> void:
 	for prop_var in code_view.get_property_list():
@@ -91,9 +97,15 @@ func _connect_signals() -> void:
 	btn_verify.pressed.connect(_on_verify_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
 	diagnostics_panel.visibility_changed.connect(_on_diagnostics_visibility_changed)
-	fix_menu.option_selected.connect(_on_fix_option_selected)
-	fix_menu.apply_requested.connect(_on_fix_apply_requested)
-	fix_menu.canceled.connect(_on_fix_menu_canceled)
+	var on_option_selected := Callable(self, "_on_fix_option_selected")
+	var on_apply_requested := Callable(self, "_on_fix_apply_requested")
+	var on_canceled := Callable(self, "_on_fix_menu_canceled")
+	if not fix_menu.is_connected("option_selected", on_option_selected):
+		fix_menu.connect("option_selected", on_option_selected)
+	if not fix_menu.is_connected("apply_requested", on_apply_requested):
+		fix_menu.connect("apply_requested", on_apply_requested)
+	if not fix_menu.is_connected("canceled", on_canceled):
+		fix_menu.connect("canceled", on_canceled)
 
 func _load_levels() -> void:
 	levels.clear()
@@ -217,8 +229,10 @@ func build_variant_key(level: Dictionary) -> String:
 			str(fix.get("result_s", ""))
 		])
 	fix_parts.sort()
-	return "%s|%s|line:%s|opts:%s" % [
+	return "%s|exp:%s|act:%s|%s|line:%s|opts:%s" % [
 		str(level.get("id", "")),
+		str(level.get("expected_s", "")),
+		str(level.get("actual_s", "")),
 		code_blob,
 		str(bug.get("correct_line_index", -1)),
 		",".join(fix_parts)
@@ -242,6 +256,7 @@ func _start_level(idx: int) -> void:
 	has_selected_correct_line = false
 	level_result_sent = false
 	line_pick_armed = false
+	last_scroll_vertical = -1
 	state = State.LINE_SELECT
 
 	task_session = {
@@ -287,12 +302,13 @@ func _set_code_lines(lines: Array, caret_line: int) -> void:
 	suppress_caret_event = false
 
 func _get_fix_option(option_id: String) -> Dictionary:
+	var normalized_option_id := option_id.strip_edges().to_upper()
 	var fix_options: Array = current_task.get("bug", {}).get("fix_options", [])
 	for fix_var in fix_options:
 		if typeof(fix_var) != TYPE_DICTIONARY:
 			continue
 		var fix: Dictionary = fix_var
-		if str(fix.get("option_id", "")).strip_edges().to_upper() == option_id:
+		if str(fix.get("option_id", "")).strip_edges().to_upper() == normalized_option_id:
 			return fix
 	return {}
 
@@ -349,24 +365,44 @@ func _on_code_gui_input(event: InputEvent) -> void:
 		if touch_event.pressed:
 			line_pick_armed = true
 
-func _update_line_highlight() -> void:
+func _update_line_highlight(restart_animation: bool = true) -> void:
 	if selected_line_index < 0:
 		line_highlight.visible = false
 		return
 
-	var line_height := 26
-	if code_view.has_method("get_line_height"):
-		line_height = int(code_view.call("get_line_height"))
-
-	line_highlight.position = Vector2(6, 6 + (selected_line_index * line_height))
-	line_highlight.size = Vector2(code_view.size.x - 12, float(line_height))
+	var visible_line_index := selected_line_index - _get_scroll_vertical()
+	line_highlight.position = Vector2(6, 6 + (visible_line_index * cached_line_height))
+	line_highlight.size = Vector2(code_view.size.x - 12, float(cached_line_height))
 	line_highlight.visible = true
 
-	if highlight_tween != null:
-		highlight_tween.kill()
-	highlight_tween = create_tween().set_loops()
-	highlight_tween.tween_property(line_highlight, "modulate:a", 0.26, 0.28)
-	highlight_tween.tween_property(line_highlight, "modulate:a", 0.12, 0.28)
+	if restart_animation:
+		if highlight_tween != null:
+			highlight_tween.kill()
+		highlight_tween = create_tween().set_loops()
+		highlight_tween.tween_property(line_highlight, "modulate:a", 0.26, 0.28)
+		highlight_tween.tween_property(line_highlight, "modulate:a", 0.12, 0.28)
+
+func _get_scroll_vertical() -> int:
+	if code_view.has_method("get_v_scroll"):
+		return int(code_view.call("get_v_scroll"))
+	if code_view.has_method("get_scroll_vertical"):
+		return int(code_view.call("get_scroll_vertical"))
+	for prop_var in code_view.get_property_list():
+		if typeof(prop_var) != TYPE_DICTIONARY:
+			continue
+		var prop: Dictionary = prop_var
+		var prop_name := str(prop.get("name", ""))
+		if prop_name == "scroll_vertical" or prop_name == "v_scroll":
+			return int(code_view.get(prop_name))
+	return 0
+
+func _process(_delta: float) -> void:
+	if not line_highlight.visible:
+		return
+	var scroll_vertical := _get_scroll_vertical()
+	if scroll_vertical != last_scroll_vertical:
+		last_scroll_vertical = scroll_vertical
+		_update_line_highlight(false)
 
 func _open_fix_menu() -> void:
 	if selected_line_index < 0:
@@ -389,17 +425,17 @@ func _open_fix_menu() -> void:
 	fix_menu.popup_centered_ratio(0.68)
 
 func _on_fix_option_selected(option_id: String) -> void:
-	selected_option_id = option_id
+	selected_option_id = option_id.strip_edges().to_upper()
 	_apply_fix_preview()
-	_log_event("fix_selected", {"option_id": option_id, "line": selected_line_index})
+	_log_event("fix_selected", {"option_id": selected_option_id, "line": selected_line_index})
 
 func _on_fix_apply_requested(option_id: String) -> void:
-	selected_option_id = option_id
+	selected_option_id = option_id.strip_edges().to_upper()
 	btn_verify.disabled = selected_line_index < 0 or selected_option_id == ""
 	_apply_fix_preview()
 	lbl_hint.text = "Fix applied. Press VERIFY."
 	state = State.READY_TO_VERIFY
-	_log_event("fix_applied", {"option_id": option_id, "line": selected_line_index})
+	_log_event("fix_applied", {"option_id": selected_option_id, "line": selected_line_index})
 
 func _on_fix_menu_canceled() -> void:
 	if state != State.FEEDBACK_SUCCESS:
@@ -421,21 +457,26 @@ func _on_verify_pressed() -> void:
 
 	var bug: Dictionary = current_task.get("bug", {})
 	var correct_line := int(bug.get("correct_line_index", -1))
-	var correct_option := str(bug.get("correct_option_id", ""))
+	var correct_option := str(bug.get("correct_option_id", "")).strip_edges().to_upper()
 	var is_correct := (selected_line_index == correct_line and selected_option_id == correct_option)
 	var effective_time_ms := _effective_elapsed_ms(Time.get_ticks_msec())
+	var paused_ms_snapshot := paused_total_ms
+	var hint_ms_snapshot := hint_total_ms
 
 	if selected_line_index == correct_line and selected_option_id != correct_option:
 		wrong_fix_attempts_before_correct += 1
 
 	var attempt := {
 		"kind": "debugging",
+		"level_id": str(current_task.get("id", "C-00")),
 		"task_id": str(current_task.get("id", "C-00")),
 		"variant_hash": variant_hash,
 		"selected_line_index": selected_line_index,
 		"fix_option_id": selected_option_id,
 		"correct": is_correct,
 		"effective_time_ms": effective_time_ms,
+		"paused_total_ms": paused_ms_snapshot,
+		"hint_total_ms": hint_ms_snapshot,
 		"misclicks_before_correct": misclicks_before_correct,
 		"wrong_fix_attempts_before_correct": wrong_fix_attempts_before_correct
 	}
@@ -480,18 +521,36 @@ func _set_actual_panel_error(is_error: bool, pulse: bool = true) -> void:
 
 func _get_selected_fix_result() -> Variant:
 	var fix_options: Array = current_task.get("bug", {}).get("fix_options", [])
+	var normalized_option_id := selected_option_id.strip_edges().to_upper()
 	for fix_var in fix_options:
 		if typeof(fix_var) != TYPE_DICTIONARY:
 			continue
 		var fix: Dictionary = fix_var
-		if str(fix.get("option_id", "")) == selected_option_id:
+		if str(fix.get("option_id", "")).strip_edges().to_upper() == normalized_option_id:
 			return fix.get("result_s", null)
 	return null
 
 func _on_analyze_pressed() -> void:
 	if diagnostics_panel.visible:
 		return
-	diagnostics_panel.call("setup", "ANALYSIS", current_task.get("explain_short", []))
+	var analysis_lines: Array = []
+	analysis_lines.append("Expected: s=%s" % str(current_task.get("expected_s", "?")))
+	analysis_lines.append("Actual: s=%s" % str(current_task.get("actual_s", "?")))
+	if selected_line_index >= 0:
+		analysis_lines.append("Your pick line: %d" % (selected_line_index + 1))
+	if selected_option_id != "":
+		var fix_result: Variant = _get_selected_fix_result()
+		var fix_line := ""
+		var fix: Dictionary = _get_fix_option(selected_option_id)
+		if not fix.is_empty():
+			fix_line = str(fix.get("replace_line", ""))
+		analysis_lines.append("Your option: %s -> s=%s" % [selected_option_id, str(fix_result)])
+		if fix_line != "":
+			analysis_lines.append("Replace with: %s" % fix_line)
+	analysis_lines.append("")
+	for line_var in current_task.get("explain_short", []):
+		analysis_lines.append(str(line_var))
+	diagnostics_panel.call("setup", "DIAGNOSTICS: %s" % str(current_task.get("id", "C-00")), analysis_lines)
 	diagnostics_panel.visible = true
 
 func _on_diagnostics_visibility_changed() -> void:
@@ -566,6 +625,7 @@ func _register_result(is_correct: bool) -> void:
 	task_session["ended_at_ticks"] = end_ticks
 	task_session["hint_total_ms"] = hint_total_ms
 	task_session["paused_total_ms"] = paused_total_ms
+	task_session["is_correct"] = is_correct
 	_log_event("task_end", {"status": "complete", "is_correct": is_correct})
 
 	var elapsed_ms := _effective_elapsed_ms(end_ticks)

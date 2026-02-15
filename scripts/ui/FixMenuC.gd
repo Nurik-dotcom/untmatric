@@ -15,6 +15,15 @@ signal canceled
 var selected_option_id := ""
 var options_by_id: Dictionary = {}
 
+func _normalize_option_id(value: Variant) -> String:
+	return str(value).strip_edges().to_upper()
+
+func _short_line(line_text: String, max_chars: int = 48) -> String:
+	var clean := line_text.strip_edges()
+	if clean.length() <= max_chars:
+		return clean
+	return clean.substr(0, max_chars - 3) + "..."
+
 func _ready() -> void:
 	btn_opt_a.pressed.connect(_on_option_pressed.bind("A"))
 	btn_opt_b.pressed.connect(_on_option_pressed.bind("B"))
@@ -25,7 +34,7 @@ func _ready() -> void:
 
 func setup(line_number_1_based: int, original_line: String, fix_options: Array, preselected_option_id: String = "") -> void:
 	lbl_title.text = "FIX LINE %02d" % line_number_1_based
-	lbl_original.text = "original: %s" % original_line
+	lbl_original.text = "original: %s" % _short_line(original_line, 64)
 
 	options_by_id.clear()
 	var option_buttons := {
@@ -44,7 +53,7 @@ func setup(line_number_1_based: int, original_line: String, fix_options: Array, 
 		if typeof(opt_var) != TYPE_DICTIONARY:
 			continue
 		var opt: Dictionary = opt_var
-		var option_id := str(opt.get("option_id", ""))
+		var option_id := _normalize_option_id(opt.get("option_id", ""))
 		if not option_buttons.has(option_id):
 			continue
 		options_by_id[option_id] = opt
@@ -52,19 +61,21 @@ func setup(line_number_1_based: int, original_line: String, fix_options: Array, 
 		btn.disabled = false
 		btn.text = "%s) %s  ->  s=%s" % [
 			option_id,
-			str(opt.get("replace_line", "")),
+			_short_line(str(opt.get("replace_line", ""))),
 			str(opt.get("result_s", "?"))
 		]
 
-	selected_option_id = preselected_option_id if options_by_id.has(preselected_option_id) else ""
+	var normalized_preselected := _normalize_option_id(preselected_option_id)
+	selected_option_id = normalized_preselected if options_by_id.has(normalized_preselected) else ""
 	_refresh_selection_visuals()
 
 func _on_option_pressed(option_id: String) -> void:
-	if not options_by_id.has(option_id):
+	var normalized_option_id := _normalize_option_id(option_id)
+	if not options_by_id.has(normalized_option_id):
 		return
-	selected_option_id = option_id
+	selected_option_id = normalized_option_id
 	_refresh_selection_visuals()
-	option_selected.emit(option_id)
+	option_selected.emit(normalized_option_id)
 
 func _refresh_selection_visuals() -> void:
 	var map := {
