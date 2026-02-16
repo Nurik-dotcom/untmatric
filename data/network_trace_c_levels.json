@@ -1,0 +1,353 @@
+[
+  {
+    "id": "NT_C_01",
+    "briefing": "Trace source IP 192.168.10.75 with mask 255.255.255.192.",
+    "prompt": "Find network id (IP AND mask).",
+    "options": [
+      {
+        "id": "C01_OPT1",
+        "label": "192.168.10.64",
+        "error_code": ""
+      },
+      {
+        "id": "C01_OPT2",
+        "label": "192.168.10.192",
+        "error_code": "C_BOUNDARY_SHIFT"
+      },
+      {
+        "id": "C01_OPT3",
+        "label": "255.255.255.192",
+        "error_code": "C_MASK_VAL"
+      },
+      {
+        "id": "C01_OPT4",
+        "label": "192.168.10.127",
+        "error_code": "C_BROADCAST"
+      }
+    ],
+    "correct_id": "C01_OPT1",
+    "explain_short": "For /26 block size is 64, so 75 belongs to block 64-127.",
+    "explain_full": "Last octet mask 192 means block size 64. Subnet starts at 0,64,128,192. Value 75 falls in 64-127, therefore network id is 64.",
+    "tags": [
+      "subnet",
+      "and",
+      "mask"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_C_02",
+    "briefing": "Suspicious host 10.2.14.199/27.",
+    "prompt": "Select network address.",
+    "options": [
+      {
+        "id": "C02_OPT1",
+        "label": "10.2.14.192",
+        "error_code": ""
+      },
+      {
+        "id": "C02_OPT2",
+        "label": "10.2.14.0",
+        "error_code": "C_L24_FALLBACK"
+      },
+      {
+        "id": "C02_OPT3",
+        "label": "10.2.14.224",
+        "error_code": "C_BOUNDARY_SHIFT"
+      },
+      {
+        "id": "C02_OPT4",
+        "label": "10.2.14.223",
+        "error_code": "C_BROADCAST"
+      }
+    ],
+    "correct_id": "C02_OPT1",
+    "explain_short": "For /27 the block is 32. 199 is in 192-223.",
+    "explain_full": "Mask /27 means 255.255.255.224. Subnet boundaries on last octet are multiples of 32. The lower boundary for 199 is 192.",
+    "tags": [
+      "slash27",
+      "network-id"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_C_03",
+    "briefing": "Captured endpoint is 172.16.5.130 with mask 255.255.255.128.",
+    "prompt": "Identify the network id.",
+    "options": [
+      {
+        "id": "C03_OPT1",
+        "label": "172.16.5.128",
+        "error_code": ""
+      },
+      {
+        "id": "C03_OPT2",
+        "label": "172.16.5.255",
+        "error_code": "C_BROADCAST"
+      },
+      {
+        "id": "C03_OPT3",
+        "label": "172.16.5.0",
+        "error_code": "C_BOUNDARY_SHIFT"
+      },
+      {
+        "id": "C03_OPT4",
+        "label": "255.255.255.128",
+        "error_code": "C_MASK_VAL"
+      }
+    ],
+    "correct_id": "C03_OPT1",
+    "explain_short": "Mask /25 splits subnet at 0 and 128.",
+    "explain_full": "With /25, each subnet spans 128 addresses. Last octet 130 is inside range 128-255, so network id is 128.",
+    "tags": [
+      "slash25",
+      "boundary"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_C_04",
+    "briefing": "Gateway logs: 192.168.1.200/24.",
+    "prompt": "Find network id.",
+    "options": [
+      {
+        "id": "C04_OPT1",
+        "label": "192.168.1.0",
+        "error_code": ""
+      },
+      {
+        "id": "C04_OPT2",
+        "label": "192.168.1.255",
+        "error_code": "C_BROADCAST"
+      },
+      {
+        "id": "C04_OPT3",
+        "label": "255.255.255.0",
+        "error_code": "C_MASK_VAL"
+      },
+      {
+        "id": "C04_OPT4",
+        "label": "192.168.0.0",
+        "error_code": "C_BOUNDARY_SHIFT"
+      }
+    ],
+    "correct_id": "C04_OPT1",
+    "explain_short": "In /24 subnet, network id ends with .0.",
+    "explain_full": "Mask 255.255.255.0 keeps first three octets and zeroes last octet. Therefore network id is 192.168.1.0.",
+    "tags": [
+      "slash24",
+      "baseline"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_C_05",
+    "briefing": "Probe source 172.20.44.14 with mask 255.255.255.240.",
+    "prompt": "Which network address is correct?",
+    "options": [
+      {
+        "id": "C05_OPT1",
+        "label": "172.20.44.0",
+        "error_code": ""
+      },
+      {
+        "id": "C05_OPT2",
+        "label": "172.20.44.16",
+        "error_code": "C_BOUNDARY_SHIFT"
+      },
+      {
+        "id": "C05_OPT3",
+        "label": "172.20.44.15",
+        "error_code": "C_BROADCAST"
+      },
+      {
+        "id": "C05_OPT4",
+        "label": "255.255.255.240",
+        "error_code": "C_MASK_VAL"
+      }
+    ],
+    "correct_id": "C05_OPT1",
+    "explain_short": "For /28 blocks of 16, value 14 falls in 0-15.",
+    "explain_full": "Mask /28 gives block size 16. Subnets start at 0,16,32,... so IP .14 belongs to block 0-15 and network id is .0.",
+    "tags": [
+      "slash28",
+      "block-size"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_C_06",
+    "briefing": "Session endpoint 10.10.10.250/30.",
+    "prompt": "Select the network id.",
+    "options": [
+      {
+        "id": "C06_OPT1",
+        "label": "10.10.10.248",
+        "error_code": ""
+      },
+      {
+        "id": "C06_OPT2",
+        "label": "10.10.10.252",
+        "error_code": "C_BOUNDARY_SHIFT"
+      },
+      {
+        "id": "C06_OPT3",
+        "label": "10.10.10.251",
+        "error_code": "C_BROADCAST"
+      },
+      {
+        "id": "C06_OPT4",
+        "label": "10.10.10.0",
+        "error_code": "C_L24_FALLBACK"
+      }
+    ],
+    "correct_id": "C06_OPT1",
+    "explain_short": "For /30 blocks of 4, 250 belongs to 248-251.",
+    "explain_full": "Subnet increments are 4 on last octet. Lower boundary for 250 is 248; upper boundary 251 is broadcast.",
+    "tags": [
+      "slash30",
+      "point-to-point"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_C_07",
+    "briefing": "Address under review: 192.0.2.129 mask 255.255.255.192.",
+    "prompt": "Network id equals:",
+    "options": [
+      {
+        "id": "C07_OPT1",
+        "label": "192.0.2.128",
+        "error_code": ""
+      },
+      {
+        "id": "C07_OPT2",
+        "label": "192.0.2.64",
+        "error_code": "C_BOUNDARY_SHIFT"
+      },
+      {
+        "id": "C07_OPT3",
+        "label": "192.0.2.191",
+        "error_code": "C_BROADCAST"
+      },
+      {
+        "id": "C07_OPT4",
+        "label": "255.255.255.192",
+        "error_code": "C_MASK_VAL"
+      }
+    ],
+    "correct_id": "C07_OPT1",
+    "explain_short": "For /26, blocks are 0,64,128,192.",
+    "explain_full": "IP .129 lands in range 128-191 with /26 mask. Therefore network id is .128 and broadcast is .191.",
+    "tags": [
+      "slash26",
+      "range"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_C_08",
+    "briefing": "Indicator host 198.51.100.94/27.",
+    "prompt": "Find the network address.",
+    "options": [
+      {
+        "id": "C08_OPT1",
+        "label": "198.51.100.64",
+        "error_code": ""
+      },
+      {
+        "id": "C08_OPT2",
+        "label": "198.51.100.96",
+        "error_code": "C_BOUNDARY_SHIFT"
+      },
+      {
+        "id": "C08_OPT3",
+        "label": "198.51.100.95",
+        "error_code": "C_BROADCAST"
+      },
+      {
+        "id": "C08_OPT4",
+        "label": "198.51.100.0",
+        "error_code": "C_L24_FALLBACK"
+      }
+    ],
+    "correct_id": "C08_OPT1",
+    "explain_short": "Block size 32. Value 94 lies in 64-95.",
+    "explain_full": "For /27, boundaries are multiples of 32. The greatest boundary not exceeding 94 is 64.",
+    "tags": [
+      "subnetting",
+      "slash27"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_C_09",
+    "briefing": "Probe 203.0.113.7 with mask 255.255.255.248.",
+    "prompt": "Choose network id.",
+    "options": [
+      {
+        "id": "C09_OPT1",
+        "label": "203.0.113.0",
+        "error_code": ""
+      },
+      {
+        "id": "C09_OPT2",
+        "label": "203.0.113.8",
+        "error_code": "C_BOUNDARY_SHIFT"
+      },
+      {
+        "id": "C09_OPT3",
+        "label": "203.0.113.7",
+        "error_code": "C_BROADCAST"
+      },
+      {
+        "id": "C09_OPT4",
+        "label": "255.255.255.248",
+        "error_code": "C_MASK_VAL"
+      }
+    ],
+    "correct_id": "C09_OPT1",
+    "explain_short": "For /29, blocks are 8 addresses: 0-7, 8-15, ...",
+    "explain_full": "IP .7 is the upper boundary of first /29 block. Network id for that block is .0 and broadcast is .7.",
+    "tags": [
+      "slash29",
+      "broadcast"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_C_10",
+    "briefing": "Endpoint under incident: 172.31.255.190/27.",
+    "prompt": "Network id is:",
+    "options": [
+      {
+        "id": "C10_OPT1",
+        "label": "172.31.255.160",
+        "error_code": ""
+      },
+      {
+        "id": "C10_OPT2",
+        "label": "172.31.255.192",
+        "error_code": "C_BOUNDARY_SHIFT"
+      },
+      {
+        "id": "C10_OPT3",
+        "label": "172.31.255.191",
+        "error_code": "C_BROADCAST"
+      },
+      {
+        "id": "C10_OPT4",
+        "label": "172.31.255.0",
+        "error_code": "C_L24_FALLBACK"
+      }
+    ],
+    "correct_id": "C10_OPT1",
+    "explain_short": "190 falls in /27 block 160-191.",
+    "explain_full": "With /27 mask, the last octet increments by 32. Range containing 190 starts at 160, ends at 191.",
+    "tags": [
+      "masking",
+      "boundary"
+    ],
+    "time_limit_sec": 120
+  }
+]

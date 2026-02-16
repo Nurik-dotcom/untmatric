@@ -19,12 +19,13 @@ extends Control
 @onready var btn_close = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/BtnClose
 @onready var modal_title = $ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer/ModalTitle
 
-enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO, SUSPECT, CITY_MAP, DATA_ARCHIVE, NETWORK_TRACE, CLUES }
+enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO, SUSPECT, CITY_MAP, DATA_ARCHIVE, FINAL_REPORT, NETWORK_TRACE, CLUES }
 var selected_quest_type = QuestType.DECRYPTOR
 
 const TITLE_TEXT = "\u0412\u044b\u0431\u043e\u0440 \u043a\u0432\u0435\u0441\u0442\u0430"
 const STATUS_READY = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043a\u0432\u0435\u0441\u0442"
 const STATUS_LOCKED = "\u042d\u0442\u043e\u0442 \u043a\u0432\u0435\u0441\u0442 \u043f\u043e\u043a\u0430 \u043d\u0435 \u0433\u043e\u0442\u043e\u0432"
+const STATUS_STAGE_PENDING = "\u042d\u0442\u0430\u043f B/C \u0435\u0449\u0435 \u043d\u0435 \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d"
 
 const BTN_CLUES_TEXT = "\u0426\u0438\u0444\u0440\u043e\u0432\u0430\u044f \u0440\u0435\u0430\u043d\u0438\u043c\u0430\u0446\u0438\u044f"
 const BTN_RADIO_TEXT = "\u0420\u0430\u0434\u0438\u043e\u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442"
@@ -33,7 +34,7 @@ const BTN_LIE_TEXT = "\u0414\u0435\u0442\u0435\u043a\u0442\u043e\u0440 \u043b\u0
 const BTN_SCRIPT_TEXT = "\u0421\u043a\u0440\u0438\u043f\u0442 \u043f\u043e\u0434\u043e\u0437\u0440\u0435\u0432\u0430\u0435\u043c\u043e\u0433\u043e"
 const BTN_CITY_TEXT = "\u041a\u0430\u0440\u0442\u0430 \u0433\u043e\u0440\u043e\u0434\u0430 (c\u043a\u043e\u0440\u043e)"
 const BTN_ARCHIVE_TEXT = "\u0410\u0440\u0445\u0438\u0432 \u0434\u0430\u043d\u043d\u044b\u0445"
-const BTN_REPORT_TEXT = "\u0424\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 \u043e\u0442\u0447\u0435\u0442 (c\u043a\u043e\u0440\u043e)"
+const BTN_REPORT_TEXT = "\u0424\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 \u043e\u0442\u0447\u0435\u0442"
 const BTN_NETWORK_TRACE_TEXT = "\u0421\u0435\u0442\u0435\u0432\u043e\u0439 \u0441\u043b\u0435\u0434"
 
 const MODAL_TITLE_TEXT = "\u0412\u044b\u0431\u043e\u0440 \u0441\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u0438"
@@ -76,7 +77,7 @@ func _connect_buttons():
 	btn_script.pressed.connect(_on_script_pressed)
 	btn_city.pressed.connect(_on_city_pressed)
 	btn_archive.pressed.connect(_on_archive_pressed)
-	btn_report.pressed.connect(_on_locked_pressed)
+	btn_report.pressed.connect(_on_report_pressed)
 	btn_network_trace.pressed.connect(_on_network_trace_pressed)
 
 	btn_complexity_a.pressed.connect(_on_complexity_a_pressed)
@@ -90,56 +91,53 @@ func _disable_unready():
 	btn_script.disabled = false
 	btn_city.disabled = false
 	btn_archive.disabled = false
-	btn_report.disabled = true
+	btn_report.disabled = false
 	btn_network_trace.disabled = false
 	btn_complexity_c.disabled = true
 
 func _on_decryptor_pressed():
 	selected_quest_type = QuestType.DECRYPTOR
-	btn_complexity_b.disabled = false
-	btn_complexity_c.disabled = false
+	_set_complexity_enabled(true, true)
 	modal.visible = true
 
 func _on_lie_detector_pressed():
 	selected_quest_type = QuestType.LOGIC_GATE
-	btn_complexity_b.disabled = false
-	btn_complexity_c.disabled = false
+	_set_complexity_enabled(true, true)
 	modal.visible = true
 
 func _on_radio_pressed():
 	selected_quest_type = QuestType.RADIO
-	btn_complexity_b.disabled = false
-	btn_complexity_c.disabled = false
+	_set_complexity_enabled(true, true)
 	modal.visible = true
 
 func _on_clues_pressed():
 	selected_quest_type = QuestType.CLUES
-	btn_complexity_b.disabled = false
-	btn_complexity_c.disabled = false
+	_set_complexity_enabled(true, true)
 	modal.visible = true
 
 func _on_script_pressed():
 	selected_quest_type = QuestType.SUSPECT
-	btn_complexity_b.disabled = false
-	btn_complexity_c.disabled = false
+	_set_complexity_enabled(true, true)
 	modal.visible = true
 
 func _on_city_pressed():
 	selected_quest_type = QuestType.CITY_MAP
-	btn_complexity_b.disabled = false
-	btn_complexity_c.disabled = false
+	_set_complexity_enabled(true, true)
 	modal.visible = true
 
 func _on_archive_pressed():
 	selected_quest_type = QuestType.DATA_ARCHIVE
-	btn_complexity_b.disabled = false
-	btn_complexity_c.disabled = false
+	_set_complexity_enabled(true, true)
+	modal.visible = true
+
+func _on_report_pressed():
+	selected_quest_type = QuestType.FINAL_REPORT
+	_set_complexity_enabled(false, false)
 	modal.visible = true
 
 func _on_network_trace_pressed():
 	selected_quest_type = QuestType.NETWORK_TRACE
-	btn_complexity_b.disabled = false
-	btn_complexity_c.disabled = false
+	_set_complexity_enabled(true, true)
 	modal.visible = true
 
 func _on_locked_pressed():
@@ -159,12 +157,18 @@ func _on_complexity_a_pressed():
 		get_tree().change_scene_to_file("res://scenes/CityMapQuestA.tscn")
 	elif selected_quest_type == QuestType.DATA_ARCHIVE:
 		get_tree().change_scene_to_file("res://scenes/case_07/da7_data_archive_a.tscn")
+	elif selected_quest_type == QuestType.FINAL_REPORT:
+		get_tree().change_scene_to_file("res://scenes/case_08/fr8_final_report_a.tscn")
 	elif selected_quest_type == QuestType.NETWORK_TRACE:
 		get_tree().change_scene_to_file("res://scenes/NetworkTraceQuestA.tscn")
 	elif selected_quest_type == QuestType.CLUES:
 		get_tree().change_scene_to_file("res://scenes/case_01/DigitalResusQuestA.tscn")
 
 func _on_complexity_b_pressed():
+	if selected_quest_type == QuestType.FINAL_REPORT:
+		modal.visible = false
+		status_label.text = STATUS_STAGE_PENDING
+		return
 	if selected_quest_type == QuestType.DECRYPTOR:
 		GlobalMetrics.current_level_index = 15
 		get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
@@ -184,6 +188,10 @@ func _on_complexity_b_pressed():
 		get_tree().change_scene_to_file("res://scenes/case_01/DigitalResusQuestB.tscn")
 
 func _on_complexity_c_pressed():
+	if selected_quest_type == QuestType.FINAL_REPORT:
+		modal.visible = false
+		status_label.text = STATUS_STAGE_PENDING
+		return
 	if selected_quest_type == QuestType.DECRYPTOR:
 		get_tree().change_scene_to_file("res://scenes/MatrixDecryptor.tscn")
 	elif selected_quest_type == QuestType.LOGIC_GATE:
@@ -203,3 +211,7 @@ func _on_complexity_c_pressed():
 
 func _on_close_modal_pressed():
 	modal.visible = false
+
+func _set_complexity_enabled(enable_b: bool, enable_c: bool) -> void:
+	btn_complexity_b.disabled = not enable_b
+	btn_complexity_c.disabled = not enable_c

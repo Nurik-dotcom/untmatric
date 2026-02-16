@@ -763,7 +763,7 @@ func _send_trial_payload(is_success: bool, decision_label: String) -> void:
 		"file_size_value": file_size_value,
 		"file_size_unit": file_size_unit,
 		"speed_mbit": speed_mbit,
-		"T_detect": t_detect,
+		"t_detect": t_detect,
 		"t_true": t_true,
 		"t_est": t_est,
 		"estimate_sec": t_est,

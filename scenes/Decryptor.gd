@@ -51,6 +51,10 @@ const SWIPE_MAX_Y: float = 40.0
 var current_target: int = 0
 var current_input: int = 0
 var is_level_active: bool = false
+var level_started_ms: int = 0
+var first_action_ms: int = -1
+var check_attempt_count: int = 0
+var hint_used: bool = false
 
 var bit_buttons: Array[Button] = []
 var weight_labels: Array[Label] = []
@@ -146,6 +150,10 @@ func start_level(level_idx: int) -> void:
 	current_target = GlobalMetrics.current_target_value
 	current_input = 0
 	last_hint_text = ""
+	level_started_ms = Time.get_ticks_msec()
+	first_action_ms = -1
+	check_attempt_count = 0
+	hint_used = false
 
 	var mode = GlobalMetrics.current_mode
 	mode_label.text = mode
@@ -201,6 +209,7 @@ func _update_input_display() -> void:
 	input_hex.text = "HEX: %X" % current_input
 
 func _on_bit_toggled(pressed: bool, bit_index: int) -> void:
+	_mark_first_action()
 	AudioManager.play("click")
 	if pressed:
 		current_input |= (1 << bit_index)
@@ -216,7 +225,11 @@ func _on_check_pressed() -> void:
 	if not is_level_active:
 		return
 
+	_mark_first_action()
+	check_attempt_count += 1
+	var submitted_input := current_input
 	var result: Dictionary = GlobalMetrics.check_solution(current_target, current_input)
+	_register_trial(result, submitted_input)
 
 	if result.success:
 		AudioManager.play("relay")
@@ -238,6 +251,7 @@ func _on_check_pressed() -> void:
 		_show_toast("INCORRECT", COLOR_ERR)
 		_apply_error_highlight(current_input ^ current_target)
 func _on_hint_pressed() -> void:
+	hint_used = true
 	if last_hint_text == "":
 		_show_toast("NO HINT AVAILABLE", COLOR_WARN)
 		return
@@ -441,9 +455,41 @@ func _is_in_switches(pos: Vector2) -> bool:
 	return upper_bits.get_global_rect().has_point(pos) or lower_bits.get_global_rect().has_point(pos)
 
 func _apply_shift_left() -> void:
+	_mark_first_action()
 	current_input = (current_input << 1) & 0xFF
 	_sync_switches_to_input()
 	_update_input_display()
+
+func _mark_first_action() -> void:
+	if first_action_ms < 0:
+		first_action_ms = Time.get_ticks_msec() - level_started_ms
+
+func _register_trial(result: Dictionary, submitted_input: int) -> void:
+	var level_number := GlobalMetrics.current_level_index + 1
+	var stage_id := "A" if GlobalMetrics.current_level_index < 15 else "B"
+	var task_id := "%s_%02d" % [stage_id, level_number]
+	var variant_source := "%s|%s|%d" % [GlobalMetrics.current_mode, stage_id, current_target]
+	var payload := TrialV2.build("DECRYPTOR", stage_id, task_id, "NUMERIC_ENTRY", str(hash(variant_source)))
+	var elapsed_ms := max(0, Time.get_ticks_msec() - level_started_ms)
+	var is_success := bool(result.get("success", false))
+	var error_code := str(result.get("error", "NONE"))
+	payload["elapsed_ms"] = elapsed_ms
+	payload["duration"] = float(elapsed_ms) / 1000.0
+	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms
+	payload["is_correct"] = is_success
+	payload["is_fit"] = is_success
+	payload["stability_delta"] = 0
+	payload["level_index"] = GlobalMetrics.current_level_index
+	payload["mode"] = GlobalMetrics.current_mode
+	payload["target_value"] = current_target
+	payload["input_value"] = submitted_input
+	payload["check_attempt_count"] = check_attempt_count
+	payload["hint_used"] = hint_used
+	payload["error_type"] = error_code
+	payload["penalty_reported"] = float(result.get("penalty", 0.0))
+	if result.has("hamming"):
+		payload["hamming"] = int(result.get("hamming", 0))
+	GlobalMetrics.register_trial(payload)
 
 func _sync_switches_to_input() -> void:
 	for bit in range(8):

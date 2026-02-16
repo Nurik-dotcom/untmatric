@@ -1,0 +1,1907 @@
+[
+  {
+    "id": "NT_B_01",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 525 KB, window 64 s. Calculate speed in bit/s.",
+    "payload_value": 525,
+    "payload_unit": "KB",
+    "time_sec": 64,
+    "ask_unit": "bps",
+    "expected_bps": 67200,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_01_OPT1",
+        "label": "67200 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_01_OPT2",
+        "label": "8400 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_01_OPT3",
+        "label": "65625 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_01_OPT4",
+        "label": "4300800 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_01_OPT5",
+        "label": "67.200 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_01_OPT6",
+        "label": "87329 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_01_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 67200 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 525 KB.",
+      "Window before lock: 64 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "kb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_02",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 256 KB, window 4 s. Calculate speed in bit/s.",
+    "payload_value": 256,
+    "payload_unit": "KB",
+    "time_sec": 4,
+    "ask_unit": "bps",
+    "expected_bps": 524288,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_02_OPT1",
+        "label": "524288 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_02_OPT2",
+        "label": "65536 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_02_OPT3",
+        "label": "512000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_02_OPT4",
+        "label": "2097152 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_02_OPT5",
+        "label": "524.288 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_02_OPT6",
+        "label": "533804 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_02_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 524288 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 256 KB.",
+      "Window before lock: 4 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "kb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_03",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 768 KB, window 3 s. Calculate speed in bit/s.",
+    "payload_value": 768,
+    "payload_unit": "KB",
+    "time_sec": 3,
+    "ask_unit": "bps",
+    "expected_bps": 2097152,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_03_OPT1",
+        "label": "2097152 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_03_OPT2",
+        "label": "262144 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_03_OPT3",
+        "label": "2048000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_03_OPT4",
+        "label": "6291456 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_03_OPT5",
+        "label": "2097.152 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_03_OPT6",
+        "label": "2125601 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_03_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 2097152 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 768 KB.",
+      "Window before lock: 3 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "kb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_04",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 64 KB, window 2 s. Calculate speed in bit/s.",
+    "payload_value": 64,
+    "payload_unit": "KB",
+    "time_sec": 2,
+    "ask_unit": "bps",
+    "expected_bps": 262144,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_04_OPT1",
+        "label": "262144 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_04_OPT2",
+        "label": "32768 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_04_OPT3",
+        "label": "256000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_04_OPT4",
+        "label": "524288 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_04_OPT5",
+        "label": "262.144 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_04_OPT6",
+        "label": "264534 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_04_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 262144 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 64 KB.",
+      "Window before lock: 2 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "kb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_05",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 320 KB, window 5 s. Calculate speed in bit/s.",
+    "payload_value": 320,
+    "payload_unit": "KB",
+    "time_sec": 5,
+    "ask_unit": "bps",
+    "expected_bps": 524288,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_05_OPT1",
+        "label": "524288 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_05_OPT2",
+        "label": "65536 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_05_OPT3",
+        "label": "512000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_05_OPT4",
+        "label": "2621440 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_05_OPT5",
+        "label": "524.288 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_05_OPT6",
+        "label": "536183 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_05_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 524288 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 320 KB.",
+      "Window before lock: 5 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "kb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_06",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 1536 KB, window 6 s. Calculate speed in bit/s.",
+    "payload_value": 1536,
+    "payload_unit": "KB",
+    "time_sec": 6,
+    "ask_unit": "bps",
+    "expected_bps": 2097152,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_06_OPT1",
+        "label": "2097152 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_06_OPT2",
+        "label": "262144 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_06_OPT3",
+        "label": "2048000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_06_OPT4",
+        "label": "12582912 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_06_OPT5",
+        "label": "2097.152 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_06_OPT6",
+        "label": "2154050 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_06_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 2097152 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 1536 KB.",
+      "Window before lock: 6 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "kb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_07",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 2 MB, window 8 s. Calculate speed in bit/s.",
+    "payload_value": 2,
+    "payload_unit": "MB",
+    "time_sec": 8,
+    "ask_unit": "bps",
+    "expected_bps": 2097152,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_07_OPT1",
+        "label": "2097152 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_07_OPT2",
+        "label": "262144 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_07_OPT3",
+        "label": "2000000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_07_OPT4",
+        "label": "16777216 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_07_OPT5",
+        "label": "2097.152 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_07_OPT6",
+        "label": "2097314 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_07_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 2097152 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 2 MB.",
+      "Window before lock: 8 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "mb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_08",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 5 MB, window 10 s. Calculate speed in bit/s.",
+    "payload_value": 5,
+    "payload_unit": "MB",
+    "time_sec": 10,
+    "ask_unit": "bps",
+    "expected_bps": 4194304,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_08_OPT1",
+        "label": "4194304 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_08_OPT2",
+        "label": "524288 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_08_OPT3",
+        "label": "4000000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_08_OPT4",
+        "label": "41943040 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_08_OPT5",
+        "label": "4194.304 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_08_OPT6",
+        "label": "4194599 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_08_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 4194304 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 5 MB.",
+      "Window before lock: 10 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "mb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_09",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 12 MB, window 48 s. Calculate speed in bit/s.",
+    "payload_value": 12,
+    "payload_unit": "MB",
+    "time_sec": 48,
+    "ask_unit": "bps",
+    "expected_bps": 2097152,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_09_OPT1",
+        "label": "2097152 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_09_OPT2",
+        "label": "262144 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_09_OPT3",
+        "label": "2000000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_09_OPT4",
+        "label": "100663296 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_09_OPT5",
+        "label": "2097.152 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_09_OPT6",
+        "label": "2098124 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_09_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 2097152 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 12 MB.",
+      "Window before lock: 48 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "mb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_10",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 9 MB, window 36 s. Calculate speed in bit/s.",
+    "payload_value": 9,
+    "payload_unit": "MB",
+    "time_sec": 36,
+    "ask_unit": "bps",
+    "expected_bps": 2097152,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_10_OPT1",
+        "label": "2097152 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_10_OPT2",
+        "label": "262144 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_10_OPT3",
+        "label": "2000000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_10_OPT4",
+        "label": "75497472 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_10_OPT5",
+        "label": "2097.152 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_10_OPT6",
+        "label": "2097881 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_10_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 2097152 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 9 MB.",
+      "Window before lock: 36 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "mb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_11",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 600 KB, window 75 s. Calculate speed in bit/s.",
+    "payload_value": 600,
+    "payload_unit": "KB",
+    "time_sec": 75,
+    "ask_unit": "bps",
+    "expected_bps": 65536,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_11_OPT1",
+        "label": "65536 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_11_OPT2",
+        "label": "8192 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_11_OPT3",
+        "label": "64000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_11_OPT4",
+        "label": "4915200 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_11_OPT5",
+        "label": "65.536 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_11_OPT6",
+        "label": "88561 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_11_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 65536 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 600 KB.",
+      "Window before lock: 75 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "kb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_12",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 840 KB, window 64 s. Calculate speed in bit/s.",
+    "payload_value": 840,
+    "payload_unit": "KB",
+    "time_sec": 64,
+    "ask_unit": "bps",
+    "expected_bps": 107520,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_12_OPT1",
+        "label": "107520 bps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_12_OPT2",
+        "label": "13440 bps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_12_OPT3",
+        "label": "105000 bps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_12_OPT4",
+        "label": "6881280 bps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_12_OPT5",
+        "label": "107.520 kbps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_12_OPT6",
+        "label": "139304 bps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_12_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 107520 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 840 KB.",
+      "Window before lock: 64 s.",
+      "Output requested: bit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "bps",
+      "kb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_13",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 700 KB, window 40 s. Calculate speed in kbit/s.",
+    "payload_value": 700,
+    "payload_unit": "KB",
+    "time_sec": 40,
+    "ask_unit": "kbps",
+    "expected_bps": 143360,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_13_OPT1",
+        "label": "143.360 kbps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_13_OPT2",
+        "label": "17.920 kbps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_13_OPT3",
+        "label": "140.000 kbps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_13_OPT4",
+        "label": "5734.400 kbps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_13_OPT5",
+        "label": "143360 bps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_13_OPT6",
+        "label": "169.700 kbps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_13_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 143360 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 700 KB.",
+      "Window before lock: 40 s.",
+      "Output requested: kbit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "kbps",
+      "kb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_14",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 1500 KB, window 48 s. Calculate speed in kbit/s.",
+    "payload_value": 1500,
+    "payload_unit": "KB",
+    "time_sec": 48,
+    "ask_unit": "kbps",
+    "expected_bps": 256000,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_14_OPT1",
+        "label": "256.000 kbps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_14_OPT2",
+        "label": "32.000 kbps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_14_OPT3",
+        "label": "250.000 kbps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_14_OPT4",
+        "label": "12288.000 kbps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_14_OPT5",
+        "label": "256000 bps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_14_OPT6",
+        "label": "312.028 kbps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_14_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 256000 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 1500 KB.",
+      "Window before lock: 48 s.",
+      "Output requested: kbit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "kbps",
+      "kb"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_B_15",
+    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
+    "prompt": "Payload 3 MB, window 16 s. Calculate speed in kbit/s.",
+    "payload_value": 3,
+    "payload_unit": "MB",
+    "time_sec": 16,
+    "ask_unit": "kbps",
+    "expected_bps": 1572864,
+    "pipeline_slots": [
+      "kilo",
+      "bit",
+      "time",
+      "out"
+    ],
+    "modules_pool": [
+      {
+        "module_id": "KILO_1024",
+        "slot_type": "kilo",
+        "display": "x1024",
+        "k": 1024,
+        "is_trap": false
+      },
+      {
+        "module_id": "KILO_1000",
+        "slot_type": "kilo",
+        "display": "x1000",
+        "k": 1000,
+        "is_trap": true
+      },
+      {
+        "module_id": "BIT_X8",
+        "slot_type": "bit",
+        "display": "x8",
+        "k": 8,
+        "is_trap": false
+      },
+      {
+        "module_id": "BIT_X1",
+        "slot_type": "bit",
+        "display": "x1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "TIME_DIV",
+        "slot_type": "time",
+        "display": "/t",
+        "k": -1,
+        "is_trap": false
+      },
+      {
+        "module_id": "TIME_SKIP",
+        "slot_type": "time",
+        "display": "/1",
+        "k": 1,
+        "is_trap": true
+      },
+      {
+        "module_id": "OUT_BPS",
+        "slot_type": "out",
+        "display": "bps",
+        "out_unit": "bps",
+        "is_trap": false
+      },
+      {
+        "module_id": "OUT_KBPS",
+        "slot_type": "out",
+        "display": "kbps",
+        "out_unit": "kbps",
+        "is_trap": true
+      }
+    ],
+    "options": [
+      {
+        "id": "NT_B_15_OPT1",
+        "label": "1572.864 kbps",
+        "error_code": ""
+      },
+      {
+        "id": "NT_B_15_OPT2",
+        "label": "196.608 kbps",
+        "error_code": "B_MATH_X8"
+      },
+      {
+        "id": "NT_B_15_OPT3",
+        "label": "1500.000 kbps",
+        "error_code": "B_MATH_1024"
+      },
+      {
+        "id": "NT_B_15_OPT4",
+        "label": "25165.824 kbps",
+        "error_code": "B_MATH_DIV"
+      },
+      {
+        "id": "NT_B_15_OPT5",
+        "label": "1572864 bps",
+        "error_code": "B_UNIT_TRAP"
+      },
+      {
+        "id": "NT_B_15_OPT6",
+        "label": "1573.151 kbps",
+        "error_code": "B_GARBAGE"
+      }
+    ],
+    "correct_id": "NT_B_15_OPT1",
+    "explain_short": "Use binary conversion then divide by time: 1572864 bps.",
+    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "logs": [
+      "Intercept node synced.",
+      "Payload chunk confirmed: 3 MB.",
+      "Window before lock: 16 s.",
+      "Output requested: kbit/s."
+    ],
+    "analyze_lines": [
+      "Conversion chain: storage -> bytes -> bits.",
+      "Rate equation: speed = bits / time."
+    ],
+    "tags": [
+      "net",
+      "math",
+      "bandwidth",
+      "kbps",
+      "mb"
+    ],
+    "time_limit_sec": 120
+  }
+]

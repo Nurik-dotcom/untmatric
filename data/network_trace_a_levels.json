@@ -1,0 +1,908 @@
+[
+  {
+    "id": "NT_A_01",
+    "incident_id": "INC_01",
+    "briefing": "Traffic between office and server zone stopped after segmentation update.",
+    "prompt": "Which device is needed to pass traffic between different subnets?",
+    "required_evidence": 2,
+    "logs": [
+      "SRC 192.168.1.10 -> DST 10.0.0.5 : NO ROUTE",
+      "ARP works inside 192.168.1.0/24",
+      "Gateway table on host is empty"
+    ],
+    "topology": {
+      "nodes": [
+        "OfficeLAN",
+        "SwitchA",
+        "?",
+        "SwitchB",
+        "ServerLAN"
+      ],
+      "edges": [
+        [
+          "OfficeLAN",
+          "SwitchA"
+        ],
+        [
+          "SwitchA",
+          "?"
+        ],
+        [
+          "?",
+          "SwitchB"
+        ],
+        [
+          "SwitchB",
+          "ServerLAN"
+        ]
+      ],
+      "labels": {
+        "OfficeLAN": "192.168.1.0/24",
+        "ServerLAN": "10.0.0.0/24"
+      }
+    },
+    "options": [
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": ""
+      },
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "repeater",
+        "label": "Repeater",
+        "error_code": "A_L1_PHYSICAL"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": "A_PASSIVE"
+      }
+    ],
+    "correct_id": "router",
+    "explain_short": "Router performs Layer-3 routing between subnets.",
+    "explain_full": "Different networks require routing decisions by IP prefix. A switch can only forward frames inside a broadcast domain. Hub and repeater are physical-layer components.",
+    "tags": [
+      "routing",
+      "subnet",
+      "l3"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_02",
+    "incident_id": "INC_01",
+    "briefing": "Two VLANs can ping inside themselves but not across.",
+    "prompt": "Select the device that restores inter-VLAN communication.",
+    "required_evidence": 2,
+    "logs": [
+      "VLAN 10 to VLAN 20 ping timeout",
+      "MAC tables on access switches are healthy",
+      "No default gateway response from VLAN interfaces"
+    ],
+    "topology": {
+      "nodes": [
+        "VLAN10",
+        "AccessSW",
+        "?",
+        "CoreSW",
+        "VLAN20"
+      ],
+      "edges": [
+        [
+          "VLAN10",
+          "AccessSW"
+        ],
+        [
+          "AccessSW",
+          "?"
+        ],
+        [
+          "?",
+          "CoreSW"
+        ],
+        [
+          "CoreSW",
+          "VLAN20"
+        ]
+      ],
+      "labels": {
+        "VLAN10": "172.16.10.0/24",
+        "VLAN20": "172.16.20.0/24"
+      }
+    },
+    "options": [
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": ""
+      },
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "ap",
+        "label": "Access Point",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": "A_PASSIVE"
+      }
+    ],
+    "correct_id": "router",
+    "explain_short": "Inter-VLAN traffic needs Layer-3 routing.",
+    "explain_full": "Hosts in different VLAN subnets need a routing hop. Layer-2 forwarding alone cannot resolve destination networks outside local segment.",
+    "tags": [
+      "vlan",
+      "routing",
+      "gateway"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_03",
+    "incident_id": "INC_02",
+    "briefing": "Broadcast traffic exploded after replacing edge equipment.",
+    "prompt": "Which device should be installed to isolate collision domains?",
+    "required_evidence": 2,
+    "logs": [
+      "Collision counter jumps every second",
+      "Frames are mirrored to all ports",
+      "Single subnet only, no routing required"
+    ],
+    "topology": {
+      "nodes": [
+        "Clients",
+        "?",
+        "Printer",
+        "NAS"
+      ],
+      "edges": [
+        [
+          "Clients",
+          "?"
+        ],
+        [
+          "?",
+          "Printer"
+        ],
+        [
+          "?",
+          "NAS"
+        ]
+      ],
+      "labels": {
+        "Clients": "192.168.50.0/24"
+      }
+    },
+    "options": [
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": ""
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "repeater",
+        "label": "Repeater",
+        "error_code": "A_L1_PHYSICAL"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": "A_PASSIVE"
+      }
+    ],
+    "correct_id": "switch",
+    "explain_short": "Switch forwards by MAC and segments collisions per port.",
+    "explain_full": "The symptom is local Layer-2 flooding, not subnet routing. Switch resolves this by forwarding only to destination MAC port.",
+    "tags": [
+      "switching",
+      "collision",
+      "lan"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_04",
+    "incident_id": "INC_02",
+    "briefing": "SOC reports every host can sniff unrelated office traffic.",
+    "prompt": "Pick the replacement that limits broad frame visibility.",
+    "required_evidence": 2,
+    "logs": [
+      "Promiscuous captures see all workstation frames",
+      "No subnet boundary crossing in this case",
+      "Current device has no MAC address table"
+    ],
+    "topology": {
+      "nodes": [
+        "DeskA",
+        "DeskB",
+        "?",
+        "DeskC",
+        "DeskD"
+      ],
+      "edges": [
+        [
+          "DeskA",
+          "?"
+        ],
+        [
+          "DeskB",
+          "?"
+        ],
+        [
+          "DeskC",
+          "?"
+        ],
+        [
+          "DeskD",
+          "?"
+        ]
+      ],
+      "labels": {
+        "DeskA": "Same subnet segment"
+      }
+    },
+    "options": [
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": ""
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "bridge",
+        "label": "Bridge",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "repeater",
+        "label": "Repeater",
+        "error_code": "A_L1_PHYSICAL"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": "A_PASSIVE"
+      }
+    ],
+    "correct_id": "switch",
+    "explain_short": "Switch suppresses unnecessary flooding after MAC learning.",
+    "explain_full": "Hub-like behavior exposes all traffic. A switch learns MAC locations and stops sending every frame to every endpoint.",
+    "tags": [
+      "security",
+      "sniffing",
+      "switch"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_05",
+    "incident_id": "INC_03",
+    "briefing": "Signal drops on a long copper corridor segment.",
+    "prompt": "Choose the component that restores physical signal only.",
+    "required_evidence": 2,
+    "logs": [
+      "CRC error bursts after 92m copper span",
+      "No addressing or policy errors detected",
+      "Issue appears before any packet headers are parsed"
+    ],
+    "topology": {
+      "nodes": [
+        "Camera",
+        "CableSpan",
+        "?",
+        "Switch"
+      ],
+      "edges": [
+        [
+          "Camera",
+          "CableSpan"
+        ],
+        [
+          "CableSpan",
+          "?"
+        ],
+        [
+          "?",
+          "Switch"
+        ]
+      ],
+      "labels": {
+        "CableSpan": "Long copper run"
+      }
+    },
+    "options": [
+      {
+        "id": "repeater",
+        "label": "Repeater",
+        "error_code": ""
+      },
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": "A_PASSIVE"
+      }
+    ],
+    "correct_id": "repeater",
+    "explain_short": "Repeater regenerates physical signal on long links.",
+    "explain_full": "This incident is physical attenuation, not addressing. Repeater extends signal integrity but does not route or filter traffic.",
+    "tags": [
+      "physical",
+      "crc",
+      "repeater"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_06",
+    "incident_id": "INC_03",
+    "briefing": "Edge branch cannot reach HQ subnet after migration.",
+    "prompt": "What device should bridge branch and HQ IP networks?",
+    "required_evidence": 2,
+    "logs": [
+      "Branch net 192.168.30.0/24 cannot reach 172.20.0.0/16",
+      "Local ARP resolves inside branch only",
+      "No route entries for HQ destination"
+    ],
+    "topology": {
+      "nodes": [
+        "BranchLAN",
+        "Switch",
+        "?",
+        "WAN",
+        "HQLAN"
+      ],
+      "edges": [
+        [
+          "BranchLAN",
+          "Switch"
+        ],
+        [
+          "Switch",
+          "?"
+        ],
+        [
+          "?",
+          "WAN"
+        ],
+        [
+          "WAN",
+          "HQLAN"
+        ]
+      ],
+      "labels": {
+        "BranchLAN": "192.168.30.0/24",
+        "HQLAN": "172.20.0.0/16"
+      }
+    },
+    "options": [
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": ""
+      },
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "firewall",
+        "label": "Firewall",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": "A_PASSIVE"
+      }
+    ],
+    "correct_id": "router",
+    "explain_short": "Router is required for inter-network forwarding.",
+    "explain_full": "Different prefixes require gateway routing tables. L2 gear and passive hardware cannot forward across routed boundaries.",
+    "tags": [
+      "wan",
+      "routing",
+      "gateway"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_07",
+    "incident_id": "INC_04",
+    "briefing": "Warehouse floor network became unstable after old spare unit was inserted.",
+    "prompt": "Which device choice prevents collision spikes in one subnet?",
+    "required_evidence": 2,
+    "logs": [
+      "Collision and late collision counters rising",
+      "Destination MAC appears but frames still flood",
+      "All hosts remain in one 10.10.40.0/24 subnet"
+    ],
+    "topology": {
+      "nodes": [
+        "ScannerA",
+        "ScannerB",
+        "?",
+        "Controller"
+      ],
+      "edges": [
+        [
+          "ScannerA",
+          "?"
+        ],
+        [
+          "ScannerB",
+          "?"
+        ],
+        [
+          "Controller",
+          "?"
+        ]
+      ],
+      "labels": {
+        "Controller": "Single L2 domain"
+      }
+    },
+    "options": [
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": ""
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "bridge",
+        "label": "Bridge",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "repeater",
+        "label": "Repeater",
+        "error_code": "A_L1_PHYSICAL"
+      }
+    ],
+    "correct_id": "switch",
+    "explain_short": "Switch isolates traffic per port and suppresses collisions.",
+    "explain_full": "In a single subnet collision scenario, switch is the proper L2 control point. Router does not solve local collision behavior.",
+    "tags": [
+      "collision",
+      "operations",
+      "switch"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_08",
+    "incident_id": "INC_04",
+    "briefing": "Technician claims patch-panel can enforce access filtering.",
+    "prompt": "Select the correct technical assessment.",
+    "required_evidence": 2,
+    "logs": [
+      "Rack contains passive patch field only",
+      "No control-plane CPU or forwarding table detected",
+      "Packets are unaffected by panel re-labeling"
+    ],
+    "topology": {
+      "nodes": [
+        "UserLAN",
+        "PatchRack",
+        "?",
+        "Core"
+      ],
+      "edges": [
+        [
+          "UserLAN",
+          "PatchRack"
+        ],
+        [
+          "PatchRack",
+          "?"
+        ],
+        [
+          "?",
+          "Core"
+        ]
+      ],
+      "labels": {
+        "PatchRack": "Passive panel"
+      }
+    },
+    "options": [
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": ""
+      },
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "repeater",
+        "label": "Repeater",
+        "error_code": "A_L1_PHYSICAL"
+      }
+    ],
+    "correct_id": "patch",
+    "explain_short": "Patch-panel is passive wiring hardware.",
+    "explain_full": "Patch-panel terminates and organizes links. It cannot route, switch, or filter traffic because it has no forwarding logic.",
+    "tags": [
+      "passive",
+      "rack",
+      "hardware"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_09",
+    "incident_id": "INC_05",
+    "briefing": "After adding guest subnet, office hosts lost access to ERP zone.",
+    "prompt": "Which device restores communication between office and ERP subnet?",
+    "required_evidence": 2,
+    "logs": [
+      "Office: 192.168.80.0/24, ERP: 192.168.120.0/24",
+      "Hosts can ping local gateway only",
+      "Switch logs show no routing entries"
+    ],
+    "topology": {
+      "nodes": [
+        "Office",
+        "AccessSW",
+        "?",
+        "DistSW",
+        "ERP"
+      ],
+      "edges": [
+        [
+          "Office",
+          "AccessSW"
+        ],
+        [
+          "AccessSW",
+          "?"
+        ],
+        [
+          "?",
+          "DistSW"
+        ],
+        [
+          "DistSW",
+          "ERP"
+        ]
+      ],
+      "labels": {
+        "Office": "192.168.80.0/24",
+        "ERP": "192.168.120.0/24"
+      }
+    },
+    "options": [
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": ""
+      },
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "firewall",
+        "label": "Firewall",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": "A_PASSIVE"
+      }
+    ],
+    "correct_id": "router",
+    "explain_short": "Different subnets need Layer-3 routing path.",
+    "explain_full": "Even with healthy switches, packets cannot move between subnet prefixes without routing.",
+    "tags": [
+      "subnet",
+      "erp",
+      "router"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_10",
+    "incident_id": "INC_05",
+    "briefing": "Monitoring says packets are copied to all ports on a floor segment.",
+    "prompt": "Choose replacement device for selective frame forwarding.",
+    "required_evidence": 2,
+    "logs": [
+      "SPAN captures identical frame copies on every port",
+      "No requirement to connect different IP networks",
+      "Unknown unicast flood persists with old hardware"
+    ],
+    "topology": {
+      "nodes": [
+        "Desk1",
+        "Desk2",
+        "?",
+        "Desk3",
+        "Desk4"
+      ],
+      "edges": [
+        [
+          "Desk1",
+          "?"
+        ],
+        [
+          "Desk2",
+          "?"
+        ],
+        [
+          "Desk3",
+          "?"
+        ],
+        [
+          "Desk4",
+          "?"
+        ]
+      ],
+      "labels": {
+        "Desk1": "One office segment"
+      }
+    },
+    "options": [
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": ""
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "repeater",
+        "label": "Repeater",
+        "error_code": "A_L1_PHYSICAL"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": "A_PASSIVE"
+      }
+    ],
+    "correct_id": "switch",
+    "explain_short": "Switch learns destinations and forwards selectively.",
+    "explain_full": "Hub-like flooding indicates missing MAC-based forwarding. Switch provides per-port forwarding and reduces exposure.",
+    "tags": [
+      "mac",
+      "forwarding",
+      "switch"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_11",
+    "incident_id": "INC_06",
+    "briefing": "Remote sensor link fails beyond a long cable run in factory line.",
+    "prompt": "Which component directly addresses physical attenuation?",
+    "required_evidence": 2,
+    "logs": [
+      "Signal level degrades after long copper path",
+      "Packet headers show valid addresses before drop",
+      "Issue reproduces regardless of subnet configuration"
+    ],
+    "topology": {
+      "nodes": [
+        "Sensor",
+        "LongRun",
+        "?",
+        "EdgeSwitch"
+      ],
+      "edges": [
+        [
+          "Sensor",
+          "LongRun"
+        ],
+        [
+          "LongRun",
+          "?"
+        ],
+        [
+          "?",
+          "EdgeSwitch"
+        ]
+      ],
+      "labels": {
+        "LongRun": "Industrial cable span"
+      }
+    },
+    "options": [
+      {
+        "id": "repeater",
+        "label": "Repeater",
+        "error_code": ""
+      },
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": "A_PASSIVE"
+      }
+    ],
+    "correct_id": "repeater",
+    "explain_short": "Repeater restores signal integrity on long runs.",
+    "explain_full": "Physical attenuation is an L1 problem. Repeater is designed to regenerate signal without modifying forwarding logic.",
+    "tags": [
+      "factory",
+      "physical",
+      "l1"
+    ],
+    "time_limit_sec": 120
+  },
+  {
+    "id": "NT_A_12",
+    "incident_id": "INC_06",
+    "briefing": "Operations inserted a hub between office and data center links.",
+    "prompt": "Pick the correct replacement to stabilize traffic and keep segmentation.",
+    "required_evidence": 2,
+    "logs": [
+      "Broadcast and collision alarms spike after change",
+      "No requirement for inter-subnet routing here",
+      "Target hosts are in same IP segment"
+    ],
+    "topology": {
+      "nodes": [
+        "Office",
+        "?",
+        "DC Switch"
+      ],
+      "edges": [
+        [
+          "Office",
+          "?"
+        ],
+        [
+          "?",
+          "DC Switch"
+        ]
+      ],
+      "labels": {
+        "Office": "10.40.0.0/24",
+        "DC Switch": "Same subnet"
+      }
+    },
+    "options": [
+      {
+        "id": "switch",
+        "label": "Switch",
+        "error_code": ""
+      },
+      {
+        "id": "hub",
+        "label": "Hub",
+        "error_code": "A_L1_BROADCAST"
+      },
+      {
+        "id": "router",
+        "label": "Router",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "bridge",
+        "label": "Bridge",
+        "error_code": "A_L2_SEGMENT_LIMIT"
+      },
+      {
+        "id": "patch",
+        "label": "Patch-panel",
+        "error_code": "A_PASSIVE"
+      }
+    ],
+    "correct_id": "switch",
+    "explain_short": "Switch is correct for segmented forwarding in one subnet.",
+    "explain_full": "The issue is L2 broadcast and collision behavior. Switch addresses this by forwarding by MAC and reducing noisy flooding.",
+    "tags": [
+      "broadcast",
+      "switch",
+      "stability"
+    ],
+    "time_limit_sec": 120
+  }
+]

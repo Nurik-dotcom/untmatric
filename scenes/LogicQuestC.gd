@@ -182,6 +182,10 @@ var current_case := {}
 var attempts := 0
 var is_locked := false
 var is_complete := false
+var case_started_ms: int = 0
+var first_action_ms: int = -1
+var patch_press_count: int = 0
+var hints_used: int = 0
 
 func _ready():
 	GlobalMetrics.stability_changed.connect(_update_stability_ui)
@@ -198,6 +202,10 @@ func load_case(idx: int):
 	attempts = 0
 	is_complete = false
 	is_locked = false
+	case_started_ms = Time.get_ticks_msec()
+	first_action_ms = -1
+	patch_press_count = 0
+	hints_used = 0
 
 	# Reset UI
 	stats_label.text = "CASE: %02d" % (idx + 1)
@@ -260,6 +268,8 @@ func _create_patch_buttons(options: Array):
 # --- INTERACTION ---
 func _on_patch_pressed(btn: Button):
 	if is_locked or is_complete: return
+	_mark_first_action()
+	patch_press_count += 1
 
 	_lock_ui(1.0) # Short lock to prevent double clicks
 
@@ -297,6 +307,12 @@ func _handle_fail(eq_res, option):
 	tween.tween_property(feedback_panel, "position:x", feedback_panel.position.x, 0.05)
 
 	_apply_penalty(penalty)
+	_register_trial("NOT_EQUIVALENT", false, {
+		"selected_label": str(option.get("label", "")),
+		"counterexample": eq_res.counterexample,
+		"orig_value": bool(eq_res.orig),
+		"new_value": bool(eq_res.new)
+	})
 
 	if attempts >= 3:
 		_enter_safe_mode()
@@ -325,6 +341,11 @@ func _handle_success(new_expr, option):
 
 	btn_next.visible = true
 	btn_hint.disabled = true
+	_register_trial("SUCCESS", true, {
+		"selected_label": str(option.get("label", "")),
+		"new_load": count_gates(new_expr),
+		"target_load": int(current_case.get("target_gates", 0))
+	})
 
 func _enter_safe_mode():
 	is_complete = true # Treat as done but failed
@@ -491,6 +512,8 @@ func _on_next_pressed():
 	load_case(current_case_idx + 1)
 
 func _on_hint_pressed():
+	_mark_first_action()
+	hints_used += 1
 	_apply_penalty(5.0)
 	# Just highlight the correct answer slightly or give text hint?
 	# Let's give text hint from logic
@@ -502,6 +525,30 @@ func _on_hint_pressed():
 
 	if correct_opt:
 		feedback_text.text = "[color=#88CCFF]HINT: Look for %s[/color]" % correct_opt.label.substr(0, 5) + "..."
+
+func _mark_first_action() -> void:
+	if first_action_ms < 0:
+		first_action_ms = Time.get_ticks_msec() - case_started_ms
+
+func _register_trial(verdict_code: String, is_correct: bool, extra: Dictionary = {}) -> void:
+	var case_id: String = str(current_case.get("id", "C_00"))
+	var variant_hash: String = str(hash(JSON.stringify(current_case.get("expr_start", []))))
+	var payload: Dictionary = TrialV2.build("LOGIC_QUEST", "C", case_id, "PATCH_SELECT", variant_hash)
+	var elapsed_ms: int = int(max(0, Time.get_ticks_msec() - case_started_ms))
+	payload["elapsed_ms"] = elapsed_ms
+	payload["duration"] = float(elapsed_ms) / 1000.0
+	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms
+	payload["is_correct"] = is_correct
+	payload["is_fit"] = is_correct
+	payload["stability_delta"] = 0
+	payload["verdict_code"] = verdict_code
+	payload["attempts"] = attempts
+	payload["patch_press_count"] = patch_press_count
+	payload["hints_used"] = hints_used
+	payload["target_gates"] = int(current_case.get("target_gates", 0))
+	for key in extra.keys():
+		payload[key] = extra[key]
+	GlobalMetrics.register_trial(payload)
 
 func _on_back_pressed():
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")

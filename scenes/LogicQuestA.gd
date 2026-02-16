@@ -145,6 +145,8 @@ var seen_combinations: Dictionary = {}
 var case_attempts: int = 0
 var hints_used: int = 0
 var start_time_msec: int = 0
+var first_action_ms: int = -1
+var verdict_count: int = 0
 
 var last_verdict_time: float = 0.0
 var verdict_timer: Timer = null
@@ -202,6 +204,8 @@ func load_case(idx: int):
 	case_attempts = 0
 	hints_used = 0
 	start_time_msec = Time.get_ticks_msec()
+	first_action_ms = -1
+	verdict_count = 0
 	is_safe_mode = false
 
 	# Update UI Text
@@ -243,12 +247,14 @@ func _update_input_labels():
 		input_b_btn.text = "%s\n%s" % [current_case.b_text, "1" if input_b else "0"]
 
 func _on_input_a_toggled(pressed: bool):
+	_mark_first_action()
 	input_a = pressed
 	_play_click()
 	_update_input_labels()
 	_update_circuit()
 
 func _on_input_b_toggled(pressed: bool):
+	_mark_first_action()
 	input_b = pressed
 	_play_click()
 	_update_input_labels()
@@ -302,6 +308,7 @@ func _update_journal_log():
 	journal_label.text = txt
 
 func _on_gate_selected(index):
+	_mark_first_action()
 	if index == 0:
 		selected_gate_guess = ""
 	else:
@@ -309,18 +316,23 @@ func _on_gate_selected(index):
 		_play_click()
 
 func _on_verdict_pressed():
-	if is_safe_mode: return
+	if is_safe_mode:
+		return
+	_mark_first_action()
+	verdict_count += 1
 
 	# Anti-spam
 	var current_time = Time.get_ticks_msec() / 1000.0
 	if current_time - last_verdict_time < 0.8:
-		_show_feedback("ﾐ斷ｵ ﾑび巾ｺﾐｰﾐｹ. ﾐ湲ﾐｾﾐｲﾐｵﾑﾑ・ﾑ・ｰﾐｺﾑび・", Color(1, 0.5, 0))
+		_show_feedback("Please wait before the next verdict.", Color(1, 0.5, 0))
 		_lock_verdict(3.0)
+		_register_trial("RATE_LIMITED", false)
 		return
 	last_verdict_time = current_time
 
 	if selected_gate_guess == "":
 		_show_feedback("SELECT GATE FIRST", Color(1, 1, 0))
+		_register_trial("EMPTY_SELECTION", false)
 		return
 
 	var min_seen = current_case.get("min_seen", 2)
@@ -328,6 +340,7 @@ func _on_verdict_pressed():
 		_show_feedback("INSUFFICIENT DATA (%d/%d)" % [seen_combinations.size(), min_seen], Color(1, 0.5, 0))
 		_apply_penalty(2.0)
 		_lock_verdict(2.0)
+		_register_trial("INSUFFICIENT_DATA", false)
 		return
 
 	if selected_gate_guess == current_case.gate:
@@ -335,19 +348,24 @@ func _on_verdict_pressed():
 		btn_verdict.visible = false
 		btn_next.visible = true
 		_disable_controls()
+		_register_trial("SUCCESS", true)
 	else:
 		case_attempts += 1
 		_update_stats_ui()
 
 		var penalty = 10.0
-		if case_attempts == 2: penalty = 15.0
-		elif case_attempts >= 3: penalty = 25.0
+		if case_attempts == 2:
+			penalty = 15.0
+		elif case_attempts >= 3:
+			penalty = 25.0
 
 		_apply_penalty(penalty)
 		_show_feedback("ACCESS DENIED (-%d)" % int(penalty), Color(1, 0, 0))
-
+		var verdict_code := "WRONG_GATE"
 		if case_attempts >= MAX_ATTEMPTS:
 			_enter_safe_mode()
+			verdict_code = "SAFE_MODE_TRIGGERED"
+		_register_trial(verdict_code, false)
 
 func _lock_verdict(duration: float):
 	if is_safe_mode: return
@@ -437,6 +455,7 @@ func _on_next_button_pressed():
 	load_case(current_case_index + 1)
 
 func _on_hint_pressed():
+	_mark_first_action()
 	if hints_used < current_case.hints.size():
 		var h = current_case.hints[hints_used]
 		hints_used += 1
@@ -444,6 +463,29 @@ func _on_hint_pressed():
 		_apply_penalty(5.0)
 	else:
 		_show_feedback("NO MORE HINTS", Color(0.5, 0.5, 0.5))
+
+func _mark_first_action() -> void:
+	if first_action_ms < 0:
+		first_action_ms = Time.get_ticks_msec() - start_time_msec
+
+func _register_trial(verdict_code: String, is_correct: bool) -> void:
+	var case_id := str(current_case.get("id", "A_00"))
+	var payload := TrialV2.build("LOGIC_QUEST", "A", case_id, "GATE_IDENTIFY")
+	var elapsed_ms := max(0, Time.get_ticks_msec() - start_time_msec)
+	payload["elapsed_ms"] = elapsed_ms
+	payload["duration"] = float(elapsed_ms) / 1000.0
+	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms
+	payload["is_correct"] = is_correct
+	payload["is_fit"] = is_correct
+	payload["stability_delta"] = 0
+	payload["verdict_code"] = verdict_code
+	payload["selected_gate_id"] = selected_gate_guess
+	payload["correct_gate_id"] = str(current_case.get("gate", ""))
+	payload["seen_combinations"] = seen_combinations.size()
+	payload["hints_used"] = hints_used
+	payload["attempts"] = case_attempts
+	payload["verdict_count"] = verdict_count
+	GlobalMetrics.register_trial(payload)
 
 func _play_click():
 	if click_player.stream:

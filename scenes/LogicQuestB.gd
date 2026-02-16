@@ -111,6 +111,9 @@ var placed_gates = [GATE_NONE, GATE_NONE] # Slot 1, Slot 2
 var selected_slot_idx = -1
 var hints_used = 0
 var case_attempts = 0
+var case_started_ms: int = 0
+var first_action_ms: int = -1
+var verdict_count: int = 0
 
 const COLOR_ON = Color(1.2, 1.2, 1.2, 1)
 const COLOR_OFF = Color(0.15, 0.15, 0.15, 1)
@@ -133,6 +136,9 @@ func load_case(idx):
 	selected_slot_idx = -1
 	hints_used = 0
 	case_attempts = 0
+	case_started_ms = Time.get_ticks_msec()
+	first_action_ms = -1
+	verdict_count = 0
 
 	# Update UI
 	story_text.text = current_case.story
@@ -187,16 +193,19 @@ func _get_gate_symbol(type):
 	return "?"
 
 func _on_input_a_toggled(pressed):
+	_mark_first_action()
 	inputs[0] = pressed
 	input_a_btn.text = "%s: %s" % [current_case.labels[0], "1" if pressed else "0"]
 	_update_circuit()
 
 func _on_input_b_toggled(pressed):
+	_mark_first_action()
 	inputs[1] = pressed
 	input_b_btn.text = "%s: %s" % [current_case.labels[1], "1" if pressed else "0"]
 	_update_circuit()
 
 func _on_input_c_toggled(pressed):
+	_mark_first_action()
 	inputs[2] = pressed
 	input_c_btn.text = "%s: %s" % [current_case.labels[2], "1" if pressed else "0"]
 	_update_circuit()
@@ -208,6 +217,7 @@ func _on_slot2_pressed():
 	_select_slot(1)
 
 func _select_slot(idx):
+	_mark_first_action()
 	selected_slot_idx = idx
 	_play_click()
 
@@ -226,6 +236,7 @@ func _set_selector_enabled(enabled):
 
 func _on_gate_btn_pressed(type):
 	if selected_slot_idx == -1: return
+	_mark_first_action()
 
 	placed_gates[selected_slot_idx] = type
 	_update_slot_visuals(selected_slot_idx)
@@ -308,9 +319,12 @@ func _gate_op(a, b, type):
 	return false
 
 func _on_verdict_pressed():
+	_mark_first_action()
+	verdict_count += 1
 	# Check completeness
 	if placed_gates[0] == GATE_NONE or placed_gates[1] == GATE_NONE:
 		_show_feedback("CIRCUIT INCOMPLETE", Color(1, 0.5, 0))
+		_register_trial("INCOMPLETE", false)
 		return
 
 	var correct = current_case.correct_gates
@@ -319,11 +333,13 @@ func _on_verdict_pressed():
 		btn_verdict.visible = false
 		btn_next.visible = true
 		_set_selector_enabled(false)
+		_register_trial("SUCCESS", true)
 	else:
 		case_attempts += 1
 		var pen = 15.0 + (case_attempts * 5.0)
 		_apply_penalty(pen)
 		_show_feedback("LOGIC ERROR. STABILITY -%d" % int(pen), Color(1, 0, 0))
+		_register_trial("WRONG_GATE", false)
 
 func _show_feedback(msg, col):
 	feedback_lbl.text = msg
@@ -351,11 +367,36 @@ func _on_next_button_pressed():
 func _on_back_button_pressed():
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
+func _mark_first_action() -> void:
+	if first_action_ms < 0:
+		first_action_ms = Time.get_ticks_msec() - case_started_ms
+
+func _register_trial(verdict_code: String, is_correct: bool) -> void:
+	var case_id := str(current_case.get("id", "B_00"))
+	var variant_source := "%s|%s" % [str(current_case.get("layout", "")), ",".join(placed_gates)]
+	var payload := TrialV2.build("LOGIC_QUEST", "B", case_id, "DRAG_DROP", str(hash(variant_source)))
+	var elapsed_ms := max(0, Time.get_ticks_msec() - case_started_ms)
+	payload["elapsed_ms"] = elapsed_ms
+	payload["duration"] = float(elapsed_ms) / 1000.0
+	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms
+	payload["is_correct"] = is_correct
+	payload["is_fit"] = is_correct
+	payload["stability_delta"] = 0
+	payload["verdict_code"] = verdict_code
+	payload["attempts"] = case_attempts
+	payload["hints_used"] = hints_used
+	payload["verdict_count"] = verdict_count
+	payload["placed_gates"] = placed_gates.duplicate()
+	payload["correct_gates"] = current_case.get("correct_gates", []).duplicate()
+	GlobalMetrics.register_trial(payload)
+
 func _play_click():
 	if click_player.stream:
 		click_player.play()
 
 func _on_hint_pressed():
+	_mark_first_action()
+	hints_used += 1
 	_show_feedback("HINT: " + current_case.hint, Color(0.5, 0.8, 1))
 	_apply_penalty(5.0)
 

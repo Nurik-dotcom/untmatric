@@ -59,6 +59,8 @@ func _ready():
 	btn_back.pressed.connect(_on_back_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_submit.pressed.connect(_on_submit_pressed)
+	sum_input.text_changed.connect(_on_sum_input_changed)
+	sum_input.placeholder_text = "Enter integer sum"
 
 	_load_level_data("res://data/city_map/level_6_3.json")
 	_calculate_optimal_path_dynamic()
@@ -348,6 +350,9 @@ func _reset_game_state():
 	sum_input.text = ""
 	status_label.text = ""
 	ambush_triggered = false
+	first_attempt_edge = null
+	planning_time_ms = 0
+	start_time_ms = Time.get_ticks_msec()
 	_update_visuals()
 	_update_sim_time_display()
 	_update_trust()
@@ -465,9 +470,34 @@ func _on_submit_pressed():
 		btn_submit.disabled = true
 		btn_reset.disabled = true
 	else:
-		status_label.text = "Error: " + verdict
+		status_label.text = _format_verdict_message(verdict)
 		status_label.add_theme_color_override("font_color", Color.ORANGE)
 		_update_trust()
+
+func _on_sum_input_changed(new_text: String) -> void:
+	var filtered := ""
+	for ch in new_text:
+		if ch >= "0" and ch <= "9":
+			filtered += ch
+	if filtered != new_text:
+		sum_input.text = filtered
+		sum_input.caret_column = filtered.length()
+
+func _format_verdict_message(verdict: String) -> String:
+	match verdict:
+		"PARSE_ERROR":
+			return "Enter a whole number."
+		"ERR_CALC":
+			return "Incorrect sum for the selected path."
+		"ERR_NOT_OPT":
+			return "Path is valid, but not optimal."
+		"ERR_MISSING_REQUIRED":
+			return "Missing required node(s)."
+		"ERR_LOGIC_VIOLATION":
+			return "Logical constraints are violated."
+		"INCOMPLETE":
+			return "Reach the destination before submit."
+	return "Error: " + verdict
 
 func _judge_solution(input_text: String) -> String:
 	# 1. Structural (Calculated during move, but verify)
@@ -574,6 +604,13 @@ func _log_attempt(input_sum_raw: String, verdict: String):
 	var t_overtime = max(0, real_time_sec - level_data.time_limit_sec)
 
 	var log_data = {
+		"schema_version": "trial.v2",
+		"quest_id": "CITY_MAP",
+		"stage": "C",
+		"task_id": str(level_data.get("level_id", "CITY_C")),
+		"interaction_type": "PATH_SUM",
+		"match_key": "CITY_MAP|C|%s|v%s" % [str(level_data.get("level_id", "CITY_C")), config_hash.substr(0, 8)],
+		"variant_hash": config_hash,
 		"contract_version": level_data.get("contract_version", "city_map.v1.0.0"),
 		"level_id": level_data.level_id,
 		"config_hash": config_hash,
@@ -601,7 +638,14 @@ func _log_attempt(input_sum_raw: String, verdict: String):
 		"N_logic": n_logic
 	}
 
-	GlobalMetrics.session_history.append(log_data)
+	log_data["is_correct"] = verdict == "OK_OPTIMAL"
+	log_data["is_fit"] = verdict == "OK_OPTIMAL"
+	log_data["stability_delta"] = 0
+	log_data["elapsed_ms"] = real_time_sec * 1000
+	log_data["duration"] = float(real_time_sec)
+	log_data["time_to_first_action_ms"] = planning_time_ms if planning_time_ms > 0 else real_time_sec * 1000
+	log_data["error_type"] = verdict if verdict != "OK_OPTIMAL" else "NONE"
+	GlobalMetrics.register_trial(log_data)
 	_save_json_log(log_data)
 
 func _save_json_log(data: Dictionary):

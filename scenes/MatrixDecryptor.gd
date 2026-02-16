@@ -26,6 +26,9 @@ var _input_locked: bool = false
 var _safe_mode_active: bool = false
 var _last_row_ok: Array = []
 var _last_col_ok: Array = []
+var _task_started_ms: int = 0
+var _first_action_ms: int = -1
+var _check_count: int = 0
 
 func _ready():
 	GlobalMetrics.stability_changed.connect(_on_stability_changed)
@@ -40,6 +43,7 @@ func _ready():
 	_build_grid()
 
 	GlobalMetrics.start_matrix_quest()
+	_reset_trial_telemetry()
 	_apply_constraints_to_labels()
 	_refresh_grid_from_state()
 	_update_status_highlights()
@@ -132,6 +136,8 @@ func _update_cell_visual(row: int, col: int):
 func _on_cell_pressed(row: int, col: int):
 	if _input_locked:
 		return
+	if _first_action_ms < 0:
+		_first_action_ms = Time.get_ticks_msec() - _task_started_ms
 	AudioManager.play("click")
 	var current = GlobalMetrics.matrix_current[row][col]
 	var next_state = STATE_ZERO if current == STATE_UNSET else (STATE_ONE if current == STATE_ZERO else STATE_UNSET)
@@ -171,11 +177,15 @@ func _update_status_highlights():
 func _on_check_pressed():
 	if _input_locked:
 		return
+	_check_count += 1
+	var changed_cells_count := GlobalMetrics.matrix_changed_cells.size()
 	var result = GlobalMetrics.check_matrix_solution()
+	_register_trial(result, changed_cells_count)
 	if result.success:
 		log_message("ACCESS GRANTED.", COLOR_NORMAL)
 		await get_tree().create_timer(1.0).timeout
 		GlobalMetrics.start_matrix_quest()
+		_reset_trial_telemetry()
 		_apply_constraints_to_labels()
 		_refresh_grid_from_state()
 		_update_status_highlights()
@@ -303,6 +313,29 @@ func _set_input_enabled(enabled: bool):
 	for r in range(MATRIX_SIZE):
 		for c in range(MATRIX_SIZE):
 			_cell_buttons[r][c].disabled = not enabled
+
+func _reset_trial_telemetry() -> void:
+	_task_started_ms = Time.get_ticks_msec()
+	_first_action_ms = -1
+	_check_count = 0
+
+func _register_trial(result: Dictionary, changed_cells_count: int) -> void:
+	var variant_hash := str(hash(JSON.stringify(GlobalMetrics.matrix_quest)))
+	var payload := TrialV2.build("MATRIX_DECRYPTOR", "C", "MATRIX_01", "GRID_CHECK", variant_hash)
+	var elapsed_ms := max(0, Time.get_ticks_msec() - _task_started_ms)
+	var is_success := bool(result.get("success", false))
+	payload["elapsed_ms"] = elapsed_ms
+	payload["duration"] = float(elapsed_ms) / 1000.0
+	payload["time_to_first_action_ms"] = _first_action_ms if _first_action_ms >= 0 else elapsed_ms
+	payload["is_correct"] = is_success
+	payload["is_fit"] = is_success
+	payload["stability_delta"] = 0
+	payload["error_type"] = str(result.get("error", "NONE"))
+	payload["penalty_reported"] = float(result.get("penalty", 0.0))
+	payload["hamming"] = int(result.get("hamming", -1))
+	payload["changed_cells_count"] = changed_cells_count
+	payload["check_count"] = _check_count
+	GlobalMetrics.register_trial(payload)
 
 func log_message(msg: String, color: Color):
 	var time_str = Time.get_time_string_from_system()

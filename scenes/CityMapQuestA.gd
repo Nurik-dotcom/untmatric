@@ -14,6 +14,8 @@ var trust: float = 100.0
 var t_elapsed_seconds: int = 0
 var is_game_over: bool = false
 var first_attempt_edge: Variant = null # String or null
+var level_started_ms: int = 0
+var first_action_ms: int = -1
 
 # Counters
 var n_calc: int = 0
@@ -41,6 +43,8 @@ func _ready():
 	btn_back.pressed.connect(_on_back_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_submit.pressed.connect(_on_submit_pressed)
+	sum_input.text_changed.connect(_on_sum_input_changed)
+	sum_input.placeholder_text = "Enter integer sum"
 
 	_load_level_data("res://data/city_map/level_6_1.json")
 	_calculate_optimal_path()
@@ -215,6 +219,8 @@ func _reset_game_state():
 	path = [current_node]
 	sum_input.text = ""
 	status_label.text = ""
+	level_started_ms = Time.get_ticks_msec()
+	first_action_ms = -1
 	_update_visuals()
 	_update_trust()
 
@@ -263,6 +269,7 @@ func _on_node_pressed(node_id: String):
 		# Capture first attempt edge
 		if first_attempt_edge == null:
 			first_attempt_edge = current_node + "->" + node_id
+			first_action_ms = Time.get_ticks_msec() - level_started_ms
 
 		path.append(node_id)
 		current_node = node_id
@@ -305,9 +312,32 @@ func _on_submit_pressed():
 		btn_reset.disabled = true
 	else:
 		# Feedback
-		status_label.text = "Error: " + verdict
+		status_label.text = _format_verdict_message(verdict)
 		status_label.add_theme_color_override("font_color", Color.ORANGE)
 		_update_trust()
+
+func _on_sum_input_changed(new_text: String) -> void:
+	var filtered := ""
+	for ch in new_text:
+		if ch >= "0" and ch <= "9":
+			filtered += ch
+	if filtered != new_text:
+		sum_input.text = filtered
+		sum_input.caret_column = filtered.length()
+
+func _format_verdict_message(verdict: String) -> String:
+	match verdict:
+		"PARSE_ERROR":
+			return "Enter a whole number."
+		"CALC_MISMATCH":
+			return "Incorrect sum for the selected path."
+		"NON_OPTIMAL":
+			return "Path is valid, but not optimal."
+		"INCOMPLETE":
+			return "Reach the destination before submit."
+		"ERR_PATH_INVALID":
+			return "Path is invalid."
+	return "Error: " + verdict
 
 func _judge_solution(input_text: String) -> String:
 	# 1. Structural Check (Fuse)
@@ -399,6 +429,13 @@ func _log_attempt(input_sum_raw: String, verdict: String):
 	var attempt_no = GlobalMetrics.session_history.size() + 1
 
 	var log_data = {
+		"schema_version": "trial.v2",
+		"quest_id": "CITY_MAP",
+		"stage": "A",
+		"task_id": str(level_data.get("level_id", "CITY_A")),
+		"interaction_type": "PATH_SUM",
+		"match_key": "CITY_MAP|A|%s|v%s" % [str(level_data.get("level_id", "CITY_A")), config_hash.substr(0, 8)],
+		"variant_hash": config_hash,
 		"contract_version": level_data.get("contract_version", "1.0"),
 		"level_id": level_data.level_id,
 		"config_hash": config_hash,
@@ -427,12 +464,17 @@ func _log_attempt(input_sum_raw: String, verdict: String):
 		"N_parse": n_parse,
 		"N_reset": n_reset,
 
-		"verdict_code": verdict
+		"verdict_code": verdict,
+		"is_correct": verdict == "OPTIMAL",
+		"is_fit": verdict == "OPTIMAL",
+		"stability_delta": 0,
+		"elapsed_ms": t_elapsed_seconds * 1000,
+		"duration": float(t_elapsed_seconds),
+		"time_to_first_action_ms": first_action_ms if first_action_ms >= 0 else t_elapsed_seconds * 1000,
+		"error_type": verdict if verdict != "OPTIMAL" else "NONE"
 	}
 
-	# 1. Append to GlobalMetrics SAFELY (No side effects)
-	# Do NOT call register_trial to avoid stability penalties
-	GlobalMetrics.session_history.append(log_data)
+	GlobalMetrics.register_trial(log_data)
 
 	# 2. Save to file
 	_save_json_log(log_data)
