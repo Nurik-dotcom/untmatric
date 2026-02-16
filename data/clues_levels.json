@@ -1,29 +1,90 @@
 [
   {
+    "quest_id": "CASE_01_DIGITAL_RESUS",
+    "schema_version": "1.3.0",
     "id": "RESUS-A-01",
     "bucket": "newbie",
-    "briefing": "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u0435 \u0441\u0438\u0441\u0442\u0435\u043c\u0443: \u0440\u0430\u0441\u043f\u0440\u0435\u0434\u0435\u043b\u0438\u0442\u0435 \u0434\u0435\u0442\u0430\u043b\u0438 \u043f\u043e \u0437\u043e\u043d\u0430\u043c INPUT / OUTPUT / MEMORY. GPU \u043d\u0443\u0436\u043d\u0430 \u0434\u043b\u044f \u0441\u0438\u0433\u043d\u0430\u043b\u0430, RAM \u2014 \u0434\u043b\u044f \u0447\u0442\u0435\u043d\u0438\u044f \u043f\u0430\u043c\u044f\u0442\u0438, CACHE \u2014 \u0434\u043b\u044f \u0431\u044b\u0441\u0442\u0440\u043e\u0439 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438.",
+    "briefing": "Restore the workstation: sort all parts into INPUT / OUTPUT / MEMORY. GPU is required for signal, RAM for stable boot, CACHE for fast diagnostics.",
     "format": "MATCHING",
     "buckets": [
-      { "bucket_id": "INPUT", "label": "\u0412\u0445\u043e\u0434" },
-      { "bucket_id": "OUTPUT", "label": "\u0412\u044b\u0445\u043e\u0434" },
-      { "bucket_id": "MEMORY", "label": "\u041f\u0430\u043c\u044f\u0442\u044c" }
+      {
+        "bucket_id": "INPUT",
+        "label": "Input"
+      },
+      {
+        "bucket_id": "OUTPUT",
+        "label": "Output"
+      },
+      {
+        "bucket_id": "MEMORY",
+        "label": "Memory"
+      }
     ],
     "items": [
-      { "item_id": "keyboard", "label": "Keyboard", "correct_bucket_id": "INPUT" },
-      { "item_id": "mouse", "label": "Mouse", "correct_bucket_id": "INPUT" },
-      { "item_id": "microphone", "label": "Microphone", "correct_bucket_id": "INPUT" },
-      { "item_id": "gpu", "label": "GPU", "correct_bucket_id": "OUTPUT" },
-      { "item_id": "monitor", "label": "Monitor", "correct_bucket_id": "OUTPUT" },
-      { "item_id": "speaker", "label": "Speaker", "correct_bucket_id": "OUTPUT" },
-      { "item_id": "ram", "label": "RAM", "correct_bucket_id": "MEMORY" },
-      { "item_id": "cache", "label": "Cache", "correct_bucket_id": "MEMORY" }
+      {
+        "item_id": "keyboard",
+        "label": "Keyboard",
+        "correct_bucket_id": "INPUT"
+      },
+      {
+        "item_id": "mouse",
+        "label": "Mouse",
+        "correct_bucket_id": "INPUT"
+      },
+      {
+        "item_id": "microphone",
+        "label": "Microphone",
+        "correct_bucket_id": "INPUT"
+      },
+      {
+        "item_id": "gpu",
+        "label": "GPU",
+        "correct_bucket_id": "OUTPUT"
+      },
+      {
+        "item_id": "monitor",
+        "label": "Monitor",
+        "correct_bucket_id": "OUTPUT"
+      },
+      {
+        "item_id": "speaker",
+        "label": "Speaker",
+        "correct_bucket_id": "OUTPUT"
+      },
+      {
+        "item_id": "ram",
+        "label": "RAM",
+        "correct_bucket_id": "MEMORY"
+      },
+      {
+        "item_id": "cache",
+        "label": "Cache",
+        "correct_bucket_id": "MEMORY"
+      }
     ],
     "scoring_model": {
       "rules": [
-        { "code": "PERFECT", "min_correct": 8, "points": 2, "stability_delta": 0, "verdict_code": "PERFECT" },
-        { "code": "PARTIAL", "min_correct": 6, "points": 1, "stability_delta": -10, "verdict_code": "PARTIAL" },
-        { "code": "FAIL", "min_correct": 0, "points": 0, "stability_delta": -30, "verdict_code": "FAIL" }
+        {
+          "code": "PERFECT",
+          "min_correct": 8,
+          "points": 2,
+          "stability_delta": 0,
+          "verdict_code": "PERFECT"
+        },
+        {
+          "code": "PARTIAL",
+          "min_correct": 6,
+          "points": 1,
+          "stability_delta": -10,
+          "verdict_code": "PARTIAL"
+        },
+        {
+          "code": "FAIL",
+          "min_correct": 0,
+          "points": 0,
+          "stability_delta": -30,
+          "verdict_code": "FAIL"
+        }
       ],
       "default_rule": {
         "code": "EMPTY_CONFIRM",
@@ -34,11 +95,11 @@
     },
     "feedback_rules": {
       "NO_GPU": {
-        "status": "\u041d\u0435\u0442 GPU \u0432 OUTPUT: \u043c\u043e\u043d\u0438\u0442\u043e\u0440 \u0431\u0435\u0437 \u0441\u0438\u0433\u043d\u0430\u043b\u0430.",
+        "status": "GPU is missing in OUTPUT: monitor stays dark.",
         "monitor": "NO SIGNAL"
       },
       "NO_RAM": {
-        "status": "\u041d\u0435\u0442 RAM \u0432 MEMORY: \u043e\u0448\u0438\u0431\u043a\u0430 \u0447\u0442\u0435\u043d\u0438\u044f \u043f\u0430\u043c\u044f\u0442\u0438.",
+        "status": "RAM is missing in MEMORY: boot keeps failing.",
         "console_lines": [
           "[ERR] Memory Read Error",
           "[SYS] Retrying memory bus...",
@@ -47,22 +108,299 @@
         ]
       },
       "NO_CACHE": {
-        "status": "\u041a\u044d\u0448 \u043d\u0435 \u043e\u0431\u043d\u0430\u0440\u0443\u0436\u0435\u043d: \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u0438\u0434\u0451\u0442 \u043c\u0435\u0434\u043b\u0435\u043d\u043d\u043e."
+        "status": "CACHE is missing: diagnostics run slowly."
       },
       "HEALTHY": {
-        "status": "\u0421\u0438\u0441\u0442\u0435\u043c\u0430 \u0441\u0442\u0430\u0431\u0438\u043b\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u043d\u0430. \u0413\u043e\u0442\u043e\u0432\u043e \u043a \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0435."
+        "status": "System restored. Ready for diagnostics."
       }
     },
     "system_state_rules": {
-      "monitor_on_if": { "item_id": "gpu", "zone_id": "OUTPUT" },
-      "ram_ok_if": { "item_id": "ram", "zone_id": "MEMORY" },
-      "fast_type_if": { "item_id": "cache", "zone_id": "MEMORY" },
+      "monitor_on_if": {
+        "item_id": "gpu",
+        "zone_id": "OUTPUT"
+      },
+      "ram_ok_if": {
+        "item_id": "ram",
+        "zone_id": "MEMORY"
+      },
+      "fast_type_if": {
+        "item_id": "cache",
+        "zone_id": "MEMORY"
+      },
       "boot_ok_lines": [
         "[SYS] Power rails: OK",
         "[SYS] Memory map: READY",
         "[SYS] PCIe devices: DETECTED",
         "[SYS] Boot sequence complete"
       ]
+    },
+    "stages": {
+      "A": {
+        "level_id": "RESUS-A-01"
+      },
+      "B": {
+        "id": "CASE01_B_01",
+        "stage_max_points": 2,
+        "format": "SINGLE_CHOICE_CONTEXT",
+        "context": "To complete the archive breach, the system must render a live video stream. Budget is limited to 1000$. Choose the best configuration.",
+        "budget": 1000,
+        "options": [
+          {
+            "option_id": "B1_BOTTLENECK",
+            "title": "BottleNeck",
+            "total_price": 650,
+            "parts": [
+              {
+                "k": "CPU",
+                "v": "High",
+                "price": 600
+              },
+              {
+                "k": "RAM",
+                "v": "Low",
+                "price": 50
+              }
+            ],
+            "tags": [
+              "CPU idle risk",
+              "RAM shortage"
+            ]
+          },
+          {
+            "option_id": "B2_OPTIMAL",
+            "title": "Optimal Balance",
+            "total_price": 700,
+            "parts": [
+              {
+                "k": "CPU",
+                "v": "Mid",
+                "price": 400
+              },
+              {
+                "k": "RAM",
+                "v": "Good",
+                "price": 300
+              }
+            ],
+            "tags": [
+              "balanced",
+              "stable render"
+            ]
+          },
+          {
+            "option_id": "B3_OVERBUDGET",
+            "title": "OverBudget",
+            "total_price": 1200,
+            "parts": [
+              {
+                "k": "CPU",
+                "v": "Top",
+                "price": 600
+              },
+              {
+                "k": "RAM",
+                "v": "Top",
+                "price": 300
+              },
+              {
+                "k": "GPU",
+                "v": "Top",
+                "price": 300
+              }
+            ],
+            "tags": [
+              "over limit"
+            ]
+          },
+          {
+            "option_id": "B4_LOWPOWER",
+            "title": "LowPower",
+            "total_price": 250,
+            "parts": [
+              {
+                "k": "CPU",
+                "v": "Low",
+                "price": 150
+              },
+              {
+                "k": "RAM",
+                "v": "Low",
+                "price": 100
+              }
+            ],
+            "tags": [
+              "insufficient"
+            ]
+          }
+        ],
+        "correct_option_id": "B2_OPTIMAL",
+        "scoring_model": {
+          "correct_points": 2,
+          "wrong_points": 0,
+          "stability_delta_correct": 0,
+          "stability_delta_wrong": -10,
+          "default_rule": {
+            "when": "EMPTY_CONFIRM",
+            "points": 0,
+            "stability_delta": -50,
+            "verdict_code": "EMPTY"
+          }
+        },
+        "feedback_rules": {
+          "B1_BOTTLENECK": {
+            "error_code": "BOTTLENECK_RAM",
+            "headline": "CPU bottlenecked by memory",
+            "details": [
+              "RAM is too weak, so the system keeps swapping memory pages.",
+              "CPU potential is wasted because memory throughput is not enough."
+            ]
+          },
+          "B2_OPTIMAL": {
+            "error_code": "OK",
+            "headline": "Balanced configuration",
+            "details": [
+              "Resources are sufficient for stream rendering.",
+              "No critical bottlenecks detected."
+            ]
+          },
+          "B3_OVERBUDGET": {
+            "error_code": "OVER_BUDGET",
+            "headline": "Budget limit exceeded",
+            "details": [
+              "This build is over the 1000$ budget cap.",
+              "Cost efficiency is required for mission constraints."
+            ]
+          },
+          "B4_LOWPOWER": {
+            "error_code": "LOW_POWER",
+            "headline": "Insufficient performance",
+            "details": [
+              "This build cannot sustain live stream rendering.",
+              "Pick a better balance between CPU and RAM."
+            ]
+          }
+        }
+      },
+      "C": {
+        "id": "CASE01_C_01",
+        "stage_max_points": 2,
+        "format": "MULTI_CHOICE",
+        "prompt": "The suspect transmitted data through an optical cable. Build a secure perimeter that prevents eavesdropping and collisions.",
+        "max_select_hint": 3,
+        "options": [
+          {
+            "option_id": "SWITCH",
+            "label": "Switch",
+            "is_correct": true,
+            "why": "Addressed forwarding reduces collision domains compared to a hub."
+          },
+          {
+            "option_id": "FIREWALL",
+            "label": "Firewall",
+            "is_correct": true,
+            "why": "Filters traffic and enforces access control policies."
+          },
+          {
+            "option_id": "FIBER",
+            "label": "Fiber optics",
+            "is_correct": true,
+            "why": "High throughput and harder to tap physically without detection."
+          },
+          {
+            "option_id": "HUB",
+            "label": "Hub",
+            "is_correct": false,
+            "why": "Broadcasts to all ports and increases collision exposure."
+          },
+          {
+            "option_id": "COAX",
+            "label": "Coaxial cable",
+            "is_correct": false,
+            "why": "Legacy medium and mismatched with the optical transmission condition."
+          }
+        ],
+        "scoring_model": {
+          "rule_2": {
+            "need_correct": 3,
+            "max_wrong": 0,
+            "points": 2,
+            "stability_delta": 0,
+            "verdict_code": "PERFECT"
+          },
+          "rule_1a": {
+            "need_correct": 2,
+            "max_wrong": 0,
+            "points": 1,
+            "stability_delta": 0,
+            "verdict_code": "GOOD"
+          },
+          "rule_1b": {
+            "need_correct": 3,
+            "max_wrong": 1,
+            "points": 1,
+            "stability_delta": -10,
+            "verdict_code": "NOISY"
+          },
+          "default_rule": {
+            "points": 0,
+            "stability_delta": -50,
+            "verdict_code": "FAIL"
+          },
+          "empty_rule": {
+            "points": 0,
+            "stability_delta": -50,
+            "verdict_code": "EMPTY"
+          },
+          "select_all_rule": {
+            "points": 0,
+            "stability_delta": -50,
+            "verdict_code": "SELECT_ALL"
+          }
+        },
+        "feedback_rules": {
+          "PERFECT": {
+            "headline": "Perimeter secured",
+            "details": [
+              "You eliminated collision-heavy topology and added traffic filtering.",
+              "Optical medium choice matches the mission constraints."
+            ]
+          },
+          "GOOD": {
+            "headline": "Almost complete",
+            "details": [
+              "Two core security components are correct.",
+              "One required component is still missing."
+            ]
+          },
+          "NOISY": {
+            "headline": "Contains extra noise",
+            "details": [
+              "Core secure trio is present, but one extra component was added.",
+              "Extra components can introduce attack surface and operational noise."
+            ]
+          },
+          "FAIL": {
+            "headline": "Perimeter remains vulnerable",
+            "details": [
+              "Current combination does not satisfy secure perimeter requirements.",
+              "Recheck Switch vs Hub behavior and firewall role."
+            ]
+          },
+          "EMPTY": {
+            "headline": "Empty confirmation",
+            "details": [
+              "No components were selected before analysis."
+            ]
+          },
+          "SELECT_ALL": {
+            "headline": "Selected everything",
+            "details": [
+              "Selecting all options is guessing, not configuration design.",
+              "Exam scoring treats this as incorrect."
+            ]
+          }
+        }
+      }
     }
   }
 ]

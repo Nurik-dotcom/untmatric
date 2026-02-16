@@ -114,8 +114,8 @@ func _on_radio_pressed():
 
 func _on_clues_pressed():
 	selected_quest_type = QuestType.CLUES
-	btn_complexity_b.disabled = true
-	btn_complexity_c.disabled = true
+	btn_complexity_b.disabled = false
+	btn_complexity_c.disabled = false
 	modal.visible = true
 
 func _on_script_pressed():
@@ -180,6 +180,8 @@ func _on_complexity_b_pressed():
 		get_tree().change_scene_to_file("res://scenes/case_07/da7_data_archive_b.tscn")
 	elif selected_quest_type == QuestType.NETWORK_TRACE:
 		get_tree().change_scene_to_file("res://scenes/NetworkTraceQuestB.tscn")
+	elif selected_quest_type == QuestType.CLUES:
+		get_tree().change_scene_to_file("res://scenes/case_01/DigitalResusQuestB.tscn")
 
 func _on_complexity_c_pressed():
 	if selected_quest_type == QuestType.DECRYPTOR:
@@ -196,6 +198,8 @@ func _on_complexity_c_pressed():
 		get_tree().change_scene_to_file("res://scenes/case_07/da7_data_archive_c.tscn")
 	elif selected_quest_type == QuestType.NETWORK_TRACE:
 		get_tree().change_scene_to_file("res://scenes/NetworkTraceQuestC.tscn")
+	elif selected_quest_type == QuestType.CLUES:
+		get_tree().change_scene_to_file("res://scenes/case_01/DigitalResusQuestC.tscn")
 
 func _on_close_modal_pressed():
 	modal.visible = false

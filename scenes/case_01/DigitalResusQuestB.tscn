@@ -1,0 +1,160 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/case_01/DigitalResusQuestB.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
+
+[node name="DigitalResusQuestB" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.07, 0.08, 1)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="MainVBox" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnBack" type="Button" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+text = "<"
+
+[node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "TITLE"
+vertical_alignment = 1
+
+[node name="StageLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "B"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StabilityBar" type="ProgressBar" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(220, 28)
+layout_mode = 2
+size_flags_vertical = 4
+value = 100.0
+show_percentage = false
+
+[node name="ContextCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+
+[node name="ContextVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContextCard"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ContextLabel" type="Label" parent="SafeArea/MainVBox/ContextCard/ContextVBox"]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+text = "Context"
+autowrap_mode = 2
+
+[node name="BudgetRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContextCard/ContextVBox"]
+layout_mode = 2
+
+[node name="BudgetLabel" type="Label" parent="SafeArea/MainVBox/ContextCard/ContextVBox/BudgetRow"]
+layout_mode = 2
+text = "Budget:"
+
+[node name="BudgetValue" type="Label" parent="SafeArea/MainVBox/ContextCard/ContextVBox/BudgetRow"]
+layout_mode = 2
+text = "0$"
+
+[node name="OptionsCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Scroll" type="ScrollContainer" parent="SafeArea/MainVBox/OptionsCard"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="OptionsVBox" type="VBoxContainer" parent="SafeArea/MainVBox/OptionsCard/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="DiagnosticCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+visible = false
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+
+[node name="DiagnosticVBox" type="VBoxContainer" parent="SafeArea/MainVBox/DiagnosticCard"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="DiagHeadline" type="Label" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Headline"
+
+[node name="DiagBody" type="RichTextLabel" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
+custom_minimum_size = Vector2(0, 82)
+layout_mode = 2
+fit_content = false
+scroll_active = true
+text = ""
+autowrap_mode = 2
+
+[node name="DiagHint" type="Label" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
+layout_mode = 2
+text = "Hint"
+autowrap_mode = 2
+
+[node name="BottomBar" type="HBoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "STATUS"
+autowrap_mode = 2
+vertical_alignment = 1
+
+[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(160, 72)
+layout_mode = 2
+text = "RESET"
+
+[node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(220, 72)
+layout_mode = 2
+text = "CONFIRM"

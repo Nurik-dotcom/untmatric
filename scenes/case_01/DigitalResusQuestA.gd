@@ -22,22 +22,34 @@ var console_target_text: String = ""
 var console_visible_chars: int = 0
 var console_cps: float = 14.0
 var console_accum: float = 0.0
+var _landscape_active: bool = false
+var _portrait_content: VBoxContainer
+var _landscape_content: HBoxContainer
+var _landscape_left: VBoxContainer
+var _landscape_right: VBoxContainer
 
+@onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
+@onready var briefing_card: PanelContainer = $SafeArea/MainVBox/BriefingCard
 @onready var title_label: Label = $SafeArea/MainVBox/Header/TitleLabel
 @onready var stage_label: Label = $SafeArea/MainVBox/Header/StageLabel
 @onready var stability_bar: ProgressBar = $SafeArea/MainVBox/Header/StabilityBar
 @onready var briefing_label: Label = $SafeArea/MainVBox/BriefingCard/BriefingLabel
 
+@onready var system_card: PanelContainer = $SafeArea/MainVBox/SystemCard
+@onready var monitor_frame: PanelContainer = $SafeArea/MainVBox/SystemCard/SystemVBox/MonitorFrame
 @onready var monitor_screen: ColorRect = $SafeArea/MainVBox/SystemCard/SystemVBox/MonitorFrame/MonitorScreen
 @onready var monitor_label: Label = $SafeArea/MainVBox/SystemCard/SystemVBox/MonitorFrame/MonitorLabel
 @onready var boot_console: RichTextLabel = $SafeArea/MainVBox/SystemCard/SystemVBox/BootConsole
 
+@onready var zones_card: PanelContainer = $SafeArea/MainVBox/ZonesCard
 @onready var pile_zone: Node = $SafeArea/MainVBox/PartsPileCard
 @onready var zone_input: Node = $SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput
 @onready var zone_output: Node = $SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput
 @onready var zone_memory: Node = $SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory
+@onready var parts_pile_card: PanelContainer = $SafeArea/MainVBox/PartsPileCard
 @onready var parts_grid: GridContainer = $SafeArea/MainVBox/PartsPileCard/VBox/Scroll/PartsGrid
 
+@onready var bottom_bar: HBoxContainer = $SafeArea/MainVBox/BottomBar
 @onready var status_label: Label = $SafeArea/MainVBox/BottomBar/StatusLabel
 @onready var btn_reset: Button = $SafeArea/MainVBox/BottomBar/BtnReset
 @onready var btn_confirm: Button = $SafeArea/MainVBox/BottomBar/BtnConfirm
@@ -57,6 +69,7 @@ func _ready() -> void:
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
 	_connect_ui_signals()
 	_connect_zone_signals()
+	_build_responsive_layout()
 	_load_levels()
 	if levels.is_empty():
 		_show_error("Failed to load Digital Resuscitation level data.")
@@ -79,6 +92,51 @@ func _connect_zone_signals() -> void:
 	for zone in _all_zones():
 		if zone.has_signal("item_placed") and not zone.is_connected("item_placed", callback):
 			zone.connect("item_placed", callback)
+
+func _build_responsive_layout() -> void:
+	if is_instance_valid(_portrait_content) and is_instance_valid(_landscape_content):
+		return
+
+	_portrait_content = VBoxContainer.new()
+	_portrait_content.name = "PortraitContent"
+	_portrait_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_portrait_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_portrait_content.add_theme_constant_override("separation", 10)
+
+	_landscape_content = HBoxContainer.new()
+	_landscape_content.name = "LandscapeContent"
+	_landscape_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_landscape_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_landscape_content.add_theme_constant_override("separation", 10)
+	_landscape_content.visible = false
+
+	_landscape_left = VBoxContainer.new()
+	_landscape_left.name = "LandscapeLeft"
+	_landscape_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_landscape_left.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_landscape_left.size_flags_stretch_ratio = 1.1
+	_landscape_left.add_theme_constant_override("separation", 8)
+
+	_landscape_right = VBoxContainer.new()
+	_landscape_right.name = "LandscapeRight"
+	_landscape_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_landscape_right.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_landscape_right.size_flags_stretch_ratio = 1.0
+	_landscape_right.add_theme_constant_override("separation", 8)
+
+	_landscape_content.add_child(_landscape_left)
+	_landscape_content.add_child(_landscape_right)
+
+	main_vbox.add_child(_portrait_content)
+	main_vbox.add_child(_landscape_content)
+
+	var insert_index: int = max(0, main_vbox.get_children().find(briefing_card) + 1)
+	main_vbox.move_child(_portrait_content, insert_index)
+	main_vbox.move_child(_landscape_content, insert_index + 1)
+
+	var portrait_nodes: Array[Control] = [system_card, zones_card, parts_pile_card, bottom_bar]
+	for node in portrait_nodes:
+		node.reparent(_portrait_content)
 
 func _load_levels() -> void:
 	levels = ResusData.load_levels(LEVELS_PATH)
@@ -376,7 +434,57 @@ func _update_stability_ui() -> void:
 
 func _on_viewport_size_changed() -> void:
 	var width: float = get_viewport_rect().size.x
-	parts_grid.columns = 1 if width < 700.0 else 2
+	var height: float = get_viewport_rect().size.y
+	var should_landscape: bool = width > height and width >= 900.0
+	_apply_layout_mode(should_landscape)
+
+func _apply_layout_mode(landscape: bool) -> void:
+	if _landscape_active != landscape:
+		_landscape_active = landscape
+		if landscape:
+			system_card.reparent(_landscape_left)
+			zones_card.reparent(_landscape_left)
+			parts_pile_card.reparent(_landscape_right)
+			bottom_bar.reparent(_landscape_right)
+		else:
+			var portrait_nodes: Array[Control] = [system_card, zones_card, parts_pile_card, bottom_bar]
+			for node in portrait_nodes:
+				node.reparent(_portrait_content)
+		_portrait_content.visible = not landscape
+		_landscape_content.visible = landscape
+
+	_apply_responsive_sizes(landscape, get_viewport_rect().size.x)
+
+func _apply_responsive_sizes(landscape: bool, width: float) -> void:
+	if landscape:
+		briefing_label.custom_minimum_size = Vector2(0, 48)
+		monitor_frame.custom_minimum_size = Vector2(0, 108)
+		boot_console.custom_minimum_size = Vector2(0, 118)
+		_set_zone_height(90)
+		parts_pile_card.custom_minimum_size = Vector2(0, 0)
+		status_label.custom_minimum_size = Vector2(0, 58)
+		btn_reset.custom_minimum_size = Vector2(140, 58)
+		btn_confirm.custom_minimum_size = Vector2(170, 58)
+		parts_grid.columns = 3 if width >= 1250.0 else 2
+	else:
+		briefing_label.custom_minimum_size = Vector2(0, 72)
+		monitor_frame.custom_minimum_size = Vector2(0, 150)
+		boot_console.custom_minimum_size = Vector2(0, 180)
+		_set_zone_height(120)
+		parts_pile_card.custom_minimum_size = Vector2(0, 220)
+		status_label.custom_minimum_size = Vector2(0, 72)
+		btn_reset.custom_minimum_size = Vector2(160, 72)
+		btn_confirm.custom_minimum_size = Vector2(180, 72)
+		parts_grid.columns = 1 if width < 700.0 else 2
+
+func _set_zone_height(height_px: int) -> void:
+	var target_size: Vector2 = Vector2(0, height_px)
+	if zone_input is Control:
+		(zone_input as Control).custom_minimum_size = target_size
+	if zone_output is Control:
+		(zone_output as Control).custom_minimum_size = target_size
+	if zone_memory is Control:
+		(zone_memory as Control).custom_minimum_size = target_size
 
 func _all_zones() -> Array:
 	return [pile_zone, zone_input, zone_output, zone_memory]

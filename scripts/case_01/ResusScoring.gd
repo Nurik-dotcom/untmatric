@@ -72,3 +72,154 @@ static func score(level: Dictionary, snapshot: Dictionary, placed_count: int) ->
 		"verdict_code": str(selected_rule.get("verdict_code", "FAIL")),
 		"rule_code": str(selected_rule.get("code", "SCORING_RULE"))
 	}
+
+static func calculate_stage_b_result(stage_b_data: Dictionary, snapshot: Dictionary) -> Dictionary:
+	var selected_option_id: String = str(snapshot.get("selected_option_id", "")).strip_edges()
+	var scoring_model: Dictionary = stage_b_data.get("scoring_model", {}) as Dictionary
+	var feedback_rules: Dictionary = stage_b_data.get("feedback_rules", {}) as Dictionary
+	var correct_option_id: String = str(stage_b_data.get("correct_option_id", ""))
+	var max_points: int = int(stage_b_data.get("stage_max_points", int(scoring_model.get("correct_points", 2))))
+
+	if selected_option_id == "":
+		var default_rule: Dictionary = scoring_model.get("default_rule", {}) as Dictionary
+		return {
+			"points": int(default_rule.get("points", 0)),
+			"max_points": max_points,
+			"is_correct": false,
+			"is_fit": false,
+			"stability_delta": int(default_rule.get("stability_delta", -50)),
+			"verdict_code": str(default_rule.get("verdict_code", "EMPTY")),
+			"error_code": "EMPTY",
+			"diagnostic_headline": "No option selected",
+			"diagnostic_details": ["Pick one of the 4 options and confirm your decision."]
+		}
+
+	var is_correct: bool = selected_option_id == correct_option_id
+	var points: int = int(scoring_model.get("correct_points", 2)) if is_correct else int(scoring_model.get("wrong_points", 0))
+	var stability_delta: int = int(scoring_model.get("stability_delta_correct", 0)) if is_correct else int(scoring_model.get("stability_delta_wrong", -10))
+	var verdict_code: String = "SUCCESS" if is_correct else "WRONG"
+
+	var feedback: Dictionary = feedback_rules.get(selected_option_id, {}) as Dictionary
+	if feedback.is_empty() and feedback_rules.has(correct_option_id):
+		feedback = feedback_rules.get(correct_option_id, {}) as Dictionary
+
+	var error_code: String = str(feedback.get("error_code", "OK" if is_correct else "WRONG"))
+	var headline: String = str(feedback.get("headline", "Configuration checked"))
+	var details: Array = (feedback.get("details", []) as Array).duplicate()
+
+	return {
+		"points": points,
+		"max_points": max_points,
+		"is_correct": is_correct,
+		"is_fit": is_correct,
+		"stability_delta": stability_delta,
+		"verdict_code": verdict_code,
+		"error_code": error_code,
+		"diagnostic_headline": headline,
+		"diagnostic_details": details
+	}
+
+static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Dictionary) -> Dictionary:
+	var options: Array = stage_c_data.get("options", []) as Array
+	var scoring_model: Dictionary = stage_c_data.get("scoring_model", {}) as Dictionary
+	var feedback_rules: Dictionary = stage_c_data.get("feedback_rules", {}) as Dictionary
+
+	var option_by_id: Dictionary = {}
+	var correct_set: Dictionary = {}
+	for option_v in options:
+		if typeof(option_v) != TYPE_DICTIONARY:
+			continue
+		var option_data: Dictionary = option_v as Dictionary
+		var option_id: String = str(option_data.get("option_id", "")).strip_edges()
+		if option_id == "":
+			continue
+		option_by_id[option_id] = option_data
+		if bool(option_data.get("is_correct", false)):
+			correct_set[option_id] = true
+
+	var selected_raw: Array = snapshot.get("selected", []) as Array
+	var selected_set: Dictionary = {}
+	var selected_ids: Array[String] = []
+	for selected_v in selected_raw:
+		var selected_id: String = str(selected_v).strip_edges()
+		if selected_id == "" or selected_set.has(selected_id):
+			continue
+		selected_set[selected_id] = true
+		selected_ids.append(selected_id)
+	selected_ids.sort()
+
+	var correct_selected: int = 0
+	var wrong_selected: int = 0
+	var explain_selected: Array = []
+	for selected_id in selected_ids:
+		var is_option_correct: bool = correct_set.has(selected_id)
+		if is_option_correct:
+			correct_selected += 1
+		else:
+			wrong_selected += 1
+
+		var option_data_v: Variant = option_by_id.get(selected_id, {})
+		var option_data: Dictionary = option_data_v as Dictionary
+		explain_selected.append({
+			"option_id": selected_id,
+			"label": str(option_data.get("label", selected_id)),
+			"is_correct": is_option_correct,
+			"why": str(option_data.get("why", "No explanation available."))
+		})
+
+	var selected_count: int = selected_ids.size()
+	var max_points: int = int(stage_c_data.get("stage_max_points", 2))
+	var verdict_code: String = "FAIL"
+	var points: int = 0
+	var stability_delta: int = -50
+
+	var rule_2: Dictionary = scoring_model.get("rule_2", {}) as Dictionary
+	var rule_1a: Dictionary = scoring_model.get("rule_1a", {}) as Dictionary
+	var rule_1b: Dictionary = scoring_model.get("rule_1b", {}) as Dictionary
+	var default_rule: Dictionary = scoring_model.get("default_rule", {}) as Dictionary
+	var empty_rule: Dictionary = scoring_model.get("empty_rule", {}) as Dictionary
+	var select_all_rule: Dictionary = scoring_model.get("select_all_rule", default_rule) as Dictionary
+
+	if selected_count == 0:
+		verdict_code = str(empty_rule.get("verdict_code", "EMPTY"))
+		points = int(empty_rule.get("points", 0))
+		stability_delta = int(empty_rule.get("stability_delta", -50))
+	elif selected_count == options.size():
+		verdict_code = str(select_all_rule.get("verdict_code", "SELECT_ALL"))
+		points = int(select_all_rule.get("points", 0))
+		stability_delta = int(select_all_rule.get("stability_delta", -50))
+	elif correct_selected == 3 and wrong_selected == 0:
+		verdict_code = str(rule_2.get("verdict_code", "PERFECT"))
+		points = int(rule_2.get("points", 2))
+		stability_delta = int(rule_2.get("stability_delta", 0))
+	elif correct_selected == 2 and wrong_selected == 0:
+		verdict_code = str(rule_1a.get("verdict_code", "GOOD"))
+		points = int(rule_1a.get("points", 1))
+		stability_delta = int(rule_1a.get("stability_delta", 0))
+	elif correct_selected == 3 and wrong_selected == 1:
+		verdict_code = str(rule_1b.get("verdict_code", "NOISY"))
+		points = int(rule_1b.get("points", 1))
+		stability_delta = int(rule_1b.get("stability_delta", -10))
+	else:
+		verdict_code = str(default_rule.get("verdict_code", "FAIL"))
+		points = int(default_rule.get("points", 0))
+		stability_delta = int(default_rule.get("stability_delta", -50))
+
+	var feedback: Dictionary = feedback_rules.get(verdict_code, {}) as Dictionary
+	var feedback_headline: String = str(feedback.get("headline", verdict_code))
+	var feedback_details: Array = (feedback.get("details", []) as Array).duplicate()
+
+	return {
+		"points": points,
+		"max_points": max_points,
+		"is_correct": verdict_code == "PERFECT",
+		"is_fit": points > 0,
+		"stability_delta": stability_delta,
+		"verdict_code": verdict_code,
+		"correct_selected": correct_selected,
+		"wrong_selected": wrong_selected,
+		"selected_count": selected_count,
+		"feedback_headline": feedback_headline,
+		"feedback_details": feedback_details,
+		"explain_selected": explain_selected
+	}
