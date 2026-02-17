@@ -1,16 +1,24 @@
 {
-  "contract_version": "1.0",
+  "contract_version": "city_map.v2.1.0",
   "level_id": "6_1",
   "directed": true,
   "time_limit_sec": 120,
   "start_node": "A",
   "end_node": "E",
+  "min_sum": 9,
+  "min_path_examples": [
+    ["A", "C", "D", "E"]
+  ],
+  "ui": {
+    "accent_color": "#67B8FF",
+    "node_radius_px": 50
+  },
   "nodes": [
-    {"id": "A", "label": "A", "pos": {"x": 100, "y": 300}},
-    {"id": "B", "label": "B", "pos": {"x": 300, "y": 150}},
-    {"id": "C", "label": "C", "pos": {"x": 300, "y": 450}},
-    {"id": "D", "label": "D", "pos": {"x": 500, "y": 450}},
-    {"id": "E", "label": "E", "pos": {"x": 700, "y": 300}}
+    {"id": "A", "label": "A", "pos": {"x": 0.10, "y": 0.50}},
+    {"id": "B", "label": "B", "pos": {"x": 0.35, "y": 0.25}},
+    {"id": "C", "label": "C", "pos": {"x": 0.35, "y": 0.75}},
+    {"id": "D", "label": "D", "pos": {"x": 0.62, "y": 0.75}},
+    {"id": "E", "label": "E", "pos": {"x": 0.88, "y": 0.50}}
   ],
   "edges": [
     {"id": "e1", "from": "A", "to": "B", "w": 5},

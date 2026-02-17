@@ -1,527 +1,660 @@
 extends Control
 
-# SSoT Data
-var level_data: Dictionary = {}
-var adjacency: Dictionary = {} # source -> {target: weight}
-var min_sum: int = 0
-var input_regex: RegEx
-var config_hash: String = ""
+const LEVEL_PATH := "res://data/city_map/level_6_2.json"
+const LOG_PREFIX := "case_6_2"
+const DEFAULT_ACCENT := Color(0.40, 0.72, 1.0, 1.0)
+const ARROW_ANGLE_RAD := 0.52
+const ARROW_LEN := 16.0
 
-# State
+@onready var content_split: BoxContainer = $SafeArea/MainVBox/ContentSplit
+@onready var graph_container: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer
+@onready var edges_layer: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer/EdgesLayer
+@onready var nodes_layer: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer/NodesLayer
+@onready var btn_back: Button = $SafeArea/MainVBox/Header/BtnBack
+@onready var btn_reset: Button = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow/BtnReset
+@onready var btn_submit: Button = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow/BtnSubmit
+@onready var sum_input: LineEdit = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SumInput
+@onready var path_display: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/PathDisplay
+@onready var sum_live_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SumLiveLabel
+@onready var constraint_info_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ConstraintInfoLabel
+@onready var backtrack_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/BacktrackLabel
+@onready var warning_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/WarningLabel
+@onready var status_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/StatusLabel
+@onready var label_state: Label = $SafeArea/MainVBox/Header/LabelState
+@onready var label_timer: Label = $SafeArea/MainVBox/Header/LabelTimer
+@onready var footer_label: Label = $SafeArea/MainVBox/Footer/FooterLabel
+@onready var briefing_title: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/BriefingTitle
+@onready var briefing_text: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/BriefingText
+@onready var briefing_constraint: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/ConstraintLabel
+
+var level_data: Dictionary = {}
+var node_defs: Dictionary = {}
+var adjacency: Dictionary = {}
+var edge_visuals: Dictionary = {}
+var edge_key_to_visuals: Dictionary = {}
+var node_buttons: Dictionary = {}
+var config_hash: String = ""
+var input_regex := RegEx.new()
+
+var min_sum: int = 0
+var accent_color: Color = DEFAULT_ACCENT
+var node_radius_px: float = 25.0
+var must_visit_nodes: Array[String] = []
+
 var current_node: String = ""
-var path: Array = []
-var trust: float = 100.0
+var path: Array[String] = []
+var path_sum: int = 0
+var stability: float = 100.0
 var t_elapsed_seconds: int = 0
 var is_game_over: bool = false
-var first_attempt_edge: Variant = null # String or null
+var first_attempt_edge: String = ""
 var level_started_ms: int = 0
 var first_action_ms: int = -1
 
-# B-Level Metrics
 var backtrack_count: int = 0
-var cycle_repeats: int = 0
-var cycle_entered: bool = false
-var n_transit: int = 0
+var cycle_events: int = 0
+var cycle_detected: bool = false
+var constraint_violations: int = 0
 
-# Counters
 var n_calc: int = 0
 var n_opt: int = 0
 var n_parse: int = 0
 var n_reset: int = 0
+var n_transit: int = 0
+var n_cycle: int = 0
 
-# UI References
-@onready var edges_layer = $MainLayout/GraphContainer/EdgesLayer
-@onready var nodes_layer = $MainLayout/GraphContainer/NodesLayer
-@onready var path_display = $MainLayout/Footer/PathDisplay
-@onready var sum_input = $MainLayout/Footer/InputRow/SumInput
-@onready var status_label = $MainLayout/Footer/StatusLabel
-@onready var trust_label = $MainLayout/Header/TrustLabel
-@onready var timer_label = $MainLayout/Header/TimerLabel
-@onready var btn_back = $MainLayout/Header/BtnBack
-@onready var btn_reset = $MainLayout/Footer/InputRow/BtnReset
-@onready var btn_submit = $MainLayout/Footer/InputRow/BtnSubmit
-
-# Helpers
-var node_buttons: Dictionary = {} # id -> Button
-var edge_lines: Dictionary = {} # "from->to" -> Line2D
-
-func _ready():
+func _ready() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_submit.pressed.connect(_on_submit_pressed)
 	sum_input.text_changed.connect(_on_sum_input_changed)
-	sum_input.placeholder_text = "Enter integer sum"
+	graph_container.resized.connect(_on_graph_resized)
 
-	_load_level_data("res://data/city_map/level_6_2.json")
-	_calculate_optimal_path_with_transit()
-	_build_graph_ui()
-	_setup_deterministic_timer()
-	_reset_game_state()
+	_load_level_data(LEVEL_PATH)
+	_apply_content_layout_mode()
+	_setup_timer()
+	call_deferred("_post_ready")
 
-func _setup_deterministic_timer():
-	var timer = Timer.new()
+func _post_ready() -> void:
+	_set_briefing()
+	_rebuild_graph_ui()
+	_reset_round_state(true)
+	_update_timer_display()
+	_recalculate_stability()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		if not is_node_ready():
+			return
+		_apply_content_layout_mode()
+		_rebuild_graph_ui()
+		_update_visuals()
+	elif what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		if has_node("ResearchTimer"):
+			get_node("ResearchTimer").paused = true
+	elif what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
+		if has_node("ResearchTimer"):
+			get_node("ResearchTimer").paused = false
+
+func _apply_content_layout_mode() -> void:
+	content_split.vertical = get_viewport_rect().size.x < get_viewport_rect().size.y
+
+func _setup_timer() -> void:
+	var timer := Timer.new()
 	timer.name = "ResearchTimer"
 	timer.wait_time = 1.0
 	timer.autostart = true
 	timer.timeout.connect(_on_timer_tick)
 	add_child(timer)
 
-func _on_timer_tick():
-	if is_game_over: return
+func _on_timer_tick() -> void:
+	if is_game_over:
+		return
 	t_elapsed_seconds += 1
 	_update_timer_display()
-	# Check overtime penalty dynamically
-	if t_elapsed_seconds > level_data.time_limit_sec:
-		_update_trust()
+	if t_elapsed_seconds > int(level_data.get("time_limit_sec", 120)):
+		_recalculate_stability()
 
-func _notification(what):
-	if has_node("ResearchTimer"):
-		if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
-			get_node("ResearchTimer").paused = true
-		elif what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
-			get_node("ResearchTimer").paused = false
-
-func _load_level_data(path: String):
-	var file = FileAccess.open(path, FileAccess.READ)
-	if not file:
-		push_error("Failed to load level data: " + path)
+func _load_level_data(path_to_file: String) -> void:
+	var file := FileAccess.open(path_to_file, FileAccess.READ)
+	if file == null:
+		push_error("Failed to open level data: %s" % path_to_file)
 		return
 
-	var content = file.get_as_text()
-	config_hash = content.sha256_text()
+	var raw_json := file.get_as_text()
+	config_hash = raw_json.sha256_text()
+	var parsed: Variant = JSON.parse_string(raw_json)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_error("Invalid level JSON in %s" % path_to_file)
+		return
 
-	var json = JSON.new()
-	var error = json.parse(content)
-	if error == OK:
-		level_data = json.data
-	else:
-		push_error("JSON Parse Error: " + json.get_error_message())
+	level_data = parsed
+	node_defs.clear()
+	adjacency.clear()
+	must_visit_nodes.clear()
 
-	# Compile Regex
-	input_regex = RegEx.new()
-	if level_data.has("rules") and level_data.rules.has("input_regex"):
-		input_regex.compile(level_data.rules.input_regex)
-	else:
-		input_regex.compile("^[0-9]+$")
+	for node_var in level_data.get("nodes", []):
+		var node: Dictionary = node_var
+		node_defs[str(node.get("id", ""))] = node
 
-	# Build adjacency list handling two_way edges
-	for edge in level_data.edges:
-		_add_adjacency(edge.from, edge.to, edge.w)
+	for transit_var in level_data.get("constraints", {}).get("must_visit", []):
+		must_visit_nodes.append(str(transit_var))
+
+	for edge_var in level_data.get("edges", []):
+		var edge: Dictionary = edge_var
+		var from_id := str(edge.get("from", ""))
+		var to_id := str(edge.get("to", ""))
+		var w := int(edge.get("w", 0))
+		if from_id.is_empty() or to_id.is_empty():
+			continue
+		_add_adjacency(from_id, to_id, w)
 		if edge.get("two_way", false):
-			_add_adjacency(edge.to, edge.from, edge.w)
+			_add_adjacency(to_id, from_id, w)
 
-func _add_adjacency(from_id: String, to_id: String, w: int):
+	input_regex = RegEx.new()
+	var regex_pattern := "^[0-9]+$"
+	if level_data.has("rules") and level_data.rules.has("input_regex"):
+		regex_pattern = str(level_data.rules.input_regex)
+	input_regex.compile(regex_pattern)
+
+	min_sum = int(level_data.get("min_sum", -1))
+	if min_sum < 0:
+		min_sum = _calculate_min_sum_with_constraints()
+
+	if level_data.has("ui"):
+		if level_data.ui.has("accent_color"):
+			accent_color = Color(level_data.ui.accent_color)
+		if level_data.ui.has("node_radius_px"):
+			var raw_radius := float(level_data.ui.node_radius_px)
+			node_radius_px = raw_radius * 0.5 if raw_radius > 32.0 else raw_radius
+			node_radius_px = maxf(16.0, node_radius_px)
+
+func _add_adjacency(from_id: String, to_id: String, weight: int) -> void:
 	if not adjacency.has(from_id):
 		adjacency[from_id] = {}
-	adjacency[from_id][to_id] = w
+	adjacency[from_id][to_id] = weight
 
-func _calculate_optimal_path_with_transit():
-	# For Complexity B: must pass through C
-	# min_sum = dist(Start->C) + dist(C->End)
-	var start_node = level_data.start_node
-	var end_node = level_data.end_node
-	var transit_nodes = level_data.constraints.must_visit
+func _set_briefing() -> void:
+	briefing_title.text = "TRANSIT CHECK"
+	briefing_text.text = "Reach node E, report exact route sum, and prove the route is optimal under all directed links."
+	var constraint_text := "CONSTRAINT: MUST VISIT %s" % ",".join(must_visit_nodes)
+	briefing_constraint.text = constraint_text
+	constraint_info_label.text = constraint_text
+	footer_label.text = "Bidirectional roads are active only where reverse edge exists in data."
 
-	if transit_nodes.is_empty():
-		min_sum = _dijkstra(start_node, end_node)
-		return
+func _calculate_min_sum_with_constraints() -> int:
+	var start_node := str(level_data.get("start_node", ""))
+	var end_node := str(level_data.get("end_node", ""))
+	if start_node.is_empty() or end_node.is_empty():
+		return 0
 
-	# Assuming single transit node for 6.2 as per spec
-	var transit = transit_nodes[0]
+	var frontier: Array[Dictionary] = [{
+		"node": start_node,
+		"cost": 0,
+		"path": [start_node]
+	}]
+	var best := 1_000_000_000
 
-	var leg1 = _dijkstra(start_node, transit)
-	var leg2 = _dijkstra(transit, end_node)
+	while not frontier.is_empty():
+		var best_index := 0
+		for i in range(1, frontier.size()):
+			if int(frontier[i].cost) < int(frontier[best_index].cost):
+				best_index = i
+		var state: Dictionary = frontier.pop_at(best_index)
 
-	if leg1 == -1 or leg2 == -1:
-		push_error("Path with transit invalid")
-		min_sum = 999999
-	else:
-		min_sum = leg1 + leg2
-
-func _dijkstra(start: String, end: String) -> int:
-	var dist = {}
-	var nodes = level_data.nodes
-
-	for n in nodes:
-		dist[n.id] = 999999
-
-	dist[start] = 0
-	var unvisited = []
-	for n in nodes:
-		unvisited.append(n.id)
-
-	while unvisited.size() > 0:
-		var u = null
-		var min_dist = 999999
-		for node_id in unvisited:
-			if dist[node_id] < min_dist:
-				min_dist = dist[node_id]
-				u = node_id
-
-		if u == null:
-			break
-		if u == end:
-			return dist[end]
-
-		unvisited.erase(u)
-
-		if adjacency.has(u):
-			for v in adjacency[u]:
-				var alt = dist[u] + adjacency[u][v]
-				if alt < dist.get(v, 999999):
-					dist[v] = alt
-
-	return -1 # Unreachable
-
-func _build_graph_ui():
-	# Clear existing
-	for child in nodes_layer.get_children():
-		child.queue_free()
-	for child in edges_layer.get_children():
-		child.queue_free()
-	node_buttons.clear()
-	edge_lines.clear()
-
-	# Draw Edges first
-	for edge in level_data.edges:
-		var from_node = _get_node_data(edge.from)
-		var to_node = _get_node_data(edge.to)
-
-		if from_node and to_node:
-			var start_pos = Vector2(from_node.pos.x, from_node.pos.y)
-			var end_pos = Vector2(to_node.pos.x, to_node.pos.y)
-
-			var line = Line2D.new()
-			line.points = [start_pos, end_pos]
-			line.width = 4.0
-			var gradient = Gradient.new()
-			gradient.set_color(0, Color(0.3, 0.3, 0.3, 0.5))
-			gradient.set_color(1, Color(0.6, 0.6, 1.0, 1.0))
-			line.gradient = gradient
-
-			edges_layer.add_child(line)
-
-			# Arrow Head(s)
-			var dir = (end_pos - start_pos).normalized()
-			_draw_arrow(end_pos, dir, edges_layer)
-
-			if edge.get("two_way", false):
-				# Add reverse arrow at start
-				_draw_arrow(start_pos, -dir, edges_layer)
-
-			# Weight Label
-			var mid_pos = (start_pos + end_pos) / 2
-			var lbl = Label.new()
-			lbl.text = str(edge.w)
-			lbl.position = mid_pos + Vector2(5, -10)
-			lbl.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
-			edges_layer.add_child(lbl)
-
-			edge_lines[edge.id] = line
-
-	# Draw Nodes
-	for node_def in level_data.nodes:
-		var btn = Button.new()
-		btn.text = node_def.label
-		btn.position = Vector2(node_def.pos.x, node_def.pos.y) - Vector2(25, 25)
-		btn.size = Vector2(50, 50)
-		btn.pressed.connect(_on_node_pressed.bind(node_def.id))
-		nodes_layer.add_child(btn)
-		node_buttons[node_def.id] = btn
-
-func _draw_arrow(pos: Vector2, dir: Vector2, parent: Node):
-	var arrow_size = 15.0
-	var arrow_pos = pos - (dir * 30.0)
-	var polygon = Polygon2D.new()
-	var p1 = arrow_pos + (dir * arrow_size)
-	var p2 = arrow_pos + (dir.rotated(2.5) * arrow_size)
-	var p3 = arrow_pos + (dir.rotated(-2.5) * arrow_size)
-	polygon.polygon = [p1, p2, p3]
-	polygon.color = Color(0.6, 0.6, 1.0, 1.0)
-	parent.add_child(polygon)
-
-func _get_node_data(id: String) -> Dictionary:
-	for n in level_data.nodes:
-		if n.id == id:
-			return n
-	return {}
-
-func _reset_game_state():
-	current_node = level_data.start_node
-	path = [current_node]
-	sum_input.text = ""
-	status_label.text = ""
-	backtrack_count = 0
-	cycle_repeats = 0
-	cycle_entered = false
-	level_started_ms = Time.get_ticks_msec()
-	first_action_ms = -1
-	_update_visuals()
-	_update_trust()
-
-func _update_visuals():
-	path_display.text = "Path: " + " -> ".join(path)
-
-	for node_id in node_buttons:
-		var btn = node_buttons[node_id]
-		var is_neighbor = false
-
-		if node_id == current_node:
-			btn.disabled = true
-			btn.modulate = Color(1, 1, 0)
+		var node_id := str(state.node)
+		var cost := int(state.cost)
+		var path_local: Array = state.path
+		if cost >= best:
 			continue
 
-		if adjacency.has(current_node) and adjacency[current_node].has(node_id):
-			is_neighbor = true
+		if node_id == end_node and _path_has_all_transit(path_local):
+			best = min(best, cost)
+			continue
 
-		btn.disabled = not is_neighbor
-		if is_neighbor:
+		for next_id in adjacency.get(node_id, {}).keys():
+			var local_visits := 0
+			for p in path_local:
+				if str(p) == str(next_id):
+					local_visits += 1
+			if local_visits >= 2:
+				continue
+			frontier.append({
+				"node": str(next_id),
+				"cost": cost + int(adjacency[node_id][next_id]),
+				"path": path_local + [str(next_id)]
+			})
+
+	return 0 if best >= 1_000_000_000 else best
+
+func _path_has_all_transit(path_local: Array) -> bool:
+	for must_node in must_visit_nodes:
+		if not path_local.has(must_node):
+			return false
+	return true
+
+func _on_graph_resized() -> void:
+	if graph_container.size.x <= 0.0 or graph_container.size.y <= 0.0:
+		return
+	_rebuild_graph_ui()
+	_update_visuals()
+
+func _rebuild_graph_ui() -> void:
+	for child in edges_layer.get_children():
+		child.queue_free()
+	for child in nodes_layer.get_children():
+		child.queue_free()
+	edge_visuals.clear()
+	edge_key_to_visuals.clear()
+	node_buttons.clear()
+
+	if graph_container.size.x <= 0.0 or graph_container.size.y <= 0.0:
+		return
+
+	for edge_var in level_data.get("edges", []):
+		var edge: Dictionary = edge_var
+		var from_id := str(edge.get("from", ""))
+		var to_id := str(edge.get("to", ""))
+		if from_id.is_empty() or to_id.is_empty() or not node_defs.has(from_id) or not node_defs.has(to_id):
+			continue
+
+		var visual_id := str(edge.get("id", _edge_key(from_id, to_id)))
+		var start_pos := _node_screen_pos(node_defs[from_id])
+		var end_pos := _node_screen_pos(node_defs[to_id])
+
+		var line := Line2D.new()
+		line.width = 4.0
+		line.points = PackedVector2Array([start_pos, end_pos])
+		line.gradient = _build_gradient(Color(0.18, 0.22, 0.30, 0.28), Color(0.30, 0.38, 0.52, 0.48))
+		edges_layer.add_child(line)
+
+		var arrows: Array[Polygon2D] = []
+		var forward_arrow := _create_arrow_polygon(start_pos, end_pos)
+		edges_layer.add_child(forward_arrow)
+		arrows.append(forward_arrow)
+
+		var keys: Array[String] = [_edge_key(from_id, to_id)]
+		if edge.get("two_way", false):
+			var reverse_arrow := _create_arrow_polygon(end_pos, start_pos)
+			edges_layer.add_child(reverse_arrow)
+			arrows.append(reverse_arrow)
+			keys.append(_edge_key(to_id, from_id))
+
+		var label := Label.new()
+		label.text = str(edge.get("w", 0))
+		label.add_theme_font_size_override("font_size", 15)
+		label.position = _edge_label_pos(start_pos, end_pos)
+		label.add_theme_color_override("font_color", Color(0.62, 0.74, 0.90))
+		edges_layer.add_child(label)
+
+		edge_visuals[visual_id] = {
+			"line": line,
+			"arrows": arrows,
+			"label": label,
+			"keys": keys
+		}
+
+		for key in keys:
+			if not edge_key_to_visuals.has(key):
+				edge_key_to_visuals[key] = []
+			edge_key_to_visuals[key].append(visual_id)
+
+	for node_id in node_defs.keys():
+		var node: Dictionary = node_defs[node_id]
+		var btn := Button.new()
+		btn.text = str(node.get("label", node_id))
+		var diameter := node_radius_px * 2.0
+		btn.size = Vector2(diameter, diameter)
+		btn.position = _node_screen_pos(node) - Vector2(node_radius_px, node_radius_px)
+		btn.pressed.connect(_on_node_pressed.bind(node_id))
+		nodes_layer.add_child(btn)
+		node_buttons[node_id] = btn
+
+func _edge_label_pos(start_pos: Vector2, end_pos: Vector2) -> Vector2:
+	var dir := (end_pos - start_pos).normalized()
+	var normal := Vector2(-dir.y, dir.x)
+	return ((start_pos + end_pos) * 0.5) + (normal * 12.0) - Vector2(10.0, 10.0)
+
+func _create_arrow_polygon(start_pos: Vector2, end_pos: Vector2) -> Polygon2D:
+	var dir := (end_pos - start_pos).normalized()
+	var tip := end_pos - dir * (node_radius_px + 4.0)
+	var base := tip - dir * ARROW_LEN
+	var side_len := ARROW_LEN * 0.65
+
+	var polygon := Polygon2D.new()
+	polygon.polygon = PackedVector2Array([
+		tip,
+		base + dir.rotated(ARROW_ANGLE_RAD) * side_len,
+		base + dir.rotated(-ARROW_ANGLE_RAD) * side_len
+	])
+	polygon.color = Color(0.45, 0.66, 0.96, 0.95)
+	return polygon
+
+func _build_gradient(start_color: Color, end_color: Color) -> Gradient:
+	var gradient := Gradient.new()
+	gradient.set_color(0, start_color)
+	gradient.set_color(1, end_color)
+	return gradient
+
+func _node_screen_pos(node_data: Dictionary) -> Vector2:
+	var pos: Dictionary = node_data.get("pos", {})
+	var x := float(pos.get("x", 0.0))
+	var y := float(pos.get("y", 0.0))
+
+	if x >= 0.0 and x <= 1.0 and y >= 0.0 and y <= 1.0:
+		var padding := node_radius_px + 4.0
+		var usable := graph_container.size - Vector2(padding * 2.0, padding * 2.0)
+		usable.x = maxf(1.0, usable.x)
+		usable.y = maxf(1.0, usable.y)
+		return Vector2(padding + x * usable.x, padding + y * usable.y)
+
+	return Vector2(x, y)
+
+func _reset_round_state(full_reset: bool) -> void:
+	current_node = str(level_data.get("start_node", "A"))
+	path = [current_node]
+	path_sum = 0
+	backtrack_count = 0
+	cycle_events = 0
+	cycle_detected = false
+	first_attempt_edge = ""
+	first_action_ms = -1
+	sum_input.clear()
+	status_label.text = ""
+
+	if full_reset:
+		level_started_ms = Time.get_ticks_msec()
+
+	_update_visuals()
+
+func _update_visuals() -> void:
+	path_display.text = "PATH: %s" % " -> ".join(path)
+	sum_live_label.text = "SUM: %d" % path_sum
+	backtrack_label.text = "BACKTRACK: %d" % backtrack_count
+	if cycle_detected:
+		warning_label.text = "WARNINGS: CYCLE DETECTED"
+	elif backtrack_count > 0:
+		warning_label.text = "WARNINGS: BACKTRACK USED"
+	else:
+		warning_label.text = "WARNINGS: -"
+
+	for node_id in node_buttons.keys():
+		var btn: Button = node_buttons[node_id]
+		var is_current: bool = node_id == current_node
+		var is_available: bool = adjacency.has(current_node) and adjacency[current_node].has(node_id)
+		btn.disabled = is_current or not is_available or is_game_over
+		if is_current:
+			btn.modulate = Color(0.95, 0.86, 0.45)
+		elif is_available:
 			btn.modulate = Color(1, 1, 1)
 		else:
-			btn.modulate = Color(0.5, 0.5, 0.5)
+			btn.modulate = Color(0.42, 0.46, 0.56)
 
-func _on_node_pressed(node_id: String):
-	if is_game_over: return
+	for visual_id in edge_visuals.keys():
+		_apply_style_to_visual(visual_id, "dim")
 
-	if adjacency.has(current_node) and adjacency[current_node].has(node_id):
-		if first_attempt_edge == null:
-			first_attempt_edge = current_node + "->" + node_id
-			first_action_ms = Time.get_ticks_msec() - level_started_ms
+	if adjacency.has(current_node):
+		for next_id in adjacency[current_node].keys():
+			_set_edge_style_by_key(_edge_key(current_node, str(next_id)), "available")
 
-		# Metric: Backtrack
-		if path.size() >= 2 and path[path.size()-2] == node_id:
-			backtrack_count += 1
+	for i in range(path.size() - 1):
+		_set_edge_style_by_key(_edge_key(path[i], path[i + 1]), "traversed")
 
-		# Metric: Cycle Repeats
-		if path.has(node_id):
-			cycle_repeats += 1
-			cycle_entered = true
+func _set_edge_style_by_key(key: String, state: String) -> void:
+	if not edge_key_to_visuals.has(key):
+		return
+	for visual_id in edge_key_to_visuals[key]:
+		_apply_style_to_visual(str(visual_id), state)
 
-		path.append(node_id)
-		current_node = node_id
-		_update_visuals()
+func _apply_style_to_visual(visual_id: String, state: String) -> void:
+	if not edge_visuals.has(visual_id):
+		return
+	var visual: Dictionary = edge_visuals[visual_id]
+	var line: Line2D = visual["line"]
+	var arrows: Array = visual["arrows"]
+	var label: Label = visual["label"]
 
-func _on_reset_pressed():
-	if is_game_over: return
+	var start_color := Color(0.18, 0.22, 0.30, 0.28)
+	var end_color := Color(0.30, 0.38, 0.52, 0.48)
+	if state == "available":
+		start_color = Color(0.24, 0.40, 0.62, 0.48)
+		end_color = accent_color
+		end_color.a = 0.95
+	elif state == "traversed":
+		start_color = accent_color.lightened(0.10)
+		start_color.a = 0.80
+		end_color = Color(0.92, 0.97, 1.0, 1.0)
+
+	line.gradient = _build_gradient(start_color, end_color)
+	for arrow in arrows:
+		(arrow as Polygon2D).color = end_color
+	label.add_theme_color_override("font_color", end_color.lightened(0.10))
+
+func _edge_key(from_id: String, to_id: String) -> String:
+	return "%s->%s" % [from_id, to_id]
+
+func _on_node_pressed(node_id: String) -> void:
+	if is_game_over:
+		return
+	if not adjacency.has(current_node) or not adjacency[current_node].has(node_id):
+		return
+
+	if first_attempt_edge.is_empty():
+		first_attempt_edge = _edge_key(current_node, node_id)
+		first_action_ms = Time.get_ticks_msec() - level_started_ms
+
+	if path.size() >= 2 and path[path.size() - 2] == node_id:
+		backtrack_count += 1
+
+	if path.has(node_id):
+		cycle_events += 1
+		cycle_detected = true
+
+	path_sum += int(adjacency[current_node][node_id])
+	path.append(node_id)
+	current_node = node_id
+	_update_visuals()
+
+func _on_reset_pressed() -> void:
+	if is_game_over:
+		return
 	n_reset += 1
-	_reset_game_state()
-	_update_trust()
+	_reset_round_state(false)
+	_recalculate_stability()
 
-func _on_back_pressed():
+func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
-func _on_submit_pressed():
-	if is_game_over: return
-
-	var input_text = sum_input.text.strip_edges()
-	var verdict = _judge_solution(input_text)
-
-	_log_attempt(input_text, verdict)
-
-	if verdict == "OPTIMAL":
-		status_label.text = "SUCCESS! Network Optimal."
-		status_label.add_theme_color_override("font_color", Color.GREEN)
-		is_game_over = true
-		btn_submit.disabled = true
-		btn_reset.disabled = true
-		_update_trust()
-	elif trust <= 10:
-		status_label.text = "MISSION FAILED: Trust Depleted."
-		status_label.add_theme_color_override("font_color", Color.RED)
-		is_game_over = true
-		btn_submit.disabled = true
-		btn_reset.disabled = true
-	else:
-		status_label.text = _format_verdict_message(verdict)
-		status_label.add_theme_color_override("font_color", Color.ORANGE)
-		_update_trust()
-
 func _on_sum_input_changed(new_text: String) -> void:
-	var filtered := ""
+	var digits := ""
 	for ch in new_text:
 		if ch >= "0" and ch <= "9":
-			filtered += ch
-	if filtered != new_text:
-		sum_input.text = filtered
-		sum_input.caret_column = filtered.length()
+			digits += ch
+	if digits != new_text:
+		sum_input.text = digits
+		sum_input.caret_column = digits.length()
 
-func _format_verdict_message(verdict: String) -> String:
-	match verdict:
-		"PARSE_ERROR":
-			return "Enter a whole number."
-		"CALC_MISMATCH":
-			return "Incorrect sum for the selected path."
-		"NON_OPTIMAL":
-			return "Path is valid, but not optimal."
+func _on_submit_pressed() -> void:
+	if is_game_over:
+		return
+
+	var verdict := _judge_solution(sum_input.text.strip_edges())
+	_log_attempt(verdict)
+
+	if verdict.result_code == "OK":
+		status_label.text = "Route accepted. Constraint and optimality confirmed."
+		status_label.add_theme_color_override("font_color", Color(0.38, 1.0, 0.62))
+		is_game_over = true
+		btn_submit.disabled = true
+		btn_reset.disabled = true
+		_update_visuals()
+		return
+
+	status_label.text = _result_message(str(verdict.result_code))
+	status_label.add_theme_color_override("font_color", Color(1.0, 0.62, 0.28))
+	_recalculate_stability()
+
+func _result_message(result_code: String) -> String:
+	match result_code:
+		"ERR_INCOMPLETE":
+			return "Reach node E before submit."
 		"ERR_MISSING_TRANSIT":
-			return "Missing required transit node."
-		"INCOMPLETE":
-			return "Reach the destination before submit."
+			return "Constraint failed: visit required transit node(s)."
+		"ERR_CYCLE":
+			return "Cycle detected in route."
+		"ERR_PARSE":
+			return "Enter digits only."
+		"ERR_CALC":
+			return "Input sum does not match the selected path."
+		"ERR_NOT_OPT":
+			return "Path is valid, but not optimal."
 		"ERR_PATH_INVALID":
-			return "Path is invalid."
-	return "Error: " + verdict
+			return "Path is invalid for directed edges."
+		_:
+			return "Unhandled result: %s" % result_code
 
-func _judge_solution(input_text: String) -> String:
-	# 1. Structural
-	var real_sum = 0
-	for i in range(path.size() - 1):
-		if not adjacency.has(path[i]) or not adjacency[path[i]].has(path[i+1]):
-			return "ERR_PATH_INVALID"
-		real_sum += adjacency[path[i]][path[i+1]]
+func _judge_solution(input_text: String) -> Dictionary:
+	var sum_actual := _compute_path_sum()
+	var sum_input_value: Variant = null
+	var result_code := "OK"
 
-	# 2. Incomplete
-	if level_data.rules.require_end_node_to_submit:
-		if current_node != level_data.end_node:
-			return "INCOMPLETE"
-
-	# 3. Transit Check
-	var has_transit = true
-	for t_node in level_data.constraints.must_visit:
-		if not path.has(t_node):
-			has_transit = false
-			break
-	if not has_transit:
+	if sum_actual < 0:
+		result_code = "ERR_PATH_INVALID"
+	elif current_node != str(level_data.get("end_node", "E")):
+		result_code = "ERR_INCOMPLETE"
+	elif not _path_has_all_transit(path):
 		n_transit += 1
-		return "ERR_MISSING_TRANSIT"
-
-	# 4. Parse
-	if not input_regex.search(input_text):
+		constraint_violations += 1
+		result_code = "ERR_MISSING_TRANSIT"
+	elif cycle_events > 0:
+		n_cycle += 1
+		constraint_violations += 1
+		result_code = "ERR_CYCLE"
+	elif input_regex.search(input_text) == null:
 		n_parse += 1
-		return "PARSE_ERROR"
-
-	# 5. Calc
-	if int(input_text) != real_sum:
-		n_calc += 1
-		return "CALC_MISMATCH"
-
-	# 6. Optimality
-	if real_sum > min_sum:
-		n_opt += 1
-		return "NON_OPTIMAL"
-
-	return "OPTIMAL"
-
-func _update_trust():
-	var t_overtime = max(0, t_elapsed_seconds - level_data.time_limit_sec)
-	var overtime_div = level_data.trust.get("overtime_div", 2)
-	var penalty_overtime = floor(t_overtime / float(overtime_div))
-
-	var penalties = (n_calc * level_data.trust.penalty_calc) + \
-					(n_opt * level_data.trust.penalty_opt) + \
-					(n_parse * level_data.trust.penalty_parse) + \
-					(n_reset * level_data.trust.penalty_reset) + \
-					(n_transit * level_data.trust.get("penalty_transit", 25)) + \
-					penalty_overtime
-
-	trust = clamp(level_data.trust.initial - penalties, 0, 100)
-	trust_label.text = "Trust: %d%%" % int(trust)
-
-	if trust <= 10:
-		if not is_game_over:
-			_game_over_trust()
-
-func _game_over_trust():
-	is_game_over = true
-	status_label.text = "MISSION FAILED: Trust Critical."
-	status_label.add_theme_color_override("font_color", Color.RED)
-	btn_submit.disabled = true
-	btn_reset.disabled = true
-	_log_attempt("", "FAIL_TRUST")
-
-func _update_timer_display():
-	var minutes = int(t_elapsed_seconds / 60)
-	var seconds = int(t_elapsed_seconds) % 60
-	timer_label.text = "%02d:%02d" % [minutes, seconds]
-	if t_elapsed_seconds > level_data.time_limit_sec:
-		timer_label.add_theme_color_override("font_color", Color.RED)
+		result_code = "ERR_PARSE"
 	else:
-		timer_label.add_theme_color_override("font_color", Color.WHITE)
+		sum_input_value = int(input_text)
+		if int(sum_input_value) != sum_actual:
+			n_calc += 1
+			result_code = "ERR_CALC"
+		elif sum_actual != min_sum:
+			n_opt += 1
+			result_code = "ERR_NOT_OPT"
 
-func _log_attempt(input_sum_raw: String, verdict: String):
-	var user_input_int = -1
-	var input_valid = false
-	var norm_input = input_sum_raw.strip_edges()
-	if input_regex.search(norm_input):
-		user_input_int = int(norm_input)
-		input_valid = true
+	return {
+		"result_code": result_code,
+		"sum_actual": sum_actual,
+		"sum_input": sum_input_value,
+		"must_visit_ok": _path_has_all_transit(path)
+	}
 
-	var real_path_sum = 0
-	var is_structurally_valid = true
+func _compute_path_sum() -> int:
+	var total := 0
 	for i in range(path.size() - 1):
-		if adjacency.has(path[i]) and adjacency[path[i]].has(path[i+1]):
-			real_path_sum += adjacency[path[i]][path[i+1]]
-		else:
-			is_structurally_valid = false
+		var from_id := path[i]
+		var to_id := path[i + 1]
+		if not adjacency.has(from_id) or not adjacency[from_id].has(to_id):
+			return -1
+		total += int(adjacency[from_id][to_id])
+	return total
 
-	var has_transit = true
-	for t_node in level_data.constraints.must_visit:
-		if not path.has(t_node):
-			has_transit = false
-			break
+func _recalculate_stability() -> void:
+	var trust_cfg: Dictionary = level_data.get("trust", {})
+	var overtime_div := int(trust_cfg.get("overtime_div", 2))
+	overtime_div = maxi(1, overtime_div)
+	var overtime: int = maxi(0, t_elapsed_seconds - int(level_data.get("time_limit_sec", 120)))
+	var overtime_penalty := int(floor(float(overtime) / float(overtime_div)))
 
-	var attempt_no = GlobalMetrics.session_history.size() + 1
-	var t_overtime = max(0, t_elapsed_seconds - level_data.time_limit_sec)
+	var penalties := (
+		n_calc * int(trust_cfg.get("penalty_calc", 25))
+		+ n_opt * int(trust_cfg.get("penalty_opt", 25))
+		+ n_parse * int(trust_cfg.get("penalty_parse", 5))
+		+ n_reset * int(trust_cfg.get("penalty_reset", 5))
+		+ n_transit * int(trust_cfg.get("penalty_transit", 25))
+		+ n_cycle * int(trust_cfg.get("penalty_cycle", 10))
+		+ overtime_penalty
+	)
 
-	var log_data = {
-		"schema_version": "trial.v2",
+	stability = clampf(float(trust_cfg.get("initial", 100)) - float(penalties), 0.0, 100.0)
+	label_state.text = "STABILITY: %d%%" % int(stability)
+
+	if stability <= 10.0 and not is_game_over:
+		is_game_over = true
+		status_label.text = "MISSION FAILED: STABILITY CRITICAL."
+		status_label.add_theme_color_override("font_color", Color(1.0, 0.30, 0.30))
+		btn_submit.disabled = true
+		btn_reset.disabled = true
+		_update_visuals()
+
+func _update_timer_display() -> void:
+	var time_limit := int(level_data.get("time_limit_sec", 120))
+	var remaining: int = maxi(0, time_limit - t_elapsed_seconds)
+	var mm: int = remaining / 60
+	var ss: int = remaining % 60
+	label_timer.text = "TIME: %02d:%02d" % [mm, ss]
+	if t_elapsed_seconds > time_limit:
+		label_timer.add_theme_color_override("font_color", Color(1.0, 0.36, 0.36))
+	else:
+		label_timer.add_theme_color_override("font_color", Color(1, 1, 1))
+
+func _log_attempt(verdict: Dictionary) -> void:
+	var sum_actual := int(verdict.get("sum_actual", -1))
+	var sum_input_value: Variant = verdict.get("sum_input", null)
+	var result_code := str(verdict.get("result_code", "ERR_UNKNOWN"))
+	var must_visit_ok := bool(verdict.get("must_visit_ok", false))
+
+	var attempt_no := GlobalMetrics.session_history.size() + 1
+	var log_data := {
+		"schema_version": "city_map.v2.1.0",
 		"quest_id": "CITY_MAP",
 		"stage": "B",
-		"task_id": str(level_data.get("level_id", "CITY_B")),
-		"interaction_type": "PATH_SUM",
-		"match_key": "CITY_MAP|B|%s|v%s" % [str(level_data.get("level_id", "CITY_B")), config_hash.substr(0, 8)],
+		"task_id": str(level_data.get("level_id", "6.2")),
+		"match_key": "CITY_MAP|B|%s|v%s" % [str(level_data.get("level_id", "6.2")), config_hash.substr(0, 8)],
 		"variant_hash": config_hash,
-		"contract_version": level_data.get("contract_version", "city_map.v1.0.0"),
-		"level_id": level_data.level_id,
-		"config_hash": config_hash,
+		"contract_version": str(level_data.get("contract_version", "city_map.v2.1.0")),
 		"attempt_no": attempt_no,
-
-		"calc_ok": (user_input_int == real_path_sum) if input_valid else false,
-		"optimal_ok": (is_structurally_valid and current_node == level_data.end_node and real_path_sum == min_sum and has_transit),
-		"transit_ok": has_transit,
-		"path_valid": is_structurally_valid,
-		"reached_end": (current_node == level_data.end_node),
-
-		"first_attempt_edge": first_attempt_edge,
+		"result_code": result_code,
+		"calc_ok": sum_input_value != null and int(sum_input_value) == sum_actual,
+		"optimal_ok": sum_actual == min_sum and result_code == "OK" and must_visit_ok,
+		"must_visit_ok": must_visit_ok,
+		"first_attempt_edge": null if first_attempt_edge.is_empty() else first_attempt_edge,
 		"t_elapsed_seconds": t_elapsed_seconds,
-		"t_overtime_seconds": t_overtime,
-		"trust_final": int(trust),
-		"path": path,
-
-		"entered_sum_raw": norm_input,
-		"entered_sum_int": user_input_int if input_valid else null,
-		"real_sum": real_path_sum,
+		"path": path.duplicate(),
+		"sum_actual": sum_actual,
+		"sum_input": sum_input_value,
 		"min_sum": min_sum,
-
-		"N_calc": n_calc,
-		"N_opt": n_opt,
-		"N_parse": n_parse,
-		"N_reset": n_reset,
-		"N_transit": n_transit,
-
 		"backtrack_count": backtrack_count,
-		"cycle_repeats": cycle_repeats,
-		"cycle_entered": cycle_entered,
-
-		"verdict_code": verdict,
-		"is_correct": verdict == "OPTIMAL",
-		"is_fit": verdict == "OPTIMAL",
+		"cycle_events": cycle_events,
+		"constraint_violations": constraint_violations,
+		"stability_final": int(stability),
+		"n_calc": n_calc,
+		"n_opt": n_opt,
+		"n_parse": n_parse,
+		"n_reset": n_reset,
+		"n_transit": n_transit,
+		"n_cycle": n_cycle,
+		"is_correct": result_code == "OK",
+		"is_fit": result_code == "OK",
 		"stability_delta": 0,
 		"elapsed_ms": t_elapsed_seconds * 1000,
 		"duration": float(t_elapsed_seconds),
 		"time_to_first_action_ms": first_action_ms if first_action_ms >= 0 else t_elapsed_seconds * 1000,
-		"error_type": verdict if verdict != "OPTIMAL" else "NONE"
+		"error_type": "NONE" if result_code == "OK" else result_code
 	}
 
 	GlobalMetrics.register_trial(log_data)
 	_save_json_log(log_data)
 
-func _save_json_log(data: Dictionary):
-	var dir = DirAccess.open("user://")
+func _save_json_log(data: Dictionary) -> void:
+	var dir := DirAccess.open("user://")
+	if dir == null:
+		return
 	if not dir.dir_exists("research_logs"):
 		dir.make_dir("research_logs")
 
-	var filename = "user://research_logs/case_6_2_%d.json" % Time.get_unix_time_from_system()
-	var file = FileAccess.open(filename, FileAccess.WRITE)
-	if file:
+	var filename := "user://research_logs/%s_%d.json" % [LOG_PREFIX, Time.get_unix_time_from_system()]
+	var file := FileAccess.open(filename, FileAccess.WRITE)
+	if file != null:
 		file.store_string(JSON.stringify(data, "\t"))
 		file.close()

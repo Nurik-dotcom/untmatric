@@ -1,30 +1,35 @@
 {
-  "contract_version": "city_map.v1.0.0",
+  "contract_version": "city_map.v2.1.0",
   "level_id": "6.3",
   "time_limit_sec": 140,
   "start_node": "A",
   "end_node": "L",
-
+  "min_sum": 67,
+  "min_path_examples": [
+    ["A", "B", "F", "G", "K", "L"]
+  ],
+  "ui": {
+    "accent_color": "#67B8FF",
+    "node_radius_px": 50
+  },
   "rules": {
     "require_end_node_to_submit": true,
     "input_regex": "^[0-9]+$"
   },
-
   "nodes": [
-    { "id": "A", "label": "A", "pos": { "x": 100, "y": 100 } },
-    { "id": "B", "label": "B", "pos": { "x": 300, "y": 100 } },
-    { "id": "C", "label": "C", "pos": { "x": 500, "y": 100 } },
-    { "id": "D", "label": "D", "pos": { "x": 700, "y": 100 } },
-    { "id": "E", "label": "E", "pos": { "x": 100, "y": 300 } },
-    { "id": "F", "label": "F", "pos": { "x": 300, "y": 300 } },
-    { "id": "G", "label": "G", "pos": { "x": 500, "y": 300 } },
-    { "id": "H", "label": "H", "pos": { "x": 700, "y": 300 } },
-    { "id": "I", "label": "I", "pos": { "x": 200, "y": 500 } },
-    { "id": "J", "label": "J", "pos": { "x": 400, "y": 500 } },
-    { "id": "K", "label": "K", "pos": { "x": 600, "y": 500 } },
-    { "id": "L", "label": "L", "pos": { "x": 800, "y": 500 } }
+    { "id": "A", "label": "A", "pos": { "x": 0.08, "y": 0.12 } },
+    { "id": "B", "label": "B", "pos": { "x": 0.28, "y": 0.12 } },
+    { "id": "C", "label": "C", "pos": { "x": 0.48, "y": 0.12 } },
+    { "id": "D", "label": "D", "pos": { "x": 0.68, "y": 0.12 } },
+    { "id": "E", "label": "E", "pos": { "x": 0.08, "y": 0.45 } },
+    { "id": "F", "label": "F", "pos": { "x": 0.28, "y": 0.45 } },
+    { "id": "G", "label": "G", "pos": { "x": 0.48, "y": 0.45 } },
+    { "id": "H", "label": "H", "pos": { "x": 0.68, "y": 0.45 } },
+    { "id": "I", "label": "I", "pos": { "x": 0.18, "y": 0.80 } },
+    { "id": "J", "label": "J", "pos": { "x": 0.38, "y": 0.80 } },
+    { "id": "K", "label": "K", "pos": { "x": 0.58, "y": 0.80 } },
+    { "id": "L", "label": "L", "pos": { "x": 0.82, "y": 0.80 } }
   ],
-
   "edges": [
     { "id": "e1", "from": "A", "to": "B", "w": 10 },
     { "id": "e2", "from": "B", "to": "C", "w": 10 },
@@ -67,7 +72,6 @@
       "tags": ["patrol", "close_trap"]
     }
   ],
-
   "constraints": {
     "must_visit": ["F"],
     "blacklist_nodes": ["J"],
@@ -75,7 +79,6 @@
       { "id": "xor_bridge", "type": "AT_MOST_ONE", "nodes": ["E", "G"] }
     ]
   },
-
   "trust": {
     "initial": 100,
     "penalty_calc": 25,
@@ -87,7 +90,6 @@
     "overtime_div": 2,
     "fail_threshold": 10
   },
-
   "analytics": {
     "enabled": true,
     "log_prefix": "case_6_3"

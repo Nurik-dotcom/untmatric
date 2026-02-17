@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://citymapquest002"]
+[gd_scene load_steps=4 format=3 uid="uid://citymapquest002"]
 
 [ext_resource type="Script" path="res://scenes/CityMapQuestB.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_untformatic.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
 
 [node name="CityMapQuestB" type="Control"]
 layout_mode = 3
@@ -20,106 +21,220 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.1, 0.1, 0.1, 1)
+color = Color(0.04, 0.05, 0.08, 1)
 
-[node name="MainLayout" type="VBoxContainer" parent="."]
+[node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
+tint_color = Color(0.33, 0.55, 0.95, 1)
+intensity = 0.1
+
+[node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 20
 
-[node name="Header" type="HBoxContainer" parent="MainLayout"]
-layout_mode = 2
-theme_override_constants/separation = 20
-
-[node name="BtnBack" type="Button" parent="MainLayout/Header"]
-custom_minimum_size = Vector2(100, 50)
-layout_mode = 2
-text = "Back"
-
-[node name="TitleLabel" type="Label" parent="MainLayout/Header"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Case 6.2: Network Node (B)"
-
-[node name="Spacer" type="Control" parent="MainLayout/Header"]
+[node name="MainVBox" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
 size_flags_horizontal = 3
-
-[node name="TrustLabel" type="Label" parent="MainLayout/Header"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.4, 0.8, 0.4, 1)
-theme_override_font_sizes/font_size = 24
-text = "Trust: 100%"
-
-[node name="TimerLabel" type="Label" parent="MainLayout/Header"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "00:00"
-
-[node name="GraphContainer" type="Control" parent="MainLayout"]
-layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 12
 
-[node name="EdgesLayer" type="Control" parent="MainLayout/GraphContainer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="NodesLayer" type="Control" parent="MainLayout/GraphContainer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Footer" type="VBoxContainer" parent="MainLayout"]
+[node name="Header" type="HBoxContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="PathDisplay" type="Label" parent="MainLayout/Footer"]
+[node name="BtnBack" type="Button" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+text = "<"
+
+[node name="LabelCase" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "CASE 6: CITY MAP"
+
+[node name="LabelMode" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Path: A"
-horizontal_alignment = 1
+text = "MODE: B"
 
-[node name="InputRow" type="HBoxContainer" parent="MainLayout/Footer"]
+[node name="Spacer" type="Control" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
-theme_override_constants/separation = 20
-alignment = 1
+size_flags_horizontal = 3
 
-[node name="SumLabel" type="Label" parent="MainLayout/Footer/InputRow"]
+[node name="LabelState" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
-text = "Total Weight:"
+theme_override_font_sizes/font_size = 18
+text = "STABILITY: 100%"
 
-[node name="SumInput" type="LineEdit" parent="MainLayout/Footer/InputRow"]
-custom_minimum_size = Vector2(150, 50)
+[node name="LabelTimer" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "TIME: 02:00"
+
+[node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+
+[node name="BriefingMargin" type="MarginContainer" parent="SafeArea/MainVBox/BriefingCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="BriefingVBox" type="VBoxContainer" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BriefingTitle" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "TRANSIT CHECK"
+
+[node name="BriefingText" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
+layout_mode = 2
+autowrap_mode = 2
+text = "Reach node E, report exact route sum, and prove the route is optimal under all directed links."
+
+[node name="ConstraintLabel" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
+layout_mode = 2
+autowrap_mode = 2
+text = "CONSTRAINT: MUST VISIT C"
+
+[node name="ContentSplit" type="BoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="GraphPanel" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="GraphMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/GraphPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="GraphContainer" type="Control" parent="SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin"]
+custom_minimum_size = Vector2(420, 320)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="EdgesLayer" type="Control" parent="SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="NodesLayer" type="Control" parent="SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="InfoPanel" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit"]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.0
+
+[node name="InfoMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="InfoVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="ConstraintInfoLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+layout_mode = 2
+text = "CONSTRAINT: MUST VISIT C"
+
+[node name="PathDisplay" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+layout_mode = 2
+autowrap_mode = 2
+text = "PATH: A"
+
+[node name="SumLiveLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+layout_mode = 2
+text = "SUM: 0"
+
+[node name="BacktrackLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+layout_mode = 2
+text = "BACKTRACK: 0"
+
+[node name="WarningLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+layout_mode = 2
+autowrap_mode = 2
+text = "WARNINGS: -"
+
+[node name="InputLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+layout_mode = 2
+text = "INPUT FINAL SUM"
+
+[node name="SumInput" type="LineEdit" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 placeholder_text = "0"
-alignment = 1
-max_length = 5
+max_length = 6
 
-[node name="BtnReset" type="Button" parent="MainLayout/Footer/InputRow"]
-custom_minimum_size = Vector2(120, 50)
+[node name="ButtonsRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "Reset"
+theme_override_constants/separation = 8
 
-[node name="BtnSubmit" type="Button" parent="MainLayout/Footer/InputRow"]
-custom_minimum_size = Vector2(120, 50)
+[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
+size_flags_horizontal = 3
+text = "RESET"
+
+[node name="BtnSubmit" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "Submit"
+text = "SUBMIT"
 
-[node name="StatusLabel" type="Label" parent="MainLayout/Footer"]
+[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
+size_flags_vertical = 3
+autowrap_mode = 2
 text = ""
-horizontal_alignment = 1
+
+[node name="Footer" type="HBoxContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FooterLabel" type="Label" parent="SafeArea/MainVBox/Footer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Bidirectional roads are active only where reverse edge exists in data."
+
+[node name="FooterMeta" type="Label" parent="SafeArea/MainVBox/Footer"]
+layout_mode = 2
+text = "CITY MAP / B"
