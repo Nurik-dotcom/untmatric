@@ -1,9 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://c4p1o1h01r4g6"]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="1_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="2_overlay"]
 
-[node name="DecryptorUI" type="Control"]
+[node name="MatrixDecryptorUI" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -52,17 +52,17 @@ theme_override_constants/separation = 8
 alignment = 1
 
 [node name="BtnBack" type="Button" parent="SafeArea/Main/HeaderBar/HeaderContent"]
-custom_minimum_size = Vector2(64, 52)
+custom_minimum_size = Vector2(72, 52)
 layout_mode = 2
 text = "<"
 
 [node name="ModeChip" type="PanelContainer" parent="SafeArea/Main/HeaderBar/HeaderContent"]
-custom_minimum_size = Vector2(80, 40)
+custom_minimum_size = Vector2(84, 40)
 layout_mode = 2
 
 [node name="ModeLabel" type="Label" parent="SafeArea/Main/HeaderBar/HeaderContent/ModeChip"]
 layout_mode = 2
-text = "DEC"
+text = "MATRIX"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -72,7 +72,7 @@ size_flags_horizontal = 3
 
 [node name="LevelLabel" type="Label" parent="SafeArea/Main/HeaderBar/HeaderContent"]
 layout_mode = 2
-text = "PROTOCOL A-1"
+text = "PROTOCOL C"
 
 [node name="Spacer2" type="Control" parent="SafeArea/Main/HeaderBar/HeaderContent"]
 layout_mode = 2
@@ -125,109 +125,65 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 1.45
 theme_override_constants/separation = 10
 
-[node name="TargetPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/LeftPanel"]
-layout_mode = 2
-
-[node name="TargetContent" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/TargetPanel"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="TargetTitle" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent"]
-layout_mode = 2
-text = "TARGET"
-
-[node name="TargetValueBig" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent"]
-layout_mode = 2
-text = "00"
-theme_override_font_sizes/font_size = 36
-horizontal_alignment = 1
-
-[node name="TargetSub" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent"]
-layout_mode = 2
-text = ""
-horizontal_alignment = 1
-
-[node name="InputPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/LeftPanel"]
-layout_mode = 2
-
-[node name="InputContent" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/InputPanel"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="InputBin" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/InputPanel/InputContent"]
-layout_mode = 2
-text = "BIN: 0000 0000"
-
-[node name="InputBasesRow" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/InputPanel/InputContent"]
-layout_mode = 2
-theme_override_constants/separation = 12
-alignment = 1
-
-[node name="InputDec" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/InputPanel/InputContent/InputBasesRow"]
-layout_mode = 2
-text = "DEC: 0"
-
-[node name="InputOct" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/InputPanel/InputContent/InputBasesRow"]
-layout_mode = 2
-text = "OCT: 0"
-
-[node name="InputHex" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/InputPanel/InputContent/InputBasesRow"]
-layout_mode = 2
-text = "HEX: 0"
-
-[node name="SwitchesPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/LeftPanel"]
+[node name="MatrixPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/LeftPanel"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="SwitchesContent" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel"]
+[node name="MatrixContent" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="NibblesCenter" type="CenterContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent"]
+[node name="MatrixTitle" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
+layout_mode = 2
+text = "FLOW MATRIX"
+
+[node name="MatrixBoard" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_constants/separation = 8
 
-[node name="NibblesRow" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter"]
-layout_mode = 2
-theme_override_constants/separation = 12
-alignment = 1
-
-[node name="UpperNibble" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 4
-
-[node name="UpperTitle" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/UpperNibble"]
-layout_mode = 2
-text = "HIGH"
-horizontal_alignment = 1
-
-[node name="UpperBits" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/UpperNibble"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="LowerNibble" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 4
-
-[node name="LowerTitle" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/LowerNibble"]
-layout_mode = 2
-text = "LOW"
-horizontal_alignment = 1
-
-[node name="LowerBits" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/LowerNibble"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="WeightsRow" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent"]
+[node name="RowLabels" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/MatrixBoard"]
+custom_minimum_size = Vector2(92, 0)
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
+
+[node name="MatrixStack" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/MatrixBoard"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="ColumnLabels" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/MatrixBoard/MatrixStack"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Grid" type="GridContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/MatrixBoard/MatrixStack"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 6
+
+[node name="InOutRow" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="InletTag" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/InOutRow"]
+layout_mode = 2
+text = "IN [0,0]"
+
+[node name="OutletTag" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/InOutRow"]
+layout_mode = 2
+text = "OUT [5,5]"
+
+[node name="ConstraintHint" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
+layout_mode = 2
+text = "Rows use HEX (00..3F), columns use count+parity"
+autowrap_mode = 3
 
 [node name="RightPanel" type="VBoxContainer" parent="SafeArea/Main/ContentSplit"]
 layout_mode = 2
@@ -236,56 +192,24 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 1.0
 theme_override_constants/separation = 10
 
-[node name="RankPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
+[node name="StatusPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
 layout_mode = 2
 
-[node name="RankContent" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/RightPanel/RankPanel"]
+[node name="StatusContent" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/RightPanel/StatusPanel"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="RankTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent"]
+[node name="StatusTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/StatusPanel/StatusContent"]
 layout_mode = 2
-text = "RANK"
+text = "FLOW STATUS"
 
-[node name="RankLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent"]
+[node name="ProgressLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/StatusPanel/StatusContent"]
 layout_mode = 2
-text = "TRAINEE"
-theme_override_font_sizes/font_size = 22
+text = "Unlocked zone: 2x2"
 
-[node name="ProgressLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent"]
+[node name="ModeLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/StatusPanel/StatusContent"]
 layout_mode = 2
-text = "LEVEL 1 / 30"
-
-[node name="ProtocolPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
-layout_mode = 2
-
-[node name="ProtocolContent" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel"]
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="ProtocolTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent"]
-layout_mode = 2
-text = "PROTOCOL DIAGNOSTICS"
-
-[node name="RegsRow" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="RegAValue" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/RegsRow"]
-layout_mode = 2
-text = "A: --"
-
-[node name="RegBValue" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/RegsRow"]
-layout_mode = 2
-text = "B: --"
-
-[node name="OpValue" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/RegsRow"]
-layout_mode = 2
-text = "OP: --"
-
-[node name="ShiftStatus" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent"]
-layout_mode = 2
-text = "SHIFT: idle"
+text = "Safe mode: OFF"
 
 [node name="LiveLogPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
 layout_mode = 2
@@ -358,9 +282,9 @@ anchor_left = 0.5
 anchor_right = 0.5
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = -180
+offset_left = -200
 offset_top = -120
-offset_right = 180
+offset_right = 200
 offset_bottom = -60
 
 [node name="ToastLabel" type="Label" parent="ToastLayer/Toast"]
@@ -377,7 +301,7 @@ anchor_left = 0.0
 anchor_right = 1.0
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -380
+offset_top = -360
 offset_bottom = 0
 
 [node name="DetailsContent" type="VBoxContainer" parent="DetailsSheet"]
@@ -404,59 +328,3 @@ custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
 bbcode_enabled = true
 text = ""
-
-[node name="SafeModeOverlay" type="CanvasLayer" parent="."]
-visible = false
-
-[node name="Dim" type="ColorRect" parent="SafeModeOverlay"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0, 0, 0, 0.6)
-
-[node name="CenterContainer" type="CenterContainer" parent="SafeModeOverlay"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="SafePanel" type="PanelContainer" parent="SafeModeOverlay/CenterContainer"]
-custom_minimum_size = Vector2(0, 360)
-layout_mode = 2
-
-[node name="SafeContent" type="VBoxContainer" parent="SafeModeOverlay/CenterContainer/SafePanel"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="SafeTitle" type="Label" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
-layout_mode = 2
-text = "SAFE MODE: ERROR ANALYSIS"
-
-[node name="SafeSummary" type="RichTextLabel" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
-layout_mode = 2
-custom_minimum_size = Vector2(0, 80)
-bbcode_enabled = true
-text = ""
-
-[node name="SafeBitsRow" type="HBoxContainer" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="SafeActions" type="HBoxContainer" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="BtnRetry" type="Button" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeActions"]
-custom_minimum_size = Vector2(120, 56)
-layout_mode = 2
-text = "RETRY"
-
-[node name="BtnContinue" type="Button" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeActions"]
-custom_minimum_size = Vector2(120, 56)
-layout_mode = 2
-text = "CONTINUE"

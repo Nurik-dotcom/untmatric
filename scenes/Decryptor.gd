@@ -8,21 +8,31 @@ extends Control
 @onready var shield_freq = $UI/SafeArea/Main/HeaderBar/HeaderContent/Shields/ShieldFreq
 @onready var shield_lazy = $UI/SafeArea/Main/HeaderBar/HeaderContent/Shields/ShieldLazy
 @onready var btn_details = $UI/SafeArea/Main/HeaderBar/HeaderContent/BtnDetails
+@onready var noir_overlay = $UI/NoirOverlay
 
-@onready var target_panel = $UI/SafeArea/Main/InstrumentArea/TargetPanel
-@onready var target_title = $UI/SafeArea/Main/InstrumentArea/TargetPanel/TargetContent/TargetTitle
-@onready var target_value = $UI/SafeArea/Main/InstrumentArea/TargetPanel/TargetContent/TargetValueBig
-@onready var target_sub = $UI/SafeArea/Main/InstrumentArea/TargetPanel/TargetContent/TargetSub
+@onready var target_panel = $UI/SafeArea/Main/ContentSplit/LeftPanel/TargetPanel
+@onready var target_title = $UI/SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent/TargetTitle
+@onready var target_value = $UI/SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent/TargetValueBig
+@onready var target_sub = $UI/SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent/TargetSub
 
-@onready var input_panel = $UI/SafeArea/Main/InstrumentArea/InputPanel
-@onready var input_bin = $UI/SafeArea/Main/InstrumentArea/InputPanel/InputContent/InputBin
-@onready var input_dec = $UI/SafeArea/Main/InstrumentArea/InputPanel/InputContent/InputBasesRow/InputDec
-@onready var input_oct = $UI/SafeArea/Main/InstrumentArea/InputPanel/InputContent/InputBasesRow/InputOct
-@onready var input_hex = $UI/SafeArea/Main/InstrumentArea/InputPanel/InputContent/InputBasesRow/InputHex
+@onready var input_panel = $UI/SafeArea/Main/ContentSplit/LeftPanel/InputPanel
+@onready var input_bin = $UI/SafeArea/Main/ContentSplit/LeftPanel/InputPanel/InputContent/InputBin
+@onready var input_dec = $UI/SafeArea/Main/ContentSplit/LeftPanel/InputPanel/InputContent/InputBasesRow/InputDec
+@onready var input_oct = $UI/SafeArea/Main/ContentSplit/LeftPanel/InputPanel/InputContent/InputBasesRow/InputOct
+@onready var input_hex = $UI/SafeArea/Main/ContentSplit/LeftPanel/InputPanel/InputContent/InputBasesRow/InputHex
 
-@onready var upper_bits = $UI/SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent/NibblesRow/UpperNibble/UpperBits
-@onready var lower_bits = $UI/SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent/NibblesRow/LowerNibble/LowerBits
-@onready var weights_row = $UI/SafeArea/Main/InstrumentArea/SwitchesPanel/SwitchesContent/WeightsRow
+@onready var upper_bits = $UI/SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/UpperNibble/UpperBits
+@onready var lower_bits = $UI/SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/LowerNibble/LowerBits
+@onready var weights_row = $UI/SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/WeightsRow
+
+@onready var rank_label = $UI/SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent/RankLabel
+@onready var progress_label = $UI/SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent/ProgressLabel
+@onready var reg_a_value = $UI/SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/RegsRow/RegAValue
+@onready var reg_b_value = $UI/SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/RegsRow/RegBValue
+@onready var op_value = $UI/SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/RegsRow/OpValue
+@onready var shift_status = $UI/SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/ShiftStatus
+@onready var live_log_text = $UI/SafeArea/Main/ContentSplit/RightPanel/LiveLogPanel/LiveLogContent/LiveLogText
+@onready var hint_text = $UI/SafeArea/Main/ContentSplit/RightPanel/HintPanel/HintContent/HintText
 
 @onready var btn_hint = $UI/SafeArea/Main/BottomBar/Actions/BtnHint
 @onready var btn_check = $UI/SafeArea/Main/BottomBar/Actions/BtnCheck
@@ -62,6 +72,7 @@ var safe_bit_labels: Array[Label] = []
 
 var log_lines: Array[String] = []
 var last_hint_text: String = ""
+var _shift_status_token: int = 0
 
 var details_open: bool = false
 var _swipe_start_pos: Vector2 = Vector2.ZERO
@@ -158,8 +169,11 @@ func start_level(level_idx: int) -> void:
 	var mode = GlobalMetrics.current_mode
 	mode_label.text = mode
 	_update_level_label(level_idx)
+	_update_rank_info()
 	_update_weights_for_mode(mode)
 	_update_target_display(level_idx, mode)
+	_update_protocol_diagnostics()
+	hint_text.text = "No diagnostics yet."
 	_reset_bit_buttons()
 	_update_input_display()
 	_log_message("System initialized. Target locked.", COLOR_OK)
@@ -168,6 +182,14 @@ func start_level(level_idx: int) -> void:
 func _update_level_label(level_idx: int) -> void:
 	var protocol = "A" if level_idx < 15 else "B"
 	level_label.text = "PROTOCOL %s-%d" % [protocol, level_idx + 1]
+
+func _update_rank_info() -> void:
+	var rank_info: Dictionary = GlobalMetrics.get_rank_info()
+	rank_label.text = str(rank_info.get("name", "TRAINEE"))
+	progress_label.text = "LEVEL %d / %d" % [GlobalMetrics.current_level_index + 1, GlobalMetrics.MAX_LEVELS]
+	if rank_info.has("color"):
+		rank_label.add_theme_color_override("font_color", rank_info["color"])
+
 func _update_target_display(level_idx: int, mode: String) -> void:
 	if level_idx >= 15:
 		target_title.text = "EXAMPLE"
@@ -181,7 +203,26 @@ func _update_target_display(level_idx: int, mode: String) -> void:
 		else:
 			target_sub.text = "DEC: %d" % current_target
 
-	_pulse_panel(target_panel, Color(0.8, 0.9, 1.0, 1.0))
+	_pulse_panel(target_panel, Color(0.55, 1.0, 0.65, 1.0))
+
+func _update_protocol_diagnostics() -> void:
+	if GlobalMetrics.current_level_index >= 15:
+		reg_a_value.text = "A: %s" % _format_value(GlobalMetrics.current_reg_a, GlobalMetrics.current_mode)
+		reg_b_value.text = "B: %s" % _format_value(GlobalMetrics.current_reg_b, GlobalMetrics.current_mode)
+		op_value.text = "OP: %s" % _operator_to_text(GlobalMetrics.current_operator)
+		_set_shift_status("SHIFT: swipe left to apply", Color(0.7, 0.9, 0.7, 1.0), false)
+	else:
+		reg_a_value.text = "A: --"
+		reg_b_value.text = "B: --"
+		op_value.text = "OP: --"
+		_set_shift_status("SHIFT: idle", Color(0.65, 0.65, 0.65, 1.0), false)
+
+func _operator_to_text(op: int) -> String:
+	if op == GlobalMetrics.Operator.ADD:
+		return "+"
+	if op == GlobalMetrics.Operator.SUB:
+		return "-"
+	return "<<"
 func _update_weights_for_mode(mode: String) -> void:
 	var weights: Array[int] = []
 	if mode == "DEC":
@@ -235,6 +276,7 @@ func _on_check_pressed() -> void:
 		AudioManager.play("relay")
 		_show_toast("SUCCESS", COLOR_OK)
 		_pulse_panel(input_panel, COLOR_OK)
+		_overlay_glitch(0.15, 0.12)
 		is_level_active = false
 		await get_tree().create_timer(1.0).timeout
 		if GlobalMetrics.current_level_index < GlobalMetrics.MAX_LEVELS - 1:
@@ -244,17 +286,21 @@ func _on_check_pressed() -> void:
 	else:
 		AudioManager.play("error")
 		_pulse_panel(input_panel, COLOR_ERR)
+		_overlay_glitch(0.6, 0.2)
 		if result.has("hints"):
 			var h = result.hints
 			last_hint_text = "Diagnosis: %s | Zone: %s" % [_translate_hint(h.diagnosis), _translate_hint(h.zone)]
+			hint_text.text = "%s\nHD: %d" % [last_hint_text, int(result.get("hamming", 0))]
 			_log_message(last_hint_text, COLOR_WARN)
 		_show_toast("INCORRECT", COLOR_ERR)
 		_apply_error_highlight(current_input ^ current_target)
 func _on_hint_pressed() -> void:
 	hint_used = true
 	if last_hint_text == "":
+		hint_text.text = "No diagnostics available. Submit a check first."
 		_show_toast("NO HINT AVAILABLE", COLOR_WARN)
 		return
+	hint_text.text = last_hint_text
 	_log_message(last_hint_text, COLOR_WARN)
 	_show_toast("HINT SHOWN", COLOR_WARN)
 func _on_reset_pressed() -> void:
@@ -262,6 +308,7 @@ func _on_reset_pressed() -> void:
 	_reset_bit_buttons()
 	_update_input_display()
 	_clear_error_highlights()
+	_set_shift_status("SHIFT: idle", Color(0.65, 0.65, 0.65, 1.0), false)
 
 func _apply_error_highlight(xor_val: int) -> void:
 	for bit in range(8):
@@ -288,6 +335,7 @@ func _on_shield_triggered(name: String, duration: float) -> void:
 		_flash_shield(shield_lazy)
 
 	btn_check.disabled = true
+	_overlay_glitch(0.6, 0.2)
 	_show_toast("SHIELD ACTIVE", COLOR_WARN)
 	await get_tree().create_timer(duration).timeout
 	btn_check.disabled = false
@@ -397,13 +445,40 @@ func _translate_hint(code: String) -> String:
 		"UPPER_NIBBLE": return "Errors in upper nibble (bits 4-7)"
 		"NONE": return "No mismatch"
 	return code
+
+func _set_shift_status(text: String, color: Color, auto_reset: bool) -> void:
+	shift_status.text = text
+	shift_status.add_theme_color_override("font_color", color)
+	if not auto_reset:
+		return
+	_shift_status_token += 1
+	var token = _shift_status_token
+	_reset_shift_status_later(token)
+
+func _reset_shift_status_later(token: int) -> void:
+	await get_tree().create_timer(0.9).timeout
+	if token != _shift_status_token:
+		return
+	if GlobalMetrics.current_level_index >= 15:
+		_set_shift_status("SHIFT: swipe left to apply", Color(0.7, 0.9, 0.7, 1.0), false)
+	else:
+		_set_shift_status("SHIFT: idle", Color(0.65, 0.65, 0.65, 1.0), false)
+
+func _overlay_glitch(strength: float, duration: float) -> void:
+	if noir_overlay != null and noir_overlay.has_method("glitch_burst"):
+		noir_overlay.call("glitch_burst", strength, duration)
+
 func _log_message(msg: String, color: Color) -> void:
 	var time_str = Time.get_time_string_from_system()
 	var line = "[%s] %s" % [time_str, msg]
 	log_lines.append(line)
 	if log_lines.size() > 200:
 		log_lines.remove_at(0)
-	details_text.text = "\n".join(log_lines)
+	var combined_log = "\n".join(log_lines)
+	details_text.text = combined_log
+	var tail = log_lines.slice(maxi(0, log_lines.size() - 18), log_lines.size())
+	live_log_text.text = "\n".join(tail)
+	live_log_text.add_theme_color_override("default_color", color)
 
 func _format_value(val: int, mode: String) -> String:
 	if mode == "DEC":
@@ -459,6 +534,8 @@ func _apply_shift_left() -> void:
 	current_input = (current_input << 1) & 0xFF
 	_sync_switches_to_input()
 	_update_input_display()
+	_set_shift_status("SHIFT: detected", COLOR_OK, true)
+	_log_message("Shift-left gesture applied.", COLOR_OK)
 
 func _mark_first_action() -> void:
 	if first_action_ms < 0:
@@ -470,7 +547,7 @@ func _register_trial(result: Dictionary, submitted_input: int) -> void:
 	var task_id := "%s_%02d" % [stage_id, level_number]
 	var variant_source := "%s|%s|%d" % [GlobalMetrics.current_mode, stage_id, current_target]
 	var payload := TrialV2.build("DECRYPTOR", stage_id, task_id, "NUMERIC_ENTRY", str(hash(variant_source)))
-	var elapsed_ms := max(0, Time.get_ticks_msec() - level_started_ms)
+	var elapsed_ms: int = maxi(0, Time.get_ticks_msec() - level_started_ms)
 	var is_success := bool(result.get("success", false))
 	var error_code := str(result.get("error", "NONE"))
 	payload["elapsed_ms"] = elapsed_ms

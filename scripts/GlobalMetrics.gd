@@ -25,7 +25,7 @@ var session_history: Array = []
 
 func register_trial(data: Dictionary):
 	session_history.append(data)
-	# ﾐ渙ｵﾐｴﾐｰﾐｳﾐｾﾐｳﾐｸﾑ・ｵﾑ・ｺﾐｸﾐｹ ﾐｻﾐｾﾐｳ ﾐｲ ﾐｺﾐｾﾐｽﾑ・ｾﾐｻﾑ・ﾐｴﾐｻﾑ・ﾐｾﾑひｻﾐｰﾐｴﾐｺﾐｸ
+	# Unified telemetry print for quick debugging.
 	var match_key = data.get("match_key", "UNKNOWN")
 	var is_correct = data.get("is_correct", false)
 	# Use elapsed_ms if available (Radio Quest), else duration (Legacy)
@@ -54,8 +54,8 @@ func register_trial(data: Dictionary):
 			emit_signal("stability_changed", stability, -10.0)
 
 # Matrix (Complexity C)
-const MATRIX_SIZE := 5
-const MATRIX_WEIGHTS := [16, 8, 4, 2, 1]
+const MATRIX_SIZE := 6
+const MATRIX_WEIGHTS := [32, 16, 8, 4, 2, 1]
 var matrix_quest: Dictionary = {}
 var matrix_target: Array = []
 var matrix_row_constraints: Array = []
@@ -138,7 +138,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_ACTIVE",
-			"message": "ﾐ｡ﾐｸﾑ・ひｵﾐｼﾐｰ ﾐｿﾐｵﾑﾐｵﾐｳﾑﾐｵﾑひｰ. ﾐ孟ｴﾐｸﾑひｵ...",
+			"message": "Shield is active. Wait for cooldown.",
 			"penalty": 0
 		}
 
@@ -150,7 +150,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_FREQ",
-			"message": "ﾐ岱ｻﾐｾﾐｺﾐｸﾑﾐｾﾐｲﾐｺﾐｰ: ﾐ｡ﾐｻﾐｸﾑ威ｺﾐｾﾐｼ ﾑ・ｰﾑ・ひｾ",
+			"message": "Frequency shield triggered: too many checks.",
 			"penalty": 0
 		}
 
@@ -171,7 +171,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 	if hd == 0:
 		return {
 			"success": true,
-			"message": "ﾐ頒ｾﾑ・びσｿ ﾑﾐｰﾐｷﾑﾐｵﾑ威ｵﾐｽ",
+			"message": "Access granted. Input matches target.",
 			"stability": stability
 		}
 	else:
@@ -196,7 +196,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 			"hamming": hd,
 			"penalty": penalty,
 			"hints": hints,
-			"message": "ﾐ樮威ｸﾐｱﾐｺﾐｰ ﾐｴﾐｾﾑ・びσｿﾐｰ. HD: %d" % hd
+			"message": "Incorrect input. Hamming distance: %d" % hd
 		}
 
 func _calculate_hamming_distance(a: int, b: int) -> int:
@@ -322,7 +322,7 @@ func check_matrix_solution() -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_ACTIVE",
-			"message": "System overheated. Wait.",
+			"message": "Shield is active. Wait for cooldown.",
 			"penalty": 0
 		}
 
@@ -335,7 +335,7 @@ func check_matrix_solution() -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_FREQ",
-			"message": "Lockout: too frequent checks.",
+			"message": "Frequency shield triggered: too many checks.",
 			"penalty": 0
 		}
 
@@ -360,7 +360,7 @@ func check_matrix_solution() -> Dictionary:
 	if hd == 0:
 		return {
 			"success": true,
-			"message": "Access granted.",
+			"message": "Access granted. Input matches target.",
 			"stability": stability
 		}
 
@@ -380,7 +380,7 @@ func check_matrix_solution() -> Dictionary:
 		"error": "INCORRECT",
 		"hamming": hd,
 		"penalty": penalty,
-		"message": "Incorrect. HD: %d" % hd
+		"message": "Incorrect input. Hamming distance: %d" % hd
 	}
 
 func _check_lazy_search_matrix(hd: int) -> bool:
@@ -528,7 +528,9 @@ func _row_bits_from_value(value: int) -> Array:
 	return bits
 
 func _pick_row_visibility(row_constraints: Array, col_constraints: Array) -> Array:
-	var rows = [0, 1, 2, 3, 4]
+	var rows: Array = []
+	for i in range(MATRIX_SIZE):
+		rows.append(i)
 	for hide_count in [2, 1]:
 		var combos = _combinations(rows, hide_count)
 		combos.shuffle()
@@ -548,7 +550,9 @@ func _count_matrix_solutions(row_constraints: Array, col_constraints: Array, vis
 		_solver_col_targets.append(col_constraints[c].ones_count)
 		_solver_col_parity.append(col_constraints[c].parity)
 	_solver_visibility = visibility
-	_solver_col_sums = [0, 0, 0, 0, 0]
+	_solver_col_sums = []
+	for _i in range(MATRIX_SIZE):
+		_solver_col_sums.append(0)
 	_solver_solutions = 0
 
 	_solver_backtrack(0)
@@ -585,7 +589,7 @@ func _solver_backtrack(row_idx: int) -> void:
 			for c in range(MATRIX_SIZE):
 				_solver_col_sums[c] -= bits[c]
 	else:
-		for mask in range(32):
+		for mask in range(1 << MATRIX_SIZE):
 			var bits: Array = []
 			for c in range(MATRIX_SIZE):
 				var bit = 1 if (mask & MATRIX_WEIGHTS[c]) != 0 else 0

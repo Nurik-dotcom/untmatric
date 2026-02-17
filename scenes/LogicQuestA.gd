@@ -471,7 +471,7 @@ func _mark_first_action() -> void:
 func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	var case_id := str(current_case.get("id", "A_00"))
 	var payload := TrialV2.build("LOGIC_QUEST", "A", case_id, "GATE_IDENTIFY")
-	var elapsed_ms := max(0, Time.get_ticks_msec() - start_time_msec)
+	var elapsed_ms: int = maxi(0, Time.get_ticks_msec() - start_time_msec)
 	payload["elapsed_ms"] = elapsed_ms
 	payload["duration"] = float(elapsed_ms) / 1000.0
 	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms

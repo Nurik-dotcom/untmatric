@@ -375,7 +375,7 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	var case_id := str(current_case.get("id", "B_00"))
 	var variant_source := "%s|%s" % [str(current_case.get("layout", "")), ",".join(placed_gates)]
 	var payload := TrialV2.build("LOGIC_QUEST", "B", case_id, "DRAG_DROP", str(hash(variant_source)))
-	var elapsed_ms := max(0, Time.get_ticks_msec() - case_started_ms)
+	var elapsed_ms: int = maxi(0, Time.get_ticks_msec() - case_started_ms)
 	payload["elapsed_ms"] = elapsed_ms
 	payload["duration"] = float(elapsed_ms) / 1000.0
 	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms

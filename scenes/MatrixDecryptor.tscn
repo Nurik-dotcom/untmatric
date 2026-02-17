@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://rr4uj50uqt2r"]
+[gd_scene load_steps=3 format=3 uid="uid://rr4uj50uqt2r"]
 
 [ext_resource type="Script" path="res://scenes/MatrixDecryptor.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/decryptor/MatrixDecryptorUI.tscn" id="2_ui"]
 
 [node name="MatrixDecryptor" type="Control"]
 layout_mode = 3
@@ -11,100 +12,5 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="UI" parent="." instance=ExtResource("2_ui")]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.05, 0.05, 0.06, 1)
-
-[node name="MainLayout" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 16
-
-[node name="TopBar" type="HBoxContainer" parent="MainLayout"]
-custom_minimum_size = Vector2(0, 70)
-layout_mode = 2
-alignment = 1
-
-[node name="MenuButton" type="Button" parent="MainLayout/TopBar"]
-custom_minimum_size = Vector2(120, 0)
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "MENU"
-
-[node name="SpacerLeft" type="Control" parent="MainLayout/TopBar"]
-custom_minimum_size = Vector2(30, 0)
-layout_mode = 2
-
-[node name="TitleLabel" type="Label" parent="MainLayout/TopBar"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
-theme_override_font_sizes/font_size = 28
-text = "MATRIX DEDUCTION"
-
-[node name="Spacer" type="Control" parent="MainLayout/TopBar"]
-custom_minimum_size = Vector2(30, 0)
-layout_mode = 2
-
-[node name="StabilityBar" type="ProgressBar" parent="MainLayout/TopBar"]
-custom_minimum_size = Vector2(400, 40)
-layout_mode = 2
-size_flags_vertical = 4
-value = 100.0
-
-[node name="Content" type="HBoxContainer" parent="MainLayout"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 20
-alignment = 1
-
-[node name="RowLabels" type="VBoxContainer" parent="MainLayout/Content"]
-custom_minimum_size = Vector2(80, 0)
-layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
-
-[node name="MatrixArea" type="VBoxContainer" parent="MainLayout/Content"]
-layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
-
-[node name="ColumnLabels" type="HBoxContainer" parent="MainLayout/Content/MatrixArea"]
-layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
-
-[node name="Grid" type="GridContainer" parent="MainLayout/Content/MatrixArea"]
-layout_mode = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
-columns = 5
-
-[node name="Actions" type="HBoxContainer" parent="MainLayout"]
-custom_minimum_size = Vector2(0, 80)
-layout_mode = 2
-alignment = 1
-
-[node name="CheckButton" type="Button" parent="MainLayout/Actions"]
-custom_minimum_size = Vector2(240, 60)
-layout_mode = 2
-theme_override_font_sizes/font_size = 26
-text = "CHECK"
-
-[node name="FeedbackPanel" type="PanelContainer" parent="MainLayout"]
-custom_minimum_size = Vector2(0, 150)
-layout_mode = 2
-
-[node name="LogText" type="RichTextLabel" parent="MainLayout/FeedbackPanel"]
-layout_mode = 2
-theme_override_font_sizes/normal_font_size = 18
-bbcode_enabled = true
-scroll_following = true
