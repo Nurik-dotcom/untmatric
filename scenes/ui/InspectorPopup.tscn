@@ -1,0 +1,80 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/InspectorPopup.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
+
+[node name="InspectorPopup" type="PopupPanel"]
+initial_position = 1
+size = Vector2i(560, 360)
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Root" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LblTitle" type="Label" parent="Root"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "INSPECT"
+horizontal_alignment = 1
+
+[node name="Info" type="GridContainer" parent="Root"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 6
+columns = 2
+
+[node name="LblSelectorKey" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "Selector:"
+
+[node name="LblSelectorValue" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "-"
+autowrap_mode = 3
+
+[node name="LblKindKey" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "Kind:"
+
+[node name="LblKindValue" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "-"
+
+[node name="LblWeightKey" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "Weight:"
+
+[node name="LblWeightValue" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "0"
+
+[node name="LblImportantKey" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "!important:"
+
+[node name="LblImportantValue" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "NO"
+
+[node name="LblOrderKey" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "Order:"
+
+[node name="LblOrderValue" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "0"
+
+[node name="LblColorKey" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "Color:"
+
+[node name="LblColorValue" type="Label" parent="Root/Info"]
+layout_mode = 2
+text = "-"
+
+[node name="BtnClose" type="Button" parent="Root"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "CLOSE"

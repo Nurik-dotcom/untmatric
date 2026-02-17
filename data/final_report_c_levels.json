@@ -1,0 +1,260 @@
+[
+  {
+    "schema_version": "1.0.0",
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "id": "FR8-C-01",
+    "briefing": "Текст скрыт конфликтом стилей. Определите итоговый цвет.",
+    "format": "CSS_CASCADE",
+    "target_text": "Секретный код",
+    "html": [
+      "<p id=\"x\" class=\"alert\">Секретный код</p>"
+    ],
+    "inline_decl": null,
+    "rules": [
+      {
+        "source_id": "R1",
+        "selector": ".alert",
+        "kind": "class",
+        "weight": 10,
+        "important": false,
+        "order": 1,
+        "decl": {"prop": "color", "value": "#ff0000"}
+      },
+      {
+        "source_id": "R2",
+        "selector": "#x",
+        "kind": "id",
+        "weight": 100,
+        "important": false,
+        "order": 2,
+        "decl": {"prop": "color", "value": "#00ff00"}
+      }
+    ],
+    "options": [
+      {"id": "RED", "label": "Красный", "value": "#ff0000"},
+      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"},
+      {"id": "BLUE", "label": "Синий", "value": "#0000ff"}
+    ],
+    "correct_option_id": "GREEN",
+    "feedback_rules": {
+      "SPECIFICITY_ERROR": "ID-защита сильнее класса: #x (100) > .alert (10).",
+      "OK": "Взлом успешен: победил #x."
+    }
+  },
+  {
+    "schema_version": "1.0.0",
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "id": "FR8-C-02",
+    "briefing": "Два класса спорят. Кто сильнее решает порядок.",
+    "format": "CSS_CASCADE",
+    "target_text": "Секретный код",
+    "html": [
+      "<p class=\"alert stealth\">Секретный код</p>"
+    ],
+    "inline_decl": null,
+    "rules": [
+      {
+        "source_id": "R1",
+        "selector": ".alert",
+        "kind": "class",
+        "weight": 10,
+        "important": false,
+        "order": 1,
+        "decl": {"prop": "color", "value": "#ff0000"}
+      },
+      {
+        "source_id": "R2",
+        "selector": ".stealth",
+        "kind": "class",
+        "weight": 10,
+        "important": false,
+        "order": 2,
+        "decl": {"prop": "color", "value": "#0000ff"}
+      }
+    ],
+    "options": [
+      {"id": "RED", "label": "Красный", "value": "#ff0000"},
+      {"id": "BLUE", "label": "Синий", "value": "#0000ff"},
+      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"}
+    ],
+    "correct_option_id": "BLUE",
+    "feedback_rules": {
+      "ORDER_TIE": "Вес равный (10 и 10), побеждает правило ниже по файлу (order=2).",
+      "OK": "Верно: одинаковый вес решает порядок."
+    }
+  },
+  {
+    "schema_version": "1.0.0",
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "id": "FR8-C-03",
+    "briefing": "Есть !important. Не притворяйтесь, что его нет.",
+    "format": "CSS_CASCADE",
+    "target_text": "Секретный код",
+    "html": [
+      "<p id=\"x\" class=\"alert\">Секретный код</p>"
+    ],
+    "inline_decl": null,
+    "rules": [
+      {
+        "source_id": "R1",
+        "selector": "#x",
+        "kind": "id",
+        "weight": 100,
+        "important": false,
+        "order": 2,
+        "decl": {"prop": "color", "value": "#00ff00"}
+      },
+      {
+        "source_id": "R2",
+        "selector": ".alert",
+        "kind": "class",
+        "weight": 10,
+        "important": true,
+        "order": 3,
+        "decl": {"prop": "color", "value": "#ff0000"}
+      }
+    ],
+    "options": [
+      {"id": "RED", "label": "Красный", "value": "#ff0000"},
+      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"},
+      {"id": "BLUE", "label": "Синий", "value": "#0000ff"}
+    ],
+    "correct_option_id": "RED",
+    "feedback_rules": {
+      "IMPORTANT_MISSED": "!important перебивает обычное правило, даже если селектор слабее.",
+      "OK": "Верно: важность сильнее веса."
+    }
+  },
+  {
+    "schema_version": "1.0.0",
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "id": "FR8-C-04",
+    "briefing": "Inline стиль на элементе. Он не для красоты.",
+    "format": "CSS_CASCADE",
+    "target_text": "Секретный код",
+    "html": [
+      "<p id=\"x\" class=\"alert\" style=\"color:#0000ff;\">Секретный код</p>"
+    ],
+    "inline_decl": {
+      "source_id": "INLINE",
+      "kind": "inline",
+      "weight": 1000,
+      "important": false,
+      "decl": {"prop": "color", "value": "#0000ff"}
+    },
+    "rules": [
+      {
+        "source_id": "R1",
+        "selector": "#x",
+        "kind": "id",
+        "weight": 100,
+        "important": false,
+        "order": 2,
+        "decl": {"prop": "color", "value": "#00ff00"}
+      },
+      {
+        "source_id": "R2",
+        "selector": ".alert",
+        "kind": "class",
+        "weight": 10,
+        "important": false,
+        "order": 3,
+        "decl": {"prop": "color", "value": "#ff0000"}
+      }
+    ],
+    "options": [
+      {"id": "BLUE", "label": "Синий", "value": "#0000ff"},
+      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"},
+      {"id": "RED", "label": "Красный", "value": "#ff0000"}
+    ],
+    "correct_option_id": "BLUE",
+    "feedback_rules": {
+      "INLINE_OVERRIDE": "Inline (1000) перекрывает #id (100) и .class (10).",
+      "OK": "Верно: inline сильнее."
+    }
+  },
+  {
+    "schema_version": "1.0.0",
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "id": "FR8-C-05",
+    "briefing": "Комбинированный селектор сильнее одиночного класса.",
+    "format": "CSS_CASCADE",
+    "target_text": "Секретный код",
+    "html": [
+      "<p id=\"x\" class=\"alert\">Секретный код</p>"
+    ],
+    "inline_decl": null,
+    "rules": [
+      {
+        "source_id": "R1",
+        "selector": ".alert",
+        "kind": "class",
+        "weight": 10,
+        "important": false,
+        "order": 1,
+        "decl": {"prop": "color", "value": "#ff0000"}
+      },
+      {
+        "source_id": "R2",
+        "selector": "p#x",
+        "kind": "mixed",
+        "weight": 101,
+        "important": false,
+        "order": 2,
+        "decl": {"prop": "color", "value": "#0000ff"}
+      }
+    ],
+    "options": [
+      {"id": "BLUE", "label": "Синий", "value": "#0000ff"},
+      {"id": "RED", "label": "Красный", "value": "#ff0000"},
+      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"}
+    ],
+    "correct_option_id": "BLUE",
+    "feedback_rules": {
+      "SPECIFICITY_ERROR": "p#x (101) сильнее .alert (10).",
+      "OK": "Верно: суммарный вес решает."
+    }
+  },
+  {
+    "schema_version": "1.0.0",
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "id": "FR8-C-06",
+    "briefing": "Два ID-правила с !important. Побеждает более позднее.",
+    "format": "CSS_CASCADE",
+    "target_text": "Секретный код",
+    "html": [
+      "<p id=\"x\">Секретный код</p>"
+    ],
+    "inline_decl": null,
+    "rules": [
+      {
+        "source_id": "R1",
+        "selector": "#x",
+        "kind": "id",
+        "weight": 100,
+        "important": true,
+        "order": 1,
+        "decl": {"prop": "color", "value": "#ff0000"}
+      },
+      {
+        "source_id": "R2",
+        "selector": "#x",
+        "kind": "id",
+        "weight": 100,
+        "important": true,
+        "order": 2,
+        "decl": {"prop": "color", "value": "#00ff00"}
+      }
+    ],
+    "options": [
+      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"},
+      {"id": "RED", "label": "Красный", "value": "#ff0000"},
+      {"id": "BLUE", "label": "Синий", "value": "#0000ff"}
+    ],
+    "correct_option_id": "GREEN",
+    "feedback_rules": {
+      "ORDER_TIE": "Важность и вес равны, решает порядок (позже = сильнее).",
+      "OK": "Верно: последняя директива выигрывает."
+    }
+  }
+]

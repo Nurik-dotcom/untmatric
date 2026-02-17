@@ -11,8 +11,16 @@ const COLOR_WARN := Color(1.0, 0.82, 0.35, 1.0)
 const COLOR_ERR := Color(1.0, 0.45, 0.45, 1.0)
 const COLOR_INFO := Color(0.84, 0.84, 0.84, 1.0)
 
-const STATUS_HINT := "Перетащите фрагменты в слоты редактора…"
-const STATUS_INCOMPLETE := "Не все фрагменты вставлены"
+const TEXT_BACK := "\u041d\u0410\u0417\u0410\u0414"
+const TEXT_RESET := "\u0421\u0411\u0420\u041e\u0421"
+const TEXT_CONFIRM := "\u041f\u041e\u0414\u0422\u0412\u0415\u0420\u0414\u0418\u0422\u042c"
+const TEXT_NEXT := "\u0414\u0410\u041b\u0415\u0415"
+const TEXT_FINISH := "\u0417\u0410\u0412\u0415\u0420\u0428\u0418\u0422\u042c"
+
+const STATUS_HINT := "\u041f\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u0435 \u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u044b \u0432 \u0441\u043b\u043e\u0442\u044b \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440\u0430\u2026"
+const STATUS_INCOMPLETE := "\u041d\u0435 \u0432\u0441\u0435 \u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u044b \u0432\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u044b"
+const STATUS_NEXT_HINT := "\u0413\u043e\u0442\u043e\u0432\u043e. \u0416\u043c\u0438\u0442\u0435 \u0414\u0410\u041b\u0415\u0415."
+const STATUS_SOLVE_FIRST := "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0440\u0435\u0448\u0438\u0442\u0435 \u0443\u0440\u043e\u0432\u0435\u043d\u044c"
 
 var levels: Array = []
 var level_data: Dictionary = {}
@@ -30,6 +38,9 @@ var drag_count: int = 0
 var swap_count: int = 0
 var trace: Array = []
 
+var level_solved: bool = false
+var confirm_locked: bool = false
+
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
 @onready var body: BoxContainer = $SafeArea/MainLayout/Body
 @onready var fragments_card: PanelContainer = $SafeArea/MainLayout/Body/FragmentsCard
@@ -40,6 +51,7 @@ var trace: Array = []
 @onready var status_label: Label = $SafeArea/MainLayout/BottomBar/StatusLabel
 @onready var btn_reset: Button = $SafeArea/MainLayout/BottomBar/BtnReset
 @onready var btn_confirm: Button = $SafeArea/MainLayout/BottomBar/BtnConfirm
+@onready var btn_next: Button = $SafeArea/MainLayout/BottomBar/BtnNext
 @onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
 @onready var title_label: Label = $SafeArea/MainLayout/Header/TitleLabel
 @onready var level_label: Label = $SafeArea/MainLayout/Header/LevelLabel
@@ -56,13 +68,14 @@ func _ready() -> void:
 	_connect_ui_signals()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("Не удалось загрузить уровни Final Report A.")
+		_show_error("\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0443\u0440\u043e\u0432\u043d\u0438 Final Report A.")
 		return
 
-	title_label.text = "ДЕЛО #8: ФИНАЛЬНЫЙ ОТЧЕТ"
-	btn_back.text = "НАЗАД"
-	btn_reset.text = "СБРОС"
-	btn_confirm.text = "ПОДТВЕРДИТЬ"
+	title_label.text = "\u0414\u0415\u041b\u041e #8: \u0424\u0418\u041d\u0410\u041b\u042c\u041d\u042b\u0419 \u041e\u0422\u0427\u0415\u0422"
+	btn_back.text = TEXT_BACK
+	btn_reset.text = TEXT_RESET
+	btn_confirm.text = TEXT_CONFIRM
+	btn_next.text = TEXT_NEXT
 
 	var initial_index: int = clamp(GlobalMetrics.current_level_index, 0, max(0, levels.size() - 1))
 	_start_level(initial_index)
@@ -72,6 +85,7 @@ func _connect_ui_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_confirm.pressed.connect(_on_confirm_pressed)
+	btn_next.pressed.connect(_on_next_pressed)
 
 func _load_levels() -> void:
 	levels = FR8Data.load_levels(LEVELS_PATH)
@@ -97,15 +111,25 @@ func _start_level(index: int) -> void:
 		var fragment_data: Dictionary = fragment_var as Dictionary
 		fragment_by_id[str(fragment_data.get("fragment_id", ""))] = fragment_data
 
-	level_label.text = "A | %s" % str(level_data.get("id", "FR8-A"))
+	level_label.text = _build_level_label()
 	briefing_label.text = str(level_data.get("briefing", ""))
 
 	if pile_zone.has_method("setup"):
-		pile_zone.call("setup", "PILE", "СКЛАД ФРАГМЕНТОВ")
+		pile_zone.call("setup", "PILE", "\u0421\u041a\u041b\u0410\u0414 \u0424\u0420\u0410\u0413\u041c\u0415\u041d\u0422\u041e\u0412")
 	_connect_zone_signal(pile_zone)
 
 	_build_slot_nodes()
 	_reset_attempt(true)
+
+func _build_level_label() -> String:
+	return "A | %s (%d/%d)" % [
+		str(level_data.get("id", "FR8-A")),
+		current_level_index + 1,
+		levels.size()
+	]
+
+func _is_last_level() -> bool:
+	return current_level_index >= levels.size() - 1
 
 func _build_slot_nodes() -> void:
 	for child in slots_grid.get_children():
@@ -146,7 +170,12 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 	trace.clear()
 	_log_event("RESET", {"level_start": is_level_start})
 
+	level_solved = false
+	confirm_locked = false
 	btn_confirm.disabled = false
+	btn_next.disabled = true
+	btn_next.text = TEXT_FINISH if _is_last_level() else TEXT_NEXT
+
 	_set_status(STATUS_HINT, COLOR_INFO)
 	_update_code_preview()
 	_update_slot_feedback()
@@ -317,6 +346,9 @@ func _build_snapshot_zones() -> Dictionary:
 	return snapshot
 
 func _on_confirm_pressed() -> void:
+	if confirm_locked:
+		return
+
 	var sequence: Array[String] = _collect_sequence()
 	var snapshot_zones: Dictionary = _build_snapshot_zones()
 	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
@@ -373,10 +405,21 @@ func _on_confirm_pressed() -> void:
 
 	var feedback_text: String = FR8Scoring.feedback_text(level_data, evaluation)
 	if verdict_code == "PERFECT":
-		_set_status(feedback_text, COLOR_OK)
+		level_solved = true
+		confirm_locked = true
+		btn_confirm.disabled = true
+		btn_next.disabled = false
+		btn_next.text = TEXT_FINISH if _is_last_level() else TEXT_NEXT
+		_set_status("%s %s" % [feedback_text, STATUS_NEXT_HINT], COLOR_OK)
 	elif verdict_code == "PARTIAL":
+		level_solved = false
+		confirm_locked = false
+		btn_next.disabled = true
 		_set_status(feedback_text, COLOR_WARN)
 	else:
+		level_solved = false
+		confirm_locked = false
+		btn_next.disabled = true
 		if error_code == "INCOMPLETE":
 			_set_status(STATUS_INCOMPLETE, COLOR_ERR)
 		else:
@@ -386,6 +429,31 @@ func _on_confirm_pressed() -> void:
 	if verdict_code in ["FAIL", "EMPTY"]:
 		_trigger_glitch()
 		_shake_main_layout()
+
+func _on_next_pressed() -> void:
+	if not level_solved:
+		_set_status(STATUS_SOLVE_FIRST, COLOR_WARN)
+		return
+
+	var from_level_id: String = str(level_data.get("id", "FR8-A-00"))
+	var from_index: int = current_level_index
+	if _is_last_level():
+		_log_event("NEXT_PRESSED", {
+			"from_level_id": from_level_id,
+			"from_index": from_index,
+			"to_index": -1
+		})
+		GlobalMetrics.current_level_index = 0
+		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+		return
+
+	var to_index: int = current_level_index + 1
+	_log_event("NEXT_PRESSED", {
+		"from_level_id": from_level_id,
+		"from_index": from_index,
+		"to_index": to_index
+	})
+	_start_level(to_index)
 
 func _play_confirm_audio(verdict_code: String) -> void:
 	if AudioManager == null:
@@ -452,6 +520,7 @@ func _shake_main_layout() -> void:
 	tween.tween_property(main_layout, "position", origin, 0.04)
 
 func _on_back_pressed() -> void:
+	GlobalMetrics.current_level_index = 0
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _on_reset_pressed() -> void:
@@ -464,7 +533,7 @@ func _on_viewport_size_changed() -> void:
 
 func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var landscape: bool = viewport_size.x > viewport_size.y and viewport_size.x >= 980.0
+	var landscape: bool = viewport_size.x > viewport_size.y
 	body.vertical = not landscape
 
 	if landscape:
@@ -486,6 +555,7 @@ func _show_error(message: String) -> void:
 	_set_status(message, COLOR_ERR)
 	btn_confirm.disabled = true
 	btn_reset.disabled = true
+	btn_next.disabled = true
 
 func _log_event(event_name: String, data: Dictionary = {}) -> void:
 	trace.append({

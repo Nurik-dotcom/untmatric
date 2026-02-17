@@ -1,0 +1,199 @@
+[
+  {
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "schema_version": "1.0.0",
+    "id": "FR8-B-01",
+    "briefing": "Инвесторы ждут план. Расставьте этапы разработки по времени.",
+    "format": "TIMELINE_SORT",
+    "cards": [
+      {"stage_id":"IDEA","title":"Идея","hint":"Формулировка проблемы и решения."},
+      {"stage_id":"MVP","title":"MVP","hint":"Минимально рабочая версия продукта."},
+      {"stage_id":"ALPHA","title":"Alpha","hint":"Внутреннее тестирование."},
+      {"stage_id":"BETA","title":"Beta","hint":"Публичное тестирование."},
+      {"stage_id":"RELEASE","title":"Release","hint":"Релиз для всех."}
+    ],
+    "dependencies": [
+      {"a":"IDEA","b":"MVP","code":"LOGIC_GAP","message":"Нельзя делать MVP раньше идеи."},
+      {"a":"MVP","b":"ALPHA","code":"LOGIC_GAP","message":"Нельзя тестировать Alpha раньше MVP."},
+      {"a":"ALPHA","b":"BETA","code":"CAUSALITY_LOOP","message":"Нельзя показывать Beta до Alpha."},
+      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Нельзя выпускать релиз до Beta."}
+    ],
+    "expected_order": ["IDEA","MVP","ALPHA","BETA","RELEASE"],
+    "feedback_rules": {
+      "LOGIC_GAP": "Вы пытаетесь утвердить этап, который не подготовлен.",
+      "CAUSALITY_LOOP": "Нельзя отдавать людям сырой продукт до внутренней проверки.",
+      "ORDER_MISMATCH": "Почти. Проверьте хронологию.",
+      "OK": "План утверждён."
+    },
+    "scoring_model": {
+      "perfect": {"points":2,"stability_delta":0,"verdict_code":"PERFECT"},
+      "fail": {"points":0,"stability_delta":-25,"verdict_code":"FAIL"}
+    },
+    "anti_cheat": {"shuffle_cards": true}
+  },
+
+  {
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "schema_version": "1.0.0",
+    "id": "FR8-B-02",
+    "briefing": "Команда хочет быстрее «выйти в люди». Убедитесь, что порядок логичен.",
+    "format": "TIMELINE_SORT",
+    "cards": [
+      {"stage_id":"PROBLEM","title":"Проблема","hint":"Сначала понять, что решаем."},
+      {"stage_id":"PROTOTYPE","title":"Прототип","hint":"Быстрая проверка идеи."},
+      {"stage_id":"MVP","title":"MVP","hint":"Минимальная рабочая версия."},
+      {"stage_id":"BETA","title":"Beta","hint":"Публичный тест."},
+      {"stage_id":"RELEASE","title":"Release","hint":"Релиз."}
+    ],
+    "dependencies": [
+      {"a":"PROBLEM","b":"PROTOTYPE","code":"LOGIC_GAP","message":"Нельзя строить прототип без проблемы."},
+      {"a":"PROTOTYPE","b":"MVP","code":"LOGIC_GAP","message":"MVP не рождается из воздуха."},
+      {"a":"MVP","b":"BETA","code":"CAUSALITY_LOOP","message":"Beta только после MVP."},
+      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Beta."}
+    ],
+    "expected_order": ["PROBLEM","PROTOTYPE","MVP","BETA","RELEASE"],
+    "feedback_rules": {
+      "LOGIC_GAP": "Сломана причинность этапов.",
+      "CAUSALITY_LOOP": "Публичность раньше внутренней готовности.",
+      "ORDER_MISMATCH": "Есть несостыковка порядка.",
+      "OK": "План утверждён."
+    },
+    "scoring_model": {
+      "perfect": {"points":2,"stability_delta":0,"verdict_code":"PERFECT"},
+      "fail": {"points":0,"stability_delta":-25,"verdict_code":"FAIL"}
+    },
+    "anti_cheat": {"shuffle_cards": true}
+  },
+
+  {
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "schema_version": "1.0.0",
+    "id": "FR8-B-03",
+    "briefing": "Система безопасности. Расставьте этапы подготовки к релизу.",
+    "format": "TIMELINE_SORT",
+    "cards": [
+      {"stage_id":"THREAT","title":"Модель угроз","hint":"Определить, от чего защищаемся."},
+      {"stage_id":"LOGGING","title":"Логирование","hint":"Сначала фиксируем события."},
+      {"stage_id":"PENTEST","title":"PenTest","hint":"Проверка уязвимостей."},
+      {"stage_id":"BETA","title":"Beta","hint":"Публичный тест."},
+      {"stage_id":"RELEASE","title":"Release","hint":"Релиз."}
+    ],
+    "dependencies": [
+      {"a":"THREAT","b":"LOGGING","code":"LOGIC_GAP","message":"Логи без понимания угроз бесполезны."},
+      {"a":"LOGGING","b":"PENTEST","code":"LOGIC_GAP","message":"PenTest без логов хуже диагностики."},
+      {"a":"PENTEST","b":"BETA","code":"CAUSALITY_LOOP","message":"Нельзя выпускать Beta до проверки безопасности."},
+      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Beta."}
+    ],
+    "expected_order": ["THREAT","LOGGING","PENTEST","BETA","RELEASE"],
+    "feedback_rules": {
+      "LOGIC_GAP": "Этап пропущен или стоит не на месте.",
+      "CAUSALITY_LOOP": "Публичный этап раньше проверки.",
+      "ORDER_MISMATCH": "Проверьте порядок.",
+      "OK": "План утверждён."
+    },
+    "scoring_model": {
+      "perfect": {"points":2,"stability_delta":0,"verdict_code":"PERFECT"},
+      "fail": {"points":0,"stability_delta":-25,"verdict_code":"FAIL"}
+    },
+    "anti_cheat": {"shuffle_cards": true}
+  },
+
+  {
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "schema_version": "1.0.0",
+    "id": "FR8-B-04",
+    "briefing": "Инвесторский цикл. Упорядочьте этапы так, чтобы это не выглядело как сказка.",
+    "format": "TIMELINE_SORT",
+    "cards": [
+      {"stage_id":"PITCH","title":"Питч","hint":"Презентация идеи."},
+      {"stage_id":"MEETING","title":"Встреча","hint":"Обсуждение деталей."},
+      {"stage_id":"FUNDING","title":"Финансирование","hint":"Деньги пришли."},
+      {"stage_id":"HIRE","title":"Найм","hint":"Собрать команду."},
+      {"stage_id":"MVP","title":"MVP","hint":"Сделать продукт."}
+    ],
+    "dependencies": [
+      {"a":"PITCH","b":"MEETING","code":"LOGIC_GAP","message":"Сначала питч, потом встреча."},
+      {"a":"MEETING","b":"FUNDING","code":"LOGIC_GAP","message":"Финансирование после обсуждения."},
+      {"a":"FUNDING","b":"HIRE","code":"LOGIC_GAP","message":"Найм обычно после денег."},
+      {"a":"HIRE","b":"MVP","code":"LOGIC_GAP","message":"MVP делают люди, а не воздух."}
+    ],
+    "expected_order": ["PITCH","MEETING","FUNDING","HIRE","MVP"],
+    "feedback_rules": {
+      "LOGIC_GAP": "Порядок не выглядит реалистично.",
+      "CAUSALITY_LOOP": "Сломана причинность.",
+      "ORDER_MISMATCH": "Почти.",
+      "OK": "План утверждён."
+    },
+    "scoring_model": {
+      "perfect": {"points":2,"stability_delta":0,"verdict_code":"PERFECT"},
+      "fail": {"points":0,"stability_delta":-25,"verdict_code":"FAIL"}
+    },
+    "anti_cheat": {"shuffle_cards": true}
+  },
+
+  {
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "schema_version": "1.0.0",
+    "id": "FR8-B-05",
+    "briefing": "Юр.чистота перед публичным запуском. Расставьте этапы.",
+    "format": "TIMELINE_SORT",
+    "cards": [
+      {"stage_id":"MVP","title":"MVP","hint":"Есть продукт."},
+      {"stage_id":"PRIVACY","title":"Privacy","hint":"Политика конфиденциальности."},
+      {"stage_id":"TERMS","title":"Terms","hint":"Пользовательское соглашение."},
+      {"stage_id":"BETA","title":"Beta","hint":"Публичный тест."},
+      {"stage_id":"RELEASE","title":"Release","hint":"Релиз."}
+    ],
+    "dependencies": [
+      {"a":"MVP","b":"PRIVACY","code":"LOGIC_GAP","message":"Сначала продукт, потом документы."},
+      {"a":"PRIVACY","b":"TERMS","code":"LOGIC_GAP","message":"Документы должны быть согласованы."},
+      {"a":"TERMS","b":"BETA","code":"CAUSALITY_LOOP","message":"Публичность после документов."},
+      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Beta."}
+    ],
+    "expected_order": ["MVP","PRIVACY","TERMS","BETA","RELEASE"],
+    "feedback_rules": {
+      "LOGIC_GAP": "Порядок документов нарушен.",
+      "CAUSALITY_LOOP": "Нельзя выпускать на публику без базовой юридической базы.",
+      "ORDER_MISMATCH": "Проверьте порядок.",
+      "OK": "План утверждён."
+    },
+    "scoring_model": {
+      "perfect": {"points":2,"stability_delta":0,"verdict_code":"PERFECT"},
+      "fail": {"points":0,"stability_delta":-25,"verdict_code":"FAIL"}
+    },
+    "anti_cheat": {"shuffle_cards": true}
+  },
+
+  {
+    "quest_id": "CASE_08_FINAL_REPORT",
+    "schema_version": "1.0.0",
+    "id": "FR8-B-06",
+    "briefing": "Контроль качества. Правильный порядок спасает от позора.",
+    "format": "TIMELINE_SORT",
+    "cards": [
+      {"stage_id":"MVP","title":"MVP","hint":"Рабочая основа."},
+      {"stage_id":"ALPHA","title":"Alpha","hint":"Внутренний тест."},
+      {"stage_id":"QA","title":"QA","hint":"Проверка качества."},
+      {"stage_id":"BETA","title":"Beta","hint":"Публичный тест."},
+      {"stage_id":"RELEASE","title":"Release","hint":"Релиз."}
+    ],
+    "dependencies": [
+      {"a":"MVP","b":"ALPHA","code":"LOGIC_GAP","message":"Alpha после MVP."},
+      {"a":"ALPHA","b":"QA","code":"LOGIC_GAP","message":"QA после внутреннего теста."},
+      {"a":"QA","b":"BETA","code":"CAUSALITY_LOOP","message":"Beta после QA."},
+      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Beta."}
+    ],
+    "expected_order": ["MVP","ALPHA","QA","BETA","RELEASE"],
+    "feedback_rules": {
+      "LOGIC_GAP": "Этапы качества стоят странно.",
+      "CAUSALITY_LOOP": "Публичный этап раньше контроля качества.",
+      "ORDER_MISMATCH": "Почти.",
+      "OK": "План утверждён."
+    },
+    "scoring_model": {
+      "perfect": {"points":2,"stability_delta":0,"verdict_code":"PERFECT"},
+      "fail": {"points":0,"stability_delta":-25,"verdict_code":"FAIL"}
+    },
+    "anti_cheat": {"shuffle_cards": true}
+  }
+]

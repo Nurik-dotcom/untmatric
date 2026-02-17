@@ -18,9 +18,12 @@ const SHORT_MESSAGES: Dictionary = {
 	"B_SPAM_TRACE": "Trace command spam detected.",
 	"B_GARBAGE": "Result does not match the transfer model.",
 	"C_MASK_VAL": "Mask value is not a network address.",
+	"C_NOT_APPLIED": "Apply AND before selecting an answer.",
 	"C_L24_FALLBACK": "Automatic /24 fallback is wrong here.",
 	"C_BOUNDARY_SHIFT": "Subnet boundary was shifted.",
 	"C_BROADCAST": "Broadcast address was selected.",
+	"C_BAD_STEP": "Subnet step was interpreted incorrectly.",
+	"C_BAD_DROP": "Mask must be dropped onto the MASK row.",
 	"TIMEOUT": "Time limit reached.",
 	"UNKNOWN": "Wrong option for this context."
 }
@@ -86,6 +89,10 @@ const DETAIL_MESSAGES: Dictionary = {
 		"Mask itself is not the network id.",
 		"Compute network as IP AND mask."
 	],
+	"C_NOT_APPLIED": [
+		"Board answers stay locked until APPLY AND is executed.",
+		"Place mask and run AND operation first."
+	],
 	"C_L24_FALLBACK": [
 		"Only /24 masks end with .0 boundaries by default.",
 		"For other masks use actual block size."
@@ -97,6 +104,14 @@ const DETAIL_MESSAGES: Dictionary = {
 	"C_BROADCAST": [
 		"Broadcast is the upper boundary of subnet.",
 		"Network id is the lower boundary."
+	],
+	"C_BAD_STEP": [
+		"Step is 256 minus the mask value in the last octet.",
+		"Use segment starts based on this step."
+	],
+	"C_BAD_DROP": [
+		"Mask card must be applied to MASK row drop zone.",
+		"Drop target rejects unrelated payloads."
 	],
 	"TIMEOUT": [
 		"Timed mode reached its limit.",
@@ -124,9 +139,12 @@ const TITLES: Dictionary = {
 	"B_SPAM_TRACE": "TRACE SPAM",
 	"B_GARBAGE": "INVALID RESULT",
 	"C_MASK_VAL": "MASK CONFUSION",
+	"C_NOT_APPLIED": "AND NOT APPLIED",
 	"C_L24_FALLBACK": "DEFAULT SUBNET TRAP",
 	"C_BOUNDARY_SHIFT": "BOUNDARY SHIFT",
 	"C_BROADCAST": "BROADCAST SELECTED",
+	"C_BAD_STEP": "BAD STEP SIZE",
+	"C_BAD_DROP": "BAD DROP TARGET",
 	"TIMEOUT": "TIMEOUT",
 	"UNKNOWN": "WRONG DECISION"
 }

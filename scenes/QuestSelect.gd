@@ -132,7 +132,7 @@ func _on_archive_pressed():
 
 func _on_report_pressed():
 	selected_quest_type = QuestType.FINAL_REPORT
-	_set_complexity_enabled(false, false)
+	_set_complexity_enabled(true, true)
 	modal.visible = true
 
 func _on_network_trace_pressed():
@@ -166,8 +166,8 @@ func _on_complexity_a_pressed():
 
 func _on_complexity_b_pressed():
 	if selected_quest_type == QuestType.FINAL_REPORT:
-		modal.visible = false
-		status_label.text = STATUS_STAGE_PENDING
+		GlobalMetrics.current_level_index = 0
+		get_tree().change_scene_to_file("res://scenes/case_08/fr8_final_report_b.tscn")
 		return
 	if selected_quest_type == QuestType.DECRYPTOR:
 		GlobalMetrics.current_level_index = 15
@@ -189,8 +189,8 @@ func _on_complexity_b_pressed():
 
 func _on_complexity_c_pressed():
 	if selected_quest_type == QuestType.FINAL_REPORT:
-		modal.visible = false
-		status_label.text = STATUS_STAGE_PENDING
+		GlobalMetrics.current_level_index = 0
+		get_tree().change_scene_to_file("res://scenes/case_08/fr8_final_report_c.tscn")
 		return
 	if selected_quest_type == QuestType.DECRYPTOR:
 		get_tree().change_scene_to_file("res://scenes/MatrixDecryptor.tscn")

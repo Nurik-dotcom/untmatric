@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://scripts/case_08/fr8_final_report_a.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/case_08/fr8_final_report_c.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
 [ext_resource type="Shader" path="res://ui/shaders/crt_overlay.gdshader" id="3_shader"]
-[ext_resource type="PackedScene" path="res://scenes/ui/TagPileZone.tscn" id="4_pile"]
+[ext_resource type="PackedScene" path="res://scenes/ui/InspectorPopup.tscn" id="4_popup"]
+[ext_resource type="PackedScene" path="res://scenes/ui/InspectBadge.tscn" id="5_badge"]
 
 [sub_resource type="ShaderMaterial" id="1_overlay_material"]
 shader = ExtResource("3_shader")
@@ -12,7 +13,7 @@ shader_parameter/intensity = 0.13
 shader_parameter/fx_quality = 0
 shader_parameter/glitch_strength = 0.0
 
-[node name="FR8_FinalReportA" type="Control"]
+[node name="FR8_FinalReportC" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -64,26 +65,26 @@ size_flags_vertical = 3
 theme_override_constants/separation = 10
 
 [node name="Header" type="HBoxContainer" parent="SafeArea/MainLayout"]
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="BtnBack" type="Button" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(116, 56)
 layout_mode = 2
-text = "НАЗАД"
+text = "BACK"
 
 [node name="TitleLabel" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
-text = "ДЕЛО #8"
+text = "CASE #8: FINAL REPORT [C]"
 vertical_alignment = 1
 
 [node name="LevelLabel" type="Label" parent="SafeArea/MainLayout/Header"]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
-text = "A"
+text = "C"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -98,10 +99,12 @@ show_percentage = false
 layout_mode = 2
 
 [node name="BriefingLabel" type="Label" parent="SafeArea/MainLayout/BriefingCard"]
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Briefing"
 autowrap_mode = 3
+vertical_alignment = 1
 
 [node name="Body" type="BoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
@@ -109,78 +112,111 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="FragmentsCard" type="PanelContainer" parent="SafeArea/MainLayout/Body"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 1.0
-
-[node name="CardVBox" type="VBoxContainer" parent="SafeArea/MainLayout/Body/FragmentsCard"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 8
-
-[node name="FragmentsTitle" type="Label" parent="SafeArea/MainLayout/Body/FragmentsCard/CardVBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "СКЛАД ФРАГМЕНТОВ"
-
-[node name="PileZone" parent="SafeArea/MainLayout/Body/FragmentsCard/CardVBox" instance=ExtResource("4_pile")]
+[node name="CodeCard" type="PanelContainer" parent="SafeArea/MainLayout/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="EditorCard" type="PanelContainer" parent="SafeArea/MainLayout/Body"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 1.2
-
-[node name="CardVBox" type="VBoxContainer" parent="SafeArea/MainLayout/Body/EditorCard"]
+[node name="CodeVBox" type="VBoxContainer" parent="SafeArea/MainLayout/Body/CodeCard"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="EditorTitle" type="Label" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox"]
+[node name="CodeTitle" type="Label" parent="SafeArea/MainLayout/Body/CodeCard/CodeVBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "РЕДАКТОР"
+theme_override_font_sizes/font_size = 20
+text = "КОД"
 
-[node name="CodePreviewCard" type="PanelContainer" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox"]
-custom_minimum_size = Vector2(0, 140)
+[node name="HtmlLabel" type="RichTextLabel" parent="SafeArea/MainLayout/Body/CodeCard/CodeVBox"]
+custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
 size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = false
+scroll_active = false
+text = "HTML"
 
-[node name="CodePreview" type="RichTextLabel" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox/CodePreviewCard"]
+[node name="CssLabel" type="RichTextLabel" parent="SafeArea/MainLayout/Body/CodeCard/CodeVBox"]
+custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "[code]S1 ____[/code]"
 fit_content = false
-scroll_active = false
+text = "CSS"
 
-[node name="SlotsTitle" type="Label" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox"]
+[node name="HintRow" type="HBoxContainer" parent="SafeArea/MainLayout/Body/CodeCard/CodeVBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "SLOTS"
+theme_override_constants/separation = 8
 
-[node name="SlotsGrid" type="GridContainer" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox"]
+[node name="InspectBadge" parent="SafeArea/MainLayout/Body/CodeCard/CodeVBox/HintRow" instance=ExtResource("5_badge")]
+layout_mode = 2
+
+[node name="HintLine" type="Label" parent="SafeArea/MainLayout/Body/CodeCard/CodeVBox/HintRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Тапните по селектору для INSPECT."
+vertical_alignment = 1
+
+[node name="DecryptCard" type="PanelContainer" parent="SafeArea/MainLayout/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
-columns = 3
 
-[node name="BottomBar" type="HBoxContainer" parent="SafeArea/MainLayout"]
-custom_minimum_size = Vector2(0, 62)
+[node name="DecVBox" type="VBoxContainer" parent="SafeArea/MainLayout/Body/DecryptCard"]
 layout_mode = 2
-theme_override_constants/separation = 10
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
 
-[node name="StatusLabel" type="Label" parent="SafeArea/MainLayout/BottomBar"]
+[node name="DecTitle" type="Label" parent="SafeArea/MainLayout/Body/DecryptCard/DecVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "ДЕШИФРАТОР"
+
+[node name="TargetPreview" type="Label" parent="SafeArea/MainLayout/Body/DecryptCard/DecVBox"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 26
+text = "Секретный код"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StrengthRow" type="HBoxContainer" parent="SafeArea/MainLayout/Body/DecryptCard/DecVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AttackBar" type="ProgressBar" parent="SafeArea/MainLayout/Body/DecryptCard/DecVBox/StrengthRow"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 11000.0
+show_percentage = false
+
+[node name="DefenseBar" type="ProgressBar" parent="SafeArea/MainLayout/Body/DecryptCard/DecVBox/StrengthRow"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 11000.0
+show_percentage = false
+
+[node name="OptionsVBox" type="VBoxContainer" parent="SafeArea/MainLayout/Body/DecryptCard/DecVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="ExplainLabel" type="Label" parent="SafeArea/MainLayout/Body/DecryptCard/DecVBox"]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Explain"
+autowrap_mode = 3
+vertical_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="SafeArea/MainLayout"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -188,18 +224,27 @@ text = "Status"
 autowrap_mode = 2
 vertical_alignment = 1
 
-[node name="BtnReset" type="Button" parent="SafeArea/MainLayout/BottomBar"]
-custom_minimum_size = Vector2(150, 56)
+[node name="BottomBar" type="HBoxContainer" parent="SafeArea/MainLayout"]
+custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
-text = "СБРОС"
+theme_override_constants/separation = 10
+
+[node name="BtnReset" type="Button" parent="SafeArea/MainLayout/BottomBar"]
+custom_minimum_size = Vector2(170, 56)
+layout_mode = 2
+text = "RESET"
 
 [node name="BtnConfirm" type="Button" parent="SafeArea/MainLayout/BottomBar"]
 custom_minimum_size = Vector2(220, 56)
 layout_mode = 2
-text = "ПОДТВЕРДИТЬ"
+size_flags_horizontal = 3
+disabled = true
+text = "CONFIRM"
 
 [node name="BtnNext" type="Button" parent="SafeArea/MainLayout/BottomBar"]
 custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
 disabled = true
-text = "ДАЛЕЕ"
+text = "NEXT"
+
+[node name="InspectorPopup" parent="." instance=ExtResource("4_popup")]
