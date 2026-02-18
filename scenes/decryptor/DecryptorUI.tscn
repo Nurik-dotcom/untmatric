@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://c4p1o1h01r4g6"]
 
-[ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="1_theme"]
+[ext_resource type="Theme" uid="uid://cfgksggpp15wa" path="res://ui/theme_terminal_green.tres" id="1_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="2_overlay"]
 
 [node name="DecryptorUI" type="Control"]
@@ -44,7 +44,7 @@ theme_override_constants/separation = 12
 [node name="HeaderBar" type="PanelContainer" parent="SafeArea/Main"]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
-theme_type_variation = "HeaderPanel"
+theme_type_variation = &"HeaderPanel"
 
 [node name="HeaderContent" type="HBoxContainer" parent="SafeArea/Main/HeaderBar"]
 layout_mode = 2
@@ -88,10 +88,7 @@ text = "STABILITY: 100%"
 [node name="StabilityBar" type="ProgressBar" parent="SafeArea/Main/HeaderBar/HeaderContent/StabilityGroup"]
 custom_minimum_size = Vector2(170, 18)
 layout_mode = 2
-min_value = 0.0
-max_value = 100.0
 value = 100.0
-percent_visible = false
 
 [node name="Shields" type="HBoxContainer" parent="SafeArea/Main/HeaderBar/HeaderContent"]
 layout_mode = 2
@@ -138,13 +135,12 @@ text = "TARGET"
 
 [node name="TargetValueBig" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent"]
 layout_mode = 2
-text = "00"
 theme_override_font_sizes/font_size = 36
+text = "00"
 horizontal_alignment = 1
 
 [node name="TargetSub" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent"]
 layout_mode = 2
-text = ""
 horizontal_alignment = 1
 
 [node name="InputPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/LeftPanel"]
@@ -233,7 +229,6 @@ alignment = 1
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.0
 theme_override_constants/separation = 10
 
 [node name="RankPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
@@ -249,8 +244,8 @@ text = "RANK"
 
 [node name="RankLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent"]
 layout_mode = 2
-text = "TRAINEE"
 theme_override_font_sizes/font_size = 22
+text = "TRAINEE"
 
 [node name="ProgressLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent"]
 layout_mode = 2
@@ -303,7 +298,6 @@ text = "LIVE TERMINAL"
 [node name="LiveLogText" type="RichTextLabel" parent="SafeArea/Main/ContentSplit/RightPanel/LiveLogPanel/LiveLogContent"]
 layout_mode = 2
 size_flags_vertical = 3
-bbcode_enabled = false
 scroll_following = true
 
 [node name="HintPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
@@ -324,7 +318,7 @@ autowrap_mode = 3
 
 [node name="BottomBar" type="PanelContainer" parent="SafeArea/Main"]
 layout_mode = 2
-theme_type_variation = "HeaderPanel"
+theme_type_variation = &"HeaderPanel"
 
 [node name="Actions" type="HBoxContainer" parent="SafeArea/Main/BottomBar"]
 layout_mode = 2
@@ -340,8 +334,8 @@ text = "HINT"
 custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
 text = "CHECK"
-theme_type_variation = "PrimaryButton"
 
 [node name="BtnReset" type="Button" parent="SafeArea/Main/BottomBar/Actions"]
 custom_minimum_size = Vector2(120, 56)
@@ -352,33 +346,32 @@ text = "RESET"
 
 [node name="Toast" type="PanelContainer" parent="ToastLayer"]
 visible = false
-layout_mode = 1
-anchors_preset = 10
+anchors_preset = 7
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -180
-offset_top = -120
-offset_right = 180
-offset_bottom = -60
+offset_left = -180.0
+offset_top = -120.0
+offset_right = 180.0
+offset_bottom = -60.0
+grow_horizontal = 2
 
 [node name="ToastLabel" type="Label" parent="ToastLayer/Toast"]
 layout_mode = 2
-text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="DetailsSheet" type="PanelContainer" parent="."]
 visible = false
 layout_mode = 1
-anchors_preset = 13
-anchor_left = 0.0
-anchor_right = 1.0
+anchors_preset = 12
 anchor_top = 1.0
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -380
-offset_bottom = 0
+offset_top = -380.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="DetailsContent" type="VBoxContainer" parent="DetailsSheet"]
 layout_mode = 2
@@ -397,19 +390,17 @@ layout_mode = 2
 text = "CLOSE"
 
 [node name="DetailsScroll" type="ScrollContainer" parent="DetailsSheet/DetailsContent"]
-layout_mode = 2
 custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
 
 [node name="DetailsText" type="RichTextLabel" parent="DetailsSheet/DetailsContent/DetailsScroll"]
 layout_mode = 2
 bbcode_enabled = true
-text = ""
 
 [node name="SafeModeOverlay" type="CanvasLayer" parent="."]
 visible = false
 
 [node name="Dim" type="ColorRect" parent="SafeModeOverlay"]
-layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -418,7 +409,6 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.6)
 
 [node name="CenterContainer" type="CenterContainer" parent="SafeModeOverlay"]
-layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -438,10 +428,9 @@ layout_mode = 2
 text = "SAFE MODE: ERROR ANALYSIS"
 
 [node name="SafeSummary" type="RichTextLabel" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
-layout_mode = 2
 custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
 bbcode_enabled = true
-text = ""
 
 [node name="SafeBitsRow" type="HBoxContainer" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
 layout_mode = 2

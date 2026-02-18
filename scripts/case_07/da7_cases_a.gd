@@ -1,6 +1,6 @@
 extends Node
 
-const SCHEMA_VERSION := "DA7.A.v2"
+const SCHEMA_VERSION := "DA7.A.v3"
 const LEVEL := "A"
 
 const CASES_A: Array = [
@@ -10,7 +10,10 @@ const CASES_A: Array = [
 		"level": LEVEL,
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
-		"prompt": "Select IDs where Access >= 3.",
+		"case_title": "ACCESS_LOG_07",
+		"briefing": "Archive mirror restored. Access traces were partially obfuscated. Verify only real high-access records.",
+		"objective": "Identify IDs where Access >= 3.",
+		"prompt": "Which records satisfy Access >= 3?",
 		"table": {
 			"columns": [
 				{"col_id": "id", "title": "ID"},
@@ -24,12 +27,23 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "101", "f_reason": "MISSED_COLUMN"},
-			{"id": "opt_2", "text": "102, 103", "f_reason": null},
-			{"id": "opt_3", "text": "101, 102, 103", "f_reason": "MISSED_ROW"},
-			{"id": "opt_4", "text": "103 only", "f_reason": "MISSED_ROW"}
+			{"id": "opt_1", "text": "File report: high-access list contains ID 101", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "Submit evidence packet: IDs 102 and 103", "f_reason": null},
+			{"id": "opt_3", "text": "Escalate all rows as high-access", "f_reason": "MISSED_ROW"},
+			{"id": "opt_4", "text": "Seize only ID 103 as confirmed", "f_reason": "MISSED_ROW"}
 		],
 		"answer_id": "opt_2",
+		"reveal": {
+			"on_correct": "Rows r2 and r3 satisfy Access >= 3. Row r1 is below threshold.",
+			"on_wrong_by_reason": {
+				"MISSED_COLUMN": "You misread Access values. Use the Access column as the filter key.",
+				"MISSED_ROW": "At least one qualifying row was dropped or over-included."
+			}
+		},
+		"highlight": {
+			"mode": "ROWS",
+			"target_row_ids": ["r2", "r3"]
+		},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
@@ -38,7 +52,10 @@ const CASES_A: Array = [
 		"level": LEVEL,
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
-		"prompt": "Select rows where Status == ERROR.",
+		"case_title": "SYSTEM_STATUS_12",
+		"briefing": "Ops channel reports instability spikes. Extract only explicit ERROR records from incident timeline.",
+		"objective": "Identify timestamps where Status == ERROR.",
+		"prompt": "Which timestamps are marked ERROR?",
 		"table": {
 			"columns": [
 				{"col_id": "time", "title": "Time"},
@@ -52,12 +69,24 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "09:00, 09:10", "f_reason": "MISSED_COLUMN"},
-			{"id": "opt_2", "text": "09:05, 09:15", "f_reason": null},
-			{"id": "opt_3", "text": "09:05 only", "f_reason": "MISSED_ROW"},
-			{"id": "opt_4", "text": "All rows", "f_reason": "COUNT_HEADER_AS_RECORD"}
+			{"id": "opt_1", "text": "Mark 09:00 and 09:10 as critical failures", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "Open incident ticket for 09:05 and 09:15", "f_reason": null},
+			{"id": "opt_3", "text": "Escalate only 09:05", "f_reason": "MISSED_ROW"},
+			{"id": "opt_4", "text": "Flag every line as ERROR", "f_reason": "COUNT_HEADER_AS_RECORD"}
 		],
 		"answer_id": "opt_2",
+		"reveal": {
+			"on_correct": "Only rows with explicit ERROR status are r2 and r4.",
+			"on_wrong_by_reason": {
+				"MISSED_COLUMN": "Status must drive the filter; time values alone are not conditions.",
+				"MISSED_ROW": "One ERROR row was skipped.",
+				"COUNT_HEADER_AS_RECORD": "Do not treat labels or unrelated statuses as incident rows."
+			}
+		},
+		"highlight": {
+			"mode": "ROWS",
+			"target_row_ids": ["r2", "r4"]
+		},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
@@ -66,7 +95,10 @@ const CASES_A: Array = [
 		"level": LEVEL,
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
-		"prompt": "Which relation matches: One user can write many posts?",
+		"case_title": "RELATION_MAP_03",
+		"briefing": "Entity map recovered from backup node. Confirm user-to-post dependency before linking archives.",
+		"objective": "Determine relation type: one user can write many posts.",
+		"prompt": "What relation fits Users.id -> Posts.user_id?",
 		"table": {
 			"columns": [
 				{"col_id": "table", "title": "Table"},
@@ -78,12 +110,23 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "1:1", "f_reason": "CONFUSED_PK_FIELD"},
-			{"id": "opt_2", "text": "1:M", "f_reason": null},
-			{"id": "opt_3", "text": "M:M", "f_reason": "CONFUSED_ROW_COLUMN"},
-			{"id": "opt_4", "text": "No relation", "f_reason": "CONFUSED_PK_FIELD"}
+			{"id": "opt_1", "text": "Approve relation as one-to-one", "f_reason": "CONFUSED_PK_FIELD"},
+			{"id": "opt_2", "text": "Approve relation as one-to-many", "f_reason": null},
+			{"id": "opt_3", "text": "Approve relation as many-to-many", "f_reason": "CONFUSED_ROW_COLUMN"},
+			{"id": "opt_4", "text": "Reject relation linkage", "f_reason": "CONFUSED_PK_FIELD"}
 		],
 		"answer_id": "opt_2",
+		"reveal": {
+			"on_correct": "Users.id (PK) referenced by Posts.user_id (FK) forms a 1:M relation.",
+			"on_wrong_by_reason": {
+				"CONFUSED_PK_FIELD": "PK to FK here allows multiple posts per one user.",
+				"CONFUSED_ROW_COLUMN": "Relation type follows key semantics, not table order in the grid."
+			}
+		},
+		"highlight": {
+			"mode": "COLUMNS",
+			"target_col_ids": ["key"]
+		},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
@@ -92,7 +135,10 @@ const CASES_A: Array = [
 		"level": LEVEL,
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
-		"prompt": "Select orders where Amount < 100.",
+		"case_title": "ORDERS_AUDIT_22",
+		"briefing": "Payment logs contain mixed-value orders. Isolate only low-amount transactions for manual review.",
+		"objective": "Identify orders where Amount < 100.",
+		"prompt": "Which orders satisfy Amount < 100?",
 		"table": {
 			"columns": [
 				{"col_id": "ord", "title": "Order"},
@@ -106,12 +152,23 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "A-11, A-12", "f_reason": null},
-			{"id": "opt_2", "text": "A-11, A-12, A-13", "f_reason": "MISSED_COLUMN"},
-			{"id": "opt_3", "text": "A-10 only", "f_reason": "MISSED_ROW"},
-			{"id": "opt_4", "text": "A-13 only", "f_reason": "MISSED_COLUMN"}
+			{"id": "opt_1", "text": "Freeze orders A-11 and A-12 for review", "f_reason": null},
+			{"id": "opt_2", "text": "Freeze A-11, A-12, and A-13", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_3", "text": "Freeze only A-10", "f_reason": "MISSED_ROW"},
+			{"id": "opt_4", "text": "Freeze only A-13", "f_reason": "MISSED_COLUMN"}
 		],
 		"answer_id": "opt_1",
+		"reveal": {
+			"on_correct": "A-11 (80) and A-12 (99) are strictly below 100.",
+			"on_wrong_by_reason": {
+				"MISSED_COLUMN": "Use strict '< 100'. Value 100 is excluded.",
+				"MISSED_ROW": "You selected non-qualifying rows and missed valid low amounts."
+			}
+		},
+		"highlight": {
+			"mode": "ROWS",
+			"target_row_ids": ["r2", "r3"]
+		},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
@@ -120,7 +177,10 @@ const CASES_A: Array = [
 		"level": LEVEL,
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
-		"prompt": "Which operator is correct for 'not equal to CLOSED'?",
+		"case_title": "STATUS_FILTER_31",
+		"briefing": "Query template is damaged. Restore the operator that excludes CLOSED states.",
+		"objective": "Pick operator for condition: status not equal to CLOSED.",
+		"prompt": "Which expression correctly means 'status not equal CLOSED'?",
 		"table": {
 			"columns": [
 				{"col_id": "field", "title": "Field"},
@@ -133,12 +193,23 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "status == CLOSED", "f_reason": "MISSED_COLUMN"},
-			{"id": "opt_2", "text": "status != CLOSED", "f_reason": null},
-			{"id": "opt_3", "text": "status > CLOSED", "f_reason": "CONFUSED_ROW_COLUMN"},
-			{"id": "opt_4", "text": "status <= CLOSED", "f_reason": "CONFUSED_ROW_COLUMN"}
+			{"id": "opt_1", "text": "Deploy filter: status == CLOSED", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "Deploy filter: status != CLOSED", "f_reason": null},
+			{"id": "opt_3", "text": "Deploy filter: status > CLOSED", "f_reason": "CONFUSED_ROW_COLUMN"},
+			{"id": "opt_4", "text": "Deploy filter: status <= CLOSED", "f_reason": "CONFUSED_ROW_COLUMN"}
 		],
 		"answer_id": "opt_2",
+		"reveal": {
+			"on_correct": "Operator '!=' excludes CLOSED and leaves OPEN/PENDING.",
+			"on_wrong_by_reason": {
+				"MISSED_COLUMN": "Equality checks CLOSED itself, not the exclusion set.",
+				"CONFUSED_ROW_COLUMN": "String comparison operators here do not represent logical exclusion."
+			}
+		},
+		"highlight": {
+			"mode": "CELL",
+			"target_cell": {"row_id": "r1", "col_id": "value"}
+		},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
@@ -147,7 +218,10 @@ const CASES_A: Array = [
 		"level": LEVEL,
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
-		"prompt": "Select customers with City == Almaty.",
+		"case_title": "CLIENT_CITY_19",
+		"briefing": "Regional export list corrupted. Recover only client IDs linked to Almaty records.",
+		"objective": "Select customers where City == Almaty.",
+		"prompt": "Which customers are from Almaty?",
 		"table": {
 			"columns": [
 				{"col_id": "cid", "title": "CID"},
@@ -160,12 +234,24 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "C2 only", "f_reason": "MISSED_COLUMN"},
-			{"id": "opt_2", "text": "C1, C3", "f_reason": null},
-			{"id": "opt_3", "text": "All rows", "f_reason": "COUNT_HEADER_AS_RECORD"},
-			{"id": "opt_4", "text": "No rows", "f_reason": "MISSED_ROW"}
+			{"id": "opt_1", "text": "Issue warrant for C2 only", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "Issue warrant for C1 and C3", "f_reason": null},
+			{"id": "opt_3", "text": "Issue warrant for all customers", "f_reason": "COUNT_HEADER_AS_RECORD"},
+			{"id": "opt_4", "text": "Close case: no matching customers", "f_reason": "MISSED_ROW"}
 		],
 		"answer_id": "opt_2",
+		"reveal": {
+			"on_correct": "C1 and C3 are tagged with City = Almaty.",
+			"on_wrong_by_reason": {
+				"MISSED_COLUMN": "Filter must match City, not CID ordering.",
+				"COUNT_HEADER_AS_RECORD": "Do not escalate non-matching rows.",
+				"MISSED_ROW": "Valid Almaty rows were skipped."
+			}
+		},
+		"highlight": {
+			"mode": "ROWS",
+			"target_row_ids": ["r1", "r3"]
+		},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	}
 ]

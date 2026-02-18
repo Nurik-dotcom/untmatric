@@ -4,6 +4,7 @@ const CasesHub = preload("res://scripts/case_07/da7_cases.gd")
 
 const BREAKPOINT_PX := 800
 const SESSION_CASE_COUNT := 6
+const TYPEWRITER_INTERVAL_SEC := 0.03
 
 var session_cases: Array = []
 var current_case_index: int = -1
@@ -15,18 +16,42 @@ var scroll_used: bool = false
 var table_has_scroll: bool = false
 var exit_btn: Button
 
+var inspect_count: int = 0
+var unique_rows_inspected: Dictionary = {}
+var answered_without_inspection: bool = false
+var last_inspected_row_id: String = ""
+
+var row_item_by_id: Dictionary = {}
+var col_index_by_id: Dictionary = {}
+var row_data_by_id: Dictionary = {}
+
+var _typewriter_steps: Array[Dictionary] = []
+var _typewriter_step_index: int = -1
+var _typewriter_target: RichTextLabel
+var _typewriter_source: String = ""
+var _typewriter_cursor: int = 0
+
 @onready var title_label: RichTextLabel = $RootLayout/Header/Margin/Title
 @onready var desktop_layout: HSplitContainer = $RootLayout/Body/DesktopLayout
 @onready var mobile_layout: VBoxContainer = $RootLayout/Body/MobileLayout
 @onready var table_section: VBoxContainer = $RootLayout/Body/DesktopLayout/TableSection
 @onready var task_section: VBoxContainer = $RootLayout/Body/DesktopLayout/TaskSection
 @onready var data_tree: Tree = $RootLayout/Body/DesktopLayout/TableSection/DataTree
+@onready var inspect_label: RichTextLabel = $RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectLabel
+@onready var scan_label: Label = $RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/ScanLabel
+@onready var case_title_label: Label = $RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/CaseTitleLabel
+@onready var briefing_label: RichTextLabel = $RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/BriefingLabel
+@onready var objective_label: Label = $RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/ObjectiveLabel
 @onready var prompt_label: RichTextLabel = $RootLayout/Body/DesktopLayout/TaskSection/PromptLabel
 @onready var options_grid: GridContainer = $RootLayout/Body/DesktopLayout/TaskSection/OptionsGrid
+@onready var explain_line: RichTextLabel = $RootLayout/Body/DesktopLayout/TaskSection/ExplainLine
 @onready var stability_label: Label = $RootLayout/Footer/StabilityLabel
 @onready var stability_bar: ProgressBar = $RootLayout/Footer/StabilityBar
+@onready var sfx_click: AudioStreamPlayer = $Runtime/Audio/SfxClick
 @onready var sfx_error: AudioStreamPlayer = $Runtime/Audio/SfxError
 @onready var sfx_relay: AudioStreamPlayer = $Runtime/Audio/SfxRelay
+@onready var result_stamp: Control = $ResultStamp
+@onready var typewriter_timer: Timer = $Runtime/TypewriterTimer
 
 func _ready() -> void:
 	randomize()
@@ -37,6 +62,10 @@ func _ready() -> void:
 		data_tree.gui_input.connect(_on_scroll_input)
 	if not prompt_label.gui_input.is_connected(_on_scroll_input):
 		prompt_label.gui_input.connect(_on_scroll_input)
+	if not data_tree.item_selected.is_connected(_on_tree_item_selected):
+		data_tree.item_selected.connect(_on_tree_item_selected)
+	if not typewriter_timer.timeout.is_connected(_on_typewriter_tick):
+		typewriter_timer.timeout.connect(_on_typewriter_tick)
 
 	_init_session()
 	call_deferred("_on_viewport_size_changed")
@@ -49,7 +78,7 @@ func _init_session() -> void:
 		return
 
 	all_cases.shuffle()
-	session_cases = all_cases.slice(0, min(SESSION_CASE_COUNT, all_cases.size()))
+	session_cases = all_cases.slice(0, mini(SESSION_CASE_COUNT, all_cases.size()))
 	current_case_index = -1
 	GlobalMetrics.stability = 100.0
 	_update_stability_ui()
@@ -69,19 +98,94 @@ func _load_next_case() -> void:
 	scroll_used = false
 	table_has_scroll = false
 	trial_locked = false
+	inspect_count = 0
+	unique_rows_inspected.clear()
+	answered_without_inspection = false
+	last_inspected_row_id = ""
+	row_item_by_id.clear()
+	col_index_by_id.clear()
+	row_data_by_id.clear()
+	typewriter_timer.stop()
 	_render_case()
 
 func _render_case() -> void:
 	title_label.text = "CASE #7: SECRET ARCHIVE [A %d/%d]" % [current_case_index + 1, session_cases.size()]
-	prompt_label.bbcode_enabled = true
-	prompt_label.text = "[b]%s[/b]" % str(current_case.get("prompt", ""))
+
+	case_title_label.text = "FILE: %s" % str(current_case.get("case_title", current_case.get("id", "UNKNOWN_FILE")))
+	briefing_label.bbcode_enabled = false
+	briefing_label.text = str(current_case.get("briefing", ""))
+	objective_label.text = "OBJECTIVE: %s" % str(current_case.get("objective", ""))
+
+	prompt_label.bbcode_enabled = false
+	prompt_label.text = str(current_case.get("prompt", ""))
+	explain_line.bbcode_enabled = false
+	explain_line.text = ""
+
+	inspect_label.bbcode_enabled = false
+	inspect_label.text = "Select a row to inspect evidence."
+	scan_label.text = "SCAN: 0"
 
 	_render_table(current_case.get("table", {}) as Dictionary)
 	_render_options(current_case.get("options", []) as Array)
+	_start_typewriter_sequence()
 	call_deferred("_update_silent_reading_possible_flag")
+
+func _start_typewriter_sequence() -> void:
+	typewriter_timer.stop()
+	_typewriter_steps.clear()
+	_typewriter_step_index = -1
+	_typewriter_steps.append({
+		"target": briefing_label,
+		"text": str(current_case.get("briefing", ""))
+	})
+	_typewriter_steps.append({
+		"target": prompt_label,
+		"text": str(current_case.get("prompt", ""))
+	})
+	_start_next_typewriter_step()
+
+func _start_next_typewriter_step() -> void:
+	_typewriter_step_index += 1
+	if _typewriter_step_index >= _typewriter_steps.size():
+		typewriter_timer.stop()
+		return
+
+	var step: Dictionary = _typewriter_steps[_typewriter_step_index]
+	var target_v: Variant = step.get("target", null)
+	if not (target_v is RichTextLabel):
+		_start_next_typewriter_step()
+		return
+
+	_typewriter_target = target_v as RichTextLabel
+	_typewriter_source = str(step.get("text", ""))
+	_typewriter_cursor = 0
+	_typewriter_target.bbcode_enabled = false
+	_typewriter_target.text = ""
+
+	if _typewriter_source.is_empty():
+		_start_next_typewriter_step()
+		return
+
+	typewriter_timer.wait_time = TYPEWRITER_INTERVAL_SEC
+	typewriter_timer.start()
+
+func _on_typewriter_tick() -> void:
+	if not is_instance_valid(_typewriter_target):
+		return
+
+	if _typewriter_cursor < _typewriter_source.length():
+		_typewriter_cursor += 1
+		_typewriter_target.text = _typewriter_source.substr(0, _typewriter_cursor)
+		typewriter_timer.start()
+	else:
+		_start_next_typewriter_step()
 
 func _render_table(table_def: Dictionary) -> void:
 	data_tree.clear()
+	row_item_by_id.clear()
+	col_index_by_id.clear()
+	row_data_by_id.clear()
+
 	var root: TreeItem = data_tree.create_item()
 	data_tree.hide_root = true
 	data_tree.select_mode = Tree.SELECT_ROW
@@ -95,7 +199,12 @@ func _render_table(table_def: Dictionary) -> void:
 
 	data_tree.columns = cols.size()
 	for i in range(cols.size()):
-		var col: Dictionary = cols[i]
+		var col_data_v: Variant = cols[i]
+		if typeof(col_data_v) != TYPE_DICTIONARY:
+			continue
+		var col: Dictionary = col_data_v as Dictionary
+		var col_id: String = str(col.get("col_id", ""))
+		col_index_by_id[col_id] = i
 		data_tree.set_column_title(i, str(col.get("title", "COL")))
 	data_tree.column_titles_visible = true
 
@@ -104,11 +213,21 @@ func _render_table(table_def: Dictionary) -> void:
 		if typeof(row_v) != TYPE_DICTIONARY:
 			continue
 		var row_data: Dictionary = row_v as Dictionary
+		var row_id: String = str(row_data.get("row_id", ""))
+		if row_id.is_empty():
+			continue
 		var row_item: TreeItem = data_tree.create_item(root)
+		row_item.set_metadata(0, row_id)
+		row_item_by_id[row_id] = row_item
+		row_data_by_id[row_id] = row_data
+
 		var cells: Dictionary = row_data.get("cells", {}) as Dictionary
 		for i in range(cols.size()):
-			var col: Dictionary = cols[i]
-			var col_id: String = str(col.get("col_id", ""))
+			var col_v: Variant = cols[i]
+			if typeof(col_v) != TYPE_DICTIONARY:
+				continue
+			var col_def: Dictionary = col_v as Dictionary
+			var col_id := str(col_def.get("col_id", ""))
 			row_item.set_text(i, str(cells.get(col_id, "")))
 
 func _render_options(options: Array) -> void:
@@ -126,24 +245,74 @@ func _render_options(options: Array) -> void:
 		btn.pressed.connect(_on_option_selected.bind(str(opt.get("id", ""))))
 		options_grid.add_child(btn)
 
+func _on_tree_item_selected() -> void:
+	if trial_locked:
+		return
+
+	var item: TreeItem = data_tree.get_selected()
+	if item == null:
+		return
+	var row_id: String = str(item.get_metadata(0))
+	if row_id.is_empty() or not row_data_by_id.has(row_id):
+		return
+
+	_register_first_action()
+	inspect_count += 1
+	unique_rows_inspected[row_id] = true
+	last_inspected_row_id = row_id
+	scan_label.text = "SCAN: %d" % inspect_count
+	inspect_label.text = _build_inspect_line(row_id)
+	if is_instance_valid(sfx_click):
+		sfx_click.play()
+
+func _build_inspect_line(row_id: String) -> String:
+	var row_data: Dictionary = row_data_by_id.get(row_id, {}) as Dictionary
+	var table_def: Dictionary = current_case.get("table", {}) as Dictionary
+	var cols: Array = table_def.get("columns", []) as Array
+	var cells: Dictionary = row_data.get("cells", {}) as Dictionary
+
+	var parts: Array[String] = []
+	for col_v in cols:
+		if typeof(col_v) != TYPE_DICTIONARY:
+			continue
+		var col_def: Dictionary = col_v as Dictionary
+		var col_id: String = str(col_def.get("col_id", ""))
+		var col_title: String = str(col_def.get("title", col_id.to_upper()))
+		parts.append("%s=%s" % [col_title, str(cells.get(col_id, ""))])
+
+	return "ROW %s: %s" % [row_id, " | ".join(parts)]
+
 func _on_option_selected(selected_id: String) -> void:
 	if trial_locked:
 		return
+
 	_register_first_action()
+	answered_without_inspection = inspect_count == 0
 	trial_locked = true
+	typewriter_timer.stop()
+	briefing_label.text = str(current_case.get("briefing", ""))
+	prompt_label.text = str(current_case.get("prompt", ""))
+
+	if is_instance_valid(sfx_click):
+		sfx_click.play()
 
 	var answer_id: String = str(current_case.get("answer_id", ""))
+	var selected_option: Dictionary = _find_option(selected_id)
 	var is_correct: bool = selected_id == answer_id
+
 	if is_correct:
-		prompt_label.text = "[b]%s[/b]\n[color=#77ff77]Correct.[/color]" % str(current_case.get("prompt", ""))
 		if sfx_relay != null:
 			sfx_relay.play()
 	else:
-		prompt_label.text = "[b]%s[/b]\n[color=#ff6b6b]Incorrect.[/color]" % str(current_case.get("prompt", ""))
 		if sfx_error != null:
 			sfx_error.play()
 
 	_set_options_locked(true)
+	_apply_highlight(current_case.get("highlight", {}) as Dictionary)
+	_show_explain_line(is_correct, selected_option)
+	if is_instance_valid(result_stamp) and result_stamp.has_method("show_result"):
+		result_stamp.call("show_result", is_correct)
+
 	_log_trial(selected_id, answer_id, is_correct)
 	_update_stability_ui()
 
@@ -153,6 +322,63 @@ func _on_option_selected(selected_id: String) -> void:
 		_game_over()
 	else:
 		_load_next_case()
+
+func _show_explain_line(is_correct: bool, selected_option: Dictionary) -> void:
+	var reveal: Dictionary = current_case.get("reveal", {}) as Dictionary
+	var line: String = ""
+	if is_correct:
+		line = str(reveal.get("on_correct", "Confirmed."))
+	else:
+		var reason: String = str(selected_option.get("f_reason", "WRONG_OPTION_GENERIC"))
+		var reason_map: Dictionary = reveal.get("on_wrong_by_reason", {}) as Dictionary
+		line = str(reason_map.get(reason, "Review the highlighted evidence and retry your logic."))
+	explain_line.text = line
+
+func _apply_highlight(highlight: Dictionary) -> void:
+	if highlight.is_empty():
+		return
+
+	var mode: String = str(highlight.get("mode", "")).to_upper()
+	var bg: Color = Color(0.42, 0.30, 0.10, 0.55)
+	var fg: Color = Color(1.0, 0.94, 0.78, 1.0)
+
+	match mode:
+		"ROWS":
+			var target_rows: Array = highlight.get("target_row_ids", []) as Array
+			for row_id_v in target_rows:
+				var row_id: String = str(row_id_v)
+				_highlight_row(row_id, bg, fg)
+		"COLUMNS":
+			var target_cols: Array = highlight.get("target_col_ids", []) as Array
+			for col_id_v in target_cols:
+				var col_id: String = str(col_id_v)
+				if not col_index_by_id.has(col_id):
+					continue
+				var col_idx: int = int(col_index_by_id[col_id])
+				for row_id_v in row_item_by_id.keys():
+					var item: TreeItem = row_item_by_id[row_id_v] as TreeItem
+					_highlight_cell(item, col_idx, bg, fg)
+		"CELL":
+			var target_cell: Dictionary = highlight.get("target_cell", {}) as Dictionary
+			var row_id: String = str(target_cell.get("row_id", ""))
+			var col_id: String = str(target_cell.get("col_id", ""))
+			if row_item_by_id.has(row_id) and col_index_by_id.has(col_id):
+				var row_item: TreeItem = row_item_by_id[row_id] as TreeItem
+				var col_idx: int = int(col_index_by_id[col_id])
+				_highlight_cell(row_item, col_idx, bg, fg)
+
+func _highlight_row(row_id: String, bg: Color, fg: Color) -> void:
+	if not row_item_by_id.has(row_id):
+		return
+	var item: TreeItem = row_item_by_id[row_id] as TreeItem
+	for col_idx in range(data_tree.columns):
+		_highlight_cell(item, col_idx, bg, fg)
+
+func _highlight_cell(item: TreeItem, col_idx: int, bg: Color, fg: Color) -> void:
+	if item == null:
+		return
+	item.set_custom_bg_color(col_idx, bg)
+	item.set_custom_color(col_idx, fg)
 
 func _log_trial(selected_id: String, answer_id: String, is_correct: bool) -> void:
 	var now_ms: int = Time.get_ticks_msec()
@@ -193,12 +419,16 @@ func _log_trial(selected_id: String, answer_id: String, is_correct: bool) -> voi
 		},
 		"flags": {
 			"silent_reading_possible": silent_reading_possible,
-			"scroll_used": scroll_used
+			"scroll_used": scroll_used,
+			"answered_without_inspection": answered_without_inspection
 		},
 		"anti_cheat": current_case.get("anti_cheat", {}),
 		"telemetry": {
 			"time_to_first_action_ms": first_action_ms,
-			"scroll_used": scroll_used
+			"scroll_used": scroll_used,
+			"inspect_count": inspect_count,
+			"unique_rows_inspected": unique_rows_inspected.size(),
+			"last_inspected_row_id": last_inspected_row_id
 		}
 	}
 	GlobalMetrics.register_trial(payload)
@@ -248,17 +478,21 @@ func _set_options_locked(locked: bool) -> void:
 
 func _finish_session() -> void:
 	trial_locked = true
+	typewriter_timer.stop()
 	title_label.text = "SESSION COMPLETE [A]"
 	prompt_label.bbcode_enabled = true
 	prompt_label.text = "[b]Archive training finished.[/b]"
+	explain_line.text = ""
 	_set_options_locked(true)
 	_ensure_exit_button()
 
 func _game_over() -> void:
 	trial_locked = true
+	typewriter_timer.stop()
 	title_label.text = "MISSION FAILED [A]"
 	prompt_label.bbcode_enabled = true
 	prompt_label.text = "[b]Stability dropped to zero.[/b]"
+	explain_line.text = ""
 	_set_options_locked(true)
 	_ensure_exit_button()
 
@@ -288,13 +522,18 @@ func _update_stability_ui() -> void:
 		stability_label.text = "STABILITY: %d%%" % int(GlobalMetrics.stability)
 
 func _on_viewport_size_changed() -> void:
-	var is_mobile: bool = get_viewport_rect().size.x < BREAKPOINT_PX
-	desktop_layout.split_offset = int(get_viewport_rect().size.x * 0.48)
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var is_mobile: bool = viewport_size.x < BREAKPOINT_PX
+	desktop_layout.split_offset = int(viewport_size.x * 0.48)
+	options_grid.columns = 1 if is_mobile else 2
+
 	if is_mobile:
 		if table_section.get_parent() != mobile_layout:
 			table_section.reparent(mobile_layout)
 		if task_section.get_parent() != mobile_layout:
 			task_section.reparent(mobile_layout)
+		mobile_layout.move_child(table_section, 0)
+		mobile_layout.move_child(task_section, 1)
 		mobile_layout.visible = true
 		desktop_layout.visible = false
 	else:

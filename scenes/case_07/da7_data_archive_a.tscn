@@ -1,9 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://da7archive001"]
+[gd_scene load_steps=7 format=3 uid="uid://da7archive001"]
 
 [ext_resource type="Script" path="res://scripts/case_07/da7_data_archive_a.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
 [ext_resource type="AudioStream" path="res://audio/error.wav" id="3_error"]
 [ext_resource type="AudioStream" path="res://audio/relay.wav" id="4_relay"]
+[ext_resource type="AudioStream" path="res://audio/click.wav" id="5_click"]
+[ext_resource type="PackedScene" path="res://scenes/ui/ResultStamp.tscn" id="6_stamp"]
 
 [node name="DA7_DataArchiveQuestA" type="Control"]
 layout_mode = 3
@@ -87,13 +89,72 @@ columns = 3
 hide_root = true
 select_mode = 1
 
+[node name="InspectPanel" type="PanelContainer" parent="RootLayout/Body/DesktopLayout/TableSection"]
+custom_minimum_size = Vector2(0, 108)
+layout_mode = 2
+
+[node name="InspectMargin" type="MarginContainer" parent="RootLayout/Body/DesktopLayout/TableSection/InspectPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="InspectVBox" type="VBoxContainer" parent="RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="InspectLabel" type="RichTextLabel" parent="RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+fit_content = false
+scroll_active = false
+autowrap_mode = 2
+text = "Select a row to inspect evidence."
+
+[node name="ScanLabel" type="Label" parent="RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox"]
+layout_mode = 2
+text = "SCAN: 0"
+
 [node name="TaskSection" type="VBoxContainer" parent="RootLayout/Body/DesktopLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
+[node name="DossierPanel" type="PanelContainer" parent="RootLayout/Body/DesktopLayout/TaskSection"]
+layout_mode = 2
+
+[node name="DossierMargin" type="MarginContainer" parent="RootLayout/Body/DesktopLayout/TaskSection/DossierPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="DossierVBox" type="VBoxContainer" parent="RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="CaseTitleLabel" type="Label" parent="RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "FILE: ACCESS_LOG_07"
+
+[node name="BriefingLabel" type="RichTextLabel" parent="RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+fit_content = false
+scroll_active = false
+autowrap_mode = 2
+text = "Briefing..."
+
+[node name="ObjectiveLabel" type="Label" parent="RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "OBJECTIVE"
+
 [node name="PromptLabel" type="RichTextLabel" parent="RootLayout/Body/DesktopLayout/TaskSection"]
-custom_minimum_size = Vector2(0, 100)
+custom_minimum_size = Vector2(0, 84)
 layout_mode = 2
 theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
@@ -106,6 +167,14 @@ size_flags_vertical = 3
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
 columns = 2
+
+[node name="ExplainLine" type="RichTextLabel" parent="RootLayout/Body/DesktopLayout/TaskSection"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+fit_content = false
+scroll_active = false
+autowrap_mode = 2
+text = ""
 
 [node name="MobileLayout" type="VBoxContainer" parent="RootLayout/Body"]
 visible = false
@@ -130,11 +199,21 @@ size_flags_vertical = 4
 step = 1.0
 value = 100.0
 
+[node name="ResultStamp" parent="." instance=ExtResource("6_stamp")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
 [node name="Runtime" type="Node" parent="."]
 
 [node name="Audio" type="Node" parent="Runtime"]
 
 [node name="SfxClick" type="AudioStreamPlayer" parent="Runtime/Audio"]
+stream = ExtResource("5_click")
 
 [node name="SfxError" type="AudioStreamPlayer" parent="Runtime/Audio"]
 stream = ExtResource("3_error")
@@ -144,5 +223,6 @@ stream = ExtResource("4_relay")
 
 [node name="TypewriterTimer" type="Timer" parent="Runtime"]
 one_shot = true
+wait_time = 0.03
 
 [node name="TelemetryTimer" type="Timer" parent="Runtime"]

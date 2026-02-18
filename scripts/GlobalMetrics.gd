@@ -17,7 +17,7 @@ var stability: float:
 		if _stability <= 0.0:
 			game_over.emit()
 var current_level_index: int = 0
-var current_mode: String = "DEC" # DEC, OCT, HEX
+var current_mode: String = "DEC"
 var current_target_value: int = 0
 
 # Analysis History
@@ -25,14 +25,13 @@ var session_history: Array = []
 
 func register_trial(data: Dictionary):
 	session_history.append(data)
-	# Unified telemetry print for quick debugging.
+
 	var match_key = data.get("match_key", "UNKNOWN")
 	var is_correct = data.get("is_correct", false)
-	# Use elapsed_ms if available (Radio Quest), else duration (Legacy)
+
 	var duration = data.get("duration", data.get("elapsed_ms", 0.0) / 1000.0)
 	print("MATCH: ", match_key, " | Correct: ", is_correct, " | Time: ", duration)
 
-	# Logic for Stage A (Radio): Penalty only if FIT is false. Overkill is acceptable.
 	var stability_delta = data.get("stability_delta", null)
 
 	if stability_delta != null:
@@ -43,17 +42,15 @@ func register_trial(data: Dictionary):
 		var penalty_condition = false
 
 		if is_fit != null:
-			# New schema: punish only if not fit
 			penalty_condition = (is_fit == false)
 		else:
-			# Fallback for old schema
+
 			penalty_condition = (is_correct == false)
 
 		if penalty_condition:
 			stability = max(0.0, stability - 10.0)
 			emit_signal("stability_changed", stability, -10.0)
 
-# Matrix (Complexity C)
 const MATRIX_SIZE := 6
 const MATRIX_WEIGHTS := [32, 16, 8, 4, 2, 1]
 var matrix_quest: Dictionary = {}
