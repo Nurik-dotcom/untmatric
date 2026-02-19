@@ -11,33 +11,33 @@ const CASES_A: Array = [
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
 		"case_title": "ACCESS_LOG_07",
-		"briefing": "Archive mirror restored. Access traces were partially obfuscated. Verify only real high-access records.",
-		"objective": "Identify IDs where Access >= 3.",
-		"prompt": "Which records satisfy Access >= 3?",
+		"briefing": "Зеркало архива восстановлено. Следы доступа частично обфусцированы. Проверьте только реальные записи с высоким уровнем доступа.",
+		"objective": "Определите ID, где Доступ >= 3.",
+		"prompt": "Какие записи удовлетворяют Доступ >= 3?",
 		"table": {
 			"columns": [
 				{"col_id": "id", "title": "ID"},
-				{"col_id": "name", "title": "Name"},
-				{"col_id": "acc", "title": "Access"}
+				{"col_id": "name", "title": "Имя"},
+				{"col_id": "acc", "title": "Доступ"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"id": "101", "name": "Alpha", "acc": "2"}},
-				{"row_id": "r2", "cells": {"id": "102", "name": "Beta", "acc": "3"}},
-				{"row_id": "r3", "cells": {"id": "103", "name": "Gamma", "acc": "4"}}
+				{"row_id": "r1", "cells": {"id": "101", "name": "Альфа", "acc": "2"}},
+				{"row_id": "r2", "cells": {"id": "102", "name": "Бета", "acc": "3"}},
+				{"row_id": "r3", "cells": {"id": "103", "name": "Гамма", "acc": "4"}}
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "File report: high-access list contains ID 101", "f_reason": "MISSED_COLUMN"},
-			{"id": "opt_2", "text": "Submit evidence packet: IDs 102 and 103", "f_reason": null},
-			{"id": "opt_3", "text": "Escalate all rows as high-access", "f_reason": "MISSED_ROW"},
-			{"id": "opt_4", "text": "Seize only ID 103 as confirmed", "f_reason": "MISSED_ROW"}
+			{"id": "opt_1", "text": "Оформить отчёт: список высокого доступа содержит ID 101", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "Отправить пакет доказательств: ID 102 и 103", "f_reason": null},
+			{"id": "opt_3", "text": "Эскалировать все строки как высокий доступ", "f_reason": "MISSED_ROW"},
+			{"id": "opt_4", "text": "Подтвердить только ID 103", "f_reason": "MISSED_ROW"}
 		],
 		"answer_id": "opt_2",
 		"reveal": {
-			"on_correct": "Rows r2 and r3 satisfy Access >= 3. Row r1 is below threshold.",
+			"on_correct": "Строки r2 и r3 удовлетворяют Доступ >= 3. Строка r1 ниже порога.",
 			"on_wrong_by_reason": {
-				"MISSED_COLUMN": "You misread Access values. Use the Access column as the filter key.",
-				"MISSED_ROW": "At least one qualifying row was dropped or over-included."
+				"MISSED_COLUMN": "Значения Доступ прочитаны неверно. Используйте столбец Доступ как ключ фильтра.",
+				"MISSED_ROW": "Хотя бы одна подходящая строка пропущена или лишняя строка включена."
 			}
 		},
 		"highlight": {
@@ -53,34 +53,34 @@ const CASES_A: Array = [
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
 		"case_title": "SYSTEM_STATUS_12",
-		"briefing": "Ops channel reports instability spikes. Extract only explicit ERROR records from incident timeline.",
-		"objective": "Identify timestamps where Status == ERROR.",
-		"prompt": "Which timestamps are marked ERROR?",
+		"briefing": "Оперативный канал сообщает о всплесках нестабильности. Извлеките только явные записи с ОШИБКОЙ из хронологии инцидента.",
+		"objective": "Определите отметки времени, где Статус == ОШИБКА.",
+		"prompt": "Какие отметки времени помечены как ОШИБКА?",
 		"table": {
 			"columns": [
-				{"col_id": "time", "title": "Time"},
-				{"col_id": "status", "title": "Status"}
+				{"col_id": "time", "title": "Время"},
+				{"col_id": "status", "title": "Статус"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"time": "09:00", "status": "OK"}},
-				{"row_id": "r2", "cells": {"time": "09:05", "status": "ERROR"}},
-				{"row_id": "r3", "cells": {"time": "09:10", "status": "WARN"}},
-				{"row_id": "r4", "cells": {"time": "09:15", "status": "ERROR"}}
+				{"row_id": "r1", "cells": {"time": "09:00", "status": "НОРМА"}},
+				{"row_id": "r2", "cells": {"time": "09:05", "status": "ОШИБКА"}},
+				{"row_id": "r3", "cells": {"time": "09:10", "status": "ПРЕДУПРЕЖДЕНИЕ"}},
+				{"row_id": "r4", "cells": {"time": "09:15", "status": "ОШИБКА"}}
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "Mark 09:00 and 09:10 as critical failures", "f_reason": "MISSED_COLUMN"},
-			{"id": "opt_2", "text": "Open incident ticket for 09:05 and 09:15", "f_reason": null},
-			{"id": "opt_3", "text": "Escalate only 09:05", "f_reason": "MISSED_ROW"},
-			{"id": "opt_4", "text": "Flag every line as ERROR", "f_reason": "COUNT_HEADER_AS_RECORD"}
+			{"id": "opt_1", "text": "Отметить 09:00 и 09:10 как критические сбои", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "Открыть тикет инцидента для 09:05 и 09:15", "f_reason": null},
+			{"id": "opt_3", "text": "Эскалировать только 09:05", "f_reason": "MISSED_ROW"},
+			{"id": "opt_4", "text": "Пометить каждую строку как ОШИБКА", "f_reason": "COUNT_HEADER_AS_RECORD"}
 		],
 		"answer_id": "opt_2",
 		"reveal": {
-			"on_correct": "Only rows with explicit ERROR status are r2 and r4.",
+			"on_correct": "Только строки с явным статусом ОШИБКА — r2 и r4.",
 			"on_wrong_by_reason": {
-				"MISSED_COLUMN": "Status must drive the filter; time values alone are not conditions.",
-				"MISSED_ROW": "One ERROR row was skipped.",
-				"COUNT_HEADER_AS_RECORD": "Do not treat labels or unrelated statuses as incident rows."
+				"MISSED_COLUMN": "Фильтр должен строиться по Статус; одних значений времени недостаточно.",
+				"MISSED_ROW": "Одна строка с ОШИБКОЙ была пропущена.",
+				"COUNT_HEADER_AS_RECORD": "Не считайте заголовки или нерелевантные статусы строками инцидента."
 			}
 		},
 		"highlight": {
@@ -96,31 +96,31 @@ const CASES_A: Array = [
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
 		"case_title": "RELATION_MAP_03",
-		"briefing": "Entity map recovered from backup node. Confirm user-to-post dependency before linking archives.",
-		"objective": "Determine relation type: one user can write many posts.",
-		"prompt": "What relation fits Users.id -> Posts.user_id?",
+		"briefing": "Карта сущностей восстановлена с резервного узла. Подтвердите зависимость пользователь-пост перед связыванием архивов.",
+		"objective": "Определите тип связи: один пользователь может написать много постов.",
+		"prompt": "Какая связь соответствует Пользователи.id -> Посты.user_id?",
 		"table": {
 			"columns": [
-				{"col_id": "table", "title": "Table"},
-				{"col_id": "key", "title": "Key"}
+				{"col_id": "table", "title": "Таблица"},
+				{"col_id": "key", "title": "Ключ"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"table": "Users", "key": "id (PK)"}},
-				{"row_id": "r2", "cells": {"table": "Posts", "key": "user_id (FK)"}}
+				{"row_id": "r1", "cells": {"table": "Пользователи", "key": "id (PK)"}},
+				{"row_id": "r2", "cells": {"table": "Посты", "key": "user_id (FK)"}}
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "Approve relation as one-to-one", "f_reason": "CONFUSED_PK_FIELD"},
-			{"id": "opt_2", "text": "Approve relation as one-to-many", "f_reason": null},
-			{"id": "opt_3", "text": "Approve relation as many-to-many", "f_reason": "CONFUSED_ROW_COLUMN"},
-			{"id": "opt_4", "text": "Reject relation linkage", "f_reason": "CONFUSED_PK_FIELD"}
+			{"id": "opt_1", "text": "Подтвердить связь один-к-одному", "f_reason": "CONFUSED_PK_FIELD"},
+			{"id": "opt_2", "text": "Подтвердить связь один-ко-многим", "f_reason": null},
+			{"id": "opt_3", "text": "Подтвердить связь многие-ко-многим", "f_reason": "CONFUSED_ROW_COLUMN"},
+			{"id": "opt_4", "text": "Отклонить связь", "f_reason": "CONFUSED_PK_FIELD"}
 		],
 		"answer_id": "opt_2",
 		"reveal": {
-			"on_correct": "Users.id (PK) referenced by Posts.user_id (FK) forms a 1:M relation.",
+			"on_correct": "Пользователи.id (PK), на который ссылается Посты.user_id (FK), образует связь 1:M.",
 			"on_wrong_by_reason": {
-				"CONFUSED_PK_FIELD": "PK to FK here allows multiple posts per one user.",
-				"CONFUSED_ROW_COLUMN": "Relation type follows key semantics, not table order in the grid."
+				"CONFUSED_PK_FIELD": "Связь PK->FK здесь допускает несколько постов на одного пользователя.",
+				"CONFUSED_ROW_COLUMN": "Тип связи определяется семантикой ключей, а не порядком таблиц в сетке."
 			}
 		},
 		"highlight": {
@@ -136,13 +136,13 @@ const CASES_A: Array = [
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
 		"case_title": "ORDERS_AUDIT_22",
-		"briefing": "Payment logs contain mixed-value orders. Isolate only low-amount transactions for manual review.",
-		"objective": "Identify orders where Amount < 100.",
-		"prompt": "Which orders satisfy Amount < 100?",
+		"briefing": "Платёжные логи содержат заказы с разными суммами. Выделите только транзакции с малой суммой для ручной проверки.",
+		"objective": "Определите заказы, где Сумма < 100.",
+		"prompt": "Какие заказы удовлетворяют Сумма < 100?",
 		"table": {
 			"columns": [
-				{"col_id": "ord", "title": "Order"},
-				{"col_id": "sum", "title": "Amount"}
+				{"col_id": "ord", "title": "Заказ"},
+				{"col_id": "sum", "title": "Сумма"}
 			],
 			"rows": [
 				{"row_id": "r1", "cells": {"ord": "A-10", "sum": "150"}},
@@ -152,17 +152,17 @@ const CASES_A: Array = [
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "Freeze orders A-11 and A-12 for review", "f_reason": null},
-			{"id": "opt_2", "text": "Freeze A-11, A-12, and A-13", "f_reason": "MISSED_COLUMN"},
-			{"id": "opt_3", "text": "Freeze only A-10", "f_reason": "MISSED_ROW"},
-			{"id": "opt_4", "text": "Freeze only A-13", "f_reason": "MISSED_COLUMN"}
+			{"id": "opt_1", "text": "Заморозить для проверки заказы A-11 и A-12", "f_reason": null},
+			{"id": "opt_2", "text": "Заморозить A-11, A-12 и A-13", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_3", "text": "Заморозить только A-10", "f_reason": "MISSED_ROW"},
+			{"id": "opt_4", "text": "Заморозить только A-13", "f_reason": "MISSED_COLUMN"}
 		],
 		"answer_id": "opt_1",
 		"reveal": {
-			"on_correct": "A-11 (80) and A-12 (99) are strictly below 100.",
+			"on_correct": "A-11 (80) и A-12 (99) строго меньше 100.",
 			"on_wrong_by_reason": {
-				"MISSED_COLUMN": "Use strict '< 100'. Value 100 is excluded.",
-				"MISSED_ROW": "You selected non-qualifying rows and missed valid low amounts."
+				"MISSED_COLUMN": "Используйте строгое '< 100'. Значение 100 исключается.",
+				"MISSED_ROW": "Вы выбрали неподходящие строки и пропустили корректные малые суммы."
 			}
 		},
 		"highlight": {
@@ -178,32 +178,32 @@ const CASES_A: Array = [
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
 		"case_title": "STATUS_FILTER_31",
-		"briefing": "Query template is damaged. Restore the operator that excludes CLOSED states.",
-		"objective": "Pick operator for condition: status not equal to CLOSED.",
-		"prompt": "Which expression correctly means 'status not equal CLOSED'?",
+		"briefing": "Шаблон запроса повреждён. Восстановите оператор, исключающий состояние ЗАКРЫТ.",
+		"objective": "Выберите оператор для условия: статус не равно ЗАКРЫТ.",
+		"prompt": "Какое выражение корректно означает 'статус не равно ЗАКРЫТ'?",
 		"table": {
 			"columns": [
-				{"col_id": "field", "title": "Field"},
-				{"col_id": "value", "title": "Value"}
+				{"col_id": "field", "title": "Поле"},
+				{"col_id": "value", "title": "Значение"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"field": "status", "value": "CLOSED"}},
-				{"row_id": "r2", "cells": {"field": "status", "value": "OPEN"}},
-				{"row_id": "r3", "cells": {"field": "status", "value": "PENDING"}}
+				{"row_id": "r1", "cells": {"field": "статус", "value": "ЗАКРЫТ"}},
+				{"row_id": "r2", "cells": {"field": "статус", "value": "ОТКРЫТ"}},
+				{"row_id": "r3", "cells": {"field": "статус", "value": "ОЖИДАНИЕ"}}
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "Deploy filter: status == CLOSED", "f_reason": "MISSED_COLUMN"},
-			{"id": "opt_2", "text": "Deploy filter: status != CLOSED", "f_reason": null},
-			{"id": "opt_3", "text": "Deploy filter: status > CLOSED", "f_reason": "CONFUSED_ROW_COLUMN"},
-			{"id": "opt_4", "text": "Deploy filter: status <= CLOSED", "f_reason": "CONFUSED_ROW_COLUMN"}
+			{"id": "opt_1", "text": "Применить фильтр: статус == ЗАКРЫТ", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "Применить фильтр: статус != ЗАКРЫТ", "f_reason": null},
+			{"id": "opt_3", "text": "Применить фильтр: статус > ЗАКРЫТ", "f_reason": "CONFUSED_ROW_COLUMN"},
+			{"id": "opt_4", "text": "Применить фильтр: статус <= ЗАКРЫТ", "f_reason": "CONFUSED_ROW_COLUMN"}
 		],
 		"answer_id": "opt_2",
 		"reveal": {
-			"on_correct": "Operator '!=' excludes CLOSED and leaves OPEN/PENDING.",
+			"on_correct": "Оператор '!=' исключает ЗАКРЫТ и оставляет ОТКРЫТ/ОЖИДАНИЕ.",
 			"on_wrong_by_reason": {
-				"MISSED_COLUMN": "Equality checks CLOSED itself, not the exclusion set.",
-				"CONFUSED_ROW_COLUMN": "String comparison operators here do not represent logical exclusion."
+				"MISSED_COLUMN": "Проверка равенства выбирает сам ЗАКРЫТ, а не множество исключения.",
+				"CONFUSED_ROW_COLUMN": "Операторы сравнения строк здесь не выражают логическое исключение."
 			}
 		},
 		"highlight": {
@@ -219,33 +219,33 @@ const CASES_A: Array = [
 		"topic": "DB_BASICS",
 		"interaction_type": "SINGLE_CHOICE",
 		"case_title": "CLIENT_CITY_19",
-		"briefing": "Regional export list corrupted. Recover only client IDs linked to Almaty records.",
-		"objective": "Select customers where City == Almaty.",
-		"prompt": "Which customers are from Almaty?",
+		"briefing": "Региональный экспортный список повреждён. Восстановите только ID клиентов, связанных с записями Алматы.",
+		"objective": "Выберите клиентов, где Город == Алматы.",
+		"prompt": "Какие клиенты из Алматы?",
 		"table": {
 			"columns": [
 				{"col_id": "cid", "title": "CID"},
-				{"col_id": "city", "title": "City"}
+				{"col_id": "city", "title": "Город"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"cid": "C1", "city": "Almaty"}},
-				{"row_id": "r2", "cells": {"cid": "C2", "city": "Astana"}},
-				{"row_id": "r3", "cells": {"cid": "C3", "city": "Almaty"}}
+				{"row_id": "r1", "cells": {"cid": "C1", "city": "Алматы"}},
+				{"row_id": "r2", "cells": {"cid": "C2", "city": "Астана"}},
+				{"row_id": "r3", "cells": {"cid": "C3", "city": "Алматы"}}
 			]
 		},
 		"options": [
-			{"id": "opt_1", "text": "Issue warrant for C2 only", "f_reason": "MISSED_COLUMN"},
-			{"id": "opt_2", "text": "Issue warrant for C1 and C3", "f_reason": null},
-			{"id": "opt_3", "text": "Issue warrant for all customers", "f_reason": "COUNT_HEADER_AS_RECORD"},
-			{"id": "opt_4", "text": "Close case: no matching customers", "f_reason": "MISSED_ROW"}
+			{"id": "opt_1", "text": "Выдать ордер только для C2", "f_reason": "MISSED_COLUMN"},
+			{"id": "opt_2", "text": "Выдать ордер для C1 и C3", "f_reason": null},
+			{"id": "opt_3", "text": "Выдать ордер для всех клиентов", "f_reason": "COUNT_HEADER_AS_RECORD"},
+			{"id": "opt_4", "text": "Закрыть дело: подходящих клиентов нет", "f_reason": "MISSED_ROW"}
 		],
 		"answer_id": "opt_2",
 		"reveal": {
-			"on_correct": "C1 and C3 are tagged with City = Almaty.",
+			"on_correct": "C1 и C3 помечены как Город = Алматы.",
 			"on_wrong_by_reason": {
-				"MISSED_COLUMN": "Filter must match City, not CID ordering.",
-				"COUNT_HEADER_AS_RECORD": "Do not escalate non-matching rows.",
-				"MISSED_ROW": "Valid Almaty rows were skipped."
+				"MISSED_COLUMN": "Фильтр должен совпадать по Город, а не по порядку CID.",
+				"COUNT_HEADER_AS_RECORD": "Не эскалируйте неподходящие строки.",
+				"MISSED_ROW": "Корректные строки Алматы были пропущены."
 			}
 		},
 		"highlight": {

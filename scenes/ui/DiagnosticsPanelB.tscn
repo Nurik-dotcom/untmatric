@@ -19,7 +19,7 @@ theme_override_constants/separation = 16
 
 [node name="Title" type="Label" parent="VBoxContainer"]
 layout_mode = 2
-text = "DIAGNOSTIC TRACE"
+text = "ДИАГНОСТИЧЕСКИЙ ТРЕЙС"
 horizontal_alignment = 1
 
 [node name="ExplainList" type="RichTextLabel" parent="VBoxContainer"]
@@ -30,9 +30,10 @@ fit_content = true
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "Trace log..."
+text = "Журнал трассировки..."
 
 [node name="BtnClose" type="Button" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-text = "CLOSE"
+text = "ЗАКРЫТЬ"
+

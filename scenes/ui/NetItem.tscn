@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/NetItem.gd" id="1_script"]
+
+[node name="NetItem" type="Button"]
+custom_minimum_size = Vector2(0, 88)
+size_flags_horizontal = 3
+theme_type_variation = &"FlatButton"
+text = "СЕТЕВОЙ ЭЛЕМЕНТ"
+script = ExtResource("1_script")

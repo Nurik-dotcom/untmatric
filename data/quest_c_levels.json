@@ -2,7 +2,7 @@
   {
     "id": "C-01",
     "bucket": "newbie",
-    "briefing": "Find the loop boundary bug.",
+    "briefing": "Найдите ошибку границы цикла.",
     "expected_s": 15,
     "actual_s": 10,
     "code_lines": [
@@ -20,14 +20,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "range(5) produces 0..4, sum is 10.",
-      "Need to include 5 to reach 15."
+      "range(5) даёт 0..4, сумма равна 10.",
+      "Нужно включить 5, чтобы получить 15."
     ]
   },
   {
     "id": "C-02",
     "bucket": "newbie",
-    "briefing": "Boundary operator in condition is wrong.",
+    "briefing": "Граничный оператор в условии неверный.",
     "expected_s": 12,
     "actual_s": 9,
     "code_lines": [
@@ -46,14 +46,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Current condition skips i = 3.",
-      "Including i = 3 gives 3 + 4 + 5 = 12."
+      "Текущее условие пропускает i = 3.",
+      "С учётом i = 3 получаем 3 + 4 + 5 = 12."
     ]
   },
   {
     "id": "C-03",
     "bucket": "newbie",
-    "briefing": "Step value in range is too large.",
+    "briefing": "Значение шага в range слишком велико.",
     "expected_s": 20,
     "actual_s": 18,
     "code_lines": [
@@ -71,14 +71,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Current sequence is 0, 3, 6, 9.",
-      "With step 2: 0, 2, 4, 6, 8 -> sum 20."
+      "Текущая последовательность: 0, 3, 6, 9.",
+      "С шагом 2: 0, 2, 4, 6, 8 -> сумма 20."
     ]
   },
   {
     "id": "C-04",
     "bucket": "newbie",
-    "briefing": "Accumulator uses the wrong expression.",
+    "briefing": "Аккумулятор использует неверное выражение.",
     "expected_s": 6,
     "actual_s": 12,
     "code_lines": [
@@ -96,14 +96,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "The current formula doubles each term.",
-      "Base loop sum for 0..3 is 6."
+      "Текущая формула удваивает каждый член.",
+      "Базовая сумма цикла для 0..3 равна 6."
     ]
   },
   {
     "id": "C-05",
     "bucket": "newbie",
-    "briefing": "Equality check should be a range check.",
+    "briefing": "Проверка равенства должна быть проверкой диапазона.",
     "expected_s": 6,
     "actual_s": 2,
     "code_lines": [
@@ -122,14 +122,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Current code adds only one value (2).",
-      "Need 0 + 1 + 2 + 3 = 6."
+      "Текущий код добавляет только одно значение (2).",
+      "Нужно 0 + 1 + 2 + 3 = 6."
     ]
   },
   {
     "id": "C-06",
     "bucket": "newbie",
-    "briefing": "Logical operator causes over-selection.",
+    "briefing": "Логический оператор вызывает избыточный отбор.",
     "expected_s": 1,
     "actual_s": 5,
     "code_lines": [
@@ -148,14 +148,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "OR is too broad for this filter.",
-      "Only i = 4 satisfies both conditions."
+      "OR слишком широк для этого фильтра.",
+      "Только i = 4 удовлетворяет обоим условиям."
     ]
   },
   {
     "id": "C-07",
     "bucket": "stalker",
-    "briefing": "Wrong loop upper bound.",
+    "briefing": "Неверная верхняя граница цикла.",
     "expected_s": 20,
     "actual_s": 27,
     "code_lines": [
@@ -173,14 +173,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Current range includes one extra value.",
-      "2..6 gives the expected 20."
+      "Текущий диапазон включает одно лишнее значение.",
+      "Диапазон 2..6 даёт ожидаемые 20."
     ]
   },
   {
     "id": "C-08",
     "bucket": "stalker",
-    "briefing": "Wrong sign in descending loop.",
+    "briefing": "Неверный знак в убывающем цикле.",
     "expected_s": 5,
     "actual_s": 0,
     "code_lines": [
@@ -198,14 +198,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Positive step with start > stop never runs.",
-      "Need negative step for countdown."
+      "Положительный шаг при start > stop не выполняется.",
+      "Для обратного отсчёта нужен отрицательный шаг."
     ]
   },
   {
     "id": "C-09",
     "bucket": "stalker",
-    "briefing": "Modulo branch checks wrong remainder.",
+    "briefing": "Проверяется неверный остаток по модулю.",
     "expected_s": 4,
     "actual_s": 3,
     "code_lines": [
@@ -224,14 +224,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "We need multiples of 3.",
-      "In 0..9 these are 0, 3, 6, 9."
+      "Нужны кратные 3.",
+      "В 0..9 это 0, 3, 6, 9."
     ]
   },
   {
     "id": "C-10",
     "bucket": "stalker",
-    "briefing": "Accumulator starts with wrong value.",
+    "briefing": "Аккумулятор стартует с неверного значения.",
     "expected_s": 15,
     "actual_s": 16,
     "code_lines": [
@@ -249,14 +249,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Loop body is correct.",
-      "Initial accumulator must be zero."
+      "Тело цикла верное.",
+      "Начальное значение накопителя должно быть нулём."
     ]
   },
   {
     "id": "C-11",
     "bucket": "stalker",
-    "briefing": "Update operator is inverted.",
+    "briefing": "Оператор обновления инвертирован.",
     "expected_s": 10,
     "actual_s": -10,
     "code_lines": [
@@ -274,14 +274,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Subtraction flips sign of the intended result.",
-      "Addition restores expected sum."
+      "Вычитание меняет знак ожидаемого результата.",
+      "Сложение возвращает ожидаемую сумму."
     ]
   },
   {
     "id": "C-12",
     "bucket": "stalker",
-    "briefing": "Negation in parity check is incorrect.",
+    "briefing": "Отрицание в проверке чётности неверно.",
     "expected_s": 6,
     "actual_s": 9,
     "code_lines": [
@@ -300,14 +300,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Current branch sums odd values.",
-      "Expected value requires even values."
+      "Текущая ветка суммирует нечётные значения.",
+      "Ожидаемое значение требует чётных."
     ]
   },
   {
     "id": "C-13",
     "bucket": "master",
-    "briefing": "Compound condition excludes boundary.",
+    "briefing": "Составное условие исключает границу.",
     "expected_s": 18,
     "actual_s": 12,
     "code_lines": [
@@ -326,14 +326,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Current condition cuts off i = 6.",
-      "Need inclusive upper boundary."
+      "Текущее условие отсекает i = 6.",
+      "Нужна включающая верхняя граница."
     ]
   },
   {
     "id": "C-14",
     "bucket": "master",
-    "briefing": "Wrong arithmetic in accumulation.",
+    "briefing": "Неверная арифметика в накоплении.",
     "expected_s": 12,
     "actual_s": 6,
     "code_lines": [
@@ -351,14 +351,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Division halves each contribution.",
-      "Need direct accumulation of i."
+      "Деление уменьшает каждый вклад вдвое.",
+      "Нужна прямая аккумуляция i."
     ]
   },
   {
     "id": "C-15",
     "bucket": "master",
-    "briefing": "Shifted term in update breaks target.",
+    "briefing": "Сдвинутый член в обновлении ломает цель.",
     "expected_s": 15,
     "actual_s": 10,
     "code_lines": [
@@ -376,14 +376,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Subtracting 1 from each term shifts total down.",
-      "Use original i to match expected sum."
+      "Вычитание 1 из каждого члена занижает сумму.",
+      "Используйте исходное i для ожидаемой суммы."
     ]
   },
   {
     "id": "C-16",
     "bucket": "master",
-    "briefing": "Flow control stops loop too early.",
+    "briefing": "Управление потоком останавливает цикл слишком рано.",
     "expected_s": 45,
     "actual_s": 39,
     "code_lines": [
@@ -403,14 +403,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "continue drops i = 6 from total.",
-      "No jump is needed in this branch."
+      "continue исключает i = 6 из суммы.",
+      "В этой ветке переход не нужен."
     ]
   },
   {
     "id": "C-17",
     "bucket": "master",
-    "briefing": "Assignment used instead of accumulation.",
+    "briefing": "Использовано присваивание вместо накопления.",
     "expected_s": 15,
     "actual_s": 5,
     "code_lines": [
@@ -428,14 +428,14 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Current code overwrites s each iteration.",
-      "Need additive update."
+      "Текущий код перезаписывает s на каждой итерации.",
+      "Нужно аддитивное обновление."
     ]
   },
   {
     "id": "C-18",
     "bucket": "master",
-    "briefing": "Final logic gate in condition is wrong.",
+    "briefing": "Финальный логический оператор в условии неверный.",
     "expected_s": 6,
     "actual_s": 15,
     "code_lines": [
@@ -454,8 +454,8 @@
       "correct_option_id": "A"
     },
     "explain_short": [
-      "OR collects many extra values.",
-      "AND leaves only numbers divisible by both 2 and 3."
+      "OR захватывает слишком много лишних значений.",
+      "AND оставляет только числа, делящиеся и на 2, и на 3."
     ]
   }
 ]

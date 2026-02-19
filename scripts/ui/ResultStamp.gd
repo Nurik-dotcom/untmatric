@@ -19,10 +19,10 @@ func show_result(is_correct: bool) -> void:
 	stamp_panel.scale = Vector2(0.8, 0.8)
 
 	if is_correct:
-		stamp_label.text = "CONFIRMED"
+		stamp_label.text = "ПОДТВЕРЖДЕНО"
 		stamp_label.add_theme_color_override("font_color", Color(0.75, 1.0, 0.72))
 	else:
-		stamp_label.text = "REJECTED"
+		stamp_label.text = "ОТКЛОНЕНО"
 		stamp_label.add_theme_color_override("font_color", Color(1.0, 0.65, 0.62))
 
 	_active_tween = create_tween()
@@ -35,3 +35,4 @@ func show_result(is_correct: bool) -> void:
 	_active_tween.finished.connect(func() -> void:
 		visible = false
 	)
+

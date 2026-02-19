@@ -16,7 +16,7 @@ theme_override_constants/separation = 10
 [node name="LblTitle" type="Label" parent="Root"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "INSPECT"
+text = "ПРОСМОТР"
 horizontal_alignment = 1
 
 [node name="Info" type="GridContainer" parent="Root"]
@@ -27,7 +27,7 @@ columns = 2
 
 [node name="LblSelectorKey" type="Label" parent="Root/Info"]
 layout_mode = 2
-text = "Selector:"
+text = "Селектор:"
 
 [node name="LblSelectorValue" type="Label" parent="Root/Info"]
 layout_mode = 2
@@ -36,7 +36,7 @@ autowrap_mode = 3
 
 [node name="LblKindKey" type="Label" parent="Root/Info"]
 layout_mode = 2
-text = "Kind:"
+text = "Тип:"
 
 [node name="LblKindValue" type="Label" parent="Root/Info"]
 layout_mode = 2
@@ -44,7 +44,7 @@ text = "-"
 
 [node name="LblWeightKey" type="Label" parent="Root/Info"]
 layout_mode = 2
-text = "Weight:"
+text = "Вес:"
 
 [node name="LblWeightValue" type="Label" parent="Root/Info"]
 layout_mode = 2
@@ -56,11 +56,11 @@ text = "!important:"
 
 [node name="LblImportantValue" type="Label" parent="Root/Info"]
 layout_mode = 2
-text = "NO"
+text = "НЕТ"
 
 [node name="LblOrderKey" type="Label" parent="Root/Info"]
 layout_mode = 2
-text = "Order:"
+text = "Порядок:"
 
 [node name="LblOrderValue" type="Label" parent="Root/Info"]
 layout_mode = 2
@@ -68,7 +68,7 @@ text = "0"
 
 [node name="LblColorKey" type="Label" parent="Root/Info"]
 layout_mode = 2
-text = "Color:"
+text = "Цвет:"
 
 [node name="LblColorValue" type="Label" parent="Root/Info"]
 layout_mode = 2
@@ -77,4 +77,5 @@ text = "-"
 [node name="BtnClose" type="Button" parent="Root"]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "CLOSE"
+text = "ЗАКРЫТЬ"
+

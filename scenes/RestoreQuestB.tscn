@@ -41,12 +41,12 @@ alignment = 1
 [node name="LblClueTitle" type="Label" parent="MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "RESTORE B-01"
+text = "ВОССТАНОВЛЕНИЕ B-01"
 
 [node name="LblSessionId" type="Label" parent="MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "SESSION INIT"
+text = "СЕССИЯ ИНИЦ."
 horizontal_alignment = 2
 
 [node name="BarsRow" type="HBoxContainer" parent="MainLayout"]
@@ -71,7 +71,7 @@ layout_mode = 2
 
 [node name="LblTarget" type="Label" parent="MainLayout/TargetDisplay"]
 layout_mode = 2
-text = "TARGET: s = ?"
+text = "ЦЕЛЬ: s = ?"
 horizontal_alignment = 1
 
 [node name="TerminalFrame" type="PanelContainer" parent="MainLayout"]
@@ -87,7 +87,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
-text = "Loading code..."
+text = "Загрузка кода..."
 fit_content = true
 
 [node name="SlotRow" type="HBoxContainer" parent="MainLayout"]
@@ -101,13 +101,13 @@ script = ExtResource("4_dropzone")
 
 [node name="Label" type="Label" parent="MainLayout/SlotRow/DropZone"]
 layout_mode = 2
-text = "[SLOT]"
+text = "[СЛОТ]"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="LblSlotHint" type="Label" parent="MainLayout/SlotRow"]
 layout_mode = 2
-text = "<-- Drag block here"
+text = "<-- Перетащите блок сюда"
 
 [node name="InventoryFrame" type="PanelContainer" parent="MainLayout"]
 layout_mode = 2
@@ -140,21 +140,21 @@ alignment = 1
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ANALYZE"
+text = "АНАЛИЗ"
 
 [node name="BtnSubmit" type="Button" parent="MainLayout/Actions"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
-text = "CHECK"
+text = "ПРОВЕРИТЬ"
 
 [node name="BtnNext" type="Button" parent="MainLayout/Actions"]
 visible = false
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "NEXT"
+text = "ДАЛЕЕ"
 
 [node name="DiagnosticsBlocker" type="ColorRect" parent="."]
 visible = false
@@ -171,3 +171,4 @@ color = Color(0, 0, 0, 0.45)
 layout_mode = 1
 visible = false
 mouse_filter = 0
+

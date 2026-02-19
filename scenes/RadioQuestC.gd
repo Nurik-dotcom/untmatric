@@ -850,7 +850,7 @@ func _update_details_text() -> void:
 		lines.append("outcome: %s" % _outcome_to_text(outcome))
 	else:
 		lines.append("t_true: \u0441\u043a\u0440\u044b\u0442\u043e \u0434\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0438\u044f")
-	lines.append("anchor: %s (%s)" % ["yes" if pool_type == "ANCHOR" else "no", anchor_type])
+	lines.append("якорь: %s (%s)" % ["да" if pool_type == "ANCHOR" else "нет", anchor_type])
 	details_sheet_text.text = "\n".join(lines)
 
 func _format_num(value: float) -> String:

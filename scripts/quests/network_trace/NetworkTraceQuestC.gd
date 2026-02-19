@@ -106,7 +106,7 @@ func _ready() -> void:
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 
 	if not _load_levels():
-		_show_boot_error("Network Trace C data is missing or invalid.")
+		_show_boot_error("Данные Network Trace C отсутствуют или повреждены.")
 		return
 
 	_start_level(0)
@@ -133,10 +133,10 @@ func _notification(what: int) -> void:
 		_apply_layout_mode()
 
 func _setup_runtime_controls() -> void:
-	lbl_title.text = "NETWORK TRACE | C"
+	lbl_title.text = "СЕТЕВОЙ СЛЕД | C"
 	palette_select.clear()
-	palette_select.add_item("GREEN", PALETTE_GREEN_ID)
-	palette_select.add_item("AMBER", PALETTE_AMBER_ID)
+	palette_select.add_item("ЗЕЛЁНЫЙ", PALETTE_GREEN_ID)
+	palette_select.add_item("ЯНТАРНЫЙ", PALETTE_AMBER_ID)
 	palette_select.select(PALETTE_GREEN_ID)
 	btn_next.visible = false
 	btn_analyze.disabled = true
@@ -324,7 +324,7 @@ func _start_level(index: int) -> void:
 
 	btn_next.visible = false
 	btn_analyze.disabled = true
-	btn_analyze.text = "ANALYZE"
+	btn_analyze.text = "АНАЛИЗ"
 	btn_apply_and.disabled = true
 	diagnostics_panel.visible = false
 
@@ -333,28 +333,28 @@ func _start_level(index: int) -> void:
 	_enable_answer_buttons(false)
 
 	state = QuestState.BOARD_LOCKED
-	lbl_status.text = "Place mask and press APPLY AND."
+	lbl_status.text = "Установите маску и нажмите ПРИМЕНИТЬ И."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.84, 0.82))
 	_update_meta_label()
 	_log_event("task_start", {"level": str(current_level.get("id", ""))})
 
 func _render_terminal() -> void:
 	lbl_briefing.clear()
-	lbl_briefing.append_text("[color=#7a7a7a]BRIEFING[/color]\n%s" % str(current_level.get("briefing", "")))
+	lbl_briefing.append_text("[color=#7a7a7a]ИНСТРУКТАЖ[/color]\n%s" % str(current_level.get("briefing", "")))
 	lbl_prompt.clear()
-	lbl_prompt.append_text("[color=#9de6b3]PROMPT[/color]\n%s" % str(current_level.get("prompt", "")))
+	lbl_prompt.append_text("[color=#9de6b3]ЗАДАНИЕ[/color]\n%s" % str(current_level.get("prompt", "")))
 	lbl_target_ip.text = "IP: %s" % str(current_level.get("target_ip", "--"))
 	lbl_target_cidr.text = "CIDR: /%d" % int(current_level.get("cidr", 0))
-	lbl_target_ask.text = "ASK: Network ID (last octet)"
+	lbl_target_ask.text = "ЗАПРОС: ID сети (последний октет)"
 
 	var lines: Array[String] = []
-	lines.append("ACCESS DENIED: wrong segment")
-	lines.append("Host trace: %s" % str(current_level.get("target_ip", "--")))
-	lines.append("Mask profile: /%d" % int(current_level.get("cidr", 0)))
-	lines.append("Use bitwise AND to unlock network lock")
-	lines.append("Segment step: %d" % int(current_level.get("step", 0)))
+	lines.append("ДОСТУП ЗАПРЕЩЁН: неверный сегмент")
+	lines.append("Трасса узла: %s" % str(current_level.get("target_ip", "--")))
+	lines.append("Профиль маски: /%d" % int(current_level.get("cidr", 0)))
+	lines.append("Используйте побитовое AND, чтобы открыть сетевой замок")
+	lines.append("Шаг сегмента: %d" % int(current_level.get("step", 0)))
 	var expected_last: int = int(current_level.get("expected_network_last", 0))
-	lines.append("Target network ends at .%d" % (mini(255, expected_last + int(current_level.get("step", 0)) - 1)))
+	lines.append("Целевая сеть заканчивается на .%d" % (mini(255, expected_last + int(current_level.get("step", 0)) - 1)))
 
 	var text_value: String = ""
 	for line in lines:
@@ -394,7 +394,7 @@ func _on_mask_selected(mask_data: Dictionary, sender: Node) -> void:
 	pending_mask_data = mask_data.duplicate(true)
 	mask_overlay.set_selected(sender == mask_overlay)
 	_play_audio("click")
-	lbl_status.text = "Mask selected. Tap mask row or drag onto mask row."
+	lbl_status.text = "Маска выбрана. Нажмите строку маски или перетащите маску на неё."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.9, 1.0))
 	_log_event("mask_selected", {"cidr": int(mask_data.get("cidr", 0))})
 
@@ -411,7 +411,7 @@ func _on_mask_target_tapped() -> void:
 		return
 	_register_first_action()
 	if pending_mask_data.is_empty():
-		lbl_status.text = "Select mask first."
+		lbl_status.text = "Сначала выберите маску."
 		lbl_status.add_theme_color_override("font_color", Color(0.95, 0.84, 0.6))
 		return
 	_apply_mask_placement(pending_mask_data, "tap")
@@ -455,7 +455,7 @@ func _apply_mask_placement(mask_data: Dictionary, source: String) -> void:
 	_enable_answer_buttons(false)
 	state = QuestState.MASK_PLACED
 	_play_audio("click")
-	lbl_status.text = "Mask placed. Press APPLY AND."
+	lbl_status.text = "Маска установлена. Нажмите ПРИМЕНИТЬ И."
 	lbl_status.add_theme_color_override("font_color", Color(0.72, 0.95, 0.86))
 	_log_event("mask_placed", {"source": source, "mask_last": mask_last_value})
 
@@ -486,7 +486,7 @@ func _on_apply_and_pressed() -> void:
 	ruler.pulse_marker(1000)
 	lock_indicator.set_applied()
 	_enable_answer_buttons(true)
-	lbl_status.text = "AND complete. Choose network id."
+	lbl_status.text = "Операция И выполнена. Выберите ID сети."
 	lbl_status.add_theme_color_override("font_color", Color(0.66, 0.95, 0.74))
 	_log_event("and_applied", {"result": and_result_last})
 
@@ -553,7 +553,7 @@ func _on_answer_pressed(index: int) -> void:
 func _handle_success() -> void:
 	state = QuestState.ANSWERED
 	lock_indicator.set_open()
-	lbl_status.text = "LOCK OPEN. %s" % str(current_level.get("explain_short", ""))
+	lbl_status.text = "ЗАМОК ОТКРЫТ. %s" % str(current_level.get("explain_short", ""))
 	lbl_status.add_theme_color_override("font_color", Color(0.35, 1.0, 0.48))
 	_play_audio("relay")
 	_finish_level(true, "success")
@@ -575,8 +575,8 @@ func _handle_failure(error_code: String) -> void:
 	if wrong_count >= 2 and not safe_mode_used:
 		safe_mode_used = true
 		state = QuestState.SAFE_MODE
-		btn_analyze.text = "DIAGNOSTICS"
-		lbl_status.text = "Safe mode unlocked. Open diagnostics."
+		btn_analyze.text = "ДИАГНОСТИКА"
+		lbl_status.text = "Безопасный режим разблокирован. Откройте диагностику."
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.74, 0.44))
 
 	if wrong_count >= MAX_ATTEMPTS:
@@ -589,7 +589,7 @@ func _on_analyze_pressed() -> void:
 	if level_finished:
 		return
 	if wrong_count < 1 and not safe_mode_used:
-		lbl_status.text = "Analyze unlocks after first error."
+		lbl_status.text = "Анализ открывается после первой ошибки."
 		lbl_status.add_theme_color_override("font_color", Color(0.92, 0.84, 0.58))
 		return
 
@@ -609,16 +609,16 @@ func _show_diagnostics(reason: String) -> void:
 	var range_end: int = mini(255, network_last + step - 1)
 
 	var lines: Array[String] = []
-	lines.append("Case: %s" % str(current_level.get("id", "")))
-	lines.append("Reason: %s" % reason)
-	lines.append("IP last: %d (%s)" % [ip_last, _byte_to_binary(ip_last)])
-	lines.append("MASK last: %d (%s)" % [mask_last, _byte_to_binary(mask_last)])
-	lines.append("AND result: %d (%s)" % [and_value, _byte_to_binary(and_value)])
-	lines.append("Step: %d" % step)
-	lines.append("Segment: %d..%d" % [network_last, range_end])
-	lines.append("Expected network: %d" % int(current_level.get("expected_network_last", 0)))
+	lines.append("Дело: %s" % str(current_level.get("id", "")))
+	lines.append("Причина: %s" % reason)
+	lines.append("Последний октет IP: %d (%s)" % [ip_last, _byte_to_binary(ip_last)])
+	lines.append("Последний октет MASK: %d (%s)" % [mask_last, _byte_to_binary(mask_last)])
+	lines.append("Результат AND: %d (%s)" % [and_value, _byte_to_binary(and_value)])
+	lines.append("Шаг: %d" % step)
+	lines.append("Сегмент: %d..%d" % [network_last, range_end])
+	lines.append("Ожидаемая сеть: %d" % int(current_level.get("expected_network_last", 0)))
 	if not last_error_code.is_empty():
-		lines.append("Last error: %s" % last_error_code)
+		lines.append("Последняя ошибка: %s" % last_error_code)
 		lines.append(ERROR_MAP.get_error_tip(last_error_code))
 		for detail in ERROR_MAP.detail_messages(last_error_code):
 			lines.append(detail)
@@ -631,7 +631,7 @@ func _show_diagnostics(reason: String) -> void:
 				lines.append(line_text)
 
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", "DIAGNOSTICS", lines)
+		diagnostics_panel.call("setup", "ДИАГНОСТИКА", lines)
 	diagnostics_panel.visible = true
 	_log_event("diagnostics_open", {"reason": reason})
 
@@ -655,7 +655,7 @@ func _on_reset_pressed() -> void:
 	diagnostics_panel.visible = false
 	state = QuestState.BOARD_LOCKED
 	_play_audio("click")
-	lbl_status.text = "Board reset. Place mask and apply AND."
+	lbl_status.text = "Поле сброшено. Установите маску и примените И."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.86, 0.95))
 	_log_event("reset_pressed", {})
 
@@ -703,7 +703,7 @@ func _play_audio(sound_name: String) -> void:
 
 func _update_meta_label() -> void:
 	var total_seconds: int = maxi(0, int(ceil(time_left_sec)))
-	lbl_meta.text = "CASE %s | ERR %d/%d | T-%02d:%02d" % [
+	lbl_meta.text = "ДЕЛО %s | ОШ %d/%d | T-%02d:%02d" % [
 		str(current_level.get("id", "--")),
 		wrong_count,
 		MAX_ATTEMPTS,
@@ -756,7 +756,7 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 	_log_event("task_end", {"reason": reason, "is_correct": is_correct})
 
 	if not is_correct and reason != "timeout":
-		lbl_status.text = str(current_level.get("explain_short", "Check diagnostics."))
+		lbl_status.text = str(current_level.get("explain_short", "Проверьте диагностику."))
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.62, 0.45))
 
 	var elapsed_ms: int = end_tick - level_started_ms
@@ -875,3 +875,5 @@ func _byte_to_binary(value: int) -> String:
 func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	body.vertical = viewport_size.x < viewport_size.y
+
+

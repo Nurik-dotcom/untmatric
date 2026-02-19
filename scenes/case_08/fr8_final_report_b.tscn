@@ -76,7 +76,7 @@ text = "НАЗАД"
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
-text = "CASE #8: FINAL REPORT [B]"
+text = "ДЕЛО #8: ФИНАЛЬНЫЙ ОТЧЁТ [B]"
 vertical_alignment = 1
 
 [node name="LevelLabel" type="Label" parent="SafeArea/MainLayout/Header"]
@@ -101,7 +101,7 @@ custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
-text = "Briefing"
+text = "Брифинг"
 fit_content = false
 scroll_active = false
 
@@ -121,7 +121,7 @@ layout_mode = 2
 
 [node name="AxisLeft" type="Label" parent="SafeArea/MainLayout/TimelineCard/CardVBox/AxisRow"]
 layout_mode = 2
-text = "PAST"
+text = "ПРОШЛОЕ"
 
 [node name="AxisSpacer" type="Control" parent="SafeArea/MainLayout/TimelineCard/CardVBox/AxisRow"]
 layout_mode = 2
@@ -129,7 +129,7 @@ size_flags_horizontal = 3
 
 [node name="AxisRight" type="Label" parent="SafeArea/MainLayout/TimelineCard/CardVBox/AxisRow"]
 layout_mode = 2
-text = "FUTURE"
+text = "БУДУЩЕЕ"
 horizontal_alignment = 2
 
 [node name="CardsRow" type="HBoxContainer" parent="SafeArea/MainLayout/TimelineCard/CardVBox"]
@@ -143,7 +143,7 @@ theme_override_constants/separation = 8
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Status"
+text = "Статус"
 autowrap_mode = 2
 vertical_alignment = 1
 

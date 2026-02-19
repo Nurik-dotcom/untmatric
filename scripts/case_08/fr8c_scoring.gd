@@ -63,7 +63,7 @@ static func feedback_text(level: Dictionary, evaluation: Dictionary) -> String:
 	if error_code == ERROR_IMPORTANT:
 		return "!important \u043f\u0435\u0440\u0435\u0431\u0438\u0432\u0430\u0435\u0442 \u043e\u0431\u044b\u0447\u043d\u044b\u0435 \u043f\u0440\u0430\u0432\u0438\u043b\u0430."
 	if error_code == ERROR_INLINE:
-		return "Inline-\u0441\u0442\u0438\u043b\u044c \u043f\u0435\u0440\u0435\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u043f\u0440\u0430\u0432\u0438\u043b\u0430 \u0438\u0437 CSS."
+		return "Встроенный стиль перекрывает правила из CSS."
 	if error_code == ERROR_ORDER_TIE:
 		return "\u041f\u0440\u0438 \u0440\u0430\u0432\u043d\u043e\u0439 \u0441\u0438\u043b\u0435 \u043f\u043e\u0431\u0435\u0436\u0434\u0430\u0435\u0442 \u043f\u0440\u0430\u0432\u0438\u043b\u043e, \u043a\u043e\u0442\u043e\u0440\u043e\u0435 \u0438\u0434\u0451\u0442 \u043f\u043e\u0437\u0436\u0435."
 	if error_code == ERROR_SPECIFICITY:
@@ -82,7 +82,7 @@ static func inspect_source(level: Dictionary, source_id: String) -> Dictionary:
 		var decl: Dictionary = inline_decl.get("decl", {}) as Dictionary
 		return {
 			"source_id": str(inline_decl.get("source_id", "INLINE")),
-			"selector": "inline style",
+			"selector": "встроенный стиль",
 			"kind": str(inline_decl.get("kind", "inline")),
 			"weight": int(inline_decl.get("weight", 1000)),
 			"important": bool(inline_decl.get("important", false)),
@@ -142,7 +142,7 @@ static func _build_candidates(level: Dictionary) -> Array:
 		var inline_decl_data: Dictionary = inline_decl.get("decl", {}) as Dictionary
 		out.append({
 			"source_id": str(inline_decl.get("source_id", "INLINE")).strip_edges(),
-			"selector": "inline style",
+			"selector": "встроенный стиль",
 			"kind": str(inline_decl.get("kind", "inline")),
 			"weight": int(inline_decl.get("weight", 1000)),
 			"important": bool(inline_decl.get("important", false)),

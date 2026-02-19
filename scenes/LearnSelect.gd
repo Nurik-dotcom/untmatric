@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 
 @onready var status_label = $MainLayout/StatusLabel
 

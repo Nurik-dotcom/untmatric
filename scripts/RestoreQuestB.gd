@@ -170,10 +170,10 @@ func _start_level(idx: int) -> void:
 	switches_before_submit = 0
 	is_safe_mode = false
 
-	lbl_clue_title.text = "RESTORE " + str(current_task.get("id", "B-00"))
-	lbl_session.text = "SESS " + str(randi() % 9000 + 1000)
-	lbl_target.text = "TARGET: s = " + str(current_task.get("target_s", "?"))
-	lbl_slot_hint.text = "<-- Drag block here"
+	lbl_clue_title.text = "ВОССТАНОВЛЕНИЕ " + str(current_task.get("id", "B-00"))
+	lbl_session.text = "СЕСС " + str(randi() % 9000 + 1000)
+	lbl_target.text = "ЦЕЛЬ: s = " + str(current_task.get("target_s", "?"))
+	lbl_slot_hint.text = "<-- Перетащите блок сюда"
 
 	_render_code()
 	_render_inventory()
@@ -220,7 +220,7 @@ func _on_block_dropped(data: Dictionary) -> void:
 
 	state = State.SOLVING_FILLED
 	btn_submit.disabled = false
-	lbl_slot_hint.text = "Ready to check."
+	lbl_slot_hint.text = "Готово к проверке."
 
 	_log_event("slot_changed", {"prev": prev_id, "new": new_id})
 
@@ -279,7 +279,7 @@ func _handle_fail_retry(selected_id) -> void:
 	energy_bar.value = energy
 	drop_zone.call("reset")
 	drop_zone.modulate = Color(1, 1, 1, 1)
-	lbl_slot_hint.text = "Incorrect. Try again."
+	lbl_slot_hint.text = "Неверно. Попробуйте снова."
 	state = State.SOLVING_EMPTY
 	btn_submit.disabled = true
 	_show_distractor_feedback(selected_id)

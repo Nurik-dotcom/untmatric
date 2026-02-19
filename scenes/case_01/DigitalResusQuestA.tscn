@@ -57,7 +57,7 @@ text = "<"
 [node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "TITLE"
+text = "ЗАГОЛОВОК"
 vertical_alignment = 1
 
 [node name="StageLabel" type="Label" parent="SafeArea/MainVBox/Header"]
@@ -80,7 +80,7 @@ layout_mode = 2
 [node name="BriefingLabel" type="Label" parent="SafeArea/MainVBox/BriefingCard"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-text = "Briefing"
+text = "Брифинг"
 autowrap_mode = 3
 
 [node name="SystemCard" type="PanelContainer" parent="SafeArea/MainVBox"]
@@ -117,7 +117,7 @@ offset_right = 110.0
 offset_bottom = 16.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "NO SIGNAL"
+text = "НЕТ СИГНАЛА"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -147,7 +147,7 @@ layout_mode = 2
 
 [node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput/VBox"]
 layout_mode = 2
-text = "INPUT"
+text = "ВВОД"
 
 [node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput/VBox"]
 layout_mode = 2
@@ -163,7 +163,7 @@ layout_mode = 2
 
 [node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput/VBox"]
 layout_mode = 2
-text = "OUTPUT"
+text = "ВЫХОД"
 
 [node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput/VBox"]
 layout_mode = 2
@@ -179,7 +179,7 @@ layout_mode = 2
 
 [node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory/VBox"]
 layout_mode = 2
-text = "MEMORY"
+text = "ПАМЯТЬ"
 
 [node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory/VBox"]
 layout_mode = 2
@@ -198,7 +198,7 @@ layout_mode = 2
 
 [node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/PartsPileCard/VBox"]
 layout_mode = 2
-text = "PARTS"
+text = "ДЕТАЛИ"
 
 [node name="Scroll" type="ScrollContainer" parent="SafeArea/MainVBox/PartsPileCard/VBox"]
 layout_mode = 2
@@ -221,19 +221,19 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "STATUS"
+text = "СТАТУС"
 autowrap_mode = 2
 vertical_alignment = 1
 
 [node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(160, 72)
 layout_mode = 2
-text = "RESET"
+text = "СБРОС"
 
 [node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(180, 72)
 layout_mode = 2
-text = "CONFIRM"
+text = "ПОДТВЕРДИТЬ"
 
 [node name="Dimmer" type="ColorRect" parent="."]
 visible = false
@@ -268,17 +268,17 @@ theme_override_constants/separation = 12
 [node name="VerdictLabel" type="Label" parent="ResultPopup/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "VERDICT"
+text = "ВЕРДИКТ"
 horizontal_alignment = 1
 
 [node name="ScoreLabel" type="Label" parent="ResultPopup/VBox"]
 layout_mode = 2
-text = "SCORE"
+text = "СЧЁТ"
 horizontal_alignment = 1
 
 [node name="StabilityLabel" type="Label" parent="ResultPopup/VBox"]
 layout_mode = 2
-text = "STABILITY"
+text = "СТАБИЛЬНОСТЬ"
 horizontal_alignment = 1
 
 [node name="Buttons" type="HBoxContainer" parent="ResultPopup/VBox"]
@@ -289,9 +289,10 @@ theme_override_constants/separation = 12
 [node name="BtnRetry" type="Button" parent="ResultPopup/VBox/Buttons"]
 custom_minimum_size = Vector2(140, 56)
 layout_mode = 2
-text = "RETRY"
+text = "ПОВТОРИТЬ"
 
 [node name="BtnBack" type="Button" parent="ResultPopup/VBox/Buttons"]
 custom_minimum_size = Vector2(140, 56)
 layout_mode = 2
-text = "BACK"
+text = "НАЗАД"
+

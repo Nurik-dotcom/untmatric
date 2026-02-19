@@ -21,11 +21,11 @@ func show_inspection(source_data: Dictionary) -> void:
 	var order: int = int(source_data.get("order", 0))
 	var color_value: String = str(source_data.get("color", "")).strip_edges()
 
-	lbl_title.text = "INSPECT | %s" % source_id
+	lbl_title.text = "ПРОСМОТР | %s" % source_id
 	lbl_selector.text = selector
 	lbl_kind.text = kind
 	lbl_weight.text = str(weight)
-	lbl_important.text = "YES" if important else "NO"
+	lbl_important.text = "ДА" if important else "НЕТ"
 	lbl_order.text = str(order)
 	lbl_color.text = color_value if not color_value.is_empty() else "-"
 
@@ -38,3 +38,4 @@ func show_inspection(source_data: Dictionary) -> void:
 
 func _on_close_pressed() -> void:
 	hide()
+

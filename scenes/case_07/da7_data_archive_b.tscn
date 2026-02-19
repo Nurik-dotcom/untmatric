@@ -52,7 +52,7 @@ theme_override_constants/margin_bottom = 5
 
 [node name="Title" type="RichTextLabel" parent="RootLayout/Header/Margin"]
 layout_mode = 2
-text = "CASE #7: SECRET ARCHIVE [LEVEL B]"
+text = "ДЕЛО #7: СЕКРЕТНЫЙ АРХИВ [УРОВЕНЬ B]"
 fit_content = true
 scroll_active = false
 autowrap_mode = 0
@@ -76,7 +76,7 @@ size_flags_vertical = 3
 
 [node name="TableTitle" type="Label" parent="RootLayout/Body/FilterModeRoot/TableSection"]
 layout_mode = 2
-text = "FILTER VIEW // MULTI-SELECT"
+text = "РЕЖИМ ФИЛЬТРА // МУЛЬТИВЫБОР"
 
 [node name="DataTree" type="Tree" parent="RootLayout/Body/FilterModeRoot/TableSection"]
 layout_mode = 2
@@ -96,7 +96,7 @@ custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
-text = "Loading case parameters..."
+text = "Загрузка параметров дела..."
 fit_content = true
 
 [node name="ControlRow" type="HBoxContainer" parent="RootLayout/Body/FilterModeRoot/TaskSection"]
@@ -107,12 +107,12 @@ alignment = 1
 [node name="BtnClear" type="Button" parent="RootLayout/Body/FilterModeRoot/TaskSection/ControlRow"]
 custom_minimum_size = Vector2(140, 56)
 layout_mode = 2
-text = "CLEAR [X]"
+text = "ОЧИСТИТЬ [X]"
 
 [node name="BtnSubmit" type="Button" parent="RootLayout/Body/FilterModeRoot/TaskSection/ControlRow"]
 custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
-text = "SUBMIT [ENTER]"
+text = "ОТПРАВИТЬ [ВВОД]"
 
 [node name="RelationModeRoot" type="VBoxContainer" parent="RootLayout/Body"]
 visible = false
@@ -123,7 +123,7 @@ size_flags_vertical = 3
 [node name="PromptLabelRel" type="RichTextLabel" parent="RootLayout/Body/RelationModeRoot"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
-text = "Analyze relationship..."
+text = "Анализ связи..."
 fit_content = true
 
 [node name="SchemaContainer" type="HBoxContainer" parent="RootLayout/Body/RelationModeRoot"]
@@ -138,7 +138,7 @@ size_flags_horizontal = 3
 
 [node name="Title" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable"]
 layout_mode = 2
-text = "Table A"
+text = "Таблица A"
 horizontal_alignment = 1
 
 [node name="TreeL" type="Tree" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable"]
@@ -164,7 +164,7 @@ color = Color(0.88, 0.64, 0.16, 1)
 [node name="HintLabel" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
-text = "FK Reference"
+text = "FK ссылка"
 
 [node name="RightTable" type="VBoxContainer" parent="RootLayout/Body/RelationModeRoot/SchemaContainer"]
 layout_mode = 2
@@ -172,7 +172,7 @@ size_flags_horizontal = 3
 
 [node name="Title" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable"]
 layout_mode = 2
-text = "Table B"
+text = "Таблица B"
 horizontal_alignment = 1
 
 [node name="TreeR" type="Tree" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable"]
@@ -204,7 +204,7 @@ theme_override_constants/separation = 20
 [node name="StabilityLabel" type="Label" parent="RootLayout/Footer"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-text = "STABILITY: 100%"
+text = "СТАБИЛЬНОСТЬ: 100%"
 
 [node name="StabilityBar" type="ProgressBar" parent="RootLayout/Footer"]
 layout_mode = 2
@@ -229,3 +229,4 @@ stream = ExtResource("4_relay")
 wait_time = 0.06
 
 [node name="TelemetryTimer" type="Timer" parent="Runtime"]
+

@@ -186,15 +186,15 @@ func _load_level_data(path_to_file: String) -> void:
 			node_radius_px = maxf(16.0, node_radius_px)
 
 func _set_briefing() -> void:
-	briefing_title.text = "CURFEW WINDOW"
-	briefing_text.text = "Reach node L during dynamic patrol windows. CLOSED edges are blocked, DANGER edges have increased cost."
-	var constraint_text := "CONSTRAINT: MUST VISIT %s | AT_MOST_ONE(E,G) | AVOID %s" % [
+	briefing_title.text = "ОКНО КОМЕНДАНТСКОГО ЧАСА"
+	briefing_text.text = "Доберитесь до узла L в условиях динамических окон патруля. Рёбра ЗАКРЫТО заблокированы, рёбра ОПАСНО имеют повышенную стоимость."
+	var constraint_text := "ОГРАНИЧЕНИЕ: ОБЯЗАТЕЛЬНО %s | НЕ БОЛЕЕ ОДНОГО ИЗ (E,G) | ИЗБЕГАТЬ %s" % [
 		"-" if must_visit_nodes.is_empty() else ",".join(must_visit_nodes),
 		"-" if blacklist_nodes.is_empty() else ",".join(blacklist_nodes)
 	]
 	briefing_constraint.text = constraint_text
 	constraint_info_label.text = constraint_text
-	footer_label.text = "REAL timer is in header. SIM time changes only when movement succeeds."
+	footer_label.text = "РЕАЛЬНЫЙ таймер в заголовке. СИМ-время меняется только при успешном перемещении."
 
 func _build_schedule_ui() -> void:
 	for child in schedule_list.get_children():
@@ -208,7 +208,7 @@ func _build_schedule_ui() -> void:
 		for slot_var in edge.schedule:
 			var slot: Dictionary = slot_var
 			var state := str(slot.get("state", "open"))
-			var w_text := "CLOSED" if state == "closed" else str(slot.get("w", edge.get("w", 0)))
+			var w_text := "ЗАКРЫТО" if state == "closed" else str(slot.get("w", edge.get("w", 0)))
 			parts.append("[%d-%d: %s]" % [int(slot.get("t_from", 0)), int(slot.get("t_to", 0)), w_text])
 
 		var row := Label.new()
@@ -403,20 +403,20 @@ func _reset_round_state(full_reset: bool) -> void:
 	_update_visuals()
 
 func _update_visuals() -> void:
-	path_display.text = "PATH: %s" % " -> ".join(path)
-	sim_time_label.text = "SIM: %d" % sim_time_sec
-	sum_live_label.text = "SUM: %d" % path_sum
+	path_display.text = "ПУТЬ: %s" % " -> ".join(path)
+	sim_time_label.text = "СИМ: %d" % sim_time_sec
+	sum_live_label.text = "СУММА: %d" % path_sum
 
 	if xor_violation:
-		warning_label.text = "WARNINGS: XOR VIOLATION"
+		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: НАРУШЕНИЕ XOR"
 	elif _path_has_blacklist(path):
-		warning_label.text = "WARNINGS: BLACKLIST ENTERED"
+		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: ВХОД В ЧЁРНЫЙ СПИСОК"
 	elif closed_edge_attempts > 0:
-		warning_label.text = "WARNINGS: CLOSED EDGE BLOCKED"
+		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: ЗАКРЫТОЕ РЕБРО ЗАБЛОКИРОВАНО"
 	elif cycle_detected:
-		warning_label.text = "WARNINGS: CYCLE DETECTED"
+		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: ОБНАРУЖЕН ЦИКЛ"
 	else:
-		warning_label.text = "WARNINGS: -"
+		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: -"
 
 	for node_id in node_buttons.keys():
 		var btn: Button = node_buttons[node_id]
@@ -473,11 +473,11 @@ func _apply_edge_style(key: String, state: String, runtime: Dictionary) -> void:
 		"closed":
 			start_color = Color(0.58, 0.14, 0.14, 0.55)
 			end_color = Color(1.0, 0.25, 0.25, 1.0)
-			label_text = "CLOSED"
+			label_text = "ЗАКРЫТО"
 		"danger":
 			start_color = Color(0.62, 0.35, 0.12, 0.60)
 			end_color = Color(1.0, 0.62, 0.18, 1.0)
-			label_text = "%d DANGER" % int(runtime.weight)
+			label_text = "%d ОПАСНО" % int(runtime.weight)
 
 	line.gradient = _build_gradient(start_color, end_color)
 	arrow.color = end_color
@@ -537,7 +537,7 @@ func _on_node_pressed(node_id: String) -> void:
 		closed_edge_attempts += 1
 		n_closed += 1
 		dynamic_weight_awareness = false
-		status_label.text = "EDGE CLOSED: movement blocked"
+		status_label.text = "ЗАКРЫТОЕ РЕБРО: перемещение заблокировано"
 		status_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35))
 		_recalculate_stability()
 		_update_visuals()
@@ -555,14 +555,14 @@ func _on_node_pressed(node_id: String) -> void:
 	if blacklist_nodes.has(node_id):
 		ambush_hits += 1
 		constraint_violations += 1
-		status_label.text = "AMBUSH: blacklist node entered"
+		status_label.text = "ЗАСАДА: вход в узел чёрного списка"
 		status_label.add_theme_color_override("font_color", Color(1.0, 0.42, 0.30))
 
 	if _is_xor_violation(path) and not xor_violation:
 		xor_violation = true
 		n_logic += 1
 		constraint_violations += 1
-		status_label.text = "XOR VIOLATION: at most one node in group"
+		status_label.text = "НАРУШЕНИЕ XOR: в группе допускается не более одного узла"
 		status_label.add_theme_color_override("font_color", Color(1.0, 0.62, 0.18))
 
 	_recalculate_stability()
@@ -595,7 +595,7 @@ func _on_submit_pressed() -> void:
 	_log_attempt(verdict)
 
 	if verdict.result_code == "OK":
-		status_label.text = "Route accepted. Dynamic constraints satisfied."
+		status_label.text = "Маршрут принят. Динамические ограничения соблюдены."
 		status_label.add_theme_color_override("font_color", Color(0.38, 1.0, 0.62))
 		is_game_over = true
 		btn_submit.disabled = true
@@ -610,23 +610,23 @@ func _on_submit_pressed() -> void:
 func _result_message(result_code: String) -> String:
 	match result_code:
 		"ERR_INCOMPLETE":
-			return "Reach node L before submit."
+			return "Дойдите до узла L перед отправкой."
 		"ERR_MISSING_TRANSIT":
-			return "Constraint failed: visit required transit node(s)."
+			return "Ограничение не выполнено: посетите обязательные транзитные узлы."
 		"ERR_LOGIC_VIOLATION":
-			return "XOR constraint violated."
+			return "Нарушено ограничение XOR."
 		"ERR_AMBUSH":
-			return "Blacklist node was visited."
+			return "Посещён узел из чёрного списка."
 		"ERR_PARSE":
-			return "Enter digits only."
+			return "Вводите только цифры."
 		"ERR_CALC":
-			return "Input sum does not match simulated path cost."
+			return "Введённая сумма не совпадает со смоделированной стоимостью пути."
 		"ERR_NOT_OPT":
-			return "Route is valid, but not optimal."
+			return "Маршрут корректный, но не оптимальный."
 		"ERR_PATH_INVALID":
-			return "Path is invalid for directed edges."
+			return "Маршрут недопустим для ориентированных рёбер."
 		_:
-			return "Unhandled result: %s" % result_code
+			return "Необработанный результат: %s" % result_code
 
 func _judge_solution(input_text: String) -> Dictionary:
 	var sum_actual := _compute_path_sum()
@@ -727,12 +727,12 @@ func _recalculate_stability() -> void:
 		effective *= ambush_multiplier
 
 	stability = clampf(effective, 0.0, 100.0)
-	label_state.text = "STABILITY: %d%%" % int(stability)
+	label_state.text = "СТАБИЛЬНОСТЬ: %d%%" % int(stability)
 
 	var fail_threshold := float(trust_cfg.get("fail_threshold", 10))
 	if stability <= fail_threshold and not is_game_over:
 		is_game_over = true
-		status_label.text = "MISSION FAILED: STABILITY CRITICAL."
+		status_label.text = "МИССИЯ ПРОВАЛЕНА: КРИТИЧЕСКАЯ СТАБИЛЬНОСТЬ."
 		status_label.add_theme_color_override("font_color", Color(1.0, 0.30, 0.30))
 		btn_submit.disabled = true
 		btn_reset.disabled = true
@@ -743,7 +743,7 @@ func _update_timer_display() -> void:
 	var remaining: int = maxi(0, time_limit - real_time_sec)
 	var mm: int = remaining / 60
 	var ss: int = remaining % 60
-	label_timer.text = "TIME: %02d:%02d" % [mm, ss]
+	label_timer.text = "ВРЕМЯ: %02d:%02d" % [mm, ss]
 	if real_time_sec > time_limit:
 		label_timer.add_theme_color_override("font_color", Color(1.0, 0.36, 0.36))
 	else:
@@ -816,3 +816,5 @@ func _save_json_log(data: Dictionary) -> void:
 	if file != null:
 		file.store_string(JSON.stringify(data, "\t"))
 		file.close()
+
+

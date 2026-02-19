@@ -127,14 +127,14 @@ func _load_next_case() -> void:
 
 func _render_case() -> void:
 	var case_id: String = str(current_case.get("id", "DA7-C-00"))
-	title_label.text = "CASE #7: MASTER SQL [%s]" % case_id
+	title_label.text = "ДЕЛО #7: МАСТЕР SQL [%s]" % case_id
 	var timing_policy: Dictionary = current_case.get("timing_policy", {}) as Dictionary
 	limit_sec = int(timing_policy.get("limit_sec", 120))
 	time_left_sec = float(limit_sec)
 	timer_bar.max_value = max(1.0, float(limit_sec))
 	timer_bar.value = timer_bar.max_value
 	prompt_label.bbcode_enabled = true
-	prompt_label.text = "[b]%s[/b]" % str(current_case.get("prompt", "Build SQL sequence."))
+	prompt_label.text = "[b]%s[/b]" % str(current_case.get("prompt", "Соберите SQL-последовательность."))
 	prompt_label.visible_characters = 0
 	typewriter_active = true
 	typewriter_accum = 0.0
@@ -143,9 +143,9 @@ func _render_case() -> void:
 	_build_block_repository()
 	_rebuild_code_area()
 	_set_input_locked(false)
-	btn_next.text = "NEXT"
+	btn_next.text = "ДАЛЕЕ"
 	btn_next.visible = false
-	status_label.text = "Compose query tokens and submit."
+	status_label.text = "Соберите токены запроса и отправьте."
 	_update_timer_ui()
 	_update_stability_ui()
 
@@ -186,7 +186,7 @@ func _on_block_pressed(block_id: String) -> void:
 	_register_interaction()
 	var role: String = str((block_by_id.get(block_id, {}) as Dictionary).get("role", ""))
 	if _role_is_single_use(role) and _sequence_has_role(role):
-		status_label.text = "Role %s is already used." % role
+		status_label.text = "Роль %s уже использована." % role
 		return
 	selected_sequence_ids.append(block_id)
 	block_pick_count += 1
@@ -290,7 +290,7 @@ func _on_clear_pressed() -> void:
 		if is_instance_valid(btn):
 			btn.disabled = false
 	_rebuild_code_area()
-	status_label.text = "Sequence cleared."
+	status_label.text = "Последовательность очищена."
 
 func _on_submit_pressed() -> void:
 	if trial_locked or not is_trial_active:
@@ -309,11 +309,11 @@ func _finish_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary,
 	prompt_label.visible_characters = -1
 	_set_input_locked(true)
 	if is_correct:
-		status_label.text = "ACCESS GRANTED. Query is valid."
+		status_label.text = "ДОСТУП РАЗРЕШЁН. Запрос корректен."
 		if is_instance_valid(sfx_relay):
 			sfx_relay.play()
 	else:
-		status_label.text = "FAILED: %s" % str(f_reason)
+		status_label.text = "ОШИБКА: %s" % str(f_reason)
 		if is_instance_valid(sfx_error):
 			sfx_error.play()
 	_log_trial(is_correct, f_reason, eval_result, end_state)
@@ -601,9 +601,9 @@ func _finish_session() -> void:
 	trial_locked = true
 	session_finished = true
 	typewriter_active = false
-	title_label.text = "CASE #7: MASTER SQL [COMPLETE]"
-	status_label.text = "Session complete."
-	btn_next.text = "EXIT"
+	title_label.text = "ДЕЛО #7: МАСТЕР SQL [ЗАВЕРШЕНО]"
+	status_label.text = "Сессия завершена."
+	btn_next.text = "ВЫХОД"
 	btn_next.disabled = false
 	btn_next.visible = true
 	_set_input_locked(true)
@@ -612,7 +612,7 @@ func _on_stability_changed(_new_value: float, _delta: float) -> void:
 	_update_stability_ui()
 
 func _update_stability_ui() -> void:
-	stability_label.text = "Stability: %d%%" % int(GlobalMetrics.stability)
+	stability_label.text = "Стабильность: %d%%" % int(GlobalMetrics.stability)
 
 func _on_viewport_size_changed() -> void:
 	var size: Vector2 = get_viewport_rect().size
@@ -622,3 +622,4 @@ func _on_viewport_size_changed() -> void:
 	else:
 		current_layout = LAYOUT_DESKTOP
 		block_repository.columns = 4
+

@@ -58,12 +58,12 @@ text = "<"
 [node name="LabelCase" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "CASE 6: CITY MAP"
+text = "ДЕЛО 6: КАРТА ГОРОДА"
 
 [node name="LabelMode" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "MODE: B"
+text = "РЕЖИМ: B"
 
 [node name="Spacer" type="Control" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
@@ -72,12 +72,12 @@ size_flags_horizontal = 3
 [node name="LabelState" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "STABILITY: 100%"
+text = "СТАБИЛЬНОСТЬ: 100%"
 
 [node name="LabelTimer" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "TIME: 02:00"
+text = "ВРЕМЯ: 02:00"
 
 [node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
@@ -96,17 +96,17 @@ theme_override_constants/separation = 6
 [node name="BriefingTitle" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "TRANSIT CHECK"
+text = "ПРОВЕРКА ТРАНЗИТА"
 
 [node name="BriefingText" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
 layout_mode = 2
 autowrap_mode = 2
-text = "Reach node E, report exact route sum, and prove the route is optimal under all directed links."
+text = "Доберитесь до узла E, укажите точную сумму маршрута и докажите его оптимальность в ориентированном графе."
 
 [node name="ConstraintLabel" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
 layout_mode = 2
 autowrap_mode = 2
-text = "CONSTRAINT: MUST VISIT C"
+text = "ОГРАНИЧЕНИЕ: ОБЯЗАТЕЛЬНО ПОСЕТИТЬ C"
 
 [node name="ContentSplit" type="BoxContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
@@ -171,29 +171,29 @@ theme_override_constants/separation = 8
 
 [node name="ConstraintInfoLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "CONSTRAINT: MUST VISIT C"
+text = "ОГРАНИЧЕНИЕ: ОБЯЗАТЕЛЬНО ПОСЕТИТЬ C"
 
 [node name="PathDisplay" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
 autowrap_mode = 2
-text = "PATH: A"
+text = "ПУТЬ: A"
 
 [node name="SumLiveLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "SUM: 0"
+text = "СУММА: 0"
 
 [node name="BacktrackLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "BACKTRACK: 0"
+text = "ОТКАТЫ: 0"
 
 [node name="WarningLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
 autowrap_mode = 2
-text = "WARNINGS: -"
+text = "ПРЕДУПРЕЖДЕНИЯ: -"
 
 [node name="InputLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "INPUT FINAL SUM"
+text = "ВВЕДИТЕ ИТОГОВУЮ СУММУ"
 
 [node name="SumInput" type="LineEdit" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 custom_minimum_size = Vector2(0, 44)
@@ -209,14 +209,14 @@ theme_override_constants/separation = 8
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "RESET"
+text = "СБРОС"
 
 [node name="BtnSubmit" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "SUBMIT"
+text = "ОТПРАВИТЬ"
 
 [node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 custom_minimum_size = Vector2(0, 64)
@@ -233,8 +233,9 @@ theme_override_constants/separation = 8
 [node name="FooterLabel" type="Label" parent="SafeArea/MainVBox/Footer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Bidirectional roads are active only where reverse edge exists in data."
+text = "Двусторонние дороги активны только там, где в данных есть обратное ребро."
 
 [node name="FooterMeta" type="Label" parent="SafeArea/MainVBox/Footer"]
 layout_mode = 2
-text = "CITY MAP / B"
+text = "КАРТА ГОРОДА / B"
+

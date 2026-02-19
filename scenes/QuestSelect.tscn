@@ -40,7 +40,7 @@ alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_font_sizes/font_size = 54
-text = "Quest Select"
+text = "Выбор задания"
 horizontal_alignment = 1
 
 [node name="QuestGrid" type="GridContainer" parent="MainLayout"]
@@ -54,61 +54,61 @@ columns = 4
 custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Clues"
+text = "Улики"
 
 [node name="RadioButton" type="Button" parent="MainLayout/QuestGrid"]
 custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Radio"
+text = "Радио"
 
 [node name="DecryptorButton" type="Button" parent="MainLayout/QuestGrid"]
 custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Decryptor"
+text = "Дешифратор"
 
 [node name="LieDetectorButton" type="Button" parent="MainLayout/QuestGrid"]
 custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Lie Detector"
+text = "Детектор лжи"
 
 [node name="SuspectScriptButton" type="Button" parent="MainLayout/QuestGrid"]
 custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Suspect Script"
+text = "Скрипт подозреваемого"
 
 [node name="CityMapButton" type="Button" parent="MainLayout/QuestGrid"]
 custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "City Map"
+text = "Карта города"
 
 [node name="DataArchiveButton" type="Button" parent="MainLayout/QuestGrid"]
 custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Data Archive"
+text = "Архив данных"
 
 [node name="FinalReportButton" type="Button" parent="MainLayout/QuestGrid"]
 custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Final Report"
+text = "Финальный отчёт"
 
 [node name="NetworkTraceButton" type="Button" parent="MainLayout/QuestGrid"]
 custom_minimum_size = Vector2(260, 160)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Network Trace"
+text = "Сетевой след"
 
 [node name="StatusLabel" type="Label" parent="MainLayout"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 theme_override_font_sizes/font_size = 20
-text = "Choose a quest"
+text = "Выберите задание"
 horizontal_alignment = 1
 
 [node name="ModalLayer" type="CanvasLayer" parent="."]
@@ -147,32 +147,33 @@ theme_override_constants/separation = 30
 [node name="ModalTitle" type="Label" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
-text = "Select Difficulty"
+text = "Выберите сложность"
 horizontal_alignment = 1
 
 [node name="BtnComplexityA" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
-text = "Complexity A"
+text = "Сложность A"
 
 [node name="BtnComplexityB" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 disabled = true
-text = "Complexity B"
+text = "Сложность B"
 
 [node name="BtnComplexityC" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 disabled = true
-text = "Complexity C"
+text = "Сложность C"
 
 [node name="BtnClose" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
 theme_override_font_sizes/font_size = 24
-text = "Back"
+text = "Назад"
+

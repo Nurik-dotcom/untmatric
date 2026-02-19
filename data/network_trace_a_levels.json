@@ -2,13 +2,13 @@
   {
     "id": "NT_A_01",
     "incident_id": "INC_01",
-    "briefing": "Traffic between office and server zone stopped after segmentation update.",
-    "prompt": "Which device is needed to pass traffic between different subnets?",
+    "briefing": "Трафик между офисом и серверной зоной остановился после обновления сегментации.",
+    "prompt": "Какое устройство нужно для передачи трафика между разными подсетями?",
     "required_evidence": 2,
     "logs": [
       "SRC 192.168.1.10 -> DST 10.0.0.5 : NO ROUTE",
-      "ARP works inside 192.168.1.0/24",
-      "Gateway table on host is empty"
+      "ARP работает внутри 192.168.1.0/24",
+      "Таблица шлюза на хосте пуста"
     ],
     "topology": {
       "nodes": [
@@ -44,33 +44,33 @@
     "options": [
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": ""
       },
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "repeater",
-        "label": "Repeater",
+        "label": "Повторитель",
         "error_code": "A_L1_PHYSICAL"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": "A_PASSIVE"
       }
     ],
     "correct_id": "router",
-    "explain_short": "Router performs Layer-3 routing between subnets.",
-    "explain_full": "Different networks require routing decisions by IP prefix. A switch can only forward frames inside a broadcast domain. Hub and repeater are physical-layer components.",
+    "explain_short": "Маршрутизатор выполняет L3-маршрутизацию между подсетями.",
+    "explain_full": "Разные сети требуют маршрутизации по IP-префиксу. Коммутатор пересылает кадры только внутри широковещательного домена. Хаб и повторитель — компоненты физического уровня.",
     "tags": [
       "routing",
       "subnet",
@@ -81,13 +81,13 @@
   {
     "id": "NT_A_02",
     "incident_id": "INC_01",
-    "briefing": "Two VLANs can ping inside themselves but not across.",
-    "prompt": "Select the device that restores inter-VLAN communication.",
+    "briefing": "Два VLAN пингуются внутри себя, но не между собой.",
+    "prompt": "Выберите устройство, которое восстановит меж-VLAN связь.",
     "required_evidence": 2,
     "logs": [
-      "VLAN 10 to VLAN 20 ping timeout",
-      "MAC tables on access switches are healthy",
-      "No default gateway response from VLAN interfaces"
+      "Таймаут ping между VLAN 10 и VLAN 20",
+      "MAC-таблицы на коммутаторах доступа в норме",
+      "Нет ответа шлюза по умолчанию от интерфейсов VLAN"
     ],
     "topology": {
       "nodes": [
@@ -123,33 +123,33 @@
     "options": [
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": ""
       },
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "ap",
-        "label": "Access Point",
+        "label": "Точка доступа",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": "A_PASSIVE"
       }
     ],
     "correct_id": "router",
-    "explain_short": "Inter-VLAN traffic needs Layer-3 routing.",
-    "explain_full": "Hosts in different VLAN subnets need a routing hop. Layer-2 forwarding alone cannot resolve destination networks outside local segment.",
+    "explain_short": "Меж-VLAN трафику нужна L3-маршрутизация.",
+    "explain_full": "Хостам в разных VLAN-подсетях нужен маршрутизирующий переход. Одной L2-пересылки недостаточно для внешних сетей.",
     "tags": [
       "vlan",
       "routing",
@@ -160,13 +160,13 @@
   {
     "id": "NT_A_03",
     "incident_id": "INC_02",
-    "briefing": "Broadcast traffic exploded after replacing edge equipment.",
-    "prompt": "Which device should be installed to isolate collision domains?",
+    "briefing": "Широковещательный трафик резко вырос после замены пограничного оборудования.",
+    "prompt": "Какое устройство нужно установить для изоляции доменов коллизий?",
     "required_evidence": 2,
     "logs": [
-      "Collision counter jumps every second",
-      "Frames are mirrored to all ports",
-      "Single subnet only, no routing required"
+      "Счётчик коллизий растёт каждую секунду",
+      "Кадры зеркалируются на все порты",
+      "Только одна подсеть, маршрутизация не требуется"
     ],
     "topology": {
       "nodes": [
@@ -196,33 +196,33 @@
     "options": [
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": ""
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "repeater",
-        "label": "Repeater",
+        "label": "Повторитель",
         "error_code": "A_L1_PHYSICAL"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": "A_PASSIVE"
       }
     ],
     "correct_id": "switch",
-    "explain_short": "Switch forwards by MAC and segments collisions per port.",
-    "explain_full": "The symptom is local Layer-2 flooding, not subnet routing. Switch resolves this by forwarding only to destination MAC port.",
+    "explain_short": "Коммутатор пересылает по MAC и сегментирует коллизии по портам.",
+    "explain_full": "Симптом — локальное L2-заливание, а не маршрутизация подсетей. Коммутатор решает это пересылкой только на порт MAC-назначения.",
     "tags": [
       "switching",
       "collision",
@@ -233,13 +233,13 @@
   {
     "id": "NT_A_04",
     "incident_id": "INC_02",
-    "briefing": "SOC reports every host can sniff unrelated office traffic.",
-    "prompt": "Pick the replacement that limits broad frame visibility.",
+    "briefing": "SOC сообщает, что каждый хост может прослушивать чужой офисный трафик.",
+    "prompt": "Выберите замену, которая ограничивает широкую видимость кадров.",
     "required_evidence": 2,
     "logs": [
-      "Promiscuous captures see all workstation frames",
-      "No subnet boundary crossing in this case",
-      "Current device has no MAC address table"
+      "Промискуитетный захват видит все кадры рабочих станций",
+      "В этом случае нет перехода между подсетями",
+      "У текущего устройства нет MAC-таблицы"
     ],
     "topology": {
       "nodes": [
@@ -268,39 +268,39 @@
         ]
       ],
       "labels": {
-        "DeskA": "Same subnet segment"
+        "DeskA": "Сегмент одной подсети"
       }
     },
     "options": [
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": ""
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "bridge",
-        "label": "Bridge",
+        "label": "Мост",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "repeater",
-        "label": "Repeater",
+        "label": "Повторитель",
         "error_code": "A_L1_PHYSICAL"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": "A_PASSIVE"
       }
     ],
     "correct_id": "switch",
-    "explain_short": "Switch suppresses unnecessary flooding after MAC learning.",
-    "explain_full": "Hub-like behavior exposes all traffic. A switch learns MAC locations and stops sending every frame to every endpoint.",
+    "explain_short": "Коммутатор подавляет лишнюю заливку после изучения MAC.",
+    "explain_full": "Поведение как у хаба раскрывает весь трафик. Коммутатор изучает MAC-адреса и перестаёт слать каждый кадр всем узлам.",
     "tags": [
       "security",
       "sniffing",
@@ -311,24 +311,24 @@
   {
     "id": "NT_A_05",
     "incident_id": "INC_03",
-    "briefing": "Signal drops on a long copper corridor segment.",
-    "prompt": "Choose the component that restores physical signal only.",
+    "briefing": "Сигнал падает на длинном медном сегменте коридора.",
+    "prompt": "Выберите компонент, который восстанавливает только физический сигнал.",
     "required_evidence": 2,
     "logs": [
-      "CRC error bursts after 92m copper span",
-      "No addressing or policy errors detected",
-      "Issue appears before any packet headers are parsed"
+      "Всплески CRC-ошибок после 92 м медного участка",
+      "Ошибки адресации или политик не обнаружены",
+      "Проблема возникает до разбора заголовков пакетов"
     ],
     "topology": {
       "nodes": [
-        "Camera",
+        "Камера",
         "CableSpan",
         "?",
-        "Switch"
+        "Коммутатор"
       ],
       "edges": [
         [
-          "Camera",
+          "Камера",
           "CableSpan"
         ],
         [
@@ -337,43 +337,43 @@
         ],
         [
           "?",
-          "Switch"
+          "Коммутатор"
         ]
       ],
       "labels": {
-        "CableSpan": "Long copper run"
+        "CableSpan": "Длинная медная линия"
       }
     },
     "options": [
       {
         "id": "repeater",
-        "label": "Repeater",
+        "label": "Повторитель",
         "error_code": ""
       },
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": "A_PASSIVE"
       }
     ],
     "correct_id": "repeater",
-    "explain_short": "Repeater regenerates physical signal on long links.",
-    "explain_full": "This incident is physical attenuation, not addressing. Repeater extends signal integrity but does not route or filter traffic.",
+    "explain_short": "Повторитель регенерирует физический сигнал на длинных линиях.",
+    "explain_full": "Этот инцидент — физическое затухание, а не адресация. Повторитель продлевает целостность сигнала, но не маршрутизирует и не фильтрует трафик.",
     "tags": [
       "physical",
       "crc",
@@ -384,18 +384,18 @@
   {
     "id": "NT_A_06",
     "incident_id": "INC_03",
-    "briefing": "Edge branch cannot reach HQ subnet after migration.",
-    "prompt": "What device should bridge branch and HQ IP networks?",
+    "briefing": "Пограничная ветка не может достичь подсети HQ после миграции.",
+    "prompt": "Какое устройство должно связать IP-сети филиала и HQ?",
     "required_evidence": 2,
     "logs": [
-      "Branch net 192.168.30.0/24 cannot reach 172.20.0.0/16",
-      "Local ARP resolves inside branch only",
-      "No route entries for HQ destination"
+      "Сеть филиала 192.168.30.0/24 не может достичь 172.20.0.0/16",
+      "Локальный ARP резолвится только внутри филиала",
+      "Нет маршрутных записей для назначения штаб-квартиры"
     ],
     "topology": {
       "nodes": [
         "BranchLAN",
-        "Switch",
+        "Коммутатор",
         "?",
         "WAN",
         "HQLAN"
@@ -403,10 +403,10 @@
       "edges": [
         [
           "BranchLAN",
-          "Switch"
+          "Коммутатор"
         ],
         [
-          "Switch",
+          "Коммутатор",
           "?"
         ],
         [
@@ -426,33 +426,33 @@
     "options": [
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": ""
       },
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "firewall",
-        "label": "Firewall",
+        "label": "Межсетевой экран",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": "A_PASSIVE"
       }
     ],
     "correct_id": "router",
-    "explain_short": "Router is required for inter-network forwarding.",
-    "explain_full": "Different prefixes require gateway routing tables. L2 gear and passive hardware cannot forward across routed boundaries.",
+    "explain_short": "Для межсетевой пересылки требуется маршрутизатор.",
+    "explain_full": "Разные префиксы требуют таблиц маршрутизации шлюза. L2-оборудование и пассивное железо не пересылают через маршрутизируемые границы.",
     "tags": [
       "wan",
       "routing",
@@ -463,13 +463,13 @@
   {
     "id": "NT_A_07",
     "incident_id": "INC_04",
-    "briefing": "Warehouse floor network became unstable after old spare unit was inserted.",
-    "prompt": "Which device choice prevents collision spikes in one subnet?",
+    "briefing": "Сеть складского этажа стала нестабильной после установки старого запасного устройства.",
+    "prompt": "Какой выбор устройства предотвращает всплески коллизий в одной подсети?",
     "required_evidence": 2,
     "logs": [
-      "Collision and late collision counters rising",
-      "Destination MAC appears but frames still flood",
-      "All hosts remain in one 10.10.40.0/24 subnet"
+      "Счётчики коллизий и поздних коллизий растут",
+      "MAC назначения определяется, но кадры всё равно фладятся",
+      "Все хосты остаются в одной подсети 10.10.40.0/24"
     ],
     "topology": {
       "nodes": [
@@ -493,39 +493,39 @@
         ]
       ],
       "labels": {
-        "Controller": "Single L2 domain"
+        "Controller": "Один L2-домен"
       }
     },
     "options": [
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": ""
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "bridge",
-        "label": "Bridge",
+        "label": "Мост",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "repeater",
-        "label": "Repeater",
+        "label": "Повторитель",
         "error_code": "A_L1_PHYSICAL"
       }
     ],
     "correct_id": "switch",
-    "explain_short": "Switch isolates traffic per port and suppresses collisions.",
-    "explain_full": "In a single subnet collision scenario, switch is the proper L2 control point. Router does not solve local collision behavior.",
+    "explain_short": "Коммутатор изолирует трафик по портам и подавляет коллизии.",
+    "explain_full": "В сценарии коллизий в одной подсети коммутатор — правильная точка L2-контроля. Маршрутизатор не решает локальные коллизии.",
     "tags": [
       "collision",
       "operations",
@@ -536,13 +536,13 @@
   {
     "id": "NT_A_08",
     "incident_id": "INC_04",
-    "briefing": "Technician claims patch-panel can enforce access filtering.",
-    "prompt": "Select the correct technical assessment.",
+    "briefing": "Техник утверждает, что патч-панель может фильтровать доступ.",
+    "prompt": "Выберите корректную техническую оценку.",
     "required_evidence": 2,
     "logs": [
-      "Rack contains passive patch field only",
-      "No control-plane CPU or forwarding table detected",
-      "Packets are unaffected by panel re-labeling"
+      "Стойка содержит только пассивное патч-поле",
+      "Процессор плоскости управления или таблица пересылки не обнаружены",
+      "Перемаркировка панели не влияет на пакеты"
     ],
     "topology": {
       "nodes": [
@@ -566,39 +566,39 @@
         ]
       ],
       "labels": {
-        "PatchRack": "Passive panel"
+        "PatchRack": "Пассивная панель"
       }
     },
     "options": [
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": ""
       },
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "repeater",
-        "label": "Repeater",
+        "label": "Повторитель",
         "error_code": "A_L1_PHYSICAL"
       }
     ],
     "correct_id": "patch",
-    "explain_short": "Patch-panel is passive wiring hardware.",
-    "explain_full": "Patch-panel terminates and organizes links. It cannot route, switch, or filter traffic because it has no forwarding logic.",
+    "explain_short": "Патч-панель — пассивное кабельное оборудование.",
+    "explain_full": "Патч-панель завершает и организует линии. Она не умеет маршрутизировать, коммутировать или фильтровать трафик, потому что не имеет логики пересылки.",
     "tags": [
       "passive",
       "rack",
@@ -609,13 +609,13 @@
   {
     "id": "NT_A_09",
     "incident_id": "INC_05",
-    "briefing": "After adding guest subnet, office hosts lost access to ERP zone.",
-    "prompt": "Which device restores communication between office and ERP subnet?",
+    "briefing": "После добавления гостевой подсети офисные хосты потеряли доступ к зоне ERP.",
+    "prompt": "Какое устройство восстанавливает связь между офисом и подсетью ERP?",
     "required_evidence": 2,
     "logs": [
       "Office: 192.168.80.0/24, ERP: 192.168.120.0/24",
-      "Hosts can ping local gateway only",
-      "Switch logs show no routing entries"
+      "Хосты могут пинговать только локальный шлюз",
+      "Логи коммутатора не содержат записей маршрутизации"
     ],
     "topology": {
       "nodes": [
@@ -651,33 +651,33 @@
     "options": [
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": ""
       },
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "firewall",
-        "label": "Firewall",
+        "label": "Межсетевой экран",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": "A_PASSIVE"
       }
     ],
     "correct_id": "router",
-    "explain_short": "Different subnets need Layer-3 routing path.",
-    "explain_full": "Even with healthy switches, packets cannot move between subnet prefixes without routing.",
+    "explain_short": "Разным подсетям нужен путь L3-маршрутизации.",
+    "explain_full": "Даже при исправных коммутаторах пакеты не проходят между префиксами подсетей без маршрутизации.",
     "tags": [
       "subnet",
       "erp",
@@ -688,13 +688,13 @@
   {
     "id": "NT_A_10",
     "incident_id": "INC_05",
-    "briefing": "Monitoring says packets are copied to all ports on a floor segment.",
-    "prompt": "Choose replacement device for selective frame forwarding.",
+    "briefing": "Мониторинг показывает, что пакеты копируются на все порты сегмента этажа.",
+    "prompt": "Выберите устройство-замену для выборочной пересылки кадров.",
     "required_evidence": 2,
     "logs": [
-      "SPAN captures identical frame copies on every port",
-      "No requirement to connect different IP networks",
-      "Unknown unicast flood persists with old hardware"
+      "SPAN фиксирует одинаковые копии кадров на каждом порту",
+      "Нет задачи соединять разные IP-сети",
+      "Флад неизвестного unicast сохраняется на старом оборудовании"
     ],
     "topology": {
       "nodes": [
@@ -723,39 +723,39 @@
         ]
       ],
       "labels": {
-        "Desk1": "One office segment"
+        "Desk1": "Один офисный сегмент"
       }
     },
     "options": [
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": ""
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "repeater",
-        "label": "Repeater",
+        "label": "Повторитель",
         "error_code": "A_L1_PHYSICAL"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": "A_PASSIVE"
       }
     ],
     "correct_id": "switch",
-    "explain_short": "Switch learns destinations and forwards selectively.",
-    "explain_full": "Hub-like flooding indicates missing MAC-based forwarding. Switch provides per-port forwarding and reduces exposure.",
+    "explain_short": "Коммутатор изучает назначения и пересылает выборочно.",
+    "explain_full": "Заливка как у хаба указывает на отсутствие MAC-пересылки. Коммутатор пересылает по портам и снижает раскрытие трафика.",
     "tags": [
       "mac",
       "forwarding",
@@ -766,13 +766,13 @@
   {
     "id": "NT_A_11",
     "incident_id": "INC_06",
-    "briefing": "Remote sensor link fails beyond a long cable run in factory line.",
-    "prompt": "Which component directly addresses physical attenuation?",
+    "briefing": "Связь с удалённым датчиком срывается на длинной кабельной линии в цехе.",
+    "prompt": "Какой компонент напрямую решает проблему физического затухания?",
     "required_evidence": 2,
     "logs": [
-      "Signal level degrades after long copper path",
-      "Packet headers show valid addresses before drop",
-      "Issue reproduces regardless of subnet configuration"
+      "Уровень сигнала ухудшается после длинного медного участка",
+      "Заголовки пакетов содержат корректные адреса до сброса",
+      "Проблема повторяется независимо от конфигурации подсети"
     ],
     "topology": {
       "nodes": [
@@ -796,39 +796,39 @@
         ]
       ],
       "labels": {
-        "LongRun": "Industrial cable span"
+        "LongRun": "Промышленная кабельная линия"
       }
     },
     "options": [
       {
         "id": "repeater",
-        "label": "Repeater",
+        "label": "Повторитель",
         "error_code": ""
       },
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": "A_PASSIVE"
       }
     ],
     "correct_id": "repeater",
-    "explain_short": "Repeater restores signal integrity on long runs.",
-    "explain_full": "Physical attenuation is an L1 problem. Repeater is designed to regenerate signal without modifying forwarding logic.",
+    "explain_short": "Повторитель восстанавливает целостность сигнала на длинных линиях.",
+    "explain_full": "Физическое затухание — проблема L1. Повторитель регенерирует сигнал без изменения логики пересылки.",
     "tags": [
       "factory",
       "physical",
@@ -839,13 +839,13 @@
   {
     "id": "NT_A_12",
     "incident_id": "INC_06",
-    "briefing": "Operations inserted a hub between office and data center links.",
-    "prompt": "Pick the correct replacement to stabilize traffic and keep segmentation.",
+    "briefing": "Операторы вставили хаб между офисной и дата-центровой линиями.",
+    "prompt": "Выберите правильную замену для стабилизации трафика и сохранения сегментации.",
     "required_evidence": 2,
     "logs": [
-      "Broadcast and collision alarms spike after change",
-      "No requirement for inter-subnet routing here",
-      "Target hosts are in same IP segment"
+      "После изменения резко выросли тревоги широковещания и коллизий",
+      "Здесь не требуется межподсеточная маршрутизация",
+      "Целевые хосты находятся в одном IP-сегменте"
     ],
     "topology": {
       "nodes": [
@@ -865,39 +865,39 @@
       ],
       "labels": {
         "Office": "10.40.0.0/24",
-        "DC Switch": "Same subnet"
+        "DC Switch": "Одна подсеть"
       }
     },
     "options": [
       {
         "id": "switch",
-        "label": "Switch",
+        "label": "Коммутатор",
         "error_code": ""
       },
       {
         "id": "hub",
-        "label": "Hub",
+        "label": "Концентратор",
         "error_code": "A_L1_BROADCAST"
       },
       {
         "id": "router",
-        "label": "Router",
+        "label": "Маршрутизатор",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "bridge",
-        "label": "Bridge",
+        "label": "Мост",
         "error_code": "A_L2_SEGMENT_LIMIT"
       },
       {
         "id": "patch",
-        "label": "Patch-panel",
+        "label": "Патч-панель",
         "error_code": "A_PASSIVE"
       }
     ],
     "correct_id": "switch",
-    "explain_short": "Switch is correct for segmented forwarding in one subnet.",
-    "explain_full": "The issue is L2 broadcast and collision behavior. Switch addresses this by forwarding by MAC and reducing noisy flooding.",
+    "explain_short": "Коммутатор корректен для сегментированной пересылки в одной подсети.",
+    "explain_full": "Проблема в L2-широковещании и коллизиях. Коммутатор решает это MAC-пересылкой и снижением шумной заливки.",
     "tags": [
       "broadcast",
       "switch",
@@ -906,3 +906,7 @@
     "time_limit_sec": 120
   }
 ]
+
+
+
+

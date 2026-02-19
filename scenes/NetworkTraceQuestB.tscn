@@ -76,19 +76,19 @@ theme_override_constants/separation = 8
 [node name="BtnBack" type="Button" parent="Main/V/Header"]
 custom_minimum_size = Vector2(118, 58)
 layout_mode = 2
-text = "BACK"
+text = "НАЗАД"
 
 [node name="LblTitle" type="Label" parent="Main/V/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
-text = "NETWORK TRACE | B"
+text = "СЕТЕВОЙ СЛЕД | B"
 
 [node name="LblMeta" type="Label" parent="Main/V/Header"]
 custom_minimum_size = Vector2(340, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "CASE -- | ERR 0/3 | T-02:00"
+text = "ДЕЛО -- | ОШ 0/3 | T-02:00"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -150,21 +150,21 @@ theme_override_constants/separation = 4
 
 [node name="LblPayload" type="Label" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox"]
 layout_mode = 2
-text = "Payload: --"
+text = "Данные: --"
 
 [node name="LblWindow" type="Label" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox"]
 layout_mode = 2
-text = "Window: --"
+text = "Окно: --"
 
 [node name="LblTargetUnit" type="Label" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox"]
 layout_mode = 2
-text = "Target unit: --"
+text = "Целевая единица: --"
 
 [node name="BtnAnalyze" type="Button" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ANALYZE"
+text = "АНАЛИЗ"
 
 [node name="LogScroll" type="ScrollContainer" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 layout_mode = 2
@@ -202,7 +202,7 @@ theme_override_constants/separation = 8
 [node name="LblConsoleTitle" type="Label" parent="Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "GATEWAY CONSOLE"
+text = "КОНСОЛЬ ШЛЮЗА"
 
 [node name="PipelineBoard" type="GridContainer" parent="Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV"]
 layout_mode = 2
@@ -226,7 +226,7 @@ layout_mode = 2
 [node name="LblModuleTray" type="Label" parent="Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "MODULE TRAY"
+text = "ЛОТОК МОДУЛЕЙ"
 
 [node name="ModuleTrayScroll" type="ScrollContainer" parent="Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV"]
 custom_minimum_size = Vector2(0, 166)
@@ -245,13 +245,13 @@ columns = 4
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "RUN CALC"
+text = "ЗАПУСТИТЬ РАСЧЁТ"
 
 [node name="LblPreview" type="Label" parent="Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV"]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "SPEED = ???"
+text = "СКОРОСТЬ = ???"
 
 [node name="TransferBar" type="ProgressBar" parent="Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV"]
 custom_minimum_size = Vector2(0, 40)
@@ -326,7 +326,7 @@ custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 autowrap_mode = 2
-text = "Status"
+text = "Статус"
 
 [node name="BottomRow" type="HBoxContainer" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV"]
 custom_minimum_size = Vector2(0, 58)
@@ -337,14 +337,14 @@ theme_override_constants/separation = 8
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "RESET"
+text = "СБРОС"
 
 [node name="BtnNext" type="Button" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 visible = false
-text = "NEXT"
+text = "ДАЛЕЕ"
 
 [node name="DiagnosticsPanel" parent="." instance=ExtResource("4_diag_panel")]
 layout_mode = 1
@@ -352,3 +352,4 @@ anchor_left = 0.1
 anchor_top = 0.12
 anchor_right = 0.9
 anchor_bottom = 0.9
+

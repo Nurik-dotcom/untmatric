@@ -35,9 +35,9 @@ func pulse_marker(duration_ms: int = 1000) -> void:
 
 func current_segment_text() -> String:
 	if not applied or network_last < 0:
-		return "SEGMENT: --"
+		return "СЕГМЕНТ: --"
 	var segment_end: int = mini(255, network_last + step - 1)
-	return "SEGMENT: %d..%d | NET ID: %d" % [network_last, segment_end, network_last]
+	return "СЕГМЕНТ: %d..%d | ID СЕТИ: %d" % [network_last, segment_end, network_last]
 
 func _process(_delta: float) -> void:
 	if pulse_until_ms <= Time.get_ticks_msec():

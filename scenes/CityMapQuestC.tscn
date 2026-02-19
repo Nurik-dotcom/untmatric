@@ -58,12 +58,12 @@ text = "<"
 [node name="LabelCase" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "CASE 6: CITY MAP"
+text = "ДЕЛО 6: КАРТА ГОРОДА"
 
 [node name="LabelMode" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "MODE: C"
+text = "РЕЖИМ: C"
 
 [node name="Spacer" type="Control" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
@@ -72,12 +72,12 @@ size_flags_horizontal = 3
 [node name="LabelState" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "STABILITY: 100%"
+text = "СТАБИЛЬНОСТЬ: 100%"
 
 [node name="LabelTimer" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "TIME: 02:20"
+text = "ВРЕМЯ: 02:20"
 
 [node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
@@ -96,17 +96,17 @@ theme_override_constants/separation = 6
 [node name="BriefingTitle" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "CURFEW WINDOW"
+text = "ОКНО КОМЕНДАНТСКОГО ЧАСА"
 
 [node name="BriefingText" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
 layout_mode = 2
 autowrap_mode = 2
-text = "Reach node L during dynamic patrol windows. CLOSED edges are blocked, DANGER edges have increased cost."
+text = "Доберитесь до узла L в условиях динамических окон патруля. Рёбра ЗАКРЫТО заблокированы, рёбра ОПАСНО имеют повышенную стоимость."
 
 [node name="ConstraintLabel" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
 layout_mode = 2
 autowrap_mode = 2
-text = "CONSTRAINT: MUST VISIT F | AT_MOST_ONE(E,G) | AVOID J"
+text = "ОГРАНИЧЕНИЕ: ОБЯЗАТЕЛЬНО F | НЕ БОЛЕЕ ОДНОГО ИЗ (E,G) | ИЗБЕГАТЬ J"
 
 [node name="ContentSplit" type="BoxContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
@@ -171,29 +171,29 @@ theme_override_constants/separation = 8
 
 [node name="ConstraintInfoLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "CONSTRAINT: MUST VISIT F"
+text = "ОГРАНИЧЕНИЕ: ОБЯЗАТЕЛЬНО F"
 
 [node name="PathDisplay" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
 autowrap_mode = 2
-text = "PATH: A"
+text = "ПУТЬ: A"
 
 [node name="SimTimeLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "SIM: 0"
+text = "СИМ: 0"
 
 [node name="SumLiveLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "SUM: 0"
+text = "СУММА: 0"
 
 [node name="WarningLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
 autowrap_mode = 2
-text = "WARNINGS: -"
+text = "ПРЕДУПРЕЖДЕНИЯ: -"
 
 [node name="InputLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "INPUT FINAL SUM"
+text = "ВВЕДИТЕ ИТОГОВУЮ СУММУ"
 
 [node name="SumInput" type="LineEdit" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 custom_minimum_size = Vector2(0, 44)
@@ -209,14 +209,14 @@ theme_override_constants/separation = 8
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "RESET"
+text = "СБРОС"
 
 [node name="BtnSubmit" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "SUBMIT"
+text = "ОТПРАВИТЬ"
 
 [node name="SchedulePanel" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
@@ -237,7 +237,7 @@ theme_override_constants/separation = 6
 
 [node name="ScheduleTitle" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel/ScheduleMargin/ScheduleVBox"]
 layout_mode = 2
-text = "SCHEDULE"
+text = "РАСПИСАНИЕ"
 
 [node name="ScheduleScroll" type="ScrollContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel/ScheduleMargin/ScheduleVBox"]
 layout_mode = 2
@@ -262,8 +262,10 @@ theme_override_constants/separation = 8
 [node name="FooterLabel" type="Label" parent="SafeArea/MainVBox/Footer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "REAL timer is in header. SIM time changes only when movement succeeds."
+text = "РЕАЛЬНЫЙ таймер в заголовке. СИМ-время меняется только при успешном перемещении."
 
 [node name="FooterMeta" type="Label" parent="SafeArea/MainVBox/Footer"]
 layout_mode = 2
-text = "CITY MAP / C"
+text = "КАРТА ГОРОДА / C"
+
+

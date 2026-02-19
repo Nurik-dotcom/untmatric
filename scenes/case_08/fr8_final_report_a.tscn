@@ -100,7 +100,7 @@ layout_mode = 2
 [node name="BriefingLabel" type="Label" parent="SafeArea/MainLayout/BriefingCard"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "Briefing"
+text = "Брифинг"
 autowrap_mode = 3
 
 [node name="Body" type="BoxContainer" parent="SafeArea/MainLayout"]
@@ -165,7 +165,7 @@ scroll_active = false
 [node name="SlotsTitle" type="Label" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "SLOTS"
+text = "СЛОТЫ"
 
 [node name="SlotsGrid" type="GridContainer" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox"]
 layout_mode = 2
@@ -184,7 +184,7 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Status"
+text = "Статус"
 autowrap_mode = 2
 vertical_alignment = 1
 
@@ -203,3 +203,5 @@ custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
 disabled = true
 text = "ДАЛЕЕ"
+
+

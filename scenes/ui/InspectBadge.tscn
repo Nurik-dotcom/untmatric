@@ -5,6 +5,7 @@ custom_minimum_size = Vector2(92, 28)
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 2
-text = "INSPECT"
+text = "ПРОСМОТР"
 horizontal_alignment = 1
 vertical_alignment = 1
+

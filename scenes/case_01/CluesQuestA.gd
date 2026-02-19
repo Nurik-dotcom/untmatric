@@ -44,24 +44,24 @@ func _connect_signals():
 func _load_level_data():
 	var file = FileAccess.open(CLUES_DATA_PATH, FileAccess.READ)
 	if not file:
-		_show_error("Failed to load level data")
+		_show_error("Не удалось загрузить данные уровня")
 		return
 
 	var json = JSON.new()
 	var error = json.parse(file.get_as_text())
 	if error != OK:
-		_show_error("JSON Parse Error: " + json.get_error_message())
+		_show_error("Ошибка разбора JSON: " + json.get_error_message())
 		return
 
 	var data = json.data
 	if typeof(data) != TYPE_ARRAY or data.is_empty():
-		_show_error("Invalid JSON format")
+		_show_error("Некорректный формат JSON")
 		return
 
 	# Assume first level for A
 	level_data = data[0]
 	if not _validate_level(level_data):
-		_show_error("Level validation failed")
+		_show_error("Проверка данных уровня не пройдена")
 		return
 
 	_setup_ui()

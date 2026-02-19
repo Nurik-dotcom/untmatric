@@ -19,7 +19,7 @@ func setup(cidr: int, mask_last: int) -> void:
 	}
 	_refresh_label()
 	set_selected(false)
-	tooltip_text = "mask /%d (last octet %d)" % [cidr, mask_last]
+	tooltip_text = "маска /%d (последний октет %d)" % [cidr, mask_last]
 
 func get_mask_data() -> Dictionary:
 	return mask_data.duplicate(true)
@@ -46,7 +46,7 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	var preview_label: Label = Label.new()
 	preview_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	preview_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	preview_label.text = "MASK %s" % str(mask_data.get("display", ""))
+	preview_label.text = "МАСКА %s" % str(mask_data.get("display", ""))
 	preview_margin.add_child(preview_label)
 	preview_panel.add_child(preview_margin)
 	set_drag_preview(preview_panel)
@@ -79,6 +79,7 @@ func _refresh_label() -> void:
 	if label_mask == null:
 		return
 	if mask_data.is_empty():
-		label_mask.text = "MASK ?"
+		label_mask.text = "МАСКА ?"
 	else:
-		label_mask.text = "MASK %s" % str(mask_data.get("display", ""))
+		label_mask.text = "МАСКА %s" % str(mask_data.get("display", ""))
+

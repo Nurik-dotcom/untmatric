@@ -225,9 +225,9 @@ func _draw() -> void:
 	draw_rect(slot_rect, Color(0.08, 0.12, 0.1, 0.95), true)
 	draw_rect(slot_rect, Color(0.95, 0.75, 0.25, 0.9), false, 3.0)
 	if tools_locked:
-		_draw_centered_text("LOCKED", slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.45, 0.4, 1.0), 18)
+		_draw_centered_text("ЗАБЛОКИРОВАНО", slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.45, 0.4, 1.0), 18)
 	elif installed_device_id.is_empty():
-		_draw_centered_text("DROP DEVICE", slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.95, 0.8, 1.0), 18)
+		_draw_centered_text("ПОМЕСТИТЕ УСТРОЙСТВО", slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.95, 0.8, 1.0), 18)
 	else:
 		_draw_centered_text(installed_device_label, slot_rect.get_center() + Vector2(0.0, 0.0), slot_rect.size.x - 8.0, Color(0.75, 1.0, 0.82, 1.0), 18)
 

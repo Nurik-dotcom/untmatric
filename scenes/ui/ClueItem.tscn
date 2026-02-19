@@ -7,5 +7,6 @@ custom_minimum_size = Vector2(0, 80)
 offset_right = 120.0
 offset_bottom = 80.0
 theme_type_variation = &"FlatButton"
-text = "ITEM"
+text = "ЭЛЕМЕНТ"
 script = ExtResource("1_clue")
+

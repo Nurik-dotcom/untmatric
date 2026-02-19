@@ -5,5 +5,6 @@
 [node name="NetworkTraceDeviceCard" type="Button"]
 custom_minimum_size = Vector2(170, 78)
 size_flags_horizontal = 3
-text = "DEVICE"
+text = "УСТРОЙСТВО"
 script = ExtResource("1_script")
+

@@ -24,7 +24,7 @@ const STATUS_OPTION_SELECTED := "\u0412\u0430\u0440\u0438\u0430\u043d\u0442 \u04
 const STATUS_NEXT_HINT := "\u041a\u043e\u0434 \u0432\u0437\u043b\u043e\u043c\u0430\u043d. \u0416\u043c\u0438\u0442\u0435 \u0414\u0410\u041b\u0415\u0415."
 const STATUS_SOLVE_FIRST := "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0440\u0435\u0448\u0438\u0442\u0435 \u0443\u0440\u043e\u0432\u0435\u043d\u044c."
 const STATUS_INSPECT_UNAVAILABLE := "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u0442\u043a\u0440\u044b\u0442\u044c \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a."
-const EXPLAIN_HINT := "\u0422\u0430\u043f\u043d\u0438\u0442\u0435 \u043f\u043e INSPECT \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0446\u0432\u0435\u0442 \u0438\u0442\u043e\u0433\u043e\u0432\u043e\u0433\u043e \u043f\u0440\u0430\u0432\u0438\u043b\u0430."
+const EXPLAIN_HINT := "\u0422\u0430\u043f\u043d\u0438\u0442\u0435 \u043f\u043e \u00ab\u043f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c\u00bb \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0446\u0432\u0435\u0442 \u0438\u0442\u043e\u0433\u043e\u0432\u043e\u0433\u043e \u043f\u0440\u0430\u0432\u0438\u043b\u0430."
 
 var levels: Array = []
 var current_level_index: int = 0
@@ -77,7 +77,7 @@ func _ready() -> void:
 	_connect_ui_signals()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0443\u0440\u043e\u0432\u043d\u0438 Final Report C.")
+		_show_error("\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0443\u0440\u043e\u0432\u043d\u0438 \u0444\u0438\u043d\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043e\u0442\u0447\u0451\u0442\u0430 C.")
 		return
 
 	title_label.text = TEXT_TITLE
@@ -188,7 +188,7 @@ func _render_code_window() -> void:
 
 	var inline_var: Variant = level_data.get("inline_decl", null)
 	if inline_var != null and typeof(inline_var) == TYPE_DICTIONARY:
-		html_lines.append("[url=inspect:inline][color=#ffca5f]style=\"color:...\" (inspect)[/color][/url]")
+		html_lines.append("[url=inspect:inline][color=#ffca5f]style=\"color:...\" (проверить)[/color][/url]")
 
 	if html_lines.is_empty():
 		html_lines.append("-")
@@ -229,7 +229,7 @@ func _render_code_window() -> void:
 func _reset_attempt(is_level_start: bool = false) -> void:
 	if not is_level_start:
 		reset_count += 1
-	_log_event("RESET", {"level_start": is_level_start})
+	_log_event("СБРОС", {"level_start": is_level_start})
 
 	selected_option_id = ""
 	level_solved = false
@@ -480,3 +480,4 @@ func _bbcode_color(color_value: String) -> String:
 	if value.begins_with("#") and (value.length() == 4 or value.length() == 7 or value.length() == 9):
 		return value
 	return "#ffffff"
+

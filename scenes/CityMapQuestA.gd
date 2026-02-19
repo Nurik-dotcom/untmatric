@@ -152,9 +152,9 @@ func _load_level_data(path_to_file: String) -> void:
 			node_radius_px = maxf(16.0, node_radius_px)
 
 func _set_briefing() -> void:
-	briefing_title.text = "ROUTE AUDIT"
-	briefing_text.text = "Reach node E using directed roads. Enter the final path sum and submit. Only the minimum route passes."
-	footer_label.text = "Directed graph: only outgoing roads from your current node are clickable."
+	briefing_title.text = "АУДИТ МАРШРУТА"
+	briefing_text.text = "Доберитесь до узла E по направленным дорогам. Введите итоговую сумму пути и отправьте. Проходит только минимальный маршрут."
+	footer_label.text = "Ориентированный граф: нажимать можно только исходящие дороги из текущего узла."
 
 func _calculate_min_sum() -> int:
 	var start_node := str(level_data.get("start_node", ""))
@@ -307,8 +307,8 @@ func _reset_round_state(full_reset: bool) -> void:
 	_update_visuals()
 
 func _update_visuals() -> void:
-	path_display.text = "PATH: %s" % " -> ".join(path)
-	sum_live_label.text = "SUM: %d" % path_sum
+	path_display.text = "ПУТЬ: %s" % " -> ".join(path)
+	sum_live_label.text = "СУММА: %d" % path_sum
 
 	for node_id in node_buttons.keys():
 		var btn: Button = node_buttons[node_id]
@@ -402,7 +402,7 @@ func _on_submit_pressed() -> void:
 	_log_attempt(verdict)
 
 	if verdict.result_code == "OK":
-		status_label.text = "Route accepted. Optimal sum confirmed."
+		status_label.text = "Маршрут принят. Оптимальная сумма подтверждена."
 		status_label.add_theme_color_override("font_color", Color(0.38, 1.0, 0.62))
 		is_game_over = true
 		btn_submit.disabled = true
@@ -417,17 +417,17 @@ func _on_submit_pressed() -> void:
 func _result_message(result_code: String) -> String:
 	match result_code:
 		"ERR_INCOMPLETE":
-			return "Reach node E before submit."
+			return "Дойдите до узла E перед отправкой."
 		"ERR_PARSE":
-			return "Enter digits only."
+			return "Вводите только цифры."
 		"ERR_CALC":
-			return "Input sum does not match the selected path."
+			return "Введённая сумма не совпадает с выбранным маршрутом."
 		"ERR_NOT_OPT":
-			return "Path is valid, but not optimal."
+			return "Маршрут корректный, но не оптимальный."
 		"ERR_PATH_INVALID":
-			return "Path is invalid for directed edges."
+			return "Маршрут недопустим для ориентированных рёбер."
 		_:
-			return "Unhandled result: %s" % result_code
+			return "Необработанный результат: %s" % result_code
 
 func _judge_solution(input_text: String) -> Dictionary:
 	var sum_actual := _compute_path_sum()
@@ -482,11 +482,11 @@ func _recalculate_stability() -> void:
 	)
 
 	stability = clampf(float(trust_cfg.get("initial", 100)) - float(penalties), 0.0, 100.0)
-	label_state.text = "STABILITY: %d%%" % int(stability)
+	label_state.text = "СТАБИЛЬНОСТЬ: %d%%" % int(stability)
 
 	if stability <= 10.0 and not is_game_over:
 		is_game_over = true
-		status_label.text = "MISSION FAILED: STABILITY CRITICAL."
+		status_label.text = "МИССИЯ ПРОВАЛЕНА: КРИТИЧЕСКАЯ СТАБИЛЬНОСТЬ."
 		status_label.add_theme_color_override("font_color", Color(1.0, 0.30, 0.30))
 		btn_submit.disabled = true
 		btn_reset.disabled = true
@@ -497,7 +497,7 @@ func _update_timer_display() -> void:
 	var remaining: int = maxi(0, time_limit - t_elapsed_seconds)
 	var mm: int = remaining / 60
 	var ss: int = remaining % 60
-	label_timer.text = "TIME: %02d:%02d" % [mm, ss]
+	label_timer.text = "ВРЕМЯ: %02d:%02d" % [mm, ss]
 	if t_elapsed_seconds > time_limit:
 		label_timer.add_theme_color_override("font_color", Color(1.0, 0.36, 0.36))
 	else:
@@ -556,3 +556,4 @@ func _save_json_log(data: Dictionary) -> void:
 	if file != null:
 		file.store_string(JSON.stringify(data, "\t"))
 		file.close()
+

@@ -96,14 +96,14 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
-text = "MODE: RADIO INTERCEPT"
+text = "РЕЖИМ: РАДИОПЕРЕХВАТ"
 
 [node name="ForcedBadge" type="Label" parent="SafeArea/MainVBox/Header"]
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.5, 0, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = "FORCED SAMPLE"
+text = "ПРИНУДИТЕЛЬНАЯ ВЫБОРКА"
 
 [node name="TimerLabel" type="Label" parent="SafeArea/MainVBox/Header"]
 visible = false
@@ -137,13 +137,13 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 18
-text = "TASK"
+text = "ЗАДАНИЕ"
 
 [node name="TaskMain" type="Label" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 32
-text = "ALPHABET: N = 10"
+text = "АЛФАВИТ: N = 10"
 
 [node name="TaskHintRow" type="HBoxContainer" parent="SafeArea/MainVBox/TaskCard/TaskVBox"]
 layout_mode = 2
@@ -154,7 +154,7 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
-text = "Choose minimal i such that 2^i >= N"
+text = "Выберите минимальное i, такое что 2^i >= N"
 autowrap_mode = 2
 
 [node name="BtnFormula" type="Button" parent="SafeArea/MainVBox/TaskCard/TaskVBox/TaskHintRow"]
@@ -193,7 +193,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 1, 0.5, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 18
-text = "BIT DEPTH"
+text = "БИТНОСТЬ"
 horizontal_alignment = 1
 
 [node name="BitKnob" type="Control" parent="SafeArea/MainVBox/ControlCard/ControlHBox/KnobStack"]
@@ -206,7 +206,7 @@ script = ExtResource("3_knob")
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 40
-text = "i = 1 bit"
+text = "i = 1 бит"
 horizontal_alignment = 1
 
 [node name="ReadoutStack" type="VBoxContainer" parent="SafeArea/MainVBox/ControlCard/ControlHBox"]
@@ -225,7 +225,7 @@ text = "2^i = 2"
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 26
-text = "FIT: NO"
+text = "ПОДХОДИТ: НЕТ"
 
 [node name="RiskRow" type="HBoxContainer" parent="SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack"]
 layout_mode = 2
@@ -234,7 +234,7 @@ layout_mode = 2
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
-text = "RISK LEVEL"
+text = "УРОВЕНЬ РИСКА"
 
 [node name="RiskBar" type="ProgressBar" parent="SafeArea/MainVBox/ControlCard/ControlHBox/ReadoutStack/RiskRow"]
 custom_minimum_size = Vector2(100, 20)
@@ -254,7 +254,7 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = "Details"
+text = "Детали"
 
 [node name="SampleStrip" type="HBoxContainer" parent="SafeArea/MainVBox/Bottom"]
 custom_minimum_size = Vector2(0, 32)
@@ -467,7 +467,7 @@ custom_minimum_size = Vector2(100, 64)
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
-text = "HINT"
+text = "ПОДСКАЗКА"
 
 [node name="BtnAnalyze" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
 custom_minimum_size = Vector2(140, 64)
@@ -483,7 +483,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 22
-text = "CAPTURE"
+text = "ПЕРЕХВАТ"
 
 [node name="BtnNext" type="Button" parent="SafeArea/MainVBox/Bottom/ActionsRow"]
 visible = false
@@ -492,7 +492,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 22
-text = "NEXT TASK"
+text = "СЛЕДУЮЩЕЕ ЗАДАНИЕ"
 
 [node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/Bottom"]
 custom_minimum_size = Vector2(0, 60)
@@ -500,7 +500,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 18
-text = "STATUS: ..."
+text = "СТАТУС: ..."
 autowrap_mode = 2
 
 [node name="Dimmer" type="ColorRect" parent="."]
@@ -540,21 +540,21 @@ theme_override_constants/separation = 12
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 24
-text = "DETAILS"
+text = "ДЕТАЛИ"
 horizontal_alignment = 1
 
 [node name="DetailsText" type="Label" parent="DetailsSheet/Margin/DetailsVBox"]
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 18
-text = "Details..."
+text = "Детали..."
 autowrap_mode = 2
 
 [node name="BtnCloseDetails" type="Button" parent="DetailsSheet/Margin/DetailsVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = "CLOSE"
+text = "ЗАКРЫТЬ"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_glow")
@@ -569,3 +569,4 @@ environment = SubResource("Environment_glow")
 [connection signal="pressed" from="SafeArea/MainVBox/Bottom/ActionsRow/BtnNext" to="." method="_on_next_pressed"]
 [connection signal="gui_input" from="Dimmer" to="." method="_on_dimmer_gui_input"]
 [connection signal="pressed" from="DetailsSheet/Margin/DetailsVBox/BtnCloseDetails" to="." method="_on_details_toggle"]
+

@@ -62,7 +62,7 @@ layout_mode = 2
 
 [node name="ModeLabel" type="Label" parent="SafeArea/Main/HeaderBar/HeaderContent/ModeChip"]
 layout_mode = 2
-text = "DEC"
+text = "ДЕК"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -72,7 +72,7 @@ size_flags_horizontal = 3
 
 [node name="LevelLabel" type="Label" parent="SafeArea/Main/HeaderBar/HeaderContent"]
 layout_mode = 2
-text = "PROTOCOL A-1"
+text = "ПРОТОКОЛ A-1"
 
 [node name="Spacer2" type="Control" parent="SafeArea/Main/HeaderBar/HeaderContent"]
 layout_mode = 2
@@ -83,7 +83,7 @@ layout_mode = 2
 
 [node name="StabilityText" type="Label" parent="SafeArea/Main/HeaderBar/HeaderContent/StabilityGroup"]
 layout_mode = 2
-text = "STABILITY: 100%"
+text = "СТАБИЛЬНОСТЬ: 100%"
 
 [node name="StabilityBar" type="ProgressBar" parent="SafeArea/Main/HeaderBar/HeaderContent/StabilityGroup"]
 custom_minimum_size = Vector2(170, 18)
@@ -107,7 +107,7 @@ text = "L"
 [node name="BtnDetails" type="Button" parent="SafeArea/Main/HeaderBar/HeaderContent"]
 custom_minimum_size = Vector2(72, 48)
 layout_mode = 2
-text = "LOG"
+text = "ЛОГ"
 
 [node name="ContentSplit" type="HBoxContainer" parent="SafeArea/Main"]
 layout_mode = 2
@@ -131,7 +131,7 @@ theme_override_constants/separation = 6
 
 [node name="TargetTitle" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent"]
 layout_mode = 2
-text = "TARGET"
+text = "ЦЕЛЬ"
 
 [node name="TargetValueBig" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent"]
 layout_mode = 2
@@ -197,7 +197,7 @@ theme_override_constants/separation = 4
 
 [node name="UpperTitle" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/UpperNibble"]
 layout_mode = 2
-text = "HIGH"
+text = "ВЫСОКИЙ"
 horizontal_alignment = 1
 
 [node name="UpperBits" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/UpperNibble"]
@@ -212,7 +212,7 @@ theme_override_constants/separation = 4
 
 [node name="LowerTitle" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/LowerNibble"]
 layout_mode = 2
-text = "LOW"
+text = "НИЗКИЙ"
 horizontal_alignment = 1
 
 [node name="LowerBits" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/LowerNibble"]
@@ -240,16 +240,16 @@ theme_override_constants/separation = 4
 
 [node name="RankTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent"]
 layout_mode = 2
-text = "RANK"
+text = "РАНГ"
 
 [node name="RankLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "TRAINEE"
+text = "НОВИЧОК"
 
 [node name="ProgressLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent"]
 layout_mode = 2
-text = "LEVEL 1 / 30"
+text = "УРОВЕНЬ 1 / 30"
 
 [node name="ProtocolPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
 layout_mode = 2
@@ -260,7 +260,7 @@ theme_override_constants/separation = 4
 
 [node name="ProtocolTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent"]
 layout_mode = 2
-text = "PROTOCOL DIAGNOSTICS"
+text = "ДИАГНОСТИКА ПРОТОКОЛА"
 
 [node name="RegsRow" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent"]
 layout_mode = 2
@@ -280,7 +280,7 @@ text = "OP: --"
 
 [node name="ShiftStatus" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent"]
 layout_mode = 2
-text = "SHIFT: idle"
+text = "СДВИГ: ожидание"
 
 [node name="LiveLogPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
 layout_mode = 2
@@ -293,7 +293,7 @@ theme_override_constants/separation = 6
 
 [node name="LiveLogTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/LiveLogPanel/LiveLogContent"]
 layout_mode = 2
-text = "LIVE TERMINAL"
+text = "ЖИВОЙ ТЕРМИНАЛ"
 
 [node name="LiveLogText" type="RichTextLabel" parent="SafeArea/Main/ContentSplit/RightPanel/LiveLogPanel/LiveLogContent"]
 layout_mode = 2
@@ -309,11 +309,11 @@ theme_override_constants/separation = 4
 
 [node name="HintTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/HintPanel/HintContent"]
 layout_mode = 2
-text = "LAST DIAGNOSTIC"
+text = "ПОСЛЕДНЯЯ ДИАГНОСТИКА"
 
 [node name="HintText" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/HintPanel/HintContent"]
 layout_mode = 2
-text = "No diagnostics yet."
+text = "Диагностики пока нет."
 autowrap_mode = 3
 
 [node name="BottomBar" type="PanelContainer" parent="SafeArea/Main"]
@@ -328,19 +328,19 @@ alignment = 1
 [node name="BtnHint" type="Button" parent="SafeArea/Main/BottomBar/Actions"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "HINT"
+text = "ПОДСКАЗКА"
 
 [node name="BtnCheck" type="Button" parent="SafeArea/Main/BottomBar/Actions"]
 custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "CHECK"
+text = "ПРОВЕРИТЬ"
 
 [node name="BtnReset" type="Button" parent="SafeArea/Main/BottomBar/Actions"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "RESET"
+text = "СБРОС"
 
 [node name="ToastLayer" type="CanvasLayer" parent="."]
 
@@ -382,12 +382,12 @@ layout_mode = 2
 
 [node name="DetailsTitle" type="Label" parent="DetailsSheet/DetailsContent/DetailsHeader"]
 layout_mode = 2
-text = "DETAILS"
+text = "ДЕТАЛИ"
 
 [node name="BtnCloseDetails" type="Button" parent="DetailsSheet/DetailsContent/DetailsHeader"]
 custom_minimum_size = Vector2(84, 42)
 layout_mode = 2
-text = "CLOSE"
+text = "ЗАКРЫТЬ"
 
 [node name="DetailsScroll" type="ScrollContainer" parent="DetailsSheet/DetailsContent"]
 custom_minimum_size = Vector2(0, 260)
@@ -425,7 +425,7 @@ theme_override_constants/separation = 8
 
 [node name="SafeTitle" type="Label" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
 layout_mode = 2
-text = "SAFE MODE: ERROR ANALYSIS"
+text = "БЕЗОПАСНЫЙ РЕЖИМ: АНАЛИЗ ОШИБОК"
 
 [node name="SafeSummary" type="RichTextLabel" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent"]
 custom_minimum_size = Vector2(0, 80)
@@ -443,9 +443,11 @@ theme_override_constants/separation = 10
 [node name="BtnRetry" type="Button" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeActions"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "RETRY"
+text = "ПОВТОРИТЬ"
 
 [node name="BtnContinue" type="Button" parent="SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeActions"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "CONTINUE"
+text = "ПРОДОЛЖИТЬ"
+
+

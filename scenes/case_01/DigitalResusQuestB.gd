@@ -49,17 +49,17 @@ func _ready() -> void:
 
 	stage_b_data = ResusData.load_stage_b(LEVELS_PATH)
 	if stage_b_data.is_empty():
-		_show_error("Stage B data is invalid. Returning to menu.")
+		_show_error("Данные этапа B повреждены. Возврат в меню.")
 		return
 
 	_setup_ui()
 	_begin_attempt()
 
 func _setup_ui() -> void:
-	title_label.text = "CASE #1: DIGITAL RESUSCITATION"
-	stage_label.text = "STAGE B"
-	btn_reset.text = "RESET"
-	btn_confirm.text = "CONFIRM"
+	title_label.text = "ДЕЛО #1: ЦИФРОВАЯ РЕАНИМАЦИЯ"
+	stage_label.text = "ЭТАП B"
+	btn_reset.text = "СБРОС"
+	btn_confirm.text = "ПОДТВЕРДИТЬ"
 
 	context_label.text = str(stage_b_data.get("context", ""))
 	budget_label.text = "%d$" % int(stage_b_data.get("budget", 0))
@@ -102,7 +102,7 @@ func _begin_attempt() -> void:
 	input_locked = false
 	btn_confirm.disabled = true
 	diagnostic_card.visible = false
-	status_label.text = "Select a configuration and press CONFIRM."
+	status_label.text = "Выберите конфигурацию и нажмите ПОДТВЕРДИТЬ."
 	status_label.modulate = COLOR_WARN
 	_update_selection_visuals()
 	_set_option_lock_state(false)
@@ -120,7 +120,7 @@ func _on_option_selected(option_id: String) -> void:
 	})
 	_update_selection_visuals()
 	btn_confirm.disabled = false
-	status_label.text = "Selected: %s" % option_id
+	status_label.text = "Выбрано: %s" % option_id
 	status_label.modulate = COLOR_WARN
 	if has_node("/root/AudioManager"):
 		AudioManager.play("click")
@@ -176,7 +176,7 @@ func _on_reset_pressed() -> void:
 	_update_selection_visuals()
 	diagnostic_card.visible = false
 	btn_confirm.disabled = true
-	status_label.text = "Selection cleared."
+	status_label.text = "Выбор очищен."
 	status_label.modulate = COLOR_WARN
 	if has_node("/root/AudioManager"):
 		AudioManager.play("click")
@@ -227,15 +227,15 @@ func _show_diagnostic(result: Dictionary) -> void:
 	var option_data: Dictionary = options_by_id.get(selected_option_id, {}) as Dictionary
 	var total_price: int = int(option_data.get("total_price", 0))
 	if total_price > budget:
-		hint_text = "Budget exceeded: +%d$" % (total_price - budget)
+		hint_text = "Бюджет превышен: +%d$" % (total_price - budget)
 	elif selected_option_id == "":
-		hint_text = "Select one option and try again."
+		hint_text = "Выберите один вариант и попробуйте снова."
 	else:
-		hint_text = "Press RESET to choose another option."
+		hint_text = "Нажмите СБРОС, чтобы выбрать другой вариант."
 	diag_hint.text = hint_text
 	diag_hint.modulate = COLOR_WARN
 
-	status_label.text = "Decision locked. Press RESET to start a new attempt."
+	status_label.text = "Решение зафиксировано. Нажмите СБРОС, чтобы начать новую попытку."
 	status_label.modulate = COLOR_OK if is_correct else COLOR_WARN
 
 func _log_event(event_name: String, data: Dictionary = {}) -> void:
@@ -261,3 +261,5 @@ func _show_error(message: String) -> void:
 	btn_reset.disabled = true
 	await get_tree().create_timer(1.2).timeout
 	_on_back_pressed()
+
+

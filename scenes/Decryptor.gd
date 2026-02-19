@@ -173,30 +173,30 @@ func start_level(level_idx: int) -> void:
 	_update_weights_for_mode(mode)
 	_update_target_display(level_idx, mode)
 	_update_protocol_diagnostics()
-	hint_text.text = "No diagnostics yet."
+	hint_text.text = "Диагностики пока нет."
 	_reset_bit_buttons()
 	_update_input_display()
-	_log_message("System initialized. Target locked.", COLOR_OK)
+	_log_message("Система инициализирована. Цель зафиксирована.", COLOR_OK)
 	_on_stability_changed(100.0, 0.0)
 
 func _update_level_label(level_idx: int) -> void:
 	var protocol = "A" if level_idx < 15 else "B"
-	level_label.text = "PROTOCOL %s-%d" % [protocol, level_idx + 1]
+	level_label.text = "ПРОТОКОЛ %s-%d" % [protocol, level_idx + 1]
 
 func _update_rank_info() -> void:
 	var rank_info: Dictionary = GlobalMetrics.get_rank_info()
-	rank_label.text = str(rank_info.get("name", "TRAINEE"))
-	progress_label.text = "LEVEL %d / %d" % [GlobalMetrics.current_level_index + 1, GlobalMetrics.MAX_LEVELS]
+	rank_label.text = str(rank_info.get("name", "НОВИЧОК"))
+	progress_label.text = "УРОВЕНЬ %d / %d" % [GlobalMetrics.current_level_index + 1, GlobalMetrics.MAX_LEVELS]
 	if rank_info.has("color"):
 		rank_label.add_theme_color_override("font_color", rank_info["color"])
 
 func _update_target_display(level_idx: int, mode: String) -> void:
 	if level_idx >= 15:
-		target_title.text = "EXAMPLE"
+		target_title.text = "ПРИМЕР"
 		target_value.text = _format_example(mode)
-		target_sub.text = "MODE: %s" % mode
+		target_sub.text = "РЕЖИМ: %s" % mode
 	else:
-		target_title.text = "TARGET"
+		target_title.text = "ЦЕЛЬ"
 		target_value.text = _format_value(current_target, mode)
 		if mode == "DEC":
 			target_sub.text = ""
@@ -210,12 +210,12 @@ func _update_protocol_diagnostics() -> void:
 		reg_a_value.text = "A: %s" % _format_value(GlobalMetrics.current_reg_a, GlobalMetrics.current_mode)
 		reg_b_value.text = "B: %s" % _format_value(GlobalMetrics.current_reg_b, GlobalMetrics.current_mode)
 		op_value.text = "OP: %s" % _operator_to_text(GlobalMetrics.current_operator)
-		_set_shift_status("SHIFT: swipe left to apply", Color(0.7, 0.9, 0.7, 1.0), false)
+		_set_shift_status("СДВИГ: свайп влево для применения", Color(0.7, 0.9, 0.7, 1.0), false)
 	else:
 		reg_a_value.text = "A: --"
 		reg_b_value.text = "B: --"
 		op_value.text = "OP: --"
-		_set_shift_status("SHIFT: idle", Color(0.65, 0.65, 0.65, 1.0), false)
+		_set_shift_status("СДВИГ: ожидание", Color(0.65, 0.65, 0.65, 1.0), false)
 
 func _operator_to_text(op: int) -> String:
 	if op == GlobalMetrics.Operator.ADD:
@@ -274,7 +274,7 @@ func _on_check_pressed() -> void:
 
 	if result.success:
 		AudioManager.play("relay")
-		_show_toast("SUCCESS", COLOR_OK)
+		_show_toast("УСПЕХ", COLOR_OK)
 		_pulse_panel(input_panel, COLOR_OK)
 		_overlay_glitch(0.15, 0.12)
 		is_level_active = false
@@ -282,33 +282,33 @@ func _on_check_pressed() -> void:
 		if GlobalMetrics.current_level_index < GlobalMetrics.MAX_LEVELS - 1:
 			start_level(GlobalMetrics.current_level_index + 1)
 		else:
-			_log_message("ALL LEVELS COMPLETE.", COLOR_OK)
+			_log_message("ВСЕ УРОВНИ ЗАВЕРШЕНЫ.", COLOR_OK)
 	else:
 		AudioManager.play("error")
 		_pulse_panel(input_panel, COLOR_ERR)
 		_overlay_glitch(0.6, 0.2)
 		if result.has("hints"):
 			var h = result.hints
-			last_hint_text = "Diagnosis: %s | Zone: %s" % [_translate_hint(h.diagnosis), _translate_hint(h.zone)]
+			last_hint_text = "Диагноз: %s | Зона: %s" % [_translate_hint(h.diagnosis), _translate_hint(h.zone)]
 			hint_text.text = "%s\nHD: %d" % [last_hint_text, int(result.get("hamming", 0))]
 			_log_message(last_hint_text, COLOR_WARN)
-		_show_toast("INCORRECT", COLOR_ERR)
+		_show_toast("НЕВЕРНО", COLOR_ERR)
 		_apply_error_highlight(current_input ^ current_target)
 func _on_hint_pressed() -> void:
 	hint_used = true
 	if last_hint_text == "":
-		hint_text.text = "No diagnostics available. Submit a check first."
-		_show_toast("NO HINT AVAILABLE", COLOR_WARN)
+		hint_text.text = "Диагностика недоступна. Сначала запустите проверку."
+		_show_toast("ПОДСКАЗКА НЕДОСТУПНА", COLOR_WARN)
 		return
 	hint_text.text = last_hint_text
 	_log_message(last_hint_text, COLOR_WARN)
-	_show_toast("HINT SHOWN", COLOR_WARN)
+	_show_toast("ПОДСКАЗКА ПОКАЗАНА", COLOR_WARN)
 func _on_reset_pressed() -> void:
 	current_input = 0
 	_reset_bit_buttons()
 	_update_input_display()
 	_clear_error_highlights()
-	_set_shift_status("SHIFT: idle", Color(0.65, 0.65, 0.65, 1.0), false)
+	_set_shift_status("СДВИГ: ожидание", Color(0.65, 0.65, 0.65, 1.0), false)
 
 func _apply_error_highlight(xor_val: int) -> void:
 	for bit in range(8):
@@ -324,7 +324,7 @@ func _clear_error_highlights() -> void:
 
 func _on_stability_changed(new_val: float, _change: float) -> void:
 	stability_bar.value = new_val
-	stability_text.text = "STABILITY: %d%%" % int(new_val)
+	stability_text.text = "СТАБИЛЬНОСТЬ: %d%%" % int(new_val)
 	if new_val <= 0:
 		_show_safe_mode()
 
@@ -336,7 +336,7 @@ func _on_shield_triggered(name: String, duration: float) -> void:
 
 	btn_check.disabled = true
 	_overlay_glitch(0.6, 0.2)
-	_show_toast("SHIELD ACTIVE", COLOR_WARN)
+	_show_toast("ЩИТ АКТИВЕН", COLOR_WARN)
 	await get_tree().create_timer(duration).timeout
 	btn_check.disabled = false
 func _flash_shield(label: Label) -> void:
@@ -359,7 +359,7 @@ func _show_safe_mode() -> void:
 		if (xor_val & (1 << bit)) != 0:
 			wrong_bits += 1
 
-	safe_summary.text = "Target: %s\nInput: %s\nWrong bits: %d" % [
+	safe_summary.text = "Цель: %s\nВвод: %s\nОшибочных битов: %d" % [
 		_format_value(current_target, GlobalMetrics.current_mode),
 		_format_value(current_input, GlobalMetrics.current_mode),
 		wrong_bits
@@ -437,13 +437,13 @@ func _pulse_panel(panel: Control, color: Color) -> void:
 
 func _translate_hint(code: String) -> String:
 	match code:
-		"VALUE_LOW": return "Value is lower than target"
-		"VALUE_HIGH": return "Value is higher than target"
-		"BIT_ERROR": return "Bit mismatch"
-		"BOTH_NIBBLES": return "Errors in both nibbles"
-		"LOWER_NIBBLE": return "Errors in lower nibble (bits 0-3)"
-		"UPPER_NIBBLE": return "Errors in upper nibble (bits 4-7)"
-		"NONE": return "No mismatch"
+		"VALUE_LOW": return "Значение ниже цели"
+		"VALUE_HIGH": return "Значение выше цели"
+		"BIT_ERROR": return "Несовпадение битов"
+		"BOTH_NIBBLES": return "Ошибки в обеих тетрадах"
+		"LOWER_NIBBLE": return "Ошибки в младшей тетраде (биты 0-3)"
+		"UPPER_NIBBLE": return "Ошибки в старшей тетраде (биты 4-7)"
+		"NONE": return "Несовпадений нет"
 	return code
 
 func _set_shift_status(text: String, color: Color, auto_reset: bool) -> void:
@@ -460,9 +460,9 @@ func _reset_shift_status_later(token: int) -> void:
 	if token != _shift_status_token:
 		return
 	if GlobalMetrics.current_level_index >= 15:
-		_set_shift_status("SHIFT: swipe left to apply", Color(0.7, 0.9, 0.7, 1.0), false)
+		_set_shift_status("СДВИГ: свайп влево для применения", Color(0.7, 0.9, 0.7, 1.0), false)
 	else:
-		_set_shift_status("SHIFT: idle", Color(0.65, 0.65, 0.65, 1.0), false)
+		_set_shift_status("СДВИГ: ожидание", Color(0.65, 0.65, 0.65, 1.0), false)
 
 func _overlay_glitch(strength: float, duration: float) -> void:
 	if noir_overlay != null and noir_overlay.has_method("glitch_burst"):
@@ -534,8 +534,8 @@ func _apply_shift_left() -> void:
 	current_input = (current_input << 1) & 0xFF
 	_sync_switches_to_input()
 	_update_input_display()
-	_set_shift_status("SHIFT: detected", COLOR_OK, true)
-	_log_message("Shift-left gesture applied.", COLOR_OK)
+	_set_shift_status("СДВИГ: применён", COLOR_OK, true)
+	_log_message("Применён жест сдвига влево.", COLOR_OK)
 
 func _mark_first_action() -> void:
 	if first_action_ms < 0:

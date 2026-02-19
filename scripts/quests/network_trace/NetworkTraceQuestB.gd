@@ -107,7 +107,7 @@ func _ready() -> void:
 	if GlobalMetrics != null and not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	if not _load_levels():
-		_show_boot_error("Network Trace B data is missing or invalid.")
+		_show_boot_error("Данные Network Trace B отсутствуют или повреждены.")
 		return
 	_start_level(0)
 
@@ -132,15 +132,15 @@ func _notification(what: int) -> void:
 		_apply_layout_mode()
 
 func _setup_runtime_controls() -> void:
-	lbl_title.text = "NETWORK TRACE | B"
+	lbl_title.text = "СЕТЕВОЙ СЛЕД | B"
 	palette_select.clear()
-	palette_select.add_item("GREEN", PALETTE_GREEN_ID)
-	palette_select.add_item("AMBER", PALETTE_AMBER_ID)
+	palette_select.add_item("ЗЕЛЁНЫЙ", PALETTE_GREEN_ID)
+	palette_select.add_item("ЯНТАРНЫЙ", PALETTE_AMBER_ID)
 	palette_select.select(PALETTE_GREEN_ID)
-	slot_kilo.setup("kilo", "KILO BASE")
-	slot_bit.setup("bit", "BYTE TO BIT")
-	slot_time.setup("time", "TIME")
-	slot_out.setup("out", "OUTPUT UNIT")
+	slot_kilo.setup("kilo", "БАЗА KILO")
+	slot_bit.setup("bit", "БАЙТ В БИТ")
+	slot_time.setup("time", "ВРЕМЯ")
+	slot_out.setup("out", "ЕДИНИЦА ВЫВОДА")
 	transfer_bar.value = 0.0
 	btn_next.visible = false
 	diagnostics_panel.visible = false
@@ -281,14 +281,14 @@ func _start_level(index: int) -> void:
 	timer_running = true
 	task_session = {"task_id": str(current_level.get("id", "NT_B_UNKNOWN")), "variant_hash": variant_hash, "started_at_ticks": level_started_ms, "ended_at_ticks": 0, "attempts": [], "events": []}
 	btn_next.visible = false
-	btn_analyze.text = "ANALYZE"
+	btn_analyze.text = "АНАЛИЗ"
 	btn_analyze.disabled = false
 	diagnostics_panel.visible = false
 	_render_terminal_panel()
 	_render_options()
 	_build_module_tray()
 	_reset_pipeline_state()
-	lbl_status.text = "Assemble pipeline, run calculation, then answer."
+	lbl_status.text = "Соберите конвейер, запустите расчёт, затем выберите ответ."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.82, 0.82))
 	state = QuestState.PIPELINE_BUILD
 	_update_meta_label()
@@ -296,12 +296,12 @@ func _start_level(index: int) -> void:
 
 func _render_terminal_panel() -> void:
 	lbl_briefing.clear()
-	lbl_briefing.append_text("[color=#7a7a7a]BRIEFING[/color]\n%s" % str(current_level.get("briefing", "")))
+	lbl_briefing.append_text("[color=#7a7a7a]ИНСТРУКТАЖ[/color]\n%s" % str(current_level.get("briefing", "")))
 	lbl_prompt.clear()
-	lbl_prompt.append_text("[color=#9de6b3]PROMPT[/color]\n%s" % str(current_level.get("prompt", "")))
-	lbl_payload.text = "Payload: %s %s" % [str(current_level.get("payload_value", 0)), str(current_level.get("payload_unit", "KB"))]
-	lbl_window.text = "Window: %s s" % str(current_level.get("time_sec", 0))
-	lbl_target_unit.text = "Target unit: %s" % str(current_level.get("ask_unit", "bps"))
+	lbl_prompt.append_text("[color=#9de6b3]ЗАДАНИЕ[/color]\n%s" % str(current_level.get("prompt", "")))
+	lbl_payload.text = "Данные: %s %s" % [str(current_level.get("payload_value", 0)), str(current_level.get("payload_unit", "KB"))]
+	lbl_window.text = "Окно: %s с" % str(current_level.get("time_sec", 0))
+	lbl_target_unit.text = "Целевая единица: %s" % str(current_level.get("ask_unit", "bps"))
 	_render_log_text()
 
 func _render_log_text() -> void:
@@ -378,7 +378,7 @@ func _reset_pipeline_state() -> void:
 	last_error_code = ""
 	selected_tray_module.clear()
 	_set_selected_module_card(null)
-	lbl_preview.text = "SPEED = ???"
+	lbl_preview.text = "СКОРОСТЬ = ???"
 	transfer_bar.value = 0.0
 	btn_run_calc.disabled = true
 	_enable_answer_buttons(false)
@@ -391,7 +391,7 @@ func _on_module_card_selected(module_data: Dictionary, sender: Node) -> void:
 	_play_audio("click")
 	selected_tray_module = module_data.duplicate(true)
 	_set_selected_module_card(sender as PipelineModuleCard)
-	lbl_status.text = "Module selected. Tap matching slot."
+	lbl_status.text = "Модуль выбран. Нажмите подходящий слот."
 	lbl_status.add_theme_color_override("font_color", Color(0.84, 0.91, 1.0))
 	_log_event("module_selected", {"module_id": str(module_data.get("module_id", ""))})
 
@@ -408,7 +408,7 @@ func _on_slot_tapped(slot_type: String) -> void:
 		return
 	_register_first_action()
 	if selected_tray_module.is_empty():
-		lbl_status.text = "Select module from tray first."
+		lbl_status.text = "Сначала выберите модуль из лотка."
 		lbl_status.add_theme_color_override("font_color", Color(0.95, 0.86, 0.68))
 		return
 	_place_module_into_slot(slot_type, selected_tray_module, "tap")
@@ -428,7 +428,7 @@ func _on_slot_bad_drop(slot_type: String, module_data: Dictionary) -> void:
 		slot.flash_bad_drop()
 	_play_audio("error")
 	last_error_code = "B_PIPELINE_BAD_DROP"
-	lbl_status.text = "Wrong connector for this module."
+	lbl_status.text = "Неверный разъём для этого модуля."
 	lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
 	_log_event("pipeline_bad_drop", {"slot": slot_type, "module_id": str(module_data.get("module_id", ""))})
 
@@ -446,9 +446,9 @@ func _on_slot_clear_pressed(slot_type: String) -> void:
 	if calc_done:
 		calc_done = false
 		calc_bps = -1
-		lbl_preview.text = "SPEED = ???"
+		lbl_preview.text = "СКОРОСТЬ = ???"
 		_enable_answer_buttons(false)
-	lbl_status.text = "Pipeline changed. Run calculation again."
+	lbl_status.text = "Конвейер изменён. Запустите расчёт снова."
 	lbl_status.add_theme_color_override("font_color", Color(0.92, 0.88, 0.62))
 	_log_event("pipeline_clear", {"slot": slot_type, "module_id": removed_id})
 	_update_pipeline_gate()
@@ -469,9 +469,9 @@ func _place_module_into_slot(slot_type: String, module_data: Dictionary, source:
 	if calc_done:
 		calc_done = false
 		calc_bps = -1
-		lbl_preview.text = "SPEED = ???"
+		lbl_preview.text = "СКОРОСТЬ = ???"
 		_enable_answer_buttons(false)
-	lbl_status.text = "Module installed. Continue assembly."
+	lbl_status.text = "Модуль установлен. Продолжайте сборку."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.92, 0.86))
 	_log_event("pipeline_set", {"slot": slot_type, "module_id": str(module_data.get("module_id", "")), "source": source})
 	_update_pipeline_gate()
@@ -500,7 +500,7 @@ func _update_pipeline_gate() -> void:
 	btn_run_calc.disabled = (not ready) or level_finished
 	if ready and pipeline_slots_filled_at_ms < 0:
 		pipeline_slots_filled_at_ms = Time.get_ticks_msec() - level_started_ms
-		lbl_status.text = "PIPELINE LOCKED. Run calculation."
+		lbl_status.text = "КОНВЕЙЕР ЗАФИКСИРОВАН. Запустите расчёт."
 		lbl_status.add_theme_color_override("font_color", Color(0.72, 0.95, 0.86))
 		_log_event("pipeline_complete", {"t_ms": pipeline_slots_filled_at_ms})
 	if not calc_done:
@@ -529,8 +529,8 @@ func _on_run_calc_pressed() -> void:
 	calc_display_unit = _current_output_unit()
 	calc_display_value = float(calc_bps) / 1000.0 if calc_display_unit == "kbps" else float(calc_bps)
 	calc_done = true
-	lbl_preview.text = "SPEED = %s" % _format_rate(calc_bps, calc_display_unit)
-	lbl_status.text = "Calculation complete. Select final answer."
+	lbl_preview.text = "СКОРОСТЬ = %s" % _format_rate(calc_bps, calc_display_unit)
+	lbl_status.text = "Расчёт завершён. Выберите финальный ответ."
 	lbl_status.add_theme_color_override("font_color", Color(0.68, 0.95, 0.72))
 	_enable_answer_buttons(true)
 	state = QuestState.ANSWERING
@@ -634,10 +634,10 @@ func _simulate_transfer(success: bool) -> void:
 func _handle_success(has_pipeline_mismatch: bool) -> void:
 	state = QuestState.FEEDBACK_SUCCESS
 	if has_pipeline_mismatch:
-		lbl_status.text = "Answer accepted. Pipeline mismatch flagged."
+		lbl_status.text = "Ответ принят. Отмечено расхождение в конвейере."
 		lbl_status.add_theme_color_override("font_color", Color(0.98, 0.82, 0.56))
 	else:
-		lbl_status.text = "UPLOAD COMPLETE. %s" % str(current_level.get("explain_short", ""))
+		lbl_status.text = "ЗАГРУЗКА ЗАВЕРШЕНА. %s" % str(current_level.get("explain_short", ""))
 		lbl_status.add_theme_color_override("font_color", Color(0.35, 1.0, 0.45))
 	_play_audio("relay")
 	_finish_level(true, "success_with_mismatch" if has_pipeline_mismatch else "success")
@@ -652,8 +652,8 @@ func _handle_failure(error_code: String) -> void:
 	_update_meta_label()
 	if wrong_count >= 2 and not safe_mode_used:
 		safe_mode_used = true
-		btn_analyze.text = "DIAGNOSTICS"
-		lbl_status.text = "Safe mode unlocked. Open diagnostics."
+		btn_analyze.text = "ДИАГНОСТИКА"
+		lbl_status.text = "Безопасный режим разблокирован. Откройте диагностику."
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.75, 0.45))
 	if wrong_count >= MAX_ATTEMPTS:
 		_show_diagnostics("attempt_limit")
@@ -673,36 +673,36 @@ func _on_analyze_pressed() -> void:
 		state = QuestState.DIAGNOSTIC
 		return
 	if logs_expanded:
-		lbl_status.text = "Analysis lines already revealed."
+		lbl_status.text = "Строки анализа уже раскрыты."
 		lbl_status.add_theme_color_override("font_color", Color(0.9, 0.85, 0.65))
 		return
 	logs_expanded = true
 	hint_used = true
 	_render_log_text()
-	lbl_status.text = "Additional telemetry unlocked."
+	lbl_status.text = "Дополнительная телеметрия разблокирована."
 	lbl_status.add_theme_color_override("font_color", Color(0.72, 0.95, 0.86))
 	_log_event("analyze_reveal", {})
 
 func _show_diagnostics(reason: String) -> void:
 	var lines: Array[String] = []
-	lines.append("Case: %s" % str(current_level.get("id", "")))
-	lines.append("Reason: %s" % reason)
-	lines.append("Pipeline complete at: %d ms" % pipeline_slots_filled_at_ms)
-	lines.append("Module moves: %d" % module_moves_count)
-	lines.append("Kilo: %s" % slot_kilo.get_module_id())
-	lines.append("Bit: %s" % slot_bit.get_module_id())
-	lines.append("Time: %s" % slot_time.get_module_id())
-	lines.append("Output: %s" % slot_out.get_module_id())
+	lines.append("Дело: %s" % str(current_level.get("id", "")))
+	lines.append("Причина: %s" % reason)
+	lines.append("Конвейер собран к: %d мс" % pipeline_slots_filled_at_ms)
+	lines.append("Перемещений модулей: %d" % module_moves_count)
+	lines.append("Кило: %s" % slot_kilo.get_module_id())
+	lines.append("Бит: %s" % slot_bit.get_module_id())
+	lines.append("Время: %s" % slot_time.get_module_id())
+	lines.append("Выход: %s" % slot_out.get_module_id())
 	if calc_bps >= 0:
-		lines.append("Calculated: %s" % _format_rate(calc_bps, calc_display_unit))
-	lines.append("Expected: %d bps" % int(current_level.get("expected_bps", 0)))
-	lines.append("Pipeline correct: %s" % ("yes" if _is_pipeline_correct() else "no"))
+		lines.append("Рассчитано: %s" % _format_rate(calc_bps, calc_display_unit))
+	lines.append("Ожидается: %d bps" % int(current_level.get("expected_bps", 0)))
+	lines.append("Конвейер корректен: %s" % ("да" if _is_pipeline_correct() else "нет"))
 	var pipeline_error: String = _derive_pipeline_error_code()
 	if not pipeline_error.is_empty():
-		lines.append("Pipeline error: %s" % pipeline_error)
+		lines.append("Ошибка конвейера: %s" % pipeline_error)
 		lines.append(ERROR_MAP.get_error_tip(pipeline_error))
 	if not last_error_code.is_empty():
-		lines.append("Answer error: %s" % last_error_code)
+		lines.append("Ошибка ответа: %s" % last_error_code)
 		lines.append(ERROR_MAP.get_error_tip(last_error_code))
 		for detail in ERROR_MAP.detail_messages(last_error_code):
 			lines.append(detail)
@@ -713,7 +713,7 @@ func _show_diagnostics(reason: String) -> void:
 			if not explain_line.is_empty():
 				lines.append(explain_line)
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", "DIAGNOSTICS", lines)
+		diagnostics_panel.call("setup", "ДИАГНОСТИКА", lines)
 	diagnostics_panel.visible = true
 	_log_event("diagnostics_open", {"reason": reason})
 
@@ -723,7 +723,7 @@ func _on_reset_pressed() -> void:
 	_register_first_action()
 	_play_audio("click")
 	_reset_pipeline_state()
-	lbl_status.text = "Pipeline reset. Build and run again."
+	lbl_status.text = "Конвейер сброшен. Соберите и запустите снова."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.86, 0.96))
 	_log_event("reset_pressed", {})
 
@@ -768,7 +768,7 @@ func _update_meta_label() -> void:
 	var stability_value: float = 100.0
 	if GlobalMetrics != null:
 		stability_value = float(GlobalMetrics.stability)
-	lbl_meta.text = "CASE %s | ERR %d/%d | T-%02d:%02d" % [str(current_level.get("id", "--")), wrong_count, MAX_ATTEMPTS, total_seconds / 60, total_seconds % 60]
+	lbl_meta.text = "ДЕЛО %s | ОШ %d/%d | T-%02d:%02d" % [str(current_level.get("id", "--")), wrong_count, MAX_ATTEMPTS, total_seconds / 60, total_seconds % 60]
 	stability_bar.value = stability_value
 
 func _on_stability_changed(_new_value: float, _delta: float) -> void:
@@ -817,7 +817,7 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 	task_session["ended_at_ticks"] = end_tick
 	_log_event("task_end", {"is_correct": is_correct, "reason": reason})
 	if not is_correct and reason != "timeout":
-		lbl_status.text = str(current_level.get("explain_short", "Check diagnostics."))
+		lbl_status.text = str(current_level.get("explain_short", "Проверьте диагностику."))
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.62, 0.45))
 	var elapsed_ms: int = end_tick - level_started_ms
 	var stability_delta: float = float(wrong_count) * FAIL_STABILITY_DELTA
@@ -893,3 +893,5 @@ func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	body.vertical = viewport_size.x < viewport_size.y
 	module_tray.columns = 2 if body.vertical else 4
+
+

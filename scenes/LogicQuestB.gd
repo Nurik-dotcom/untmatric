@@ -142,7 +142,7 @@ func load_case(idx):
 
 	# Update UI
 	story_text.text = current_case.story
-	stats_label.text = "CASE: %02d" % (idx + 1)
+	stats_label.text = "ДЕЛО: %02d" % (idx + 1)
 
 	var labels = current_case.labels
 	input_a_btn.text = "%s: 0" % labels[0]
@@ -226,7 +226,7 @@ func _select_slot(idx):
 	# Actually we rely on theme override in scene, simpler to just set focus or border
 	# For now, just enable selector
 	_set_selector_enabled(true)
-	feedback_lbl.text = "SELECT COMPONENT FOR SLOT %d" % (idx + 1)
+	feedback_lbl.text = "ВЫБЕРИТЕ КОМПОНЕНТ ДЛЯ СЛОТА %d" % (idx + 1)
 	feedback_lbl.add_theme_color_override("font_color", Color(0.5, 0.8, 1))
 	feedback_lbl.visible = true
 
@@ -323,13 +323,13 @@ func _on_verdict_pressed():
 	verdict_count += 1
 	# Check completeness
 	if placed_gates[0] == GATE_NONE or placed_gates[1] == GATE_NONE:
-		_show_feedback("CIRCUIT INCOMPLETE", Color(1, 0.5, 0))
+		_show_feedback("СХЕМА НЕ СОБРАНА", Color(1, 0.5, 0))
 		_register_trial("INCOMPLETE", false)
 		return
 
 	var correct = current_case.correct_gates
 	if placed_gates[0] == correct[0] and placed_gates[1] == correct[1]:
-		_show_feedback("SYSTEM STABLE. ACCESS GRANTED.", Color(0, 1, 0))
+		_show_feedback("СИСТЕМА СТАБИЛЬНА. ДОСТУП РАЗРЕШЁН.", Color(0, 1, 0))
 		btn_verdict.visible = false
 		btn_next.visible = true
 		_set_selector_enabled(false)
@@ -338,7 +338,7 @@ func _on_verdict_pressed():
 		case_attempts += 1
 		var pen = 15.0 + (case_attempts * 5.0)
 		_apply_penalty(pen)
-		_show_feedback("LOGIC ERROR. STABILITY -%d" % int(pen), Color(1, 0, 0))
+		_show_feedback("ЛОГИЧЕСКАЯ ОШИБКА. СТАБИЛЬНОСТЬ -%d" % int(pen), Color(1, 0, 0))
 		_register_trial("WRONG_GATE", false)
 
 func _show_feedback(msg, col):
@@ -356,7 +356,7 @@ func _game_over():
 	game_over_panel.visible = true
 
 func _update_stability(val, _change):
-	stability_label.text = "STABILITY: %d%%" % int(val)
+	stability_label.text = "СТАБИЛЬНОСТЬ: %d%%" % int(val)
 	if val < 30: stability_label.add_theme_color_override("font_color", Color(1, 0, 0))
 	elif val < 70: stability_label.add_theme_color_override("font_color", Color(1, 1, 0))
 	else: stability_label.add_theme_color_override("font_color", Color(0, 1, 0))
@@ -397,7 +397,7 @@ func _play_click():
 func _on_hint_pressed():
 	_mark_first_action()
 	hints_used += 1
-	_show_feedback("HINT: " + current_case.hint, Color(0.5, 0.8, 1))
+	_show_feedback("ПОДСКАЗКА: " + current_case.hint, Color(0.5, 0.8, 1))
 	_apply_penalty(5.0)
 
 func _on_restart_pressed():

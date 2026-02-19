@@ -35,6 +35,7 @@ theme_override_constants/margin_bottom = 14
 [node name="StampLabel" type="Label" parent="CenterContainer/StampPanel/Margin"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 44
-text = "CONFIRMED"
+text = "ПОДТВЕРЖДЕНО"
 horizontal_alignment = 1
 vertical_alignment = 1
+

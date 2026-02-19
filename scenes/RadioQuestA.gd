@@ -131,7 +131,7 @@ func generate_task() -> void:
 	btn_hint.disabled = false
 	bit_knob.mouse_filter = Control.MOUSE_FILTER_STOP # Enable knob
 
-	status_label.text = "STATUS: Configure bits and capture signal."
+	status_label.text = "СТАТУС: настройте биты и перехватите сигнал."
 	status_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
 	forced_sampling = prev_time_to_first_action > 10.0
@@ -139,11 +139,11 @@ func generate_task() -> void:
 	forced_label.visible = forced_sampling
 
 	if is_timed_mode:
-		mode_label.text = "MODE: TIMED"
+		mode_label.text = "РЕЖИМ: ПО ВРЕМЕНИ"
 		timer_label.visible = true
 		time_remaining = trial_duration
 	else:
-		mode_label.text = "MODE: NORMAL"
+		mode_label.text = "РЕЖИМ: НОРМАЛЬНЫЙ"
 		timer_label.visible = false
 
 	if anchor_countdown == 0:
@@ -159,8 +159,8 @@ func generate_task() -> void:
 		target_n = pool.pick_random()
 
 	target_bits = int(ceil(log(float(target_n)) / log(2.0)))
-	task_main_label.text = "ALPHABET POWER: N = %d" % target_n
-	task_sub_label.text = "Use Hartley: N = 2^i"
+	task_main_label.text = "МОЩНОСТЬ АЛФАВИТА: N = %d" % target_n
+	task_sub_label.text = "Используйте Хартли: N = 2^i"
 
 	current_bits = 1
 	bit_knob.set("value", 1)
@@ -186,14 +186,14 @@ func apply_user_bits(i: int, from_user: bool = true) -> void:
 		last_diff_sign = diff_sign
 		last_change_time = Time.get_ticks_msec() / 1000.0
 
-	big_i_label.text = "i = %d bit" % current_bits
+	big_i_label.text = "i = %d бит" % current_bits
 	pow_label.text = "2^i = %d" % pow_val
 
 	if is_fit:
-		fit_label.text = "FIT: YES"
+		fit_label.text = "ПОДХОДИТ: ДА"
 		fit_label.add_theme_color_override("font_color", COLOR_GREEN)
 	else:
-		fit_label.text = "FIT: NO"
+		fit_label.text = "ПОДХОДИТ: НЕТ"
 		fit_label.add_theme_color_override("font_color", COLOR_RED)
 
 	if is_overkill:
@@ -201,29 +201,29 @@ func apply_user_bits(i: int, from_user: bool = true) -> void:
 		var risk_pct: float = minf(100.0, float(excess) * 25.0)
 		risk_bar.value = risk_pct
 		if risk_pct < 40.0:
-			risk_label.text = "RISK: LOW"
+			risk_label.text = "РИСК: НИЗКИЙ"
 			risk_label.add_theme_color_override("font_color", COLOR_GREEN)
 			risk_bar.modulate = COLOR_GREEN
 		elif risk_pct < 80.0:
-			risk_label.text = "RISK: MEDIUM"
+			risk_label.text = "РИСК: СРЕДНИЙ"
 			risk_label.add_theme_color_override("font_color", COLOR_YELLOW)
 			risk_bar.modulate = COLOR_YELLOW
 		else:
-			risk_label.text = "RISK: HIGH"
+			risk_label.text = "РИСК: ВЫСОКИЙ"
 			risk_label.add_theme_color_override("font_color", COLOR_RED)
 			risk_bar.modulate = COLOR_RED
 	else:
-		risk_label.text = "RISK: NONE"
+		risk_label.text = "РИСК: НЕТ"
 		risk_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 		risk_bar.value = 0.0
 		risk_bar.modulate = Color(0.2, 0.2, 0.2)
 
-	details_text.text = "N: %d\nTarget i: %d\n2^i: %d\nMinimal: %s\nAnchor: %s\nMode: %s" % [
+	details_text.text = "N: %d\nЦелевое i: %d\n2^i: %d\nМинимум: %s\nОпора: %s\nРежим: %s" % [
 		target_n,
 		target_bits,
 		pow_val,
-		"YES" if is_minimal else "NO",
-		"YES" if pool_type == "ANCHOR" else "NO",
+		"ДА" if is_minimal else "НЕТ",
+		"ДА" if pool_type == "ANCHOR" else "НЕТ",
 		"TIMED" if is_timed_mode else "UNTIMED"
 	]
 
@@ -268,13 +268,13 @@ func _on_analyze_pressed() -> void:
 
 	var capacity: int = int(pow(2.0, current_bits))
 	if capacity < target_n:
-		status_label.text = "ANALYZE: increase i. Current capacity is below N."
+		status_label.text = "АНАЛИЗ: увеличьте i. Текущая ёмкость ниже N."
 		status_label.add_theme_color_override("font_color", COLOR_YELLOW)
 	elif current_bits > target_bits:
-		status_label.text = "ANALYZE: fit reached, but use fewer bits for minimal depth."
+		status_label.text = "АНАЛИЗ: условие выполнено, но для минимума нужно меньше бит."
 		status_label.add_theme_color_override("font_color", COLOR_YELLOW)
 	else:
-		status_label.text = "ANALYZE: exact minimal fit. Capture the signal."
+		status_label.text = "АНАЛИЗ: точное минимальное попадание. Перехватите сигнал."
 		status_label.add_theme_color_override("font_color", COLOR_GREEN)
 
 func _force_fail_timeout() -> void:
@@ -303,13 +303,13 @@ func _finish_trial(is_timeout: bool) -> void:
 		is_overkill = false
 
 	if not is_fit:
-		status_label.text = "STATUS: Signal lost. Not enough bits."
+		status_label.text = "СТАТУС: сигнал потерян. Недостаточно бит."
 		status_label.add_theme_color_override("font_color", COLOR_RED)
 	elif is_minimal:
-		status_label.text = "STATUS: Perfect lock. Minimal depth reached."
+		status_label.text = "СТАТУС: идеальная синхронизация. Достигнута минимальная глубина."
 		status_label.add_theme_color_override("font_color", COLOR_GREEN)
 	else:
-		status_label.text = "STATUS: Channel stable, but depth is excessive."
+		status_label.text = "СТАТУС: канал стабилен, но глубина избыточна."
 		status_label.add_theme_color_override("font_color", COLOR_YELLOW)
 
 	if current_trial_idx < sample_strip.get_child_count():
@@ -356,7 +356,7 @@ func _on_next_pressed() -> void:
 func _on_hint_pressed() -> void:
 	mark_first_action()
 	hint_used = true
-	status_label.text = "HINT: N = 2^i. Choose the minimal i where 2^i >= N."
+	status_label.text = "ПОДСКАЗКА: N = 2^i. Выберите минимальное i, где 2^i >= N."
 	status_label.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
 
 func _on_back_pressed() -> void:
@@ -367,7 +367,7 @@ func _on_details_toggle() -> void:
 	var is_open := not details_sheet.visible
 	details_sheet.visible = is_open
 	dimmer.visible = is_open
-	btn_details_main.text = "Close" if is_open else "Details"
+	btn_details_main.text = "Закрыть" if is_open else "Детали"
 
 func _on_dimmer_gui_input(event: InputEvent) -> void:
 	if (event is InputEventMouseButton and event.pressed) or (event is InputEventScreenTouch and event.pressed):

@@ -175,12 +175,12 @@ func _setup_gate_selector():
 	gate_selector.clear()
 	gate_selector.add_item(" ... ", 0) # ID 0 = None
 	# Using strict ENT symbols as requested
-	gate_selector.add_item(" &  (AND)", 1)
-	gate_selector.add_item(" 1  (OR)", 2)
-	gate_selector.add_item(" ﾂｬ  (NOT)", 3)
-	gate_selector.add_item(" 竓・ (XOR)", 4)
-	gate_selector.add_item(" |  (NAND)", 5)
-	gate_selector.add_item(" 竊・ (NOR)", 6)
+	gate_selector.add_item(" &  (И)", 1)
+	gate_selector.add_item(" 1  (ИЛИ)", 2)
+	gate_selector.add_item(" ¬  (НЕ)", 3)
+	gate_selector.add_item(" ⊕  (ИСКЛ. ИЛИ)", 4)
+	gate_selector.add_item(" |  (И-НЕ)", 5)
+	gate_selector.add_item(" ↓  (ИЛИ-НЕ)", 6)
 
 	gate_selector.set_item_metadata(1, GATE_AND)
 	gate_selector.set_item_metadata(2, GATE_OR)
@@ -211,7 +211,7 @@ func load_case(idx: int):
 	# Update UI Text
 	story_text.text = current_case.witness_text
 	_update_stats_ui()
-	journal_label.text = "LOG: SYSTEM READY"
+	journal_label.text = "ЛОГ: СИСТЕМА ГОТОВА"
 
 	# Reset Inputs
 	input_a_btn.button_pressed = false
@@ -301,7 +301,7 @@ func _calculate_gate_output(a: bool, b: bool, type: String) -> bool:
 	return false
 
 func _update_journal_log():
-	var txt = "LOG:\n"
+	var txt = "ЛОГ:\n"
 	for k in seen_combinations:
 		var res = "1" if seen_combinations[k] else "0"
 		txt += "%s -> F=%s | " % [k, res]
@@ -324,27 +324,27 @@ func _on_verdict_pressed():
 	# Anti-spam
 	var current_time = Time.get_ticks_msec() / 1000.0
 	if current_time - last_verdict_time < 0.8:
-		_show_feedback("Please wait before the next verdict.", Color(1, 0.5, 0))
+		_show_feedback("Подождите перед следующим вердиктом.", Color(1, 0.5, 0))
 		_lock_verdict(3.0)
 		_register_trial("RATE_LIMITED", false)
 		return
 	last_verdict_time = current_time
 
 	if selected_gate_guess == "":
-		_show_feedback("SELECT GATE FIRST", Color(1, 1, 0))
+		_show_feedback("СНАЧАЛА ВЫБЕРИТЕ ВЕНТИЛЬ", Color(1, 1, 0))
 		_register_trial("EMPTY_SELECTION", false)
 		return
 
 	var min_seen = current_case.get("min_seen", 2)
 	if seen_combinations.size() < min_seen:
-		_show_feedback("INSUFFICIENT DATA (%d/%d)" % [seen_combinations.size(), min_seen], Color(1, 0.5, 0))
+		_show_feedback("НЕДОСТАТОЧНО ДАННЫХ (%d/%d)" % [seen_combinations.size(), min_seen], Color(1, 0.5, 0))
 		_apply_penalty(2.0)
 		_lock_verdict(2.0)
 		_register_trial("INSUFFICIENT_DATA", false)
 		return
 
 	if selected_gate_guess == current_case.gate:
-		_show_feedback("ACCESS GRANTED", Color(0, 1, 0))
+		_show_feedback("ДОСТУП РАЗРЕШЁН", Color(0, 1, 0))
 		btn_verdict.visible = false
 		btn_next.visible = true
 		_disable_controls()
@@ -360,7 +360,7 @@ func _on_verdict_pressed():
 			penalty = 25.0
 
 		_apply_penalty(penalty)
-		_show_feedback("ACCESS DENIED (-%d)" % int(penalty), Color(1, 0, 0))
+		_show_feedback("ДОСТУП ЗАПРЕЩЁН (-%d)" % int(penalty), Color(1, 0, 0))
 		var verdict_code := "WRONG_GATE"
 		if case_attempts >= MAX_ATTEMPTS:
 			_enter_safe_mode()
@@ -392,14 +392,14 @@ func _enter_safe_mode():
 
 	var gate_symbol = "?"
 	match current_case.gate:
-		GATE_AND: gate_symbol = "& (AND)"
-		GATE_OR: gate_symbol = "1 (OR)"
-		GATE_NOT: gate_symbol = "ﾂｬ (NOT)"
-		GATE_XOR: gate_symbol = "竓・(XOR)"
-		GATE_NAND: gate_symbol = "| (NAND)"
-		GATE_NOR: gate_symbol = "竊・(NOR)"
+		GATE_AND: gate_symbol = "& (И)"
+		GATE_OR: gate_symbol = "1 (ИЛИ)"
+		GATE_NOT: gate_symbol = "¬ (НЕ)"
+		GATE_XOR: gate_symbol = "⊕ (ИСКЛ. ИЛИ)"
+		GATE_NAND: gate_symbol = "| (И-НЕ)"
+		GATE_NOR: gate_symbol = "↓ (ИЛИ-НЕ)"
 
-	_show_feedback("SAFE MODE: ﾐｿﾑﾐｰﾐｲﾐｸﾐｻﾑ糊ｽﾑ巾ｹ ﾐｲﾐｵﾐｽﾑひｸﾐｻﾑ・窶・%s. ﾐ｡ﾐｸﾑ・ひｵﾐｼﾐｰ ﾑ・ｱﾑﾐｾﾑ威ｵﾐｽﾐｰ." % gate_symbol, Color(1, 0.5, 0))
+	_show_feedback("БЕЗОПАСНЫЙ РЕЖИМ: правильный вентиль %s. Выполнен авторазбор." % gate_symbol, Color(1, 0.5, 0))
 
 func _show_feedback(msg: String, col: Color):
 	feedback_label.text = msg
@@ -411,7 +411,7 @@ func _apply_penalty(amount):
 	GlobalMetrics.stability_changed.emit(GlobalMetrics.stability, -amount)
 
 func _update_stability_ui(val, _change):
-	stability_label.text = "STABILITY: %d%%" % int(val)
+	stability_label.text = "СТАБИЛЬНОСТЬ: %d%%" % int(val)
 	if val < 30:
 		stability_label.add_theme_color_override("font_color", Color(1, 0, 0))
 	elif val < 70:
@@ -421,7 +421,7 @@ func _update_stability_ui(val, _change):
 
 func _update_stats_ui():
 	var min_seen = current_case.get("min_seen", 2)
-	stats_label.text = "CASE: %02d | ATT: %d/%d | FACTS: %d/%d" % [
+	stats_label.text = "ДЕЛО: %02d | ПОП: %d/%d | ФАКТЫ: %d/%d" % [
 		current_case_index + 1,
 		case_attempts,
 		MAX_ATTEMPTS,
@@ -459,10 +459,10 @@ func _on_hint_pressed():
 	if hints_used < current_case.hints.size():
 		var h = current_case.hints[hints_used]
 		hints_used += 1
-		_show_feedback("HINT: " + h, Color(0.5, 0.8, 1))
+		_show_feedback("ПОДСКАЗКА: " + h, Color(0.5, 0.8, 1))
 		_apply_penalty(5.0)
 	else:
-		_show_feedback("NO MORE HINTS", Color(0.5, 0.5, 0.5))
+		_show_feedback("ПОДСКАЗОК БОЛЬШЕ НЕТ", Color(0.5, 0.5, 0.5))
 
 func _mark_first_action() -> void:
 	if first_action_ms < 0:

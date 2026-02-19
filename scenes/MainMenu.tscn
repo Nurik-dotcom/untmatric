@@ -45,17 +45,18 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(420, 52)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Start"
+text = "Старт"
 
 [node name="PapersArea" type="Button" parent="Center/Menu"]
 custom_minimum_size = Vector2(420, 52)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Learn"
+text = "Обучение"
 
 [node name="LaptopArea" type="Button" parent="Center/Menu"]
 custom_minimum_size = Vector2(420, 52)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
-text = "Options (soon)"
+text = "Опции (скоро)"
+

@@ -105,7 +105,7 @@ func _ready() -> void:
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 
 	if not _load_levels_for_complexity(complexity_name):
-		_show_boot_error("Level data not available for complexity %s." % complexity_name)
+		_show_boot_error("Данные уровней недоступны для сложности %s." % complexity_name)
 		return
 
 	_load_level(0)
@@ -152,13 +152,13 @@ func _collect_action_buttons() -> void:
 
 func _setup_runtime_controls() -> void:
 	palette_select.clear()
-	palette_select.add_item("GREEN", PALETTE_GREEN_ID)
-	palette_select.add_item("AMBER", PALETTE_AMBER_ID)
+	palette_select.add_item("ЗЕЛЁНЫЙ", PALETTE_GREEN_ID)
+	palette_select.add_item("ЯНТАРНЫЙ", PALETTE_AMBER_ID)
 	palette_select.select(PALETTE_GREEN_ID)
 
 	fx_select.clear()
-	fx_select.add_item("FX LOW", FX_LOW_ID)
-	fx_select.add_item("FX HIGH", FX_HIGH_ID)
+	fx_select.add_item("FX НИЗКИЙ", FX_LOW_ID)
+	fx_select.add_item("FX ВЫСОКИЙ", FX_HIGH_ID)
 	fx_select.select(FX_LOW_ID)
 
 	btn_next.visible = false
@@ -310,9 +310,9 @@ func _load_level(index: int) -> void:
 		"events": []
 	}
 
-	lbl_case.text = "NETWORK TRACE | %s" % complexity_name
-	lbl_session.text = "SESS %04d" % (randi() % 10000)
-	lbl_attempts.text = "ERR 0/%d" % MAX_ATTEMPTS
+	lbl_case.text = "СЕТЕВОЙ СЛЕД | %s" % complexity_name
+	lbl_session.text = "СЕСС %04d" % (randi() % 10000)
+	lbl_attempts.text = "ОШ 0/%d" % MAX_ATTEMPTS
 	btn_next.visible = false
 	btn_next.disabled = false
 	btn_analyze.disabled = true
@@ -330,7 +330,7 @@ func _load_level(index: int) -> void:
 	_setup_option_buttons()
 	_set_option_buttons_enabled(true)
 
-	lbl_status.text = "Select an action." 
+	lbl_status.text = "Выберите действие." 
 	lbl_status.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
 	state = QuestState.SOLVING
@@ -346,15 +346,15 @@ func _render_terminal_content() -> void:
 	var tags_arr: Array = current_level.get("tags", [])
 	var tag_line := ""
 	if not tags_arr.is_empty():
-		tag_line = "\n[color=#6f8f6f]TAGS:[/color] %s" % ", ".join(_stringify_array(tags_arr))
+		tag_line = "\n[color=#6f8f6f]ТЕГИ:[/color] %s" % ", ".join(_stringify_array(tags_arr))
 
 	terminal_text.clear()
-	terminal_text.append_text("[color=#7a7a7a]BRIEFING[/color]\n")
+	terminal_text.append_text("[color=#7a7a7a]ИНСТРУКТАЖ[/color]\n")
 	terminal_text.append_text("%s\n\n" % briefing)
-	terminal_text.append_text("[color=#9de6b3]PROMPT[/color]\n")
+	terminal_text.append_text("[color=#9de6b3]ЗАДАНИЕ[/color]\n")
 	terminal_text.append_text("%s\n" % prompt)
 	if not explain_short.is_empty():
-		terminal_text.append_text("\n[color=#a1a1a1]NOTE[/color]\n%s\n" % explain_short)
+		terminal_text.append_text("\n[color=#a1a1a1]ПРИМЕЧАНИЕ[/color]\n%s\n" % explain_short)
 	if not tag_line.is_empty():
 		terminal_text.append_text(tag_line)
 	terminal_scroll.scroll_vertical = 0
@@ -450,7 +450,7 @@ func _on_action_pressed(button_index: int) -> void:
 
 func _handle_success() -> void:
 	state = QuestState.FEEDBACK_SUCCESS
-	lbl_status.text = "Correct. Link path confirmed."
+	lbl_status.text = "Верно. Путь связи подтверждён."
 	lbl_status.add_theme_color_override("font_color", Color(0.35, 1.0, 0.45))
 	_set_option_buttons_enabled(false)
 	btn_analyze.disabled = true
@@ -461,11 +461,11 @@ func _handle_success() -> void:
 
 func _handle_failure(error_code: String) -> void:
 	wrong_count += 1
-	lbl_attempts.text = "ERR %d/%d" % [wrong_count, MAX_ATTEMPTS]
+	lbl_attempts.text = "ОШ %d/%d" % [wrong_count, MAX_ATTEMPTS]
 	state = QuestState.FEEDBACK_FAIL
 
 	var short_message: String = ERROR_MAP.short_message(error_code)
-	lbl_status.text = "Wrong: %s" % short_message
+	lbl_status.text = "Ошибка: %s" % short_message
 	lbl_status.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 
 	_play_audio("error")
@@ -486,7 +486,7 @@ func _enter_safe_mode() -> void:
 	safe_mode = true
 	state = QuestState.SAFE_MODE
 	btn_analyze.disabled = false
-	lbl_status.text = "Safe mode unlocked. Analyze is available."
+	lbl_status.text = "Безопасный режим разблокирован. Доступен анализ."
 	lbl_status.add_theme_color_override("font_color", Color(1.0, 0.7, 0.35))
 	_log_event("safe_mode_enabled", {"wrong_count": wrong_count})
 
@@ -494,7 +494,7 @@ func _on_analyze_pressed() -> void:
 	if level_finished:
 		return
 	if not safe_mode:
-		lbl_status.text = "Analyze unlocks after 2 errors."
+		lbl_status.text = "Анализ открывается после 2 ошибок."
 		lbl_status.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4))
 		return
 
@@ -504,9 +504,9 @@ func _on_analyze_pressed() -> void:
 		_log_event("hint_used", {"source": "analyze"})
 
 	var lines: Array[String] = []
-	lines.append("Level: %s" % str(current_level.get("id", "UNKNOWN")))
+	lines.append("Уровень: %s" % str(current_level.get("id", "UNKNOWN")))
 	if not last_error_code.is_empty():
-		lines.append("Last error: %s" % last_error_code)
+		lines.append("Последняя ошибка: %s" % last_error_code)
 		lines.append(ERROR_MAP.short_message(last_error_code))
 		for detail_line in ERROR_MAP.detail_messages(last_error_code):
 			lines.append(detail_line)
@@ -531,8 +531,8 @@ func _on_hint_pressed() -> void:
 		hint_used = true
 		_log_event("hint_used", {"source": "hint_button"})
 
-	var hint_text: String = str(current_level.get("explain_short", "No hint available."))
-	lbl_status.text = "Hint: %s" % hint_text
+	var hint_text: String = str(current_level.get("explain_short", "Подсказка недоступна."))
+	lbl_status.text = "Подсказка: %s" % hint_text
 	lbl_status.add_theme_color_override("font_color", Color(0.8, 0.9, 1.0))
 
 func _on_next_pressed() -> void:
@@ -630,7 +630,7 @@ func _finish_level(is_correct: bool, end_reason: String) -> void:
 			lbl_status.add_theme_color_override("font_color", Color(1.0, 0.6, 0.45))
 
 	if end_reason == "timeout":
-		lbl_status.text = "Timeout. Trace window closed."
+		lbl_status.text = "Время вышло. Окно трассировки закрыто."
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 
 	var end_tick: int = Time.get_ticks_msec()
@@ -695,7 +695,7 @@ func _on_timeout() -> void:
 
 func _show_diagnostics(lines: Array[String]) -> void:
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", "DIAGNOSTICS", lines)
+		diagnostics_panel.call("setup", "ДИАГНОСТИКА", lines)
 	diagnostics_panel.visible = true
 
 func _trigger_glitch() -> void:

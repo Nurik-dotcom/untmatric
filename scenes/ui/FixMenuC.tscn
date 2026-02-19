@@ -16,13 +16,13 @@ theme_override_constants/separation = 12
 [node name="LblTitle" type="Label" parent="Root"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "FIX LINE 01"
+text = "ИСПРАВИТЬ СТРОКУ 01"
 horizontal_alignment = 1
 
 [node name="LblOriginal" type="Label" parent="Root"]
 layout_mode = 2
 autowrap_mode = 2
-text = "original: if i > 3:"
+text = "оригинал: if i > 3:"
 
 [node name="Options" type="VBoxContainer" parent="Root"]
 layout_mode = 2
@@ -51,10 +51,11 @@ theme_override_constants/separation = 12
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "APPLY"
+text = "ПРИМЕНИТЬ"
 
 [node name="BtnClose" type="Button" parent="Root/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "CANCEL"
+text = "ОТМЕНА"
+

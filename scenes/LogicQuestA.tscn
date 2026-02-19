@@ -74,7 +74,7 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.2, 1, 0.2, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
-text = "STABILITY: 100%"
+text = "СТАБИЛЬНОСТЬ: 100%"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -83,7 +83,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 16
-text = "CASE: 01"
+text = "ДЕЛО: 01"
 
 [node name="StoryPanel" type="PanelContainer" parent="MainLayout"]
 custom_minimum_size = Vector2(0, 120)
@@ -102,7 +102,7 @@ layout_mode = 2
 theme_override_fonts/normal_font = SubResource("SystemFont_1")
 theme_override_font_sizes/normal_font_size = 18
 bbcode_enabled = true
-text = "Witness statement..."
+text = "Показания свидетеля..."
 fit_content = true
 
 [node name="BoardContainer" type="Control" parent="MainLayout"]
@@ -186,7 +186,7 @@ offset_right = 780.0
 offset_bottom = 240.0
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = "OUTPUT"
+text = "ВЫХОД"
 horizontal_alignment = 1
 
 [node name="JournalLabel" type="Label" parent="MainLayout/BoardContainer"]
@@ -199,7 +199,7 @@ anchor_bottom = 0.98
 theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 12
-text = "LOG: ..."
+text = "ЛОГ: ..."
 autowrap_mode = 2
 
 [node name="ControlsPanel" type="PanelContainer" parent="MainLayout"]
@@ -222,7 +222,7 @@ alignment = 1
 custom_minimum_size = Vector2(100, 60)
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = "HINT"
+text = "ПОДСКАЗКА"
 
 [node name="BtnVerdict" type="Button" parent="MainLayout/ControlsPanel/ControlsMargin/HBox"]
 custom_minimum_size = Vector2(160, 60)
@@ -231,7 +231,7 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
-text = "VERDICT"
+text = "ВЕРДИКТ"
 
 [node name="BtnNext" type="Button" parent="MainLayout/ControlsPanel/ControlsMargin/HBox"]
 visible = false
@@ -241,14 +241,14 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0, 1, 0, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 20
-text = "NEXT >"
+text = "ДАЛЕЕ >"
 
 [node name="FeedbackLabel" type="Label" parent="MainLayout/ControlsPanel/ControlsMargin/HBox"]
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
-text = "Access Denied"
+text = "Доступ запрещён"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_glow")
@@ -291,7 +291,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1, 0, 0, 1)
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 32
-text = "CRITICAL FAILURE"
+text = "КРИТИЧЕСКИЙ СБОЙ"
 horizontal_alignment = 1
 
 [node name="RestartButton" type="Button" parent="GameOverPanel/CenterContainer/VBox"]
@@ -299,7 +299,7 @@ custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 24
-text = "REBOOT SYSTEM"
+text = "ПЕРЕЗАПУСК СИСТЕМЫ"
 
 [connection signal="pressed" from="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/BtnBack" to="." method="_on_back_button_pressed"]
 [connection signal="toggled" from="MainLayout/BoardContainer/InputA_Btn" to="." method="_on_input_a_toggled"]
@@ -309,3 +309,5 @@ text = "REBOOT SYSTEM"
 [connection signal="pressed" from="MainLayout/ControlsPanel/ControlsMargin/HBox/BtnVerdict" to="." method="_on_verdict_pressed"]
 [connection signal="pressed" from="MainLayout/ControlsPanel/ControlsMargin/HBox/BtnNext" to="." method="_on_next_button_pressed"]
 [connection signal="pressed" from="GameOverPanel/CenterContainer/VBox/RestartButton" to="." method="_on_restart_pressed"]
+
+

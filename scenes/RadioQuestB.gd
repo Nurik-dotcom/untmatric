@@ -408,7 +408,7 @@ func _finish_trial():
 		status_label.add_theme_color_override("font_color", COLOR_RED)
 		_update_sample_strip(COLOR_RED)
 	elif is_overkill:
-		status_label.text = "РЕЗУЛЬТАТ: Носитель подходит, но слишком велик (Overkill)."
+		status_label.text = "РЕЗУЛЬТАТ: Носитель подходит, но избыточен."
 		status_label.add_theme_color_override("font_color", COLOR_YELLOW)
 		_update_sample_strip(COLOR_YELLOW)
 	else:

@@ -224,7 +224,7 @@ size_flags_vertical = 3
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 18
 toggle_mode = true
-text = "Option 1"
+text = "Вариант 1"
 text_overrun_behavior = 3
 clip_text = true
 
@@ -235,7 +235,7 @@ size_flags_vertical = 3
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 18
 toggle_mode = true
-text = "Option 2"
+text = "Вариант 2"
 text_overrun_behavior = 3
 clip_text = true
 
@@ -246,7 +246,7 @@ size_flags_vertical = 3
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 18
 toggle_mode = true
-text = "Option 3"
+text = "Вариант 3"
 text_overrun_behavior = 3
 clip_text = true
 
@@ -257,7 +257,7 @@ size_flags_vertical = 3
 theme_override_fonts/font = SubResource("SystemFont_1")
 theme_override_font_sizes/font_size = 18
 toggle_mode = true
-text = "Option 4"
+text = "Вариант 4"
 text_overrun_behavior = 3
 clip_text = true
 
@@ -411,3 +411,4 @@ environment = SubResource("Environment_glow")
 [connection signal="pressed" from="SafeArea/MainVBox/BottomVBox/ActionsRow/BtnConverter" to="." method="_on_converter_pressed"]
 [connection signal="pressed" from="SafeArea/MainVBox/BottomVBox/ActionsRow/BtnCapture" to="." method="_on_capture_pressed"]
 [connection signal="pressed" from="SafeArea/MainVBox/BottomVBox/ActionsRow/BtnNext" to="." method="_on_next_pressed"]
+

@@ -76,7 +76,7 @@ func _ready() -> void:
 	_apply_mobile_min_sizes()
 
 	if not _load_levels_from_json():
-		_show_boot_error("Failed to load suspect levels.")
+		_show_boot_error("Не удалось загрузить уровни подозреваемых.")
 		return
 
 	if levels.size() != 18:
@@ -90,13 +90,13 @@ func _apply_theme() -> void:
 
 func _setup_runtime_controls() -> void:
 	palette_select.clear()
-	palette_select.add_item("GREEN", PALETTE_ID_GREEN)
-	palette_select.add_item("AMBER", PALETTE_ID_AMBER)
+	palette_select.add_item("ЗЕЛЁНЫЙ", PALETTE_ID_GREEN)
+	palette_select.add_item("ЯНТАРНЫЙ", PALETTE_ID_AMBER)
 	palette_select.select(PALETTE_ID_GREEN if terminal_palette == "green" else PALETTE_ID_AMBER)
 
 	fx_select.clear()
-	fx_select.add_item("LOW", FX_ID_LOW)
-	fx_select.add_item("HIGH", FX_ID_HIGH)
+	fx_select.add_item("НИЗКИЙ", FX_ID_LOW)
+	fx_select.add_item("ВЫСОКИЙ", FX_ID_HIGH)
 	fx_select.select(FX_ID_HIGH if fx_quality == "high" else FX_ID_LOW)
 
 	palette_select.item_selected.connect(_on_palette_selected)
@@ -239,11 +239,11 @@ func _load_level(idx: int) -> void:
 	task_finished = false
 	task_result_sent = false
 
-	lbl_clue_title.text = "CLUE #%s" % str(current_task.get("id", "A-00"))
-	lbl_session.text = "SESS %04d" % (randi() % 10000)
-	lbl_status.text = "DECRYPTING..."
+	lbl_clue_title.text = "УЛИКА #%s" % str(current_task.get("id", "A-00"))
+	lbl_session.text = "СЕСС %04d" % (randi() % 10000)
+	lbl_status.text = "ДЕШИФРОВКА..."
 	lbl_status.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	lbl_attempts.text = "ERR: 0/%d" % MAX_ATTEMPTS
+	lbl_attempts.text = "ОШ: 0/%d" % MAX_ATTEMPTS
 	decrypt_bar.value = float(current_level_idx) / maxf(1.0, float(levels.size() - 1)) * 100.0
 	energy_bar.value = energy
 
@@ -263,7 +263,7 @@ func _load_level(idx: int) -> void:
 	state = State.SOLVING
 	btn_enter.disabled = false
 	btn_analyze.disabled = false
-	lbl_status.text = "INPUT READY"
+	lbl_status.text = "ВВОД ГОТОВ"
 	lbl_status.add_theme_color_override("font_color", Color(0.6, 0.95, 0.6))
 
 func _typewrite_code(lines: Array) -> void:
@@ -318,7 +318,7 @@ func _on_enter_pressed() -> void:
 		_play_sfx(AUDIO_ERROR)
 		_trigger_glitch()
 		_shake_screen()
-		lbl_status.text = "INVALID INPUT"
+		lbl_status.text = "НЕКОРРЕКТНЫЙ ВВОД"
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 		task_session["attempts"].append({
 			"kind": "numpad",
@@ -371,7 +371,7 @@ func _on_enter_pressed() -> void:
 
 func _handle_success_feedback() -> void:
 	state = State.FEEDBACK_SUCCESS
-	lbl_status.text = "ACCESS GRANTED"
+	lbl_status.text = "ДОСТУП РАЗРЕШЁН"
 	lbl_status.add_theme_color_override("font_color", Color(0.2, 1.0, 0.2))
 	btn_enter.disabled = true
 	btn_analyze.disabled = true
@@ -381,8 +381,8 @@ func _handle_success_feedback() -> void:
 
 func _handle_fail_feedback() -> void:
 	wrong_count += 1
-	lbl_attempts.text = "ERR: %d/%d" % [wrong_count, MAX_ATTEMPTS]
-	lbl_status.text = "ACCESS DENIED"
+	lbl_attempts.text = "ОШ: %d/%d" % [wrong_count, MAX_ATTEMPTS]
+	lbl_status.text = "ДОСТУП ЗАПРЕЩЁН"
 	lbl_status.add_theme_color_override("font_color", Color(1.0, 0.25, 0.25))
 
 	var wrong_penalty := int(current_task.get("economy", {}).get("wrong", 10))
@@ -404,7 +404,7 @@ func _trigger_safe_mode() -> void:
 	is_safe_mode = true
 	btn_enter.disabled = true
 	btn_next.visible = true
-	lbl_status.text = "SAFE MODE ACTIVE"
+	lbl_status.text = "БЕЗОПАСНЫЙ РЕЖИМ АКТИВЕН"
 	lbl_status.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 
 	btn_analyze.disabled = false
@@ -421,7 +421,7 @@ func _on_analyze_pressed(free: bool = false) -> void:
 	if not free:
 		var analyze_cost := int(current_task.get("economy", {}).get("analyze", 20))
 		if energy < float(analyze_cost):
-			lbl_status.text = "INSUFFICIENT ENERGY"
+			lbl_status.text = "НЕДОСТАТОЧНО ЭНЕРГИИ"
 			lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.25))
 			_play_sfx(AUDIO_ERROR)
 			return
@@ -530,3 +530,5 @@ func _log_event(name: String, payload: Dictionary) -> void:
 		"payload": payload
 	})
 	task_session["events"] = events
+
+

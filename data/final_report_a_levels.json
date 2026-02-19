@@ -250,9 +250,9 @@
                           },
                           {
                               "fragment_id":  "a_home",
-                              "label":  "\u003ca href=\"#home\"\u003eHome\u003c/a\u003e",
+                              "label":  "\u003ca href=\"#home\"\u003eГлавная\u003c/a\u003e",
                               "kind":  "LINK",
-                              "token":  "\u003ca href=\"#home\"\u003eHome\u003c/a\u003e"
+                              "token":  "\u003ca href=\"#home\"\u003eГлавная\u003c/a\u003e"
                           },
                           {
                               "fragment_id":  "a_mvp",
@@ -262,9 +262,9 @@
                           },
                           {
                               "fragment_id":  "a_team",
-                              "label":  "\u003ca href=\"#team\"\u003eTeam\u003c/a\u003e",
+                              "label":  "\u003ca href=\"#team\"\u003eКоманда\u003c/a\u003e",
                               "kind":  "LINK",
-                              "token":  "\u003ca href=\"#team\"\u003eTeam\u003c/a\u003e"
+                              "token":  "\u003ca href=\"#team\"\u003eКоманда\u003c/a\u003e"
                           },
                           {
                               "fragment_id":  "close_nav",
@@ -274,9 +274,9 @@
                           },
                           {
                               "fragment_id":  "noise_span",
-                              "label":  "\u003cspan\u003ead\u003c/span\u003e",
+                              "label":  "\u003cspan\u003eреклама\u003c/span\u003e",
                               "kind":  "FOREIGN",
-                              "token":  "\u003cspan\u003ead\u003c/span\u003e"
+                              "token":  "\u003cspan\u003eреклама\u003c/span\u003e"
                           }
                       ],
         "expected_sequence":  [
@@ -361,15 +361,15 @@
                           },
                           {
                               "fragment_id":  "a_home",
-                              "label":  "\u003ca href=\"#home\"\u003eHome\u003c/a\u003e",
+                              "label":  "\u003ca href=\"#home\"\u003eГлавная\u003c/a\u003e",
                               "kind":  "LINK",
-                              "token":  "\u003ca href=\"#home\"\u003eHome\u003c/a\u003e"
+                              "token":  "\u003ca href=\"#home\"\u003eГлавная\u003c/a\u003e"
                           },
                           {
                               "fragment_id":  "a_invest",
-                              "label":  "\u003ca href=\"#invest\"\u003eInvest\u003c/a\u003e",
+                              "label":  "\u003ca href=\"#invest\"\u003eИнвестировать\u003c/a\u003e",
                               "kind":  "LINK",
-                              "token":  "\u003ca href=\"#invest\"\u003eInvest\u003c/a\u003e"
+                              "token":  "\u003ca href=\"#invest\"\u003eИнвестировать\u003c/a\u003e"
                           },
                           {
                               "fragment_id":  "close_nav",
@@ -379,9 +379,9 @@
                           },
                           {
                               "fragment_id":  "noise_div",
-                              "label":  "\u003cdiv\u003ebanner\u003c/div\u003e",
+                              "label":  "\u003cdiv\u003eбаннер\u003c/div\u003e",
                               "kind":  "FOREIGN",
-                              "token":  "\u003cdiv\u003ebanner\u003c/div\u003e"
+                              "token":  "\u003cdiv\u003eбаннер\u003c/div\u003e"
                           }
                       ],
         "expected_sequence":  [
@@ -462,21 +462,21 @@
                           },
                           {
                               "fragment_id":  "row_ok_1201",
-                              "label":  "\u003ctr\u003e\u003ctd\u003e12:01\u003c/td\u003e\u003ctd\u003eOK\u003c/td\u003e\u003c/tr\u003e",
+                              "label":  "\u003ctr\u003e\u003ctd\u003e12:01\u003c/td\u003e\u003ctd\u003eОК\u003c/td\u003e\u003c/tr\u003e",
                               "kind":  "TR_ROW",
-                              "token":  "\u003ctr\u003e\u003ctd\u003e12:01\u003c/td\u003e\u003ctd\u003eOK\u003c/td\u003e\u003c/tr\u003e"
+                              "token":  "\u003ctr\u003e\u003ctd\u003e12:01\u003c/td\u003e\u003ctd\u003eОК\u003c/td\u003e\u003c/tr\u003e"
                           },
                           {
                               "fragment_id":  "row_deny_1203",
-                              "label":  "\u003ctr\u003e\u003ctd\u003e12:03\u003c/td\u003e\u003ctd\u003eDENY\u003c/td\u003e\u003c/tr\u003e",
+                              "label":  "\u003ctr\u003e\u003ctd\u003e12:03\u003c/td\u003e\u003ctd\u003eОТКАЗ\u003c/td\u003e\u003c/tr\u003e",
                               "kind":  "TR_ROW",
-                              "token":  "\u003ctr\u003e\u003ctd\u003e12:03\u003c/td\u003e\u003ctd\u003eDENY\u003c/td\u003e\u003c/tr\u003e"
+                              "token":  "\u003ctr\u003e\u003ctd\u003e12:03\u003c/td\u003e\u003ctd\u003eОТКАЗ\u003c/td\u003e\u003c/tr\u003e"
                           },
                           {
                               "fragment_id":  "row_ok_1210",
-                              "label":  "\u003ctr\u003e\u003ctd\u003e12:10\u003c/td\u003e\u003ctd\u003eOK\u003c/td\u003e\u003c/tr\u003e",
+                              "label":  "\u003ctr\u003e\u003ctd\u003e12:10\u003c/td\u003e\u003ctd\u003eОК\u003c/td\u003e\u003c/tr\u003e",
                               "kind":  "TR_ROW",
-                              "token":  "\u003ctr\u003e\u003ctd\u003e12:10\u003c/td\u003e\u003ctd\u003eOK\u003c/td\u003e\u003c/tr\u003e"
+                              "token":  "\u003ctr\u003e\u003ctd\u003e12:10\u003c/td\u003e\u003ctd\u003eОК\u003c/td\u003e\u003c/tr\u003e"
                           },
                           {
                               "fragment_id":  "close_table",
@@ -486,9 +486,9 @@
                           },
                           {
                               "fragment_id":  "noise_div",
-                              "label":  "\u003cdiv\u003erow\u003c/div\u003e",
+                              "label":  "\u003cdiv\u003eстрока\u003c/div\u003e",
                               "kind":  "FOREIGN",
-                              "token":  "\u003cdiv\u003erow\u003c/div\u003e"
+                              "token":  "\u003cdiv\u003eстрока\u003c/div\u003e"
                           }
                       ],
         "expected_sequence":  [
@@ -569,21 +569,21 @@
                           },
                           {
                               "fragment_id":  "row_1",
-                              "label":  "\u003ctr\u003e\u003ctd\u003eHost-1\u003c/td\u003e\u003ctd\u003eOK\u003c/td\u003e\u003c/tr\u003e",
+                              "label":  "\u003ctr\u003e\u003ctd\u003eХост-1\u003c/td\u003e\u003ctd\u003eОК\u003c/td\u003e\u003c/tr\u003e",
                               "kind":  "TR_ROW",
-                              "token":  "\u003ctr\u003e\u003ctd\u003eHost-1\u003c/td\u003e\u003ctd\u003eOK\u003c/td\u003e\u003c/tr\u003e"
+                              "token":  "\u003ctr\u003e\u003ctd\u003eХост-1\u003c/td\u003e\u003ctd\u003eОК\u003c/td\u003e\u003c/tr\u003e"
                           },
                           {
                               "fragment_id":  "row_2",
-                              "label":  "\u003ctr\u003e\u003ctd\u003eHost-2\u003c/td\u003e\u003ctd\u003eWARN\u003c/td\u003e\u003c/tr\u003e",
+                              "label":  "\u003ctr\u003e\u003ctd\u003eХост-2\u003c/td\u003e\u003ctd\u003eПРЕДУПРЕЖДЕНИЕ\u003c/td\u003e\u003c/tr\u003e",
                               "kind":  "TR_ROW",
-                              "token":  "\u003ctr\u003e\u003ctd\u003eHost-2\u003c/td\u003e\u003ctd\u003eWARN\u003c/td\u003e\u003c/tr\u003e"
+                              "token":  "\u003ctr\u003e\u003ctd\u003eХост-2\u003c/td\u003e\u003ctd\u003eПРЕДУПРЕЖДЕНИЕ\u003c/td\u003e\u003c/tr\u003e"
                           },
                           {
                               "fragment_id":  "row_3",
-                              "label":  "\u003ctr\u003e\u003ctd\u003eHost-3\u003c/td\u003e\u003ctd\u003eOK\u003c/td\u003e\u003c/tr\u003e",
+                              "label":  "\u003ctr\u003e\u003ctd\u003eХост-3\u003c/td\u003e\u003ctd\u003eОК\u003c/td\u003e\u003c/tr\u003e",
                               "kind":  "TR_ROW",
-                              "token":  "\u003ctr\u003e\u003ctd\u003eHost-3\u003c/td\u003e\u003ctd\u003eOK\u003c/td\u003e\u003c/tr\u003e"
+                              "token":  "\u003ctr\u003e\u003ctd\u003eХост-3\u003c/td\u003e\u003ctd\u003eОК\u003c/td\u003e\u003c/tr\u003e"
                           },
                           {
                               "fragment_id":  "close_table",
@@ -650,7 +650,7 @@
         "schema_version":  "1.2.0",
         "id":  "FR8-A-F01",
         "bucket":  "newbie",
-        "briefing":  "Соберите простую форму допроса: label + input + button.",
+        "briefing":  "Соберите простую форму допроса: надпись + поле ввода + кнопка.",
         "format":  "TAG_ORDERING",
         "validator_profile":  "FORM_SIMPLE",
         "allowed_containers":  [
@@ -678,9 +678,9 @@
                           },
                           {
                               "fragment_id":  "label_name",
-                              "label":  "\u003clabel for=\"n\"\u003eName\u003c/label\u003e",
+                              "label":  "\u003clabel for=\"n\"\u003eИмя\u003c/label\u003e",
                               "kind":  "FORM_FIELD",
-                              "token":  "\u003clabel for=\"n\"\u003eName\u003c/label\u003e"
+                              "token":  "\u003clabel for=\"n\"\u003eИмя\u003c/label\u003e"
                           },
                           {
                               "fragment_id":  "input_name",
@@ -690,9 +690,9 @@
                           },
                           {
                               "fragment_id":  "button_submit",
-                              "label":  "\u003cbutton\u003eSubmit\u003c/button\u003e",
+                              "label":  "\u003cbutton\u003eПодтвердить\u003c/button\u003e",
                               "kind":  "BUTTON",
-                              "token":  "\u003cbutton\u003eSubmit\u003c/button\u003e"
+                              "token":  "\u003cbutton\u003eПодтвердить\u003c/button\u003e"
                           },
                           {
                               "fragment_id":  "close_form",
@@ -702,9 +702,9 @@
                           },
                           {
                               "fragment_id":  "noise_p",
-                              "label":  "\u003cp\u003enote\u003c/p\u003e",
+                              "label":  "\u003cp\u003eзаметка\u003c/p\u003e",
                               "kind":  "FOREIGN",
-                              "token":  "\u003cp\u003enote\u003c/p\u003e"
+                              "token":  "\u003cp\u003eзаметка\u003c/p\u003e"
                           }
                       ],
         "expected_sequence":  [
@@ -788,9 +788,9 @@
                           },
                           {
                               "fragment_id":  "label_name",
-                              "label":  "\u003clabel for=\"n\"\u003eName\u003c/label\u003e",
+                              "label":  "\u003clabel for=\"n\"\u003eИмя\u003c/label\u003e",
                               "kind":  "FORM_FIELD",
-                              "token":  "\u003clabel for=\"n\"\u003eName\u003c/label\u003e"
+                              "token":  "\u003clabel for=\"n\"\u003eИмя\u003c/label\u003e"
                           },
                           {
                               "fragment_id":  "input_name",
@@ -800,9 +800,9 @@
                           },
                           {
                               "fragment_id":  "label_code",
-                              "label":  "\u003clabel for=\"c\"\u003eCode\u003c/label\u003e",
+                              "label":  "\u003clabel for=\"c\"\u003eКод\u003c/label\u003e",
                               "kind":  "FORM_FIELD",
-                              "token":  "\u003clabel for=\"c\"\u003eCode\u003c/label\u003e"
+                              "token":  "\u003clabel for=\"c\"\u003eКод\u003c/label\u003e"
                           },
                           {
                               "fragment_id":  "input_code",
@@ -812,9 +812,9 @@
                           },
                           {
                               "fragment_id":  "button_send",
-                              "label":  "\u003cbutton\u003eSend\u003c/button\u003e",
+                              "label":  "\u003cbutton\u003eОтправить\u003c/button\u003e",
                               "kind":  "BUTTON",
-                              "token":  "\u003cbutton\u003eSend\u003c/button\u003e"
+                              "token":  "\u003cbutton\u003eОтправить\u003c/button\u003e"
                           },
                           {
                               "fragment_id":  "close_form",
@@ -824,9 +824,9 @@
                           },
                           {
                               "fragment_id":  "noise_div",
-                              "label":  "\u003cdiv\u003ead\u003c/div\u003e",
+                              "label":  "\u003cdiv\u003eреклама\u003c/div\u003e",
                               "kind":  "FOREIGN",
-                              "token":  "\u003cdiv\u003ead\u003c/div\u003e"
+                              "token":  "\u003cdiv\u003eреклама\u003c/div\u003e"
                           }
                       ],
         "expected_sequence":  [
@@ -908,15 +908,15 @@
                           },
                           {
                               "fragment_id":  "h1_final",
-                              "label":  "\u003ch1\u003eFinal Report\u003c/h1\u003e",
+                              "label":  "\u003ch1\u003eФинальный отчёт\u003c/h1\u003e",
                               "kind":  "TEXT_BLOCK",
-                              "token":  "\u003ch1\u003eFinal Report\u003c/h1\u003e"
+                              "token":  "\u003ch1\u003eФинальный отчёт\u003c/h1\u003e"
                           },
                           {
                               "fragment_id":  "p_evidence",
-                              "label":  "\u003cp\u003eEvidence restored.\u003c/p\u003e",
+                              "label":  "\u003cp\u003eУлики восстановлены.\u003c/p\u003e",
                               "kind":  "TEXT_BLOCK",
-                              "token":  "\u003cp\u003eEvidence restored.\u003c/p\u003e"
+                              "token":  "\u003cp\u003eУлики восстановлены.\u003c/p\u003e"
                           },
                           {
                               "fragment_id":  "small_case",
@@ -1019,21 +1019,21 @@
                           },
                           {
                               "fragment_id":  "p_body",
-                              "label":  "\u003cp\u003eFinal note.\u003c/p\u003e",
+                              "label":  "\u003cp\u003eФинальная заметка.\u003c/p\u003e",
                               "kind":  "TEXT_BLOCK",
-                              "token":  "\u003cp\u003eFinal note.\u003c/p\u003e"
+                              "token":  "\u003cp\u003eФинальная заметка.\u003c/p\u003e"
                           },
                           {
                               "fragment_id":  "p_extra",
-                              "label":  "\u003cp\u003eAppendix.\u003c/p\u003e",
+                              "label":  "\u003cp\u003eПриложение.\u003c/p\u003e",
                               "kind":  "TEXT_BLOCK",
-                              "token":  "\u003cp\u003eAppendix.\u003c/p\u003e"
+                              "token":  "\u003cp\u003eПриложение.\u003c/p\u003e"
                           },
                           {
                               "fragment_id":  "small_note",
-                              "label":  "\u003csmall\u003e#archive\u003c/small\u003e",
+                              "label":  "\u003csmall\u003e#архив\u003c/small\u003e",
                               "kind":  "TEXT_BLOCK",
-                              "token":  "\u003csmall\u003e#archive\u003c/small\u003e"
+                              "token":  "\u003csmall\u003e#архив\u003c/small\u003e"
                           },
                           {
                               "fragment_id":  "close_article",
@@ -1043,9 +1043,9 @@
                           },
                           {
                               "fragment_id":  "noise_nav",
-                              "label":  "\u003cnav\u003emenu\u003c/nav\u003e",
+                              "label":  "\u003cnav\u003eменю\u003c/nav\u003e",
                               "kind":  "FOREIGN",
-                              "token":  "\u003cnav\u003emenu\u003c/nav\u003e"
+                              "token":  "\u003cnav\u003eменю\u003c/nav\u003e"
                           }
                       ],
         "expected_sequence":  [
@@ -1137,9 +1137,9 @@
                           },
                           {
                               "fragment_id":  "caption_main",
-                              "label":  "\u003cfigcaption\u003eCamera 12\u003c/figcaption\u003e",
+                              "label":  "\u003cfigcaption\u003eКамера 12\u003c/figcaption\u003e",
                               "kind":  "TEXT_BLOCK",
-                              "token":  "\u003cfigcaption\u003eCamera 12\u003c/figcaption\u003e"
+                              "token":  "\u003cfigcaption\u003eКамера 12\u003c/figcaption\u003e"
                           },
                           {
                               "fragment_id":  "close_figure",
@@ -1149,9 +1149,9 @@
                           },
                           {
                               "fragment_id":  "li_fake",
-                              "label":  "\u003cli\u003efake\u003c/li\u003e",
+                              "label":  "\u003cli\u003eфейк\u003c/li\u003e",
                               "kind":  "FOREIGN",
-                              "token":  "\u003cli\u003efake\u003c/li\u003e"
+                              "token":  "\u003cli\u003eфейк\u003c/li\u003e"
                           }
                       ],
         "expected_sequence":  [
@@ -1239,9 +1239,9 @@
                           },
                           {
                               "fragment_id":  "caption_cam",
-                              "label":  "\u003cfigcaption\u003eCamera 12\u003c/figcaption\u003e",
+                              "label":  "\u003cfigcaption\u003eКамера 12\u003c/figcaption\u003e",
                               "kind":  "TEXT_BLOCK",
-                              "token":  "\u003cfigcaption\u003eCamera 12\u003c/figcaption\u003e"
+                              "token":  "\u003cfigcaption\u003eКамера 12\u003c/figcaption\u003e"
                           },
                           {
                               "fragment_id":  "close_figure",
@@ -1251,9 +1251,9 @@
                           },
                           {
                               "fragment_id":  "open_div",
-                              "label":  "\u003cdiv\u003ecaption\u003c/div\u003e",
+                              "label":  "\u003cdiv\u003eподпись\u003c/div\u003e",
                               "kind":  "FOREIGN",
-                              "token":  "\u003cdiv\u003ecaption\u003c/div\u003e"
+                              "token":  "\u003cdiv\u003eподпись\u003c/div\u003e"
                           },
                           {
                               "fragment_id":  "close_div",

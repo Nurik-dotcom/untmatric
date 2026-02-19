@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 
 const N_VALUES = [32, 64, 100, 128, 200, 256]
 const POINT_COUNT = 96

@@ -1,8 +1,8 @@
 [
   {
     "id": "NT_B_01",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 525 KB, window 64 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 525 KB, окно 64 с. Вычислите скорость в бит/с.",
     "payload_value": 525,
     "payload_unit": "KB",
     "time_sec": 64,
@@ -105,17 +105,17 @@
       }
     ],
     "correct_id": "NT_B_01_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 67200 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 67200 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 525 KB.",
-      "Window before lock: 64 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 525 KB.",
+      "Окно до блокировки: 64 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -128,8 +128,8 @@
   },
   {
     "id": "NT_B_02",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 256 KB, window 4 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 256 KB, окно 4 с. Вычислите скорость в бит/с.",
     "payload_value": 256,
     "payload_unit": "KB",
     "time_sec": 4,
@@ -232,17 +232,17 @@
       }
     ],
     "correct_id": "NT_B_02_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 524288 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 524288 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 256 KB.",
-      "Window before lock: 4 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 256 KB.",
+      "Окно до блокировки: 4 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -255,8 +255,8 @@
   },
   {
     "id": "NT_B_03",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 768 KB, window 3 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 768 KB, окно 3 с. Вычислите скорость в бит/с.",
     "payload_value": 768,
     "payload_unit": "KB",
     "time_sec": 3,
@@ -359,17 +359,17 @@
       }
     ],
     "correct_id": "NT_B_03_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 2097152 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 2097152 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 768 KB.",
-      "Window before lock: 3 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 768 KB.",
+      "Окно до блокировки: 3 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -382,8 +382,8 @@
   },
   {
     "id": "NT_B_04",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 64 KB, window 2 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 64 KB, окно 2 с. Вычислите скорость в бит/с.",
     "payload_value": 64,
     "payload_unit": "KB",
     "time_sec": 2,
@@ -486,17 +486,17 @@
       }
     ],
     "correct_id": "NT_B_04_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 262144 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 262144 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 64 KB.",
-      "Window before lock: 2 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 64 KB.",
+      "Окно до блокировки: 2 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -509,8 +509,8 @@
   },
   {
     "id": "NT_B_05",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 320 KB, window 5 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 320 KB, окно 5 с. Вычислите скорость в бит/с.",
     "payload_value": 320,
     "payload_unit": "KB",
     "time_sec": 5,
@@ -613,17 +613,17 @@
       }
     ],
     "correct_id": "NT_B_05_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 524288 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 524288 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 320 KB.",
-      "Window before lock: 5 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 320 KB.",
+      "Окно до блокировки: 5 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -636,8 +636,8 @@
   },
   {
     "id": "NT_B_06",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 1536 KB, window 6 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 1536 KB, окно 6 с. Вычислите скорость в бит/с.",
     "payload_value": 1536,
     "payload_unit": "KB",
     "time_sec": 6,
@@ -740,17 +740,17 @@
       }
     ],
     "correct_id": "NT_B_06_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 2097152 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 2097152 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 1536 KB.",
-      "Window before lock: 6 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 1536 KB.",
+      "Окно до блокировки: 6 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -763,8 +763,8 @@
   },
   {
     "id": "NT_B_07",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 2 MB, window 8 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 2 MB, окно 8 с. Вычислите скорость в бит/с.",
     "payload_value": 2,
     "payload_unit": "MB",
     "time_sec": 8,
@@ -867,17 +867,17 @@
       }
     ],
     "correct_id": "NT_B_07_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 2097152 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 2097152 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 2 MB.",
-      "Window before lock: 8 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 2 MB.",
+      "Окно до блокировки: 8 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -890,8 +890,8 @@
   },
   {
     "id": "NT_B_08",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 5 MB, window 10 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 5 MB, окно 10 с. Вычислите скорость в бит/с.",
     "payload_value": 5,
     "payload_unit": "MB",
     "time_sec": 10,
@@ -994,17 +994,17 @@
       }
     ],
     "correct_id": "NT_B_08_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 4194304 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 4194304 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 5 MB.",
-      "Window before lock: 10 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 5 MB.",
+      "Окно до блокировки: 10 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -1017,8 +1017,8 @@
   },
   {
     "id": "NT_B_09",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 12 MB, window 48 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 12 MB, окно 48 с. Вычислите скорость в бит/с.",
     "payload_value": 12,
     "payload_unit": "MB",
     "time_sec": 48,
@@ -1121,17 +1121,17 @@
       }
     ],
     "correct_id": "NT_B_09_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 2097152 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 2097152 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 12 MB.",
-      "Window before lock: 48 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 12 MB.",
+      "Окно до блокировки: 48 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -1144,8 +1144,8 @@
   },
   {
     "id": "NT_B_10",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 9 MB, window 36 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 9 MB, окно 36 с. Вычислите скорость в бит/с.",
     "payload_value": 9,
     "payload_unit": "MB",
     "time_sec": 36,
@@ -1248,17 +1248,17 @@
       }
     ],
     "correct_id": "NT_B_10_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 2097152 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 2097152 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 9 MB.",
-      "Window before lock: 36 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 9 MB.",
+      "Окно до блокировки: 36 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -1271,8 +1271,8 @@
   },
   {
     "id": "NT_B_11",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 600 KB, window 75 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 600 KB, окно 75 с. Вычислите скорость в бит/с.",
     "payload_value": 600,
     "payload_unit": "KB",
     "time_sec": 75,
@@ -1375,17 +1375,17 @@
       }
     ],
     "correct_id": "NT_B_11_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 65536 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 65536 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 600 KB.",
-      "Window before lock: 75 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 600 KB.",
+      "Окно до блокировки: 75 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -1398,8 +1398,8 @@
   },
   {
     "id": "NT_B_12",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 840 KB, window 64 s. Calculate speed in bit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 840 KB, окно 64 с. Вычислите скорость в бит/с.",
     "payload_value": 840,
     "payload_unit": "KB",
     "time_sec": 64,
@@ -1502,17 +1502,17 @@
       }
     ],
     "correct_id": "NT_B_12_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 107520 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 107520 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 840 KB.",
-      "Window before lock: 64 s.",
-      "Output requested: bit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 840 KB.",
+      "Окно до блокировки: 64 s.",
+      "Требуемый вывод: бит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -1525,8 +1525,8 @@
   },
   {
     "id": "NT_B_13",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 700 KB, window 40 s. Calculate speed in kbit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 700 KB, окно 40 с. Вычислите скорость в кбит/с.",
     "payload_value": 700,
     "payload_unit": "KB",
     "time_sec": 40,
@@ -1629,17 +1629,17 @@
       }
     ],
     "correct_id": "NT_B_13_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 143360 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 143360 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 700 KB.",
-      "Window before lock: 40 s.",
-      "Output requested: kbit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 700 KB.",
+      "Окно до блокировки: 40 s.",
+      "Требуемый вывод: кбит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -1652,8 +1652,8 @@
   },
   {
     "id": "NT_B_14",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 1500 KB, window 48 s. Calculate speed in kbit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 1500 KB, окно 48 с. Вычислите скорость в кбит/с.",
     "payload_value": 1500,
     "payload_unit": "KB",
     "time_sec": 48,
@@ -1756,17 +1756,17 @@
       }
     ],
     "correct_id": "NT_B_14_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 256000 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 256000 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 1500 KB.",
-      "Window before lock: 48 s.",
-      "Output requested: kbit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 1500 KB.",
+      "Окно до блокировки: 48 s.",
+      "Требуемый вывод: кбит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -1779,8 +1779,8 @@
   },
   {
     "id": "NT_B_15",
-    "briefing": "Intercept window is closing. Configure the gateway throughput before lock event.",
-    "prompt": "Payload 3 MB, window 16 s. Calculate speed in kbit/s.",
+    "briefing": "Окно перехвата закрывается. Настройте пропускную способность шлюза до события блокировки.",
+    "prompt": "Данные 3 MB, окно 16 с. Вычислите скорость в кбит/с.",
     "payload_value": 3,
     "payload_unit": "MB",
     "time_sec": 16,
@@ -1883,17 +1883,17 @@
       }
     ],
     "correct_id": "NT_B_15_OPT1",
-    "explain_short": "Use binary conversion then divide by time: 1572864 bps.",
-    "explain_full": "Pipeline order is fixed: choose binary base, convert bytes to bits, divide by transfer time, then output in requested units.",
+    "explain_short": "Используйте двоичное преобразование и деление на время: 1572864 bps.",
+    "explain_full": "Порядок конвейера фиксирован: выберите двоичную базу, переведите байты в биты, разделите на время передачи, затем выведите в требуемых единицах.",
     "logs": [
-      "Intercept node synced.",
-      "Payload chunk confirmed: 3 MB.",
-      "Window before lock: 16 s.",
-      "Output requested: kbit/s."
+      "Узел перехвата синхронизирован.",
+      "Блок данных подтверждён: 3 MB.",
+      "Окно до блокировки: 16 s.",
+      "Требуемый вывод: кбит/с."
     ],
     "analyze_lines": [
-      "Conversion chain: storage -> bytes -> bits.",
-      "Rate equation: speed = bits / time."
+      "Цепочка перевода: хранилище -> байты -> биты.",
+      "Формула скорости: скорость = биты / время."
     ],
     "tags": [
       "net",
@@ -1905,3 +1905,7 @@
     "time_limit_sec": 120
   }
 ]
+
+
+
+

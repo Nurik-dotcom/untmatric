@@ -68,7 +68,7 @@ func _ready() -> void:
 	_connect_ui_signals()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0443\u0440\u043e\u0432\u043d\u0438 Final Report A.")
+		_show_error("\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0443\u0440\u043e\u0432\u043d\u0438 \u0444\u0438\u043d\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043e\u0442\u0447\u0451\u0442\u0430 A.")
 		return
 
 	title_label.text = "\u0414\u0415\u041b\u041e #8: \u0424\u0418\u041d\u0410\u041b\u042c\u041d\u042b\u0419 \u041e\u0422\u0427\u0415\u0422"
@@ -168,7 +168,7 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 	drag_count = 0
 	swap_count = 0
 	trace.clear()
-	_log_event("RESET", {"level_start": is_level_start})
+	_log_event("СБРОС", {"level_start": is_level_start})
 
 	level_solved = false
 	confirm_locked = false
@@ -569,3 +569,4 @@ func _on_stability_changed(_new_value: float, _delta: float) -> void:
 
 func _update_stability_ui() -> void:
 	stability_bar.value = GlobalMetrics.stability
+

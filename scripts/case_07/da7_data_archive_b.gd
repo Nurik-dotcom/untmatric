@@ -227,12 +227,12 @@ func _render_relation_ui():
 	var link: Dictionary = schema.get("link", {}) as Dictionary
 
 	_fill_mini_tree(rel_tree_l, left_table)
-	rel_title_l.text = str(left_table.get("title", "Left"))
+	rel_title_l.text = str(left_table.get("title", "Левая"))
 
 	_fill_mini_tree(rel_tree_r, right_table)
-	rel_title_r.text = str(right_table.get("title", "Right"))
+	rel_title_r.text = str(right_table.get("title", "Правая"))
 
-	rel_link_label.text = str(link.get("hint_label", "FK Reference"))
+	rel_link_label.text = str(link.get("hint_label", "FK ссылка"))
 	rel_arrow_label.text = ""
 	rel_prompt.text = str(current_case.get("prompt", ""))
 	rel_prompt.visible_characters = 0
@@ -249,7 +249,7 @@ func _render_relation_ui():
 			continue
 		var opt_data: Dictionary = opt as Dictionary
 		var btn: Button = Button.new()
-		btn.text = str(opt_data.get("text", "OPTION"))
+		btn.text = str(opt_data.get("text", "ВАРИАНТ"))
 		btn.name = "Btn_" + str(opt_data.get("id", ""))
 		btn.custom_minimum_size = Vector2(0, 56)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -571,7 +571,7 @@ func _update_stability_ui():
 	if is_instance_valid(stability_bar):
 		stability_bar.value = GlobalMetrics.stability
 	if is_instance_valid(stability_label):
-		stability_label.text = "STABILITY: %d%%" % int(GlobalMetrics.stability)
+		stability_label.text = "СТАБИЛЬНОСТЬ: %d%%" % int(GlobalMetrics.stability)
 
 func _start_typewriter():
 	var lbl: RichTextLabel = _get_active_prompt_label()
@@ -601,9 +601,9 @@ func _on_viewport_size_changed():
 
 func _finish_session():
 	is_game_over = true
-	title_label.text = "SESSION COMPLETE [B]"
-	prompt_label.text = "Archives secured."
-	rel_prompt.text = "Archives secured."
+	title_label.text = "СЕССИЯ ЗАВЕРШЕНА [B]"
+	prompt_label.text = "Архивы защищены."
+	rel_prompt.text = "Архивы защищены."
 
 	# Remove controls
 	if mode == "FILTER":
@@ -612,7 +612,7 @@ func _finish_session():
 		rel_options_row.queue_free()
 
 	var btn_exit: Button = Button.new()
-	btn_exit.text = "EXIT"
+	btn_exit.text = "ВЫХОД"
 	btn_exit.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn"))
 
 	# Add exit button somewhere visible
@@ -620,9 +620,9 @@ func _finish_session():
 
 func _game_over():
 	is_game_over = true
-	title_label.text = "MISSION FAILED"
+	title_label.text = "МИССИЯ ПРОВАЛЕНА"
 	var btn_exit: Button = Button.new()
-	btn_exit.text = "EXIT"
+	btn_exit.text = "ВЫХОД"
 	btn_exit.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn"))
 	$RootLayout/Footer.add_child(btn_exit)
 
@@ -793,3 +793,5 @@ func _sets_equal(arr1: Array, arr2: Array) -> bool:
 	if arr1.size() != arr2.size():
 		return false
 	return _is_subset(arr1, arr2) and _is_subset(arr2, arr1)
+
+

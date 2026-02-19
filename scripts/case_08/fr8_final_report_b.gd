@@ -60,7 +60,7 @@ func _ready() -> void:
 	_connect_ui_signals()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0443\u0440\u043e\u0432\u043d\u0438 Final Report B.")
+		_show_error("\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0443\u0440\u043e\u0432\u043d\u0438 \u0444\u0438\u043d\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043e\u0442\u0447\u0451\u0442\u0430 B.")
 		return
 
 	title_label.text = TEXT_TITLE
@@ -160,7 +160,7 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 		_mark_first_action()
 		reset_count += 1
 
-	_log_event("RESET", {"level_start": is_level_start})
+	_log_event("СБРОС", {"level_start": is_level_start})
 
 	trial_locked = false
 	level_solved = false

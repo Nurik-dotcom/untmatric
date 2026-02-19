@@ -54,13 +54,13 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
-text = "Case C: Disarm"
+text = "Дело C: Разминирование"
 
 [node name="LblSession" type="Label" parent="MainLayout/HeaderRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
-text = "SESSION: C-01"
+text = "СЕССИЯ: C-01"
 horizontal_alignment = 2
 
 [node name="StatusMonitor" type="PanelContainer" parent="MainLayout"]
@@ -83,7 +83,7 @@ theme_override_constants/separation = 6
 [node name="LblExpectedTitle" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "EXPECTED"
+text = "ОЖИДАЕМОЕ"
 horizontal_alignment = 1
 
 [node name="LblExpectedValue" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox"]
@@ -104,7 +104,7 @@ theme_override_constants/separation = 6
 [node name="LblActualTitle" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "ACTUAL"
+text = "ФАКТ"
 horizontal_alignment = 1
 
 [node name="LblActualValue" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox"]
@@ -162,13 +162,13 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 22
-text = "Find bug line and select fix."
+text = "Найдите строку с ошибкой и выберите исправление."
 autowrap_mode = 2
 
 [node name="MisclickCounter" type="Label" parent="MainLayout/BodyRow/SideInfo"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "MISCLICKS: 0"
+text = "ПРОМАХИ: 0"
 
 [node name="ActionsRow" type="HBoxContainer" parent="MainLayout"]
 layout_mode = 2
@@ -178,21 +178,21 @@ theme_override_constants/separation = 12
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ANALYZE"
+text = "АНАЛИЗ"
 
 [node name="BtnVerify" type="Button" parent="MainLayout/ActionsRow"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
-text = "VERIFY"
+text = "ПРОВЕРИТЬ"
 
 [node name="BtnNext" type="Button" parent="MainLayout/ActionsRow"]
 visible = false
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "NEXT"
+text = "ДАЛЕЕ"
 
 [node name="DiagnosticsBlocker" type="ColorRect" parent="."]
 visible = false
@@ -210,3 +210,4 @@ visible = false
 
 [node name="DiagnosticsPanelC" parent="." instance=ExtResource("4_diag_panel")]
 visible = false
+

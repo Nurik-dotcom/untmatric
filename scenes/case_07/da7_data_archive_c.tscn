@@ -62,7 +62,7 @@ theme_override_constants/separation = 6
 [node name="Title" type="Label" parent="SafeArea/Margin/Root/Header/HeaderVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "CASE #7: MASTER SQL"
+text = "ДЕЛО #7: МАСТЕР SQL"
 
 [node name="TimerRow" type="HBoxContainer" parent="SafeArea/Margin/Root/Header/HeaderVBox"]
 layout_mode = 2
@@ -71,7 +71,7 @@ theme_override_constants/separation = 8
 [node name="StabilityLabel" type="Label" parent="SafeArea/Margin/Root/Header/HeaderVBox/TimerRow"]
 custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
-text = "Stability: 100%"
+text = "СТАБИЛЬНОСТЬ: 100%"
 
 [node name="TimerBar" type="ProgressBar" parent="SafeArea/Margin/Root/Header/HeaderVBox/TimerRow"]
 layout_mode = 2
@@ -90,7 +90,7 @@ horizontal_alignment = 2
 custom_minimum_size = Vector2(0, 84)
 layout_mode = 2
 bbcode_enabled = true
-text = "Loading case..."
+text = "Загрузка дела..."
 fit_content = false
 autowrap_mode = 2
 
@@ -114,29 +114,29 @@ theme_override_constants/separation = 10
 [node name="BtnUndo" type="Button" parent="SafeArea/Margin/Root/ControlsRow"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "UNDO"
+text = "ОТМЕНА"
 
 [node name="BtnClear" type="Button" parent="SafeArea/Margin/Root/ControlsRow"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "CLEAR"
+text = "ОЧИСТИТЬ"
 
 [node name="BtnSubmit" type="Button" parent="SafeArea/Margin/Root/ControlsRow"]
 custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "SUBMIT"
+text = "ОТПРАВИТЬ"
 
 [node name="BtnNext" type="Button" parent="SafeArea/Margin/Root/ControlsRow"]
 visible = false
 custom_minimum_size = Vector2(160, 56)
 layout_mode = 2
-text = "NEXT"
+text = "ДАЛЕЕ"
 
 [node name="StatusLabel" type="Label" parent="SafeArea/Margin/Root"]
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
-text = "Compose query tokens and submit."
+text = "Соберите токены запроса и отправьте."
 autowrap_mode = 2
 
 [node name="RepoPanel" type="PanelContainer" parent="SafeArea/Margin/Root"]
@@ -169,3 +169,5 @@ stream = ExtResource("4_error")
 
 [node name="SfxRelay" type="AudioStreamPlayer" parent="SFX"]
 stream = ExtResource("5_relay")
+
+

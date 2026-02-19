@@ -236,8 +236,12 @@ static func validate_stage_b(stage_b: Dictionary) -> bool:
 	return true
 
 static func validate_stage_c(stage_c: Dictionary) -> bool:
-	if str(stage_c.get("format", "")) != "MULTI_CHOICE":
+	if str(stage_c.get("format", "")) != "MULTI_CHOICE_SLOTS":
 		push_error("ResusData: Stage C invalid format")
+		return false
+
+	if int(stage_c.get("max_slots", 0)) != 3:
+		push_error("ResusData: Stage C max_slots must be 3")
 		return false
 
 	var options: Array = stage_c.get("options", []) as Array
@@ -245,6 +249,7 @@ static func validate_stage_c(stage_c: Dictionary) -> bool:
 		push_error("ResusData: Stage C must contain exactly 5 options")
 		return false
 
+	var required_effect_keys: Array[String] = ["collisions", "filtering", "eavesdrop", "media"]
 	var option_ids: Dictionary = {}
 	var correct_count: int = 0
 	for option_v in options:
@@ -259,6 +264,11 @@ static func validate_stage_c(stage_c: Dictionary) -> bool:
 		if not option_data.has_all(["label", "is_correct", "why"]):
 			push_error("ResusData: Stage C option %s is incomplete" % option_id)
 			return false
+		var effects: Dictionary = option_data.get("effects", {}) as Dictionary
+		for effect_key in required_effect_keys:
+			if not effects.has(effect_key):
+				push_error("ResusData: Stage C option %s missing effect '%s'" % [option_id, effect_key])
+				return false
 		if bool(option_data.get("is_correct", false)):
 			correct_count += 1
 		option_ids[option_id] = true
@@ -271,8 +281,8 @@ static func validate_stage_c(stage_c: Dictionary) -> bool:
 	if scoring_model.is_empty():
 		push_error("ResusData: Stage C scoring_model is missing")
 		return false
-	if not scoring_model.has_all(["default_rule", "empty_rule"]):
-		push_error("ResusData: Stage C scoring_model requires default_rule and empty_rule")
+	if not scoring_model.has_all(["rule_2", "rule_1a", "rule_1b", "default_rule", "empty_rule", "select_all_rule"]):
+		push_error("ResusData: Stage C scoring_model is incomplete")
 		return false
 
 	var feedback_rules: Dictionary = stage_c.get("feedback_rules", {}) as Dictionary

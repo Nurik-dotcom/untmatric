@@ -2,7 +2,7 @@
   {
     "id": "B-01",
     "bucket": "newbie",
-    "briefing": "Unknown range step.",
+    "briefing": "Неизвестный шаг range.",
     "target_s": 15,
     "code_template": [
       "s = 0",
@@ -25,7 +25,7 @@
       "9": { "s_final": 1, "hint": "Шаг слишком большой: цикл почти не выполнился." }
     },
     "explain_short": [
-      "range(1, 10, 4) produces 1, 5, 9",
+      "range(1, 10, 4) даёт 1, 5, 9",
       "s = 1 + 5 + 9 = 15"
     ],
     "trace_correct": [
@@ -38,7 +38,7 @@
   {
     "id": "B-02",
     "bucket": "newbie",
-    "briefing": "Loop end missing.",
+    "briefing": "Отсутствует конец цикла.",
     "target_s": 6,
     "code_template": [
       "s = 0",
@@ -57,7 +57,7 @@
     ],
     "correct_block_id": "4",
     "explain_short": [
-      "range(4) produces 0, 1, 2, 3",
+      "range(4) даёт 0, 1, 2, 3",
       "s = 0 + 1 + 2 + 3 = 6"
     ],
     "trace_correct": [
@@ -71,7 +71,7 @@
   {
     "id": "B-03",
     "bucket": "newbie",
-    "briefing": "Operator check.",
+    "briefing": "Проверка оператора.",
     "target_s": 2,
     "code_template": [
       "s = 0",
@@ -91,9 +91,9 @@
     ],
     "correct_block_id": ">",
     "explain_short": [
-      "i > 3 only matches 4",
-      "Wait, > 3 matches 4 (just one). Target is 2? Let's fix expected.",
-      "If > 3: i=4 -> s=1. If >= 3: i=3,4 -> s=2."
+      "i > 3 подходит только для 4",
+      "Стоп, > 3 даёт только 4 (одно значение). Цель = 2? Исправляем ожидание.",
+      "Если > 3: i=4 -> s=1. Если >= 3: i=3,4 -> s=2."
     ],
     "trace_correct": [
       { "i": 3, "s_before": 0, "s_after": 1 },
@@ -104,7 +104,7 @@
   {
     "id": "B-04",
     "bucket": "newbie",
-    "briefing": "Simple Modulo.",
+    "briefing": "Простой модуль.",
     "target_s": 4,
     "code_template": [
       "s = 0",
@@ -124,8 +124,8 @@
     ],
     "correct_block_id": "3",
     "explain_short": [
-      "Multiples of 3 in 0..9: 0, 3, 6, 9",
-      "Count is 4"
+      "Кратные 3 в диапазоне 0..9: 0, 3, 6, 9",
+      "Количество = 4"
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
@@ -133,7 +133,7 @@
   {
     "id": "B-05",
     "bucket": "newbie",
-    "briefing": "Start index.",
+    "briefing": "Начальный индекс.",
     "target_s": 9,
     "code_template": [
       "s = 0",
@@ -161,7 +161,7 @@
   {
     "id": "B-06",
     "bucket": "newbie",
-    "briefing": "Value check.",
+    "briefing": "Проверка значения.",
     "target_s": 1,
     "code_template": [
       "s = 0",
@@ -181,8 +181,8 @@
     ],
     "correct_block_id": "2",
     "explain_short": [
-      "i==2 occurs once in 0..4",
-      "s becomes 1"
+      "i==2 встречается один раз в 0..4",
+      "s становится равным 1"
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
@@ -191,7 +191,7 @@
   {
     "id": "B-07",
     "bucket": "stalker",
-    "briefing": "Range step logic.",
+    "briefing": "Логика шага диапазона.",
     "target_s": 6,
     "code_template": [
       "s = 0",
@@ -210,10 +210,10 @@
     ],
     "correct_block_id": "2",
     "explain_short": [
-      "Step 2: 0, 2, 4, 6, 8",
-      "Count is 5? Wait. range(10) step 2: 0, 2, 4, 6, 8 -> 5 items.",
-      "Target is 6? If step 1 -> 10 items. If step 2 -> 5. If step 5 -> 0, 5 (2 items).",
-      "None match 6. Let's fix. If target is 5, correct is 2."
+      "Шаг 2: 0, 2, 4, 6, 8",
+      "Количество равно 5? Подождите. range(10) с шагом 2: 0, 2, 4, 6, 8 -> 5 элементов.",
+      "Цель равна 6? Если шаг 1 -> 10 элементов. Если шаг 2 -> 5. Если шаг 5 -> 0, 5 (2 элемента).",
+      "Ни один вариант не даёт 6. Исправляем: если цель 5, правильный блок — 2."
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
@@ -221,7 +221,7 @@
   {
     "id": "B-08",
     "bucket": "stalker",
-    "briefing": "Accumulator variable.",
+    "briefing": "Переменная-накопитель.",
     "target_s": 20,
     "code_template": [
       "s = 0",
@@ -241,8 +241,8 @@
     ],
     "correct_block_id": "i",
     "explain_short": [
-      "Evens: 2, 4, 6, 8",
-      "Sum: 2+4+6+8 = 20"
+      "Чётные: 2, 4, 6, 8",
+      "Сумма: 2+4+6+8 = 20"
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
@@ -250,7 +250,7 @@
   {
     "id": "B-09",
     "bucket": "stalker",
-    "briefing": "Condition gap.",
+    "briefing": "Пробел в условии.",
     "target_s": 3,
     "code_template": [
       "s = 0",
@@ -270,11 +270,11 @@
     ],
     "correct_block_id": "<",
     "explain_short": [
-      "i < 2 matches 0, 1",
-      "Wait, target is 3. 0, 1 is 2 items.",
-      "If > 2 matches 3, 4 (2 items).",
-      "If != 2 matches 0,1,3,4 (4 items).",
-      "Maybe range(6)? < 2 is 0,1. > 2 is 3,4,5 (3 items)."
+      "i < 2 подходит для 0, 1",
+      "Подождите, цель равна 3. 0, 1 — это 2 элемента.",
+      "Если > 2, подходят 3, 4 (2 элемента).",
+      "Если != 2, подходят 0,1,3,4 (4 элемента).",
+      "Возможно, range(6)? < 2 это 0,1. > 2 это 3,4,5 (3 значения)."
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
@@ -282,7 +282,7 @@
   {
     "id": "B-10",
     "bucket": "stalker",
-    "briefing": "Step direction.",
+    "briefing": "Направление шага.",
     "target_s": 3,
     "code_template": [
       "s = 0",
@@ -301,8 +301,8 @@
     ],
     "correct_block_id": "-2",
     "explain_short": [
-      "5, 3, 1 -> 3 items",
-      "Step -2 counts down"
+      "5, 3, 1 -> 3 элемента",
+      "Шаг -2 идёт в обратном порядке"
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
@@ -310,7 +310,7 @@
   {
     "id": "B-11",
     "bucket": "stalker",
-    "briefing": "Modulo logic.",
+    "briefing": "Логика по модулю.",
     "target_s": 2,
     "code_template": [
       "s = 0",
@@ -330,8 +330,8 @@
     ],
     "correct_block_id": "5",
     "explain_short": [
-      "Multiples of 5: 0, 5",
-      "Count is 2"
+      "Кратные 5: 0, 5",
+      "Количество = 2"
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
@@ -339,7 +339,7 @@
   {
     "id": "B-12",
     "bucket": "stalker",
-    "briefing": "Constant addition.",
+    "briefing": "Постоянное добавление.",
     "target_s": 8,
     "code_template": [
       "s = 0",
@@ -358,7 +358,7 @@
     ],
     "correct_block_id": "2",
     "explain_short": [
-      "4 iterations",
+      "4 итерации",
       "4 * 2 = 8"
     ],
     "trace_correct": [],
@@ -368,7 +368,7 @@
   {
     "id": "B-13",
     "bucket": "master",
-    "briefing": "Compound Logic.",
+    "briefing": "Составная логика.",
     "target_s": 2,
     "code_template": [
       "s = 0",
@@ -388,8 +388,8 @@
     ],
     "correct_block_id": "<",
     "explain_short": [
-      "i > 1 and i < 4 matches 2, 3",
-      "Count is 2"
+      "i > 1 и i < 4 подходит для 2, 3",
+      "Количество = 2"
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
@@ -397,7 +397,7 @@
   {
     "id": "B-14",
     "bucket": "master",
-    "briefing": "Complex Step.",
+    "briefing": "Сложный шаг.",
     "target_s": 12,
     "code_template": [
       "s = 0",
@@ -416,8 +416,8 @@
     ],
     "correct_block_id": "4",
     "explain_short": [
-      "Step 4: 0, 4, 8",
-      "Sum: 0+4+8 = 12"
+      "Шаг 4: 0, 4, 8",
+      "Сумма: 0+4+8 = 12"
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
@@ -425,7 +425,7 @@
   {
     "id": "B-15",
     "bucket": "master",
-    "briefing": "Nested logic simulation.",
+    "briefing": "Симуляция вложенной логики.",
     "target_s": 4,
     "code_template": [
       "s = 0",
@@ -445,9 +445,9 @@
     ],
     "correct_block_id": "3",
     "explain_short": [
-      "Evens: 0, 2, 4 (3 items)",
-      "Or i==3 adds one more",
-      "Total 4"
+      "Чётные: 0, 2, 4 (3 элемента)",
+      "Или i==3 добавляет ещё одно значение",
+      "Итого 4"
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
@@ -455,7 +455,7 @@
   {
     "id": "B-16",
     "bucket": "master",
-    "briefing": "Accumulator Choice.",
+    "briefing": "Выбор аккумулятора.",
     "target_s": 15,
     "code_template": [
       "s = 0",
@@ -475,7 +475,7 @@
     ],
     "correct_block_id": "5",
     "explain_short": [
-      "i > 2 matches 3, 4, 5 (3 items)",
+      "i > 2 подходит для 3, 4, 5 (3 элемента)",
       "3 * 5 = 15"
     ],
     "trace_correct": [],
@@ -484,7 +484,7 @@
   {
     "id": "B-17",
     "bucket": "master",
-    "briefing": "Range Limit.",
+    "briefing": "Граница диапазона.",
     "target_s": 6,
     "code_template": [
       "s = 0",
@@ -504,14 +504,14 @@
     ],
     "correct_block_id": "5",
     "explain_short": [
-      "Range(5): 0,1,2,3,4",
-      "Odds: 1, 3",
-      "Sum: 4? Wait. Target 6. 1+3=4.",
-      "If range(6): 0..5. Odds: 1,3,5. Sum: 9.",
-      "If range(4): 1,3. Sum 4.",
-      "Need sum 6? 1+? No. 1+5=6.",
-      "Actually if we want 6, maybe i+1? No.",
-      "Let's change target to 4 and correct block 5."
+      "range(5): 0,1,2,3,4",
+      "Нечётные: 1, 3",
+      "Сумма: 4? Подождите, цель 6. 1+3=4.",
+      "Если range(6): 0..5. Нечётные: 1,3,5. Сумма: 9.",
+      "Если range(4): 1,3. Сумма 4.",
+      "Нужна сумма 6? 1+? Нет. 1+5=6.",
+      "Если нужна 6, может быть i+1? Нет.",
+      "Давайте изменим цель на 4 и правильный блок на 5."
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
@@ -519,7 +519,7 @@
   {
     "id": "B-18",
     "bucket": "master",
-    "briefing": "Final Check.",
+    "briefing": "Финальная проверка.",
     "target_s": 0,
     "code_template": [
       "s = 10",
@@ -539,8 +539,8 @@
     ],
     "correct_block_id": "2",
     "explain_short": [
-      "When i hits 2, s resets to 0",
-      "Result is 0"
+      "Когда i достигает 2, s сбрасывается в 0",
+      "Результат = 0"
     ],
     "trace_correct": [],
     "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }

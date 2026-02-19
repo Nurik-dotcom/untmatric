@@ -72,7 +72,7 @@ func _ready() -> void:
 	_build_responsive_layout()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("Failed to load Digital Resuscitation level data.")
+		_show_error("Не удалось загрузить данные уровня «Цифровая реанимация».")
 		return
 	_start_level(current_level_index)
 	_on_viewport_size_changed()
@@ -278,11 +278,11 @@ func _refresh_system_state(snapshot: Dictionary) -> void:
 
 	if monitor_on:
 		monitor_screen.color = Color(0.09, 0.2, 0.12, 1.0)
-		monitor_label.text = "SIGNAL OK"
+		monitor_label.text = "СИГНАЛ ОК"
 		monitor_label.modulate = COLOR_OK
 	else:
 		monitor_screen.color = Color(0.03, 0.03, 0.03, 1.0)
-		monitor_label.text = "NO SIGNAL"
+		monitor_label.text = "НЕТ СИГНАЛА"
 		monitor_label.modulate = COLOR_ERR
 
 	console_cps = 40.0 if fast_type else 14.0
@@ -294,19 +294,19 @@ func _refresh_system_state(snapshot: Dictionary) -> void:
 	var console_lines: Array = []
 
 	if not monitor_on:
-		status_text = str((feedback_rules.get("NO_GPU", {}) as Dictionary).get("status", "GPU missing in OUTPUT."))
+		status_text = str((feedback_rules.get("NO_GPU", {}) as Dictionary).get("status", "GPU отсутствует в ВЫХОДЕ."))
 		status_color = COLOR_ERR
 	if not ram_ok:
-		status_text = str((feedback_rules.get("NO_RAM", {}) as Dictionary).get("status", "RAM is missing in MEMORY."))
+		status_text = str((feedback_rules.get("NO_RAM", {}) as Dictionary).get("status", "RAM отсутствует в ПАМЯТИ."))
 		status_color = COLOR_ERR
 		console_lines = ((feedback_rules.get("NO_RAM", {}) as Dictionary).get("console_lines", []) as Array).duplicate()
 	else:
 		console_lines = (system_rules.get("boot_ok_lines", []) as Array).duplicate()
 		if not fast_type:
-			status_text = str((feedback_rules.get("NO_CACHE", {}) as Dictionary).get("status", "CACHE not detected. Boot is slow."))
+			status_text = str((feedback_rules.get("NO_CACHE", {}) as Dictionary).get("status", "CACHE не обнаружен. Загрузка медленная."))
 			status_color = COLOR_WARN
 		else:
-			status_text = str((feedback_rules.get("HEALTHY", {}) as Dictionary).get("status", "System recovered. Ready for diagnostics."))
+			status_text = str((feedback_rules.get("HEALTHY", {}) as Dictionary).get("status", "Система восстановлена. Готова к диагностике."))
 			status_color = COLOR_OK
 
 	if console_lines.is_empty():
@@ -397,7 +397,7 @@ func _show_result(result: Dictionary) -> void:
 		int(result.get("points", 0)),
 		int(result.get("max_points", 2))
 	]
-	result_stability_label.text = "\u0394 Stability: %d" % int(result.get("stability_delta", 0))
+	result_stability_label.text = "\u0394 Стабильность: %d" % int(result.get("stability_delta", 0))
 
 	if verdict_code == "PERFECT":
 		result_verdict_label.modulate = COLOR_OK
@@ -493,3 +493,4 @@ func _show_error(message: String) -> void:
 	status_label.text = message
 	status_label.modulate = COLOR_ERR
 	btn_confirm.disabled = true
+

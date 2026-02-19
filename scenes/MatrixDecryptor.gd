@@ -160,14 +160,14 @@ func _start_new_matrix() -> void:
 	_apply_constraints_to_labels()
 	_refresh_grid_from_state()
 	_update_status_highlights()
-	hint_text.text = "No diagnostics yet."
-	_log_message("Matrix initialized. Flow constraints loaded.", COLOR_NORMAL)
+	hint_text.text = "Диагностики пока нет."
+	_log_message("Матрица инициализирована. Ограничения потока загружены.", COLOR_NORMAL)
 
 func _refresh_header_labels() -> void:
 	var edge = _matrix_size() - 1
-	level_label.text = "PROTOCOL C | %dx%d" % [_matrix_size(), _matrix_size()]
-	inlet_tag.text = "IN [0,0]"
-	outlet_tag.text = "OUT [%d,%d]" % [edge, edge]
+	level_label.text = "ПРОТОКОЛ C | %dx%d" % [_matrix_size(), _matrix_size()]
+	inlet_tag.text = "ВХОД [0,0]"
+	outlet_tag.text = "ВЫХОД [%d,%d]" % [edge, edge]
 	inlet_tag.add_theme_color_override("font_color", Color(0.6, 1.0, 0.7, 1.0))
 	outlet_tag.add_theme_color_override("font_color", Color(0.6, 0.95, 1.0, 1.0))
 
@@ -283,7 +283,7 @@ func _update_status_highlights() -> void:
 	if frontier_filled >= frontier_total and _unlock_depth < _matrix_size() - 1:
 		_unlock_depth += 1
 		_refresh_grid_from_state()
-		_log_message("Flow unlocked to %dx%d zone." % [_unlock_depth + 1, _unlock_depth + 1], COLOR_NORMAL)
+		_log_message("Поток открыт до зоны %dx%d." % [_unlock_depth + 1, _unlock_depth + 1], COLOR_NORMAL)
 		frontier_side = _unlock_depth + 1
 		frontier_total = frontier_side * frontier_side
 		frontier_filled = 0
@@ -292,7 +292,7 @@ func _update_status_highlights() -> void:
 				if int(GlobalMetrics.matrix_current[r][c]) != STATE_UNSET:
 					frontier_filled += 1
 
-	progress_label.text = "Unlocked zone: %dx%d | Frontier: %d/%d | Rows: %d/%d | Cols: %d/%d" % [
+	progress_label.text = "Открытая зона: %dx%d | Фронт: %d/%d | Строки: %d/%d | Столбцы: %d/%d" % [
 		_unlock_depth + 1,
 		_unlock_depth + 1,
 		frontier_filled,
@@ -302,18 +302,18 @@ func _update_status_highlights() -> void:
 		solved_cols,
 		_matrix_size()
 	]
-	mode_state_label.text = "Safe mode: %s" % ("ON" if _safe_mode_active else "OFF")
+	mode_state_label.text = "Безопасный режим: %s" % ("ВКЛ" if _safe_mode_active else "ВЫКЛ")
 
 func _on_hint_pressed() -> void:
 	if _input_locked:
-		hint_text.text = "Input is locked by shield or safe mode."
-		_show_toast("INPUT LOCKED", COLOR_WARN)
+		hint_text.text = "Ввод заблокирован щитом или безопасным режимом."
+		_show_toast("ВВОД ЗАБЛОКИРОВАН", COLOR_WARN)
 		return
 	var logic: Dictionary = GlobalMetrics.validate_matrix_logic()
 	var hd_val = int(logic.get("hd", 0))
-	hint_text.text = "HD: %d | Focus on visible HEX rows and matching column parity." % hd_val
-	_log_message("Hint requested. HD=%d" % hd_val, COLOR_WARN)
-	_show_toast("HINT SHOWN", COLOR_WARN)
+	hint_text.text = "HD: %d | Сосредоточьтесь на видимых HEX-строках и совпадении чётности столбцов." % hd_val
+	_log_message("Запрошена подсказка. HD=%d" % hd_val, COLOR_WARN)
+	_show_toast("ПОДСКАЗКА ПОКАЗАНА", COLOR_WARN)
 
 func _on_check_pressed() -> void:
 	if _input_locked:
@@ -326,21 +326,21 @@ func _on_check_pressed() -> void:
 	if bool(result.get("success", false)):
 		AudioManager.play("relay")
 		_overlay_glitch(0.15, 0.12)
-		_show_toast("ACCESS GRANTED", COLOR_NORMAL)
-		_log_message("ACCESS GRANTED. Matrix solved.", COLOR_NORMAL)
+		_show_toast("ДОСТУП РАЗРЕШЁН", COLOR_NORMAL)
+		_log_message("ДОСТУП РАЗРЕШЁН. Матрица решена.", COLOR_NORMAL)
 		await get_tree().create_timer(1.0).timeout
 		_start_new_matrix()
 		return
 
 	AudioManager.play("error")
 	_overlay_glitch(0.6, 0.2)
-	var message := str(result.get("message", "Incorrect"))
+	var message := str(result.get("message", "Неверно"))
 	hint_text.text = message
 	if str(result.get("error", "")) in ["SHIELD_FREQ", "SHIELD_ACTIVE", "SHIELD_LAZY"]:
 		_log_message(message, COLOR_WARN)
 	else:
 		_log_message(message, COLOR_ERROR)
-	_show_toast("INCORRECT", COLOR_ERROR)
+	_show_toast("НЕВЕРНО", COLOR_ERROR)
 
 func _on_reset_pressed() -> void:
 	for r in range(_matrix_size()):
@@ -351,9 +351,9 @@ func _on_reset_pressed() -> void:
 	_reset_trial_telemetry()
 	_refresh_grid_from_state()
 	_update_status_highlights()
-	hint_text.text = "Matrix input reset."
-	_log_message("Matrix reset to unknown state.", COLOR_WARN)
-	_show_toast("RESET", COLOR_WARN)
+	hint_text.text = "Ввод матрицы сброшен."
+	_log_message("Матрица сброшена в неопределённое состояние.", COLOR_WARN)
+	_show_toast("СБРОС", COLOR_WARN)
 
 func _on_shield_triggered(name: String, duration: float) -> void:
 	AudioManager.play("error")
@@ -362,41 +362,41 @@ func _on_shield_triggered(name: String, duration: float) -> void:
 		_flash_shield(shield_freq)
 	elif name == "LAZY":
 		_flash_shield(shield_lazy)
-	_log_message("SHIELD %s active for %.1fs." % [name, duration], COLOR_WARN)
+	_log_message("ЩИТ %s активен %.1f c." % [name, duration], COLOR_WARN)
 	_set_input_enabled(false)
 	await get_tree().create_timer(duration).timeout
 	if not _safe_mode_active:
 		_set_input_enabled(true)
-		_log_message("Shield cooldown complete.", COLOR_NORMAL)
+		_log_message("Кулдаун щита завершён.", COLOR_NORMAL)
 
 func _on_stability_changed(new_val: float, _change: float) -> void:
 	progress_stability.value = new_val
-	stability_text.text = "STABILITY: %d%%" % int(new_val)
+	stability_text.text = "СТАБИЛЬНОСТЬ: %d%%" % int(new_val)
 	if new_val <= 0.0 and not _safe_mode_active:
 		_safe_mode_active = true
-		mode_state_label.text = "Safe mode: ON"
+		mode_state_label.text = "Безопасный режим: ВКЛ"
 		_set_input_enabled(false)
 		await _start_safe_mode_analysis()
 
 func _start_safe_mode_analysis() -> void:
-	_log_message("SAFE MODE: analysis started.", COLOR_WARN)
+	_log_message("БЕЗОПАСНЫЙ РЕЖИМ: анализ запущен.", COLOR_WARN)
 	var conflict = _find_conflict_cell()
 	if conflict.size() == 2:
 		var row = int(conflict[0])
 		var col = int(conflict[1])
 		_highlight_conflict(row, col)
-		hint_text.text = "Conflict near [%d, %d]. Check row HEX and column count/parity." % [row + 1, col + 1]
-		_log_message("Conflict detected at [%d, %d]." % [row + 1, col + 1], COLOR_ERROR)
+		hint_text.text = "Конфликт около [%d, %d]. Проверьте HEX строки и количество/чётность столбцов." % [row + 1, col + 1]
+		_log_message("Конфликт обнаружен в [%d, %d]." % [row + 1, col + 1], COLOR_ERROR)
 	else:
-		hint_text.text = "Conflict not localized. Verify unresolved rows/columns first."
-		_log_message("Conflict not localized.", COLOR_WARN)
+		hint_text.text = "Конфликт не локализован. Сначала проверьте нерешённые строки/столбцы."
+		_log_message("Конфликт не локализован.", COLOR_WARN)
 
 	await get_tree().create_timer(8.0).timeout
 	_clear_conflict_highlight()
 	_safe_mode_active = false
-	mode_state_label.text = "Safe mode: OFF"
+	mode_state_label.text = "Безопасный режим: ВЫКЛ"
 	_set_input_enabled(true)
-	_log_message("SAFE MODE: input restored.", COLOR_NORMAL)
+	_log_message("БЕЗОПАСНЫЙ РЕЖИМ: ввод восстановлен.", COLOR_NORMAL)
 
 func _find_conflict_cell() -> Array:
 	var row_values: Array = []

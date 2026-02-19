@@ -135,7 +135,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_ACTIVE",
-			"message": "Shield is active. Wait for cooldown.",
+			"message": "Щит активен. Дождитесь перезарядки.",
 			"penalty": 0
 		}
 
@@ -147,7 +147,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_FREQ",
-			"message": "Frequency shield triggered: too many checks.",
+			"message": "Сработал частотный щит: слишком много проверок.",
 			"penalty": 0
 		}
 
@@ -168,7 +168,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 	if hd == 0:
 		return {
 			"success": true,
-			"message": "Access granted. Input matches target.",
+			"message": "Доступ разрешён. Ввод совпадает с целью.",
 			"stability": stability
 		}
 	else:
@@ -193,7 +193,7 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 			"hamming": hd,
 			"penalty": penalty,
 			"hints": hints,
-			"message": "Incorrect input. Hamming distance: %d" % hd
+			"message": "Неверный ввод. Расстояние Хэмминга: %d" % hd
 		}
 
 func _calculate_hamming_distance(a: int, b: int) -> int:
@@ -279,14 +279,14 @@ func _generate_hints(target: int, input: int, hd: int) -> Dictionary:
 func get_rank_info() -> Dictionary:
 	var idx = current_level_index
 	if idx < 5:
-		return {"name": "TRAINEE", "color": Color("888888")}
+		return {"name": "СТАЖЁР", "color": Color("888888")}
 	if idx < 10:
-		return {"name": "SIGNAL TECH", "color": Color("33ff33")}
+		return {"name": "СИГНАЛИСТ", "color": Color("33ff33")}
 	if idx < 15:
-		return {"name": "CRYPTO ANALYST", "color": Color("33aaff")}
+		return {"name": "КРИПТОАНАЛИТИК", "color": Color("33aaff")}
 	if idx < 30:
-		return {"name": "SYSTEMS ENGINEER", "color": Color("ffcc00")}
-	return {"name": "MONOLITH MASTER", "color": Color("ff33ff")}
+		return {"name": "СИСТЕМНЫЙ ИНЖЕНЕР", "color": Color("ffcc00")}
+	return {"name": "МАСТЕР МОНОЛИТА", "color": Color("ff33ff")}
 
 # --- Matrix (Complexity C) ---
 func start_matrix_quest():
@@ -319,7 +319,7 @@ func check_matrix_solution() -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_ACTIVE",
-			"message": "Shield is active. Wait for cooldown.",
+			"message": "Щит активен. Дождитесь перезарядки.",
 			"penalty": 0
 		}
 
@@ -332,7 +332,7 @@ func check_matrix_solution() -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_FREQ",
-			"message": "Frequency shield triggered: too many checks.",
+			"message": "Сработал частотный щит: слишком много проверок.",
 			"penalty": 0
 		}
 
@@ -348,7 +348,7 @@ func check_matrix_solution() -> Dictionary:
 		return {
 			"success": false,
 			"error": "SHIELD_LAZY",
-			"message": "Lockout: insufficient exploration.",
+			"message": "Блокировка: недостаточно проверки вариантов.",
 			"penalty": 0
 		}
 
@@ -357,7 +357,7 @@ func check_matrix_solution() -> Dictionary:
 	if hd == 0:
 		return {
 			"success": true,
-			"message": "Access granted. Input matches target.",
+			"message": "Доступ разрешён. Ввод совпадает с целью.",
 			"stability": stability
 		}
 
@@ -377,7 +377,7 @@ func check_matrix_solution() -> Dictionary:
 		"error": "INCORRECT",
 		"hamming": hd,
 		"penalty": penalty,
-		"message": "Incorrect input. Hamming distance: %d" % hd
+		"message": "Неверный ввод. Расстояние Хэмминга: %d" % hd
 	}
 
 func _check_lazy_search_matrix(hd: int) -> bool:

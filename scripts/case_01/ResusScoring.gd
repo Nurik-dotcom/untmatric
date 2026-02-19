@@ -90,8 +90,8 @@ static func calculate_stage_b_result(stage_b_data: Dictionary, snapshot: Diction
 			"stability_delta": int(default_rule.get("stability_delta", -50)),
 			"verdict_code": str(default_rule.get("verdict_code", "EMPTY")),
 			"error_code": "EMPTY",
-			"diagnostic_headline": "No option selected",
-			"diagnostic_details": ["Pick one of the 4 options and confirm your decision."]
+			"diagnostic_headline": "Вариант не выбран",
+			"diagnostic_details": ["Выберите один из 4 вариантов и подтвердите решение."]
 		}
 
 	var is_correct: bool = selected_option_id == correct_option_id
@@ -104,7 +104,7 @@ static func calculate_stage_b_result(stage_b_data: Dictionary, snapshot: Diction
 		feedback = feedback_rules.get(correct_option_id, {}) as Dictionary
 
 	var error_code: String = str(feedback.get("error_code", "OK" if is_correct else "WRONG"))
-	var headline: String = str(feedback.get("headline", "Configuration checked"))
+	var headline: String = str(feedback.get("headline", "Конфигурация проверена"))
 	var details: Array = (feedback.get("details", []) as Array).duplicate()
 
 	return {
@@ -137,7 +137,14 @@ static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Diction
 		if bool(option_data.get("is_correct", false)):
 			correct_set[option_id] = true
 
+	var slots_raw: Array = snapshot.get("slots", []) as Array
+	var slots: Array[String] = []
+	for slot_v in slots_raw:
+		slots.append(str(slot_v).strip_edges())
+
 	var selected_raw: Array = snapshot.get("selected", []) as Array
+	if selected_raw.is_empty() and not slots.is_empty():
+		selected_raw = slots_raw
 	var selected_set: Dictionary = {}
 	var selected_ids: Array[String] = []
 	for selected_v in selected_raw:
@@ -164,10 +171,11 @@ static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Diction
 			"option_id": selected_id,
 			"label": str(option_data.get("label", selected_id)),
 			"is_correct": is_option_correct,
-			"why": str(option_data.get("why", "No explanation available."))
+			"why": str(option_data.get("why", "Пояснение отсутствует."))
 		})
 
 	var selected_count: int = selected_ids.size()
+	var unique_used_count: int = int(snapshot.get("unique_used_count", selected_count))
 	var max_points: int = int(stage_c_data.get("stage_max_points", 2))
 	var verdict_code: String = "FAIL"
 	var points: int = 0
@@ -179,24 +187,25 @@ static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Diction
 	var default_rule: Dictionary = scoring_model.get("default_rule", {}) as Dictionary
 	var empty_rule: Dictionary = scoring_model.get("empty_rule", {}) as Dictionary
 	var select_all_rule: Dictionary = scoring_model.get("select_all_rule", default_rule) as Dictionary
+	var is_select_all_behavior: bool = (options.size() > 0 and unique_used_count >= options.size()) or selected_count == options.size()
 
 	if selected_count == 0:
 		verdict_code = str(empty_rule.get("verdict_code", "EMPTY"))
 		points = int(empty_rule.get("points", 0))
 		stability_delta = int(empty_rule.get("stability_delta", -50))
-	elif selected_count == options.size():
+	elif is_select_all_behavior:
 		verdict_code = str(select_all_rule.get("verdict_code", "SELECT_ALL"))
 		points = int(select_all_rule.get("points", 0))
 		stability_delta = int(select_all_rule.get("stability_delta", -50))
-	elif correct_selected == 3 and wrong_selected == 0:
+	elif correct_selected == int(rule_2.get("need_correct", 3)) and wrong_selected <= int(rule_2.get("max_wrong", 0)):
 		verdict_code = str(rule_2.get("verdict_code", "PERFECT"))
 		points = int(rule_2.get("points", 2))
 		stability_delta = int(rule_2.get("stability_delta", 0))
-	elif correct_selected == 2 and wrong_selected == 0:
+	elif correct_selected == int(rule_1a.get("need_correct", 2)) and wrong_selected <= int(rule_1a.get("max_wrong", 0)):
 		verdict_code = str(rule_1a.get("verdict_code", "GOOD"))
 		points = int(rule_1a.get("points", 1))
 		stability_delta = int(rule_1a.get("stability_delta", 0))
-	elif correct_selected == 3 and wrong_selected == 1:
+	elif correct_selected == int(rule_1b.get("need_correct", 3)) and wrong_selected <= int(rule_1b.get("max_wrong", 1)):
 		verdict_code = str(rule_1b.get("verdict_code", "NOISY"))
 		points = int(rule_1b.get("points", 1))
 		stability_delta = int(rule_1b.get("stability_delta", -10))
@@ -204,6 +213,16 @@ static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Diction
 		verdict_code = str(default_rule.get("verdict_code", "FAIL"))
 		points = int(default_rule.get("points", 0))
 		stability_delta = int(default_rule.get("stability_delta", -50))
+
+	var required_ids: Array[String] = []
+	for option_id_v in correct_set.keys():
+		required_ids.append(str(option_id_v))
+	required_ids.sort()
+
+	var missing_required: Array[String] = []
+	for required_id in required_ids:
+		if not selected_set.has(required_id):
+			missing_required.append(required_id)
 
 	var feedback: Dictionary = feedback_rules.get(verdict_code, {}) as Dictionary
 	var feedback_headline: String = str(feedback.get("headline", verdict_code))
@@ -216,9 +235,13 @@ static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Diction
 		"is_fit": points > 0,
 		"stability_delta": stability_delta,
 		"verdict_code": verdict_code,
+		"slots": slots.duplicate(),
+		"selected_ids": selected_ids.duplicate(),
 		"correct_selected": correct_selected,
 		"wrong_selected": wrong_selected,
 		"selected_count": selected_count,
+		"unique_used_count": unique_used_count,
+		"missing_required": missing_required.duplicate(),
 		"feedback_headline": feedback_headline,
 		"feedback_details": feedback_details,
 		"explain_selected": explain_selected

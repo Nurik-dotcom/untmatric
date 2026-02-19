@@ -58,7 +58,7 @@ func _ready() -> void:
 	_connect_signals()
 	_load_levels()
 	if levels.is_empty():
-		lbl_hint.text = "No C-level data loaded."
+		lbl_hint.text = "Данные уровня C не загружены."
 		return
 
 	var idx: int = int(GlobalMetrics.current_level_index)
@@ -270,11 +270,11 @@ func _start_level(idx: int) -> void:
 		"paused_total_ms": 0
 	}
 
-	lbl_clue_title.text = "CASE C: DISARM"
-	lbl_session.text = "SESSION: %s" % str(current_task.get("id", "C-00"))
+	lbl_clue_title.text = "ДЕЛО C: РАЗМИНИРОВАНИЕ"
+	lbl_session.text = "СЕССИЯ: %s" % str(current_task.get("id", "C-00"))
 	lbl_expected_value.text = "s = %s" % str(current_task.get("expected_s", "?"))
 	lbl_actual_value.text = "s = %s" % str(current_task.get("actual_s", "?"))
-	lbl_hint.text = "Tap the buggy line, then choose a fix."
+	lbl_hint.text = "Нажмите на строку с ошибкой, затем выберите исправление."
 	_update_misclick_label()
 
 	btn_verify.disabled = true
@@ -433,7 +433,7 @@ func _on_fix_apply_requested(option_id: String) -> void:
 	selected_option_id = option_id.strip_edges().to_upper()
 	btn_verify.disabled = selected_line_index < 0 or selected_option_id == ""
 	_apply_fix_preview()
-	lbl_hint.text = "Fix applied. Press VERIFY."
+	lbl_hint.text = "Исправление применено. Нажмите ПРОВЕРИТЬ."
 	state = State.READY_TO_VERIFY
 	_log_event("fix_applied", {"option_id": selected_option_id, "line": selected_line_index})
 
@@ -490,7 +490,7 @@ func _on_verify_pressed() -> void:
 func _handle_success() -> void:
 	state = State.FEEDBACK_SUCCESS
 	lbl_actual_value.text = "s = %s" % str(current_task.get("expected_s", "?"))
-	lbl_hint.text = "ACCESS GRANTED"
+	lbl_hint.text = "ДОСТУП РАЗРЕШЁН"
 	btn_verify.disabled = true
 	btn_next.visible = true
 	_set_actual_panel_error(false)
@@ -503,9 +503,9 @@ func _handle_fail(correct_line: int) -> void:
 	var selected_result: Variant = _get_selected_fix_result()
 	if selected_line_index == correct_line and selected_result != null:
 		lbl_actual_value.text = "s = %s" % str(selected_result)
-		lbl_hint.text = "Wrong fix: result mismatch."
+		lbl_hint.text = "Неверное исправление: результат не совпадает."
 	else:
-		lbl_hint.text = "Wrong line selected."
+		lbl_hint.text = "Выбрана неверная строка."
 
 func _set_actual_panel_error(is_error: bool, pulse: bool = true) -> void:
 	if is_error:
@@ -534,23 +534,23 @@ func _on_analyze_pressed() -> void:
 	if diagnostics_panel.visible:
 		return
 	var analysis_lines: Array = []
-	analysis_lines.append("Expected: s=%s" % str(current_task.get("expected_s", "?")))
-	analysis_lines.append("Actual: s=%s" % str(current_task.get("actual_s", "?")))
+	analysis_lines.append("Ожидаемое: s=%s" % str(current_task.get("expected_s", "?")))
+	analysis_lines.append("Фактическое: s=%s" % str(current_task.get("actual_s", "?")))
 	if selected_line_index >= 0:
-		analysis_lines.append("Your pick line: %d" % (selected_line_index + 1))
+		analysis_lines.append("Выбранная строка: %d" % (selected_line_index + 1))
 	if selected_option_id != "":
 		var fix_result: Variant = _get_selected_fix_result()
 		var fix_line := ""
 		var fix: Dictionary = _get_fix_option(selected_option_id)
 		if not fix.is_empty():
 			fix_line = str(fix.get("replace_line", ""))
-		analysis_lines.append("Your option: %s -> s=%s" % [selected_option_id, str(fix_result)])
+		analysis_lines.append("Ваш вариант: %s -> s=%s" % [selected_option_id, str(fix_result)])
 		if fix_line != "":
-			analysis_lines.append("Replace with: %s" % fix_line)
+			analysis_lines.append("Заменить на: %s" % fix_line)
 	analysis_lines.append("")
 	for line_var in current_task.get("explain_short", []):
 		analysis_lines.append(str(line_var))
-	diagnostics_panel.call("setup", "DIAGNOSTICS: %s" % str(current_task.get("id", "C-00")), analysis_lines)
+	diagnostics_panel.call("setup", "ДИАГНОСТИКА: %s" % str(current_task.get("id", "C-00")), analysis_lines)
 	diagnostics_panel.visible = true
 
 func _on_diagnostics_visibility_changed() -> void:
@@ -662,4 +662,4 @@ func _log_event(name: String, payload: Dictionary) -> void:
 	task_session["events"] = events
 
 func _update_misclick_label() -> void:
-	lbl_misclicks.text = "MISCLICKS: %d" % misclicks_before_correct
+	lbl_misclicks.text = "ПРОМАХИ: %d" % misclicks_before_correct

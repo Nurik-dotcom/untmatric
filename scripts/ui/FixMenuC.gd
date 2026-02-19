@@ -33,8 +33,8 @@ func _ready() -> void:
 	btn_apply.disabled = true
 
 func setup(line_number_1_based: int, original_line: String, fix_options: Array, preselected_option_id: String = "") -> void:
-	lbl_title.text = "FIX LINE %02d" % line_number_1_based
-	lbl_original.text = "original: %s" % _short_line(original_line, 64)
+	lbl_title.text = "ИСПРАВИТЬ СТРОКУ %02d" % line_number_1_based
+	lbl_original.text = "оригинал: %s" % _short_line(original_line, 64)
 
 	options_by_id.clear()
 	var option_buttons := {
@@ -100,3 +100,4 @@ func _on_apply_pressed() -> void:
 func _on_close_pressed() -> void:
 	canceled.emit()
 	hide()
+

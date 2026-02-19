@@ -82,19 +82,19 @@ theme_override_constants/separation = 8
 [node name="BtnBack" type="Button" parent="Main/V/Header"]
 custom_minimum_size = Vector2(118, 58)
 layout_mode = 2
-text = "BACK"
+text = "НАЗАД"
 
 [node name="LblTitle" type="Label" parent="Main/V/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
-text = "NETWORK TRACE | C"
+text = "СЕТЕВОЙ СЛЕД | C"
 
 [node name="LblMeta" type="Label" parent="Main/V/Header"]
 custom_minimum_size = Vector2(330, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "CASE -- | ERR 0/3 | T-02:00"
+text = "ДЕЛО -- | ОШ 0/3 | T-02:00"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -157,7 +157,7 @@ text = "CIDR: --"
 
 [node name="LblTargetAsk" type="Label" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox"]
 layout_mode = 2
-text = "ASK: --"
+text = "ЗАПРОС: --"
 
 [node name="LogScroll" type="ScrollContainer" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 layout_mode = 2
@@ -221,7 +221,7 @@ theme_override_constants/separation = 6
 [node name="LblRowMask" type="Label" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine"]
 custom_minimum_size = Vector2(62, 44)
 layout_mode = 2
-text = "MASK"
+text = "МАСКА"
 vertical_alignment = 1
 
 [node name="MaskDropTarget" type="PanelContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine"]
@@ -251,7 +251,7 @@ theme_override_constants/separation = 6
 [node name="LblRowRes" type="Label" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowResLine"]
 custom_minimum_size = Vector2(62, 44)
 layout_mode = 2
-text = "RESULT"
+text = "РЕЗУЛЬТАТ"
 vertical_alignment = 1
 
 [node name="RowRes" type="HBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowResLine"]
@@ -266,7 +266,7 @@ theme_override_constants/separation = 8
 [node name="LblMaskTray" type="Label" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/MaskTray"]
 custom_minimum_size = Vector2(94, 52)
 layout_mode = 2
-text = "MASK"
+text = "МАСКА"
 vertical_alignment = 1
 
 [node name="MaskOverlay" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/MaskTray" instance=ExtResource("6_mask_overlay")]
@@ -285,20 +285,20 @@ custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
-text = "ANALYZE"
+text = "АНАЛИЗ"
 
 [node name="BtnApplyAnd" type="Button" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
-text = "APPLY AND"
+text = "ПРИМЕНИТЬ И"
 
 [node name="BtnReset" type="Button" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "RESET"
+text = "СБРОС"
 
 [node name="AnswersPane" type="PanelContainer" parent="Main/V/Body"]
 layout_mode = 2
@@ -367,7 +367,7 @@ custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 autowrap_mode = 2
-text = "Status"
+text = "Статус"
 
 [node name="BottomRow" type="HBoxContainer" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV"]
 custom_minimum_size = Vector2(0, 58)
@@ -379,7 +379,7 @@ custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 visible = false
-text = "NEXT"
+text = "ДАЛЕЕ"
 
 [node name="DiagnosticsPanel" parent="." instance=ExtResource("4_diag_panel")]
 layout_mode = 1
@@ -387,3 +387,5 @@ anchor_left = 0.1
 anchor_top = 0.12
 anchor_right = 0.9
 anchor_bottom = 0.9
+
+

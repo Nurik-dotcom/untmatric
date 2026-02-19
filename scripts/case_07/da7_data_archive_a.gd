@@ -74,7 +74,7 @@ func _ready() -> void:
 func _init_session() -> void:
 	var all_cases: Array = CasesHub.get_cases("A")
 	if all_cases.is_empty():
-		_show_fatal("No CASES_A found. Check scripts/case_07/da7_cases_a.gd")
+		_show_fatal("Кейсы уровня A не найдены. Проверьте scripts/case_07/da7_cases_a.gd")
 		return
 
 	all_cases.shuffle()
@@ -109,12 +109,12 @@ func _load_next_case() -> void:
 	_render_case()
 
 func _render_case() -> void:
-	title_label.text = "CASE #7: SECRET ARCHIVE [A %d/%d]" % [current_case_index + 1, session_cases.size()]
+	title_label.text = "ДЕЛО #7: СЕКРЕТНЫЙ АРХИВ [A %d/%d]" % [current_case_index + 1, session_cases.size()]
 
-	case_title_label.text = "FILE: %s" % str(current_case.get("case_title", current_case.get("id", "UNKNOWN_FILE")))
+	case_title_label.text = "ФАЙЛ: %s" % str(current_case.get("case_title", current_case.get("id", "НЕИЗВЕСТНЫЙ_ФАЙЛ")))
 	briefing_label.bbcode_enabled = false
 	briefing_label.text = str(current_case.get("briefing", ""))
-	objective_label.text = "OBJECTIVE: %s" % str(current_case.get("objective", ""))
+	objective_label.text = "ЦЕЛЬ: %s" % str(current_case.get("objective", ""))
 
 	prompt_label.bbcode_enabled = false
 	prompt_label.text = str(current_case.get("prompt", ""))
@@ -122,8 +122,8 @@ func _render_case() -> void:
 	explain_line.text = ""
 
 	inspect_label.bbcode_enabled = false
-	inspect_label.text = "Select a row to inspect evidence."
-	scan_label.text = "SCAN: 0"
+	inspect_label.text = "Выберите строку для проверки улики."
+	scan_label.text = "СКАН: 0"
 
 	_render_table(current_case.get("table", {}) as Dictionary)
 	_render_options(current_case.get("options", []) as Array)
@@ -193,7 +193,7 @@ func _render_table(table_def: Dictionary) -> void:
 	var cols: Array = table_def.get("columns", []) as Array
 	if cols.is_empty():
 		data_tree.columns = 1
-		data_tree.set_column_title(0, "Data")
+		data_tree.set_column_title(0, "Данные")
 		data_tree.column_titles_visible = true
 		return
 
@@ -205,7 +205,7 @@ func _render_table(table_def: Dictionary) -> void:
 		var col: Dictionary = col_data_v as Dictionary
 		var col_id: String = str(col.get("col_id", ""))
 		col_index_by_id[col_id] = i
-		data_tree.set_column_title(i, str(col.get("title", "COL")))
+		data_tree.set_column_title(i, str(col.get("title", "СТОЛБЕЦ")))
 	data_tree.column_titles_visible = true
 
 	var rows: Array = table_def.get("rows", []) as Array
@@ -241,7 +241,7 @@ func _render_options(options: Array) -> void:
 		var btn: Button = Button.new()
 		btn.custom_minimum_size = Vector2(0, 56)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.text = str(opt.get("text", "Option"))
+		btn.text = str(opt.get("text", "Вариант"))
 		btn.pressed.connect(_on_option_selected.bind(str(opt.get("id", ""))))
 		options_grid.add_child(btn)
 
@@ -260,7 +260,7 @@ func _on_tree_item_selected() -> void:
 	inspect_count += 1
 	unique_rows_inspected[row_id] = true
 	last_inspected_row_id = row_id
-	scan_label.text = "SCAN: %d" % inspect_count
+	scan_label.text = "СКАН: %d" % inspect_count
 	inspect_label.text = _build_inspect_line(row_id)
 	if is_instance_valid(sfx_click):
 		sfx_click.play()
@@ -280,7 +280,7 @@ func _build_inspect_line(row_id: String) -> String:
 		var col_title: String = str(col_def.get("title", col_id.to_upper()))
 		parts.append("%s=%s" % [col_title, str(cells.get(col_id, ""))])
 
-	return "ROW %s: %s" % [row_id, " | ".join(parts)]
+	return "СТРОКА %s: %s" % [row_id, " | ".join(parts)]
 
 func _on_option_selected(selected_id: String) -> void:
 	if trial_locked:
@@ -327,11 +327,11 @@ func _show_explain_line(is_correct: bool, selected_option: Dictionary) -> void:
 	var reveal: Dictionary = current_case.get("reveal", {}) as Dictionary
 	var line: String = ""
 	if is_correct:
-		line = str(reveal.get("on_correct", "Confirmed."))
+		line = str(reveal.get("on_correct", "Подтверждено."))
 	else:
 		var reason: String = str(selected_option.get("f_reason", "WRONG_OPTION_GENERIC"))
 		var reason_map: Dictionary = reveal.get("on_wrong_by_reason", {}) as Dictionary
-		line = str(reason_map.get(reason, "Review the highlighted evidence and retry your logic."))
+		line = str(reason_map.get(reason, "Проверьте выделенные улики и повторите попытку."))
 	explain_line.text = line
 
 func _apply_highlight(highlight: Dictionary) -> void:
@@ -479,9 +479,9 @@ func _set_options_locked(locked: bool) -> void:
 func _finish_session() -> void:
 	trial_locked = true
 	typewriter_timer.stop()
-	title_label.text = "SESSION COMPLETE [A]"
+	title_label.text = "СЕССИЯ ЗАВЕРШЕНА [A]"
 	prompt_label.bbcode_enabled = true
-	prompt_label.text = "[b]Archive training finished.[/b]"
+	prompt_label.text = "[b]Тренировка архива завершена.[/b]"
 	explain_line.text = ""
 	_set_options_locked(true)
 	_ensure_exit_button()
@@ -489,9 +489,9 @@ func _finish_session() -> void:
 func _game_over() -> void:
 	trial_locked = true
 	typewriter_timer.stop()
-	title_label.text = "MISSION FAILED [A]"
+	title_label.text = "МИССИЯ ПРОВАЛЕНА [A]"
 	prompt_label.bbcode_enabled = true
-	prompt_label.text = "[b]Stability dropped to zero.[/b]"
+	prompt_label.text = "[b]Стабильность упала до нуля.[/b]"
 	explain_line.text = ""
 	_set_options_locked(true)
 	_ensure_exit_button()
@@ -500,7 +500,7 @@ func _ensure_exit_button() -> void:
 	if exit_btn != null and is_instance_valid(exit_btn):
 		return
 	exit_btn = Button.new()
-	exit_btn.text = "EXIT"
+	exit_btn.text = "ВЫХОД"
 	exit_btn.custom_minimum_size = Vector2(140, 48)
 	exit_btn.pressed.connect(func() -> void:
 		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
@@ -519,7 +519,7 @@ func _update_stability_ui() -> void:
 	if is_instance_valid(stability_bar):
 		stability_bar.value = GlobalMetrics.stability
 	if is_instance_valid(stability_label):
-		stability_label.text = "STABILITY: %d%%" % int(GlobalMetrics.stability)
+		stability_label.text = "СТАБИЛЬНОСТЬ: %d%%" % int(GlobalMetrics.stability)
 
 func _on_viewport_size_changed() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size

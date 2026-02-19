@@ -110,7 +110,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.22, 0.88, 0.42, 1)
 theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 20
-text = "STABILITY: 100%"
+text = "СТАБИЛЬНОСТЬ: 100%"
 
 [node name="Spacer2" type="Control" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
 layout_mode = 2
@@ -121,7 +121,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 0.5, 0.6, 1)
 theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 16
-text = "CASE: 01"
+text = "ДЕЛО: 01"
 
 [node name="StoryPanel" type="PanelContainer" parent="MainLayout"]
 layout_mode = 2
@@ -140,7 +140,7 @@ theme_override_colors/default_color = Color(0.8, 0.85, 0.9, 1)
 theme_override_fonts/normal_font = SubResource("SystemFont_mono")
 theme_override_font_sizes/normal_font_size = 18
 bbcode_enabled = true
-text = "Story text goes here..."
+text = "Здесь будет текст истории..."
 fit_content = true
 
 [node name="ExprPanel" type="PanelContainer" parent="MainLayout"]
@@ -163,7 +163,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 0.6, 0.7, 1)
 theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 14
-text = "SECURITY MODULE: CONDITION"
+text = "МОДУЛЬ БЕЗОПАСНОСТИ: УСЛОВИЕ"
 
 [node name="ExprText" type="RichTextLabel" parent="MainLayout/ExprPanel/Margin/VBox"]
 layout_mode = 2
@@ -181,7 +181,7 @@ theme_override_constants/separation = 12
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_fonts/font = SubResource("SystemFont_mono")
-text = "LOAD: 6/4"
+text = "НАГРУЗКА: 6/4"
 
 [node name="LoadBar" type="ProgressBar" parent="MainLayout/ExprPanel/Margin/VBox/LoadHBox"]
 custom_minimum_size = Vector2(0, 24)
@@ -213,7 +213,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 0.6, 0.7, 1)
 theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 14
-text = "AVAILABLE PATCHES"
+text = "ДОСТУПНЫЕ ПАТЧИ"
 
 [node name="PatchList" type="VBoxContainer" parent="MainLayout/PatchPanel/Margin/VBox"]
 layout_mode = 2
@@ -235,7 +235,7 @@ layout_mode = 2
 theme_override_fonts/normal_font = SubResource("SystemFont_mono")
 theme_override_font_sizes/normal_font_size = 16
 bbcode_enabled = true
-text = "Select a patch to minimize load."
+text = "Выберите патч, чтобы снизить нагрузку."
 fit_content = true
 
 [node name="BottomBar" type="HBoxContainer" parent="MainLayout"]
@@ -249,7 +249,7 @@ custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 20
-text = "HINT"
+text = "ПОДСКАЗКА"
 
 [node name="BtnNext" type="Button" parent="MainLayout/BottomBar"]
 visible = false
@@ -259,7 +259,7 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0, 1, 0, 1)
 theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 24
-text = "NEXT >"
+text = "ДАЛЕЕ >"
 
 [node name="Spacer" type="Control" parent="MainLayout/BottomBar"]
 layout_mode = 2
@@ -279,7 +279,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 18
-text = "SAFE MODE ACTIVATED: CORRECT PATCH HIGHLIGHTED"
+text = "БЕЗОПАСНЫЙ РЕЖИМ: ПРАВИЛЬНЫЙ ПАТЧ ПОДСВЕЧЕН"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -297,7 +297,7 @@ theme_override_colors/font_color = Color(1, 0.8, 0.4, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 24
-text = "SYSTEM LOCKED
+text = "СИСТЕМА ЗАБЛОКИРОВАНА
 2s"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -338,7 +338,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.3, 0.3, 1)
 theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 32
-text = "CRITICAL FAILURE"
+text = "КРИТИЧЕСКИЙ СБОЙ"
 horizontal_alignment = 1
 
 [node name="RestartButton" type="Button" parent="GameOverPanel/CenterContainer/VBox"]
@@ -346,7 +346,7 @@ custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 24
-text = "REBOOT"
+text = "ПЕРЕЗАПУСК"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_glow")
@@ -357,3 +357,5 @@ environment = SubResource("Environment_glow")
 [connection signal="pressed" from="MainLayout/BottomBar/BtnHint" to="." method="_on_hint_pressed"]
 [connection signal="pressed" from="MainLayout/BottomBar/BtnNext" to="." method="_on_next_pressed"]
 [connection signal="pressed" from="GameOverPanel/CenterContainer/VBox/RestartButton" to="." method="_on_restart_pressed"]
+
+

@@ -3,150 +3,150 @@ class_name NetworkTraceErrors
 
 const SHORT_MESSAGES: Dictionary = {
 	"": "",
-	"A_WRONG_EVIDENCE": "Collect enough evidence before deployment.",
-	"A_L1_BROADCAST": "Hub floods every port. Segment stays noisy.",
-	"A_L2_SEGMENT_LIMIT": "Switch cannot route between subnets.",
-	"A_L1_PHYSICAL": "Repeater only amplifies signal.",
-	"A_PASSIVE": "Patch panel is passive wiring.",
-	"B_MATH_X8": "Bytes were not converted to bits.",
-	"B_MATH_1024": "Binary multiplier 1024 was missed.",
-	"B_MATH_DIV": "Transfer rate must divide by time.",
-	"B_UNIT_TRAP": "Requested unit is bit/s, not kbit/s.",
-	"B_PIPELINE_INCOMPLETE": "Build and run pipeline before final answer.",
-	"B_PIPELINE_BAD_DROP": "Module does not match this slot type.",
-	"B_PIPELINE_MISMATCH": "Answer selected with incorrect pipeline.",
-	"B_SPAM_TRACE": "Trace command spam detected.",
-	"B_GARBAGE": "Result does not match the transfer model.",
-	"C_MASK_VAL": "Mask value is not a network address.",
-	"C_NOT_APPLIED": "Apply AND before selecting an answer.",
-	"C_L24_FALLBACK": "Automatic /24 fallback is wrong here.",
-	"C_BOUNDARY_SHIFT": "Subnet boundary was shifted.",
-	"C_BROADCAST": "Broadcast address was selected.",
-	"C_BAD_STEP": "Subnet step was interpreted incorrectly.",
-	"C_BAD_DROP": "Mask must be dropped onto the MASK row.",
-	"TIMEOUT": "Time limit reached.",
-	"UNKNOWN": "Wrong option for this context."
+	"A_WRONG_EVIDENCE": "Соберите достаточно улик перед запуском.",
+	"A_L1_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": "Хаб дублирует кадры на все порты. Сегмент остаётся шумным.",
+	"A_L2_SEGMENT_LIMIT": "Коммутатор не маршрутизирует между подсетями.",
+	"A_L1_PHYSICAL": "Репитер только усиливает сигнал.",
+	"A_PASSIVE": "Патч-панель — пассивная коммутация.",
+	"B_MATH_X8": "Байты не переведены в биты.",
+	"B_MATH_1024": "Пропущен двоичный множитель 1024.",
+	"B_MATH_DIV": "Скорость нужно делить на время.",
+	"B_UNIT_TRAP": "Требуемая единица — бит/с, а не кбит/с.",
+	"B_PIPELINE_INCOMPLETE": "Соберите и запустите конвейер перед ответом.",
+	"B_PIPELINE_BAD_DROP": "Модуль не подходит к этому слоту.",
+	"B_PIPELINE_MISMATCH": "Ответ выбран при неверном конвейере.",
+	"B_SPAM_TRACE": "Обнаружен спам-команд трассировки.",
+	"B_GARBAGE": "Результат не совпадает с моделью передачи.",
+	"C_MASK_VAL": "Значение маски не является адресом сети.",
+	"C_NOT_APPLIED": "Сначала примените AND, затем выбирайте ответ.",
+	"C_L24_FALLBACK": "Автоподстановка /24 здесь неверна.",
+	"C_BOUNDARY_SHIFT": "Граница подсети сдвинута.",
+	"C_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": "Выбран широковещательный адрес.",
+	"C_BAD_STEP": "Шаг подсети вычислен неверно.",
+	"C_BAD_DROP": "Маску нужно поместить в строку «МАСКА».",
+	"TIMEOUT": "Время вышло.",
+	"UNKNOWN": "Неверный вариант для текущего контекста."
 }
 
 const DETAIL_MESSAGES: Dictionary = {
 	"A_WRONG_EVIDENCE": [
-		"Evidence gating prevents blind guessing.",
-		"Select the required log clues first."
+		"Порог по уликам предотвращает случайный перебор.",
+		"Сначала выберите обязательные лог-улики."
 	],
-	"A_L1_BROADCAST": [
-		"Hub sends frame copies to all ports.",
-		"Use switch for L2 segmentation or router for subnet routing."
+	"A_L1_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": [
+		"Хаб отправляет копии кадров на все порты.",
+		"Для сегментации L2 нужен коммутатор, для подсетей — маршрутизатор."
 	],
 	"A_L2_SEGMENT_LIMIT": [
-		"Switch forwards by MAC inside one broadcast domain.",
-		"Inter-subnet traffic needs router or L3 switch."
+		"Коммутатор пересылает по MAC внутри одного широковещательного домена.",
+		"Трафик между подсетями требует маршрутизатора или L3-коммутатора."
 	],
 	"A_L1_PHYSICAL": [
-		"Repeater restores signal power only.",
-		"It does not inspect addresses or enforce policy."
+		"Репитер только восстанавливает мощность сигнала.",
+		"Он не анализирует адреса и не применяет правила."
 	],
 	"A_PASSIVE": [
-		"Patch panel is a cable termination point.",
-		"It cannot filter or route traffic."
+		"Патч-панель — это точка коммутации кабелей.",
+		"Она не фильтрует и не маршрутизирует трафик."
 	],
 	"B_MATH_X8": [
-		"Rate formula is bits/time.",
-		"Convert bytes to bits by multiplying by 8 first."
+		"Формула скорости: биты/время.",
+		"Сначала переведите байты в биты, умножив на 8."
 	],
 	"B_MATH_1024": [
-		"Binary storage units use 1024.",
-		"Use KiB and MiB factors when task expects binary conversion."
+		"Двоичные единицы хранения используют 1024.",
+		"Когда нужна двоичная конверсия, используйте множители KiB и MiB."
 	],
 	"B_MATH_DIV": [
-		"Throughput is total bits divided by transfer seconds.",
-		"Missing division overstates the result."
+		"Пропускная способность — это общее число бит, делённое на секунды передачи.",
+		"Без деления результат получается завышенным."
 	],
 	"B_UNIT_TRAP": [
-		"Answer must match requested unit exactly.",
-		"If asked in bit/s, avoid kbit/s shorthand."
+		"Ответ должен точно совпадать с требуемой единицей.",
+		"Если требуется бит/с, не подставляйте кбит/с."
 	],
 	"B_PIPELINE_INCOMPLETE": [
-		"The answer panel unlocks only after RUN CALC.",
-		"Select base, byte-bit step, and time division first."
+		"Панель ответов открывается только после КАЛЬКУЛЯЦИИ.",
+		"Сначала выберите основание, шаг байт->бит и деление на время."
 	],
 	"B_PIPELINE_BAD_DROP": [
-		"Each slot accepts only one module category.",
-		"Match module slot_type with connector label."
+		"Каждый слот принимает только свою категорию модуля.",
+		"Сопоставьте slot_type модуля с подписью разъёма."
 	],
 	"B_PIPELINE_MISMATCH": [
-		"Final answer can be guessed even with wrong assembly.",
-		"Review pipeline stages to avoid unit and formula drift."
+		"Финальный ответ можно угадать даже при неверной сборке.",
+		"Проверьте этапы конвейера, чтобы избежать ошибок единиц и формулы."
 	],
 	"B_SPAM_TRACE": [
-		"Repeated rapid clicks reduce reliability.",
-		"Wait for cooldown before running trace again."
+		"Частые быстрые клики снижают надёжность.",
+		"Дождитесь окончания кулдауна перед повторным запуском."
 	],
 	"B_GARBAGE": [
-		"Chosen number does not follow conversion pipeline.",
-		"Re-check each operation before selecting final answer."
+		"Выбранное число не соответствует конвейеру преобразования.",
+		"Проверьте каждую операцию перед выбором финального ответа."
 	],
 	"C_MASK_VAL": [
-		"Mask itself is not the network id.",
-		"Compute network as IP AND mask."
+		"Маска сама по себе не является ID сети.",
+		"Вычисляйте сеть как IP И маска."
 	],
 	"C_NOT_APPLIED": [
-		"Board answers stay locked until APPLY AND is executed.",
-		"Place mask and run AND operation first."
+		"Варианты ответа заблокированы, пока не выполнен операция И.",
+		"Сначала установите маску и выполните операцию И."
 	],
 	"C_L24_FALLBACK": [
-		"Only /24 masks end with .0 boundaries by default.",
-		"For other masks use actual block size."
+		"Только маски /24 по умолчанию дают границу .0.",
+		"Для остальных масок используйте реальный размер блока."
 	],
 	"C_BOUNDARY_SHIFT": [
-		"Find block size from last non-255 octet.",
-		"Network id is the nearest lower block boundary."
+		"Размер блока берётся из последнего октета маски, отличного от 255.",
+		"ID сети — ближайшая нижняя граница блока."
 	],
-	"C_BROADCAST": [
-		"Broadcast is the upper boundary of subnet.",
-		"Network id is the lower boundary."
+	"C_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": [
+		"Широковещательный адрес — верхняя граница подсети.",
+		"ID сети — нижняя граница."
 	],
 	"C_BAD_STEP": [
-		"Step is 256 minus the mask value in the last octet.",
-		"Use segment starts based on this step."
+		"Шаг равен 256 минус значение маски в последнем октете.",
+		"Используйте начала сегментов по этому шагу."
 	],
 	"C_BAD_DROP": [
-		"Mask card must be applied to MASK row drop zone.",
-		"Drop target rejects unrelated payloads."
+		"Карту маски нужно помещать в зону сброса строки «МАСКА».",
+		"Зона сброса отклоняет неподходящие объекты."
 	],
 	"TIMEOUT": [
-		"Timed mode reached its limit.",
-		"Use quick unit conversion and boundary checks."
+		"Временной режим достиг лимита.",
+		"Используйте быстрые преобразования единиц и проверку границ."
 	],
 	"UNKNOWN": [
-		"Option did not satisfy prompt constraints.",
-		"Review context and pick one deterministic match."
+		"Вариант не удовлетворяет условиям задачи.",
+		"Перепроверьте контекст и выберите единственное корректное совпадение."
 	]
 }
 
 const TITLES: Dictionary = {
-	"A_WRONG_EVIDENCE": "EVIDENCE REQUIRED",
-	"A_L1_BROADCAST": "BROADCAST STORM",
-	"A_L2_SEGMENT_LIMIT": "L2 LIMITATION",
-	"A_L1_PHYSICAL": "PHYSICAL LAYER ONLY",
-	"A_PASSIVE": "PASSIVE COMPONENT",
-	"B_MATH_X8": "BITS CONVERSION ERROR",
-	"B_MATH_1024": "BINARY UNIT ERROR",
-	"B_MATH_DIV": "RATE FORMULA ERROR",
-	"B_UNIT_TRAP": "UNIT MISMATCH",
-	"B_PIPELINE_INCOMPLETE": "PIPELINE INCOMPLETE",
-	"B_PIPELINE_BAD_DROP": "BAD DROP TARGET",
-	"B_PIPELINE_MISMATCH": "PIPELINE MISMATCH",
-	"B_SPAM_TRACE": "TRACE SPAM",
-	"B_GARBAGE": "INVALID RESULT",
-	"C_MASK_VAL": "MASK CONFUSION",
-	"C_NOT_APPLIED": "AND NOT APPLIED",
-	"C_L24_FALLBACK": "DEFAULT SUBNET TRAP",
-	"C_BOUNDARY_SHIFT": "BOUNDARY SHIFT",
-	"C_BROADCAST": "BROADCAST SELECTED",
-	"C_BAD_STEP": "BAD STEP SIZE",
-	"C_BAD_DROP": "BAD DROP TARGET",
-	"TIMEOUT": "TIMEOUT",
-	"UNKNOWN": "WRONG DECISION"
+	"A_WRONG_EVIDENCE": "ТРЕБУЮТСЯ УЛИКИ",
+	"A_L1_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": "ШТОРМ ШИРОКОВЕЩАНИЯ",
+	"A_L2_SEGMENT_LIMIT": "ОГРАНИЧЕНИЕ L2",
+	"A_L1_PHYSICAL": "ТОЛЬКО ФИЗИЧЕСКИЙ УРОВЕНЬ",
+	"A_PASSIVE": "ПАССИВНЫЙ КОМПОНЕНТ",
+	"B_MATH_X8": "ОШИБКА ПЕРЕВОДА В БИТЫ",
+	"B_MATH_1024": "ОШИБКА ДВОИЧНОЙ ЕДИНИЦЫ",
+	"B_MATH_DIV": "ОШИБКА ФОРМУЛЫ СКОРОСТИ",
+	"B_UNIT_TRAP": "НЕСОВПАДЕНИЕ ЕДИНИЦ",
+	"B_PIPELINE_INCOMPLETE": "КОНВЕЙЕР НЕ ЗАВЕРШЁН",
+	"B_PIPELINE_BAD_DROP": "НЕВЕРНАЯ ЗОНА СБРОСА",
+	"B_PIPELINE_MISMATCH": "НЕСОВПАДЕНИЕ КОНВЕЙЕРА",
+	"B_SPAM_TRACE": "СПАМ ТРАССИРОВКИ",
+	"B_GARBAGE": "НЕКОРРЕКТНЫЙ РЕЗУЛЬТАТ",
+	"C_MASK_VAL": "ПУТАНИЦА С МАСКОЙ",
+	"C_NOT_APPLIED": "ОПЕРАЦИЯ И НЕ ПРИМЕНЁН",
+	"C_L24_FALLBACK": "ЛОВУШКА /24 ПО УМОЛЧАНИЮ",
+	"C_BOUNDARY_SHIFT": "СДВИГ ГРАНИЦЫ",
+	"C_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": "ВЫБРАН ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС",
+	"C_BAD_STEP": "НЕВЕРНЫЙ ШАГ",
+	"C_BAD_DROP": "НЕВЕРНАЯ ЗОНА СБРОСА",
+	"TIMEOUT": "ТАЙМАУТ",
+	"UNKNOWN": "НЕВЕРНОЕ РЕШЕНИЕ"
 }
 
 static func short_message(code: String) -> String:
@@ -175,3 +175,4 @@ static func detail_messages(code: String) -> Array[String]:
 	for line_var in source:
 		details.append(str(line_var))
 	return details
+

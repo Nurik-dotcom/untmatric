@@ -129,7 +129,7 @@
     "schema_version": "1.0.0",
     "quest_id": "CASE_08_FINAL_REPORT",
     "id": "FR8-C-04",
-    "briefing": "Inline стиль на элементе. Он не для красоты.",
+    "briefing": "Встроенный стиль на элементе. Он не для красоты.",
     "format": "CSS_CASCADE",
     "target_text": "Секретный код",
     "html": [
@@ -169,8 +169,8 @@
     ],
     "correct_option_id": "BLUE",
     "feedback_rules": {
-      "INLINE_OVERRIDE": "Inline (1000) перекрывает #id (100) и .class (10).",
-      "OK": "Верно: inline сильнее."
+      "INLINE_OVERRIDE": "Встроенный стиль (1000) перекрывает #id (100) и .class (10).",
+      "OK": "Верно: встроенный стиль сильнее."
     }
   },
   {

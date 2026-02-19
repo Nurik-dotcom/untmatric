@@ -8,15 +8,15 @@
     "cards": [
       {"stage_id":"IDEA","title":"Идея","hint":"Формулировка проблемы и решения."},
       {"stage_id":"MVP","title":"MVP","hint":"Минимально рабочая версия продукта."},
-      {"stage_id":"ALPHA","title":"Alpha","hint":"Внутреннее тестирование."},
-      {"stage_id":"BETA","title":"Beta","hint":"Публичное тестирование."},
-      {"stage_id":"RELEASE","title":"Release","hint":"Релиз для всех."}
+      {"stage_id":"ALPHA","title":"Альфа","hint":"Внутреннее тестирование."},
+      {"stage_id":"BETA","title":"Бета","hint":"Публичное тестирование."},
+      {"stage_id":"RELEASE","title":"Релиз","hint":"Релиз для всех."}
     ],
     "dependencies": [
       {"a":"IDEA","b":"MVP","code":"LOGIC_GAP","message":"Нельзя делать MVP раньше идеи."},
-      {"a":"MVP","b":"ALPHA","code":"LOGIC_GAP","message":"Нельзя тестировать Alpha раньше MVP."},
-      {"a":"ALPHA","b":"BETA","code":"CAUSALITY_LOOP","message":"Нельзя показывать Beta до Alpha."},
-      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Нельзя выпускать релиз до Beta."}
+      {"a":"MVP","b":"ALPHA","code":"LOGIC_GAP","message":"Нельзя тестировать Альфу раньше MVP."},
+      {"a":"ALPHA","b":"BETA","code":"CAUSALITY_LOOP","message":"Нельзя показывать Бету до Альфы."},
+      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Нельзя выпускать релиз до Беты."}
     ],
     "expected_order": ["IDEA","MVP","ALPHA","BETA","RELEASE"],
     "feedback_rules": {
@@ -42,14 +42,14 @@
       {"stage_id":"PROBLEM","title":"Проблема","hint":"Сначала понять, что решаем."},
       {"stage_id":"PROTOTYPE","title":"Прототип","hint":"Быстрая проверка идеи."},
       {"stage_id":"MVP","title":"MVP","hint":"Минимальная рабочая версия."},
-      {"stage_id":"BETA","title":"Beta","hint":"Публичный тест."},
-      {"stage_id":"RELEASE","title":"Release","hint":"Релиз."}
+      {"stage_id":"BETA","title":"Бета","hint":"Публичный тест."},
+      {"stage_id":"RELEASE","title":"Релиз","hint":"Релиз."}
     ],
     "dependencies": [
       {"a":"PROBLEM","b":"PROTOTYPE","code":"LOGIC_GAP","message":"Нельзя строить прототип без проблемы."},
       {"a":"PROTOTYPE","b":"MVP","code":"LOGIC_GAP","message":"MVP не рождается из воздуха."},
-      {"a":"MVP","b":"BETA","code":"CAUSALITY_LOOP","message":"Beta только после MVP."},
-      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Beta."}
+      {"a":"MVP","b":"BETA","code":"CAUSALITY_LOOP","message":"Бета только после MVP."},
+      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Беты."}
     ],
     "expected_order": ["PROBLEM","PROTOTYPE","MVP","BETA","RELEASE"],
     "feedback_rules": {
@@ -74,15 +74,15 @@
     "cards": [
       {"stage_id":"THREAT","title":"Модель угроз","hint":"Определить, от чего защищаемся."},
       {"stage_id":"LOGGING","title":"Логирование","hint":"Сначала фиксируем события."},
-      {"stage_id":"PENTEST","title":"PenTest","hint":"Проверка уязвимостей."},
-      {"stage_id":"BETA","title":"Beta","hint":"Публичный тест."},
-      {"stage_id":"RELEASE","title":"Release","hint":"Релиз."}
+      {"stage_id":"PENTEST","title":"Пентест","hint":"Проверка уязвимостей."},
+      {"stage_id":"BETA","title":"Бета","hint":"Публичный тест."},
+      {"stage_id":"RELEASE","title":"Релиз","hint":"Релиз."}
     ],
     "dependencies": [
       {"a":"THREAT","b":"LOGGING","code":"LOGIC_GAP","message":"Логи без понимания угроз бесполезны."},
-      {"a":"LOGGING","b":"PENTEST","code":"LOGIC_GAP","message":"PenTest без логов хуже диагностики."},
-      {"a":"PENTEST","b":"BETA","code":"CAUSALITY_LOOP","message":"Нельзя выпускать Beta до проверки безопасности."},
-      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Beta."}
+      {"a":"LOGGING","b":"PENTEST","code":"LOGIC_GAP","message":"Пентест без логов хуже диагностики."},
+      {"a":"PENTEST","b":"BETA","code":"CAUSALITY_LOOP","message":"Нельзя выпускать Бету до проверки безопасности."},
+      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Беты."}
     ],
     "expected_order": ["THREAT","LOGGING","PENTEST","BETA","RELEASE"],
     "feedback_rules": {
@@ -139,16 +139,16 @@
     "format": "TIMELINE_SORT",
     "cards": [
       {"stage_id":"MVP","title":"MVP","hint":"Есть продукт."},
-      {"stage_id":"PRIVACY","title":"Privacy","hint":"Политика конфиденциальности."},
-      {"stage_id":"TERMS","title":"Terms","hint":"Пользовательское соглашение."},
-      {"stage_id":"BETA","title":"Beta","hint":"Публичный тест."},
-      {"stage_id":"RELEASE","title":"Release","hint":"Релиз."}
+      {"stage_id":"PRIVACY","title":"Конфиденциальность","hint":"Политика конфиденциальности."},
+      {"stage_id":"TERMS","title":"Условия","hint":"Пользовательское соглашение."},
+      {"stage_id":"BETA","title":"Бета","hint":"Публичный тест."},
+      {"stage_id":"RELEASE","title":"Релиз","hint":"Релиз."}
     ],
     "dependencies": [
       {"a":"MVP","b":"PRIVACY","code":"LOGIC_GAP","message":"Сначала продукт, потом документы."},
       {"a":"PRIVACY","b":"TERMS","code":"LOGIC_GAP","message":"Документы должны быть согласованы."},
       {"a":"TERMS","b":"BETA","code":"CAUSALITY_LOOP","message":"Публичность после документов."},
-      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Beta."}
+      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Беты."}
     ],
     "expected_order": ["MVP","PRIVACY","TERMS","BETA","RELEASE"],
     "feedback_rules": {
@@ -172,16 +172,16 @@
     "format": "TIMELINE_SORT",
     "cards": [
       {"stage_id":"MVP","title":"MVP","hint":"Рабочая основа."},
-      {"stage_id":"ALPHA","title":"Alpha","hint":"Внутренний тест."},
+      {"stage_id":"ALPHA","title":"Альфа","hint":"Внутренний тест."},
       {"stage_id":"QA","title":"QA","hint":"Проверка качества."},
-      {"stage_id":"BETA","title":"Beta","hint":"Публичный тест."},
-      {"stage_id":"RELEASE","title":"Release","hint":"Релиз."}
+      {"stage_id":"BETA","title":"Бета","hint":"Публичный тест."},
+      {"stage_id":"RELEASE","title":"Релиз","hint":"Релиз."}
     ],
     "dependencies": [
-      {"a":"MVP","b":"ALPHA","code":"LOGIC_GAP","message":"Alpha после MVP."},
+      {"a":"MVP","b":"ALPHA","code":"LOGIC_GAP","message":"Альфа после MVP."},
       {"a":"ALPHA","b":"QA","code":"LOGIC_GAP","message":"QA после внутреннего теста."},
-      {"a":"QA","b":"BETA","code":"CAUSALITY_LOOP","message":"Beta после QA."},
-      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Beta."}
+      {"a":"QA","b":"BETA","code":"CAUSALITY_LOOP","message":"Бета после QA."},
+      {"a":"BETA","b":"RELEASE","code":"LOGIC_GAP","message":"Релиз после Беты."}
     ],
     "expected_order": ["MVP","ALPHA","QA","BETA","RELEASE"],
     "feedback_rules": {

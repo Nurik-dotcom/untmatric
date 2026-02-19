@@ -75,7 +75,7 @@ layout_mode = 2
 
 [node name="BriefingLabel" type="Label" parent="SafeArea/MainVBox/BriefingCard"]
 layout_mode = 2
-text = "Briefing..."
+text = "Брифинг..."
 autowrap_mode = 3
 
 [node name="WorkArea" type="HBoxContainer" parent="SafeArea/MainVBox"]
@@ -165,7 +165,7 @@ theme_override_constants/separation = 20
 [node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomBar"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "STATUS"
+text = "СТАТУС"
 vertical_alignment = 1
 
 [node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
@@ -210,17 +210,17 @@ theme_override_constants/separation = 20
 [node name="VerdictLabel" type="Label" parent="ResultPopup/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "VERDICT"
+text = "ВЕРДИКТ"
 horizontal_alignment = 1
 
 [node name="ScoreLabel" type="Label" parent="ResultPopup/VBox"]
 layout_mode = 2
-text = "SCORE"
+text = "СЧЁТ"
 horizontal_alignment = 1
 
 [node name="StabilityLabel" type="Label" parent="ResultPopup/VBox"]
 layout_mode = 2
-text = "STABILITY"
+text = "СТАБИЛЬНОСТЬ"
 horizontal_alignment = 1
 
 [node name="HBox" type="HBoxContainer" parent="ResultPopup/VBox"]
@@ -237,3 +237,4 @@ text = "ПОВТОРИТЬ"
 custom_minimum_size = Vector2(100, 50)
 layout_mode = 2
 text = "В МЕНЮ"
+

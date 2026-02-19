@@ -120,7 +120,7 @@ const CASES_C := [
 				"explain": "Ты снял только один слой. Это другое."
 			},
 			{
-				"label": "0 (FALSE)",
+				"label": "0 (ЛОЖЬ)",
 				"expr": false,
 				"explain": "Нет, ¬¬A не превращает всё в ложь."
 			}
@@ -208,7 +208,7 @@ func load_case(idx: int):
 	hints_used = 0
 
 	# Reset UI
-	stats_label.text = "CASE: %02d" % (idx + 1)
+	stats_label.text = "ДЕЛО: %02d" % (idx + 1)
 	story_text.text = current_case.story
 
 	# Expression
@@ -220,14 +220,14 @@ func load_case(idx: int):
 	var target_load = current_case.target_gates
 	load_bar.max_value = max(current_load, target_load) + 2 # Some headroom
 	load_bar.value = current_load
-	load_label.text = "LOAD: %d / %d" % [current_load, target_load]
+	load_label.text = "НАГРУЗКА: %d / %d" % [current_load, target_load]
 
 	# Patches
 	_create_patch_buttons(current_case.options)
 
 	# Feedback
 	feedback_panel.visible = true
-	feedback_text.text = "[center]Select a patch to minimize load.[/center]"
+	feedback_text.text = "[center]Выберите патч, чтобы снизить нагрузку.[/center]"
 	feedback_text.modulate = Color(0.7, 0.7, 0.7)
 
 	btn_next.visible = false
@@ -294,7 +294,7 @@ func _handle_fail(eq_res, option):
 	for k in eq_res.counterexample:
 		env_str += "%s=%d " % [k, 1 if eq_res.counterexample[k] else 0]
 
-	feedback_text.text = "[color=#E24B4B]NOT EQUIVALENT[/color]\nCounter-example: %s\nOrig: %s | Patch: %s" % [
+	feedback_text.text = "[color=#E24B4B]НЕЭКВИВАЛЕНТНО[/color]\nКонтрпример: %s\nИсходное: %s | Патч: %s" % [
 		env_str,
 		"1" if eq_res.orig else "0",
 		"1" if eq_res.new else "0"
@@ -325,10 +325,10 @@ func _handle_success(new_expr, option):
 	# Load check (optional strictness)
 	var new_load = count_gates(new_expr)
 	load_bar.value = new_load
-	load_label.text = "LOAD: %d / %d" % [new_load, current_case.target_gates]
+	load_label.text = "НАГРУЗКА: %d / %d" % [new_load, current_case.target_gates]
 
 	# Visual Success
-	feedback_text.text = "[color=#38E06B]PATCH APPLIED: EQUIVALENT[/color]\n%s" % option.explain
+	feedback_text.text = "[color=#38E06B]ПАТЧ ПРИМЕНЁН: ЭКВИВАЛЕНТНО[/color]\n%s" % option.explain
 	expr_text.text = _format_expr(new_expr) # Update main display
 
 	var tween = create_tween()
@@ -369,7 +369,7 @@ func _enter_safe_mode():
 	if correct_idx != -1:
 		var btn = patch_list.get_child(correct_idx)
 		btn.modulate = Color(0, 1, 0)
-		feedback_text.text = "[color=#FFFF00]SAFE MODE[/color]\nCorrect patch: %s\n%s" % [
+		feedback_text.text = "[color=#FFFF00]БЕЗОПАСНЫЙ РЕЖИМ[/color]\nВерный патч: %s\n%s" % [
 			current_case.options[correct_idx].label,
 			current_case.options[correct_idx].explain
 		]
@@ -383,7 +383,7 @@ func _enter_safe_mode():
 func _lock_ui(time: float):
 	is_locked = true
 	lock_overlay.visible = true
-	lock_overlay.text = "SYSTEM LOCKED\n%.1fs" % time
+	lock_overlay.text = "СИСТЕМА ЗАБЛОКИРОВАНА\n%.1fс" % time
 
 	var timer = get_tree().create_timer(time)
 	await timer.timeout
@@ -499,7 +499,7 @@ func _apply_penalty(amt: float):
 		_game_over()
 
 func _update_stability_ui(val, _diff):
-	stability_label.text = "STABILITY: %d%%" % int(val)
+	stability_label.text = "СТАБИЛЬНОСТЬ: %d%%" % int(val)
 	if val < 40:
 		stability_label.add_theme_color_override("font_color", Color.RED)
 	else:
@@ -524,7 +524,7 @@ func _on_hint_pressed():
 			break
 
 	if correct_opt:
-		feedback_text.text = "[color=#88CCFF]HINT: Look for %s[/color]" % correct_opt.label.substr(0, 5) + "..."
+		feedback_text.text = "[color=#88CCFF]ПОДСКАЗКА: ищите %s[/color]" % correct_opt.label.substr(0, 5) + "..."
 
 func _mark_first_action() -> void:
 	if first_action_ms < 0:

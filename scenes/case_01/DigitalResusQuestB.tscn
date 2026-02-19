@@ -53,7 +53,7 @@ text = "<"
 [node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "TITLE"
+text = "ЗАГОЛОВОК"
 vertical_alignment = 1
 
 [node name="StageLabel" type="Label" parent="SafeArea/MainVBox/Header"]
@@ -80,7 +80,7 @@ theme_override_constants/separation = 6
 [node name="ContextLabel" type="Label" parent="SafeArea/MainVBox/ContextCard/ContextVBox"]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
-text = "Context"
+text = "Контекст"
 autowrap_mode = 2
 
 [node name="BudgetRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContextCard/ContextVBox"]
@@ -88,7 +88,7 @@ layout_mode = 2
 
 [node name="BudgetLabel" type="Label" parent="SafeArea/MainVBox/ContextCard/ContextVBox/BudgetRow"]
 layout_mode = 2
-text = "Budget:"
+text = "Бюджет:"
 
 [node name="BudgetValue" type="Label" parent="SafeArea/MainVBox/ContextCard/ContextVBox/BudgetRow"]
 layout_mode = 2
@@ -122,7 +122,7 @@ theme_override_constants/separation = 4
 [node name="DiagHeadline" type="Label" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Headline"
+text = "Заголовок"
 
 [node name="DiagBody" type="RichTextLabel" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
 custom_minimum_size = Vector2(0, 82)
@@ -134,7 +134,7 @@ autowrap_mode = 2
 
 [node name="DiagHint" type="Label" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
 layout_mode = 2
-text = "Hint"
+text = "Подсказка"
 autowrap_mode = 2
 
 [node name="BottomBar" type="HBoxContainer" parent="SafeArea/MainVBox"]
@@ -145,16 +145,17 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "STATUS"
+text = "СТАТУС"
 autowrap_mode = 2
 vertical_alignment = 1
 
 [node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(160, 72)
 layout_mode = 2
-text = "RESET"
+text = "СБРОС"
 
 [node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(220, 72)
 layout_mode = 2
-text = "CONFIRM"
+text = "ПОДТВЕРДИТЬ"
+

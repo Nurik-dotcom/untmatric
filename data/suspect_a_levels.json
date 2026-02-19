@@ -2,300 +2,300 @@
   {
 	"id": "A-01",
 	"bucket": "newbie",
-	"briefing": "Trace the loop summation.",
+	"briefing": "Проследите суммирование в цикле.",
 	"code": ["s = 0", "for i in range(4):", "    s = s + i"],
 	"expected": 6,
 	"trace": [
-	  {"i": 0, "cond": "loop", "s_before": 0, "s_after": 0},
-	  {"i": 1, "cond": "loop", "s_before": 0, "s_after": 1},
-	  {"i": 2, "cond": "loop", "s_before": 1, "s_after": 3},
-	  {"i": 3, "cond": "loop", "s_before": 3, "s_after": 6}
+	  {"i": 0, "cond": "цикл", "s_before": 0, "s_after": 0},
+	  {"i": 1, "cond": "цикл", "s_before": 0, "s_after": 1},
+	  {"i": 2, "cond": "цикл", "s_before": 1, "s_after": 3},
+	  {"i": 3, "cond": "цикл", "s_before": 3, "s_after": 6}
 	],
-	"explain": ["Loop values are 0,1,2,3", "Accumulator adds i every iteration", "Final s = 6"],
+	"explain": ["Значения цикла: 0,1,2,3", "Аккумулятор добавляет i на каждой итерации", "Итоговое s = 6"],
 	"economy": {"analyze": 20, "wrong": 10, "reward": 15}
   },
   {
 	"id": "A-02",
 	"bucket": "newbie",
-	"briefing": "Loop with a non-zero start index.",
+	"briefing": "Цикл с ненулевым начальным индексом.",
 	"code": ["s = 0", "for i in range(1, 5):", "    s = s + i"],
 	"expected": 10,
 	"trace": [
-	  {"i": 1, "cond": "loop", "s_before": 0, "s_after": 1},
-	  {"i": 2, "cond": "loop", "s_before": 1, "s_after": 3},
-	  {"i": 3, "cond": "loop", "s_before": 3, "s_after": 6},
-	  {"i": 4, "cond": "loop", "s_before": 6, "s_after": 10}
+	  {"i": 1, "cond": "цикл", "s_before": 0, "s_after": 1},
+	  {"i": 2, "cond": "цикл", "s_before": 1, "s_after": 3},
+	  {"i": 3, "cond": "цикл", "s_before": 3, "s_after": 6},
+	  {"i": 4, "cond": "цикл", "s_before": 6, "s_after": 10}
 	],
-	"explain": ["range(1,5) gives 1,2,3,4", "Sum is 1+2+3+4", "Final s = 10"],
+	"explain": ["range(1,5) даёт 1,2,3,4", "Сумма: 1+2+3+4", "Итоговое s = 10"],
 	"economy": {"analyze": 20, "wrong": 10, "reward": 15}
   },
   {
 	"id": "A-03",
 	"bucket": "newbie",
-	"briefing": "Trace a loop with step = 2.",
+	"briefing": "Проследите цикл с шагом = 2.",
 	"code": ["s = 0", "for i in range(0, 5, 2):", "    s = s + i"],
 	"expected": 6,
 	"trace": [
-	  {"i": 0, "cond": "loop", "s_before": 0, "s_after": 0},
-	  {"i": 2, "cond": "loop", "s_before": 0, "s_after": 2},
-	  {"i": 4, "cond": "loop", "s_before": 2, "s_after": 6}
+	  {"i": 0, "cond": "цикл", "s_before": 0, "s_after": 0},
+	  {"i": 2, "cond": "цикл", "s_before": 0, "s_after": 2},
+	  {"i": 4, "cond": "цикл", "s_before": 2, "s_after": 6}
 	],
-	"explain": ["Loop values are 0,2,4", "Accumulator adds each value", "Final s = 6"],
+	"explain": ["Значения цикла: 0,2,4", "Аккумулятор добавляет каждое значение", "Итоговое s = 6"],
 	"economy": {"analyze": 20, "wrong": 10, "reward": 15}
   },
   {
 	"id": "A-04",
 	"bucket": "newbie",
-	"briefing": "Each iteration adds i*2.",
+	"briefing": "На каждой итерации добавляется i*2.",
 	"code": ["s = 0", "for i in range(3):", "    s = s + (i * 2)"],
 	"expected": 6,
 	"trace": [
-	  {"i": 0, "cond": "loop", "s_before": 0, "s_after": 0},
-	  {"i": 1, "cond": "loop", "s_before": 0, "s_after": 2},
-	  {"i": 2, "cond": "loop", "s_before": 2, "s_after": 6}
+	  {"i": 0, "cond": "цикл", "s_before": 0, "s_after": 0},
+	  {"i": 1, "cond": "цикл", "s_before": 0, "s_after": 2},
+	  {"i": 2, "cond": "цикл", "s_before": 2, "s_after": 6}
 	],
-	"explain": ["Add sequence is 0,2,4", "0+2+4=6", "Final s = 6"],
+	"explain": ["Последовательность добавления: 0,2,4", "0+2+4=6", "Итоговое s = 6"],
 	"economy": {"analyze": 20, "wrong": 10, "reward": 15}
   },
   {
 	"id": "A-05",
 	"bucket": "newbie",
-	"briefing": "Count how many times i > 2.",
+	"briefing": "Посчитайте, сколько раз i > 2.",
 	"code": ["s = 0", "for i in range(5):", "    if i > 2:", "        s = s + 1"],
 	"expected": 2,
 	"trace": [
-	  {"i": 0, "cond": "i > 2 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 1, "cond": "i > 2 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 2, "cond": "i > 2 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 3, "cond": "i > 2 -> true", "s_before": 0, "s_after": 1},
-	  {"i": 4, "cond": "i > 2 -> true", "s_before": 1, "s_after": 2}
+	  {"i": 0, "cond": "i > 2 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 1, "cond": "i > 2 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 2, "cond": "i > 2 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 3, "cond": "i > 2 -> истина", "s_before": 0, "s_after": 1},
+	  {"i": 4, "cond": "i > 2 -> истина", "s_before": 1, "s_after": 2}
 	],
-	"explain": ["Condition is true only for i=3 and i=4", "Counter increments twice", "Final s = 2"],
+	"explain": ["Условие истинно только для i=3 и i=4", "Счётчик увеличивается дважды", "Итоговое s = 2"],
 	"economy": {"analyze": 25, "wrong": 10, "reward": 15}
   },
   {
 	"id": "A-06",
 	"bucket": "newbie",
-	"briefing": "Sum only odd values.",
+	"briefing": "Суммируйте только нечётные значения.",
 	"code": ["s = 0", "for i in range(6):", "    if i % 2 != 0:", "        s = s + i"],
 	"expected": 9,
 	"trace": [
-	  {"i": 0, "cond": "i % 2 != 0 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 1, "cond": "i % 2 != 0 -> true", "s_before": 0, "s_after": 1},
-	  {"i": 2, "cond": "i % 2 != 0 -> false", "s_before": 1, "s_after": 1},
-	  {"i": 3, "cond": "i % 2 != 0 -> true", "s_before": 1, "s_after": 4},
-	  {"i": 4, "cond": "i % 2 != 0 -> false", "s_before": 4, "s_after": 4},
-	  {"i": 5, "cond": "i % 2 != 0 -> true", "s_before": 4, "s_after": 9}
+	  {"i": 0, "cond": "i % 2 != 0 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 1, "cond": "i % 2 != 0 -> истина", "s_before": 0, "s_after": 1},
+	  {"i": 2, "cond": "i % 2 != 0 -> ложь", "s_before": 1, "s_after": 1},
+	  {"i": 3, "cond": "i % 2 != 0 -> истина", "s_before": 1, "s_after": 4},
+	  {"i": 4, "cond": "i % 2 != 0 -> ложь", "s_before": 4, "s_after": 4},
+	  {"i": 5, "cond": "i % 2 != 0 -> истина", "s_before": 4, "s_after": 9}
 	],
-	"explain": ["Odd values are 1,3,5", "Sum is 1+3+5", "Final s = 9"],
+	"explain": ["Нечётные значения: 1,3,5", "Сумма 1+3+5", "Итоговое s = 9"],
 	"economy": {"analyze": 25, "wrong": 10, "reward": 15}
   },
   {
 	"id": "A-07",
 	"bucket": "stalker",
-	"briefing": "Sum only even numbers from 1 to 8.",
+	"briefing": "Суммируйте только чётные числа от 1 до 8.",
 	"code": ["s = 0", "for i in range(1, 9):", "    if i % 2 == 0:", "        s = s + i"],
 	"expected": 20,
 	"trace": [
-	  {"i": 1, "cond": "i % 2 == 0 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 2, "cond": "i % 2 == 0 -> true", "s_before": 0, "s_after": 2},
-	  {"i": 3, "cond": "i % 2 == 0 -> false", "s_before": 2, "s_after": 2},
-	  {"i": 4, "cond": "i % 2 == 0 -> true", "s_before": 2, "s_after": 6},
-	  {"i": 5, "cond": "i % 2 == 0 -> false", "s_before": 6, "s_after": 6},
-	  {"i": 6, "cond": "i % 2 == 0 -> true", "s_before": 6, "s_after": 12},
-	  {"i": 7, "cond": "i % 2 == 0 -> false", "s_before": 12, "s_after": 12},
-	  {"i": 8, "cond": "i % 2 == 0 -> true", "s_before": 12, "s_after": 20}
+	  {"i": 1, "cond": "i % 2 == 0 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 2, "cond": "i % 2 == 0 -> истина", "s_before": 0, "s_after": 2},
+	  {"i": 3, "cond": "i % 2 == 0 -> ложь", "s_before": 2, "s_after": 2},
+	  {"i": 4, "cond": "i % 2 == 0 -> истина", "s_before": 2, "s_after": 6},
+	  {"i": 5, "cond": "i % 2 == 0 -> ложь", "s_before": 6, "s_after": 6},
+	  {"i": 6, "cond": "i % 2 == 0 -> истина", "s_before": 6, "s_after": 12},
+	  {"i": 7, "cond": "i % 2 == 0 -> ложь", "s_before": 12, "s_after": 12},
+	  {"i": 8, "cond": "i % 2 == 0 -> истина", "s_before": 12, "s_after": 20}
 	],
-	"explain": ["Even terms are 2,4,6,8", "Sum is 20"],
+	"explain": ["Чётные значения: 2,4,6,8", "Сумма 20"],
 	"economy": {"analyze": 30, "wrong": 15, "reward": 20}
   },
   {
 	"id": "A-08",
 	"bucket": "stalker",
-	"briefing": "Count multiples of 3 in range(10).",
+	"briefing": "Посчитайте кратные 3 в range(10).",
 	"code": ["s = 0", "for i in range(10):", "    if i % 3 == 0:", "        s = s + 1"],
 	"expected": 4,
 	"trace": [
-	  {"i": 0, "cond": "i % 3 == 0 -> true", "s_before": 0, "s_after": 1},
-	  {"i": 1, "cond": "i % 3 == 0 -> false", "s_before": 1, "s_after": 1},
-	  {"i": 2, "cond": "i % 3 == 0 -> false", "s_before": 1, "s_after": 1},
-	  {"i": 3, "cond": "i % 3 == 0 -> true", "s_before": 1, "s_after": 2},
-	  {"i": 4, "cond": "i % 3 == 0 -> false", "s_before": 2, "s_after": 2},
-	  {"i": 5, "cond": "i % 3 == 0 -> false", "s_before": 2, "s_after": 2},
-	  {"i": 6, "cond": "i % 3 == 0 -> true", "s_before": 2, "s_after": 3},
-	  {"i": 7, "cond": "i % 3 == 0 -> false", "s_before": 3, "s_after": 3},
-	  {"i": 8, "cond": "i % 3 == 0 -> false", "s_before": 3, "s_after": 3},
-	  {"i": 9, "cond": "i % 3 == 0 -> true", "s_before": 3, "s_after": 4}
+	  {"i": 0, "cond": "i % 3 == 0 -> истина", "s_before": 0, "s_after": 1},
+	  {"i": 1, "cond": "i % 3 == 0 -> ложь", "s_before": 1, "s_after": 1},
+	  {"i": 2, "cond": "i % 3 == 0 -> ложь", "s_before": 1, "s_after": 1},
+	  {"i": 3, "cond": "i % 3 == 0 -> истина", "s_before": 1, "s_after": 2},
+	  {"i": 4, "cond": "i % 3 == 0 -> ложь", "s_before": 2, "s_after": 2},
+	  {"i": 5, "cond": "i % 3 == 0 -> ложь", "s_before": 2, "s_after": 2},
+	  {"i": 6, "cond": "i % 3 == 0 -> истина", "s_before": 2, "s_after": 3},
+	  {"i": 7, "cond": "i % 3 == 0 -> ложь", "s_before": 3, "s_after": 3},
+	  {"i": 8, "cond": "i % 3 == 0 -> ложь", "s_before": 3, "s_after": 3},
+	  {"i": 9, "cond": "i % 3 == 0 -> истина", "s_before": 3, "s_after": 4}
 	],
-	"explain": ["Multiples are 0,3,6,9", "Counter increments 4 times"],
+	"explain": ["Кратные: 0,3,6,9", "Счётчик увеличивается 4 раза"],
 	"economy": {"analyze": 30, "wrong": 15, "reward": 20}
   },
   {
 	"id": "A-09",
 	"bucket": "stalker",
-	"briefing": "Two updates per iteration.",
+	"briefing": "Два обновления на итерацию.",
 	"code": ["s = 0", "for i in range(4):", "    s = s + i", "    s = s + 1"],
 	"expected": 10,
 	"trace": [
-	  {"i": 0, "cond": "after i", "s_before": 0, "s_after": 1},
-	  {"i": 1, "cond": "after i", "s_before": 1, "s_after": 3},
-	  {"i": 2, "cond": "after i", "s_before": 3, "s_after": 6},
-	  {"i": 3, "cond": "after i", "s_before": 6, "s_after": 10}
+	  {"i": 0, "cond": "после i", "s_before": 0, "s_after": 1},
+	  {"i": 1, "cond": "после i", "s_before": 1, "s_after": 3},
+	  {"i": 2, "cond": "после i", "s_before": 3, "s_after": 6},
+	  {"i": 3, "cond": "после i", "s_before": 6, "s_after": 10}
 	],
-	"explain": ["Each loop adds i then adds 1", "Equivalent to adding (i+1)", "Final s = 10"],
+	"explain": ["На каждой итерации добавляется i, затем 1", "Эквивалентно добавлению (i+1)", "Итоговое s = 10"],
 	"economy": {"analyze": 30, "wrong": 15, "reward": 20}
   },
   {
 	"id": "A-10",
 	"bucket": "stalker",
-	"briefing": "Descending range with step -2.",
+	"briefing": "Убывающий range с шагом -2.",
 	"code": ["s = 0", "for i in range(4, 0, -2):", "    s = s + 1"],
 	"expected": 2,
 	"trace": [
-	  {"i": 4, "cond": "loop", "s_before": 0, "s_after": 1},
-	  {"i": 2, "cond": "loop", "s_before": 1, "s_after": 2}
+	  {"i": 4, "cond": "цикл", "s_before": 0, "s_after": 1},
+	  {"i": 2, "cond": "цикл", "s_before": 1, "s_after": 2}
 	],
-	"explain": ["range(4,0,-2) gives 4 and 2", "Loop runs two times"],
+	"explain": ["range(4,0,-2) даёт 4 и 2", "Цикл выполняется два раза"],
 	"economy": {"analyze": 30, "wrong": 15, "reward": 20}
   },
   {
 	"id": "A-11",
 	"bucket": "stalker",
-	"briefing": "Sum values divisible by 5.",
+	"briefing": "Суммируйте значения, делящиеся на 5.",
 	"code": ["s = 0", "for i in range(10):", "    if i % 5 == 0:", "        s = s + i"],
 	"expected": 5,
 	"trace": [
-	  {"i": 0, "cond": "i % 5 == 0 -> true", "s_before": 0, "s_after": 0},
-	  {"i": 1, "cond": "i % 5 == 0 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 2, "cond": "i % 5 == 0 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 3, "cond": "i % 5 == 0 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 4, "cond": "i % 5 == 0 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 5, "cond": "i % 5 == 0 -> true", "s_before": 0, "s_after": 5},
-	  {"i": 6, "cond": "i % 5 == 0 -> false", "s_before": 5, "s_after": 5},
-	  {"i": 7, "cond": "i % 5 == 0 -> false", "s_before": 5, "s_after": 5},
-	  {"i": 8, "cond": "i % 5 == 0 -> false", "s_before": 5, "s_after": 5},
-	  {"i": 9, "cond": "i % 5 == 0 -> false", "s_before": 5, "s_after": 5}
+	  {"i": 0, "cond": "i % 5 == 0 -> истина", "s_before": 0, "s_after": 0},
+	  {"i": 1, "cond": "i % 5 == 0 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 2, "cond": "i % 5 == 0 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 3, "cond": "i % 5 == 0 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 4, "cond": "i % 5 == 0 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 5, "cond": "i % 5 == 0 -> истина", "s_before": 0, "s_after": 5},
+	  {"i": 6, "cond": "i % 5 == 0 -> ложь", "s_before": 5, "s_after": 5},
+	  {"i": 7, "cond": "i % 5 == 0 -> ложь", "s_before": 5, "s_after": 5},
+	  {"i": 8, "cond": "i % 5 == 0 -> ложь", "s_before": 5, "s_after": 5},
+	  {"i": 9, "cond": "i % 5 == 0 -> ложь", "s_before": 5, "s_after": 5}
 	],
-	"explain": ["Divisible values are 0 and 5", "Accumulator adds only those values", "Final s = 5"],
+	"explain": ["Делящиеся значения: 0 и 5", "Накопитель добавляет только эти значения", "Итоговое s = 5"],
 	"economy": {"analyze": 30, "wrong": 15, "reward": 20}
   },
   {
 	"id": "A-12",
 	"bucket": "stalker",
-	"briefing": "Count values matching OR logic.",
+	"briefing": "Посчитайте значения, удовлетворяющие логике OR.",
 	"code": ["s = 0", "for i in range(5):", "    if i < 2 or i > 3:", "        s = s + 1"],
 	"expected": 3,
 	"trace": [
-	  {"i": 0, "cond": "i < 2 or i > 3 -> true", "s_before": 0, "s_after": 1},
-	  {"i": 1, "cond": "i < 2 or i > 3 -> true", "s_before": 1, "s_after": 2},
-	  {"i": 2, "cond": "i < 2 or i > 3 -> false", "s_before": 2, "s_after": 2},
-	  {"i": 3, "cond": "i < 2 or i > 3 -> false", "s_before": 2, "s_after": 2},
-	  {"i": 4, "cond": "i < 2 or i > 3 -> true", "s_before": 2, "s_after": 3}
+	  {"i": 0, "cond": "i < 2 or i > 3 -> истина", "s_before": 0, "s_after": 1},
+	  {"i": 1, "cond": "i < 2 or i > 3 -> истина", "s_before": 1, "s_after": 2},
+	  {"i": 2, "cond": "i < 2 or i > 3 -> ложь", "s_before": 2, "s_after": 2},
+	  {"i": 3, "cond": "i < 2 or i > 3 -> ложь", "s_before": 2, "s_after": 2},
+	  {"i": 4, "cond": "i < 2 or i > 3 -> истина", "s_before": 2, "s_after": 3}
 	],
-	"explain": ["True for i=0,1,4", "Counter increments three times"],
+	"explain": ["Истинно для i=0,1,4", "Счётчик увеличивается три раза"],
 	"economy": {"analyze": 30, "wrong": 15, "reward": 20}
   },
   {
 	"id": "A-13",
 	"bucket": "master",
-	"briefing": "Count values in open interval (2,6).",
+	"briefing": "Посчитайте значения в открытом интервале (2,6).",
 	"code": ["s = 0", "for i in range(10):", "    if i > 2 and i < 6:", "        s = s + 1"],
 	"expected": 3,
 	"trace": [
-	  {"i": 0, "cond": "i > 2 and i < 6 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 1, "cond": "i > 2 and i < 6 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 2, "cond": "i > 2 and i < 6 -> false", "s_before": 0, "s_after": 0},
-	  {"i": 3, "cond": "i > 2 and i < 6 -> true", "s_before": 0, "s_after": 1},
-	  {"i": 4, "cond": "i > 2 and i < 6 -> true", "s_before": 1, "s_after": 2},
-	  {"i": 5, "cond": "i > 2 and i < 6 -> true", "s_before": 2, "s_after": 3},
-	  {"i": 6, "cond": "i > 2 and i < 6 -> false", "s_before": 3, "s_after": 3},
-	  {"i": 7, "cond": "i > 2 and i < 6 -> false", "s_before": 3, "s_after": 3},
-	  {"i": 8, "cond": "i > 2 and i < 6 -> false", "s_before": 3, "s_after": 3},
-	  {"i": 9, "cond": "i > 2 and i < 6 -> false", "s_before": 3, "s_after": 3}
+	  {"i": 0, "cond": "i > 2 and i < 6 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 1, "cond": "i > 2 and i < 6 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 2, "cond": "i > 2 and i < 6 -> ложь", "s_before": 0, "s_after": 0},
+	  {"i": 3, "cond": "i > 2 and i < 6 -> истина", "s_before": 0, "s_after": 1},
+	  {"i": 4, "cond": "i > 2 and i < 6 -> истина", "s_before": 1, "s_after": 2},
+	  {"i": 5, "cond": "i > 2 and i < 6 -> истина", "s_before": 2, "s_after": 3},
+	  {"i": 6, "cond": "i > 2 and i < 6 -> ложь", "s_before": 3, "s_after": 3},
+	  {"i": 7, "cond": "i > 2 and i < 6 -> ложь", "s_before": 3, "s_after": 3},
+	  {"i": 8, "cond": "i > 2 and i < 6 -> ложь", "s_before": 3, "s_after": 3},
+	  {"i": 9, "cond": "i > 2 and i < 6 -> ложь", "s_before": 3, "s_after": 3}
 	],
-	"explain": ["Only i=3,4,5 satisfy both conditions", "Final s = 3"],
+	"explain": ["Только i=3,4,5 удовлетворяют обоим условиям", "Итоговое s = 3"],
 	"economy": {"analyze": 40, "wrong": 20, "reward": 25}
   },
   {
 	"id": "A-14",
 	"bucket": "master",
-	"briefing": "Branch depends on current accumulator value.",
+	"briefing": "Ветка зависит от текущего значения аккумулятора.",
 	"code": ["s = 0", "for i in range(3):", "    if s == 0:", "        s = 2", "    else:", "        s = s * 2"],
 	"expected": 8,
 	"trace": [
-	  {"i": 0, "cond": "s == 0 -> true", "s_before": 0, "s_after": 2},
-	  {"i": 1, "cond": "s == 0 -> false", "s_before": 2, "s_after": 4},
-	  {"i": 2, "cond": "s == 0 -> false", "s_before": 4, "s_after": 8}
+	  {"i": 0, "cond": "s == 0 -> истина", "s_before": 0, "s_after": 2},
+	  {"i": 1, "cond": "s == 0 -> ложь", "s_before": 2, "s_after": 4},
+	  {"i": 2, "cond": "s == 0 -> ложь", "s_before": 4, "s_after": 8}
 	],
-	"explain": ["First iteration seeds s=2", "Then value doubles each loop", "Final s = 8"],
+	"explain": ["Первая итерация задаёт s=2", "Затем значение удваивается в каждой итерации", "Итоговое s = 8"],
 	"economy": {"analyze": 40, "wrong": 20, "reward": 25}
   },
   {
 	"id": "A-15",
 	"bucket": "master",
-	"briefing": "Watch for a forced reset at i=3.",
+	"briefing": "Следите за принудительным сбросом при i=3.",
 	"code": ["s = 10", "for i in range(5):", "    if i == 3:", "        s = 0"],
 	"expected": 0,
 	"trace": [
-	  {"i": 0, "cond": "i == 3 -> false", "s_before": 10, "s_after": 10},
-	  {"i": 1, "cond": "i == 3 -> false", "s_before": 10, "s_after": 10},
-	  {"i": 2, "cond": "i == 3 -> false", "s_before": 10, "s_after": 10},
-	  {"i": 3, "cond": "i == 3 -> true", "s_before": 10, "s_after": 0},
-	  {"i": 4, "cond": "i == 3 -> false", "s_before": 0, "s_after": 0}
+	  {"i": 0, "cond": "i == 3 -> ложь", "s_before": 10, "s_after": 10},
+	  {"i": 1, "cond": "i == 3 -> ложь", "s_before": 10, "s_after": 10},
+	  {"i": 2, "cond": "i == 3 -> ложь", "s_before": 10, "s_after": 10},
+	  {"i": 3, "cond": "i == 3 -> истина", "s_before": 10, "s_after": 0},
+	  {"i": 4, "cond": "i == 3 -> ложь", "s_before": 0, "s_after": 0}
 	],
-	"explain": ["Accumulator starts at 10", "At i=3 it is explicitly reset to 0", "Final s = 0"],
+	"explain": ["Накопитель начинается с 10", "При i=3 он явно сбрасывается в 0", "Итоговое s = 0"],
 	"economy": {"analyze": 40, "wrong": 20, "reward": 25}
   },
   {
 	"id": "A-16",
 	"bucket": "master",
-	"briefing": "Even branch adds i, odd branch adds 1.",
+	"briefing": "В чётной ветке добавляется i, в нечётной — 1.",
 	"code": ["s = 0", "for i in range(5):", "    if i % 2 == 0:", "        s = s + i", "    else:", "        s = s + 1"],
 	"expected": 8,
 	"trace": [
-	  {"i": 0, "cond": "i % 2 == 0 -> true", "s_before": 0, "s_after": 0},
-	  {"i": 1, "cond": "i % 2 == 0 -> false", "s_before": 0, "s_after": 1},
-	  {"i": 2, "cond": "i % 2 == 0 -> true", "s_before": 1, "s_after": 3},
-	  {"i": 3, "cond": "i % 2 == 0 -> false", "s_before": 3, "s_after": 4},
-	  {"i": 4, "cond": "i % 2 == 0 -> true", "s_before": 4, "s_after": 8}
+	  {"i": 0, "cond": "i % 2 == 0 -> истина", "s_before": 0, "s_after": 0},
+	  {"i": 1, "cond": "i % 2 == 0 -> ложь", "s_before": 0, "s_after": 1},
+	  {"i": 2, "cond": "i % 2 == 0 -> истина", "s_before": 1, "s_after": 3},
+	  {"i": 3, "cond": "i % 2 == 0 -> ложь", "s_before": 3, "s_after": 4},
+	  {"i": 4, "cond": "i % 2 == 0 -> истина", "s_before": 4, "s_after": 8}
 	],
-	"explain": ["Even i contributes i itself", "Odd i contributes 1", "Final s = 8"],
+	"explain": ["Для чётного i добавляется само i", "Для нечётного i добавляется 1", "Итоговое s = 8"],
 	"economy": {"analyze": 40, "wrong": 20, "reward": 25}
   },
   {
 	"id": "A-17",
 	"bucket": "master",
-	"briefing": "Accumulate squares for odd sequence.",
+	"briefing": "Накопите квадраты для нечётной последовательности.",
 	"code": ["s = 0", "for i in range(1, 6, 2):", "    s = s + i * i"],
 	"expected": 35,
 	"trace": [
-	  {"i": 1, "cond": "loop", "s_before": 0, "s_after": 1},
-	  {"i": 3, "cond": "loop", "s_before": 1, "s_after": 10},
-	  {"i": 5, "cond": "loop", "s_before": 10, "s_after": 35}
+	  {"i": 1, "cond": "цикл", "s_before": 0, "s_after": 1},
+	  {"i": 3, "cond": "цикл", "s_before": 1, "s_after": 10},
+	  {"i": 5, "cond": "цикл", "s_before": 10, "s_after": 35}
 	],
-	"explain": ["Terms are 1^2, 3^2, 5^2", "1 + 9 + 25 = 35"],
+	"explain": ["Слагаемые: 1^2, 3^2, 5^2", "1 + 9 + 25 = 35"],
 	"economy": {"analyze": 40, "wrong": 20, "reward": 25}
   },
   {
 	"id": "A-18",
 	"bucket": "master",
-	"briefing": "Final control sum from 0 to 10.",
+	"briefing": "Финальная контрольная сумма от 0 до 10.",
 	"code": ["s = 0", "for i in range(11):", "    s = s + i"],
 	"expected": 55,
 	"trace": [
-	  {"i": 0, "cond": "loop", "s_before": 0, "s_after": 0},
-	  {"i": 1, "cond": "loop", "s_before": 0, "s_after": 1},
-	  {"i": 2, "cond": "loop", "s_before": 1, "s_after": 3},
-	  {"i": 3, "cond": "loop", "s_before": 3, "s_after": 6},
-	  {"i": 4, "cond": "loop", "s_before": 6, "s_after": 10},
-	  {"i": 5, "cond": "loop", "s_before": 10, "s_after": 15},
-	  {"i": 6, "cond": "loop", "s_before": 15, "s_after": 21},
-	  {"i": 7, "cond": "loop", "s_before": 21, "s_after": 28},
-	  {"i": 8, "cond": "loop", "s_before": 28, "s_after": 36},
-	  {"i": 9, "cond": "loop", "s_before": 36, "s_after": 45},
-	  {"i": 10, "cond": "loop", "s_before": 45, "s_after": 55}
+	  {"i": 0, "cond": "цикл", "s_before": 0, "s_after": 0},
+	  {"i": 1, "cond": "цикл", "s_before": 0, "s_after": 1},
+	  {"i": 2, "cond": "цикл", "s_before": 1, "s_after": 3},
+	  {"i": 3, "cond": "цикл", "s_before": 3, "s_after": 6},
+	  {"i": 4, "cond": "цикл", "s_before": 6, "s_after": 10},
+	  {"i": 5, "cond": "цикл", "s_before": 10, "s_after": 15},
+	  {"i": 6, "cond": "цикл", "s_before": 15, "s_after": 21},
+	  {"i": 7, "cond": "цикл", "s_before": 21, "s_after": 28},
+	  {"i": 8, "cond": "цикл", "s_before": 28, "s_after": 36},
+	  {"i": 9, "cond": "цикл", "s_before": 36, "s_after": 45},
+	  {"i": 10, "cond": "цикл", "s_before": 45, "s_after": 55}
 	],
-	"explain": ["Classic arithmetic series 0..10", "Result is 55"],
+	"explain": ["Классическая арифметическая серия 0..10", "Результат: 55"],
 	"economy": {"analyze": 40, "wrong": 20, "reward": 25}
   }
 ]

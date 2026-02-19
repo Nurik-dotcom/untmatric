@@ -11,7 +11,7 @@ const CASES_C: Array = [
 		"topic": "DB_SQL",
 		"case_kind": "SQL_SELECT",
 		"interaction_type": "ASSEMBLE_BLOCKS",
-		"prompt": "Build a query that selects user names where id = 5.",
+		"prompt": "Соберите запрос, который выбирает имена пользователей, где id = 5.",
 		"available_blocks": [
 			{"id": "b1", "text": "SELECT", "role": "KW_MAIN"},
 			{"id": "b2", "text": "name", "role": "IDENT_FIELD"},
@@ -47,7 +47,7 @@ const CASES_C: Array = [
 		"topic": "DB_SQL",
 		"case_kind": "SQL_UPDATE",
 		"interaction_type": "ASSEMBLE_BLOCKS",
-		"prompt": "Build UPDATE query: set role='admin' for user id = 5.",
+		"prompt": "Соберите UPDATE-запрос: установите role='admin' для пользователя с id = 5.",
 		"available_blocks": [
 			{"id": "b1", "text": "UPDATE", "role": "KW_MAIN"},
 			{"id": "b2", "text": "Users", "role": "IDENT_TABLE"},
@@ -84,7 +84,7 @@ const CASES_C: Array = [
 		"topic": "DB_SQL",
 		"case_kind": "SQL_DELETE",
 		"interaction_type": "ASSEMBLE_BLOCKS",
-		"prompt": "Delete DEBUG logs from Logs table.",
+		"prompt": "Удалите DEBUG-логи из таблицы Logs.",
 		"available_blocks": [
 			{"id": "b1", "text": "DELETE", "role": "KW_MAIN"},
 			{"id": "b2", "text": "FROM", "role": "KW_FROM"},
@@ -119,7 +119,7 @@ const CASES_C: Array = [
 		"topic": "DB_SQL",
 		"case_kind": "SQL_INSERT",
 		"interaction_type": "ASSEMBLE_BLOCKS",
-		"prompt": "Insert user (7, 'Neo') into Users table.",
+		"prompt": "Добавьте пользователя (7, 'Neo') в таблицу Users.",
 		"available_blocks": [
 			{"id": "b1", "text": "INSERT", "role": "KW_MAIN"},
 			{"id": "b2", "text": "INTO", "role": "KW_INTO"},
@@ -155,7 +155,7 @@ const CASES_C: Array = [
 		"topic": "DB_SQL",
 		"case_kind": "DDL_CREATE_TABLE",
 		"interaction_type": "ASSEMBLE_BLOCKS",
-		"prompt": "Create table Archive with a single INT id column.",
+		"prompt": "Создайте таблицу Archive с одним столбцом id типа INT.",
 		"available_blocks": [
 			{"id": "b1", "text": "CREATE", "role": "KW_MAIN"},
 			{"id": "b2", "text": "TABLE", "role": "DDL_TARGET"},
@@ -188,7 +188,7 @@ const CASES_C: Array = [
 		"topic": "DB_SQL",
 		"case_kind": "DDL_CREATE_DB",
 		"interaction_type": "ASSEMBLE_BLOCKS",
-		"prompt": "Create database ArchiveDB.",
+		"prompt": "Создайте базу данных ArchiveDB.",
 		"available_blocks": [
 			{"id": "b1", "text": "CREATE", "role": "KW_MAIN"},
 			{"id": "b2", "text": "DATABASE", "role": "DDL_TARGET"},

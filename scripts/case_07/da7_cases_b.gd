@@ -31,7 +31,7 @@ const CASES_B: Array = [
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Terminal: select agents with Access strictly greater than 3.",
+		"prompt": "Терминал: выберите агентов с уровнем доступа строго больше 3.",
 		"predicate": {
 			"field_col_id": "c_access",
 			"operator": ">",
@@ -41,14 +41,14 @@ const CASES_B: Array = [
 		},
 		"table": {
 			"columns": [
-				{"col_id": "c_name", "title": "Name"},
-				{"col_id": "c_access", "title": "Access"}
+				{"col_id": "c_name", "title": "Имя"},
+				{"col_id": "c_access", "title": "Доступ"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"c_name": "Alpha", "c_access": "2"}},
-				{"row_id": "r2", "cells": {"c_name": "Beta", "c_access": "5"}},
-				{"row_id": "r3", "cells": {"c_name": "Gamma", "c_access": "3"}},
-				{"row_id": "r4", "cells": {"c_name": "Delta", "c_access": "4"}}
+				{"row_id": "r1", "cells": {"c_name": "Альфа", "c_access": "2"}},
+				{"row_id": "r2", "cells": {"c_name": "Бета", "c_access": "5"}},
+				{"row_id": "r3", "cells": {"c_name": "Гамма", "c_access": "3"}},
+				{"row_id": "r4", "cells": {"c_name": "Дельта", "c_access": "4"}}
 			]
 		},
 		"answer_row_ids": ["r2", "r4"],
@@ -68,7 +68,7 @@ const CASES_B: Array = [
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "System: select incidents with Sev >= 2.",
+		"prompt": "Система: выберите инциденты с уровнем серьёзности >= 2.",
 		"predicate": {
 			"field_col_id": "c_sev",
 			"operator": ">=",
@@ -79,7 +79,7 @@ const CASES_B: Array = [
 		"table": {
 			"columns": [
 				{"col_id": "c_id", "title": "ID"},
-				{"col_id": "c_sev", "title": "Sev"}
+				{"col_id": "c_sev", "title": "Серьёзн."}
 			],
 			"rows": [
 				{"row_id": "r1", "cells": {"c_id": "101", "c_sev": "1"}},
@@ -105,24 +105,24 @@ const CASES_B: Array = [
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Search: select all rows with status ERROR.",
+		"prompt": "Поиск: выберите все строки со статусом ОШИБКА.",
 		"predicate": {
 			"field_col_id": "c_stat",
 			"operator": "==",
-			"value": "ERROR",
+			"value": "ОШИБКА",
 			"value_type": "TEXT",
 			"strict_expected": true
 		},
 		"table": {
 			"columns": [
-				{"col_id": "c_ts", "title": "Time"},
-				{"col_id": "c_stat", "title": "Status"}
+				{"col_id": "c_ts", "title": "Время"},
+				{"col_id": "c_stat", "title": "Статус"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"c_ts": "09:00", "c_stat": "OK"}},
-				{"row_id": "r2", "cells": {"c_ts": "09:05", "c_stat": "ERROR"}},
-				{"row_id": "r3", "cells": {"c_ts": "09:10", "c_stat": "WARN"}},
-				{"row_id": "r4", "cells": {"c_ts": "09:15", "c_stat": "ERROR"}}
+				{"row_id": "r1", "cells": {"c_ts": "09:00", "c_stat": "НОРМА"}},
+				{"row_id": "r2", "cells": {"c_ts": "09:05", "c_stat": "ОШИБКА"}},
+				{"row_id": "r3", "cells": {"c_ts": "09:10", "c_stat": "ПРЕДУПРЕЖДЕНИЕ"}},
+				{"row_id": "r4", "cells": {"c_ts": "09:15", "c_stat": "ОШИБКА"}}
 			]
 		},
 		"answer_row_ids": ["r2", "r4"],
@@ -142,7 +142,7 @@ const CASES_B: Array = [
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Filter: find transactions with Amount < 100.",
+		"prompt": "Фильтр: найдите транзакции с суммой < 100.",
 		"predicate": {
 			"field_col_id": "c_sum",
 			"operator": "<",
@@ -153,7 +153,7 @@ const CASES_B: Array = [
 		"table": {
 			"columns": [
 				{"col_id": "c_id", "title": "TX_ID"},
-				{"col_id": "c_sum", "title": "Amount"}
+				{"col_id": "c_sum", "title": "Сумма"}
 			],
 			"rows": [
 				{"row_id": "r1", "cells": {"c_id": "1", "c_sum": "50"}},
@@ -179,34 +179,34 @@ const CASES_B: Array = [
 		"topic": "DB_RELATIONSHIPS",
 		"case_kind": "RELATION_TYPE",
 		"interaction_type": "RELATIONSHIP_CHOICE",
-		"prompt": "Schema: determine relation between Users and Posts.",
+		"prompt": "Схема: определите связь между Пользователи и Посты.",
 		"schema_visual": {
 			"left_table": {
-				"title": "Users",
-				"columns": [{"col_id":"u_id","title":"ID"}, {"col_id":"u_name","title":"Name"}],
+				"title": "Пользователи",
+				"columns": [{"col_id":"u_id","title":"ID"}, {"col_id":"u_name","title":"Имя"}],
 				"rows_preview": [
-					{"row_id":"u1", "cells":{"u_id":"1","u_name":"Alice"}},
-					{"row_id":"u2", "cells":{"u_id":"2","u_name":"Bob"}}
+					{"row_id":"u1", "cells":{"u_id":"1","u_name":"Алиса"}},
+					{"row_id":"u2", "cells":{"u_id":"2","u_name":"Боб"}}
 				]
 			},
 			"right_table": {
-				"title": "Posts",
-				"columns": [{"col_id":"p_id","title":"ID"}, {"col_id":"p_uid","title":"User_ID"}, {"col_id":"p_txt","title":"Text"}],
+				"title": "Посты",
+				"columns": [{"col_id":"p_id","title":"ID"}, {"col_id":"p_uid","title":"ID_пользователя"}, {"col_id":"p_txt","title":"Текст"}],
 				"rows_preview": [
-					{"row_id":"p1", "cells":{"p_id":"10","p_uid":"1","p_txt":"Hello"}},
-					{"row_id":"p2", "cells":{"p_id":"11","p_uid":"1","p_txt":"Update"}},
-					{"row_id":"p3", "cells":{"p_id":"12","p_uid":"2","p_txt":"Hi"}}
+					{"row_id":"p1", "cells":{"p_id":"10","p_uid":"1","p_txt":"Привет"}},
+					{"row_id":"p2", "cells":{"p_id":"11","p_uid":"1","p_txt":"Обновление"}},
+					{"row_id":"p3", "cells":{"p_id":"12","p_uid":"2","p_txt":"Здравствуй"}}
 				]
 			},
 			"link": {
-				"hint_label": "Users.ID -> Posts.User_ID"
+				"hint_label": "Пользователи.ID -> Посты.ID_пользователя"
 			}
 		},
 		"expected_relation": "1:M",
 		"options": [
-			{"id": "opt1", "text": "1:1 (One-to-One)", "f_reason": "RELATION_CONFUSION_1TO1_1TOM"},
-			{"id": "opt2", "text": "1:M (One-to-Many)", "f_reason": null},
-			{"id": "opt3", "text": "M:M (Many-to-Many)", "f_reason": "RELATION_CONFUSION_1TOM_MTOM"}
+			{"id": "opt1", "text": "1:1 (Один-к-одному)", "f_reason": "RELATION_CONFUSION_1TO1_1TOM"},
+			{"id": "opt2", "text": "1:M (Один-ко-многим)", "f_reason": null},
+			{"id": "opt3", "text": "M:M (Многие-ко-многим)", "f_reason": "RELATION_CONFUSION_1TOM_MTOM"}
 		],
 		"answer_id": "opt2",
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120},
@@ -220,33 +220,33 @@ const CASES_B: Array = [
 		"topic": "DB_RELATIONSHIPS",
 		"case_kind": "RELATION_TYPE",
 		"interaction_type": "RELATIONSHIP_CHOICE",
-		"prompt": "Schema: determine relation between Employee and Passport_Details (unique passport).",
+		"prompt": "Схема: определите связь между Сотрудники и Паспортные_данные (уникальный паспорт).",
 		"schema_visual": {
 			"left_table": {
-				"title": "Employee",
-				"columns": [{"col_id":"e_id","title":"ID"}, {"col_id":"e_name","title":"Name"}],
+				"title": "Сотрудники",
+				"columns": [{"col_id":"e_id","title":"ID"}, {"col_id":"e_name","title":"Имя"}],
 				"rows_preview": [
-					{"row_id":"e1", "cells":{"e_id":"101","e_name":"John"}},
-					{"row_id":"e2", "cells":{"e_id":"102","e_name":"Jane"}}
+					{"row_id":"e1", "cells":{"e_id":"101","e_name":"Иван"}},
+					{"row_id":"e2", "cells":{"e_id":"102","e_name":"Жанна"}}
 				]
 			},
 			"right_table": {
-				"title": "Passport_Details",
-				"columns": [{"col_id":"pd_id","title":"Pass_ID"}, {"col_id":"pd_eid","title":"Emp_ID"}, {"col_id":"pd_num","title":"Number"}],
+				"title": "Паспортные_данные",
+				"columns": [{"col_id":"pd_id","title":"ID_паспорта"}, {"col_id":"pd_eid","title":"ID_сотрудника"}, {"col_id":"pd_num","title":"Номер"}],
 				"rows_preview": [
 					{"row_id":"p1", "cells":{"pd_id":"55","pd_eid":"101","pd_num":"A-001"}},
 					{"row_id":"p2", "cells":{"pd_id":"56","pd_eid":"102","pd_num":"B-002"}}
 				]
 			},
 			"link": {
-				"hint_label": "Employee.ID -> Passport.Emp_ID (Unique)"
+				"hint_label": "Сотрудники.ID -> Паспорт.ID_сотрудника (Уникально)"
 			}
 		},
 		"expected_relation": "1:1",
 		"options": [
-			{"id": "opt1", "text": "1:1 (One-to-One)", "f_reason": null},
-			{"id": "opt2", "text": "1:M (One-to-Many)", "f_reason": "RELATION_CONFUSION_1TO1_1TOM"},
-			{"id": "opt3", "text": "M:M (Many-to-Many)", "f_reason": "RELATION_CONFUSION_1TOM_MTOM"}
+			{"id": "opt1", "text": "1:1 (Один-к-одному)", "f_reason": null},
+			{"id": "opt2", "text": "1:M (Один-ко-многим)", "f_reason": "RELATION_CONFUSION_1TO1_1TOM"},
+			{"id": "opt3", "text": "M:M (Многие-ко-многим)", "f_reason": "RELATION_CONFUSION_1TOM_MTOM"}
 		],
 		"answer_id": "opt1",
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120},

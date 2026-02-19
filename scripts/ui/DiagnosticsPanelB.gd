@@ -9,7 +9,7 @@ func _ready():
 
 func setup(explain_lines: Array, trace_steps: Array):
 	# Explain
-	var txt = "[b]ANALYSIS:[/b]\n"
+	var txt = "[b]АНАЛИЗ:[/b]\n"
 	for line in explain_lines:
 		txt += "- " + str(line) + "\n"
 	explain_label.text = txt
@@ -17,7 +17,7 @@ func setup(explain_lines: Array, trace_steps: Array):
 	# Trace
 	var trace_txt = ""
 	if trace_steps.is_empty():
-		trace_txt = "No trace available."
+		trace_txt = "Трассировка недоступна."
 	else:
 		for step in trace_steps:
 			# Trace format: i=1 | s: 0 -> 1

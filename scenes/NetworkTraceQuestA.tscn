@@ -79,19 +79,19 @@ theme_override_constants/separation = 10
 [node name="BtnBack" type="Button" parent="Main/V/Header"]
 custom_minimum_size = Vector2(120, 58)
 layout_mode = 2
-text = "BACK"
+text = "НАЗАД"
 
 [node name="LblTitle" type="Label" parent="Main/V/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 26
-text = "NETWORK TRACE | A"
+text = "СЕТЕВОЙ СЛЕД | A"
 
 [node name="LblMeta" type="Label" parent="Main/V/Header"]
 custom_minimum_size = Vector2(360, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "CASE -- | ERR 0/3 | 02:00"
+text = "ДЕЛО -- | ОШ 0/3 | 02:00"
 horizontal_alignment = 2
 vertical_alignment = 1
 
@@ -150,7 +150,7 @@ theme_override_constants/separation = 6
 [node name="EvidenceLabel" type="Label" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "EVIDENCE"
+text = "УЛИКИ"
 
 [node name="EvidenceRow" type="HBoxContainer" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 custom_minimum_size = Vector2(0, 66)
@@ -186,7 +186,7 @@ script = ExtResource("5_topology")
 [node name="PaletteLabel" type="Label" parent="Main/V/Body/MapPane/MapMargin/MapV"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "DEVICE PALETTE"
+text = "ПАЛИТРА УСТРОЙСТВ"
 
 [node name="PaletteScroll" type="ScrollContainer" parent="Main/V/Body/MapPane/MapMargin/MapV"]
 custom_minimum_size = Vector2(0, 94)
@@ -209,35 +209,35 @@ custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
-text = "ANALYZE"
+text = "АНАЛИЗ"
 
 [node name="BtnRunTrace" type="Button" parent="Main/V/Body/MapPane/MapMargin/MapV/Actions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
-text = "RUN TRACE"
+text = "ЗАПУСТИТЬ ТРАССИРОВКУ"
 
 [node name="BtnReset" type="Button" parent="Main/V/Body/MapPane/MapMargin/MapV/Actions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
-text = "RESET"
+text = "СБРОС"
 
 [node name="BtnNext" type="Button" parent="Main/V/Body/MapPane/MapMargin/MapV/Actions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 visible = false
-text = "NEXT"
+text = "ДАЛЕЕ"
 
 [node name="LblStatus" type="Label" parent="Main/V/Body/MapPane/MapMargin/MapV"]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 autowrap_mode = 2
-text = "Status"
+text = "Статус"
 
 [node name="DiagnosticsPanel" parent="." instance=ExtResource("4_diag_panel")]
 layout_mode = 1
@@ -245,3 +245,4 @@ anchor_left = 0.1
 anchor_top = 0.12
 anchor_right = 0.9
 anchor_bottom = 0.9
+

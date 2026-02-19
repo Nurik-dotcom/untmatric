@@ -58,12 +58,12 @@ text = "<"
 [node name="LabelCase" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "CASE 6: CITY MAP"
+text = "ДЕЛО 6: КАРТА ГОРОДА"
 
 [node name="LabelMode" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "MODE: A"
+text = "РЕЖИМ: A"
 
 [node name="Spacer" type="Control" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
@@ -72,12 +72,12 @@ size_flags_horizontal = 3
 [node name="LabelState" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "STABILITY: 100%"
+text = "СТАБИЛЬНОСТЬ: 100%"
 
 [node name="LabelTimer" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "TIME: 02:00"
+text = "ВРЕМЯ: 02:00"
 
 [node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
@@ -96,12 +96,12 @@ theme_override_constants/separation = 6
 [node name="BriefingTitle" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "ROUTE AUDIT"
+text = "АУДИТ МАРШРУТА"
 
 [node name="BriefingText" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
 layout_mode = 2
 autowrap_mode = 2
-text = "Reach node E using directed roads. Enter the final path sum and submit. Only the minimum route passes."
+text = "Доберитесь до узла E по направленным дорогам. Введите итоговую сумму пути и отправьте. Проходит только минимальный маршрут."
 
 [node name="ConstraintLabel" type="Label" parent="SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox"]
 visible = false
@@ -173,15 +173,15 @@ theme_override_constants/separation = 8
 [node name="PathDisplay" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
 autowrap_mode = 2
-text = "PATH: A"
+text = "ПУТЬ: A"
 
 [node name="SumLiveLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "SUM: 0"
+text = "СУММА: 0"
 
 [node name="InputLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "INPUT FINAL SUM"
+text = "ВВЕДИТЕ ИТОГОВУЮ СУММУ"
 
 [node name="SumInput" type="LineEdit" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 custom_minimum_size = Vector2(0, 44)
@@ -197,14 +197,14 @@ theme_override_constants/separation = 8
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "RESET"
+text = "СБРОС"
 
 [node name="BtnSubmit" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "SUBMIT"
+text = "ОТПРАВИТЬ"
 
 [node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 custom_minimum_size = Vector2(0, 64)
@@ -221,8 +221,9 @@ theme_override_constants/separation = 8
 [node name="FooterLabel" type="Label" parent="SafeArea/MainVBox/Footer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Directed graph: only outgoing roads from your current node are clickable."
+text = "Ориентированный граф: нажимать можно только исходящие дороги из текущего узла."
 
 [node name="FooterMeta" type="Label" parent="SafeArea/MainVBox/Footer"]
 layout_mode = 2
-text = "CITY MAP / A"
+text = "КАРТА ГОРОДА / A"
+
