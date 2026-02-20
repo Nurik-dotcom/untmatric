@@ -2,10 +2,10 @@ extends PanelContainer
 
 signal selected(option_id: String)
 
-const COLOR_BASE := Color(1, 1, 1, 1)
-const COLOR_SELECTED := Color(1.1, 1.1, 1.1, 1)
-const COLOR_BUDGET_OK := Color(0.42, 0.95, 0.55, 1)
-const COLOR_BUDGET_BAD := Color(1.0, 0.45, 0.45, 1)
+const COLOR_BASE := Color(1.0, 1.0, 1.0, 1.0)
+const COLOR_SELECTED := Color(1.08, 1.08, 1.08, 1.0)
+const COLOR_BUDGET_OK := Color(0.92, 0.92, 0.92, 1.0)
+const COLOR_BUDGET_BAD := Color(0.93, 0.34, 0.38, 1.0)
 
 var option_id: String = ""
 var total_price: int = 0
@@ -31,7 +31,7 @@ func setup(option_data: Dictionary, budget: int) -> void:
 	if is_instance_valid(title_label):
 		title_label.text = str(option_data.get("title", option_id))
 	if is_instance_valid(price_label):
-		price_label.text = "Цена: %d$" % total_price
+		price_label.text = "Бюджет: %d$" % total_price
 		price_label.modulate = COLOR_BUDGET_BAD if total_price > budget_limit else COLOR_BUDGET_OK
 
 	var parts_lines: Array[String] = []

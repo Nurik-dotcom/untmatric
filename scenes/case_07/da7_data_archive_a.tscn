@@ -1,11 +1,12 @@
-[gd_scene load_steps=7 format=3 uid="uid://da7archive001"]
+[gd_scene load_steps=8 format=3 uid="uid://da7archive001"]
 
 [ext_resource type="Script" path="res://scripts/case_07/da7_data_archive_a.gd" id="1_script"]
-[ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="AudioStream" path="res://audio/error.wav" id="3_error"]
 [ext_resource type="AudioStream" path="res://audio/relay.wav" id="4_relay"]
 [ext_resource type="AudioStream" path="res://audio/click.wav" id="5_click"]
 [ext_resource type="PackedScene" path="res://scenes/ui/ResultStamp.tscn" id="6_stamp"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="7_noir_overlay"]
 
 [node name="DA7_DataArchiveQuestA" type="Control"]
 layout_mode = 3
@@ -25,6 +26,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.05, 0.05, 0.05, 1)
+
+[node name="NoirOverlay" parent="." instance=ExtResource("7_noir_overlay")]
 
 [node name="RootLayout" type="VBoxContainer" parent="."]
 layout_mode = 1

@@ -1,12 +1,14 @@
-[gd_scene load_steps=4 format=3 uid="uid://c6l2jvi53qwcf"]
+[gd_scene load_steps=6 format=3 uid="uid://c6l2jvi53qwcf"]
 
 [ext_resource type="Script" path="res://scenes/QuestSelect.gd" id="1_script"]
 [ext_resource type="Shader" path="res://scenes/Blur.gdshader" id="2_shader"]
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="3_theme"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="4_noir"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_1"]
 shader = ExtResource("2_shader")
 shader_parameter/lod = 2.5
-shader_parameter/modulate = Color(0, 0, 0, 0.8)
+shader_parameter/modulate = Color(0, 0, 0, 0.82)
 
 [node name="QuestSelect" type="Control"]
 layout_mode = 3
@@ -15,6 +17,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("3_theme")
 script = ExtResource("1_script")
 
 [node name="Background" type="ColorRect" parent="."]
@@ -24,92 +27,103 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.1, 0.1, 0.1, 1)
+color = Color(0.03, 0.03, 0.04, 1)
 
-[node name="MainLayout" type="VBoxContainer" parent="."]
+[node name="NoirOverlay" parent="." instance=ExtResource("4_noir")]
+
+[node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 30
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 16
+
+[node name="MainLayout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 20
 alignment = 1
 
-[node name="Title" type="Label" parent="MainLayout"]
+[node name="Title" type="Label" parent="SafeArea/MainLayout"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_font_sizes/font_size = 54
-text = "Выбор задания"
+theme_override_font_sizes/font_size = 58
+text = "ВЫБОР КВЕСТА"
 horizontal_alignment = 1
 
-[node name="QuestGrid" type="GridContainer" parent="MainLayout"]
+[node name="QuestGrid" type="GridContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_constants/h_separation = 20
-theme_override_constants/v_separation = 20
-columns = 4
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 14
+columns = 3
 
-[node name="CluesButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="CluesButton" type="Button" parent="SafeArea/MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(280, 118)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Улики"
+theme_override_font_sizes/font_size = 20
+text = "Цифровая реанимация"
 
-[node name="RadioButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="RadioButton" type="Button" parent="SafeArea/MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(280, 118)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Радио"
+theme_override_font_sizes/font_size = 20
+text = "Радиоперехват"
 
-[node name="DecryptorButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="DecryptorButton" type="Button" parent="SafeArea/MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(280, 118)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Дешифратор"
+theme_override_font_sizes/font_size = 20
+text = "Дешифрование"
 
-[node name="LieDetectorButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="LieDetectorButton" type="Button" parent="SafeArea/MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(280, 118)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "Детектор лжи"
 
-[node name="SuspectScriptButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="SuspectScriptButton" type="Button" parent="SafeArea/MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(280, 118)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "Скрипт подозреваемого"
 
-[node name="CityMapButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="CityMapButton" type="Button" parent="SafeArea/MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(280, 118)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "Карта города"
 
-[node name="DataArchiveButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="DataArchiveButton" type="Button" parent="SafeArea/MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(280, 118)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "Архив данных"
 
-[node name="FinalReportButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="FinalReportButton" type="Button" parent="SafeArea/MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(280, 118)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Финальный отчёт"
+theme_override_font_sizes/font_size = 20
+text = "Финальный отчет"
 
-[node name="NetworkTraceButton" type="Button" parent="MainLayout/QuestGrid"]
-custom_minimum_size = Vector2(260, 160)
+[node name="NetworkTraceButton" type="Button" parent="SafeArea/MainLayout/QuestGrid"]
+custom_minimum_size = Vector2(280, 118)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "Сетевой след"
 
-[node name="StatusLabel" type="Label" parent="MainLayout"]
+[node name="StatusLabel" type="Label" parent="SafeArea/MainLayout"]
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 theme_override_font_sizes/font_size = 20
-text = "Выберите задание"
+text = "Выберите квест"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ModalLayer" type="CanvasLayer" parent="."]
 
@@ -140,40 +154,38 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="ModalLayer/ModeSelectionModal/CenterContainer"]
-custom_minimum_size = Vector2(600, 400)
+custom_minimum_size = Vector2(620, 420)
 layout_mode = 2
-theme_override_constants/separation = 30
+theme_override_constants/separation = 20
 
 [node name="ModalTitle" type="Label" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
-text = "Выберите сложность"
+theme_override_font_sizes/font_size = 44
+text = "ВЫБОР СЛОЖНОСТИ"
 horizontal_alignment = 1
 
 [node name="BtnComplexityA" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 74)
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "Сложность A"
+theme_override_font_sizes/font_size = 30
+text = "СЛОЖНОСТЬ A"
 
 [node name="BtnComplexityB" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 74)
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 30
 disabled = true
-text = "Сложность B"
+text = "СЛОЖНОСТЬ B"
 
 [node name="BtnComplexityC" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 74)
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 30
 disabled = true
-text = "Сложность C"
+text = "СЛОЖНОСТЬ C"
 
 [node name="BtnClose" type="Button" parent="ModalLayer/ModeSelectionModal/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
 theme_override_font_sizes/font_size = 24
-text = "Назад"
-
+text = "НАЗАД"

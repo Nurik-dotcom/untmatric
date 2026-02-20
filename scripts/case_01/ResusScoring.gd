@@ -176,6 +176,9 @@ static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Diction
 
 	var selected_count: int = selected_ids.size()
 	var unique_used_count: int = int(snapshot.get("unique_used_count", selected_count))
+	var strategy_flags: Array[String] = []
+	if options.size() > 0 and unique_used_count >= options.size():
+		strategy_flags.append("TOUCHED_ALL_OPTIONS")
 	var max_points: int = int(stage_c_data.get("stage_max_points", 2))
 	var verdict_code: String = "FAIL"
 	var points: int = 0
@@ -187,7 +190,7 @@ static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Diction
 	var default_rule: Dictionary = scoring_model.get("default_rule", {}) as Dictionary
 	var empty_rule: Dictionary = scoring_model.get("empty_rule", {}) as Dictionary
 	var select_all_rule: Dictionary = scoring_model.get("select_all_rule", default_rule) as Dictionary
-	var is_select_all_behavior: bool = (options.size() > 0 and unique_used_count >= options.size()) or selected_count == options.size()
+	var is_select_all_behavior: bool = options.size() > 0 and selected_count == options.size()
 
 	if selected_count == 0:
 		verdict_code = str(empty_rule.get("verdict_code", "EMPTY"))
@@ -241,6 +244,7 @@ static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Diction
 		"wrong_selected": wrong_selected,
 		"selected_count": selected_count,
 		"unique_used_count": unique_used_count,
+		"strategy_flags": strategy_flags.duplicate(),
 		"missing_required": missing_required.duplicate(),
 		"feedback_headline": feedback_headline,
 		"feedback_details": feedback_details,

@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://bdk0pnntt5iu8"]
+[gd_scene load_steps=4 format=3 uid="uid://bdk0pnntt5iu8"]
 
-[ext_resource type="Script" path="res://scenes/MainMenu.gd" id="1"]
+[ext_resource type="Script" path="res://scenes/MainMenu.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -9,7 +11,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1")
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -18,7 +21,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.08, 0.1, 1)
+color = Color(0.03, 0.03, 0.04, 1)
+
+[node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
 
 [node name="Center" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -29,34 +34,36 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Menu" type="VBoxContainer" parent="Center"]
-custom_minimum_size = Vector2(420, 0)
+custom_minimum_size = Vector2(520, 0)
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 18
 alignment = 1
 
 [node name="Title" type="Label" parent="Center/Menu"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.9, 1, 1)
-theme_override_font_sizes/font_size = 36
-text = "UNTformatic"
+theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
+theme_override_font_sizes/font_size = 56
+text = "UNTformatic: Noir Protocol"
 horizontal_alignment = 1
 
 [node name="NotebookArea" type="Button" parent="Center/Menu"]
-custom_minimum_size = Vector2(420, 52)
+custom_minimum_size = Vector2(520, 64)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Старт"
+theme_override_font_sizes/font_size = 24
+text = "КВЕСТЫ"
 
 [node name="PapersArea" type="Button" parent="Center/Menu"]
-custom_minimum_size = Vector2(420, 52)
+custom_minimum_size = Vector2(520, 64)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Обучение"
+theme_override_font_sizes/font_size = 24
+text = "ОБУЧЕНИЕ"
 
 [node name="LaptopArea" type="Button" parent="Center/Menu"]
-custom_minimum_size = Vector2(420, 52)
+custom_minimum_size = Vector2(520, 64)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
 disabled = true
-text = "Опции (скоро)"
-
+text = "ЛАБОРАТОРИЯ (СКОРО)"

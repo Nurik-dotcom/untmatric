@@ -5,9 +5,9 @@ const ITEM_SCENE := preload("res://scenes/ui/ResusPartItem.tscn")
 const ResusData := preload("res://scripts/case_01/ResusData.gd")
 const ResusScoring := preload("res://scripts/case_01/ResusScoring.gd")
 
-const COLOR_OK := Color(0.42, 0.95, 0.55, 1.0)
-const COLOR_WARN := Color(1.0, 0.78, 0.25, 1.0)
-const COLOR_ERR := Color(1.0, 0.45, 0.45, 1.0)
+const COLOR_OK := Color(0.92, 0.92, 0.92, 1.0)
+const COLOR_WARN := Color(0.86, 0.73, 0.56, 1.0)
+const COLOR_ERR := Color(0.93, 0.34, 0.38, 1.0)
 
 var levels: Array = []
 var current_level_index: int = 0
@@ -144,17 +144,17 @@ func _load_levels() -> void:
 func _start_level(index: int) -> void:
 	current_level_index = clamp(index, 0, max(0, levels.size() - 1))
 	level_data = (levels[current_level_index] as Dictionary).duplicate(true)
-	title_label.text = "\u0414\u0415\u041b\u041e \u21161: \u0426\u0418\u0424\u0420\u041e\u0412\u0410\u042f \u0420\u0415\u0410\u041d\u0418\u041c\u0410\u0426\u0418\u042f"
-	stage_label.text = "\u042d\u0422\u0410\u041f A"
+	title_label.text = "ДЕЛО №1: ЦИФРОВАЯ РЕАНИМАЦИЯ"
+	stage_label.text = "ЭТАП A"
 	briefing_label.text = str(level_data.get("briefing", ""))
-	btn_reset.text = "\u0421\u0411\u0420\u041e\u0421"
-	btn_confirm.text = "\u041f\u041e\u0414\u0422\u0412\u0415\u0420\u0414\u0418\u0422\u042c"
-	result_retry_button.text = "\u041f\u041e\u0412\u0422\u041e\u0420\u0418\u0422\u042c"
-	result_back_button.text = "\u0412\u042b\u0425\u041e\u0414"
+	btn_reset.text = "СБРОС"
+	btn_confirm.text = "ПОДТВЕРДИТЬ"
+	result_retry_button.text = "ПОВТОРИТЬ"
+	result_back_button.text = "ВЫХОД"
 
 	var bucket_labels: Dictionary = _bucket_label_map(level_data.get("buckets", []) as Array)
 
-	_zone_setup(pile_zone, "PILE", "\u041a\u0443\u0447\u0430 \u0434\u0435\u0442\u0430\u043b\u0435\u0439")
+	_zone_setup(pile_zone, "PILE", "Куча деталей")
 	_zone_setup(zone_input, "INPUT", str(bucket_labels.get("INPUT", "INPUT")))
 	_zone_setup(zone_output, "OUTPUT", str(bucket_labels.get("OUTPUT", "OUTPUT")))
 	_zone_setup(zone_memory, "MEMORY", str(bucket_labels.get("MEMORY", "MEMORY")))
@@ -278,44 +278,66 @@ func _refresh_system_state(snapshot: Dictionary) -> void:
 
 	if monitor_on:
 		monitor_screen.color = Color(0.09, 0.2, 0.12, 1.0)
-		monitor_label.text = "СИГНАЛ ОК"
+		monitor_label.text = "СИГНАЛ ЕСТЬ"
 		monitor_label.modulate = COLOR_OK
 	else:
 		monitor_screen.color = Color(0.03, 0.03, 0.03, 1.0)
-		monitor_label.text = "НЕТ СИГНАЛА"
+		monitor_label.text = "NO SIGNAL"
 		monitor_label.modulate = COLOR_ERR
 
 	console_cps = 40.0 if fast_type else 14.0
 
 	var feedback_rules: Dictionary = level_data.get("feedback_rules", {}) as Dictionary
 	var system_rules: Dictionary = level_data.get("system_state_rules", {}) as Dictionary
-	var status_text: String = ""
-	var status_color: Color = COLOR_WARN
 	var console_lines: Array = []
+	var problem_lines: Array[String] = []
+	var status_color: Color = COLOR_OK
 
-	if not monitor_on:
-		status_text = str((feedback_rules.get("NO_GPU", {}) as Dictionary).get("status", "GPU отсутствует в ВЫХОДЕ."))
-		status_color = COLOR_ERR
 	if not ram_ok:
-		status_text = str((feedback_rules.get("NO_RAM", {}) as Dictionary).get("status", "RAM отсутствует в ПАМЯТИ."))
+		problem_lines.append(_feedback_status_line(
+			feedback_rules,
+			"NO_RAM",
+			"Сбой загрузки: установите RAM в ПАМЯТЬ"
+		))
 		status_color = COLOR_ERR
 		console_lines = ((feedback_rules.get("NO_RAM", {}) as Dictionary).get("console_lines", []) as Array).duplicate()
 	else:
 		console_lines = (system_rules.get("boot_ok_lines", []) as Array).duplicate()
-		if not fast_type:
-			status_text = str((feedback_rules.get("NO_CACHE", {}) as Dictionary).get("status", "CACHE не обнаружен. Загрузка медленная."))
+
+	if not monitor_on:
+		problem_lines.append(_feedback_status_line(
+			feedback_rules,
+			"NO_GPU",
+			"Нет видеосигнала: установите GPU в ВЫВОД"
+		))
+		status_color = COLOR_ERR
+
+	if ram_ok and not fast_type:
+		problem_lines.append(_feedback_status_line(
+			feedback_rules,
+			"NO_CACHE",
+			"Диагностика медленная: установите CACHE в ПАМЯТЬ"
+		))
+		if status_color != COLOR_ERR:
 			status_color = COLOR_WARN
-		else:
-			status_text = str((feedback_rules.get("HEALTHY", {}) as Dictionary).get("status", "Система восстановлена. Готова к диагностике."))
-			status_color = COLOR_OK
+
+	if problem_lines.is_empty():
+		problem_lines.append(_feedback_status_line(
+			feedback_rules,
+			"HEALTHY",
+			"Система стабилизирована. Можно подтверждать."
+		))
+		status_color = COLOR_OK
 
 	if console_lines.is_empty():
 		console_lines.append("...")
 	_set_console_target(_array_to_lines(console_lines))
 
-	status_label.text = status_text
+	status_label.text = "\n".join(problem_lines)
 	status_label.modulate = status_color
 
+func _feedback_status_line(feedback_rules: Dictionary, rule_key: String, fallback: String) -> String:
+	return str((feedback_rules.get(rule_key, {}) as Dictionary).get("status", fallback))
 func _set_console_target(text: String) -> void:
 	if console_target_text == text:
 		return
@@ -354,7 +376,7 @@ func _on_confirm_pressed() -> void:
 	var match_key: String = "RESUS_A|%s|%d" % [str(level_data.get("id", "RESUS-A")), GlobalMetrics.session_history.size()]
 
 	var payload: Dictionary = {
-		"quest_id": "CASE_01_CLUES",
+		"quest_id": "CASE_01_DIGITAL_RESUS",
 		"stage": "A",
 		"level_id": str(level_data.get("id", "RESUS-A-00")),
 		"format": "MATCHING",
@@ -397,7 +419,7 @@ func _show_result(result: Dictionary) -> void:
 		int(result.get("points", 0)),
 		int(result.get("max_points", 2))
 	]
-	result_stability_label.text = "\u0394 Стабильность: %d" % int(result.get("stability_delta", 0))
+	result_stability_label.text = "Δ Стабильность: %d" % int(result.get("stability_delta", 0))
 
 	if verdict_code == "PERFECT":
 		result_verdict_label.modulate = COLOR_OK
@@ -410,9 +432,12 @@ func _show_result(result: Dictionary) -> void:
 	result_popup.visible = true
 
 func _on_reset_pressed() -> void:
+	var snapshot: Dictionary = _build_snapshot()
+	_log_event("RESET_PRESSED", {
+		"placed_count": _count_placed(snapshot)
+	})
 	_reset_attempt()
 	AudioManager.play("click")
-
 func _on_retry_pressed() -> void:
 	_reset_attempt()
 

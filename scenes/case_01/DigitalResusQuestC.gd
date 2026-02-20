@@ -5,9 +5,9 @@ const NET_ITEM_SCENE := preload("res://scenes/ui/NetItem.tscn")
 const ResusData := preload("res://scripts/case_01/ResusData.gd")
 const ResusScoring := preload("res://scripts/case_01/ResusScoring.gd")
 
-const COLOR_OK := Color(0.42, 0.95, 0.55, 1.0)
-const COLOR_WARN := Color(1.0, 0.78, 0.25, 1.0)
-const COLOR_ERR := Color(1.0, 0.45, 0.45, 1.0)
+const COLOR_OK := Color(0.92, 0.92, 0.92, 1.0)
+const COLOR_WARN := Color(0.86, 0.73, 0.56, 1.0)
+const COLOR_ERR := Color(0.93, 0.34, 0.38, 1.0)
 
 var stage_c_data: Dictionary = {}
 var option_by_id: Dictionary = {}
@@ -404,7 +404,7 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 	for detail_v in (result.get("feedback_details", []) as Array):
 		detail_lines.append("- %s" % str(detail_v))
 	detail_lines.append("")
-	detail_lines.append("РИСК: КОЛЛИЗИИ=%s | ПЕРЕХВАТ=%s | ФИЛЬТРАЦИЯ=%s | СРЕДА=%s" % [
+	detail_lines.append("Сборка сети дала риск-профиль: коллизии=%s | перехват=%s | фильтрация=%s | среда=%s" % [
 		_translate_risk_value(str(risk.get("collisions", "MID"))),
 		_translate_risk_value(str(risk.get("eavesdrop", "MID"))),
 		_translate_risk_value(str(risk.get("filtering", "OFF"))),
@@ -413,26 +413,41 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 	expl_details.text = "\n".join(detail_lines)
 
 	var why_lines: Array[String] = []
+	var strategy_flags: Array = result.get("strategy_flags", []) as Array
+	var missing_required: Array = result.get("missing_required", []) as Array
+	var wrong_selected: int = int(result.get("wrong_selected", 0))
+
+	why_lines.append("Почему это важно:")
+	if str(risk.get("filtering", "OFF")) == "OFF":
+		why_lines.append("- Без фильтрации трафика периметр остается уязвимым для внешних соединений.")
+	else:
+		why_lines.append("- Фильтрация включена: риск несанкционированного доступа ниже.")
+
+	if missing_required.is_empty() and wrong_selected == 0:
+		why_lines.append("- Выбраны все критически важные элементы периметра.")
+	elif not missing_required.is_empty():
+		why_lines.append("- Не хватает ключевых звеньев: %s." % ", ".join(_to_string_array(missing_required)))
+	else:
+		why_lines.append("- Есть лишние или шумные выборы, они повышают общий риск периметра.")
+
+	if strategy_flags.has("TOUCHED_ALL_OPTIONS"):
+		why_lines.append("")
+		why_lines.append("Зафиксирована переборная стратегия (использованы все варианты).")
+
 	var explain_selected: Array = result.get("explain_selected", []) as Array
 	if not explain_selected.is_empty():
-		why_lines.append("Выбранные элементы:")
+		why_lines.append("")
+		why_lines.append("Разбор выбранных элементов:")
 		for explain_v in explain_selected:
 			if typeof(explain_v) != TYPE_DICTIONARY:
 				continue
 			var explain_item: Dictionary = explain_v as Dictionary
-			var marker: String = "[ВЕРНО]" if bool(explain_item.get("is_correct", false)) else "[ЛИШНЕЕ]"
+			var marker: String = "[OK]" if bool(explain_item.get("is_correct", false)) else "[X]"
 			why_lines.append("%s %s: %s" % [
 				marker,
 				str(explain_item.get("label", explain_item.get("option_id", "?"))),
 				str(explain_item.get("why", ""))
 			])
-
-	var missing_required: Array = result.get("missing_required", []) as Array
-	if not missing_required.is_empty():
-		if why_lines.is_empty():
-			why_lines.append("Выбранные элементы:")
-		why_lines.append("")
-		why_lines.append("Не хватает: %s" % ", ".join(_to_string_array(missing_required)))
 
 	expl_why.text = "\n".join(why_lines)
 
@@ -496,6 +511,7 @@ func _register_trial(result: Dictionary, risk: Dictionary) -> void:
 		"drag_count": drag_count,
 		"slot_change_count": slot_change_count,
 		"unique_used_count": unique_used_set.size(),
+		"strategy_flags": _to_string_array(result.get("strategy_flags", []) as Array),
 		"time_to_first_action_ms": max(-1, time_to_first_action_ms),
 		"elapsed_ms": elapsed_ms,
 		"trace": trace.duplicate(true)

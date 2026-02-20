@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/ConfigCard.gd" id="1_script"]
 
 [node name="ConfigCard" type="PanelContainer"]
-custom_minimum_size = Vector2(0, 104)
+custom_minimum_size = Vector2(0, 118)
 size_flags_horizontal = 3
 mouse_filter = 1
 script = ExtResource("1_script")
@@ -11,18 +11,18 @@ script = ExtResource("1_script")
 [node name="VBox" type="VBoxContainer" parent="."]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 4
 
 [node name="Title" type="Label" parent="VBox"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_font_sizes/font_size = 20
-text = "ЗАГОЛОВОК"
+theme_override_font_sizes/font_size = 22
+text = "Конфигурация"
 
 [node name="Price" type="Label" parent="VBox"]
 layout_mode = 2
 mouse_filter = 2
-text = "Цена: 0$"
+text = "Бюджет: 0$"
 
 [node name="Parts" type="Label" parent="VBox"]
 layout_mode = 2
@@ -34,6 +34,5 @@ autowrap_mode = 2
 layout_mode = 2
 mouse_filter = 2
 theme_override_font_sizes/font_size = 14
-text = "Теги"
+text = "Метки"
 autowrap_mode = 2
-

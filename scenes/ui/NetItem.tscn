@@ -3,8 +3,9 @@
 [ext_resource type="Script" path="res://scripts/ui/NetItem.gd" id="1_script"]
 
 [node name="NetItem" type="Button"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 92)
 size_flags_horizontal = 3
 theme_type_variation = &"FlatButton"
-text = "СЕТЕВОЙ ЭЛЕМЕНТ"
+theme_override_font_sizes/font_size = 18
+text = "Сетевой модуль"
 script = ExtResource("1_script")

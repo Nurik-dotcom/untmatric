@@ -5,8 +5,8 @@
 
 [sub_resource type="ShaderMaterial" id="1_overlay_material"]
 shader = ExtResource("2_shader")
-shader_parameter/tint_color = Color(0, 1, 0.25, 1)
-shader_parameter/intensity = 0.12
+shader_parameter/tint_color = Color(0.93, 0.93, 0.93, 1)
+shader_parameter/intensity = 0.18
 shader_parameter/fx_quality = 1
 shader_parameter/glitch_strength = 0.0
 

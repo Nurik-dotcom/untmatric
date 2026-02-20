@@ -37,7 +37,7 @@ func _ready() -> void:
 func set_slot_title(index: int) -> void:
 	slot_index = index
 	if is_instance_valid(_title_label):
-		_title_label.text = "СЛОТ %d" % slot_index
+		_title_label.text = "КАНАЛ %d" % slot_index
 
 func set_locked(locked: bool) -> void:
 	_locked = locked
@@ -157,19 +157,19 @@ func _apply_visual_state() -> void:
 	var tone: Color = Color(1.0, 1.0, 1.0, 1.0)
 	match _feedback_state:
 		"correct":
-			tone = Color(0.82, 1.08, 0.84, 1.0)
+			tone = Color(1.05, 1.05, 1.05, 1.0)
 		"wrong":
-			tone = Color(1.08, 0.80, 0.80, 1.0)
+			tone = Color(1.12, 0.84, 0.86, 1.0)
 		"missing":
-			tone = Color(1.05, 0.97, 0.72, 1.0)
+			tone = Color(1.08, 0.98, 0.9, 1.0)
 		_:
 			tone = Color(1.0, 1.0, 1.0, 1.0)
 
 	if _drag_hovered:
-		tone = Color(tone.r * 1.08, tone.g * 1.08, tone.b * 1.08, tone.a)
+		tone = Color(tone.r * 1.05, tone.g * 1.05, tone.b * 1.05, tone.a)
 
 	if _locked and _feedback_state == "neutral":
-		tone = Color(0.9, 0.9, 0.9, 1.0)
+		tone = Color(0.85, 0.85, 0.85, 1.0)
 
 	self_modulate = tone
 
@@ -179,6 +179,6 @@ func _pulse() -> void:
 	tween.tween_property(self, "scale", Vector2.ONE, 0.1)
 
 func _flash_reject() -> void:
-	self_modulate = Color(1.1, 0.72, 0.72, 1.0)
+	self_modulate = Color(1.12, 0.84, 0.86, 1.0)
 	var tween: Tween = create_tween()
 	tween.tween_property(self, "self_modulate", Color(1.0, 1.0, 1.0, 1.0), 0.12)

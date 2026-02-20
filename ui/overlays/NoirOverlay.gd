@@ -1,8 +1,8 @@
 extends CanvasLayer
 
-@export_range(0.0, 1.0, 0.01) var intensity: float = 0.12
+@export_range(0.0, 1.0, 0.01) var intensity: float = 0.18
 @export var fx_quality: int = 1
-@export var tint_color: Color = Color(0.0, 1.0, 0.25, 1.0)
+@export var tint_color: Color = Color(0.93, 0.93, 0.93, 1.0)
 
 @onready var crt_overlay: ColorRect = $CRT_Overlay
 

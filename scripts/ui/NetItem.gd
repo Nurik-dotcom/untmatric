@@ -14,7 +14,7 @@ func setup(option_data: Dictionary) -> void:
 	option_id = str(option_data.get("option_id", "")).strip_edges()
 	option_label = str(option_data.get("label", option_id))
 	text = option_label
-	tooltip_text = "%s\n%s" % [option_label, str(option_data.get("why", ""))]
+	tooltip_text = "Модуль: %s\n%s" % [option_label, str(option_data.get("why", ""))]
 	custom_minimum_size = Vector2(0, 88)
 	set_source("PALETTE", -1)
 	set_feedback_state("neutral")
@@ -59,15 +59,15 @@ func _apply_visual_state() -> void:
 	var tone: Color = Color(1.0, 1.0, 1.0, 1.0)
 	match _feedback_state:
 		"correct":
-			tone = Color(0.82, 1.08, 0.84, 1.0)
+			tone = Color(1.05, 1.05, 1.05, 1.0)
 		"wrong":
-			tone = Color(1.08, 0.80, 0.80, 1.0)
+			tone = Color(1.12, 0.84, 0.86, 1.0)
 		"missing":
-			tone = Color(1.06, 0.97, 0.72, 1.0)
+			tone = Color(1.08, 0.98, 0.9, 1.0)
 		_:
 			tone = Color(1.0, 1.0, 1.0, 1.0)
 
 	if _locked and _feedback_state == "neutral":
-		tone = Color(0.88, 0.88, 0.88, 1.0)
+		tone = Color(0.82, 0.82, 0.82, 1.0)
 
 	self_modulate = tone

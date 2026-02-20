@@ -3,9 +3,9 @@
 [ext_resource type="Script" path="res://scripts/ui/ResusPartItem.gd" id="1_script"]
 
 [node name="ResusPartItem" type="Button"]
-custom_minimum_size = Vector2(0, 76)
+custom_minimum_size = Vector2(0, 80)
 size_flags_horizontal = 3
 theme_type_variation = &"FlatButton"
-text = "ДЕТАЛЬ"
+theme_override_font_sizes/font_size = 18
+text = "Деталь"
 script = ExtResource("1_script")
-

@@ -5,9 +5,9 @@ const CONFIG_CARD_SCENE := preload("res://scenes/ui/ConfigCard.tscn")
 const ResusData := preload("res://scripts/case_01/ResusData.gd")
 const ResusScoring := preload("res://scripts/case_01/ResusScoring.gd")
 
-const COLOR_OK := Color(0.42, 0.95, 0.55, 1.0)
-const COLOR_WARN := Color(1.0, 0.78, 0.25, 1.0)
-const COLOR_ERR := Color(1.0, 0.45, 0.45, 1.0)
+const COLOR_OK := Color(0.92, 0.92, 0.92, 1.0)
+const COLOR_WARN := Color(0.86, 0.73, 0.56, 1.0)
+const COLOR_ERR := Color(0.93, 0.34, 0.38, 1.0)
 
 var stage_b_data: Dictionary = {}
 var options_by_id: Dictionary = {}
@@ -49,14 +49,14 @@ func _ready() -> void:
 
 	stage_b_data = ResusData.load_stage_b(LEVELS_PATH)
 	if stage_b_data.is_empty():
-		_show_error("Данные этапа B повреждены. Возврат в меню.")
+		_show_error("Этап B не загрузился: проверьте данные уровня.")
 		return
 
 	_setup_ui()
 	_begin_attempt()
 
 func _setup_ui() -> void:
-	title_label.text = "ДЕЛО #1: ЦИФРОВАЯ РЕАНИМАЦИЯ"
+	title_label.text = "ДЕЛО №1: ЦИФРОВАЯ РЕАНИМАЦИЯ"
 	stage_label.text = "ЭТАП B"
 	btn_reset.text = "СБРОС"
 	btn_confirm.text = "ПОДТВЕРДИТЬ"
@@ -82,6 +82,7 @@ func _build_option_cards() -> void:
 		if option_id == "":
 			continue
 		options_by_id[option_id] = option_data
+
 		var card_node: Node = CONFIG_CARD_SCENE.instantiate()
 		if not (card_node is PanelContainer):
 			continue
@@ -101,11 +102,12 @@ func _begin_attempt() -> void:
 	stage_started_ms = Time.get_ticks_msec()
 	input_locked = false
 	btn_confirm.disabled = true
-	diagnostic_card.visible = false
-	status_label.text = "Выберите конфигурацию и нажмите ПОДТВЕРДИТЬ."
+	diagnostic_card.visible = true
+	status_label.text = "Выберите конфигурацию и проверьте прогноз до подтверждения."
 	status_label.modulate = COLOR_WARN
 	_update_selection_visuals()
 	_set_option_lock_state(false)
+	_show_preview()
 
 func _on_option_selected(option_id: String) -> void:
 	if input_locked:
@@ -114,7 +116,7 @@ func _on_option_selected(option_id: String) -> void:
 	selection_count += 1
 	if time_to_first_select_ms < 0:
 		time_to_first_select_ms = Time.get_ticks_msec() - stage_started_ms
-	_log_event("OPTION_SELECTED", {
+	_log_event("SELECT_OPTION", {
 		"option_id": option_id,
 		"selection_index": selection_count
 	})
@@ -122,6 +124,7 @@ func _on_option_selected(option_id: String) -> void:
 	btn_confirm.disabled = false
 	status_label.text = "Выбрано: %s" % option_id
 	status_label.modulate = COLOR_WARN
+	_show_preview()
 	if has_node("/root/AudioManager"):
 		AudioManager.play("click")
 
@@ -174,15 +177,112 @@ func _on_reset_pressed() -> void:
 		return
 	selected_option_id = ""
 	_update_selection_visuals()
-	diagnostic_card.visible = false
 	btn_confirm.disabled = true
-	status_label.text = "Выбор очищен."
+	_show_preview()
+	status_label.text = "Выбор сброшен."
 	status_label.modulate = COLOR_WARN
 	if has_node("/root/AudioManager"):
 		AudioManager.play("click")
 
+func _show_preview() -> void:
+	diagnostic_card.visible = true
+	if selected_option_id == "":
+		diag_headline.text = "Прогноз конфигурации"
+		diag_headline.modulate = COLOR_WARN
+		diag_body.text = "\n".join([
+			"- Рендер-поток: ?",
+			"- Бюджет: ?",
+			"- Узкое место: ?"
+		])
+		diag_hint.text = "Выберите один вариант, чтобы увидеть прогноз."
+		diag_hint.modulate = COLOR_WARN
+		return
+
+	var option_data: Dictionary = _selected_option_data()
+	var preview: Dictionary = _build_preview(option_data)
+	var render_stream: String = str(preview.get("render_stream", "WARNING"))
+	var budget_status: String = str(preview.get("budget_status", "UNKNOWN"))
+	var bottleneck: String = str(preview.get("bottleneck", "UNKNOWN"))
+	var total_price: int = int(option_data.get("total_price", 0))
+	var budget: int = int(stage_b_data.get("budget", 0))
+
+	diag_headline.text = "Прогноз до подтверждения"
+	diag_headline.modulate = _render_status_color(render_stream)
+	diag_body.text = "\n".join([
+		"- Рендер-поток: %s" % render_stream,
+		"- Бюджет: %d$ / %d$ (%s)" % [total_price, budget, budget_status],
+		"- Узкое место: %s" % bottleneck
+	])
+	diag_hint.text = str(preview.get("hint", ""))
+	diag_hint.modulate = COLOR_WARN if render_stream != "OK" else COLOR_OK
+
+func _build_preview(option_data: Dictionary) -> Dictionary:
+	var budget: int = int(stage_b_data.get("budget", 0))
+	var total_price: int = int(option_data.get("total_price", 0))
+	var cpu_price: int = _part_price(option_data, "CPU")
+	var ram_price: int = _part_price(option_data, "RAM")
+	var gpu_price: int = _part_price(option_data, "GPU")
+
+	var render_stream: String = "OK"
+	var budget_status: String = "IN_RANGE"
+	var bottleneck: String = "NONE"
+	var hint: String = "Конфигурация выглядит сбалансированно."
+
+	if total_price > budget:
+		render_stream = "FAIL"
+		budget_status = "OVER"
+		bottleneck = "BUDGET"
+		hint = "Превышение бюджета даже при нормальной производительности."
+	elif cpu_price >= 500 and ram_price <= 120:
+		render_stream = "WARNING"
+		bottleneck = "RAM"
+		hint = "Сильный CPU упирается в слабую RAM."
+	elif cpu_price <= 220 and ram_price <= 140 and gpu_price <= 180:
+		render_stream = "FAIL"
+		bottleneck = "CPU"
+		hint = "Конфигурация слишком слабая для цели."
+	elif ram_price <= 140:
+		render_stream = "WARNING"
+		bottleneck = "RAM"
+		hint = "Есть риск ограничения по памяти."
+	elif gpu_price > 0 and gpu_price <= 180:
+		render_stream = "WARNING"
+		bottleneck = "GPU"
+		hint = "Рендер будет работать, но есть запас для GPU."
+
+	return {
+		"render_stream": render_stream,
+		"budget_status": budget_status,
+		"bottleneck": bottleneck,
+		"hint": hint
+	}
+
+func _part_price(option_data: Dictionary, key: String) -> int:
+	var parts: Array = option_data.get("parts", []) as Array
+	for part_v in parts:
+		if typeof(part_v) != TYPE_DICTIONARY:
+			continue
+		var part: Dictionary = part_v as Dictionary
+		if str(part.get("k", "")).to_upper() == key.to_upper():
+			return int(part.get("price", 0))
+	return 0
+
+func _render_status_color(render_stream: String) -> Color:
+	match render_stream:
+		"OK":
+			return COLOR_OK
+		"WARNING":
+			return COLOR_WARN
+		_:
+			return COLOR_ERR
+
+func _selected_option_data() -> Dictionary:
+	return options_by_id.get(selected_option_id, {}) as Dictionary
+
 func _register_trial(result: Dictionary) -> void:
 	var elapsed_ms: int = Time.get_ticks_msec() - stage_started_ms
+	var option_data: Dictionary = _selected_option_data()
+	var preview: Dictionary = _build_preview(option_data) if not option_data.is_empty() else {}
 	var payload: Dictionary = {
 		"quest_id": "CASE_01_DIGITAL_RESUS",
 		"stage": "B",
@@ -192,6 +292,7 @@ func _register_trial(result: Dictionary) -> void:
 		"context": str(stage_b_data.get("context", "")),
 		"budget": int(stage_b_data.get("budget", 0)),
 		"selected_option_id": selected_option_id,
+		"total_price": int(option_data.get("total_price", 0)),
 		"selection_count": selection_count,
 		"time_to_first_select_ms": max(-1, time_to_first_select_ms),
 		"elapsed_ms": elapsed_ms,
@@ -204,6 +305,9 @@ func _register_trial(result: Dictionary) -> void:
 		"error_code": str(result.get("error_code", "UNKNOWN")),
 		"diagnostic_headline": str(result.get("diagnostic_headline", "")),
 		"diagnostic_details": (result.get("diagnostic_details", []) as Array).duplicate(),
+		"preview_render_stream": str(preview.get("render_stream", "UNKNOWN")),
+		"preview_budget_status": str(preview.get("budget_status", "UNKNOWN")),
+		"preview_bottleneck": str(preview.get("bottleneck", "UNKNOWN")),
 		"trace": trace.duplicate(true)
 	}
 	GlobalMetrics.register_trial(payload)
@@ -213,29 +317,34 @@ func _show_diagnostic(result: Dictionary) -> void:
 	var is_correct: bool = bool(result.get("is_correct", false))
 	var headline: String = str(result.get("diagnostic_headline", ""))
 	var details: Array = result.get("diagnostic_details", []) as Array
+	var option_data: Dictionary = _selected_option_data()
+	var preview: Dictionary = _build_preview(option_data) if not option_data.is_empty() else {}
 
 	diag_headline.text = headline
 	diag_headline.modulate = COLOR_OK if is_correct else COLOR_ERR
 
 	var detail_lines: Array[String] = []
+	detail_lines.append("- Рендер-поток: %s" % str(preview.get("render_stream", "UNKNOWN")))
+	detail_lines.append("- Бюджет: %d$ / %d$" % [int(option_data.get("total_price", 0)), int(stage_b_data.get("budget", 0))])
+	detail_lines.append("- Узкое место: %s" % str(preview.get("bottleneck", "UNKNOWN")))
+	detail_lines.append("")
 	for detail_v in details:
-		detail_lines.append("? %s" % str(detail_v))
+		detail_lines.append("- %s" % str(detail_v))
 	diag_body.text = "\n".join(detail_lines)
 
 	var hint_text: String = ""
 	var budget: int = int(stage_b_data.get("budget", 0))
-	var option_data: Dictionary = options_by_id.get(selected_option_id, {}) as Dictionary
 	var total_price: int = int(option_data.get("total_price", 0))
 	if total_price > budget:
-		hint_text = "Бюджет превышен: +%d$" % (total_price - budget)
+		hint_text = "Превышение бюджета: +%d$." % (total_price - budget)
 	elif selected_option_id == "":
-		hint_text = "Выберите один вариант и попробуйте снова."
+		hint_text = "Сначала выберите один вариант."
 	else:
-		hint_text = "Нажмите СБРОС, чтобы выбрать другой вариант."
+		hint_text = "Можно сделать сброс и проверить другую конфигурацию."
 	diag_hint.text = hint_text
 	diag_hint.modulate = COLOR_WARN
 
-	status_label.text = "Решение зафиксировано. Нажмите СБРОС, чтобы начать новую попытку."
+	status_label.text = "Разбор зафиксирован. Для новой попытки нажмите СБРОС."
 	status_label.modulate = COLOR_OK if is_correct else COLOR_WARN
 
 func _log_event(event_name: String, data: Dictionary = {}) -> void:
@@ -261,5 +370,3 @@ func _show_error(message: String) -> void:
 	btn_reset.disabled = true
 	await get_tree().create_timer(1.2).timeout
 	_on_back_pressed()
-
-

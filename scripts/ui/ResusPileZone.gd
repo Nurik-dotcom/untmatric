@@ -3,9 +3,9 @@ extends PanelContainer
 signal item_placed(item_id: String, to_bucket: String, from_bucket: String)
 
 @export var title_path: NodePath = NodePath("VBox/BucketTitle")
-@export var items_container_path: NodePath = NodePath("VBox/ItemsFlow")
+@export var items_container_path: NodePath = NodePath("VBox/Scroll/PartsGrid")
 
-var bucket_id: String = ""
+var bucket_id: String = "PILE"
 
 @onready var _title_label: Label = get_node_or_null(title_path) as Label
 @onready var _items_container: Control = get_node_or_null(items_container_path) as Control
@@ -27,12 +27,18 @@ func clear_items() -> void:
 	if not is_instance_valid(_items_container):
 		return
 	for child in _items_container.get_children():
+		_items_container.remove_child(child)
 		child.queue_free()
 
 func add_item_control(item_control: Control) -> void:
 	if not is_instance_valid(_items_container):
 		return
-	_items_container.add_child(item_control)
+	var current_parent: Node = item_control.get_parent()
+	if current_parent == null:
+		_items_container.add_child(item_control)
+	elif current_parent != _items_container:
+		item_control.reparent(_items_container)
+
 	if item_control.has_method("set_zone_id"):
 		item_control.call("set_zone_id", bucket_id)
 	else:

@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/NetSlot.gd" id="1_script"]
 
 [node name="NetSlot" type="PanelContainer"]
-custom_minimum_size = Vector2(0, 110)
+custom_minimum_size = Vector2(0, 118)
 size_flags_horizontal = 3
 script = ExtResource("1_script")
 
@@ -25,11 +25,11 @@ theme_override_constants/separation = 6
 [node name="SlotTitle" type="Label" parent="Margin/VBox/TopRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "СЛОТ 1"
+text = "КАНАЛ 1"
 vertical_alignment = 1
 
 [node name="BtnClear" type="Button" parent="Margin/VBox/TopRow"]
-custom_minimum_size = Vector2(34, 28)
+custom_minimum_size = Vector2(36, 30)
 layout_mode = 2
 text = "X"
 
@@ -41,6 +41,6 @@ vertical_alignment = 1
 autowrap_mode = 2
 
 [node name="ItemHolder" type="VBoxContainer" parent="Margin/VBox"]
-custom_minimum_size = Vector2(0, 78)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_horizontal = 3
