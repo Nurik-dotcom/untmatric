@@ -89,7 +89,7 @@ func _on_lie_detector_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/LogicQuestA.tscn")
 
 func _on_radio_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/radio_intercept/RadioQuestA.tscn")
+	get_tree().change_scene_to_file("res://scenes/RadioQuestA.tscn")
 
 func _on_locked_pressed() -> void:
 	status_label.text = STATUS_LOCKED

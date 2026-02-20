@@ -1,4 +1,4 @@
-extends Control
+﻿extends Control
 
 enum State {
 	TUNE,
@@ -25,6 +25,7 @@ const EPS: float = 0.05
 const MIN_ESTIMATE: float = 0.0
 const MAX_ESTIMATE: float = 30.0
 const SAMPLE_SLOTS: int = 7
+const PHONE_LANDSCAPE_MAX_HEIGHT: float = 520.0
 
 const UNIT_MB := "\u041c\u0411"
 const UNIT_GB := "\u0413\u0411"
@@ -79,6 +80,9 @@ const COLOR_SAMPLE_WARN: Color = Color(0.95, 0.75, 0.20, 1.0)
 
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var body_split: HSplitContainer = $SafeArea/RootVBox/BodyHSplit
+@onready var top_bar: PanelContainer = $SafeArea/RootVBox/TopBar
+@onready var mission_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard
+@onready var actions_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard
 
 @onready var title_label: Label = $SafeArea/RootVBox/TopBar/TopBarHBox/TitleLabel
 @onready var mode_chip: Label = $SafeArea/RootVBox/TopBar/TopBarHBox/ModeChip
@@ -273,11 +277,43 @@ func _configure_layout() -> void:
 		return
 
 	var size: Vector2 = get_viewport_rect().size
-	body_split.split_offset = int(size.x * 0.56)
-	if size.x < 1500.0:
-		time_knob.custom_minimum_size = Vector2(280, 280)
+	var is_phone_landscape: bool = size.x > size.y and size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
+	if is_phone_landscape:
+		body_split.split_offset = int(size.x * 0.54)
+		top_bar.custom_minimum_size.y = 58.0
+		mission_card.custom_minimum_size.y = 140.0
+		actions_card.custom_minimum_size.y = 200.0
+		time_knob.custom_minimum_size = Vector2(220, 220)
+		title_label.add_theme_font_size_override("font_size", 24)
+		mode_chip.add_theme_font_size_override("font_size", 15)
+		stability_label.add_theme_font_size_override("font_size", 15)
+		estimate_value_label.add_theme_font_size_override("font_size", 30)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_analyze, btn_risk, btn_abort, btn_units, btn_details, btn_next, btn_close_details]:
+			btn.custom_minimum_size.y = 56.0
+	elif size.x < 1500.0:
+		body_split.split_offset = int(size.x * 0.55)
+		top_bar.custom_minimum_size.y = 62.0
+		mission_card.custom_minimum_size.y = 150.0
+		actions_card.custom_minimum_size.y = 210.0
+		time_knob.custom_minimum_size = Vector2(270, 270)
+		title_label.add_theme_font_size_override("font_size", 28)
+		mode_chip.add_theme_font_size_override("font_size", 17)
+		stability_label.add_theme_font_size_override("font_size", 17)
+		estimate_value_label.add_theme_font_size_override("font_size", 34)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_analyze, btn_risk, btn_abort, btn_units, btn_details, btn_next, btn_close_details]:
+			btn.custom_minimum_size.y = 58.0
 	else:
+		body_split.split_offset = int(size.x * 0.56)
+		top_bar.custom_minimum_size.y = 62.0
+		mission_card.custom_minimum_size.y = 160.0
+		actions_card.custom_minimum_size.y = 220.0
 		time_knob.custom_minimum_size = Vector2(320, 320)
+		title_label.add_theme_font_size_override("font_size", 30)
+		mode_chip.add_theme_font_size_override("font_size", 18)
+		stability_label.add_theme_font_size_override("font_size", 18)
+		estimate_value_label.add_theme_font_size_override("font_size", 38)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_analyze, btn_risk, btn_abort, btn_units, btn_details, btn_next, btn_close_details]:
+			btn.custom_minimum_size.y = 58.0
 
 func _collect_sample_refs() -> void:
 	sample_refs.clear()
@@ -850,7 +886,7 @@ func _update_details_text() -> void:
 		lines.append("outcome: %s" % _outcome_to_text(outcome))
 	else:
 		lines.append("t_true: \u0441\u043a\u0440\u044b\u0442\u043e \u0434\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0438\u044f")
-	lines.append("якорь: %s (%s)" % ["да" if pool_type == "ANCHOR" else "нет", anchor_type])
+	lines.append("\u0420\u0435\u0436\u0438\u043c \u043f\u0443\u043b\u0430: %s (%s)" % ["\u044f\u043a\u043e\u0440\u043d\u044b\u0439" if pool_type == "ANCHOR" else "\u043e\u0431\u044b\u0447\u043d\u044b\u0439", anchor_type])
 	details_sheet_text.text = "\n".join(lines)
 
 func _format_num(value: float) -> String:

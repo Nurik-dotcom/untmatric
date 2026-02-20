@@ -1,8 +1,16 @@
-[gd_scene load_steps=4 format=3 uid="uid://dmd28rj5m2f34"]
+[gd_scene load_steps=6 format=3 uid="uid://dmd28rj5m2f34"]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestC.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_untformatic.tres" id="2_theme"]
+[ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
 [ext_resource type="Script" path="res://scenes/TimeKnob.gd" id="3_knob_script"]
+[ext_resource type="Shader" path="res://ui/shaders/crt_overlay.gdshader" id="4_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
+shader = ExtResource("4_shader")
+shader_parameter/tint_color = Color(0, 1, 0.25, 1)
+shader_parameter/intensity = 0.12
+shader_parameter/fx_quality = 1
+shader_parameter/glitch_strength = 0.0
 
 [node name="RadioQuestC" type="Control"]
 layout_mode = 3
@@ -23,6 +31,18 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.05, 0.08, 0.05, 1)
 
+[node name="CRTLayer" type="CanvasLayer" parent="."]
+
+[node name="CRTOverlay" type="ColorRect" parent="CRTLayer"]
+material = SubResource("ShaderMaterial_crt")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -40,7 +60,7 @@ layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="TopBar" type="PanelContainer" parent="SafeArea/RootVBox"]
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
 
 [node name="TopBarHBox" type="HBoxContainer" parent="SafeArea/RootVBox/TopBar"]
@@ -48,7 +68,7 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="BtnBack" type="Button" parent="SafeArea/RootVBox/TopBar/TopBarHBox"]
-custom_minimum_size = Vector2(96, 64)
+custom_minimum_size = Vector2(120, 58)
 layout_mode = 2
 text = "<-"
 
@@ -81,7 +101,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 10
 
 [node name="MissionCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol"]
-custom_minimum_size = Vector2(0, 200)
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 
 [node name="MissionMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard"]
@@ -164,31 +184,31 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="BtnMinus1" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/FineButtonsRow"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "-1"
 
 [node name="BtnMinus01" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/FineButtonsRow"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "-0.1"
 
 [node name="BtnPlus01" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/FineButtonsRow"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "+0.1"
 
 [node name="BtnPlus1" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/FineButtonsRow"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "+1"
 
 [node name="BtnAnalyze" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox"]
-custom_minimum_size = Vector2(0, 96)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 text = "АНАЛИЗ"
 
@@ -272,7 +292,7 @@ theme_override_font_sizes/font_size = 22
 text = "РИСК"
 
 [node name="ActionsCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol"]
-custom_minimum_size = Vector2(0, 260)
+custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 
 [node name="ActionsMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard"]
@@ -296,14 +316,14 @@ layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="BtnRisk" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow"]
-custom_minimum_size = Vector2(0, 96)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "РИСК"
 
 [node name="BtnAbort" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow"]
-custom_minimum_size = Vector2(0, 96)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
@@ -314,19 +334,19 @@ layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="BtnUnits" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ЕДИНИЦЫ"
 
 [node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ДЕТАЛИ"
 
 [node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 visible = false
@@ -616,7 +636,7 @@ scroll_active = true
 bbcode_enabled = false
 
 [node name="BtnCloseDetails" type="Button" parent="DetailsOverlay/BottomSheet/SheetMargin/SheetVBox"]
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 text = "ЗАКРЫТЬ"
 
