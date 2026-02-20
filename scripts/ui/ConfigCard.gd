@@ -33,7 +33,7 @@ func setup(option_data: Dictionary, budget: int) -> void:
 	if is_instance_valid(price_label):
 		price_label.text = "Бюджет: %d$" % total_price
 		price_label.modulate = COLOR_BUDGET_BAD if total_price > budget_limit else COLOR_BUDGET_OK
-
+	
 	var parts_lines: Array[String] = []
 	var parts: Array = option_data.get("parts", []) as Array
 	for part_v in parts:

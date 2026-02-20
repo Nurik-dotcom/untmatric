@@ -21,6 +21,7 @@ enum State {
 
 @onready var lbl_clue_title: Label = $MainLayout/Header/LblClueTitle
 @onready var lbl_session: Label = $MainLayout/Header/LblSessionId
+@onready var btn_back: Button = $MainLayout/Header/BtnBack
 @onready var decrypt_bar: ProgressBar = $MainLayout/BarsRow/DecryptBar
 @onready var energy_bar: ProgressBar = $MainLayout/BarsRow/EnergyBar
 @onready var lbl_target: Label = $MainLayout/TargetDisplay/LblTarget
@@ -119,10 +120,14 @@ func _validate_level(level: Dictionary) -> bool:
 
 func _connect_signals() -> void:
 	drop_zone.block_dropped.connect(_on_block_dropped)
+	btn_back.pressed.connect(_on_back_pressed)
 	btn_analyze.pressed.connect(_on_analyze_pressed)
 	btn_submit.pressed.connect(_on_submit_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
 	diag_panel.visibility_changed.connect(_on_diag_visibility_changed)
+
+func _on_back_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func build_variant_key(task: Dictionary) -> String:
 	var code: String = "\n".join(task.get("code_template", []))

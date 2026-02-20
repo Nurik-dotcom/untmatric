@@ -38,6 +38,7 @@ var clear_used: bool = false
 var unique_blocks_used: Dictionary = {}
 
 @onready var title_label: Label = $SafeArea/Margin/Root/Header/HeaderVBox/Title
+@onready var btn_back: Button = $SafeArea/Margin/Root/BackRow/BtnBack
 @onready var stability_label: Label = $SafeArea/Margin/Root/Header/HeaderVBox/TimerRow/StabilityLabel
 @onready var timer_bar: ProgressBar = $SafeArea/Margin/Root/Header/HeaderVBox/TimerRow/TimerBar
 @onready var timer_label: Label = $SafeArea/Margin/Root/Header/HeaderVBox/TimerRow/TimerLabel
@@ -58,6 +59,7 @@ func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	btn_back.pressed.connect(_on_back_pressed)
 	btn_undo.pressed.connect(_on_undo_pressed)
 	btn_clear.pressed.connect(_on_clear_pressed)
 	btn_submit.pressed.connect(_on_submit_pressed)
@@ -595,6 +597,9 @@ func _on_next_pressed() -> void:
 		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 		return
 	_load_next_case()
+
+func _on_back_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _finish_session() -> void:
 	is_trial_active = false

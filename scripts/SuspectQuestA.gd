@@ -44,6 +44,7 @@ enum State {
 @onready var btn_analyze: Button = $MainLayout/Actions/BtnAnalyze
 @onready var btn_next: Button = $MainLayout/Actions/BtnNext
 @onready var btn_close_diag: Button = $DiagnosticsPanel/VBoxContainer/BtnCloseDiag
+@onready var btn_quest_back: Button = $MainLayout/Header/BtnQuestBack
 @onready var lbl_clue_title: Label = $MainLayout/Header/LblClueTitle
 @onready var lbl_session: Label = $MainLayout/Header/LblSessionId
 @onready var palette_select: OptionButton = $MainLayout/SettingsRow/PaletteSelect
@@ -127,6 +128,7 @@ func _connect_signals() -> void:
 	btn_analyze.pressed.connect(_on_analyze_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
 	btn_close_diag.pressed.connect(_on_close_diag_pressed)
+	btn_quest_back.pressed.connect(_on_back_pressed)
 
 func _on_palette_selected(index: int) -> void:
 	var item_id: int = palette_select.get_item_id(index)
@@ -465,6 +467,9 @@ func _on_next_pressed() -> void:
 		return
 	_log_event("next_pressed", {"from_task": str(current_task.get("id", "A-00"))})
 	_load_level(current_level_idx + 1)
+
+func _on_back_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _finalize_task_result(is_correct: bool, reason: String) -> void:
 	if task_result_sent:

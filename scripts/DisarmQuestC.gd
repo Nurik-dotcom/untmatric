@@ -15,6 +15,7 @@ enum State {
 
 @onready var lbl_clue_title: Label = $MainLayout/HeaderRow/LblClueTitle
 @onready var lbl_session: Label = $MainLayout/HeaderRow/LblSession
+@onready var btn_back: Button = $MainLayout/HeaderRow/BtnBack
 @onready var expected_panel: PanelContainer = $MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel
 @onready var actual_panel: PanelContainer = $MainLayout/StatusMonitor/MonitorsRow/ActualPanel
 @onready var lbl_expected_value: Label = $MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox/LblExpectedValue
@@ -93,6 +94,7 @@ func _try_set_control_property(prop_name: String, value: Variant) -> void:
 func _connect_signals() -> void:
 	code_view.caret_changed.connect(_on_code_caret_changed)
 	code_view.gui_input.connect(_on_code_gui_input)
+	btn_back.pressed.connect(_on_back_pressed)
 	btn_analyze.pressed.connect(_on_analyze_pressed)
 	btn_verify.pressed.connect(_on_verify_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
@@ -616,6 +618,9 @@ func _on_app_resumed() -> void:
 func _on_next_pressed() -> void:
 	_log_event("task_end", {"status": "next_pressed"})
 	_start_level(current_level_idx + 1)
+
+func _on_back_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _register_result(is_correct: bool) -> void:
 	if level_result_sent:

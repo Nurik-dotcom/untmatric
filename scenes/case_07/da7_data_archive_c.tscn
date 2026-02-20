@@ -54,6 +54,14 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
+[node name="BackRow" type="HBoxContainer" parent="SafeArea/Margin/Root"]
+layout_mode = 2
+
+[node name="BtnBack" type="Button" parent="SafeArea/Margin/Root/BackRow"]
+custom_minimum_size = Vector2(120, 48)
+layout_mode = 2
+text = "НАЗАД"
+
 [node name="Header" type="PanelContainer" parent="SafeArea/Margin/Root"]
 layout_mode = 2
 size_flags_horizontal = 3

@@ -32,6 +32,7 @@ var _typewriter_source: String = ""
 var _typewriter_cursor: int = 0
 
 @onready var title_label: RichTextLabel = $RootLayout/Header/Margin/Title
+@onready var btn_back: Button = $RootLayout/BackRow/BtnBack
 @onready var desktop_layout: HSplitContainer = $RootLayout/Body/DesktopLayout
 @onready var mobile_layout: VBoxContainer = $RootLayout/Body/MobileLayout
 @onready var table_section: VBoxContainer = $RootLayout/Body/DesktopLayout/TableSection
@@ -57,6 +58,8 @@ func _ready() -> void:
 	randomize()
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
+	if not btn_back.pressed.is_connected(_on_back_pressed):
+		btn_back.pressed.connect(_on_back_pressed)
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
 	if not data_tree.gui_input.is_connected(_on_scroll_input):
 		data_tree.gui_input.connect(_on_scroll_input)
@@ -511,6 +514,9 @@ func _show_fatal(text: String) -> void:
 	prompt_label.bbcode_enabled = false
 	prompt_label.text = text
 	trial_locked = true
+
+func _on_back_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _on_stability_changed(_new_val: float, _delta: float) -> void:
 	_update_stability_ui()

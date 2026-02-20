@@ -3,15 +3,21 @@ extends Control
 const N_VALUES = [32, 64, 100, 128, 200, 256]
 const POINT_COUNT = 96
 const MAX_NOISE = 24.0
+const PHONE_LANDSCAPE_MAX_HEIGHT := 520.0
 
-@onready var task_label = $RootPanel/VBox/TaskLabel
-@onready var oscillo_area = $RootPanel/VBox/OscilloBox/OscilloArea
-@onready var osc_line = $RootPanel/VBox/OscilloBox/OscilloArea/OscilloNode/OscLine
-@onready var bits_label = $RootPanel/VBox/TunerRow/BitsLabel
-@onready var bits_slider = $RootPanel/VBox/TunerRow/BitsSlider
-@onready var hint_button = $RootPanel/VBox/ButtonsRow/HintButton
-@onready var confirm_button = $RootPanel/VBox/ButtonsRow/ConfirmButton
-@onready var hint_label = $RootPanel/VBox/HintLabel
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var root_vbox: VBoxContainer = $SafeArea/RootPanel/VBox
+@onready var oscillo_box: PanelContainer = $SafeArea/RootPanel/VBox/OscilloBox
+@onready var tuner_row: HBoxContainer = $SafeArea/RootPanel/VBox/TunerRow
+@onready var buttons_row: HBoxContainer = $SafeArea/RootPanel/VBox/ButtonsRow
+@onready var task_label: Label = $SafeArea/RootPanel/VBox/HeaderBar/TaskLabel
+@onready var oscillo_area: Control = $SafeArea/RootPanel/VBox/OscilloBox/OscilloArea
+@onready var osc_line: Line2D = $SafeArea/RootPanel/VBox/OscilloBox/OscilloArea/OscilloNode/OscLine
+@onready var bits_label: Label = $SafeArea/RootPanel/VBox/TunerRow/BitsLabel
+@onready var bits_slider: HSlider = $SafeArea/RootPanel/VBox/TunerRow/BitsSlider
+@onready var hint_button: Button = $SafeArea/RootPanel/VBox/ButtonsRow/HintButton
+@onready var confirm_button: Button = $SafeArea/RootPanel/VBox/ButtonsRow/ConfirmButton
+@onready var hint_label: Label = $SafeArea/RootPanel/VBox/HintLabel
 
 var current_n: int = 0
 var i_min: int = 0
@@ -23,8 +29,11 @@ var _phase: float = 0.0
 var _animate: bool = true
 
 func _ready():
+	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	_on_viewport_size_changed()
 	_start_new_task()
-	_draw_signal()
+	call_deferred("_draw_signal")
 
 func _process(delta: float) -> void:
 	if _animate:
@@ -85,6 +94,56 @@ func _on_confirm_button_pressed() -> void:
 
 	_start_new_task()
 	_draw_signal()
+
+func _on_slider_value_changed(value: float) -> void:
+	_on_bits_slider_value_changed(value)
+
+func _on_hint_pressed() -> void:
+	_on_hint_button_pressed()
+
+func _on_confirm_pressed() -> void:
+	_on_confirm_button_pressed()
+
+func _on_back_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/LearnSelect.tscn")
+
+func _on_viewport_size_changed() -> void:
+	var size: Vector2 = get_viewport_rect().size
+	var is_phone_landscape: bool = _is_phone_landscape(size)
+	if is_phone_landscape:
+		safe_area.add_theme_constant_override("margin_left", 10)
+		safe_area.add_theme_constant_override("margin_right", 10)
+		safe_area.add_theme_constant_override("margin_top", 8)
+		safe_area.add_theme_constant_override("margin_bottom", 8)
+		root_vbox.add_theme_constant_override("separation", 12)
+		task_label.add_theme_font_size_override("font_size", 20)
+		bits_label.add_theme_font_size_override("font_size", 24)
+		oscillo_box.custom_minimum_size.y = clampf(size.y * 0.35, 150.0, 220.0)
+		tuner_row.custom_minimum_size.y = 62.0
+		bits_slider.custom_minimum_size.x = clampf(size.x * 0.30, 220.0, 340.0)
+		buttons_row.add_theme_constant_override("separation", 16)
+		hint_button.custom_minimum_size = Vector2(150, 52)
+		confirm_button.custom_minimum_size = Vector2(170, 52)
+		hint_label.custom_minimum_size.y = 40.0
+	else:
+		safe_area.add_theme_constant_override("margin_left", 16)
+		safe_area.add_theme_constant_override("margin_right", 16)
+		safe_area.add_theme_constant_override("margin_top", 12)
+		safe_area.add_theme_constant_override("margin_bottom", 12)
+		root_vbox.add_theme_constant_override("separation", 20)
+		task_label.add_theme_font_size_override("font_size", 24)
+		bits_label.add_theme_font_size_override("font_size", 32)
+		oscillo_box.custom_minimum_size.y = 280.0
+		tuner_row.custom_minimum_size.y = 80.0
+		bits_slider.custom_minimum_size.x = 400.0
+		buttons_row.add_theme_constant_override("separation", 40)
+		hint_button.custom_minimum_size = Vector2(200, 60)
+		confirm_button.custom_minimum_size = Vector2(200, 60)
+		hint_label.custom_minimum_size.y = 50.0
+	call_deferred("_draw_signal")
+
+func _is_phone_landscape(size: Vector2) -> bool:
+	return size.x > size.y and size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
 
 func _draw_signal():
 	if not is_instance_valid(oscillo_area):

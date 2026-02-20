@@ -70,6 +70,7 @@ var relation_mobile_schema: VBoxContainer
 @onready var stability_bar: ProgressBar = get_node_or_null("RootLayout/Footer/StabilityBar")
 @onready var stability_label: Label = get_node_or_null("RootLayout/Footer/StabilityLabel")
 @onready var title_label: RichTextLabel = $RootLayout/Header/Margin/Title
+@onready var btn_back: Button = $RootLayout/BackRow/BtnBack
 @onready var sfx_error: AudioStreamPlayer = $Runtime/Audio/SfxError
 @onready var sfx_relay: AudioStreamPlayer = $Runtime/Audio/SfxRelay
 
@@ -81,6 +82,7 @@ func _ready():
 	btn_submit.pressed.connect(_register_interaction)
 	btn_clear.pressed.connect(_on_clear_pressed)
 	btn_clear.pressed.connect(_register_interaction)
+	btn_back.pressed.connect(_on_back_pressed)
 
 	_init_session()
 
@@ -625,6 +627,9 @@ func _game_over():
 	btn_exit.text = "ВЫХОД"
 	btn_exit.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn"))
 	$RootLayout/Footer.add_child(btn_exit)
+
+func _on_back_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _build_mobile_containers() -> void:
 	filter_mobile_layout = VBoxContainer.new()
