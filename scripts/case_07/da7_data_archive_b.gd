@@ -37,40 +37,40 @@ var _typewriter_active: bool = false
 var _typewriter_accum: float = 0.0
 
 # Nodes
-@onready var filter_mode_root: HSplitContainer = $RootLayout/Body/FilterModeRoot
-@onready var relation_mode_root: VBoxContainer = $RootLayout/Body/RelationModeRoot
-@onready var body_container: VBoxContainer = $RootLayout/Body
+@onready var filter_mode_root: HSplitContainer = $SafeArea/RootLayout/Body/FilterModeRoot
+@onready var relation_mode_root: VBoxContainer = $SafeArea/RootLayout/Body/RelationModeRoot
+@onready var body_container: VBoxContainer = $SafeArea/RootLayout/Body
 
 # Filter Mode Nodes
-@onready var data_tree: Tree = $RootLayout/Body/FilterModeRoot/TableSection/DataTree
-@onready var prompt_label: RichTextLabel = $RootLayout/Body/FilterModeRoot/TaskSection/PromptLabel
-@onready var btn_submit: Button = $RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnSubmit
-@onready var btn_clear: Button = $RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnClear
-@onready var filter_table_section: VBoxContainer = $RootLayout/Body/FilterModeRoot/TableSection
-@onready var filter_task_section: VBoxContainer = $RootLayout/Body/FilterModeRoot/TaskSection
+@onready var data_tree: Tree = $SafeArea/RootLayout/Body/FilterModeRoot/TableSection/DataTree
+@onready var prompt_label: RichTextLabel = $SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/PromptLabel
+@onready var btn_submit: Button = $SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnSubmit
+@onready var btn_clear: Button = $SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnClear
+@onready var filter_table_section: VBoxContainer = $SafeArea/RootLayout/Body/FilterModeRoot/TableSection
+@onready var filter_task_section: VBoxContainer = $SafeArea/RootLayout/Body/FilterModeRoot/TaskSection
 var filter_mobile_layout: VBoxContainer
 
 # Relation Mode Nodes
-@onready var rel_prompt: RichTextLabel = $RootLayout/Body/RelationModeRoot/PromptLabelRel
-@onready var relation_schema_container: HBoxContainer = $RootLayout/Body/RelationModeRoot/SchemaContainer
-@onready var rel_tree_l: Tree = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable/TreeL
-@onready var rel_tree_r: Tree = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable/TreeR
-@onready var rel_title_l: Label = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable/Title
-@onready var rel_title_r: Label = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable/Title
-@onready var rel_link_label: Label = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector/HintLabel
-@onready var rel_arrow_label: Label = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector/ArrowLabel
-@onready var rel_left_table: VBoxContainer = $RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable
-@onready var rel_center_connector: VBoxContainer = $RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector
-@onready var rel_right_table: VBoxContainer = $RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable
-@onready var rel_options_row: HBoxContainer = $RootLayout/Body/RelationModeRoot/OptionsRow
-@onready var connector_overlay: Control = $RootLayout/Body/RelationModeRoot/ConnectorOverlay
+@onready var rel_prompt: RichTextLabel = $SafeArea/RootLayout/Body/RelationModeRoot/PromptLabelRel
+@onready var relation_schema_container: HBoxContainer = $SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer
+@onready var rel_tree_l: Tree = $SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable/TreeL
+@onready var rel_tree_r: Tree = $SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable/TreeR
+@onready var rel_title_l: Label = $SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable/Title
+@onready var rel_title_r: Label = $SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable/Title
+@onready var rel_link_label: Label = $SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector/HintLabel
+@onready var rel_arrow_label: Label = $SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector/ArrowLabel
+@onready var rel_left_table: VBoxContainer = $SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable
+@onready var rel_center_connector: VBoxContainer = $SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector
+@onready var rel_right_table: VBoxContainer = $SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable
+@onready var rel_options_row: HBoxContainer = $SafeArea/RootLayout/Body/RelationModeRoot/OptionsRow
+@onready var connector_overlay: Control = $SafeArea/RootLayout/Body/RelationModeRoot/ConnectorOverlay
 var relation_mobile_schema: VBoxContainer
 
 # Common Nodes
-@onready var stability_bar: ProgressBar = get_node_or_null("RootLayout/Footer/StabilityBar")
-@onready var stability_label: Label = get_node_or_null("RootLayout/Footer/StabilityLabel")
-@onready var title_label: RichTextLabel = $RootLayout/Header/Margin/Title
-@onready var btn_back: Button = $RootLayout/BackRow/BtnBack
+@onready var stability_bar: ProgressBar = get_node_or_null("SafeArea/RootLayout/Footer/StabilityBar")
+@onready var stability_label: Label = get_node_or_null("SafeArea/RootLayout/Footer/StabilityLabel")
+@onready var title_label: RichTextLabel = $SafeArea/RootLayout/Header/Margin/Title
+@onready var btn_back: Button = $SafeArea/RootLayout/BackRow/BtnBack
 @onready var sfx_error: AudioStreamPlayer = $Runtime/Audio/SfxError
 @onready var sfx_relay: AudioStreamPlayer = $Runtime/Audio/SfxRelay
 
@@ -609,7 +609,7 @@ func _finish_session():
 
 	# Remove controls
 	if mode == "FILTER":
-		$RootLayout/Body/FilterModeRoot/TaskSection/ControlRow.queue_free()
+		$SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/ControlRow.queue_free()
 	else:
 		rel_options_row.queue_free()
 
@@ -618,7 +618,7 @@ func _finish_session():
 	btn_exit.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn"))
 
 	# Add exit button somewhere visible
-	$RootLayout/Footer.add_child(btn_exit)
+	$SafeArea/RootLayout/Footer.add_child(btn_exit)
 
 func _game_over():
 	is_game_over = true
@@ -626,7 +626,7 @@ func _game_over():
 	var btn_exit: Button = Button.new()
 	btn_exit.text = "ВЫХОД"
 	btn_exit.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn"))
-	$RootLayout/Footer.add_child(btn_exit)
+	$SafeArea/RootLayout/Footer.add_child(btn_exit)
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
@@ -798,5 +798,6 @@ func _sets_equal(arr1: Array, arr2: Array) -> bool:
 	if arr1.size() != arr2.size():
 		return false
 	return _is_subset(arr1, arr2) and _is_subset(arr2, arr1)
+
 
 

@@ -31,23 +31,23 @@ var _typewriter_target: RichTextLabel
 var _typewriter_source: String = ""
 var _typewriter_cursor: int = 0
 
-@onready var title_label: RichTextLabel = $RootLayout/Header/Margin/Title
-@onready var btn_back: Button = $RootLayout/BackRow/BtnBack
-@onready var desktop_layout: HSplitContainer = $RootLayout/Body/DesktopLayout
-@onready var mobile_layout: VBoxContainer = $RootLayout/Body/MobileLayout
-@onready var table_section: VBoxContainer = $RootLayout/Body/DesktopLayout/TableSection
-@onready var task_section: VBoxContainer = $RootLayout/Body/DesktopLayout/TaskSection
-@onready var data_tree: Tree = $RootLayout/Body/DesktopLayout/TableSection/DataTree
-@onready var inspect_label: RichTextLabel = $RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectLabel
-@onready var scan_label: Label = $RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/ScanLabel
-@onready var case_title_label: Label = $RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/CaseTitleLabel
-@onready var briefing_label: RichTextLabel = $RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/BriefingLabel
-@onready var objective_label: Label = $RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/ObjectiveLabel
-@onready var prompt_label: RichTextLabel = $RootLayout/Body/DesktopLayout/TaskSection/PromptLabel
-@onready var options_grid: GridContainer = $RootLayout/Body/DesktopLayout/TaskSection/OptionsGrid
-@onready var explain_line: RichTextLabel = $RootLayout/Body/DesktopLayout/TaskSection/ExplainLine
-@onready var stability_label: Label = $RootLayout/Footer/StabilityLabel
-@onready var stability_bar: ProgressBar = $RootLayout/Footer/StabilityBar
+@onready var title_label: RichTextLabel = $SafeArea/RootLayout/Header/Margin/Title
+@onready var btn_back: Button = $SafeArea/RootLayout/BackRow/BtnBack
+@onready var desktop_layout: HSplitContainer = $SafeArea/RootLayout/Body/DesktopLayout
+@onready var mobile_layout: VBoxContainer = $SafeArea/RootLayout/Body/MobileLayout
+@onready var table_section: VBoxContainer = $SafeArea/RootLayout/Body/DesktopLayout/TableSection
+@onready var task_section: VBoxContainer = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection
+@onready var data_tree: Tree = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/DataTree
+@onready var inspect_label: RichTextLabel = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectLabel
+@onready var scan_label: Label = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/ScanLabel
+@onready var case_title_label: Label = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/CaseTitleLabel
+@onready var briefing_label: RichTextLabel = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/BriefingLabel
+@onready var objective_label: Label = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/ObjectiveLabel
+@onready var prompt_label: RichTextLabel = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection/PromptLabel
+@onready var options_grid: GridContainer = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection/OptionsGrid
+@onready var explain_line: RichTextLabel = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection/ExplainLine
+@onready var stability_label: Label = $SafeArea/RootLayout/Footer/StabilityLabel
+@onready var stability_bar: ProgressBar = $SafeArea/RootLayout/Footer/StabilityBar
 @onready var sfx_click: AudioStreamPlayer = $Runtime/Audio/SfxClick
 @onready var sfx_error: AudioStreamPlayer = $Runtime/Audio/SfxError
 @onready var sfx_relay: AudioStreamPlayer = $Runtime/Audio/SfxRelay
@@ -508,7 +508,7 @@ func _ensure_exit_button() -> void:
 	exit_btn.pressed.connect(func() -> void:
 		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 	)
-	$RootLayout/Footer.add_child(exit_btn)
+	$SafeArea/RootLayout/Footer.add_child(exit_btn)
 
 func _show_fatal(text: String) -> void:
 	prompt_label.bbcode_enabled = false
@@ -551,3 +551,4 @@ func _on_viewport_size_changed() -> void:
 		desktop_layout.move_child(task_section, 1)
 		desktop_layout.visible = true
 		mobile_layout.visible = false
+

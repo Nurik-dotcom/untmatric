@@ -29,47 +29,59 @@ color = Color(0.05, 0.05, 0.05, 1)
 
 [node name="NoirOverlay" parent="." instance=ExtResource("7_noir_overlay")]
 
-[node name="RootLayout" type="VBoxContainer" parent="."]
+[node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 12.0
-offset_right = -16.0
-offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="RootLayout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
 
-[node name="BackRow" type="HBoxContainer" parent="RootLayout"]
+[node name="BackRow" type="HBoxContainer" parent="SafeArea/RootLayout"]
 layout_mode = 2
 
-[node name="BtnBack" type="Button" parent="RootLayout/BackRow"]
+[node name="BtnBack" type="Button" parent="SafeArea/RootLayout/BackRow"]
 custom_minimum_size = Vector2(120, 48)
 layout_mode = 2
 text = "НАЗАД"
 
-[node name="Header" type="PanelContainer" parent="RootLayout"]
+[node name="Header" type="PanelContainer" parent="SafeArea/RootLayout"]
 layout_mode = 2
 size_flags_vertical = 0
 size_flags_horizontal = 3
 
-[node name="Margin" type="MarginContainer" parent="RootLayout/Header"]
+[node name="Margin" type="MarginContainer" parent="SafeArea/RootLayout/Header"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 5
 
-[node name="Title" type="RichTextLabel" parent="RootLayout/Header/Margin"]
+[node name="Title" type="RichTextLabel" parent="SafeArea/RootLayout/Header/Margin"]
 layout_mode = 2
 text = "ДЕЛО #7: СЕКРЕТНЫЙ АРХИВ"
 fit_content = true
 scroll_active = false
 autowrap_mode = 0
 
-[node name="Body" type="MarginContainer" parent="RootLayout"]
+[node name="Body" type="MarginContainer" parent="SafeArea/RootLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -78,44 +90,44 @@ theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 6
 
-[node name="DesktopLayout" type="HSplitContainer" parent="RootLayout/Body"]
+[node name="DesktopLayout" type="HSplitContainer" parent="SafeArea/RootLayout/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 split_offset = 400
 
-[node name="TableSection" type="VBoxContainer" parent="RootLayout/Body/DesktopLayout"]
+[node name="TableSection" type="VBoxContainer" parent="SafeArea/RootLayout/Body/DesktopLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="TableTitle" type="Label" parent="RootLayout/Body/DesktopLayout/TableSection"]
+[node name="TableTitle" type="Label" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection"]
 layout_mode = 2
 text = "РЕЖИМ ДАННЫХ // ТОЛЬКО ЧТЕНИЕ"
 
-[node name="DataTree" type="Tree" parent="RootLayout/Body/DesktopLayout/TableSection"]
+[node name="DataTree" type="Tree" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection"]
 layout_mode = 2
 size_flags_vertical = 3
 columns = 3
 hide_root = true
 select_mode = 1
 
-[node name="InspectPanel" type="PanelContainer" parent="RootLayout/Body/DesktopLayout/TableSection"]
+[node name="InspectPanel" type="PanelContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection"]
 custom_minimum_size = Vector2(0, 108)
 layout_mode = 2
 
-[node name="InspectMargin" type="MarginContainer" parent="RootLayout/Body/DesktopLayout/TableSection/InspectPanel"]
+[node name="InspectMargin" type="MarginContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 8
 
-[node name="InspectVBox" type="VBoxContainer" parent="RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin"]
+[node name="InspectVBox" type="VBoxContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="InspectLabel" type="RichTextLabel" parent="RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox"]
+[node name="InspectLabel" type="RichTextLabel" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox"]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 fit_content = false
@@ -123,35 +135,35 @@ scroll_active = false
 autowrap_mode = 2
 text = "Выберите строку для проверки улики."
 
-[node name="ScanLabel" type="Label" parent="RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox"]
+[node name="ScanLabel" type="Label" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox"]
 layout_mode = 2
 text = "СКАН: 0"
 
-[node name="TaskSection" type="VBoxContainer" parent="RootLayout/Body/DesktopLayout"]
+[node name="TaskSection" type="VBoxContainer" parent="SafeArea/RootLayout/Body/DesktopLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="DossierPanel" type="PanelContainer" parent="RootLayout/Body/DesktopLayout/TaskSection"]
+[node name="DossierPanel" type="PanelContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TaskSection"]
 layout_mode = 2
 
-[node name="DossierMargin" type="MarginContainer" parent="RootLayout/Body/DesktopLayout/TaskSection/DossierPanel"]
+[node name="DossierMargin" type="MarginContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 8
 
-[node name="DossierVBox" type="VBoxContainer" parent="RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin"]
+[node name="DossierVBox" type="VBoxContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="CaseTitleLabel" type="Label" parent="RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox"]
+[node name="CaseTitleLabel" type="Label" parent="SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "ФАЙЛ: ACCESS_LOG_07"
 
-[node name="BriefingLabel" type="RichTextLabel" parent="RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox"]
+[node name="BriefingLabel" type="RichTextLabel" parent="SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 fit_content = false
@@ -159,12 +171,12 @@ scroll_active = false
 autowrap_mode = 2
 text = "Брифинг..."
 
-[node name="ObjectiveLabel" type="Label" parent="RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox"]
+[node name="ObjectiveLabel" type="Label" parent="SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "ЦЕЛЬ"
 
-[node name="PromptLabel" type="RichTextLabel" parent="RootLayout/Body/DesktopLayout/TaskSection"]
+[node name="PromptLabel" type="RichTextLabel" parent="SafeArea/RootLayout/Body/DesktopLayout/TaskSection"]
 custom_minimum_size = Vector2(0, 84)
 layout_mode = 2
 theme_override_font_sizes/normal_font_size = 20
@@ -172,14 +184,14 @@ bbcode_enabled = true
 text = "Загрузка параметров дела..."
 fit_content = true
 
-[node name="OptionsGrid" type="GridContainer" parent="RootLayout/Body/DesktopLayout/TaskSection"]
+[node name="OptionsGrid" type="GridContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TaskSection"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
 columns = 2
 
-[node name="ExplainLine" type="RichTextLabel" parent="RootLayout/Body/DesktopLayout/TaskSection"]
+[node name="ExplainLine" type="RichTextLabel" parent="SafeArea/RootLayout/Body/DesktopLayout/TaskSection"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 fit_content = false
@@ -187,23 +199,23 @@ scroll_active = false
 autowrap_mode = 2
 text = ""
 
-[node name="MobileLayout" type="VBoxContainer" parent="RootLayout/Body"]
+[node name="MobileLayout" type="VBoxContainer" parent="SafeArea/RootLayout/Body"]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Footer" type="HBoxContainer" parent="RootLayout"]
+[node name="Footer" type="HBoxContainer" parent="SafeArea/RootLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 20
 
-[node name="StabilityLabel" type="Label" parent="RootLayout/Footer"]
+[node name="StabilityLabel" type="Label" parent="SafeArea/RootLayout/Footer"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "СТАБИЛЬНОСТЬ: 100%"
 
-[node name="StabilityBar" type="ProgressBar" parent="RootLayout/Footer"]
+[node name="StabilityBar" type="ProgressBar" parent="SafeArea/RootLayout/Footer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -237,4 +249,5 @@ one_shot = true
 wait_time = 0.03
 
 [node name="TelemetryTimer" type="Timer" parent="Runtime"]
+
 

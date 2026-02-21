@@ -289,8 +289,17 @@ static func validate_case_b(c: Dictionary) -> bool:
 		if not _all_exist_in(answer_ids, all_row_ids) or not _all_exist_in(boundary_ids, all_row_ids) or not _all_exist_in(opposite_ids, all_row_ids) or not _all_exist_in(unrelated_ids, all_row_ids) or not _all_exist_in(decoy_ids, all_row_ids):
 			push_error("Case %s has unknown row ids in sets" % case_id)
 			return false
-		if not _are_disjoint([answer_ids, boundary_ids, opposite_ids, unrelated_ids, decoy_ids]):
-			push_error("Case %s has intersecting sets (A/B/O/U/D)" % case_id)
+		# Boundary rows may overlap with answer rows for non-strict predicates (e.g. >=).
+		var predicate: Dictionary = c.get("predicate", {}) as Dictionary
+		var strict_expected: bool = bool(predicate.get("strict_expected", false))
+		if not _are_disjoint([answer_ids, opposite_ids, unrelated_ids, decoy_ids]):
+			push_error("Case %s has intersecting sets (A/O/U/D)" % case_id)
+			return false
+		if _has_intersection(boundary_ids, opposite_ids) or _has_intersection(boundary_ids, unrelated_ids) or _has_intersection(boundary_ids, decoy_ids):
+			push_error("Case %s has invalid boundary overlap with O/U/D sets" % case_id)
+			return false
+		if strict_expected and _has_intersection(boundary_ids, answer_ids):
+			push_error("Case %s has strict predicate but boundary overlaps answer set" % case_id)
 			return false
 
 	elif str(c.get("interaction_type", "")) == "RELATIONSHIP_CHOICE":
@@ -322,3 +331,12 @@ static func _are_disjoint(grouped_ids: Array) -> bool:
 				return false
 			seen[key] = true
 	return true
+
+static func _has_intersection(arr1: Array, arr2: Array) -> bool:
+	var lookup: Dictionary = {}
+	for id_v in arr2:
+		lookup[str(id_v)] = true
+	for id_v in arr1:
+		if lookup.has(str(id_v)):
+			return true
+	return false

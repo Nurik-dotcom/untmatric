@@ -28,68 +28,80 @@ color = Color(0.05, 0.05, 0.05, 1)
 
 [node name="NoirOverlay" parent="." instance=ExtResource("6_noir_overlay")]
 
-[node name="RootLayout" type="VBoxContainer" parent="."]
+[node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 12.0
-offset_right = -16.0
-offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="RootLayout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
 
-[node name="BackRow" type="HBoxContainer" parent="RootLayout"]
+[node name="BackRow" type="HBoxContainer" parent="SafeArea/RootLayout"]
 layout_mode = 2
 
-[node name="BtnBack" type="Button" parent="RootLayout/BackRow"]
+[node name="BtnBack" type="Button" parent="SafeArea/RootLayout/BackRow"]
 custom_minimum_size = Vector2(120, 48)
 layout_mode = 2
 text = "НАЗАД"
 
-[node name="Header" type="PanelContainer" parent="RootLayout"]
+[node name="Header" type="PanelContainer" parent="SafeArea/RootLayout"]
 layout_mode = 2
 size_flags_vertical = 0
 size_flags_horizontal = 3
 
-[node name="Margin" type="MarginContainer" parent="RootLayout/Header"]
+[node name="Margin" type="MarginContainer" parent="SafeArea/RootLayout/Header"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 5
 
-[node name="Title" type="RichTextLabel" parent="RootLayout/Header/Margin"]
+[node name="Title" type="RichTextLabel" parent="SafeArea/RootLayout/Header/Margin"]
 layout_mode = 2
 text = "ДЕЛО #7: СЕКРЕТНЫЙ АРХИВ [УРОВЕНЬ B]"
 fit_content = true
 scroll_active = false
 autowrap_mode = 0
 
-[node name="Body" type="VBoxContainer" parent="RootLayout"]
+[node name="Body" type="VBoxContainer" parent="SafeArea/RootLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 0
 
-[node name="FilterModeRoot" type="HSplitContainer" parent="RootLayout/Body"]
+[node name="FilterModeRoot" type="HSplitContainer" parent="SafeArea/RootLayout/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 split_offset = 400
 
-[node name="TableSection" type="VBoxContainer" parent="RootLayout/Body/FilterModeRoot"]
+[node name="TableSection" type="VBoxContainer" parent="SafeArea/RootLayout/Body/FilterModeRoot"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="TableTitle" type="Label" parent="RootLayout/Body/FilterModeRoot/TableSection"]
+[node name="TableTitle" type="Label" parent="SafeArea/RootLayout/Body/FilterModeRoot/TableSection"]
 layout_mode = 2
 text = "РЕЖИМ ФИЛЬТРА // МУЛЬТИВЫБОР"
 
-[node name="DataTree" type="Tree" parent="RootLayout/Body/FilterModeRoot/TableSection"]
+[node name="DataTree" type="Tree" parent="SafeArea/RootLayout/Body/FilterModeRoot/TableSection"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -97,12 +109,12 @@ columns = 3
 hide_root = true
 select_mode = 1
 
-[node name="TaskSection" type="VBoxContainer" parent="RootLayout/Body/FilterModeRoot"]
+[node name="TaskSection" type="VBoxContainer" parent="SafeArea/RootLayout/Body/FilterModeRoot"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="PromptLabel" type="RichTextLabel" parent="RootLayout/Body/FilterModeRoot/TaskSection"]
+[node name="PromptLabel" type="RichTextLabel" parent="SafeArea/RootLayout/Body/FilterModeRoot/TaskSection"]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 theme_override_font_sizes/normal_font_size = 20
@@ -110,94 +122,94 @@ bbcode_enabled = true
 text = "Загрузка параметров дела..."
 fit_content = true
 
-[node name="ControlRow" type="HBoxContainer" parent="RootLayout/Body/FilterModeRoot/TaskSection"]
+[node name="ControlRow" type="HBoxContainer" parent="SafeArea/RootLayout/Body/FilterModeRoot/TaskSection"]
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="BtnClear" type="Button" parent="RootLayout/Body/FilterModeRoot/TaskSection/ControlRow"]
+[node name="BtnClear" type="Button" parent="SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/ControlRow"]
 custom_minimum_size = Vector2(140, 56)
 layout_mode = 2
 text = "ОЧИСТИТЬ [X]"
 
-[node name="BtnSubmit" type="Button" parent="RootLayout/Body/FilterModeRoot/TaskSection/ControlRow"]
+[node name="BtnSubmit" type="Button" parent="SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/ControlRow"]
 custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
 text = "ОТПРАВИТЬ [ВВОД]"
 
-[node name="RelationModeRoot" type="VBoxContainer" parent="RootLayout/Body"]
+[node name="RelationModeRoot" type="VBoxContainer" parent="SafeArea/RootLayout/Body"]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="PromptLabelRel" type="RichTextLabel" parent="RootLayout/Body/RelationModeRoot"]
+[node name="PromptLabelRel" type="RichTextLabel" parent="SafeArea/RootLayout/Body/RelationModeRoot"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 text = "Анализ связи..."
 fit_content = true
 
-[node name="SchemaContainer" type="HBoxContainer" parent="RootLayout/Body/RelationModeRoot"]
+[node name="SchemaContainer" type="HBoxContainer" parent="SafeArea/RootLayout/Body/RelationModeRoot"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 alignment = 1
 
-[node name="LeftTable" type="VBoxContainer" parent="RootLayout/Body/RelationModeRoot/SchemaContainer"]
+[node name="LeftTable" type="VBoxContainer" parent="SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Title" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable"]
+[node name="Title" type="Label" parent="SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable"]
 layout_mode = 2
 text = "Таблица A"
 horizontal_alignment = 1
 
-[node name="TreeL" type="Tree" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable"]
+[node name="TreeL" type="Tree" parent="SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/LeftTable"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 hide_root = true
 
-[node name="CenterConnector" type="VBoxContainer" parent="RootLayout/Body/RelationModeRoot/SchemaContainer"]
+[node name="CenterConnector" type="VBoxContainer" parent="SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer"]
 layout_mode = 2
 alignment = 1
 
-[node name="ArrowLabel" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
+[node name="ArrowLabel" type="Label" parent="SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
 layout_mode = 2
 horizontal_alignment = 1
 text = ""
 
-[node name="ArrowLine" type="ColorRect" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
+[node name="ArrowLine" type="ColorRect" parent="SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
 custom_minimum_size = Vector2(96, 3)
 layout_mode = 2
 color = Color(0.88, 0.64, 0.16, 1)
 
-[node name="HintLabel" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
+[node name="HintLabel" type="Label" parent="SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/CenterConnector"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
 text = "FK ссылка"
 
-[node name="RightTable" type="VBoxContainer" parent="RootLayout/Body/RelationModeRoot/SchemaContainer"]
+[node name="RightTable" type="VBoxContainer" parent="SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Title" type="Label" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable"]
+[node name="Title" type="Label" parent="SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable"]
 layout_mode = 2
 text = "Таблица B"
 horizontal_alignment = 1
 
-[node name="TreeR" type="Tree" parent="RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable"]
+[node name="TreeR" type="Tree" parent="SafeArea/RootLayout/Body/RelationModeRoot/SchemaContainer/RightTable"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 hide_root = true
 
-[node name="OptionsRow" type="HBoxContainer" parent="RootLayout/Body/RelationModeRoot"]
+[node name="OptionsRow" type="HBoxContainer" parent="SafeArea/RootLayout/Body/RelationModeRoot"]
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="ConnectorOverlay" type="Control" parent="RootLayout/Body/RelationModeRoot"]
+[node name="ConnectorOverlay" type="Control" parent="SafeArea/RootLayout/Body/RelationModeRoot"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -207,17 +219,17 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("5_connector")
 
-[node name="Footer" type="HBoxContainer" parent="RootLayout"]
+[node name="Footer" type="HBoxContainer" parent="SafeArea/RootLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 20
 
-[node name="StabilityLabel" type="Label" parent="RootLayout/Footer"]
+[node name="StabilityLabel" type="Label" parent="SafeArea/RootLayout/Footer"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 text = "СТАБИЛЬНОСТЬ: 100%"
 
-[node name="StabilityBar" type="ProgressBar" parent="RootLayout/Footer"]
+[node name="StabilityBar" type="ProgressBar" parent="SafeArea/RootLayout/Footer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -240,4 +252,5 @@ stream = ExtResource("4_relay")
 wait_time = 0.06
 
 [node name="TelemetryTimer" type="Timer" parent="Runtime"]
+
 
