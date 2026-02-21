@@ -109,29 +109,38 @@ const CASES = [
 	}
 ]
 # --- UI NODES ---
-@onready var stability_label = $MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/StabilityLabel
-@onready var stats_label = $MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/StatsLabel
-@onready var story_text = $MainLayout/StoryPanel/StoryMargin/StoryText
-@onready var journal_label = $MainLayout/BoardContainer/JournalLabel
+@onready var clue_title_label: Label = $MainLayout/Header/LblClueTitle
+@onready var session_label: Label = $MainLayout/Header/LblSessionId
+@onready var facts_bar: ProgressBar = $MainLayout/BarsRow/FactsBar
+@onready var energy_bar: ProgressBar = $MainLayout/BarsRow/EnergyBar
+@onready var target_label: Label = $MainLayout/TargetDisplay/LblTarget
+@onready var terminal_text: RichTextLabel = $MainLayout/TerminalFrame/TerminalScroll/TerminalRichText
+@onready var stats_label: Label = $MainLayout/StatusRow/StatsLabel
+@onready var feedback_label: Label = $MainLayout/StatusRow/FeedbackLabel
 
-@onready var input_a_btn = $MainLayout/BoardContainer/InputA_Btn
-@onready var input_b_btn = $MainLayout/BoardContainer/InputB_Btn
-@onready var gate_selector = $MainLayout/BoardContainer/GateSelector
-@onready var lamp_rect = $MainLayout/BoardContainer/Lamp
-@onready var lamp_label = $MainLayout/BoardContainer/Lamp/LampLabel
+@onready var input_a_frame: PanelContainer = $MainLayout/InteractionRow/InputAFrame
+@onready var input_b_frame: PanelContainer = $MainLayout/InteractionRow/InputBFrame
+@onready var input_a_btn: Button = $MainLayout/InteractionRow/InputAFrame/InputAVBox/InputA_Btn
+@onready var input_b_btn: Button = $MainLayout/InteractionRow/InputBFrame/InputBVBox/InputB_Btn
+@onready var gate_label: Label = $MainLayout/InteractionRow/GateSlot/GateVBox/GateLabel
+@onready var output_value_label: Label = $MainLayout/InteractionRow/OutputSlot/OutputVBox/OutputValueLabel
 
-@onready var wire_a = $MainLayout/BoardContainer/WiresLayer/InputA_Wire
-@onready var wire_b = $MainLayout/BoardContainer/WiresLayer/InputB_Wire
-@onready var wire_out = $MainLayout/BoardContainer/WiresLayer/Output_Wire
+@onready var gate_and_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateAndBtn
+@onready var gate_or_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateOrBtn
+@onready var gate_not_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNotBtn
+@onready var gate_xor_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateXorBtn
+@onready var gate_nand_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNandBtn
+@onready var gate_nor_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNorBtn
 
-@onready var feedback_label = $MainLayout/ControlsPanel/ControlsMargin/HBox/FeedbackLabel
-@onready var btn_verdict = $MainLayout/ControlsPanel/ControlsMargin/HBox/BtnVerdict
-@onready var btn_next = $MainLayout/ControlsPanel/ControlsMargin/HBox/BtnNext
-@onready var btn_hint = $MainLayout/ControlsPanel/ControlsMargin/HBox/BtnHint
-
-@onready var game_over_panel = $GameOverPanel
-@onready var game_over_label = $GameOverPanel/CenterContainer/VBox/Title
-@onready var click_player = $ClickPlayer
+@onready var btn_hint: Button = $MainLayout/Actions/BtnHint
+@onready var btn_verdict: Button = $MainLayout/Actions/BtnVerdict
+@onready var btn_next: Button = $MainLayout/Actions/BtnNext
+@onready var diagnostics_blocker: ColorRect = $DiagnosticsBlocker
+@onready var diagnostics_panel: PanelContainer = $DiagnosticsPanelA
+@onready var diagnostics_title: Label = $DiagnosticsPanelA/PopupMargin/PopupVBox/PopupTitle
+@onready var diagnostics_text: RichTextLabel = $DiagnosticsPanelA/PopupMargin/PopupVBox/PopupText
+@onready var diagnostics_next_button: Button = $DiagnosticsPanelA/PopupMargin/PopupVBox/PopupBtnNext
+@onready var click_player: AudioStreamPlayer = $ClickPlayer
 
 # --- STATE ---
 var current_case_index: int = 0
@@ -142,6 +151,7 @@ var input_b: bool = false
 var selected_gate_guess: String = ""
 
 var seen_combinations: Dictionary = {}
+var seen_trace_entries: Array[Dictionary] = []
 var case_attempts: int = 0
 var hints_used: int = 0
 var start_time_msec: int = 0
@@ -151,18 +161,18 @@ var verdict_count: int = 0
 var last_verdict_time: float = 0.0
 var verdict_timer: Timer = null
 var is_safe_mode: bool = false
+var gate_buttons: Dictionary = {}
 
-# Colors for Wires/Effects
-const COLOR_WIRE_OFF = Color(0.15, 0.15, 0.15, 1) # Dark Grey
-const COLOR_WIRE_ON = Color(1.2, 1.2, 1.2, 1)     # Glowing White (HDR)
-const COLOR_LAMP_OFF = Color(0.1, 0.1, 0.1, 1)
-const COLOR_LAMP_ON = Color(1.5, 1.5, 1.3, 1)     # Bright Warm White
+const COLOR_OUTPUT_ON = Color(0.95, 0.95, 0.90, 1.0)
+const COLOR_OUTPUT_OFF = Color(0.55, 0.55, 0.55, 1.0)
 
-func _ready():
-	_setup_gate_selector()
+func _ready() -> void:
+	_setup_gate_buttons()
 	_update_stability_ui(GlobalMetrics.stability, 0)
-	GlobalMetrics.stability_changed.connect(_update_stability_ui)
-	GlobalMetrics.game_over.connect(_on_game_over)
+	if not GlobalMetrics.stability_changed.is_connected(_update_stability_ui):
+		GlobalMetrics.stability_changed.connect(_update_stability_ui)
+	if not GlobalMetrics.game_over.is_connected(_on_game_over):
+		GlobalMetrics.game_over.connect(_on_game_over)
 
 	verdict_timer = Timer.new()
 	verdict_timer.one_shot = true
@@ -171,115 +181,106 @@ func _ready():
 
 	load_case(0)
 
-func _setup_gate_selector():
-	gate_selector.clear()
-	gate_selector.add_item(" ... ", 0) # ID 0 = None
-	# Using strict ENT symbols as requested
-	gate_selector.add_item(" &  (И)", 1)
-	gate_selector.add_item(" 1  (ИЛИ)", 2)
-	gate_selector.add_item(" ¬  (НЕ)", 3)
-	gate_selector.add_item(" ⊕  (ИСКЛ. ИЛИ)", 4)
-	gate_selector.add_item(" |  (И-НЕ)", 5)
-	gate_selector.add_item(" ↓  (ИЛИ-НЕ)", 6)
+func _setup_gate_buttons() -> void:
+	gate_buttons = {
+		GATE_AND: gate_and_btn,
+		GATE_OR: gate_or_btn,
+		GATE_NOT: gate_not_btn,
+		GATE_XOR: gate_xor_btn,
+		GATE_NAND: gate_nand_btn,
+		GATE_NOR: gate_nor_btn
+	}
+	_clear_gate_selection()
 
-	gate_selector.set_item_metadata(1, GATE_AND)
-	gate_selector.set_item_metadata(2, GATE_OR)
-	gate_selector.set_item_metadata(3, GATE_NOT)
-	gate_selector.set_item_metadata(4, GATE_XOR)
-	gate_selector.set_item_metadata(5, GATE_NAND)
-	gate_selector.set_item_metadata(6, GATE_NOR)
-
-func load_case(idx: int):
+func load_case(idx: int) -> void:
 	if idx >= CASES.size():
-		idx = 0 # Loop for now
+		idx = 0
 
 	current_case_index = idx
 	current_case = CASES[idx]
 
-	# Reset State
 	input_a = false
 	input_b = false
 	selected_gate_guess = ""
 	seen_combinations.clear()
+	seen_trace_entries.clear()
 	case_attempts = 0
 	hints_used = 0
 	start_time_msec = Time.get_ticks_msec()
 	first_action_ms = -1
 	verdict_count = 0
+	last_verdict_time = 0.0
 	is_safe_mode = false
 
-	# Update UI Text
-	story_text.text = current_case.witness_text
+	clue_title_label.text = "ДЕТЕКТОР ЛЖИ A-01"
 	_update_stats_ui()
-	journal_label.text = "ЛОГ: СИСТЕМА ГОТОВА"
+	_hide_diagnostics()
 
-	# Reset Inputs
 	input_a_btn.button_pressed = false
 	input_b_btn.button_pressed = false
 	input_a_btn.disabled = false
 	input_b_btn.disabled = false
 	btn_hint.disabled = false
-	_update_input_labels()
-
-	# Handle NOT gate (Single input)
-	if current_case.gate == GATE_NOT:
-		input_b_btn.visible = false
-		wire_b.visible = false
-	else:
-		input_b_btn.visible = true
-		wire_b.visible = true
-
-	# Reset Selector & Output
-	gate_selector.selected = 0
-	gate_selector.disabled = false
-
-	# Reset Controls
 	btn_verdict.visible = true
 	btn_verdict.disabled = false
 	btn_next.visible = false
+	feedback_label.visible = false
 	feedback_label.text = ""
 
+	if current_case.gate == GATE_NOT:
+		input_b_frame.visible = false
+	else:
+		input_b_frame.visible = true
+
+	_set_gate_buttons_enabled(true)
+	_clear_gate_selection()
+	_update_input_labels()
 	_update_circuit()
 
-func _update_input_labels():
-	input_a_btn.text = "%s\n%s" % [current_case.a_text, "1" if input_a else "0"]
+func _update_input_labels() -> void:
+	input_a_btn.text = "%s\n[%s]" % [str(current_case.get("a_text", "A")), "1" if input_a else "0"]
 	if current_case.gate != GATE_NOT:
-		input_b_btn.text = "%s\n%s" % [current_case.b_text, "1" if input_b else "0"]
+		input_b_btn.text = "%s\n[%s]" % [str(current_case.get("b_text", "B")), "1" if input_b else "0"]
 
-func _on_input_a_toggled(pressed: bool):
+func _on_input_a_toggled(pressed: bool) -> void:
 	_mark_first_action()
 	input_a = pressed
 	_play_click()
 	_update_input_labels()
 	_update_circuit()
 
-func _on_input_b_toggled(pressed: bool):
+func _on_input_b_toggled(pressed: bool) -> void:
 	_mark_first_action()
 	input_b = pressed
 	_play_click()
 	_update_input_labels()
 	_update_circuit()
 
-func _update_circuit():
-	# 1. Update Input Wires
-	wire_a.default_color = COLOR_WIRE_ON if input_a else COLOR_WIRE_OFF
-	wire_b.default_color = COLOR_WIRE_ON if input_b else COLOR_WIRE_OFF
+func _on_gate_button_toggled(gate_id: String, pressed: bool) -> void:
+	if is_safe_mode:
+		return
+	if not pressed:
+		if selected_gate_guess == gate_id:
+			selected_gate_guess = ""
+			_update_gate_slot_label()
+		return
 
-	# 2. Calculate Logic
-	var out_val = _calculate_gate_output(input_a, input_b, current_case.gate)
+	_mark_first_action()
+	for key in gate_buttons.keys():
+		if key != gate_id:
+			var btn_other: Button = gate_buttons[key]
+			btn_other.set_pressed_no_signal(false)
 
-	# 3. Update Output Wire & Lamp
-	wire_out.default_color = COLOR_WIRE_ON if out_val else COLOR_WIRE_OFF
+	selected_gate_guess = gate_id
+	_play_click()
+	_update_gate_slot_label()
 
-	if out_val:
-		lamp_rect.color = COLOR_LAMP_ON
-		lamp_label.modulate = Color(0, 0, 0, 1) # Black text on bright lamp
-	else:
-		lamp_rect.color = COLOR_LAMP_OFF
-		lamp_label.modulate = Color(0.3, 0.3, 0.3, 1) # Dim text
+func _update_circuit() -> void:
+	var out_val := _calculate_gate_output(input_a, input_b, str(current_case.get("gate", "")))
+	output_value_label.text = "F = %s" % ("1" if out_val else "0")
+	output_value_label.add_theme_color_override("font_color", COLOR_OUTPUT_ON if out_val else COLOR_OUTPUT_OFF)
 
-	# 4. Log
-	var key = ""
+	var key := ""
 	if current_case.gate == GATE_NOT:
 		key = "A=%d" % [1 if input_a else 0]
 	else:
@@ -287,64 +288,157 @@ func _update_circuit():
 
 	if not seen_combinations.has(key):
 		seen_combinations[key] = out_val
-		_update_journal_log()
+		seen_trace_entries.append({
+			"a": 1 if input_a else 0,
+			"b": -1 if current_case.gate == GATE_NOT else (1 if input_b else 0),
+			"f": 1 if out_val else 0
+		})
 		_update_stats_ui()
+
+	_update_target_and_bars()
+	_update_terminal_text(out_val)
 
 func _calculate_gate_output(a: bool, b: bool, type: String) -> bool:
 	match type:
-		GATE_AND: return a and b
-		GATE_OR: return a or b
-		GATE_NOT: return not a
-		GATE_XOR: return a != b
-		GATE_NAND: return not (a and b)
-		GATE_NOR: return not (a or b)
+		GATE_AND:
+			return a and b
+		GATE_OR:
+			return a or b
+		GATE_NOT:
+			return not a
+		GATE_XOR:
+			return a != b
+		GATE_NAND:
+			return not (a and b)
+		GATE_NOR:
+			return not (a or b)
 	return false
 
-func _update_journal_log():
-	var txt = "ЛОГ:\n"
-	for k in seen_combinations:
-		var res = "1" if seen_combinations[k] else "0"
-		txt += "%s -> F=%s | " % [k, res]
-	journal_label.text = txt
+func _update_terminal_text(out_val: bool) -> void:
+	var lines: Array[String] = []
+	lines.append("[b]БРИФИНГ[/b]")
+	lines.append(str(current_case.get("witness_text", "")))
+	lines.append("")
+	lines.append("[b]FACTS LOG[/b]")
 
-func _on_gate_selected(index):
-	_mark_first_action()
-	if index == 0:
-		selected_gate_guess = ""
+	if seen_trace_entries.is_empty():
+		lines.append("• ЖУРНАЛ ПУСТ")
 	else:
-		selected_gate_guess = gate_selector.get_item_metadata(index)
-		_play_click()
+		for i in range(seen_trace_entries.size()):
+			var entry: Dictionary = seen_trace_entries[i]
+			var row := ""
+			if int(entry.get("b", -1)) < 0:
+				row = "• KEY=%d  =>  F=%d" % [int(entry.get("a", 0)), int(entry.get("f", 0))]
+			else:
+				row = "• KEY=%d  BTN=%d  =>  F=%d" % [int(entry.get("a", 0)), int(entry.get("b", 0)), int(entry.get("f", 0))]
+			if i == seen_trace_entries.size() - 1:
+				row = "[color=#f4f2e6]> %s[/color]" % row
+			lines.append(row)
 
-func _on_verdict_pressed():
+	lines.append("")
+	lines.append("[b]CURRENT OUTPUT[/b]")
+	lines.append("F = %s" % ("1" if out_val else "0"))
+
+	terminal_text.text = "\n".join(lines)
+
+func _update_gate_slot_label() -> void:
+	if selected_gate_guess.is_empty():
+		gate_label.text = "GATE: ?"
+		return
+	gate_label.text = "GATE: %s (%s)" % [_gate_symbol(selected_gate_guess), _gate_title(selected_gate_guess)]
+
+func _gate_symbol(gate_id: String) -> String:
+	match gate_id:
+		GATE_AND:
+			return "∧"
+		GATE_OR:
+			return "∨"
+		GATE_NOT:
+			return "¬"
+		GATE_XOR:
+			return "⊕"
+		GATE_NAND:
+			return "⊼"
+		GATE_NOR:
+			return "⊽"
+		_:
+			return "?"
+
+func _gate_title(gate_id: String) -> String:
+	match gate_id:
+		GATE_AND:
+			return "AND"
+		GATE_OR:
+			return "OR"
+		GATE_NOT:
+			return "NOT"
+		GATE_XOR:
+			return "XOR"
+		GATE_NAND:
+			return "NAND"
+		GATE_NOR:
+			return "NOR"
+		_:
+			return "UNKNOWN"
+
+func _set_gate_buttons_enabled(enabled: bool) -> void:
+	for gate_id in gate_buttons.keys():
+		var gate_btn: Button = gate_buttons[gate_id]
+		gate_btn.disabled = not enabled
+
+func _clear_gate_selection() -> void:
+	for gate_id in gate_buttons.keys():
+		var gate_btn: Button = gate_buttons[gate_id]
+		gate_btn.set_pressed_no_signal(false)
+	selected_gate_guess = ""
+	_update_gate_slot_label()
+
+func _select_gate_button(gate_id: String) -> void:
+	_clear_gate_selection()
+	if not gate_buttons.has(gate_id):
+		return
+	var gate_btn: Button = gate_buttons[gate_id]
+	gate_btn.set_pressed_no_signal(true)
+	selected_gate_guess = gate_id
+	_update_gate_slot_label()
+
+func _update_target_and_bars() -> void:
+	var min_seen: int = int(current_case.get("min_seen", 2))
+	var seen_count: int = seen_combinations.size()
+	var ratio := float(seen_count) / float(maxi(1, min_seen))
+	facts_bar.value = clampf(ratio * 100.0, 0.0, 100.0)
+	energy_bar.value = clampf(GlobalMetrics.stability, 0.0, 100.0)
+	target_label.text = "ЦЕЛЬ: собрать факты %d/%d и вынести вердикт" % [mini(seen_count, min_seen), min_seen]
+
+func _on_verdict_pressed() -> void:
 	if is_safe_mode:
 		return
 	_mark_first_action()
 	verdict_count += 1
 
-	# Anti-spam
-	var current_time = Time.get_ticks_msec() / 1000.0
+	var current_time: float = Time.get_ticks_msec() / 1000.0
 	if current_time - last_verdict_time < 0.8:
-		_show_feedback("Подождите перед следующим вердиктом.", Color(1, 0.5, 0))
+		_show_feedback("Подождите перед следующим вердиктом.", Color(1.0, 0.62, 0.28))
 		_lock_verdict(3.0)
 		_register_trial("RATE_LIMITED", false)
 		return
 	last_verdict_time = current_time
 
-	if selected_gate_guess == "":
-		_show_feedback("СНАЧАЛА ВЫБЕРИТЕ ВЕНТИЛЬ", Color(1, 1, 0))
+	if selected_gate_guess.is_empty():
+		_show_feedback("СНАЧАЛА ВЫБЕРИТЕ ВЕНТИЛЬ", Color(1.0, 0.86, 0.32))
 		_register_trial("EMPTY_SELECTION", false)
 		return
 
-	var min_seen = current_case.get("min_seen", 2)
+	var min_seen: int = int(current_case.get("min_seen", 2))
 	if seen_combinations.size() < min_seen:
-		_show_feedback("НЕДОСТАТОЧНО ДАННЫХ (%d/%d)" % [seen_combinations.size(), min_seen], Color(1, 0.5, 0))
+		_show_feedback("НЕДОСТАТОЧНО ДАННЫХ (%d/%d)" % [seen_combinations.size(), min_seen], Color(1.0, 0.62, 0.28))
 		_apply_penalty(2.0)
 		_lock_verdict(2.0)
 		_register_trial("INSUFFICIENT_DATA", false)
 		return
 
 	if selected_gate_guess == current_case.gate:
-		_show_feedback("ДОСТУП РАЗРЕШЁН", Color(0, 1, 0))
+		_show_feedback("ДОСТУП РАЗРЕШЁН", Color(0.45, 0.92, 0.62))
 		btn_verdict.visible = false
 		btn_next.visible = true
 		_disable_controls()
@@ -353,116 +447,106 @@ func _on_verdict_pressed():
 		case_attempts += 1
 		_update_stats_ui()
 
-		var penalty = 10.0
+		var penalty := 10.0
 		if case_attempts == 2:
 			penalty = 15.0
 		elif case_attempts >= 3:
 			penalty = 25.0
 
 		_apply_penalty(penalty)
-		_show_feedback("ДОСТУП ЗАПРЕЩЁН (-%d)" % int(penalty), Color(1, 0, 0))
+		_show_feedback("ДОСТУП ЗАПРЕЩЁН (-%d)" % int(penalty), Color(1.0, 0.35, 0.32))
 		var verdict_code := "WRONG_GATE"
 		if case_attempts >= MAX_ATTEMPTS:
 			_enter_safe_mode()
 			verdict_code = "SAFE_MODE_TRIGGERED"
 		_register_trial(verdict_code, false)
 
-func _lock_verdict(duration: float):
-	if is_safe_mode: return
+func _lock_verdict(duration: float) -> void:
+	if is_safe_mode:
+		return
 	btn_verdict.disabled = true
 	verdict_timer.start(duration)
 
-func _on_verdict_unlock():
-	if is_safe_mode: return
-	if GlobalMetrics.stability > 0:
+func _on_verdict_unlock() -> void:
+	if is_safe_mode:
+		return
+	if GlobalMetrics.stability > 0.0:
 		btn_verdict.disabled = false
 
-func _enter_safe_mode():
+func _enter_safe_mode() -> void:
 	is_safe_mode = true
 	_disable_controls()
 	btn_verdict.disabled = true
 	btn_next.visible = true
 
-	# Auto-select correct gate
-	for i in range(gate_selector.item_count):
-		if gate_selector.get_item_metadata(i) == current_case.gate:
-			gate_selector.select(i)
-			gate_selector.disabled = true
-			break
+	_set_gate_buttons_enabled(false)
+	_select_gate_button(str(current_case.get("gate", "")))
 
-	var gate_symbol = "?"
-	match current_case.gate:
-		GATE_AND: gate_symbol = "& (И)"
-		GATE_OR: gate_symbol = "1 (ИЛИ)"
-		GATE_NOT: gate_symbol = "¬ (НЕ)"
-		GATE_XOR: gate_symbol = "⊕ (ИСКЛ. ИЛИ)"
-		GATE_NAND: gate_symbol = "| (И-НЕ)"
-		GATE_NOR: gate_symbol = "↓ (ИЛИ-НЕ)"
+	var gate_symbol := _gate_symbol(str(current_case.get("gate", "")))
+	var gate_title := _gate_title(str(current_case.get("gate", "")))
+	var safe_msg := "БЕЗОПАСНЫЙ РЕЖИМ: правильный вентиль %s (%s)." % [gate_symbol, gate_title]
+	_show_feedback(safe_msg, Color(1.0, 0.74, 0.32))
+	_show_diagnostics("SAFE MODE", "%s\nВыполнен авторазбор, изучите журнал и переходите далее." % safe_msg)
 
-	_show_feedback("БЕЗОПАСНЫЙ РЕЖИМ: правильный вентиль %s. Выполнен авторазбор." % gate_symbol, Color(1, 0.5, 0))
+func _show_diagnostics(title: String, message: String) -> void:
+	diagnostics_title.text = title
+	diagnostics_text.text = message
+	diagnostics_blocker.visible = true
+	diagnostics_panel.visible = true
+	diagnostics_next_button.grab_focus()
 
-func _show_feedback(msg: String, col: Color):
+func _hide_diagnostics() -> void:
+	diagnostics_blocker.visible = false
+	diagnostics_panel.visible = false
+
+func _on_diagnostics_close_pressed() -> void:
+	_hide_diagnostics()
+
+func _show_feedback(msg: String, col: Color) -> void:
 	feedback_label.text = msg
 	feedback_label.add_theme_color_override("font_color", col)
 	feedback_label.visible = true
 
-func _apply_penalty(amount):
+func _apply_penalty(amount: float) -> void:
 	GlobalMetrics.stability = max(0.0, GlobalMetrics.stability - amount)
 	GlobalMetrics.stability_changed.emit(GlobalMetrics.stability, -amount)
 
-func _update_stability_ui(val, _change):
-	stability_label.text = "СТАБИЛЬНОСТЬ: %d%%" % int(val)
-	if val < 30:
-		stability_label.add_theme_color_override("font_color", Color(1, 0, 0))
-	elif val < 70:
-		stability_label.add_theme_color_override("font_color", Color(1, 1, 0))
-	else:
-		stability_label.add_theme_color_override("font_color", Color(0, 1, 0))
+func _update_stability_ui(val: float, _change: float) -> void:
+	energy_bar.value = clampf(val, 0.0, 100.0)
+	_update_stats_ui()
 
-func _update_stats_ui():
-	var min_seen = current_case.get("min_seen", 2)
-	stats_label.text = "ДЕЛО: %02d | ПОП: %d/%d | ФАКТЫ: %d/%d" % [
-		current_case_index + 1,
+func _update_stats_ui() -> void:
+	var min_seen: int = int(current_case.get("min_seen", 2))
+	var case_id := str(current_case.get("id", "A_00"))
+	session_label.text = "СЕССИЯ: %02d/%02d • CASE %s" % [current_case_index + 1, CASES.size(), case_id]
+	stats_label.text = "ПОП: %d/%d • ФАКТЫ: %d/%d • СТАБ: %d%%" % [
 		case_attempts,
 		MAX_ATTEMPTS,
 		seen_combinations.size(),
-		min_seen
+		min_seen,
+		int(GlobalMetrics.stability)
 	]
+	_update_target_and_bars()
 
-func _on_game_over():
-	_enter_safe_mode()
-	# The original game over panel is now redundant if we want "Safe Mode" style instead
-	# But per instructions, if stability drops to 0, we enter Safe Mode.
-	# We can keep the glitch effect if desired, but "Safe Mode" implies continuing.
-	# Let's hide the old game over panel if it pops up via other paths, or just not use it.
-	game_over_panel.visible = false
-
-func _on_system_failure():
-	# Deprecated by Safe Mode logic, but kept as fallback/extreme fail
+func _on_game_over() -> void:
 	_enter_safe_mode()
 
-func _on_restart_pressed():
-	# Legacy restart, might not be needed if Safe Mode handles everything
-	GlobalMetrics.stability = 100.0
-	GlobalMetrics.stability_changed.emit(100.0, 0)
-	game_over_panel.visible = false
-	load_case(current_case_index)
-
-func _on_back_button_pressed():
+func _on_back_button_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
-func _on_next_button_pressed():
+func _on_next_button_pressed() -> void:
+	_hide_diagnostics()
 	load_case(current_case_index + 1)
 
-func _on_hint_pressed():
+func _on_hint_pressed() -> void:
 	_mark_first_action()
 	if hints_used < current_case.hints.size():
-		var h = current_case.hints[hints_used]
+		var h := str(current_case.hints[hints_used])
 		hints_used += 1
-		_show_feedback("ПОДСКАЗКА: " + h, Color(0.5, 0.8, 1))
+		_show_feedback("ПОДСКАЗКА: " + h, Color(0.56, 0.78, 0.96))
 		_apply_penalty(5.0)
 	else:
-		_show_feedback("ПОДСКАЗОК БОЛЬШЕ НЕТ", Color(0.5, 0.5, 0.5))
+		_show_feedback("ПОДСКАЗОК БОЛЬШЕ НЕТ", Color(0.66, 0.66, 0.66))
 
 func _mark_first_action() -> void:
 	if first_action_ms < 0:
@@ -487,12 +571,12 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	payload["verdict_count"] = verdict_count
 	GlobalMetrics.register_trial(payload)
 
-func _play_click():
+func _play_click() -> void:
 	if click_player.stream:
 		click_player.play()
 
-func _disable_controls():
+func _disable_controls() -> void:
 	input_a_btn.disabled = true
 	input_b_btn.disabled = true
-	gate_selector.disabled = true
+	_set_gate_buttons_enabled(false)
 	btn_hint.disabled = true
