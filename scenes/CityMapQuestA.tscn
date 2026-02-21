@@ -114,17 +114,16 @@ layout_mode = 2
 autowrap_mode = 2
 text = ""
 
-[node name="ContentSplit" type="BoxContainer" parent="SafeArea/MainVBox"]
+[node name="ContentSplit" type="HSplitContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+split_offset = 800
 
 [node name="GraphPanel" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-size_flags_stretch_ratio = 2.0
 
 [node name="GraphMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/GraphPanel"]
 layout_mode = 2
@@ -156,11 +155,9 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="InfoPanel" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit"]
-custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.0
 
 [node name="InfoMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel"]
 layout_mode = 2
@@ -202,12 +199,14 @@ theme_override_constants/separation = 8
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.0
 text = "СБРОС"
 
 [node name="BtnSubmit" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.0
 theme_type_variation = &"PrimaryButton"
 text = "ОТПРАВИТЬ"
 
@@ -216,6 +215,7 @@ visible = false
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.0
 theme_type_variation = &"PrimaryButton"
 disabled = true
 text = "ДАЛЕЕ"

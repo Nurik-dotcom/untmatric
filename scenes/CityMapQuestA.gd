@@ -6,7 +6,7 @@ const DEFAULT_ACCENT := Color(0.40, 0.72, 1.0, 1.0)
 const ARROW_ANGLE_RAD := 0.52
 const ARROW_LEN := 16.0
 
-@onready var content_split: BoxContainer = $SafeArea/MainVBox/ContentSplit
+@onready var content_split: HSplitContainer = $SafeArea/MainVBox/ContentSplit
 @onready var graph_container: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer
 @onready var edges_layer: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer/EdgesLayer
 @onready var nodes_layer: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer/NodesLayer

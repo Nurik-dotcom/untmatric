@@ -1,56 +1,18 @@
-[gd_scene load_steps=10 format=3 uid="uid://c2k856hihjj58"]
+[gd_scene load_steps=5 format=3 uid="uid://c2k856hihjj58"]
 
 [ext_resource type="Script" path="res://scenes/LogicQuestC.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/theme_noir_pencil.tres" id="2_theme"]
+[ext_resource type="Shader" path="res://ui/shaders/noir_pencil_overlay.gdshader" id="3_shader"]
 
-[sub_resource type="SystemFont" id="SystemFont_mono"]
-font_names = PackedStringArray("Courier New", "Consolas", "Liberation Mono", "Monospace")
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
-bg_color = Color(0.043, 0.051, 0.063, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
-bg_color = Color(0.08, 0.09, 0.11, 1)
-border_width_bottom = 2
-border_color = Color(0.16, 0.18, 0.21, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.08, 0.09, 0.11, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.16, 0.18, 0.21, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_feedback"]
-bg_color = Color(0.06, 0.07, 0.08, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.2, 0.2, 0.2, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_overlay"]
-bg_color = Color(0, 0, 0, 0.85)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_safe"]
-bg_color = Color(0, 0.2, 0, 0.9)
-border_width_bottom = 4
-border_color = Color(0, 1, 0, 1)
-
-[sub_resource type="Environment" id="Environment_glow"]
-background_mode = 3
-glow_enabled = true
-glow_intensity = 0.5
-glow_strength = 0.9
-glow_blend_mode = 1
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_noir"]
+shader = ExtResource("3_shader")
+shader_parameter/intensity = 0.34
+shader_parameter/grain_strength = 0.33
+shader_parameter/hatch_strength = 0.26
+shader_parameter/vignette_strength = 0.42
+shader_parameter/fx_quality = 1
+shader_parameter/pulse = 0.0
+shader_parameter/jitter_strength = 0.0
 
 [node name="LogicQuestC" type="Control"]
 layout_mode = 3
@@ -59,16 +21,30 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
-[node name="Background" type="Panel" parent="."]
+[node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+color = Color(0.05, 0.05, 0.05, 1)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="NoirOverlay" type="ColorRect" parent="CanvasLayer"]
+material = SubResource("ShaderMaterial_noir")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
 
 [node name="MainLayout" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -81,232 +57,206 @@ offset_right = -16.0
 offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
+alignment = 1
 
-[node name="HeaderPanel" type="PanelContainer" parent="MainLayout"]
-custom_minimum_size = Vector2(0, 60)
+[node name="Header" type="HBoxContainer" parent="MainLayout"]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_header")
+alignment = 1
 
-[node name="HeaderMargin" type="MarginContainer" parent="MainLayout/HeaderPanel"]
+[node name="BtnBack" type="Button" parent="MainLayout/Header"]
+custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 8
+text = "НАЗАД"
 
-[node name="HeaderHBox" type="HBoxContainer" parent="MainLayout/HeaderPanel/HeaderMargin"]
-layout_mode = 2
-
-[node name="BtnBack" type="Button" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 24
-text = "<"
-
-[node name="Spacer1" type="Control" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+[node name="LblClueTitle" type="Label" parent="MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
+text = "ДЕТЕКТОР ЛЖИ C-01"
 
-[node name="StabilityLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.22, 0.88, 0.42, 1)
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 20
-text = "СТАБИЛЬНОСТЬ: 100%"
-
-[node name="Spacer2" type="Control" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+[node name="LblSessionId" type="Label" parent="MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
+text = "СЕССИЯ: 00/00 • CASE C_00"
+horizontal_alignment = 2
 
-[node name="StatsLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+[node name="BarsRow" type="HBoxContainer" parent="MainLayout"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.5, 0.5, 0.6, 1)
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 16
-text = "ДЕЛО: 01"
+alignment = 1
 
-[node name="StoryPanel" type="PanelContainer" parent="MainLayout"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
-
-[node name="Margin" type="MarginContainer" parent="MainLayout/StoryPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
-
-[node name="StoryText" type="RichTextLabel" parent="MainLayout/StoryPanel/Margin"]
-layout_mode = 2
-theme_override_colors/default_color = Color(0.8, 0.85, 0.9, 1)
-theme_override_fonts/normal_font = SubResource("SystemFont_mono")
-theme_override_font_sizes/normal_font_size = 18
-bbcode_enabled = true
-text = "Здесь будет текст истории..."
-fit_content = true
-
-[node name="ExprPanel" type="PanelContainer" parent="MainLayout"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
-
-[node name="Margin" type="MarginContainer" parent="MainLayout/ExprPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
-
-[node name="VBox" type="VBoxContainer" parent="MainLayout/ExprPanel/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="HeaderLabel" type="Label" parent="MainLayout/ExprPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.5, 0.6, 0.7, 1)
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 14
-text = "МОДУЛЬ БЕЗОПАСНОСТИ: УСЛОВИЕ"
-
-[node name="ExprText" type="RichTextLabel" parent="MainLayout/ExprPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_fonts/normal_font = SubResource("SystemFont_mono")
-theme_override_font_sizes/normal_font_size = 28
-bbcode_enabled = true
-text = "[b]A[/b] AND ([b]B[/b] OR [b]C[/b])"
-fit_content = true
-
-[node name="LoadHBox" type="HBoxContainer" parent="MainLayout/ExprPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="LoadLabel" type="Label" parent="MainLayout/ExprPanel/Margin/VBox/LoadHBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_fonts/font = SubResource("SystemFont_mono")
-text = "НАГРУЗКА: 6/4"
-
-[node name="LoadBar" type="ProgressBar" parent="MainLayout/ExprPanel/Margin/VBox/LoadHBox"]
-custom_minimum_size = Vector2(0, 24)
+[node name="FactsBar" type="ProgressBar" parent="MainLayout/BarsRow"]
+custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_horizontal = 3
-max_value = 10.0
-step = 1.0
-value = 6.0
 show_percentage = false
 
-[node name="PatchPanel" type="PanelContainer" parent="MainLayout"]
+[node name="EnergyBar" type="ProgressBar" parent="MainLayout/BarsRow"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+size_flags_horizontal = 3
+value = 100.0
+show_percentage = false
+
+[node name="TargetDisplay" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+
+[node name="LblTarget" type="Label" parent="MainLayout/TargetDisplay"]
+layout_mode = 2
+text = "ШАГ 1/3: выберите патч"
+horizontal_alignment = 1
+
+[node name="TerminalFrame" type="PanelContainer" parent="MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="Margin" type="MarginContainer" parent="MainLayout/PatchPanel"]
+[node name="TerminalScroll" type="ScrollContainer" parent="MainLayout/TerminalFrame"]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
 
-[node name="VBox" type="VBoxContainer" parent="MainLayout/PatchPanel/Margin"]
+[node name="TerminalRichText" type="RichTextLabel" parent="MainLayout/TerminalFrame/TerminalScroll"]
 layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="HeaderLabel" type="Label" parent="MainLayout/PatchPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.5, 0.6, 0.7, 1)
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 14
-text = "ДОСТУПНЫЕ ПАТЧИ"
-
-[node name="PatchList" type="VBoxContainer" parent="MainLayout/PatchPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="FeedbackPanel" type="PanelContainer" parent="MainLayout"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_feedback")
-
-[node name="Margin" type="MarginContainer" parent="MainLayout/FeedbackPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 12
-
-[node name="FeedbackText" type="RichTextLabel" parent="MainLayout/FeedbackPanel/Margin"]
-layout_mode = 2
-theme_override_fonts/normal_font = SubResource("SystemFont_mono")
-theme_override_font_sizes/normal_font_size = 16
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
-text = "Выберите патч, чтобы снизить нагрузку."
+text = "[b]БРИФИНГ[/b]"
 fit_content = true
 
-[node name="BottomBar" type="HBoxContainer" parent="MainLayout"]
-custom_minimum_size = Vector2(0, 72)
+[node name="InteractionRow" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="ExprSlot" type="PanelContainer" parent="MainLayout/InteractionRow"]
+custom_minimum_size = Vector2(360, 108)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ExprVBox" type="VBoxContainer" parent="MainLayout/InteractionRow/ExprSlot"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ExprTitle" type="Label" parent="MainLayout/InteractionRow/ExprSlot/ExprVBox"]
+layout_mode = 2
+text = "CURRENT CONDITION"
+horizontal_alignment = 1
+
+[node name="ExprValue" type="RichTextLabel" parent="MainLayout/InteractionRow/ExprSlot/ExprVBox"]
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 24
+bbcode_enabled = true
+text = "[b]A[/b]"
+fit_content = true
+
+[node name="PatchSlot" type="PanelContainer" parent="MainLayout/InteractionRow"]
+custom_minimum_size = Vector2(360, 108)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PatchVBox" type="VBoxContainer" parent="MainLayout/InteractionRow/PatchSlot"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PatchTitle" type="Label" parent="MainLayout/InteractionRow/PatchSlot/PatchVBox"]
+layout_mode = 2
+text = "PATCH SLOT"
+horizontal_alignment = 1
+
+[node name="PatchValue" type="Label" parent="MainLayout/InteractionRow/PatchSlot/PatchVBox"]
+layout_mode = 2
+text = "PATCH: EMPTY"
+horizontal_alignment = 1
+
+[node name="LoadSlot" type="PanelContainer" parent="MainLayout/InteractionRow"]
+custom_minimum_size = Vector2(280, 108)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LoadVBox" type="VBoxContainer" parent="MainLayout/InteractionRow/LoadSlot"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LoadTitle" type="Label" parent="MainLayout/InteractionRow/LoadSlot/LoadVBox"]
+layout_mode = 2
+text = "LOAD"
+horizontal_alignment = 1
+
+[node name="LoadBar" type="ProgressBar" parent="MainLayout/InteractionRow/LoadSlot/LoadVBox"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+size_flags_horizontal = 3
+show_percentage = false
+
+[node name="LoadLabel" type="Label" parent="MainLayout/InteractionRow/LoadSlot/LoadVBox"]
+layout_mode = 2
+text = "LOAD: 0 / 0"
+horizontal_alignment = 1
+
+[node name="InventoryFrame" type="PanelContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.55
+
+[node name="InventoryMargin" type="MarginContainer" parent="MainLayout/InventoryFrame"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="InventoryScroll" type="ScrollContainer" parent="MainLayout/InventoryFrame/InventoryMargin"]
+layout_mode = 2
+
+[node name="PatchContainer" type="VBoxContainer" parent="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="StatusRow" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="StatsLabel" type="Label" parent="MainLayout/StatusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ПОП: 0/3 • СКАНЫ: 0 • СТАБ: 100%"
+
+[node name="FeedbackLabel" type="Label" parent="MainLayout/StatusRow"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+text = "..."
+horizontal_alignment = 2
+
+[node name="Actions" type="HBoxContainer" parent="MainLayout"]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="BtnHint" type="Button" parent="MainLayout/BottomBar"]
-custom_minimum_size = Vector2(100, 0)
+[node name="BtnHint" type="Button" parent="MainLayout/Actions"]
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 20
+size_flags_horizontal = 3
 text = "ПОДСКАЗКА"
 
-[node name="BtnNext" type="Button" parent="MainLayout/BottomBar"]
-visible = false
-custom_minimum_size = Vector2(160, 0)
+[node name="BtnScan" type="Button" parent="MainLayout/Actions"]
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0, 1, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 24
-text = "ДАЛЕЕ >"
+disabled = true
+text = "СКАН"
 
-[node name="Spacer" type="Control" parent="MainLayout/BottomBar"]
+[node name="BtnNext" type="Button" parent="MainLayout/Actions"]
+visible = false
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
+text = "ДАЛЕЕ"
 
-[node name="SafeModeOverlay" type="PanelContainer" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 40.0
-grow_horizontal = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_safe")
+[node name="ClickPlayer" type="AudioStreamPlayer" parent="."]
 
-[node name="Label" type="Label" parent="SafeModeOverlay"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 18
-text = "БЕЗОПАСНЫЙ РЕЖИМ: ПРАВИЛЬНЫЙ ПАТЧ ПОДСВЕЧЕН"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="LockOverlay" type="Label" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -100.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_colors/font_color = Color(1, 0.8, 0.4, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 24
-text = "СИСТЕМА ЗАБЛОКИРОВАНА
-2s"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="GameOverPanel" type="Control" parent="."]
+[node name="DiagnosticsBlocker" type="ColorRect" parent="."]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -314,52 +264,56 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.45)
 
-[node name="Overlay" type="Panel" parent="GameOverPanel"]
+[node name="DiagnosticsPanelC" type="PanelContainer" parent="."]
+visible = false
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -360.0
+offset_top = -210.0
+offset_right = 360.0
+offset_bottom = 210.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
+mouse_filter = 0
 
-[node name="CenterContainer" type="CenterContainer" parent="GameOverPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="VBox" type="VBoxContainer" parent="GameOverPanel/CenterContainer"]
-custom_minimum_size = Vector2(300, 0)
+[node name="PopupMargin" type="MarginContainer" parent="DiagnosticsPanelC"]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
 
-[node name="Title" type="Label" parent="GameOverPanel/CenterContainer/VBox"]
+[node name="PopupVBox" type="VBoxContainer" parent="DiagnosticsPanelC/PopupMargin"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.3, 0.3, 1)
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 32
-text = "КРИТИЧЕСКИЙ СБОЙ"
+theme_override_constants/separation = 16
+
+[node name="PopupTitle" type="Label" parent="DiagnosticsPanelC/PopupMargin/PopupVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "SAFE MODE"
 horizontal_alignment = 1
 
-[node name="RestartButton" type="Button" parent="GameOverPanel/CenterContainer/VBox"]
-custom_minimum_size = Vector2(0, 64)
+[node name="PopupText" type="RichTextLabel" parent="DiagnosticsPanelC/PopupMargin/PopupVBox"]
 layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 24
-text = "ПЕРЕЗАПУСК"
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "Диагностический отчёт."
+fit_content = true
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_glow")
+[node name="PopupBtnNext" type="Button" parent="DiagnosticsPanelC/PopupMargin/PopupVBox"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = "ДАЛЕЕ"
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-
-[connection signal="pressed" from="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/BtnBack" to="." method="_on_back_pressed"]
-[connection signal="pressed" from="MainLayout/BottomBar/BtnHint" to="." method="_on_hint_pressed"]
-[connection signal="pressed" from="MainLayout/BottomBar/BtnNext" to="." method="_on_next_pressed"]
-[connection signal="pressed" from="GameOverPanel/CenterContainer/VBox/RestartButton" to="." method="_on_restart_pressed"]
-
-
+[connection signal="pressed" from="MainLayout/Header/BtnBack" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="MainLayout/Actions/BtnHint" to="." method="_on_hint_pressed"]
+[connection signal="pressed" from="MainLayout/Actions/BtnScan" to="." method="_on_scan_pressed"]
+[connection signal="pressed" from="MainLayout/Actions/BtnNext" to="." method="_on_next_pressed"]
+[connection signal="pressed" from="DiagnosticsPanelC/PopupMargin/PopupVBox/PopupBtnNext" to="." method="_on_diagnostics_close_pressed"]

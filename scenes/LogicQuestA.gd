@@ -109,32 +109,34 @@ const CASES = [
 	}
 ]
 # --- UI NODES ---
-@onready var clue_title_label: Label = $MainLayout/Header/LblClueTitle
-@onready var session_label: Label = $MainLayout/Header/LblSessionId
-@onready var facts_bar: ProgressBar = $MainLayout/BarsRow/FactsBar
-@onready var energy_bar: ProgressBar = $MainLayout/BarsRow/EnergyBar
-@onready var target_label: Label = $MainLayout/TargetDisplay/LblTarget
-@onready var terminal_text: RichTextLabel = $MainLayout/TerminalFrame/TerminalScroll/TerminalRichText
-@onready var stats_label: Label = $MainLayout/StatusRow/StatsLabel
-@onready var feedback_label: Label = $MainLayout/StatusRow/FeedbackLabel
+@onready var clue_title_label: Label = $SafeArea/MainLayout/Header/LblClueTitle
+@onready var session_label: Label = $SafeArea/MainLayout/Header/LblSessionId
+@onready var facts_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/FactsBar
+@onready var energy_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/EnergyBar
+@onready var target_label: Label = $SafeArea/MainLayout/TargetDisplay/LblTarget
+@onready var terminal_text: RichTextLabel = $SafeArea/MainLayout/ContentHSplit/LeftPane/TerminalFrame/TerminalScroll/TerminalRichText
+@onready var stats_label: Label = $SafeArea/MainLayout/ContentHSplit/RightPane/StatusRow/StatsLabel
+@onready var feedback_label: Label = $SafeArea/MainLayout/ContentHSplit/RightPane/StatusRow/FeedbackLabel
 
-@onready var input_a_frame: PanelContainer = $MainLayout/InteractionRow/InputAFrame
-@onready var input_b_frame: PanelContainer = $MainLayout/InteractionRow/InputBFrame
-@onready var input_a_btn: Button = $MainLayout/InteractionRow/InputAFrame/InputAVBox/InputA_Btn
-@onready var input_b_btn: Button = $MainLayout/InteractionRow/InputBFrame/InputBVBox/InputB_Btn
-@onready var gate_label: Label = $MainLayout/InteractionRow/GateSlot/GateVBox/GateLabel
-@onready var output_value_label: Label = $MainLayout/InteractionRow/OutputSlot/OutputVBox/OutputValueLabel
+@onready var input_a_frame: PanelContainer = $SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/InputAFrame
+@onready var input_b_frame: PanelContainer = $SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/InputBFrame
+@onready var gate_slot_frame: PanelContainer = $SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/GateSlot
+@onready var input_a_btn: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/InputAFrame/InputAVBox/InputA_Btn
+@onready var input_b_btn: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/InputBFrame/InputBVBox/InputB_Btn
+@onready var gate_label: Label = $SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/GateSlot/GateVBox/GateLabel
+@onready var output_value_label: Label = $SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/OutputSlot/OutputVBox/OutputValueLabel
+@onready var inventory_frame: PanelContainer = $SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame
 
-@onready var gate_and_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateAndBtn
-@onready var gate_or_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateOrBtn
-@onready var gate_not_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNotBtn
-@onready var gate_xor_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateXorBtn
-@onready var gate_nand_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNandBtn
-@onready var gate_nor_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNorBtn
+@onready var gate_and_btn: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateAndBtn
+@onready var gate_or_btn: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateOrBtn
+@onready var gate_not_btn: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNotBtn
+@onready var gate_xor_btn: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateXorBtn
+@onready var gate_nand_btn: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNandBtn
+@onready var gate_nor_btn: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNorBtn
 
-@onready var btn_hint: Button = $MainLayout/Actions/BtnHint
-@onready var btn_verdict: Button = $MainLayout/Actions/BtnVerdict
-@onready var btn_next: Button = $MainLayout/Actions/BtnNext
+@onready var btn_hint: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/Actions/BtnHint
+@onready var btn_verdict: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/Actions/BtnVerdict
+@onready var btn_next: Button = $SafeArea/MainLayout/ContentHSplit/RightPane/Actions/BtnNext
 @onready var diagnostics_blocker: ColorRect = $DiagnosticsBlocker
 @onready var diagnostics_panel: PanelContainer = $DiagnosticsPanelA
 @onready var diagnostics_title: Label = $DiagnosticsPanelA/PopupMargin/PopupVBox/PopupTitle
@@ -162,6 +164,7 @@ var last_verdict_time: float = 0.0
 var verdict_timer: Timer = null
 var is_safe_mode: bool = false
 var gate_buttons: Dictionary = {}
+var highlighted_step: int = -1
 
 const COLOR_OUTPUT_ON = Color(0.95, 0.95, 0.90, 1.0)
 const COLOR_OUTPUT_OFF = Color(0.55, 0.55, 0.55, 1.0)
@@ -222,7 +225,7 @@ func load_case(idx: int) -> void:
 	input_b_btn.disabled = false
 	btn_hint.disabled = false
 	btn_verdict.visible = true
-	btn_verdict.disabled = false
+	btn_verdict.disabled = true
 	btn_next.visible = false
 	feedback_label.visible = false
 	feedback_label.text = ""
@@ -236,6 +239,7 @@ func load_case(idx: int) -> void:
 	_clear_gate_selection()
 	_update_input_labels()
 	_update_circuit()
+	_update_ui_state()
 
 func _update_input_labels() -> void:
 	input_a_btn.text = "%s\n[%s]" % [str(current_case.get("a_text", "A")), "1" if input_a else "0"]
@@ -256,8 +260,21 @@ func _on_input_b_toggled(pressed: bool) -> void:
 	_update_input_labels()
 	_update_circuit()
 
-func _on_gate_button_toggled(gate_id: String, pressed: bool) -> void:
+func _on_gate_button_toggled(arg1: Variant, arg2: Variant = null) -> void:
+	var pressed := false
+	var gate_id := ""
+	if arg1 is bool:
+		pressed = arg1
+		gate_id = str(arg2)
+	else:
+		gate_id = str(arg1)
+		pressed = bool(arg2)
+	if gate_id.is_empty():
+		return
+
 	if is_safe_mode:
+		return
+	if gate_and_btn.disabled:
 		return
 	if not pressed:
 		if selected_gate_guess == gate_id:
@@ -297,6 +314,7 @@ func _update_circuit() -> void:
 
 	_update_target_and_bars()
 	_update_terminal_text(out_val)
+	_update_ui_state()
 
 func _calculate_gate_output(a: bool, b: bool, type: String) -> bool:
 	match type:
@@ -318,6 +336,11 @@ func _update_terminal_text(out_val: bool) -> void:
 	var lines: Array[String] = []
 	lines.append("[b]БРИФИНГ[/b]")
 	lines.append(str(current_case.get("witness_text", "")))
+	lines.append("")
+	lines.append("[b]ШАГИ[/b]")
+	lines.append("1) Выставьте входы и соберите факты.")
+	lines.append("2) Выберите вентиль в инвентаре.")
+	lines.append("3) Нажмите ВЕРДИКТ.")
 	lines.append("")
 	lines.append("[b]FACTS LOG[/b]")
 
@@ -408,10 +431,58 @@ func _update_target_and_bars() -> void:
 	var ratio := float(seen_count) / float(maxi(1, min_seen))
 	facts_bar.value = clampf(ratio * 100.0, 0.0, 100.0)
 	energy_bar.value = clampf(GlobalMetrics.stability, 0.0, 100.0)
-	target_label.text = "ЦЕЛЬ: собрать факты %d/%d и вынести вердикт" % [mini(seen_count, min_seen), min_seen]
+ 
+func _update_ui_state() -> void:
+	var min_seen: int = int(current_case.get("min_seen", 2))
+	var seen_count: int = seen_combinations.size()
+	var facts_ready := seen_count >= min_seen
+	var gate_ready := not selected_gate_guess.is_empty()
+	var has_result := is_safe_mode or not btn_verdict.visible
+
+	if has_result:
+		target_label.text = "ШАГ 3/3: анализ завершен, переходите далее"
+		btn_verdict.disabled = true
+		_set_gate_buttons_enabled(false)
+		_pulse_step(3)
+		return
+
+	_set_gate_buttons_enabled(facts_ready)
+	btn_verdict.disabled = not (facts_ready and gate_ready)
+
+	if not facts_ready:
+		target_label.text = "ШАГ 1/3: соберите факты %d/%d" % [seen_count, min_seen]
+		_pulse_step(1)
+	elif not gate_ready:
+		target_label.text = "ШАГ 2/3: выберите вентиль"
+		_pulse_step(2)
+	else:
+		target_label.text = "ШАГ 3/3: вынесите вердикт"
+		_pulse_step(3)
+
+func _pulse_step(step: int) -> void:
+	if highlighted_step == step:
+		return
+	highlighted_step = step
+	input_a_frame.modulate = Color(1, 1, 1, 1)
+	input_b_frame.modulate = Color(1, 1, 1, 1)
+	gate_slot_frame.modulate = Color(1, 1, 1, 1)
+	inventory_frame.modulate = Color(1, 1, 1, 1)
+	btn_verdict.modulate = Color(1, 1, 1, 1)
+
+	var target: CanvasItem = input_a_frame
+	if step == 2:
+		target = inventory_frame
+	elif step == 3:
+		target = btn_verdict
+
+	var tween := create_tween()
+	tween.tween_property(target, "modulate", Color(1.08, 1.08, 1.04, 1.0), 0.18)
+	tween.tween_property(target, "modulate", Color(1, 1, 1, 1), 0.22)
 
 func _on_verdict_pressed() -> void:
 	if is_safe_mode:
+		return
+	if btn_verdict.disabled:
 		return
 	_mark_first_action()
 	verdict_count += 1
@@ -427,14 +498,6 @@ func _on_verdict_pressed() -> void:
 	if selected_gate_guess.is_empty():
 		_show_feedback("СНАЧАЛА ВЫБЕРИТЕ ВЕНТИЛЬ", Color(1.0, 0.86, 0.32))
 		_register_trial("EMPTY_SELECTION", false)
-		return
-
-	var min_seen: int = int(current_case.get("min_seen", 2))
-	if seen_combinations.size() < min_seen:
-		_show_feedback("НЕДОСТАТОЧНО ДАННЫХ (%d/%d)" % [seen_combinations.size(), min_seen], Color(1.0, 0.62, 0.28))
-		_apply_penalty(2.0)
-		_lock_verdict(2.0)
-		_register_trial("INSUFFICIENT_DATA", false)
 		return
 
 	if selected_gate_guess == current_case.gate:
@@ -487,6 +550,7 @@ func _enter_safe_mode() -> void:
 	var safe_msg := "БЕЗОПАСНЫЙ РЕЖИМ: правильный вентиль %s (%s)." % [gate_symbol, gate_title]
 	_show_feedback(safe_msg, Color(1.0, 0.74, 0.32))
 	_show_diagnostics("SAFE MODE", "%s\nВыполнен авторазбор, изучите журнал и переходите далее." % safe_msg)
+	_update_ui_state()
 
 func _show_diagnostics(title: String, message: String) -> void:
 	diagnostics_title.text = title
@@ -506,6 +570,7 @@ func _show_feedback(msg: String, col: Color) -> void:
 	feedback_label.text = msg
 	feedback_label.add_theme_color_override("font_color", col)
 	feedback_label.visible = true
+	_update_ui_state()
 
 func _apply_penalty(amount: float) -> void:
 	GlobalMetrics.stability = max(0.0, GlobalMetrics.stability - amount)
@@ -514,6 +579,7 @@ func _apply_penalty(amount: float) -> void:
 func _update_stability_ui(val: float, _change: float) -> void:
 	energy_bar.value = clampf(val, 0.0, 100.0)
 	_update_stats_ui()
+	_update_ui_state()
 
 func _update_stats_ui() -> void:
 	var min_seen: int = int(current_case.get("min_seen", 2))
@@ -527,6 +593,7 @@ func _update_stats_ui() -> void:
 		int(GlobalMetrics.stability)
 	]
 	_update_target_and_bars()
+	_update_ui_state()
 
 func _on_game_over() -> void:
 	_enter_safe_mode()
