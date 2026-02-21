@@ -1,6 +1,6 @@
 extends Control
 
-const LEVEL_PATH := "res://data/city_map/level_6_2.json"
+const PACK_PATH := "res://data/city_map/pack_6_2_B.json"
 const LOG_PREFIX := "case_6_2"
 const DEFAULT_ACCENT := Color(0.40, 0.72, 1.0, 1.0)
 const ARROW_ANGLE_RAD := 0.52
@@ -11,8 +11,10 @@ const ARROW_LEN := 16.0
 @onready var edges_layer: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer/EdgesLayer
 @onready var nodes_layer: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer/NodesLayer
 @onready var btn_back: Button = $SafeArea/MainVBox/Header/BtnBack
+@onready var label_progress: Label = $SafeArea/MainVBox/Header/LabelProgress
 @onready var btn_reset: Button = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow/BtnReset
 @onready var btn_submit: Button = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow/BtnSubmit
+@onready var btn_next: Button = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow/BtnNext
 @onready var sum_input: LineEdit = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SumInput
 @onready var path_display: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/PathDisplay
 @onready var sum_live_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SumLiveLabel
@@ -28,6 +30,8 @@ const ARROW_LEN := 16.0
 @onready var briefing_constraint: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/ConstraintLabel
 
 var level_data: Dictionary = {}
+var pack_data: Dictionary = {}
+var pack_levels: Array = []
 var node_defs: Dictionary = {}
 var adjacency: Dictionary = {}
 var edge_visuals: Dictionary = {}
@@ -35,6 +39,22 @@ var edge_key_to_visuals: Dictionary = {}
 var node_buttons: Dictionary = {}
 var config_hash: String = ""
 var input_regex := RegEx.new()
+var pack_id: String = "CITY_MAP_B_PACK_01"
+var level_index: int = 0
+var level_total: int = 0
+var run_id: String = ""
+var run_started_unix: int = 0
+var attempt_in_sublevel: int = 0
+var attempt_in_run: int = 0
+var levels_completed: int = 0
+var levels_perfect: int = 0
+var run_total_time_seconds: int = 0
+var run_total_calc_errors: int = 0
+var run_total_opt_errors: int = 0
+var run_total_parse_errors: int = 0
+var run_total_reset_errors: int = 0
+var run_total_transit_errors: int = 0
+var run_total_cycle_errors: int = 0
 
 var min_sum: int = 0
 var accent_color: Color = DEFAULT_ACCENT
@@ -47,6 +67,8 @@ var path_sum: int = 0
 var stability: float = 100.0
 var t_elapsed_seconds: int = 0
 var is_game_over: bool = false
+var stage_completed: bool = false
+var input_locked: bool = false
 var first_attempt_edge: String = ""
 var level_started_ms: int = 0
 var first_action_ms: int = -1
@@ -67,20 +89,160 @@ func _ready() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_submit.pressed.connect(_on_submit_pressed)
+	btn_next.pressed.connect(_on_next_pressed)
 	sum_input.text_changed.connect(_on_sum_input_changed)
 	graph_container.resized.connect(_on_graph_resized)
 
-	_load_level_data(LEVEL_PATH)
+	_load_pack(PACK_PATH)
 	_apply_content_layout_mode()
 	_setup_timer()
-	call_deferred("_post_ready")
+	call_deferred("_start_pack_run")
 
-func _post_ready() -> void:
+func _start_pack_run() -> void:
+	run_started_unix = int(Time.get_unix_time_from_system())
+	run_id = "CITYMAP_%s_%d" % ["B", run_started_unix]
+	level_index = 0
+	attempt_in_run = 0
+	levels_completed = 0
+	levels_perfect = 0
+	run_total_time_seconds = 0
+	run_total_calc_errors = 0
+	run_total_opt_errors = 0
+	run_total_parse_errors = 0
+	run_total_reset_errors = 0
+	run_total_transit_errors = 0
+	run_total_cycle_errors = 0
+	_load_sublevel(level_index)
+
+func _load_pack(pack_path: String) -> void:
+	pack_data.clear()
+	pack_levels.clear()
+	level_total = 0
+
+	var file := FileAccess.open(pack_path, FileAccess.READ)
+	if file == null:
+		push_error("Failed to open pack data: %s" % pack_path)
+		pack_levels = [{"id": "6_2_01", "path": "res://data/city_map/level_6_2.json"}]
+		level_total = pack_levels.size()
+		return
+
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_error("Invalid pack JSON in %s" % pack_path)
+		pack_levels = [{"id": "6_2_01", "path": "res://data/city_map/level_6_2.json"}]
+		level_total = pack_levels.size()
+		return
+
+	pack_data = parsed
+	pack_id = str(pack_data.get("pack_id", "CITY_MAP_B_PACK_01"))
+	var raw_levels: Array = pack_data.get("levels", [])
+	for level_var in raw_levels:
+		if typeof(level_var) != TYPE_DICTIONARY:
+			continue
+		var level_entry: Dictionary = level_var
+		if str(level_entry.get("path", "")).is_empty():
+			continue
+		pack_levels.append(level_entry)
+
+	if pack_levels.is_empty():
+		pack_levels = [{"id": "6_2_01", "path": "res://data/city_map/level_6_2.json"}]
+	level_total = pack_levels.size()
+
+func _load_sublevel(index: int) -> void:
+	if index < 0 or index >= pack_levels.size():
+		return
+
+	level_index = index
+	var level_entry := _current_level_entry()
+	var level_path := str(level_entry.get("path", ""))
+	if level_path.is_empty():
+		push_error("Missing level path in pack entry at index %d" % index)
+		return
+
+	_load_level_data(level_path)
+	attempt_in_sublevel = 0
+	is_game_over = false
+	stage_completed = false
+	input_locked = false
+	t_elapsed_seconds = 0
+	n_calc = 0
+	n_opt = 0
+	n_parse = 0
+	n_reset = 0
+	n_transit = 0
+	n_cycle = 0
+	backtrack_count = 0
+	cycle_events = 0
+	cycle_detected = false
+	constraint_violations = 0
+
 	_set_briefing()
 	_rebuild_graph_ui()
 	_reset_round_state(true)
+	_lock_input(false)
 	_update_timer_display()
 	_recalculate_stability()
+	if is_game_over:
+		return
+	btn_next.visible = false
+	btn_next.disabled = true
+	_set_progress_ui()
+
+func _current_level_entry() -> Dictionary:
+	if level_index < 0 or level_index >= pack_levels.size():
+		return {}
+	var level_var: Variant = pack_levels[level_index]
+	if typeof(level_var) != TYPE_DICTIONARY:
+		return {}
+	return level_var
+
+func _set_progress_ui() -> void:
+	var shown_index := maxi(0, level_index + 1)
+	label_progress.text = "TASK: %d/%d" % [shown_index, maxi(1, level_total)]
+	if level_index >= level_total - 1:
+		btn_next.text = "FINISH"
+	else:
+		btn_next.text = "NEXT"
+
+func _is_round_locked() -> bool:
+	return is_game_over or stage_completed or input_locked
+
+func _lock_input(locked: bool) -> void:
+	input_locked = locked
+	sum_input.editable = not locked and not is_game_over and not stage_completed
+	btn_submit.disabled = locked or is_game_over or stage_completed
+	btn_reset.disabled = locked or is_game_over or stage_completed
+	_update_visuals()
+
+func _on_next_pressed() -> void:
+	if not stage_completed:
+		return
+	if level_index + 1 >= level_total:
+		_finalize_pack_run()
+		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+		return
+	_load_sublevel(level_index + 1)
+
+func _finalize_pack_run() -> void:
+	var summary := {
+		"schema_version": "city_map.run.v1",
+		"quest_id": "CITY_MAP",
+		"mode": "B",
+		"run_id": run_id,
+		"pack_id": pack_id,
+		"levels_total": level_total,
+		"levels_completed": levels_completed,
+		"levels_perfect": levels_perfect,
+		"total_time_seconds": run_total_time_seconds,
+		"total_calc_errors": run_total_calc_errors,
+		"total_opt_errors": run_total_opt_errors,
+		"total_parse_errors": run_total_parse_errors,
+		"total_reset_errors": run_total_reset_errors,
+		"total_transit_errors": run_total_transit_errors,
+		"total_cycle_errors": run_total_cycle_errors,
+		"finished_at_unix": int(Time.get_unix_time_from_system())
+	}
+	_save_json_log(summary, true)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
@@ -108,7 +270,7 @@ func _setup_timer() -> void:
 	add_child(timer)
 
 func _on_timer_tick() -> void:
-	if is_game_over:
+	if is_game_over or stage_completed or level_data.is_empty():
 		return
 	t_elapsed_seconds += 1
 	_update_timer_display()
@@ -382,7 +544,7 @@ func _update_visuals() -> void:
 		var btn: Button = node_buttons[node_id]
 		var is_current: bool = node_id == current_node
 		var is_available: bool = adjacency.has(current_node) and adjacency[current_node].has(node_id)
-		btn.disabled = is_current or not is_available or is_game_over
+		btn.disabled = is_current or not is_available or _is_round_locked()
 		if is_current:
 			btn.modulate = Color(0.95, 0.86, 0.45)
 		elif is_available:
@@ -434,7 +596,7 @@ func _edge_key(from_id: String, to_id: String) -> String:
 	return "%s->%s" % [from_id, to_id]
 
 func _on_node_pressed(node_id: String) -> void:
-	if is_game_over:
+	if _is_round_locked():
 		return
 	if not adjacency.has(current_node) or not adjacency[current_node].has(node_id):
 		return
@@ -456,7 +618,7 @@ func _on_node_pressed(node_id: String) -> void:
 	_update_visuals()
 
 func _on_reset_pressed() -> void:
-	if is_game_over:
+	if _is_round_locked():
 		return
 	n_reset += 1
 	_reset_round_state(false)
@@ -475,19 +637,32 @@ func _on_sum_input_changed(new_text: String) -> void:
 		sum_input.caret_column = digits.length()
 
 func _on_submit_pressed() -> void:
-	if is_game_over:
+	if _is_round_locked():
 		return
 
+	attempt_in_sublevel += 1
+	attempt_in_run += 1
 	var verdict := _judge_solution(sum_input.text.strip_edges())
 	_log_attempt(verdict)
 
 	if verdict.result_code == "OK":
 		status_label.text = "Маршрут принят. Ограничение и оптимальность подтверждены."
 		status_label.add_theme_color_override("font_color", Color(0.38, 1.0, 0.62))
-		is_game_over = true
-		btn_submit.disabled = true
-		btn_reset.disabled = true
-		_update_visuals()
+		stage_completed = true
+		levels_completed += 1
+		run_total_time_seconds += t_elapsed_seconds
+		run_total_calc_errors += n_calc
+		run_total_opt_errors += n_opt
+		run_total_parse_errors += n_parse
+		run_total_reset_errors += n_reset
+		run_total_transit_errors += n_transit
+		run_total_cycle_errors += n_cycle
+		if attempt_in_sublevel == 1:
+			levels_perfect += 1
+		btn_next.visible = true
+		btn_next.disabled = false
+		_lock_input(true)
+		_set_progress_ui()
 		return
 
 	status_label.text = _result_message(str(verdict.result_code))
@@ -581,11 +756,12 @@ func _recalculate_stability() -> void:
 
 	if stability <= 10.0 and not is_game_over:
 		is_game_over = true
+		stage_completed = false
 		status_label.text = "МИССИЯ ПРОВАЛЕНА: КРИТИЧЕСКАЯ СТАБИЛЬНОСТЬ."
 		status_label.add_theme_color_override("font_color", Color(1.0, 0.30, 0.30))
-		btn_submit.disabled = true
-		btn_reset.disabled = true
-		_update_visuals()
+		btn_next.visible = false
+		btn_next.disabled = true
+		_lock_input(true)
 
 func _update_timer_display() -> void:
 	var time_limit := int(level_data.get("time_limit_sec", 120))
@@ -603,13 +779,26 @@ func _log_attempt(verdict: Dictionary) -> void:
 	var sum_input_value: Variant = verdict.get("sum_input", null)
 	var result_code := str(verdict.get("result_code", "ERR_UNKNOWN"))
 	var must_visit_ok := bool(verdict.get("must_visit_ok", false))
+	var level_entry := _current_level_entry()
+	var sublevel_id := str(level_entry.get("id", "6_2_%02d" % (level_index + 1)))
+	var sublevel_path := str(level_entry.get("path", ""))
+	var next_available := result_code == "OK" and level_index + 1 < level_total
 
 	var attempt_no := GlobalMetrics.session_history.size() + 1
 	var log_data := {
-		"schema_version": "city_map.v2.1.0",
+		"schema_version": "city_map.v2.2.0",
 		"quest_id": "CITY_MAP",
 		"stage": "B",
 		"task_id": str(level_data.get("level_id", "6.2")),
+		"run_id": run_id,
+		"pack_id": pack_id,
+		"sublevel_index": level_index + 1,
+		"sublevel_total": level_total,
+		"sublevel_id": sublevel_id,
+		"sublevel_path": sublevel_path,
+		"attempt_in_sublevel": attempt_in_sublevel,
+		"attempt_in_run": attempt_in_run,
+		"next_available": next_available,
 		"match_key": "CITY_MAP|B|%s|v%s" % [str(level_data.get("level_id", "6.2")), config_hash.substr(0, 8)],
 		"variant_hash": config_hash,
 		"contract_version": str(level_data.get("contract_version", "city_map.v2.1.0")),
@@ -646,16 +835,18 @@ func _log_attempt(verdict: Dictionary) -> void:
 	GlobalMetrics.register_trial(log_data)
 	_save_json_log(log_data)
 
-func _save_json_log(data: Dictionary) -> void:
+func _save_json_log(data: Dictionary, is_summary: bool = false) -> void:
 	var dir := DirAccess.open("user://")
 	if dir == null:
 		return
 	if not dir.dir_exists("research_logs"):
 		dir.make_dir("research_logs")
 
-	var filename := "user://research_logs/%s_%d.json" % [LOG_PREFIX, Time.get_unix_time_from_system()]
+	var stamp := Time.get_unix_time_from_system()
+	var filename := "user://research_logs/%s_%d.json" % [LOG_PREFIX, stamp]
+	if is_summary:
+		filename = "user://research_logs/%s_run_%s_%d.json" % [LOG_PREFIX, run_id, stamp]
 	var file := FileAccess.open(filename, FileAccess.WRITE)
 	if file != null:
 		file.store_string(JSON.stringify(data, "\t"))
 		file.close()
-

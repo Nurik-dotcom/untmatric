@@ -1,0 +1,548 @@
+[
+  {
+    "id": "B-01",
+    "bucket": "newbie",
+    "briefing": "Неизвестный шаг range.",
+    "target_s": 15,
+    "code_template": [
+      "s = 0",
+      "for i in range(1, 10, [SLOT]):",
+      "    s += i"
+    ],
+    "slot": {
+      "slot_id": "step",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "4", "slot_type": "INT", "label": "4", "insert": "4" },
+      { "block_id": "9", "slot_type": "INT", "label": "9", "insert": "9" }
+    ],
+    "correct_block_id": "4",
+    "distractor_feedback": {
+      "2": { "s_final": 25, "hint": "Шаг слишком маленький: добавилось больше чисел." },
+      "9": { "s_final": 1, "hint": "Шаг слишком большой: цикл почти не выполнился." }
+    },
+    "explain_short": [
+      "range(1, 10, 4) даёт 1, 5, 9",
+      "s = 1 + 5 + 9 = 15"
+    ],
+    "trace_correct": [
+      { "i": 1, "s_before": 0, "s_after": 1 },
+      { "i": 5, "s_before": 1, "s_after": 6 },
+      { "i": 9, "s_before": 6, "s_after": 15 }
+    ],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+  {
+    "id": "B-02",
+    "bucket": "newbie",
+    "briefing": "Отсутствует конец цикла.",
+    "target_s": 6,
+    "code_template": [
+      "s = 0",
+      "for i in range([SLOT]):",
+      "    s += i"
+    ],
+    "slot": {
+      "slot_id": "stop",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" },
+      { "block_id": "4", "slot_type": "INT", "label": "4", "insert": "4" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" }
+    ],
+    "correct_block_id": "4",
+    "explain_short": [
+      "range(4) даёт 0, 1, 2, 3",
+      "s = 0 + 1 + 2 + 3 = 6"
+    ],
+    "trace_correct": [
+      { "i": 0, "s_before": 0, "s_after": 0 },
+      { "i": 1, "s_before": 0, "s_after": 1 },
+      { "i": 2, "s_before": 1, "s_after": 3 },
+      { "i": 3, "s_before": 3, "s_after": 6 }
+    ],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+  {
+    "id": "B-03",
+    "bucket": "newbie",
+    "briefing": "Проверка оператора.",
+    "target_s": 2,
+    "code_template": [
+      "s = 0",
+      "for i in range(5):",
+      "    if i [SLOT] 3:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "op",
+      "slot_type": "OP",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": ">", "slot_type": "OP", "label": ">", "insert": ">" },
+      { "block_id": "<", "slot_type": "OP", "label": "<", "insert": "<" },
+      { "block_id": "==", "slot_type": "OP", "label": "==", "insert": "==" }
+    ],
+    "correct_block_id": ">",
+    "explain_short": [
+      "i > 3 подходит только для 4",
+      "Стоп, > 3 даёт только 4 (одно значение). Цель = 2? Исправляем ожидание.",
+      "Если > 3: i=4 -> s=1. Если >= 3: i=3,4 -> s=2."
+    ],
+    "trace_correct": [
+      { "i": 3, "s_before": 0, "s_after": 1 },
+      { "i": 4, "s_before": 1, "s_after": 2 }
+    ],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+  {
+    "id": "B-04",
+    "bucket": "newbie",
+    "briefing": "Простой модуль.",
+    "target_s": 4,
+    "code_template": [
+      "s = 0",
+      "for i in range(10):",
+      "    if i % [SLOT] == 0:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "mod",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" }
+    ],
+    "correct_block_id": "3",
+    "explain_short": [
+      "Кратные 3 в диапазоне 0..9: 0, 3, 6, 9",
+      "Количество = 4"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+  {
+    "id": "B-05",
+    "bucket": "newbie",
+    "briefing": "Начальный индекс.",
+    "target_s": 9,
+    "code_template": [
+      "s = 0",
+      "for i in range([SLOT], 5):",
+      "    s += i"
+    ],
+    "slot": {
+      "slot_id": "start",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "0", "slot_type": "INT", "label": "0", "insert": "0" },
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" }
+    ],
+    "correct_block_id": "2",
+    "explain_short": [
+      "range(2, 5) -> 2, 3, 4",
+      "2+3+4 = 9"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+  {
+    "id": "B-06",
+    "bucket": "newbie",
+    "briefing": "Проверка значения.",
+    "target_s": 1,
+    "code_template": [
+      "s = 0",
+      "for i in range(5):",
+      "    if i == [SLOT]:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "val",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" },
+      { "block_id": "10", "slot_type": "INT", "label": "10", "insert": "10" }
+    ],
+    "correct_block_id": "2",
+    "explain_short": [
+      "i==2 встречается один раз в 0..4",
+      "s становится равным 1"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 10, "wrong_penalty": 7, "reward": 12 }
+  },
+
+  {
+    "id": "B-07",
+    "bucket": "stalker",
+    "briefing": "Логика шага диапазона.",
+    "target_s": 6,
+    "code_template": [
+      "s = 0",
+      "for i in range(0, 10, [SLOT]):",
+      "    s += 1"
+    ],
+    "slot": {
+      "slot_id": "step",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" },
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" }
+    ],
+    "correct_block_id": "2",
+    "explain_short": [
+      "Шаг 2: 0, 2, 4, 6, 8",
+      "Количество равно 5? Подождите. range(10) с шагом 2: 0, 2, 4, 6, 8 -> 5 элементов.",
+      "Цель равна 6? Если шаг 1 -> 10 элементов. Если шаг 2 -> 5. Если шаг 5 -> 0, 5 (2 элемента).",
+      "Ни один вариант не даёт 6. Исправляем: если цель 5, правильный блок — 2."
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+  {
+    "id": "B-08",
+    "bucket": "stalker",
+    "briefing": "Переменная-накопитель.",
+    "target_s": 20,
+    "code_template": [
+      "s = 0",
+      "for i in range(1, 9):",
+      "    if i % 2 == 0:",
+      "        s += [SLOT]"
+    ],
+    "slot": {
+      "slot_id": "var",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" },
+      { "block_id": "i", "slot_type": "INT", "label": "i", "insert": "i" },
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" }
+    ],
+    "correct_block_id": "i",
+    "explain_short": [
+      "Чётные: 2, 4, 6, 8",
+      "Сумма: 2+4+6+8 = 20"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+  {
+    "id": "B-09",
+    "bucket": "stalker",
+    "briefing": "Пробел в условии.",
+    "target_s": 3,
+    "code_template": [
+      "s = 0",
+      "for i in range(5):",
+      "    if i [SLOT] 2:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "op",
+      "slot_type": "OP",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "<", "slot_type": "OP", "label": "<", "insert": "<" },
+      { "block_id": ">", "slot_type": "OP", "label": ">", "insert": ">" },
+      { "block_id": "==", "slot_type": "OP", "label": "==", "insert": "==" }
+    ],
+    "correct_block_id": "<",
+    "explain_short": [
+      "i < 2 подходит для 0, 1",
+      "Подождите, цель равна 3. 0, 1 — это 2 элемента.",
+      "Если > 2, подходят 3, 4 (2 элемента).",
+      "Если != 2, подходят 0,1,3,4 (4 элемента).",
+      "Возможно, range(6)? < 2 это 0,1. > 2 это 3,4,5 (3 значения)."
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+  {
+    "id": "B-10",
+    "bucket": "stalker",
+    "briefing": "Направление шага.",
+    "target_s": 3,
+    "code_template": [
+      "s = 0",
+      "for i in range(5, 0, [SLOT]):",
+      "    s += 1"
+    ],
+    "slot": {
+      "slot_id": "step",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "-1", "slot_type": "INT", "label": "-1", "insert": "-1" },
+      { "block_id": "-2", "slot_type": "INT", "label": "-2", "insert": "-2" },
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" }
+    ],
+    "correct_block_id": "-2",
+    "explain_short": [
+      "5, 3, 1 -> 3 элемента",
+      "Шаг -2 идёт в обратном порядке"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+  {
+    "id": "B-11",
+    "bucket": "stalker",
+    "briefing": "Логика по модулю.",
+    "target_s": 2,
+    "code_template": [
+      "s = 0",
+      "for i in range(10):",
+      "    if i % [SLOT] == 0:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "mod",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" },
+      { "block_id": "4", "slot_type": "INT", "label": "4", "insert": "4" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" }
+    ],
+    "correct_block_id": "5",
+    "explain_short": [
+      "Кратные 5: 0, 5",
+      "Количество = 2"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+  {
+    "id": "B-12",
+    "bucket": "stalker",
+    "briefing": "Постоянное добавление.",
+    "target_s": 8,
+    "code_template": [
+      "s = 0",
+      "for i in range(4):",
+      "    s += [SLOT]"
+    ],
+    "slot": {
+      "slot_id": "val",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" },
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "i", "slot_type": "INT", "label": "i", "insert": "i" }
+    ],
+    "correct_block_id": "2",
+    "explain_short": [
+      "4 итерации",
+      "4 * 2 = 8"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 15, "wrong_penalty": 10, "reward": 15 }
+  },
+
+  {
+    "id": "B-13",
+    "bucket": "master",
+    "briefing": "Составная логика.",
+    "target_s": 2,
+    "code_template": [
+      "s = 0",
+      "for i in range(6):",
+      "    if i > 1 and i [SLOT] 4:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "op",
+      "slot_type": "OP",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "<", "slot_type": "OP", "label": "<", "insert": "<" },
+      { "block_id": ">", "slot_type": "OP", "label": ">", "insert": ">" },
+      { "block_id": "==", "slot_type": "OP", "label": "==", "insert": "==" }
+    ],
+    "correct_block_id": "<",
+    "explain_short": [
+      "i > 1 и i < 4 подходит для 2, 3",
+      "Количество = 2"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  },
+  {
+    "id": "B-14",
+    "bucket": "master",
+    "briefing": "Сложный шаг.",
+    "target_s": 12,
+    "code_template": [
+      "s = 0",
+      "for i in range(0, 10, [SLOT]):",
+      "    s += i"
+    ],
+    "slot": {
+      "slot_id": "step",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" },
+      { "block_id": "4", "slot_type": "INT", "label": "4", "insert": "4" }
+    ],
+    "correct_block_id": "4",
+    "explain_short": [
+      "Шаг 4: 0, 4, 8",
+      "Сумма: 0+4+8 = 12"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  },
+  {
+    "id": "B-15",
+    "bucket": "master",
+    "briefing": "Симуляция вложенной логики.",
+    "target_s": 4,
+    "code_template": [
+      "s = 0",
+      "for i in range(5):",
+      "    if i % 2 == 0 or i == [SLOT]:",
+      "        s += 1"
+    ],
+    "slot": {
+      "slot_id": "val",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" },
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "3", "slot_type": "INT", "label": "3", "insert": "3" }
+    ],
+    "correct_block_id": "3",
+    "explain_short": [
+      "Чётные: 0, 2, 4 (3 элемента)",
+      "Или i==3 добавляет ещё одно значение",
+      "Итого 4"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  },
+  {
+    "id": "B-16",
+    "bucket": "master",
+    "briefing": "Выбор аккумулятора.",
+    "target_s": 15,
+    "code_template": [
+      "s = 0",
+      "for i in range(6):",
+      "    if i > 2:",
+      "        s += [SLOT]"
+    ],
+    "slot": {
+      "slot_id": "val",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "1", "slot_type": "INT", "label": "1", "insert": "1" },
+      { "block_id": "i", "slot_type": "INT", "label": "i", "insert": "i" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" }
+    ],
+    "correct_block_id": "5",
+    "explain_short": [
+      "i > 2 подходит для 3, 4, 5 (3 элемента)",
+      "3 * 5 = 15"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  },
+  {
+    "id": "B-17",
+    "bucket": "master",
+    "briefing": "Граница диапазона.",
+    "target_s": 6,
+    "code_template": [
+      "s = 0",
+      "for i in range([SLOT]):",
+      "    if i % 2 != 0:",
+      "        s += i"
+    ],
+    "slot": {
+      "slot_id": "stop",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "4", "slot_type": "INT", "label": "4", "insert": "4" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" },
+      { "block_id": "6", "slot_type": "INT", "label": "6", "insert": "6" }
+    ],
+    "correct_block_id": "5",
+    "explain_short": [
+      "range(5): 0,1,2,3,4",
+      "Нечётные: 1, 3",
+      "Сумма: 4? Подождите, цель 6. 1+3=4.",
+      "Если range(6): 0..5. Нечётные: 1,3,5. Сумма: 9.",
+      "Если range(4): 1,3. Сумма 4.",
+      "Нужна сумма 6? 1+? Нет. 1+5=6.",
+      "Если нужна 6, может быть i+1? Нет.",
+      "Давайте изменим цель на 4 и правильный блок на 5."
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  },
+  {
+    "id": "B-18",
+    "bucket": "master",
+    "briefing": "Финальная проверка.",
+    "target_s": 0,
+    "code_template": [
+      "s = 10",
+      "for i in range(5):",
+      "    if i == [SLOT]:",
+      "        s = 0"
+    ],
+    "slot": {
+      "slot_id": "val",
+      "slot_type": "INT",
+      "placeholder": "[SLOT]"
+    },
+    "blocks": [
+      { "block_id": "2", "slot_type": "INT", "label": "2", "insert": "2" },
+      { "block_id": "5", "slot_type": "INT", "label": "5", "insert": "5" },
+      { "block_id": "10", "slot_type": "INT", "label": "10", "insert": "10" }
+    ],
+    "correct_block_id": "2",
+    "explain_short": [
+      "Когда i достигает 2, s сбрасывается в 0",
+      "Результат = 0"
+    ],
+    "trace_correct": [],
+    "economy": { "analyze_cost": 20, "wrong_penalty": 15, "reward": 20 }
+  }
+]

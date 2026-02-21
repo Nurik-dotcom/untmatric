@@ -1,0 +1,20 @@
+{
+	"pack_version": "city_map.pack.v1",
+	"pack_id": "CITY_MAP_A_PACK_01",
+	"mode": "A",
+	"shuffle": false,
+	"levels": [
+		{
+			"id": "6_1_01",
+			"path": "res://data/city_map/level_6_1.json"
+		},
+		{
+			"id": "6_1_02",
+			"path": "res://data/city_map/level_6_1.json"
+		},
+		{
+			"id": "6_1_03",
+			"path": "res://data/city_map/level_6_1.json"
+		}
+	]
+}

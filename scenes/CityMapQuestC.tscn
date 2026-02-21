@@ -65,6 +65,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "РЕЖИМ: C"
 
+[node name="LabelProgress" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "TASK: 1/1"
+
 [node name="Spacer" type="Control" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -218,6 +223,15 @@ size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
 text = "ОТПРАВИТЬ"
 
+[node name="BtnNext" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+disabled = true
+text = "NEXT"
+
 [node name="SchedulePanel" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -267,5 +281,4 @@ text = "РЕАЛЬНЫЙ таймер в заголовке. СИМ-время �
 [node name="FooterMeta" type="Label" parent="SafeArea/MainVBox/Footer"]
 layout_mode = 2
 text = "КАРТА ГОРОДА / C"
-
 

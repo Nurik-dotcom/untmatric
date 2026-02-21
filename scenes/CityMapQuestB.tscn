@@ -65,6 +65,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "РЕЖИМ: B"
 
+[node name="LabelProgress" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "TASK: 1/1"
+
 [node name="Spacer" type="Control" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -218,6 +223,15 @@ size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
 text = "ОТПРАВИТЬ"
 
+[node name="BtnNext" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+disabled = true
+text = "NEXT"
+
 [node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
@@ -238,4 +252,3 @@ text = "Двусторонние дороги активны только там
 [node name="FooterMeta" type="Label" parent="SafeArea/MainVBox/Footer"]
 layout_mode = 2
 text = "КАРТА ГОРОДА / B"
-

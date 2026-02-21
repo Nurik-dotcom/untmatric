@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="1_script"]
+[ext_resource type="Shader" path="res://ui/shaders/crt_overlay.gdshader" id="2_shader"]
+
+[sub_resource type="ShaderMaterial" id="1_overlay_material"]
+shader = ExtResource("2_shader")
+shader_parameter/tint_color = Color(0.93, 0.93, 0.93, 1)
+shader_parameter/intensity = 0.18
+shader_parameter/fx_quality = 1
+shader_parameter/glitch_strength = 0.0
+
+[node name="NoirOverlay" type="CanvasLayer"]
+layer = 100
+script = ExtResource("1_script")
+
+[node name="CRT_Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+material = SubResource("1_overlay_material")
+color = Color(1, 1, 1, 0)

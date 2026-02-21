@@ -1,0 +1,441 @@
+[
+  {
+    "quest_id": "CASE_01_DIGITAL_RESUS",
+    "schema_version": "1.3.0",
+    "id": "RESUS-A-01",
+    "bucket": "newbie",
+    "briefing": "Восстановите рабочую станцию: распределите все детали по ВВОД / ВЫВОД / ПАМЯТЬ. GPU нужен для сигнала, RAM — для стабильной загрузки, CACHE — для быстрой диагностики.",
+    "format": "MATCHING",
+    "buckets": [
+      {
+        "bucket_id": "INPUT",
+        "label": "Ввод"
+      },
+      {
+        "bucket_id": "OUTPUT",
+        "label": "Вывод"
+      },
+      {
+        "bucket_id": "MEMORY",
+        "label": "Память"
+      }
+    ],
+    "items": [
+      {
+        "item_id": "keyboard",
+        "label": "Клавиатура",
+        "correct_bucket_id": "INPUT"
+      },
+      {
+        "item_id": "mouse",
+        "label": "Мышь",
+        "correct_bucket_id": "INPUT"
+      },
+      {
+        "item_id": "microphone",
+        "label": "Микрофон",
+        "correct_bucket_id": "INPUT"
+      },
+      {
+        "item_id": "gpu",
+        "label": "GPU",
+        "correct_bucket_id": "OUTPUT"
+      },
+      {
+        "item_id": "monitor",
+        "label": "Монитор",
+        "correct_bucket_id": "OUTPUT"
+      },
+      {
+        "item_id": "speaker",
+        "label": "Динамик",
+        "correct_bucket_id": "OUTPUT"
+      },
+      {
+        "item_id": "ram",
+        "label": "RAM",
+        "correct_bucket_id": "MEMORY"
+      },
+      {
+        "item_id": "cache",
+        "label": "Кэш",
+        "correct_bucket_id": "MEMORY"
+      }
+    ],
+    "scoring_model": {
+      "rules": [
+        {
+          "code": "PERFECT",
+          "min_correct": 8,
+          "points": 2,
+          "stability_delta": 0,
+          "verdict_code": "PERFECT"
+        },
+        {
+          "code": "PARTIAL",
+          "min_correct": 6,
+          "points": 1,
+          "stability_delta": -10,
+          "verdict_code": "PARTIAL"
+        },
+        {
+          "code": "FAIL",
+          "min_correct": 0,
+          "points": 0,
+          "stability_delta": -30,
+          "verdict_code": "FAIL"
+        }
+      ],
+      "default_rule": {
+        "code": "EMPTY_CONFIRM",
+        "points": 0,
+        "stability_delta": -50,
+        "verdict_code": "EMPTY"
+      }
+    },
+    "feedback_rules": {
+      "NO_GPU": {
+        "status": "GPU отсутствует в OUTPUT: монитор остаётся тёмным.",
+        "monitor": "НЕТ СИГНАЛА"
+      },
+      "NO_RAM": {
+        "status": "RAM отсутствует в MEMORY: загрузка продолжает сбоить.",
+        "console_lines": [
+          "[ОШИБКА] Ошибка чтения памяти",
+          "[СИСТЕМА] Повторная инициализация шины памяти...",
+          "[ОШИБКА] Ошибка чтения памяти",
+          "[СИСТЕМА] Загрузка остановлена"
+        ]
+      },
+      "NO_CACHE": {
+        "status": "CACHE отсутствует: диагностика работает медленно."
+      },
+      "HEALTHY": {
+        "status": "Система восстановлена. Готова к диагностике."
+      }
+    },
+    "system_state_rules": {
+      "monitor_on_if": {
+        "item_id": "gpu",
+        "zone_id": "OUTPUT"
+      },
+      "ram_ok_if": {
+        "item_id": "ram",
+        "zone_id": "MEMORY"
+      },
+      "fast_type_if": {
+        "item_id": "cache",
+        "zone_id": "MEMORY"
+      },
+      "boot_ok_lines": [
+        "[СИСТЕМА] Линии питания: ОК",
+        "[СИСТЕМА] Карта памяти: ГОТОВО",
+        "[СИСТЕМА] Устройства PCIe: ОБНАРУЖЕНЫ",
+        "[СИСТЕМА] Последовательность загрузки завершена"
+      ]
+    },
+    "stages": {
+      "A": {
+        "level_id": "RESUS-A-01"
+      },
+      "B": {
+        "id": "CASE01_B_01",
+        "stage_max_points": 2,
+        "format": "SINGLE_CHOICE_CONTEXT",
+        "context": "Чтобы завершить взлом архива, система должна вывести видеопоток в реальном времени. Бюджет ограничен 1000$. Выберите лучшую конфигурацию.",
+        "budget": 1000,
+        "options": [
+          {
+            "option_id": "B1_BOTTLENECK",
+            "title": "Узкое место",
+            "total_price": 650,
+            "parts": [
+              {
+                "k": "CPU",
+                "v": "Высокий",
+                "price": 600
+              },
+              {
+                "k": "RAM",
+                "v": "Низкий",
+                "price": 50
+              }
+            ],
+            "tags": [
+              "Риск простоя CPU",
+              "Недостаток RAM"
+            ]
+          },
+          {
+            "option_id": "B2_OPTIMAL",
+            "title": "Оптимальный баланс",
+            "total_price": 700,
+            "parts": [
+              {
+                "k": "CPU",
+                "v": "Средний",
+                "price": 400
+              },
+              {
+                "k": "RAM",
+                "v": "Хороший",
+                "price": 300
+              }
+            ],
+            "tags": [
+              "сбалансировано",
+              "стабильный рендер"
+            ]
+          },
+          {
+            "option_id": "B3_OVERBUDGET",
+            "title": "Превышение бюджета",
+            "total_price": 1200,
+            "parts": [
+              {
+                "k": "CPU",
+                "v": "Топ",
+                "price": 600
+              },
+              {
+                "k": "RAM",
+                "v": "Топ",
+                "price": 300
+              },
+              {
+                "k": "GPU",
+                "v": "Топ",
+                "price": 300
+              }
+            ],
+            "tags": [
+              "превышен лимит"
+            ]
+          },
+          {
+            "option_id": "B4_LOWPOWER",
+            "title": "Низкая мощность",
+            "total_price": 250,
+            "parts": [
+              {
+                "k": "CPU",
+                "v": "Низкий",
+                "price": 150
+              },
+              {
+                "k": "RAM",
+                "v": "Низкий",
+                "price": 100
+              }
+            ],
+            "tags": [
+              "недостаточно"
+            ]
+          }
+        ],
+        "correct_option_id": "B2_OPTIMAL",
+        "scoring_model": {
+          "correct_points": 2,
+          "wrong_points": 0,
+          "stability_delta_correct": 0,
+          "stability_delta_wrong": -10,
+          "default_rule": {
+            "when": "EMPTY_CONFIRM",
+            "points": 0,
+            "stability_delta": -50,
+            "verdict_code": "EMPTY"
+          }
+        },
+        "feedback_rules": {
+          "B1_BOTTLENECK": {
+            "error_code": "BOTTLENECK_RAM",
+            "headline": "CPU ограничен памятью",
+            "details": [
+              "RAM слишком слабая, поэтому система постоянно выгружает страницы памяти.",
+              "Потенциал CPU теряется, потому что пропускной способности памяти недостаточно."
+            ]
+          },
+          "B2_OPTIMAL": {
+            "error_code": "OK",
+            "headline": "Сбалансированная конфигурация",
+            "details": [
+              "Ресурсов достаточно для потокового рендера.",
+              "Критических узких мест не обнаружено."
+            ]
+          },
+          "B3_OVERBUDGET": {
+            "error_code": "OVER_BUDGET",
+            "headline": "Превышен лимит бюджета",
+            "details": [
+              "Эта сборка превышает лимит бюджета 1000$.",
+              "По условиям миссии требуется экономичность."
+            ]
+          },
+          "B4_LOWPOWER": {
+            "error_code": "LOW_POWER",
+            "headline": "Недостаточная производительность",
+            "details": [
+              "Эта сборка не тянет рендер в реальном времени.",
+              "Подберите более сбалансированное сочетание CPU и RAM."
+            ]
+          }
+        }
+      },
+      "C": {
+        "id": "CASE01_C_01",
+        "stage_max_points": 2,
+        "format": "MULTI_CHOICE_SLOTS",
+        "prompt": "Подозреваемый передавал данные через оптический кабель. Соберите защищённую сеть, исключающую прослушивание и коллизии.",
+        "max_slots": 3,
+        "options": [
+          {
+            "option_id": "SWITCH",
+            "label": "Коммутатор",
+            "is_correct": true,
+            "why": "Адресная передача, снижает коллизии (в отличие от концентратора).",
+            "effects": {
+              "collisions": "LOW",
+              "filtering": "OFF",
+              "eavesdrop": "MID",
+              "media": "NEUTRAL"
+            }
+          },
+          {
+            "option_id": "FIREWALL",
+            "label": "Межсетевой экран",
+            "is_correct": true,
+            "why": "Фильтрация трафика и контроль доступа.",
+            "effects": {
+              "collisions": "NEUTRAL",
+              "filtering": "ON",
+              "eavesdrop": "MID",
+              "media": "NEUTRAL"
+            }
+          },
+          {
+            "option_id": "FIBER",
+            "label": "Оптоволокно",
+            "is_correct": true,
+            "why": "Соответствует условию оптики, сложнее скрытно подключиться.",
+            "effects": {
+              "collisions": "NEUTRAL",
+              "filtering": "OFF",
+              "eavesdrop": "LOW",
+              "media": "FIBER"
+            }
+          },
+          {
+            "option_id": "HUB",
+            "label": "Концентратор",
+            "is_correct": false,
+            "why": "Широковещание, коллизии, хуже для безопасности.",
+            "effects": {
+              "collisions": "HIGH",
+              "filtering": "OFF",
+              "eavesdrop": "HIGH",
+              "media": "NEUTRAL"
+            }
+          },
+          {
+            "option_id": "COAX",
+            "label": "Коаксиальный кабель",
+            "is_correct": false,
+            "why": "Не соответствует условию оптики и устаревшая среда.",
+            "effects": {
+              "collisions": "MID",
+              "filtering": "OFF",
+              "eavesdrop": "HIGH",
+              "media": "COAX"
+            }
+          }
+        ],
+        "scoring_model": {
+          "rule_2": {
+            "need_correct": 3,
+            "max_wrong": 0,
+            "points": 2,
+            "stability_delta": 0,
+            "verdict_code": "PERFECT"
+          },
+          "rule_1a": {
+            "need_correct": 2,
+            "max_wrong": 0,
+            "points": 1,
+            "stability_delta": 0,
+            "verdict_code": "GOOD"
+          },
+          "rule_1b": {
+            "need_correct": 3,
+            "max_wrong": 1,
+            "points": 1,
+            "stability_delta": -10,
+            "verdict_code": "NOISY"
+          },
+          "default_rule": {
+            "points": 0,
+            "stability_delta": -50,
+            "verdict_code": "FAIL"
+          },
+          "empty_rule": {
+            "points": 0,
+            "stability_delta": -50,
+            "verdict_code": "EMPTY"
+          },
+          "select_all_rule": {
+            "points": 0,
+            "stability_delta": -50,
+            "verdict_code": "SELECT_ALL"
+          }
+        },
+        "feedback_rules": {
+          "PERFECT": {
+            "headline": "Периметр защищён",
+            "details": [
+              "Коллизии минимальны.",
+              "Фильтрация включена.",
+              "Среда соответствует оптике."
+            ]
+          },
+          "GOOD": {
+            "headline": "Почти правильно",
+            "details": [
+              "Вы выбрали 2 ключевых компонента.",
+              "Не хватает одного элемента защищённого контура."
+            ]
+          },
+          "NOISY": {
+            "headline": "Есть лишний элемент",
+            "details": [
+              "Основной набор собран, но добавлен лишний компонент.",
+              "Это ухудшает безопасность и стабильность."
+            ]
+          },
+          "FAIL": {
+            "headline": "Периметр уязвим",
+            "details": [
+              "Комбинация противоречит условию или не защищает сеть."
+            ]
+          },
+          "EMPTY": {
+            "headline": "Пустое подтверждение",
+            "details": [
+              "Вы не установили ни одного элемента."
+            ]
+          },
+          "SELECT_ALL": {
+            "headline": "Выбрано всё сразу",
+            "details": [
+              "Это угадайка.",
+              "В ЕНТ это считается ошибкой."
+            ]
+          }
+        }
+      }
+    }
+  }
+]
+
+
+
+
+

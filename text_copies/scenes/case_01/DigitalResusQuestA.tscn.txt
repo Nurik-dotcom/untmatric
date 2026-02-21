@@ -1,0 +1,300 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scenes/case_01/DigitalResusQuestA.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="Script" path="res://scripts/ui/ResusDropZone.gd" id="3_drop"]
+[ext_resource type="Script" path="res://scripts/ui/ResusPileZone.gd" id="4_pile"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="5_noir"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dimmer"]
+bg_color = Color(0, 0, 0, 0.65)
+
+[node name="DigitalResusQuestA" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.07, 0.08, 1)
+[node name="NoirOverlay" parent="." instance=ExtResource("5_noir")]
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="MainVBox" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnBack" type="Button" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+text = "<"
+
+[node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ДЕЛО №1: ЦИФРОВАЯ РЕАНИМАЦИЯ"
+vertical_alignment = 1
+
+[node name="StageLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StabilityBar" type="ProgressBar" parent="SafeArea/MainVBox/Header"]
+custom_minimum_size = Vector2(220, 28)
+layout_mode = 2
+size_flags_vertical = 4
+value = 100.0
+show_percentage = false
+
+[node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+
+[node name="BriefingLabel" type="Label" parent="SafeArea/MainVBox/BriefingCard"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+text = "Брифинг"
+autowrap_mode = 3
+
+[node name="SystemCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SystemVBox" type="VBoxContainer" parent="SafeArea/MainVBox/SystemCard"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MonitorFrame" type="PanelContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+
+[node name="MonitorScreen" type="ColorRect" parent="SafeArea/MainVBox/SystemCard/SystemVBox/MonitorFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.03, 0.03, 1)
+
+[node name="MonitorLabel" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/MonitorFrame"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -110.0
+offset_top = -16.0
+offset_right = 110.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "NO SIGNAL"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BootConsole" type="RichTextLabel" parent="SafeArea/MainVBox/SystemCard/SystemVBox"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+fit_content = false
+scroll_active = true
+text = ""
+autowrap_mode = 2
+
+[node name="ZonesCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ZonesVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ZoneInput" type="PanelContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+script = ExtResource("3_drop")
+
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput"]
+layout_mode = 2
+
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput/VBox"]
+layout_mode = 2
+text = "ВВОД"
+
+[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ZoneOutput" type="PanelContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+script = ExtResource("3_drop")
+
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput"]
+layout_mode = 2
+
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput/VBox"]
+layout_mode = 2
+text = "ВЫВОД"
+
+[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ZoneMemory" type="PanelContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+script = ExtResource("3_drop")
+
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory"]
+layout_mode = 2
+
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory/VBox"]
+layout_mode = 2
+text = "ПАМЯТЬ"
+
+[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PartsPileCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("4_pile")
+items_container_path = NodePath("VBox/Scroll/PartsGrid")
+
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/PartsPileCard"]
+layout_mode = 2
+
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/PartsPileCard/VBox"]
+layout_mode = 2
+text = "ДЕТАЛИ"
+
+[node name="Scroll" type="ScrollContainer" parent="SafeArea/MainVBox/PartsPileCard/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PartsGrid" type="GridContainer" parent="SafeArea/MainVBox/PartsPileCard/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="BottomBar" type="HBoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "СТАТУС"
+autowrap_mode = 2
+vertical_alignment = 1
+
+[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(160, 72)
+layout_mode = 2
+text = "СБРОС"
+
+[node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(180, 72)
+layout_mode = 2
+text = "ПОДТВЕРДИТЬ"
+
+[node name="Dimmer" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.65)
+mouse_filter = 2
+
+[node name="ResultPopup" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -190.0
+offset_top = -140.0
+offset_right = 190.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="ResultPopup"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="VerdictLabel" type="Label" parent="ResultPopup/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "ВЕРДИКТ"
+horizontal_alignment = 1
+
+[node name="ScoreLabel" type="Label" parent="ResultPopup/VBox"]
+layout_mode = 2
+text = "СЧЁТ"
+horizontal_alignment = 1
+
+[node name="StabilityLabel" type="Label" parent="ResultPopup/VBox"]
+layout_mode = 2
+text = "СТАБИЛЬНОСТЬ"
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="ResultPopup/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="BtnRetry" type="Button" parent="ResultPopup/VBox/Buttons"]
+custom_minimum_size = Vector2(140, 56)
+layout_mode = 2
+text = "ПОВТОРИТЬ"
+
+[node name="BtnBack" type="Button" parent="ResultPopup/VBox/Buttons"]
+custom_minimum_size = Vector2(140, 56)
+layout_mode = 2
+text = "НАЗАД"
+
