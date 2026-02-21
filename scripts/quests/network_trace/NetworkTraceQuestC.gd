@@ -18,40 +18,40 @@ const PALETTE_AMBER_ID: int = 1
 
 enum QuestState { INIT, BOARD_LOCKED, MASK_PLACED, AND_APPLIED, ANSWERED, SAFE_MODE, DIAGNOSTIC, DONE }
 
-@onready var btn_back: Button = $Main/V/Header/BtnBack
-@onready var lbl_title: Label = $Main/V/Header/LblTitle
-@onready var lbl_meta: Label = $Main/V/Header/LblMeta
-@onready var palette_select: OptionButton = $Main/V/Header/PaletteSelect
-@onready var body: BoxContainer = $Main/V/Body
-@onready var lbl_briefing: RichTextLabel = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblBriefing
-@onready var lbl_prompt: RichTextLabel = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblPrompt
-@onready var lbl_target_ip: Label = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox/LblTargetIp
-@onready var lbl_target_cidr: Label = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox/LblTargetCidr
-@onready var lbl_target_ask: Label = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox/LblTargetAsk
-@onready var log_text: RichTextLabel = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll/LogText
-@onready var lock_indicator: NetworkLockIndicator = $Main/V/Body/BoardPane/BoardMargin/BoardV/LockIndicator
-@onready var row_ip: HBoxContainer = $Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowIpLine/RowIp
-@onready var row_mask: HBoxContainer = $Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine/MaskDropTarget/RowMask
-@onready var mask_drop_target: SubnetMaskDropTarget = $Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine/MaskDropTarget
-@onready var row_res_line: HBoxContainer = $Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowResLine
-@onready var row_res: HBoxContainer = $Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowResLine/RowRes
-@onready var mask_overlay: SubnetMaskOverlay = $Main/V/Body/BoardPane/BoardMargin/BoardV/MaskTray/MaskOverlay
-@onready var ruler: SubnetRulerControl = $Main/V/Body/BoardPane/BoardMargin/BoardV/Ruler
-@onready var btn_analyze: Button = $Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions/BtnAnalyze
-@onready var btn_apply_and: Button = $Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions/BtnApplyAnd
-@onready var btn_reset: Button = $Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions/BtnReset
-@onready var lbl_status: Label = $Main/V/Body/AnswersPane/AnswersMargin/AnswersV/LblStatus
-@onready var btn_next: Button = $Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow/BtnNext
+@onready var btn_back: Button = $SafeArea/Main/V/Header/BtnBack
+@onready var lbl_title: Label = $SafeArea/Main/V/Header/LblTitle
+@onready var lbl_meta: Label = $SafeArea/Main/V/Header/LblMeta
+@onready var palette_select: OptionButton = $SafeArea/Main/V/Header/PaletteSelect
+@onready var body: BoxContainer = $SafeArea/Main/V/Body
+@onready var lbl_briefing: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblBriefing
+@onready var lbl_prompt: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblPrompt
+@onready var lbl_target_ip: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox/LblTargetIp
+@onready var lbl_target_cidr: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox/LblTargetCidr
+@onready var lbl_target_ask: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox/LblTargetAsk
+@onready var log_text: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll/LogText
+@onready var lock_indicator: NetworkLockIndicator = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/LockIndicator
+@onready var row_ip: HBoxContainer = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowIpLine/RowIp
+@onready var row_mask: HBoxContainer = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine/MaskDropTarget/RowMask
+@onready var mask_drop_target: SubnetMaskDropTarget = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine/MaskDropTarget
+@onready var row_res_line: HBoxContainer = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowResLine
+@onready var row_res: HBoxContainer = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowResLine/RowRes
+@onready var mask_overlay: SubnetMaskOverlay = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/MaskTray/MaskOverlay
+@onready var ruler: SubnetRulerControl = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/Ruler
+@onready var btn_analyze: Button = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions/BtnAnalyze
+@onready var btn_apply_and: Button = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions/BtnApplyAnd
+@onready var btn_reset: Button = $SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions/BtnReset
+@onready var lbl_status: Label = $SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/LblStatus
+@onready var btn_next: Button = $SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow/BtnNext
 @onready var diagnostics_panel: PanelContainer = $DiagnosticsPanel
-@onready var crt_overlay: ColorRect = $CanvasLayer/CRT_Overlay
+@onready var crt_overlay: ColorRect = $NoirOverlay/CRT_Overlay
 
 @onready var action_buttons: Array[Button] = [
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn1,
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn2,
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn3,
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn4,
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn5,
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn6
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn1,
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn2,
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn3,
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn4,
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn5,
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn6
 ]
 
 var row_ip_cells: Array[SubnetBitCell] = []

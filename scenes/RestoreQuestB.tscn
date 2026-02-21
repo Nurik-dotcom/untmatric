@@ -52,59 +52,59 @@ layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="MainLayout#Header" type="HBoxContainer" parent="."]
+[node name="Header" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 alignment = 1
 
-[node name="SafeArea_MainLayout_Header#BtnBack" type="Button" parent="."]
+[node name="BtnBack" type="Button" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
 text = "НАЗАД"
 
-[node name="SafeArea_MainLayout_Header#LblClueTitle" type="Label" parent="."]
+[node name="LblClueTitle" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ВОССТАНОВЛЕНИЕ B-01"
 
-[node name="SafeArea_MainLayout_Header#LblSessionId" type="Label" parent="."]
+[node name="LblSessionId" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "СЕССИЯ ИНИЦ."
 horizontal_alignment = 2
 
-[node name="MainLayout#BarsRow" type="HBoxContainer" parent="."]
+[node name="BarsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 alignment = 1
 
-[node name="SafeArea_MainLayout_BarsRow#DecryptBar" type="ProgressBar" parent="."]
+[node name="DecryptBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_horizontal = 3
 show_percentage = false
 
-[node name="SafeArea_MainLayout_BarsRow#EnergyBar" type="ProgressBar" parent="."]
+[node name="EnergyBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_horizontal = 3
 value = 100.0
 show_percentage = false
 
-[node name="MainLayout#TargetDisplay" type="PanelContainer" parent="."]
+[node name="TargetDisplay" type="PanelContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 
-[node name="SafeArea_MainLayout_TargetDisplay#LblTarget" type="Label" parent="."]
+[node name="LblTarget" type="Label" parent="SafeArea/MainLayout/TargetDisplay"]
 layout_mode = 2
 text = "ЦЕЛЬ: s = ?"
 horizontal_alignment = 1
 
-[node name="MainLayout#TerminalFrame" type="PanelContainer" parent="."]
+[node name="TerminalFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="SafeArea_MainLayout_TerminalFrame#CodeScroll" type="ScrollContainer" parent="."]
+[node name="CodeScroll" type="ScrollContainer" parent="SafeArea/MainLayout/TerminalFrame"]
 layout_mode = 2
 
-[node name="SafeArea_MainLayout_TerminalFrame_CodeScroll#CodeDisplay" type="RichTextLabel" parent="."]
+[node name="CodeDisplay" type="RichTextLabel" parent="SafeArea/MainLayout/TerminalFrame/CodeScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -113,66 +113,66 @@ bbcode_enabled = true
 text = "Загрузка кода..."
 fit_content = true
 
-[node name="MainLayout#SlotRow" type="HBoxContainer" parent="."]
+[node name="SlotRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 alignment = 1
 
-[node name="SafeArea_MainLayout_SlotRow#DropZone" type="PanelContainer" parent="."]
+[node name="DropZone" type="PanelContainer" parent="SafeArea/MainLayout/SlotRow"]
 custom_minimum_size = Vector2(240, 96)
 layout_mode = 2
 script = ExtResource("4_dropzone")
 
-[node name="SafeArea_MainLayout_SlotRow_DropZone#Label" type="Label" parent="."]
+[node name="Label" type="Label" parent="SafeArea/MainLayout/SlotRow/DropZone"]
 layout_mode = 2
 text = "[СЛОТ]"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SafeArea_MainLayout_SlotRow#LblSlotHint" type="Label" parent="."]
+[node name="LblSlotHint" type="Label" parent="SafeArea/MainLayout/SlotRow"]
 layout_mode = 2
 text = "<-- Перетащите блок сюда"
 
-[node name="MainLayout#InventoryFrame" type="PanelContainer" parent="."]
+[node name="InventoryFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 0.5
 
-[node name="SafeArea_MainLayout_InventoryFrame#InventoryMargin" type="MarginContainer" parent="."]
+[node name="InventoryMargin" type="MarginContainer" parent="SafeArea/MainLayout/InventoryFrame"]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="SafeArea_MainLayout_InventoryFrame_InventoryMargin#InventoryScroll" type="ScrollContainer" parent="."]
+[node name="InventoryScroll" type="ScrollContainer" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin"]
 layout_mode = 2
 
-[node name="SafeArea_MainLayout_InventoryFrame_InventoryMargin_InventoryScroll#BlocksContainer" type="HBoxContainer" parent="."]
+[node name="BlocksContainer" type="HBoxContainer" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 14
 alignment = 1
 
-[node name="MainLayout#Actions" type="HBoxContainer" parent="."]
+[node name="Actions" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="SafeArea_MainLayout_Actions#BtnAnalyze" type="Button" parent="."]
+[node name="BtnAnalyze" type="Button" parent="SafeArea/MainLayout/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "АНАЛИЗ"
 
-[node name="SafeArea_MainLayout_Actions#BtnSubmit" type="Button" parent="."]
+[node name="BtnSubmit" type="Button" parent="SafeArea/MainLayout/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "ПРОВЕРИТЬ"
 
-[node name="SafeArea_MainLayout_Actions#BtnNext" type="Button" parent="."]
+[node name="BtnNext" type="Button" parent="SafeArea/MainLayout/Actions"]
 visible = false
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2

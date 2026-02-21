@@ -52,87 +52,87 @@ theme_override_constants/margin_bottom = 12
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="MainLayout#HeaderRow" type="HBoxContainer" parent="."]
+[node name="HeaderRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 
-[node name="SafeArea_MainLayout_HeaderRow#BtnBack" type="Button" parent="."]
+[node name="BtnBack" type="Button" parent="SafeArea/MainLayout/HeaderRow"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
 text = "НАЗАД"
 
-[node name="SafeArea_MainLayout_HeaderRow#LblClueTitle" type="Label" parent="."]
+[node name="LblClueTitle" type="Label" parent="SafeArea/MainLayout/HeaderRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 text = "Дело C: Разминирование"
 
-[node name="SafeArea_MainLayout_HeaderRow#LblSession" type="Label" parent="."]
+[node name="LblSession" type="Label" parent="SafeArea/MainLayout/HeaderRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "СЕССИЯ: C-01"
 horizontal_alignment = 2
 
-[node name="MainLayout#StatusMonitor" type="PanelContainer" parent="."]
+[node name="StatusMonitor" type="PanelContainer" parent="SafeArea/MainLayout"]
 custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
 
-[node name="SafeArea_MainLayout_StatusMonitor#MonitorsRow" type="HBoxContainer" parent="."]
+[node name="MonitorsRow" type="HBoxContainer" parent="SafeArea/MainLayout/StatusMonitor"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow#ExpectedPanel" type="PanelContainer" parent="."]
+[node name="ExpectedPanel" type="PanelContainer" parent="SafeArea/MainLayout/StatusMonitor/MonitorsRow"]
 self_modulate = Color(0.92, 0.92, 0.9, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ExpectedPanel#ExpectedVBox" type="VBoxContainer" parent="."]
+[node name="ExpectedVBox" type="VBoxContainer" parent="SafeArea/MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ExpectedPanel_ExpectedVBox#LblExpectedTitle" type="Label" parent="."]
+[node name="LblExpectedTitle" type="Label" parent="SafeArea/MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "ОЖИДАЕМОЕ"
 horizontal_alignment = 1
 
-[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ExpectedPanel_ExpectedVBox#LblExpectedValue" type="Label" parent="."]
+[node name="LblExpectedValue" type="Label" parent="SafeArea/MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
 text = "s = 20"
 horizontal_alignment = 1
 
-[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow#ActualPanel" type="PanelContainer" parent="."]
+[node name="ActualPanel" type="PanelContainer" parent="SafeArea/MainLayout/StatusMonitor/MonitorsRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ActualPanel#ActualVBox" type="VBoxContainer" parent="."]
+[node name="ActualVBox" type="VBoxContainer" parent="SafeArea/MainLayout/StatusMonitor/MonitorsRow/ActualPanel"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ActualPanel_ActualVBox#LblActualTitle" type="Label" parent="."]
+[node name="LblActualTitle" type="Label" parent="SafeArea/MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "ФАКТ"
 horizontal_alignment = 1
 
-[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ActualPanel_ActualVBox#LblActualValue" type="Label" parent="."]
+[node name="LblActualValue" type="Label" parent="SafeArea/MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
 text = "s = 15"
 horizontal_alignment = 1
 
-[node name="MainLayout#BodyRow" type="HBoxContainer" parent="."]
+[node name="BodyRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="SafeArea_MainLayout_BodyRow#CodeFrame" type="PanelContainer" parent="."]
+[node name="CodeFrame" type="PanelContainer" parent="SafeArea/MainLayout/BodyRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="SafeArea_MainLayout_BodyRow_CodeFrame#CodeRoot" type="Control" parent="."]
+[node name="CodeRoot" type="Control" parent="SafeArea/MainLayout/BodyRow/CodeFrame"]
 layout_mode = 2
 anchors_preset = 0
 anchor_right = 1.0
@@ -140,7 +140,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="SafeArea_MainLayout_BodyRow_CodeFrame_CodeRoot#CodeView" type="CodeEdit" parent="."]
+[node name="CodeView" type="CodeEdit" parent="SafeArea/MainLayout/BodyRow/CodeFrame/CodeRoot"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -153,7 +153,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 24
 
-[node name="SafeArea_MainLayout_BodyRow_CodeFrame_CodeRoot#LineHighlight" type="ColorRect" parent="."]
+[node name="LineHighlight" type="ColorRect" parent="SafeArea/MainLayout/BodyRow/CodeFrame/CodeRoot"]
 visible = false
 layout_mode = 1
 offset_left = 8.0
@@ -163,12 +163,12 @@ offset_bottom = 40.0
 mouse_filter = 2
 color = Color(0.93, 0.93, 0.91, 0.14)
 
-[node name="SafeArea_MainLayout_BodyRow#SideInfo" type="VBoxContainer" parent="."]
+[node name="SideInfo" type="VBoxContainer" parent="SafeArea/MainLayout/BodyRow"]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="SafeArea_MainLayout_BodyRow_SideInfo#LblHint" type="Label" parent="."]
+[node name="LblHint" type="Label" parent="SafeArea/MainLayout/BodyRow/SideInfo"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -176,29 +176,29 @@ theme_override_font_sizes/font_size = 22
 text = "Найдите строку с ошибкой и выберите исправление."
 autowrap_mode = 2
 
-[node name="SafeArea_MainLayout_BodyRow_SideInfo#MisclickCounter" type="Label" parent="."]
+[node name="MisclickCounter" type="Label" parent="SafeArea/MainLayout/BodyRow/SideInfo"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "ПРОМАХИ: 0"
 
-[node name="MainLayout#ActionsRow" type="HBoxContainer" parent="."]
+[node name="ActionsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="SafeArea_MainLayout_ActionsRow#BtnAnalyze" type="Button" parent="."]
+[node name="BtnAnalyze" type="Button" parent="SafeArea/MainLayout/ActionsRow"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "АНАЛИЗ"
 
-[node name="SafeArea_MainLayout_ActionsRow#BtnVerify" type="Button" parent="."]
+[node name="BtnVerify" type="Button" parent="SafeArea/MainLayout/ActionsRow"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "ПРОВЕРИТЬ"
 
-[node name="SafeArea_MainLayout_ActionsRow#BtnNext" type="Button" parent="."]
+[node name="BtnNext" type="Button" parent="SafeArea/MainLayout/ActionsRow"]
 visible = false
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2

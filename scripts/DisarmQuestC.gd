@@ -13,20 +13,20 @@ enum State {
 	DIAGNOSTIC
 }
 
-@onready var lbl_clue_title: Label = $MainLayout/HeaderRow/LblClueTitle
-@onready var lbl_session: Label = $MainLayout/HeaderRow/LblSession
-@onready var btn_back: Button = $MainLayout/HeaderRow/BtnBack
-@onready var expected_panel: PanelContainer = $MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel
-@onready var actual_panel: PanelContainer = $MainLayout/StatusMonitor/MonitorsRow/ActualPanel
-@onready var lbl_expected_value: Label = $MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox/LblExpectedValue
-@onready var lbl_actual_value: Label = $MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox/LblActualValue
-@onready var code_view: CodeEdit = $MainLayout/BodyRow/CodeFrame/CodeRoot/CodeView
-@onready var line_highlight: ColorRect = $MainLayout/BodyRow/CodeFrame/CodeRoot/LineHighlight
-@onready var lbl_hint: Label = $MainLayout/BodyRow/SideInfo/LblHint
-@onready var lbl_misclicks: Label = $MainLayout/BodyRow/SideInfo/MisclickCounter
-@onready var btn_analyze: Button = $MainLayout/ActionsRow/BtnAnalyze
-@onready var btn_verify: Button = $MainLayout/ActionsRow/BtnVerify
-@onready var btn_next: Button = $MainLayout/ActionsRow/BtnNext
+@onready var lbl_clue_title: Label = $SafeArea/MainLayout/HeaderRow/LblClueTitle
+@onready var lbl_session: Label = $SafeArea/MainLayout/HeaderRow/LblSession
+@onready var btn_back: Button = $SafeArea/MainLayout/HeaderRow/BtnBack
+@onready var expected_panel: PanelContainer = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel
+@onready var actual_panel: PanelContainer = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ActualPanel
+@onready var lbl_expected_value: Label = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox/LblExpectedValue
+@onready var lbl_actual_value: Label = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox/LblActualValue
+@onready var code_view: CodeEdit = $SafeArea/MainLayout/BodyRow/CodeFrame/CodeRoot/CodeView
+@onready var line_highlight: ColorRect = $SafeArea/MainLayout/BodyRow/CodeFrame/CodeRoot/LineHighlight
+@onready var lbl_hint: Label = $SafeArea/MainLayout/BodyRow/SideInfo/LblHint
+@onready var lbl_misclicks: Label = $SafeArea/MainLayout/BodyRow/SideInfo/MisclickCounter
+@onready var btn_analyze: Button = $SafeArea/MainLayout/ActionsRow/BtnAnalyze
+@onready var btn_verify: Button = $SafeArea/MainLayout/ActionsRow/BtnVerify
+@onready var btn_next: Button = $SafeArea/MainLayout/ActionsRow/BtnNext
 @onready var diagnostics_blocker: ColorRect = $DiagnosticsBlocker
 @onready var fix_menu: PopupPanel = $FixMenuC
 @onready var diagnostics_panel: PanelContainer = $DiagnosticsPanelC

@@ -56,33 +56,34 @@ const CASES := [
 	}
 ]
 
-@onready var clue_title_label: Label = $MainLayout/Header/LblClueTitle
-@onready var session_label: Label = $MainLayout/Header/LblSessionId
-@onready var facts_bar: ProgressBar = $MainLayout/BarsRow/FactsBar
-@onready var energy_bar: ProgressBar = $MainLayout/BarsRow/EnergyBar
-@onready var target_label: Label = $MainLayout/TargetDisplay/LblTarget
-@onready var terminal_text: RichTextLabel = $MainLayout/TerminalFrame/TerminalScroll/TerminalRichText
-@onready var stats_label: Label = $MainLayout/StatusRow/StatsLabel
-@onready var feedback_label: Label = $MainLayout/StatusRow/FeedbackLabel
+@onready var clue_title_label: Label = $SafeArea/MainLayout/Header/LblClueTitle
+@onready var session_label: Label = $SafeArea/MainLayout/Header/LblSessionId
+@onready var facts_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/FactsBar
+@onready var energy_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/EnergyBar
+@onready var target_label: Label = $SafeArea/MainLayout/TargetDisplay/LblTarget
+@onready var terminal_text: RichTextLabel = $SafeArea/MainLayout/TerminalFrame/TerminalScroll/TerminalRichText
+@onready var stats_label: Label = $SafeArea/MainLayout/StatusRow/StatsLabel
+@onready var feedback_label: Label = $SafeArea/MainLayout/StatusRow/FeedbackLabel
 
-@onready var input_a_btn: Button = $MainLayout/InteractionRow/InputAFrame/InputAVBox/InputA_Btn
-@onready var input_b_btn: Button = $MainLayout/InteractionRow/InputBFrame/InputBVBox/InputB_Btn
-@onready var input_c_btn: Button = $MainLayout/InteractionRow/InputCFrame/InputCVBox/InputC_Btn
-@onready var slot1_btn: Button = $MainLayout/InteractionRow/Slot1Frame/Slot1VBox/Slot1SelectBtn
-@onready var slot2_btn: Button = $MainLayout/InteractionRow/Slot2Frame/Slot2VBox/Slot2SelectBtn
-@onready var inter_value_label: Label = $MainLayout/InteractionRow/InterSlot/InterVBox/InterValueLabel
-@onready var output_value_label: Label = $MainLayout/InteractionRow/OutputSlot/OutputVBox/OutputValueLabel
+@onready var input_a_btn: Button = $SafeArea/MainLayout/InteractionRow/InputAFrame/InputAVBox/InputA_Btn
+@onready var input_b_btn: Button = $SafeArea/MainLayout/InteractionRow/InputBFrame/InputBVBox/InputB_Btn
+@onready var input_c_btn: Button = $SafeArea/MainLayout/InteractionRow/InputCFrame/InputCVBox/InputC_Btn
+@onready var slot1_btn: Button = $SafeArea/MainLayout/InteractionRow/Slot1Frame/Slot1VBox/Slot1SelectBtn
+@onready var slot2_btn: Button = $SafeArea/MainLayout/InteractionRow/Slot2Frame/Slot2VBox/Slot2SelectBtn
+@onready var inter_value_label: Label = $SafeArea/MainLayout/InteractionRow/InterSlot/InterVBox/InterValueLabel
+@onready var output_value_label: Label = $SafeArea/MainLayout/InteractionRow/OutputSlot/OutputVBox/OutputValueLabel
 
-@onready var gate_and_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateAndBtn
-@onready var gate_or_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateOrBtn
-@onready var gate_not_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNotBtn
-@onready var gate_xor_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateXorBtn
-@onready var gate_nand_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNandBtn
-@onready var gate_nor_btn: Button = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNorBtn
+@onready var gate_and_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateAndBtn
+@onready var gate_or_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateOrBtn
+@onready var gate_not_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNotBtn
+@onready var gate_xor_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateXorBtn
+@onready var gate_nand_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNandBtn
+@onready var gate_nor_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNorBtn
 
-@onready var btn_hint: Button = $MainLayout/Actions/BtnHint
-@onready var btn_test: Button = $MainLayout/Actions/BtnTest
-@onready var btn_next: Button = $MainLayout/Actions/BtnNext
+@onready var btn_hint: Button = $SafeArea/MainLayout/Actions/BtnHint
+@onready var btn_test: Button = $SafeArea/MainLayout/Actions/BtnTest
+@onready var btn_next: Button = $SafeArea/MainLayout/Actions/BtnNext
+@onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
 
 @onready var diagnostics_blocker: ColorRect = $DiagnosticsBlocker
 @onready var diagnostics_panel: PanelContainer = $DiagnosticsPanelB
@@ -110,6 +111,7 @@ var trace_lines: Array[String] = []
 var gate_buttons: Dictionary = {}
 
 func _ready() -> void:
+	_connect_ui_signals()
 	_setup_gate_buttons()
 	_update_stability_ui(GlobalMetrics.stability, 0.0)
 	if not GlobalMetrics.stability_changed.is_connected(_update_stability_ui):
@@ -117,6 +119,43 @@ func _ready() -> void:
 	if not GlobalMetrics.game_over.is_connected(_on_game_over):
 		GlobalMetrics.game_over.connect(_on_game_over)
 	load_case(0)
+
+func _connect_ui_signals() -> void:
+	if not btn_back.pressed.is_connected(_on_back_button_pressed):
+		btn_back.pressed.connect(_on_back_button_pressed)
+	if not input_a_btn.toggled.is_connected(_on_input_a_toggled):
+		input_a_btn.toggled.connect(_on_input_a_toggled)
+	if not input_b_btn.toggled.is_connected(_on_input_b_toggled):
+		input_b_btn.toggled.connect(_on_input_b_toggled)
+	if not input_c_btn.toggled.is_connected(_on_input_c_toggled):
+		input_c_btn.toggled.connect(_on_input_c_toggled)
+	if not slot1_btn.pressed.is_connected(_on_slot1_pressed):
+		slot1_btn.pressed.connect(_on_slot1_pressed)
+	if not slot2_btn.pressed.is_connected(_on_slot2_pressed):
+		slot2_btn.pressed.connect(_on_slot2_pressed)
+
+	var gate_callbacks: Dictionary = {
+		gate_and_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_AND),
+		gate_or_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_OR),
+		gate_not_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_NOT),
+		gate_xor_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_XOR),
+		gate_nand_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_NAND),
+		gate_nor_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_NOR)
+	}
+	for gate_btn_var in gate_callbacks.keys():
+		var gate_btn: Button = gate_btn_var
+		var cb: Callable = gate_callbacks[gate_btn]
+		if not gate_btn.toggled.is_connected(cb):
+			gate_btn.toggled.connect(cb)
+
+	if not btn_hint.pressed.is_connected(_on_hint_pressed):
+		btn_hint.pressed.connect(_on_hint_pressed)
+	if not btn_test.pressed.is_connected(_on_test_pressed):
+		btn_test.pressed.connect(_on_test_pressed)
+	if not btn_next.pressed.is_connected(_on_next_button_pressed):
+		btn_next.pressed.connect(_on_next_button_pressed)
+	if not diagnostics_next_button.pressed.is_connected(_on_diagnostics_close_pressed):
+		diagnostics_next_button.pressed.connect(_on_diagnostics_close_pressed)
 
 func _setup_gate_buttons() -> void:
 	gate_buttons = {

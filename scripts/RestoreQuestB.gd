@@ -19,19 +19,19 @@ enum State {
 	SAFE_MODE
 }
 
-@onready var lbl_clue_title: Label = $MainLayout/Header/LblClueTitle
-@onready var lbl_session: Label = $MainLayout/Header/LblSessionId
-@onready var btn_back: Button = $MainLayout/Header/BtnBack
-@onready var decrypt_bar: ProgressBar = $MainLayout/BarsRow/DecryptBar
-@onready var energy_bar: ProgressBar = $MainLayout/BarsRow/EnergyBar
-@onready var lbl_target: Label = $MainLayout/TargetDisplay/LblTarget
-@onready var code_display: RichTextLabel = $MainLayout/TerminalFrame/CodeScroll/CodeDisplay
-@onready var drop_zone: PanelContainer = $MainLayout/SlotRow/DropZone
-@onready var lbl_slot_hint: Label = $MainLayout/SlotRow/LblSlotHint
-@onready var blocks_container: HBoxContainer = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/BlocksContainer
-@onready var btn_analyze: Button = $MainLayout/Actions/BtnAnalyze
-@onready var btn_submit: Button = $MainLayout/Actions/BtnSubmit
-@onready var btn_next: Button = $MainLayout/Actions/BtnNext
+@onready var lbl_clue_title: Label = $SafeArea/MainLayout/Header/LblClueTitle
+@onready var lbl_session: Label = $SafeArea/MainLayout/Header/LblSessionId
+@onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
+@onready var decrypt_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/DecryptBar
+@onready var energy_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/EnergyBar
+@onready var lbl_target: Label = $SafeArea/MainLayout/TargetDisplay/LblTarget
+@onready var code_display: RichTextLabel = $SafeArea/MainLayout/TerminalFrame/CodeScroll/CodeDisplay
+@onready var drop_zone: PanelContainer = $SafeArea/MainLayout/SlotRow/DropZone
+@onready var lbl_slot_hint: Label = $SafeArea/MainLayout/SlotRow/LblSlotHint
+@onready var blocks_container: HBoxContainer = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/BlocksContainer
+@onready var btn_analyze: Button = $SafeArea/MainLayout/Actions/BtnAnalyze
+@onready var btn_submit: Button = $SafeArea/MainLayout/Actions/BtnSubmit
+@onready var btn_next: Button = $SafeArea/MainLayout/Actions/BtnNext
 @onready var diagnostics_blocker: ColorRect = $DiagnosticsBlocker
 @onready var diag_panel: PanelContainer = $DiagnosticsPanelB
 

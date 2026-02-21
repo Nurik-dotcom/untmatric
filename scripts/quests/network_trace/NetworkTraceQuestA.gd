@@ -24,24 +24,24 @@ enum QuestState {
 	DIAGNOSTIC
 }
 
-@onready var btn_back: Button = $Main/V/Header/BtnBack
-@onready var lbl_title: Label = $Main/V/Header/LblTitle
-@onready var lbl_meta: Label = $Main/V/Header/LblMeta
-@onready var palette_select: OptionButton = $Main/V/Header/PaletteSelect
-@onready var body: BoxContainer = $Main/V/Body
-@onready var lbl_briefing: RichTextLabel = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblBriefing
-@onready var lbl_prompt: RichTextLabel = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblPrompt
-@onready var log_list: VBoxContainer = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll/LogList
-@onready var evidence_row: HBoxContainer = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/EvidenceRow
-@onready var topology_board: NetworkTraceTopologyBoardA = $Main/V/Body/MapPane/MapMargin/MapV/TopologyBoard
-@onready var palette_box: HBoxContainer = $Main/V/Body/MapPane/MapMargin/MapV/PaletteScroll/Palette
-@onready var btn_analyze: Button = $Main/V/Body/MapPane/MapMargin/MapV/Actions/BtnAnalyze
-@onready var btn_run_trace: Button = $Main/V/Body/MapPane/MapMargin/MapV/Actions/BtnRunTrace
-@onready var btn_reset: Button = $Main/V/Body/MapPane/MapMargin/MapV/Actions/BtnReset
-@onready var btn_next: Button = $Main/V/Body/MapPane/MapMargin/MapV/Actions/BtnNext
-@onready var lbl_status: Label = $Main/V/Body/MapPane/MapMargin/MapV/LblStatus
+@onready var btn_back: Button = $SafeArea/Main/V/Header/BtnBack
+@onready var lbl_title: Label = $SafeArea/Main/V/Header/LblTitle
+@onready var lbl_meta: Label = $SafeArea/Main/V/Header/LblMeta
+@onready var palette_select: OptionButton = $SafeArea/Main/V/Header/PaletteSelect
+@onready var body: BoxContainer = $SafeArea/Main/V/Body
+@onready var lbl_briefing: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblBriefing
+@onready var lbl_prompt: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblPrompt
+@onready var log_list: VBoxContainer = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll/LogList
+@onready var evidence_row: HBoxContainer = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/EvidenceRow
+@onready var topology_board: NetworkTraceTopologyBoardA = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/TopologyBoard
+@onready var palette_box: HBoxContainer = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/PaletteScroll/Palette
+@onready var btn_analyze: Button = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions/BtnAnalyze
+@onready var btn_run_trace: Button = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions/BtnRunTrace
+@onready var btn_reset: Button = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions/BtnReset
+@onready var btn_next: Button = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions/BtnNext
+@onready var lbl_status: Label = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/LblStatus
 @onready var diagnostics_panel: PanelContainer = $DiagnosticsPanel
-@onready var crt_overlay: ColorRect = $CanvasLayer/CRT_Overlay
+@onready var crt_overlay: ColorRect = $NoirOverlay/CRT_Overlay
 
 var levels: Array[Dictionary] = []
 var current_level: Dictionary = {}

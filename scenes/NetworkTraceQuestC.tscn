@@ -61,7 +61,7 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="V" type="VBoxContainer" parent="Main"]
+[node name="V" type="VBoxContainer" parent="SafeArea/Main"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -185,7 +185,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="LockIndicator" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV" instance=ExtResource("5_lock_indicator")]
+[node name="LockIndicator" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV" instance=ExtResource("4_lock_indicator")]
 layout_mode = 2
 
 [node name="BitBoard" type="VBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV"]
@@ -221,7 +221,7 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-script = ExtResource("8_drop_target")
+script = ExtResource("7_drop_target")
 
 [node name="RowMask" type="HBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine/MaskDropTarget"]
 layout_mode = 1
@@ -262,10 +262,10 @@ layout_mode = 2
 text = "МАСКА"
 vertical_alignment = 1
 
-[node name="MaskOverlay" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/MaskTray" instance=ExtResource("6_mask_overlay")]
+[node name="MaskOverlay" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/MaskTray" instance=ExtResource("5_mask_overlay")]
 layout_mode = 2
 
-[node name="Ruler" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV" instance=ExtResource("7_subnet_ruler")]
+[node name="Ruler" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV" instance=ExtResource("6_subnet_ruler")]
 layout_mode = 2
 
 [node name="BoardActions" type="HBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV"]
@@ -374,11 +374,9 @@ size_flags_horizontal = 3
 visible = false
 text = "ДАЛЕЕ"
 
-[node name="DiagnosticsPanel" parent="." instance=ExtResource("4_diag_panel")]
+[node name="DiagnosticsPanel" parent="." instance=ExtResource("3_diag_panel")]
 layout_mode = 1
 anchor_left = 0.1
 anchor_top = 0.12
 anchor_right = 0.9
 anchor_bottom = 0.9
-
-

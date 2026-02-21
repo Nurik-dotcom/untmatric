@@ -55,7 +55,7 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="V" type="VBoxContainer" parent="Main"]
+[node name="V" type="VBoxContainer" parent="SafeArea/Main"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -171,7 +171,7 @@ custom_minimum_size = Vector2(0, 240)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-script = ExtResource("5_topology")
+script = ExtResource("4_topology")
 
 [node name="PaletteLabel" type="Label" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV"]
 layout_mode = 2
@@ -229,10 +229,9 @@ theme_override_font_sizes/font_size = 18
 autowrap_mode = 2
 text = "Статус"
 
-[node name="DiagnosticsPanel" parent="." instance=ExtResource("4_diag_panel")]
+[node name="DiagnosticsPanel" parent="." instance=ExtResource("3_diag_panel")]
 layout_mode = 1
 anchor_left = 0.1
 anchor_top = 0.12
 anchor_right = 0.9
 anchor_bottom = 0.9
-

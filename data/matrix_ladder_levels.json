@@ -1,0 +1,20 @@
+{
+  "levels": [
+    {
+      "id": "C_LADDER_001",
+      "stages": [
+        { "size": 2, "base": "DEC", "row_targets": [3, 0] },
+        { "size": 3, "base": "DEC", "row_targets": [3, 4, 2] },
+        { "size": 4, "base": "OCT", "row_targets": ["13", "14", "02", "16"] },
+        { "size": 5, "base": "OCT", "row_targets": ["13", "34", "22", "16", "05"] },
+        { "size": 6, "base": "HEX", "row_targets": ["2B", "1C", "32", "0E", "25", "17"] }
+      ],
+      "options": {
+        "lock_previous": true,
+        "show_live_row_sum": true,
+        "enable_shields": true
+      }
+    }
+  ]
+}
+

@@ -101,24 +101,25 @@ const CASES := [
 	}
 ]
 
-@onready var clue_title_label: Label = $MainLayout/Header/LblClueTitle
-@onready var session_label: Label = $MainLayout/Header/LblSessionId
-@onready var facts_bar: ProgressBar = $MainLayout/BarsRow/FactsBar
-@onready var energy_bar: ProgressBar = $MainLayout/BarsRow/EnergyBar
-@onready var target_label: Label = $MainLayout/TargetDisplay/LblTarget
-@onready var terminal_text: RichTextLabel = $MainLayout/TerminalFrame/TerminalScroll/TerminalRichText
-@onready var stats_label: Label = $MainLayout/StatusRow/StatsLabel
-@onready var feedback_label: Label = $MainLayout/StatusRow/FeedbackLabel
+@onready var clue_title_label: Label = $SafeArea/MainLayout/Header/LblClueTitle
+@onready var session_label: Label = $SafeArea/MainLayout/Header/LblSessionId
+@onready var facts_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/FactsBar
+@onready var energy_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/EnergyBar
+@onready var target_label: Label = $SafeArea/MainLayout/TargetDisplay/LblTarget
+@onready var terminal_text: RichTextLabel = $SafeArea/MainLayout/TerminalFrame/TerminalScroll/TerminalRichText
+@onready var stats_label: Label = $SafeArea/MainLayout/StatusRow/StatsLabel
+@onready var feedback_label: Label = $SafeArea/MainLayout/StatusRow/FeedbackLabel
 
-@onready var expr_value_label: RichTextLabel = $MainLayout/InteractionRow/ExprSlot/ExprVBox/ExprValue
-@onready var patch_value_label: Label = $MainLayout/InteractionRow/PatchSlot/PatchVBox/PatchValue
-@onready var load_bar: ProgressBar = $MainLayout/InteractionRow/LoadSlot/LoadVBox/LoadBar
-@onready var load_label: Label = $MainLayout/InteractionRow/LoadSlot/LoadVBox/LoadLabel
-@onready var patch_container: VBoxContainer = $MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/PatchContainer
+@onready var expr_value_label: RichTextLabel = $SafeArea/MainLayout/InteractionRow/ExprSlot/ExprVBox/ExprValue
+@onready var patch_value_label: Label = $SafeArea/MainLayout/InteractionRow/PatchSlot/PatchVBox/PatchValue
+@onready var load_bar: ProgressBar = $SafeArea/MainLayout/InteractionRow/LoadSlot/LoadVBox/LoadBar
+@onready var load_label: Label = $SafeArea/MainLayout/InteractionRow/LoadSlot/LoadVBox/LoadLabel
+@onready var patch_container: VBoxContainer = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/PatchContainer
 
-@onready var btn_hint: Button = $MainLayout/Actions/BtnHint
-@onready var btn_scan: Button = $MainLayout/Actions/BtnScan
-@onready var btn_next: Button = $MainLayout/Actions/BtnNext
+@onready var btn_hint: Button = $SafeArea/MainLayout/Actions/BtnHint
+@onready var btn_scan: Button = $SafeArea/MainLayout/Actions/BtnScan
+@onready var btn_next: Button = $SafeArea/MainLayout/Actions/BtnNext
+@onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
 
 @onready var diagnostics_blocker: ColorRect = $DiagnosticsBlocker
 @onready var diagnostics_panel: PanelContainer = $DiagnosticsPanelC
@@ -143,12 +144,25 @@ var trace_lines: Array[String] = []
 var patch_buttons: Array[Button] = []
 
 func _ready() -> void:
+	_connect_ui_signals()
 	_update_stability_ui(GlobalMetrics.stability, 0.0)
 	if not GlobalMetrics.stability_changed.is_connected(_update_stability_ui):
 		GlobalMetrics.stability_changed.connect(_update_stability_ui)
 	if not GlobalMetrics.game_over.is_connected(_on_game_over):
 		GlobalMetrics.game_over.connect(_on_game_over)
 	load_case(0)
+
+func _connect_ui_signals() -> void:
+	if not btn_back.pressed.is_connected(_on_back_pressed):
+		btn_back.pressed.connect(_on_back_pressed)
+	if not btn_hint.pressed.is_connected(_on_hint_pressed):
+		btn_hint.pressed.connect(_on_hint_pressed)
+	if not btn_scan.pressed.is_connected(_on_scan_pressed):
+		btn_scan.pressed.connect(_on_scan_pressed)
+	if not btn_next.pressed.is_connected(_on_next_pressed):
+		btn_next.pressed.connect(_on_next_pressed)
+	if not diagnostics_next_button.pressed.is_connected(_on_diagnostics_close_pressed):
+		diagnostics_next_button.pressed.connect(_on_diagnostics_close_pressed)
 
 func load_case(idx: int) -> void:
 	if idx >= CASES.size():
