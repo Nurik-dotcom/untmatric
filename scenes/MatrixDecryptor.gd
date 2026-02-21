@@ -9,6 +9,7 @@ const COLOR_WARN = Color("ffcc00")
 const COLOR_ERROR = Color("ff5555")
 const COLOR_DIM = Color(0.65, 0.65, 0.65)
 const MIN_CELL_SIZE := 64
+const DETAILS_SHEET_H := 360.0
 
 @onready var btn_back: Button = $UI/SafeArea/Main/HeaderBar/HeaderContent/BtnBack
 @onready var btn_details: Button = $UI/SafeArea/Main/HeaderBar/HeaderContent/BtnDetails
@@ -160,14 +161,14 @@ func _start_new_matrix() -> void:
 	_apply_constraints_to_labels()
 	_refresh_grid_from_state()
 	_update_status_highlights()
-	hint_text.text = "Диагностики пока нет."
-	_log_message("Матрица инициализирована. Ограничения потока загружены.", COLOR_NORMAL)
+	hint_text.text = "Tap matrix cells to set values."
+	_log_message("Matrix initialized. Fill the flow and run check.", COLOR_NORMAL)
 
 func _refresh_header_labels() -> void:
 	var edge = _matrix_size() - 1
-	level_label.text = "ПРОТОКОЛ C | %dx%d" % [_matrix_size(), _matrix_size()]
-	inlet_tag.text = "ВХОД [0,0]"
-	outlet_tag.text = "ВЫХОД [%d,%d]" % [edge, edge]
+	level_label.text = "PROTOCOL C | %dx%d" % [_matrix_size(), _matrix_size()]
+	inlet_tag.text = "IN [0,0]"
+	outlet_tag.text = "OUT [%d,%d]" % [edge, edge]
 	inlet_tag.add_theme_color_override("font_color", Color(0.6, 1.0, 0.7, 1.0))
 	outlet_tag.add_theme_color_override("font_color", Color(0.6, 0.95, 1.0, 1.0))
 
@@ -199,7 +200,7 @@ func _update_cell_visual(row: int, col: int) -> void:
 	btn.disabled = _input_locked or not unlocked
 
 	if not unlocked:
-		btn.text = "·" if state == STATE_UNSET else str(state)
+		btn.text = "x" if state == STATE_UNSET else str(state)
 		btn.add_theme_color_override("font_color", Color(0.45, 0.45, 0.45, 1.0))
 		btn.self_modulate = Color(0.65, 0.65, 0.65, 1.0)
 		return
@@ -217,8 +218,10 @@ func _update_cell_visual(row: int, col: int) -> void:
 
 	var edge = _matrix_size() - 1
 	if row == 0 and col == 0:
+		btn.text += "\nIN"
 		btn.self_modulate = Color(0.78, 1.0, 0.82, 1.0)
 	elif row == edge and col == edge:
+		btn.text += "\nOUT"
 		btn.self_modulate = Color(0.78, 0.94, 1.0, 1.0)
 	else:
 		btn.self_modulate = Color(1, 1, 1, 1)
@@ -274,25 +277,18 @@ func _update_status_highlights() -> void:
 
 	var frontier_side = _unlock_depth + 1
 	var frontier_total = frontier_side * frontier_side
-	var frontier_filled = 0
-	for r in range(frontier_side):
-		for c in range(frontier_side):
-			if int(GlobalMetrics.matrix_current[r][c]) != STATE_UNSET:
-				frontier_filled += 1
+	var frontier_filled = _count_frontier_filled(frontier_side)
+	var feasible := _is_matrix_feasible()
 
-	if frontier_filled >= frontier_total and _unlock_depth < _matrix_size() - 1:
+	if frontier_filled >= frontier_total and feasible and _unlock_depth < _matrix_size() - 1:
 		_unlock_depth += 1
 		_refresh_grid_from_state()
-		_log_message("Поток открыт до зоны %dx%d." % [_unlock_depth + 1, _unlock_depth + 1], COLOR_NORMAL)
+		_log_message("Flow opened to %dx%d zone." % [_unlock_depth + 1, _unlock_depth + 1], COLOR_NORMAL)
 		frontier_side = _unlock_depth + 1
 		frontier_total = frontier_side * frontier_side
-		frontier_filled = 0
-		for r in range(frontier_side):
-			for c in range(frontier_side):
-				if int(GlobalMetrics.matrix_current[r][c]) != STATE_UNSET:
-					frontier_filled += 1
+		frontier_filled = _count_frontier_filled(frontier_side)
 
-	progress_label.text = "Открытая зона: %dx%d | Фронт: %d/%d | Строки: %d/%d | Столбцы: %d/%d" % [
+	progress_label.text = "FLOW %dx%d | FRONTIER %d/%d | ROW %d/%d | COL %d/%d | %s" % [
 		_unlock_depth + 1,
 		_unlock_depth + 1,
 		frontier_filled,
@@ -300,20 +296,74 @@ func _update_status_highlights() -> void:
 		solved_visible_rows,
 		maxi(1, visible_rows),
 		solved_cols,
-		_matrix_size()
+		_matrix_size(),
+		"FEASIBLE" if feasible else "CONFLICT"
 	]
-	mode_state_label.text = "Безопасный режим: %s" % ("ВКЛ" if _safe_mode_active else "ВЫКЛ")
+	mode_state_label.text = "MODE: %s | FLOW: %s" % [
+		"SAFE" if _safe_mode_active else "RUN",
+		"FEASIBLE" if feasible else "CONFLICT"
+	]
+
+func _count_frontier_filled(frontier_side: int) -> int:
+	var frontier_filled := 0
+	for r in range(frontier_side):
+		for c in range(frontier_side):
+			if int(GlobalMetrics.matrix_current[r][c]) != STATE_UNSET:
+				frontier_filled += 1
+	return frontier_filled
+
+func _is_matrix_feasible() -> bool:
+	for r in range(_matrix_size()):
+		var row_constraint: Dictionary = GlobalMetrics.matrix_row_constraints[r]
+		if not bool(row_constraint.get("is_hex_visible", false)):
+			continue
+		var row_target := int(row_constraint.get("hex_value", 0))
+		var row_value_current := 0
+		var row_max_possible := 0
+		for c in range(_matrix_size()):
+			var weight := int(GlobalMetrics.MATRIX_WEIGHTS[c])
+			var cell := int(GlobalMetrics.matrix_current[r][c])
+			if cell == STATE_ONE:
+				row_value_current += weight
+				row_max_possible += weight
+			elif cell == STATE_UNSET:
+				row_max_possible += weight
+		if row_value_current > row_target:
+			return false
+		if row_target > row_max_possible:
+			return false
+
+	for c in range(_matrix_size()):
+		var col_constraint: Dictionary = GlobalMetrics.matrix_col_constraints[c]
+		var ones_target := int(col_constraint.get("ones_count", 0))
+		var parity_target := int(col_constraint.get("parity", 0))
+		var ones_current := 0
+		var unset_count := 0
+		for r in range(_matrix_size()):
+			var cell := int(GlobalMetrics.matrix_current[r][c])
+			if cell == STATE_ONE:
+				ones_current += 1
+			elif cell == STATE_UNSET:
+				unset_count += 1
+		if ones_current > ones_target:
+			return false
+		if ones_target > ones_current + unset_count:
+			return false
+		if unset_count == 0 and (ones_current % 2) != parity_target:
+			return false
+
+	return true
 
 func _on_hint_pressed() -> void:
 	if _input_locked:
-		hint_text.text = "Ввод заблокирован щитом или безопасным режимом."
-		_show_toast("ВВОД ЗАБЛОКИРОВАН", COLOR_WARN)
+		hint_text.text = "Input is locked. Wait for safe mode to finish."
+		_show_toast("Input locked in safe mode.", COLOR_WARN)
 		return
 	var logic: Dictionary = GlobalMetrics.validate_matrix_logic()
 	var hd_val = int(logic.get("hd", 0))
-	hint_text.text = "HD: %d | Сосредоточьтесь на видимых HEX-строках и совпадении чётности столбцов." % hd_val
-	_log_message("Запрошена подсказка. HD=%d" % hd_val, COLOR_WARN)
-	_show_toast("ПОДСКАЗКА ПОКАЗАНА", COLOR_WARN)
+	hint_text.text = "HD: %d | Check visible HEX rows and column constraints." % hd_val
+	_log_message("Hint updated. HD=%d" % hd_val, COLOR_WARN)
+	_show_toast("Hint updated.", COLOR_WARN)
 
 func _on_check_pressed() -> void:
 	if _input_locked:
@@ -322,25 +372,35 @@ func _on_check_pressed() -> void:
 	var changed_cells_count: int = GlobalMetrics.matrix_changed_cells.size()
 	var result: Dictionary = GlobalMetrics.check_matrix_solution()
 	_register_trial(result, changed_cells_count)
+	var error_code := str(result.get("error", ""))
+
+	if error_code.begins_with("SHIELD"):
+		var shield_message := str(result.get("message", "Shield active."))
+		hint_text.text = shield_message
+		if error_code == "SHIELD_ACTIVE":
+			var now_sec := Time.get_ticks_msec() / 1000.0
+			var cooldown_left := maxi(0.0, float(GlobalMetrics.blocked_until) - now_sec)
+			_show_toast("SHIELD: COOLDOWN %.1fs" % cooldown_left, COLOR_WARN)
+			_log_message("Shield cooldown %.1fs." % cooldown_left, COLOR_WARN)
+		else:
+			_log_message(shield_message, COLOR_WARN)
+		return
 
 	if bool(result.get("success", false)):
 		AudioManager.play("relay")
 		_overlay_glitch(0.15, 0.12)
-		_show_toast("ДОСТУП РАЗРЕШЁН", COLOR_NORMAL)
-		_log_message("ДОСТУП РАЗРЕШЁН. Матрица решена.", COLOR_NORMAL)
+		_show_toast("ACCESS GRANTED", COLOR_NORMAL)
+		_log_message("Access granted. Matrix solved.", COLOR_NORMAL)
 		await get_tree().create_timer(1.0).timeout
 		_start_new_matrix()
 		return
 
 	AudioManager.play("error")
 	_overlay_glitch(0.6, 0.2)
-	var message := str(result.get("message", "Неверно"))
+	var message := str(result.get("message", "Incorrect"))
 	hint_text.text = message
-	if str(result.get("error", "")) in ["SHIELD_FREQ", "SHIELD_ACTIVE", "SHIELD_LAZY"]:
-		_log_message(message, COLOR_WARN)
-	else:
-		_log_message(message, COLOR_ERROR)
-	_show_toast("НЕВЕРНО", COLOR_ERROR)
+	_log_message(message, COLOR_ERROR)
+	_show_toast("INCORRECT", COLOR_ERROR)
 
 func _on_reset_pressed() -> void:
 	for r in range(_matrix_size()):
@@ -351,9 +411,9 @@ func _on_reset_pressed() -> void:
 	_reset_trial_telemetry()
 	_refresh_grid_from_state()
 	_update_status_highlights()
-	hint_text.text = "Ввод матрицы сброшен."
-	_log_message("Матрица сброшена в неопределённое состояние.", COLOR_WARN)
-	_show_toast("СБРОС", COLOR_WARN)
+	hint_text.text = "Matrix reset."
+	_log_message("Matrix reset to initial state.", COLOR_WARN)
+	_show_toast("RESET", COLOR_WARN)
 
 func _on_shield_triggered(name: String, duration: float) -> void:
 	AudioManager.play("error")
@@ -362,41 +422,41 @@ func _on_shield_triggered(name: String, duration: float) -> void:
 		_flash_shield(shield_freq)
 	elif name == "LAZY":
 		_flash_shield(shield_lazy)
-	_log_message("ЩИТ %s активен %.1f c." % [name, duration], COLOR_WARN)
+	_log_message("Shield %s active for %.1f s." % [name, duration], COLOR_WARN)
 	_set_input_enabled(false)
 	await get_tree().create_timer(duration).timeout
 	if not _safe_mode_active:
 		_set_input_enabled(true)
-		_log_message("Кулдаун щита завершён.", COLOR_NORMAL)
+		_log_message("Shield released. Check is available again.", COLOR_NORMAL)
 
 func _on_stability_changed(new_val: float, _change: float) -> void:
 	progress_stability.value = new_val
-	stability_text.text = "СТАБИЛЬНОСТЬ: %d%%" % int(new_val)
+	stability_text.text = "Stability: %d%%" % int(new_val)
 	if new_val <= 0.0 and not _safe_mode_active:
 		_safe_mode_active = true
-		mode_state_label.text = "Безопасный режим: ВКЛ"
+		mode_state_label.text = "MODE: SAFE | FLOW: LOCKED"
 		_set_input_enabled(false)
 		await _start_safe_mode_analysis()
 
 func _start_safe_mode_analysis() -> void:
-	_log_message("БЕЗОПАСНЫЙ РЕЖИМ: анализ запущен.", COLOR_WARN)
+	_log_message("Safe mode: starting conflict analysis.", COLOR_WARN)
 	var conflict = _find_conflict_cell()
 	if conflict.size() == 2:
 		var row = int(conflict[0])
 		var col = int(conflict[1])
 		_highlight_conflict(row, col)
-		hint_text.text = "Конфликт около [%d, %d]. Проверьте HEX строки и количество/чётность столбцов." % [row + 1, col + 1]
-		_log_message("Конфликт обнаружен в [%d, %d]." % [row + 1, col + 1], COLOR_ERROR)
+		hint_text.text = "Conflict at cell [%d, %d]. Check row/column limits." % [row + 1, col + 1]
+		_log_message("Conflict detected at [%d, %d]." % [row + 1, col + 1], COLOR_ERROR)
 	else:
-		hint_text.text = "Конфликт не локализован. Сначала проверьте нерешённые строки/столбцы."
-		_log_message("Конфликт не локализован.", COLOR_WARN)
+		hint_text.text = "No explicit conflict found. Check filled rows and columns."
+		_log_message("Conflict was not localized.", COLOR_WARN)
 
 	await get_tree().create_timer(8.0).timeout
 	_clear_conflict_highlight()
 	_safe_mode_active = false
-	mode_state_label.text = "Безопасный режим: ВЫКЛ"
+	mode_state_label.text = "MODE: RUN | FLOW: RECOVERED"
 	_set_input_enabled(true)
-	_log_message("БЕЗОПАСНЫЙ РЕЖИМ: ввод восстановлен.", COLOR_NORMAL)
+	_log_message("Safe mode finished. You can continue.", COLOR_NORMAL)
 
 func _find_conflict_cell() -> Array:
 	var row_values: Array = []
@@ -433,7 +493,8 @@ func _find_conflict_cell() -> Array:
 				continue
 			var row_constraint: Dictionary = GlobalMetrics.matrix_row_constraints[r]
 			var col_constraint: Dictionary = GlobalMetrics.matrix_col_constraints[c]
-			var row_over = row_values[r] > int(row_constraint.get("hex_value", 0))
+			var row_visible := bool(row_constraint.get("is_hex_visible", false))
+			var row_over = row_visible and row_values[r] > int(row_constraint.get("hex_value", 0))
 			var col_over = col_counts[c] > int(col_constraint.get("ones_count", 0))
 			if row_over and col_over:
 				return [r, c]
@@ -444,7 +505,8 @@ func _find_conflict_cell() -> Array:
 				continue
 			var row_constraint: Dictionary = GlobalMetrics.matrix_row_constraints[r]
 			var col_constraint: Dictionary = GlobalMetrics.matrix_col_constraints[c]
-			var row_bad = bool(row_has_unset[r]) or row_values[r] != int(row_constraint.get("hex_value", 0))
+			var row_visible := bool(row_constraint.get("is_hex_visible", false))
+			var row_bad = row_visible and (bool(row_has_unset[r]) or row_values[r] != int(row_constraint.get("hex_value", 0)))
 			var col_bad = bool(col_has_unset[c]) or col_counts[c] != int(col_constraint.get("ones_count", 0))
 			if row_bad and col_bad:
 				return [r, c]
@@ -547,15 +609,18 @@ func _set_details_open(open: bool, immediate: bool) -> void:
 	if open:
 		details_sheet.visible = true
 
-	var target_offset = -details_sheet.size.y if open else 0.0
+	var target_top := -DETAILS_SHEET_H if open else 0.0
+	var target_bottom := 0.0 if open else DETAILS_SHEET_H
 	if immediate:
-		details_sheet.offset_top = target_offset
+		details_sheet.offset_top = target_top
+		details_sheet.offset_bottom = target_bottom
 		if not open:
 			details_sheet.visible = false
 		return
 
 	var tween := create_tween()
-	tween.tween_property(details_sheet, "offset_top", target_offset, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(details_sheet, "offset_top", target_top, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(details_sheet, "offset_bottom", target_bottom, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if not open:
 		tween.tween_callback(func() -> void: details_sheet.visible = false)
 

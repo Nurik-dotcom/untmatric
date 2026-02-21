@@ -30,40 +30,40 @@ const DEFAULT_MODULE_POOL: Array = [
 
 enum QuestState { INIT, PIPELINE_BUILD, PIPELINE_READY, CALC_DONE, ANSWERING, FEEDBACK_SUCCESS, FEEDBACK_FAIL, SAFE_MODE, DIAGNOSTIC, DONE }
 
-@onready var btn_back: Button = $Main/V/Header/BtnBack
-@onready var lbl_title: Label = $Main/V/Header/LblTitle
-@onready var lbl_meta: Label = $Main/V/Header/LblMeta
-@onready var stability_bar: ProgressBar = $Main/V/Header/StabilityBar
-@onready var palette_select: OptionButton = $Main/V/Header/PaletteSelect
-@onready var body: BoxContainer = $Main/V/Body
-@onready var lbl_briefing: RichTextLabel = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblBriefing
-@onready var lbl_prompt: RichTextLabel = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblPrompt
-@onready var lbl_payload: Label = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox/LblPayload
-@onready var lbl_window: Label = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox/LblWindow
-@onready var lbl_target_unit: Label = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox/LblTargetUnit
-@onready var btn_analyze: Button = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/BtnAnalyze
-@onready var log_text: RichTextLabel = $Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll/LogText
-@onready var slot_kilo: PipelineSlotControl = $Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotKilo
-@onready var slot_bit: PipelineSlotControl = $Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotBit
-@onready var slot_time: PipelineSlotControl = $Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotTime
-@onready var slot_out: PipelineSlotControl = $Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotOut
-@onready var module_tray: GridContainer = $Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/ModuleTrayScroll/ModuleTray
-@onready var btn_run_calc: Button = $Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/BtnRunCalc
-@onready var lbl_preview: Label = $Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/LblPreview
-@onready var transfer_bar: ProgressBar = $Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/TransferBar
-@onready var lbl_status: Label = $Main/V/Body/AnswersPane/AnswersMargin/AnswersV/LblStatus
-@onready var btn_reset: Button = $Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow/BtnReset
-@onready var btn_next: Button = $Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow/BtnNext
+@onready var btn_back: Button = $SafeArea/Main/V/Header/BtnBack
+@onready var lbl_title: Label = $SafeArea/Main/V/Header/LblTitle
+@onready var lbl_meta: Label = $SafeArea/Main/V/Header/LblMeta
+@onready var stability_bar: ProgressBar = $SafeArea/Main/V/Header/StabilityBar
+@onready var palette_select: OptionButton = $SafeArea/Main/V/Header/PaletteSelect
+@onready var body: BoxContainer = $SafeArea/Main/V/Body
+@onready var lbl_briefing: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblBriefing
+@onready var lbl_prompt: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblPrompt
+@onready var lbl_payload: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox/LblPayload
+@onready var lbl_window: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox/LblWindow
+@onready var lbl_target_unit: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox/LblTargetUnit
+@onready var btn_analyze: Button = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/BtnAnalyze
+@onready var log_text: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll/LogText
+@onready var slot_kilo: PipelineSlotControl = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotKilo
+@onready var slot_bit: PipelineSlotControl = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotBit
+@onready var slot_time: PipelineSlotControl = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotTime
+@onready var slot_out: PipelineSlotControl = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotOut
+@onready var module_tray: GridContainer = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/ModuleTrayScroll/ModuleTray
+@onready var btn_run_calc: Button = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/BtnRunCalc
+@onready var lbl_preview: Label = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/LblPreview
+@onready var transfer_bar: ProgressBar = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/TransferBar
+@onready var lbl_status: Label = $SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/LblStatus
+@onready var btn_reset: Button = $SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow/BtnReset
+@onready var btn_next: Button = $SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow/BtnNext
 @onready var diagnostics_panel: PanelContainer = $DiagnosticsPanel
-@onready var crt_overlay: ColorRect = $CanvasLayer/CRT_Overlay
+@onready var crt_overlay: ColorRect = $NoirOverlay/CRT_Overlay
 
 @onready var action_buttons: Array[Button] = [
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn1,
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn2,
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn3,
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn4,
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn5,
-	$Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn6
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn1,
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn2,
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn3,
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn4,
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn5,
+	$SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid/ActionBtn6
 ]
 
 var levels: Array[Dictionary] = []

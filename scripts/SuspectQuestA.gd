@@ -32,28 +32,28 @@ enum State {
 @export_enum("low", "high") var fx_quality: String = "low"
 @export var typewriter_delay_sec: float = 0.03
 
-@onready var main_layout: VBoxContainer = $MainLayout
-@onready var noir_overlay: ColorRect = $CanvasLayer/NoirOverlay
-@onready var code_label: RichTextLabel = $MainLayout/TerminalFrame/ScrollContainer/CodeLabel
-@onready var code_scroll: ScrollContainer = $MainLayout/TerminalFrame/ScrollContainer
-@onready var input_display: Label = $MainLayout/InputFrame/InputDisplay
-@onready var lbl_status: Label = $MainLayout/StatusRow/LblStatus
-@onready var lbl_attempts: Label = $MainLayout/StatusRow/LblAttempts
-@onready var decrypt_bar: ProgressBar = $MainLayout/BarsRow/DecryptBar
-@onready var energy_bar: ProgressBar = $MainLayout/BarsRow/EnergyBar
+@onready var main_layout: VBoxContainer = $SafeArea/MainLayout
+@onready var noir_overlay: CanvasLayer = $NoirOverlay
+@onready var code_label: RichTextLabel = $SafeArea/MainLayout/TerminalFrame/ScrollContainer/CodeLabel
+@onready var code_scroll: ScrollContainer = $SafeArea/MainLayout/TerminalFrame/ScrollContainer
+@onready var input_display: Label = $SafeArea/MainLayout/InputFrame/InputDisplay
+@onready var lbl_status: Label = $SafeArea/MainLayout/StatusRow/LblStatus
+@onready var lbl_attempts: Label = $SafeArea/MainLayout/StatusRow/LblAttempts
+@onready var decrypt_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/DecryptBar
+@onready var energy_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/EnergyBar
 @onready var diag_panel: PanelContainer = $DiagnosticsPanel
 @onready var diag_trace: RichTextLabel = $DiagnosticsPanel/VBoxContainer/TraceList
 @onready var diag_explain: RichTextLabel = $DiagnosticsPanel/VBoxContainer/ExplainList
-@onready var btn_enter: Button = $MainLayout/Actions/BtnEnter
-@onready var btn_analyze: Button = $MainLayout/Actions/BtnAnalyze
-@onready var btn_next: Button = $MainLayout/Actions/BtnNext
+@onready var btn_enter: Button = $SafeArea/MainLayout/Actions/BtnEnter
+@onready var btn_analyze: Button = $SafeArea/MainLayout/Actions/BtnAnalyze
+@onready var btn_next: Button = $SafeArea/MainLayout/Actions/BtnNext
 @onready var btn_close_diag: Button = $DiagnosticsPanel/VBoxContainer/BtnCloseDiag
-@onready var btn_quest_back: Button = $MainLayout/Header/BtnQuestBack
-@onready var lbl_clue_title: Label = $MainLayout/Header/LblClueTitle
-@onready var lbl_session: Label = $MainLayout/Header/LblSessionId
-@onready var palette_select: OptionButton = $MainLayout/SettingsRow/PaletteSelect
-@onready var fx_select: OptionButton = $MainLayout/SettingsRow/FxSelect
-@onready var numpad: GridContainer = $MainLayout/Numpad
+@onready var btn_quest_back: Button = $SafeArea/MainLayout/Header/BtnQuestBack
+@onready var lbl_clue_title: Label = $SafeArea/MainLayout/Header/LblClueTitle
+@onready var lbl_session: Label = $SafeArea/MainLayout/Header/LblSessionId
+@onready var palette_select: OptionButton = $SafeArea/MainLayout/SettingsRow/PaletteSelect
+@onready var fx_select: OptionButton = $SafeArea/MainLayout/SettingsRow/FxSelect
+@onready var numpad: GridContainer = $SafeArea/MainLayout/Numpad
 
 var levels: Array = []
 var current_level_idx := 0
@@ -108,7 +108,10 @@ func _setup_runtime_controls() -> void:
 	fx_select.item_selected.connect(_on_fx_selected)
 
 func _configure_overlay_shader() -> void:
-	var shader_mat := noir_overlay.material as ShaderMaterial
+	var crt_overlay := noir_overlay.get_node("CRT_Overlay") as ColorRect
+	if crt_overlay == null:
+		return
+	var shader_mat := crt_overlay.material as ShaderMaterial
 	if shader_mat == null:
 		return
 	var high_fx := fx_quality == "high"
@@ -517,7 +520,10 @@ func _play_sfx(stream: AudioStream) -> void:
 	sfx_player.play()
 
 func _trigger_glitch() -> void:
-	var shader_mat := noir_overlay.material as ShaderMaterial
+	var crt_overlay := noir_overlay.get_node("CRT_Overlay") as ColorRect
+	if crt_overlay == null:
+		return
+	var shader_mat := crt_overlay.material as ShaderMaterial
 	if shader_mat == null:
 		return
 	var is_high_fx := fx_quality == "high"
@@ -537,7 +543,10 @@ func _shake_screen() -> void:
 	tw.tween_property(main_layout, "position", original_pos, 0.05)
 
 func _play_success_clean_effect() -> void:
-	var shader_mat := noir_overlay.material as ShaderMaterial
+	var crt_overlay := noir_overlay.get_node("CRT_Overlay") as ColorRect
+	if crt_overlay == null:
+		return
+	var shader_mat := crt_overlay.material as ShaderMaterial
 	if shader_mat == null:
 		return
 	var is_high_fx := fx_quality == "high"
@@ -561,5 +570,3 @@ func _log_event(name: String, payload: Dictionary) -> void:
 		"payload": payload
 	})
 	task_session["events"] = events
-
-

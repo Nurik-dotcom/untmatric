@@ -1,16 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://dmd28rj5m2f34"]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestC.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="Script" path="res://scenes/TimeKnob.gd" id="3_knob_script"]
-[ext_resource type="Shader" path="res://ui/shaders/crt_overlay.gdshader" id="4_shader"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
-shader = ExtResource("4_shader")
-shader_parameter/tint_color = Color(0, 1, 0.25, 1)
-shader_parameter/intensity = 0.12
-shader_parameter/fx_quality = 1
-shader_parameter/glitch_strength = 0.0
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="4_noir"]
+[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_w857s"]
 
 [node name="RadioQuestC" type="Control"]
 layout_mode = 3
@@ -29,31 +23,26 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.05, 0.08, 0.05, 1)
+color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="CRTLayer" type="CanvasLayer" parent="."]
-
-[node name="CRTOverlay" type="ColorRect" parent="CRTLayer"]
-material = SubResource("ShaderMaterial_crt")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
+[node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("4_noir")]
+layer = 100
+script = ExtResource("4_w857s")
+intensity = 0.18
+fx_quality = 1
+tint_color = Color(0.93, 0.93, 0.93, 1)
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 12.0
-offset_right = -16.0
-offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
 
 [node name="RootVBox" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
@@ -132,16 +121,16 @@ text = "СТРОКА2"
 
 [node name="TaskLine3" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
 theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
 text = "СТРОКА3"
 
 [node name="MicroHint" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
 theme_override_font_sizes/font_size = 18
-autowrap_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
 text = "ПОДСКАЗКА"
+autowrap_mode = 2
 
 [node name="KnobCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol"]
 layout_mode = 2
@@ -172,12 +161,18 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(320, 320)
 layout_mode = 2
 script = ExtResource("3_knob_script")
+min_value = 0.0
+max_value = 30.0
+step = 0.1
+start_angle_deg = -225.0
+end_angle_deg = 45.0
+value = 0.0
 
 [node name="EstimateValue" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 38
-horizontal_alignment = 1
 text = "t = 0.0"
+horizontal_alignment = 1
 
 [node name="FineButtonsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox"]
 layout_mode = 2
@@ -226,8 +221,8 @@ theme_override_constants/margin_bottom = 8
 [node name="StatusLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/StatusCard/StatusMargin"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-autowrap_mode = 2
 text = "СТАТУС"
+autowrap_mode = 2
 
 [node name="RightCol" type="VBoxContainer" parent="SafeArea/RootVBox/BodyHSplit"]
 layout_mode = 2
@@ -346,10 +341,10 @@ size_flags_horizontal = 3
 text = "ДЕТАЛИ"
 
 [node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
+visible = false
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-visible = false
 text = "ДАЛЕЕ"
 
 [node name="SampleStrip" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
@@ -362,28 +357,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="BG" type="ColorRect" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample1"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 color = Color(0.18, 0.18, 0.18, 1)
 
 [node name="AnchorMark" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample1"]
 visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -7.0
-offset_top = -9.0
-offset_right = 7.0
-offset_bottom = 9.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "A"
 horizontal_alignment = 1
@@ -394,28 +373,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="BG" type="ColorRect" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample2"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 color = Color(0.18, 0.18, 0.18, 1)
 
 [node name="AnchorMark" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample2"]
 visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -7.0
-offset_top = -9.0
-offset_right = 7.0
-offset_bottom = 9.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "A"
 horizontal_alignment = 1
@@ -426,28 +389,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="BG" type="ColorRect" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample3"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 color = Color(0.18, 0.18, 0.18, 1)
 
 [node name="AnchorMark" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample3"]
 visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -7.0
-offset_top = -9.0
-offset_right = 7.0
-offset_bottom = 9.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "A"
 horizontal_alignment = 1
@@ -458,28 +405,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="BG" type="ColorRect" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample4"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 color = Color(0.18, 0.18, 0.18, 1)
 
 [node name="AnchorMark" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample4"]
 visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -7.0
-offset_top = -9.0
-offset_right = 7.0
-offset_bottom = 9.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "A"
 horizontal_alignment = 1
@@ -490,28 +421,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="BG" type="ColorRect" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample5"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 color = Color(0.18, 0.18, 0.18, 1)
 
 [node name="AnchorMark" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample5"]
 visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -7.0
-offset_top = -9.0
-offset_right = 7.0
-offset_bottom = 9.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "A"
 horizontal_alignment = 1
@@ -522,28 +437,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="BG" type="ColorRect" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample6"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 color = Color(0.18, 0.18, 0.18, 1)
 
 [node name="AnchorMark" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample6"]
 visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -7.0
-offset_top = -9.0
-offset_right = 7.0
-offset_bottom = 9.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "A"
 horizontal_alignment = 1
@@ -554,28 +453,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="BG" type="ColorRect" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample7"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 color = Color(0.18, 0.18, 0.18, 1)
 
 [node name="AnchorMark" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip/Sample7"]
 visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -7.0
-offset_top = -9.0
-offset_right = 7.0
-offset_bottom = 9.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "A"
 horizontal_alignment = 1
@@ -602,9 +485,9 @@ color = Color(0, 0, 0, 0.6)
 
 [node name="BottomSheet" type="PanelContainer" parent="DetailsOverlay"]
 layout_mode = 1
-anchors_preset = 0
+anchors_preset = -1
 anchor_left = 0.12
-anchor_top = 0.30
+anchor_top = 0.3
 anchor_right = 0.88
 anchor_bottom = 0.94
 grow_horizontal = 2
@@ -631,9 +514,6 @@ text = "ДЕТАЛИ"
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 size_flags_vertical = 3
-fit_content = false
-scroll_active = true
-bbcode_enabled = false
 
 [node name="BtnCloseDetails" type="Button" parent="DetailsOverlay/BottomSheet/SheetMargin/SheetVBox"]
 custom_minimum_size = Vector2(0, 56)
@@ -649,4 +529,3 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(1, 0.05, 0.05, 0)
-

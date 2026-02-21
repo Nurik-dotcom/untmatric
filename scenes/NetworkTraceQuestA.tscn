@@ -1,17 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://dnn0a5mgt8u1a"]
+[gd_scene load_steps=5 format=3 uid="uid://dnn0a5mgt8u1a"]
 
 [ext_resource type="Script" path="res://scripts/quests/network_trace/NetworkTraceQuestA.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
-[ext_resource type="Shader" path="res://ui/shaders/crt_overlay.gdshader" id="3_shader"]
-[ext_resource type="PackedScene" path="res://scenes/ui/DiagnosticsPanelC.tscn" id="4_diag_panel"]
-[ext_resource type="Script" path="res://scripts/ui/network_trace/topology_board_a.gd" id="5_topology"]
-
-[sub_resource type="ShaderMaterial" id="1_overlay_material"]
-shader = ExtResource("3_shader")
-shader_parameter/tint_color = Color(0, 1, 0.25, 1)
-shader_parameter/intensity = 0.12
-shader_parameter/fx_quality = 0
-shader_parameter/glitch_strength = 0.0
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DiagnosticsPanelC.tscn" id="3_diag_panel"]
+[ext_resource type="Script" path="res://scripts/ui/network_trace/topology_board_a.gd" id="4_topology"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="5_noir"]
 
 [node name="NetworkTraceQuestA" type="Control"]
 layout_mode = 3
@@ -30,26 +23,23 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.04, 0.06, 0.05, 1)
+color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="CanvasModulate" type="CanvasModulate" parent="."]
-color = Color(0.88, 1, 0.9, 1)
+[node name="NoirOverlay" parent="." instance=ExtResource("5_noir")]
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
-layer = 100
-
-[node name="CRT_Overlay" type="ColorRect" parent="CanvasLayer"]
+[node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
-material = SubResource("1_overlay_material")
-color = Color(1, 1, 1, 0)
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
 
-[node name="Main" type="MarginContainer" parent="."]
+[node name="Main" type="MarginContainer" parent="SafeArea"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -71,23 +61,23 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="Header" type="HBoxContainer" parent="Main/V"]
+[node name="Header" type="HBoxContainer" parent="SafeArea/Main/V"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BtnBack" type="Button" parent="Main/V/Header"]
+[node name="BtnBack" type="Button" parent="SafeArea/Main/V/Header"]
 custom_minimum_size = Vector2(120, 58)
 layout_mode = 2
 text = "НАЗАД"
 
-[node name="LblTitle" type="Label" parent="Main/V/Header"]
+[node name="LblTitle" type="Label" parent="SafeArea/Main/V/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 26
 text = "СЕТЕВОЙ СЛЕД | A"
 
-[node name="LblMeta" type="Label" parent="Main/V/Header"]
+[node name="LblMeta" type="Label" parent="SafeArea/Main/V/Header"]
 custom_minimum_size = Vector2(360, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
@@ -95,144 +85,144 @@ text = "ДЕЛО -- | ОШ 0/3 | 02:00"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="PaletteSelect" type="OptionButton" parent="Main/V/Header"]
+[node name="PaletteSelect" type="OptionButton" parent="SafeArea/Main/V/Header"]
 custom_minimum_size = Vector2(150, 52)
 layout_mode = 2
 
-[node name="Body" type="BoxContainer" parent="Main/V"]
+[node name="Body" type="BoxContainer" parent="SafeArea/Main/V"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="TerminalPane" type="PanelContainer" parent="Main/V/Body"]
+[node name="TerminalPane" type="PanelContainer" parent="SafeArea/Main/V/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 1.55
 
-[node name="TerminalMargin" type="MarginContainer" parent="Main/V/Body/TerminalPane"]
+[node name="TerminalMargin" type="MarginContainer" parent="SafeArea/Main/V/Body/TerminalPane"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 
-[node name="TerminalV" type="VBoxContainer" parent="Main/V/Body/TerminalPane/TerminalMargin"]
+[node name="TerminalV" type="VBoxContainer" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="LblBriefing" type="RichTextLabel" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
+[node name="LblBriefing" type="RichTextLabel" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 custom_minimum_size = Vector2(0, 84)
 layout_mode = 2
 fit_content = false
 bbcode_enabled = true
 scroll_active = false
 
-[node name="LblPrompt" type="RichTextLabel" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
+[node name="LblPrompt" type="RichTextLabel" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 fit_content = false
 bbcode_enabled = true
 scroll_active = false
 
-[node name="LogScroll" type="ScrollContainer" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
+[node name="LogScroll" type="ScrollContainer" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="LogList" type="VBoxContainer" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll"]
+[node name="LogList" type="VBoxContainer" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
-[node name="EvidenceLabel" type="Label" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
+[node name="EvidenceLabel" type="Label" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "УЛИКИ"
 
-[node name="EvidenceRow" type="HBoxContainer" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
+[node name="EvidenceRow" type="HBoxContainer" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 custom_minimum_size = Vector2(0, 66)
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="MapPane" type="PanelContainer" parent="Main/V/Body"]
+[node name="MapPane" type="PanelContainer" parent="SafeArea/Main/V/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 1.15
 
-[node name="MapMargin" type="MarginContainer" parent="Main/V/Body/MapPane"]
+[node name="MapMargin" type="MarginContainer" parent="SafeArea/Main/V/Body/MapPane"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 
-[node name="MapV" type="VBoxContainer" parent="Main/V/Body/MapPane/MapMargin"]
+[node name="MapV" type="VBoxContainer" parent="SafeArea/Main/V/Body/MapPane/MapMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="TopologyBoard" type="Control" parent="Main/V/Body/MapPane/MapMargin/MapV"]
+[node name="TopologyBoard" type="Control" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV"]
 custom_minimum_size = Vector2(0, 240)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("5_topology")
 
-[node name="PaletteLabel" type="Label" parent="Main/V/Body/MapPane/MapMargin/MapV"]
+[node name="PaletteLabel" type="Label" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "ПАЛИТРА УСТРОЙСТВ"
 
-[node name="PaletteScroll" type="ScrollContainer" parent="Main/V/Body/MapPane/MapMargin/MapV"]
+[node name="PaletteScroll" type="ScrollContainer" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV"]
 custom_minimum_size = Vector2(0, 94)
 layout_mode = 2
 horizontal_scroll_mode = 1
 vertical_scroll_mode = 0
 
-[node name="Palette" type="HBoxContainer" parent="Main/V/Body/MapPane/MapMargin/MapV/PaletteScroll"]
+[node name="Palette" type="HBoxContainer" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV/PaletteScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="Actions" type="HBoxContainer" parent="Main/V/Body/MapPane/MapMargin/MapV"]
+[node name="Actions" type="HBoxContainer" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BtnAnalyze" type="Button" parent="Main/V/Body/MapPane/MapMargin/MapV/Actions"]
+[node name="BtnAnalyze" type="Button" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "АНАЛИЗ"
 
-[node name="BtnRunTrace" type="Button" parent="Main/V/Body/MapPane/MapMargin/MapV/Actions"]
+[node name="BtnRunTrace" type="Button" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "ЗАПУСТИТЬ ТРАССИРОВКУ"
 
-[node name="BtnReset" type="Button" parent="Main/V/Body/MapPane/MapMargin/MapV/Actions"]
+[node name="BtnReset" type="Button" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "СБРОС"
 
-[node name="BtnNext" type="Button" parent="Main/V/Body/MapPane/MapMargin/MapV/Actions"]
+[node name="BtnNext" type="Button" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 visible = false
 text = "ДАЛЕЕ"
 
-[node name="LblStatus" type="Label" parent="Main/V/Body/MapPane/MapMargin/MapV"]
+[node name="LblStatus" type="Label" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV"]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18

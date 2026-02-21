@@ -1,18 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://suspectquest_a"]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/SuspectQuestA.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_noir_pencil.tres" id="2_theme"]
-[ext_resource type="Shader" path="res://ui/shaders/noir_pencil_overlay.gdshader" id="3_shader"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
-shader = ExtResource("3_shader")
-shader_parameter/intensity = 0.34
-shader_parameter/grain_strength = 0.35
-shader_parameter/hatch_strength = 0.3
-shader_parameter/vignette_strength = 0.45
-shader_parameter/fx_quality = 1
-shader_parameter/pulse = 0.0
-shader_parameter/jitter_strength = 0.0
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
+[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_cc18y"]
 
 [node name="SuspectQuestA" type="Control"]
 layout_mode = 3
@@ -31,130 +22,129 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0509804, 0.0509804, 0.0509804, 1)
+color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("3_noir")]
 layer = 100
+script = ExtResource("4_cc18y")
+intensity = 0.18
+fx_quality = 1
+tint_color = Color(0.93, 0.93, 0.93, 1)
 
-[node name="NoirOverlay" type="ColorRect" parent="CanvasLayer"]
-material = SubResource("ShaderMaterial_crt")
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(1, 1, 1, 0)
-
-[node name="MainLayout" type="VBoxContainer" parent="."]
+[node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="MainLayout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="Header" type="HBoxContainer" parent="MainLayout"]
+[node name="Header" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 alignment = 1
 
-[node name="BtnQuestBack" type="Button" parent="MainLayout/Header"]
+[node name="BtnQuestBack" type="Button" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
 text = "НАЗАД"
 
-[node name="LblClueTitle" type="Label" parent="MainLayout/Header"]
+[node name="LblClueTitle" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 text = "УЛИКА #A-01"
 horizontal_alignment = 1
 
-[node name="LblSessionId" type="Label" parent="MainLayout/Header"]
+[node name="LblSessionId" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 10
 text = "СЕССИЯ ИНИЦ."
 horizontal_alignment = 2
 
-[node name="SettingsRow" type="HBoxContainer" parent="MainLayout"]
+[node name="SettingsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="PaletteTitle" type="Label" parent="MainLayout/SettingsRow"]
+[node name="PaletteTitle" type="Label" parent="SafeArea/MainLayout/SettingsRow"]
 layout_mode = 2
 text = "ПАЛИТРА"
 
-[node name="PaletteSelect" type="OptionButton" parent="MainLayout/SettingsRow"]
+[node name="PaletteSelect" type="OptionButton" parent="SafeArea/MainLayout/SettingsRow"]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 
-[node name="FxTitle" type="Label" parent="MainLayout/SettingsRow"]
+[node name="FxTitle" type="Label" parent="SafeArea/MainLayout/SettingsRow"]
 layout_mode = 2
 text = "ЭФФЕКТЫ"
 
-[node name="FxSelect" type="OptionButton" parent="MainLayout/SettingsRow"]
+[node name="FxSelect" type="OptionButton" parent="SafeArea/MainLayout/SettingsRow"]
 custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
 
-[node name="BarsRow" type="HBoxContainer" parent="MainLayout"]
+[node name="BarsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 alignment = 1
 
-[node name="DecryptBar" type="ProgressBar" parent="MainLayout/BarsRow"]
+[node name="DecryptBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_horizontal = 3
-value = 0.0
 show_percentage = false
 
-[node name="EnergyBar" type="ProgressBar" parent="MainLayout/BarsRow"]
+[node name="EnergyBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_horizontal = 3
 value = 100.0
 show_percentage = false
 
-[node name="TerminalFrame" type="PanelContainer" parent="MainLayout"]
+[node name="TerminalFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MainLayout/TerminalFrame"]
+[node name="ScrollContainer" type="ScrollContainer" parent="SafeArea/MainLayout/TerminalFrame"]
 layout_mode = 2
 
-[node name="CodeLabel" type="RichTextLabel" parent="MainLayout/TerminalFrame/ScrollContainer"]
+[node name="CodeLabel" type="RichTextLabel" parent="SafeArea/MainLayout/TerminalFrame/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
 text = "[code]Инициализация...[/code]"
-fit_content = false
 
-[node name="StatusRow" type="HBoxContainer" parent="MainLayout"]
+[node name="StatusRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 alignment = 1
 
-[node name="LblStatus" type="Label" parent="MainLayout/StatusRow"]
+[node name="LblStatus" type="Label" parent="SafeArea/MainLayout/StatusRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ДОСТУП ОЖИДАЕТ"
 
-[node name="LblAttempts" type="Label" parent="MainLayout/StatusRow"]
+[node name="LblAttempts" type="Label" parent="SafeArea/MainLayout/StatusRow"]
 layout_mode = 2
 text = "ОШ: 0/3"
 
-[node name="InputFrame" type="PanelContainer" parent="MainLayout"]
+[node name="InputFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 
-[node name="InputDisplay" type="Label" parent="MainLayout/InputFrame"]
+[node name="InputDisplay" type="Label" parent="SafeArea/MainLayout/InputFrame"]
 custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "----"
 horizontal_alignment = 1
 
-[node name="Numpad" type="GridContainer" parent="MainLayout"]
+[node name="Numpad" type="GridContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 0.6
@@ -162,109 +152,109 @@ theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 3
 
-[node name="Btn7" type="Button" parent="MainLayout/Numpad"]
+[node name="Btn7" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "7"
 
-[node name="Btn8" type="Button" parent="MainLayout/Numpad"]
+[node name="Btn8" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "8"
 
-[node name="Btn9" type="Button" parent="MainLayout/Numpad"]
+[node name="Btn9" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "9"
 
-[node name="Btn4" type="Button" parent="MainLayout/Numpad"]
+[node name="Btn4" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "4"
 
-[node name="Btn5" type="Button" parent="MainLayout/Numpad"]
+[node name="Btn5" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "5"
 
-[node name="Btn6" type="Button" parent="MainLayout/Numpad"]
+[node name="Btn6" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "6"
 
-[node name="Btn1" type="Button" parent="MainLayout/Numpad"]
+[node name="Btn1" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "1"
 
-[node name="Btn2" type="Button" parent="MainLayout/Numpad"]
+[node name="Btn2" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "2"
 
-[node name="Btn3" type="Button" parent="MainLayout/Numpad"]
+[node name="Btn3" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "3"
 
-[node name="BtnClr" type="Button" parent="MainLayout/Numpad"]
+[node name="BtnClr" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "СБР"
 
-[node name="Btn0" type="Button" parent="MainLayout/Numpad"]
+[node name="Btn0" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "0"
 
-[node name="BtnBack" type="Button" parent="MainLayout/Numpad"]
+[node name="BtnBack" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "<-"
 
-[node name="Actions" type="HBoxContainer" parent="MainLayout"]
+[node name="Actions" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="BtnAnalyze" type="Button" parent="MainLayout/Actions"]
+[node name="BtnAnalyze" type="Button" parent="SafeArea/MainLayout/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "АНАЛИЗ"
 
-[node name="BtnEnter" type="Button" parent="MainLayout/Actions"]
+[node name="BtnEnter" type="Button" parent="SafeArea/MainLayout/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
 text = "ВВОД"
 
-[node name="BtnNext" type="Button" parent="MainLayout/Actions"]
+[node name="BtnNext" type="Button" parent="SafeArea/MainLayout/Actions"]
 visible = false
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
@@ -292,18 +282,14 @@ horizontal_alignment = 1
 
 [node name="ExplainList" type="RichTextLabel" parent="DiagnosticsPanel/VBoxContainer"]
 layout_mode = 2
-fit_content = false
-size_flags_vertical = 1
 
 [node name="TraceList" type="RichTextLabel" parent="DiagnosticsPanel/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
 text = "Журнал трассировки..."
-fit_content = false
 
 [node name="BtnCloseDiag" type="Button" parent="DiagnosticsPanel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 text = "ЗАКРЫТЬ"
-

@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://c4p1o1h01r4g6"]
 
-[ext_resource type="Theme" uid="uid://cfgksggpp15wa" path="res://ui/theme_terminal_green.tres" id="1_theme"]
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="1_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="2_overlay"]
 
 [node name="DecryptorUI" type="Control"]
@@ -19,7 +19,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.03, 0.05, 0.03, 1)
+color = Color(0.06, 0.07, 0.08, 1)
 
 [node name="NoirOverlay" parent="." instance=ExtResource("2_overlay")]
 
@@ -30,9 +30,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 12
+theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 12
+theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 12
 
 [node name="Main" type="VBoxContainer" parent="SafeArea"]
@@ -44,7 +44,6 @@ theme_override_constants/separation = 12
 [node name="HeaderBar" type="PanelContainer" parent="SafeArea/Main"]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
-theme_type_variation = &"HeaderPanel"
 
 [node name="HeaderContent" type="HBoxContainer" parent="SafeArea/Main/HeaderBar"]
 layout_mode = 2
@@ -318,7 +317,6 @@ autowrap_mode = 3
 
 [node name="BottomBar" type="PanelContainer" parent="SafeArea/Main"]
 layout_mode = 2
-theme_type_variation = &"HeaderPanel"
 
 [node name="Actions" type="HBoxContainer" parent="SafeArea/Main/BottomBar"]
 layout_mode = 2
@@ -334,7 +332,6 @@ text = "ПОДСКАЗКА"
 custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"PrimaryButton"
 text = "ПРОВЕРИТЬ"
 
 [node name="BtnReset" type="Button" parent="SafeArea/Main/BottomBar/Actions"]
@@ -369,7 +366,8 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -380.0
+offset_top = 0.0
+offset_bottom = 380.0
 grow_horizontal = 2
 grow_vertical = 2
 

@@ -1,15 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestB.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
-[ext_resource type="Shader" path="res://ui/shaders/crt_overlay.gdshader" id="3_shader"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
-shader = ExtResource("3_shader")
-shader_parameter/tint_color = Color(0, 1, 0.25, 1)
-shader_parameter/intensity = 0.12
-shader_parameter/fx_quality = 1
-shader_parameter/glitch_strength = 0.0
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
+[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_tmvn2"]
 
 [node name="RadioQuestB" type="Control"]
 layout_mode = 3
@@ -28,19 +22,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.01, 0.03, 0.015, 1)
+color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="CRTLayer" type="CanvasLayer" parent="."]
-
-[node name="CRTOverlay" type="ColorRect" parent="CRTLayer"]
-material = SubResource("ShaderMaterial_crt")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
+[node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("3_noir")]
+layer = 100
+script = ExtResource("4_tmvn2")
+intensity = 0.18
+fx_quality = 1
+tint_color = Color(0.93, 0.93, 0.93, 1)
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -81,8 +70,8 @@ text = "RADIO INTERCEPT | B"
 custom_minimum_size = Vector2(360, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-horizontal_alignment = 2
 text = "MODE | STABILITY"
+horizontal_alignment = 2
 
 [node name="BodyHSplit" type="HSplitContainer" parent="SafeArea/RootVBox"]
 layout_mode = 2
@@ -202,8 +191,8 @@ text = "K = 128 symbols"
 [node name="TaskLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-autowrap_mode = 2
 text = "Compute I = K*i and choose best storage option"
+autowrap_mode = 2
 
 [node name="CalcCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 120)
@@ -239,8 +228,8 @@ custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 34
-horizontal_alignment = 1
 text = "0"
+horizontal_alignment = 1
 
 [node name="BtnPlus" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox/IBitsRow"]
 custom_minimum_size = Vector2(72, 56)
@@ -338,8 +327,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -365,8 +354,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -392,8 +381,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -419,8 +408,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -446,8 +435,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -473,8 +462,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -500,8 +489,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -510,8 +499,8 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-autowrap_mode = 2
 text = "Status"
+autowrap_mode = 2
 
 [node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 56)
@@ -532,7 +521,6 @@ theme_override_constants/margin_bottom = 8
 [node name="FooterLabel" type="Label" parent="SafeArea/RootVBox/Footer/FooterMargin"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = ""
 
 [node name="Dimmer" type="ColorRect" parent="."]
 visible = false
@@ -576,9 +564,6 @@ text = "DETAILS"
 custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
 size_flags_vertical = 3
-fit_content = false
-scroll_active = true
-bbcode_enabled = false
 
 [node name="BtnCloseDetails" type="Button" parent="DetailsSheet/DetailsMargin/DetailsVBox"]
 custom_minimum_size = Vector2(0, 56)

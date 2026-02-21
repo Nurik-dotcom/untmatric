@@ -1,20 +1,14 @@
-[gd_scene load_steps=8 format=3 uid="uid://disarm_quest_c_new"]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/DisarmQuestC.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_noir_pencil.tres" id="2_theme"]
-[ext_resource type="PackedScene" uid="uid://fix_menu_c_new" path="res://scenes/ui/FixMenuC.tscn" id="3_fix_menu"]
-[ext_resource type="PackedScene" uid="uid://diagnostics_panel_c_new" path="res://scenes/ui/DiagnosticsPanelC.tscn" id="4_diag_panel"]
-[ext_resource type="Shader" path="res://ui/shaders/noir_pencil_overlay.gdshader" id="5_shader"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_noir"]
-shader = ExtResource("5_shader")
-shader_parameter/intensity = 0.34
-shader_parameter/grain_strength = 0.34
-shader_parameter/hatch_strength = 0.28
-shader_parameter/vignette_strength = 0.44
-shader_parameter/fx_quality = 1
-shader_parameter/pulse = 0.0
-shader_parameter/jitter_strength = 0.0
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://scenes/ui/FixMenuC.tscn" id="3_fix_menu"]
+[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_2wosd"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DiagnosticsPanelC.tscn" id="4_diag_panel"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="5_noir"]
+[ext_resource type="Theme" path="res://ui/theme_noir_pencil.tres" id="6_1park"]
+[ext_resource type="Script" path="res://scripts/ui/FixMenuC.gd" id="7_qsefb"]
+[ext_resource type="Script" path="res://scripts/ui/DiagnosticsPanelC.gd" id="9_mc3vw"]
 
 [node name="DisarmQuestC" type="Control"]
 layout_mode = 3
@@ -33,122 +27,120 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0509804, 0.0509804, 0.0509804, 1)
+color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="NoirOverlay" type="ColorRect" parent="."]
+[node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("5_noir")]
+layer = 100
+script = ExtResource("4_2wosd")
+intensity = 0.18
+fx_quality = 1
+tint_color = Color(0.93, 0.93, 0.93, 1)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
-material = SubResource("ShaderMaterial_noir")
-color = Color(1, 1, 1, 0)
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
 
-[node name="MainLayout" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = 12.0
-offset_right = -12.0
-offset_bottom = -12.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="MainLayout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="HeaderRow" type="HBoxContainer" parent="MainLayout"]
+[node name="MainLayout#HeaderRow" type="HBoxContainer" parent="."]
 layout_mode = 2
 
-[node name="BtnBack" type="Button" parent="MainLayout/HeaderRow"]
+[node name="SafeArea_MainLayout_HeaderRow#BtnBack" type="Button" parent="."]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
 text = "НАЗАД"
 
-[node name="LblClueTitle" type="Label" parent="MainLayout/HeaderRow"]
+[node name="SafeArea_MainLayout_HeaderRow#LblClueTitle" type="Label" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 text = "Дело C: Разминирование"
 
-[node name="LblSession" type="Label" parent="MainLayout/HeaderRow"]
+[node name="SafeArea_MainLayout_HeaderRow#LblSession" type="Label" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "СЕССИЯ: C-01"
 horizontal_alignment = 2
 
-[node name="StatusMonitor" type="PanelContainer" parent="MainLayout"]
-layout_mode = 2
+[node name="MainLayout#StatusMonitor" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
 
-[node name="MonitorsRow" type="HBoxContainer" parent="MainLayout/StatusMonitor"]
+[node name="SafeArea_MainLayout_StatusMonitor#MonitorsRow" type="HBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="ExpectedPanel" type="PanelContainer" parent="MainLayout/StatusMonitor/MonitorsRow"]
+[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow#ExpectedPanel" type="PanelContainer" parent="."]
+self_modulate = Color(0.92, 0.92, 0.9, 1)
 layout_mode = 2
 size_flags_horizontal = 3
-self_modulate = Color(0.92, 0.92, 0.9, 1)
 
-[node name="ExpectedVBox" type="VBoxContainer" parent="MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel"]
+[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ExpectedPanel#ExpectedVBox" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="LblExpectedTitle" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox"]
+[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ExpectedPanel_ExpectedVBox#LblExpectedTitle" type="Label" parent="."]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "ОЖИДАЕМОЕ"
 horizontal_alignment = 1
 
-[node name="LblExpectedValue" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox"]
+[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ExpectedPanel_ExpectedVBox#LblExpectedValue" type="Label" parent="."]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
 text = "s = 20"
 horizontal_alignment = 1
 
-[node name="ActualPanel" type="PanelContainer" parent="MainLayout/StatusMonitor/MonitorsRow"]
+[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow#ActualPanel" type="PanelContainer" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
-self_modulate = Color(1, 1, 1, 1)
 
-[node name="ActualVBox" type="VBoxContainer" parent="MainLayout/StatusMonitor/MonitorsRow/ActualPanel"]
+[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ActualPanel#ActualVBox" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="LblActualTitle" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox"]
+[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ActualPanel_ActualVBox#LblActualTitle" type="Label" parent="."]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "ФАКТ"
 horizontal_alignment = 1
 
-[node name="LblActualValue" type="Label" parent="MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox"]
+[node name="SafeArea_MainLayout_StatusMonitor_MonitorsRow_ActualPanel_ActualVBox#LblActualValue" type="Label" parent="."]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
 text = "s = 15"
 horizontal_alignment = 1
 
-[node name="BodyRow" type="HBoxContainer" parent="MainLayout"]
+[node name="MainLayout#BodyRow" type="HBoxContainer" parent="."]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="CodeFrame" type="PanelContainer" parent="MainLayout/BodyRow"]
+[node name="SafeArea_MainLayout_BodyRow#CodeFrame" type="PanelContainer" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="CodeRoot" type="Control" parent="MainLayout/BodyRow/CodeFrame"]
+[node name="SafeArea_MainLayout_BodyRow_CodeFrame#CodeRoot" type="Control" parent="."]
 layout_mode = 2
-anchors_preset = 15
+anchors_preset = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CodeView" type="CodeEdit" parent="MainLayout/BodyRow/CodeFrame/CodeRoot"]
+[node name="SafeArea_MainLayout_BodyRow_CodeFrame_CodeRoot#CodeView" type="CodeEdit" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -161,20 +153,22 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 24
 
-[node name="LineHighlight" type="ColorRect" parent="MainLayout/BodyRow/CodeFrame/CodeRoot"]
+[node name="SafeArea_MainLayout_BodyRow_CodeFrame_CodeRoot#LineHighlight" type="ColorRect" parent="."]
 visible = false
 layout_mode = 1
-position = Vector2(8, 8)
-size = Vector2(100, 32)
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 108.0
+offset_bottom = 40.0
 mouse_filter = 2
 color = Color(0.93, 0.93, 0.91, 0.14)
 
-[node name="SideInfo" type="VBoxContainer" parent="MainLayout/BodyRow"]
+[node name="SafeArea_MainLayout_BodyRow#SideInfo" type="VBoxContainer" parent="."]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="LblHint" type="Label" parent="MainLayout/BodyRow/SideInfo"]
+[node name="SafeArea_MainLayout_BodyRow_SideInfo#LblHint" type="Label" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -182,29 +176,29 @@ theme_override_font_sizes/font_size = 22
 text = "Найдите строку с ошибкой и выберите исправление."
 autowrap_mode = 2
 
-[node name="MisclickCounter" type="Label" parent="MainLayout/BodyRow/SideInfo"]
+[node name="SafeArea_MainLayout_BodyRow_SideInfo#MisclickCounter" type="Label" parent="."]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "ПРОМАХИ: 0"
 
-[node name="ActionsRow" type="HBoxContainer" parent="MainLayout"]
+[node name="MainLayout#ActionsRow" type="HBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BtnAnalyze" type="Button" parent="MainLayout/ActionsRow"]
+[node name="SafeArea_MainLayout_ActionsRow#BtnAnalyze" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "АНАЛИЗ"
 
-[node name="BtnVerify" type="Button" parent="MainLayout/ActionsRow"]
+[node name="SafeArea_MainLayout_ActionsRow#BtnVerify" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "ПРОВЕРИТЬ"
 
-[node name="BtnNext" type="Button" parent="MainLayout/ActionsRow"]
+[node name="SafeArea_MainLayout_ActionsRow#BtnNext" type="Button" parent="."]
 visible = false
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
@@ -219,12 +213,23 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 color = Color(0, 0, 0, 0.4)
 
-[node name="FixMenuC" parent="." instance=ExtResource("3_fix_menu")]
-visible = false
+[node name="FixMenuC" type="PopupPanel" parent="." instance=ExtResource("3_fix_menu")]
+initial_position = 1
+size = Vector2i(860, 420)
+theme = ExtResource("6_1park")
+script = ExtResource("7_qsefb")
 
-[node name="DiagnosticsPanelC" parent="." instance=ExtResource("4_diag_panel")]
+[node name="DiagnosticsPanelC" type="PanelContainer" parent="." instance=ExtResource("4_diag_panel")]
 visible = false
-
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.15
+anchor_top = 0.2
+anchor_right = 0.85
+anchor_bottom = 0.8
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("6_1park")
+script = ExtResource("9_mc3vw")

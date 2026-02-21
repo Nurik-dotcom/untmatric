@@ -1,20 +1,13 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/quests/network_trace/NetworkTraceQuestC.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_terminal_green.tres" id="2_theme"]
-[ext_resource type="Shader" path="res://ui/shaders/crt_overlay.gdshader" id="3_shader"]
-[ext_resource type="PackedScene" path="res://scenes/ui/DiagnosticsPanelC.tscn" id="4_diag_panel"]
-[ext_resource type="PackedScene" path="res://scenes/ui/subnet/LockIndicator.tscn" id="5_lock_indicator"]
-[ext_resource type="PackedScene" path="res://scenes/ui/subnet/MaskOverlay.tscn" id="6_mask_overlay"]
-[ext_resource type="PackedScene" path="res://scenes/ui/subnet/SubnetRuler.tscn" id="7_subnet_ruler"]
-[ext_resource type="Script" path="res://scripts/ui/subnet/MaskDropTarget.gd" id="8_drop_target"]
-
-[sub_resource type="ShaderMaterial" id="1_overlay_material"]
-shader = ExtResource("3_shader")
-shader_parameter/tint_color = Color(0, 1, 0.25, 1)
-shader_parameter/intensity = 0.12
-shader_parameter/fx_quality = 0
-shader_parameter/glitch_strength = 0.0
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DiagnosticsPanelC.tscn" id="3_diag_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/subnet/LockIndicator.tscn" id="4_lock_indicator"]
+[ext_resource type="PackedScene" path="res://scenes/ui/subnet/MaskOverlay.tscn" id="5_mask_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/ui/subnet/SubnetRuler.tscn" id="6_subnet_ruler"]
+[ext_resource type="Script" path="res://scripts/ui/subnet/MaskDropTarget.gd" id="7_drop_target"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="8_noir"]
 
 [node name="NetworkTraceQuestC" type="Control"]
 layout_mode = 3
@@ -33,26 +26,26 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.04, 0.06, 0.05, 1)
+color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
-layer = 100
+[node name="NoirOverlay" parent="." instance=ExtResource("8_noir")]
 
-[node name="CRT_Overlay" type="ColorRect" parent="CanvasLayer"]
+[node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
-material = SubResource("1_overlay_material")
-color = Color(1, 1, 1, 0)
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
 
 [node name="CanvasModulate" type="CanvasModulate" parent="."]
 color = Color(0.9, 1, 0.94, 1)
 
-[node name="Main" type="MarginContainer" parent="."]
+[node name="Main" type="MarginContainer" parent="SafeArea"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -74,23 +67,23 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="Header" type="HBoxContainer" parent="Main/V"]
+[node name="Header" type="HBoxContainer" parent="SafeArea/Main/V"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BtnBack" type="Button" parent="Main/V/Header"]
+[node name="BtnBack" type="Button" parent="SafeArea/Main/V/Header"]
 custom_minimum_size = Vector2(118, 58)
 layout_mode = 2
 text = "НАЗАД"
 
-[node name="LblTitle" type="Label" parent="Main/V/Header"]
+[node name="LblTitle" type="Label" parent="SafeArea/Main/V/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 text = "СЕТЕВОЙ СЛЕД | C"
 
-[node name="LblMeta" type="Label" parent="Main/V/Header"]
+[node name="LblMeta" type="Label" parent="SafeArea/Main/V/Header"]
 custom_minimum_size = Vector2(330, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
@@ -98,36 +91,36 @@ text = "ДЕЛО -- | ОШ 0/3 | T-02:00"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="PaletteSelect" type="OptionButton" parent="Main/V/Header"]
+[node name="PaletteSelect" type="OptionButton" parent="SafeArea/Main/V/Header"]
 custom_minimum_size = Vector2(132, 52)
 layout_mode = 2
 
-[node name="Body" type="BoxContainer" parent="Main/V"]
+[node name="Body" type="BoxContainer" parent="SafeArea/Main/V"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="TerminalPane" type="PanelContainer" parent="Main/V/Body"]
+[node name="TerminalPane" type="PanelContainer" parent="SafeArea/Main/V/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 1.4
 
-[node name="TerminalMargin" type="MarginContainer" parent="Main/V/Body/TerminalPane"]
+[node name="TerminalMargin" type="MarginContainer" parent="SafeArea/Main/V/Body/TerminalPane"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 
-[node name="TerminalV" type="VBoxContainer" parent="Main/V/Body/TerminalPane/TerminalMargin"]
+[node name="TerminalV" type="VBoxContainer" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="LblBriefing" type="RichTextLabel" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
+[node name="LblBriefing" type="RichTextLabel" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -135,7 +128,7 @@ bbcode_enabled = true
 fit_content = false
 scroll_active = false
 
-[node name="LblPrompt" type="RichTextLabel" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
+[node name="LblPrompt" type="RichTextLabel" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -143,28 +136,28 @@ bbcode_enabled = true
 fit_content = false
 scroll_active = false
 
-[node name="TargetBox" type="VBoxContainer" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
+[node name="TargetBox" type="VBoxContainer" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="LblTargetIp" type="Label" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox"]
+[node name="LblTargetIp" type="Label" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox"]
 layout_mode = 2
 text = "IP: --"
 
-[node name="LblTargetCidr" type="Label" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox"]
+[node name="LblTargetCidr" type="Label" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox"]
 layout_mode = 2
 text = "CIDR: --"
 
-[node name="LblTargetAsk" type="Label" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox"]
+[node name="LblTargetAsk" type="Label" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox"]
 layout_mode = 2
 text = "ЗАПРОС: --"
 
-[node name="LogScroll" type="ScrollContainer" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
+[node name="LogScroll" type="ScrollContainer" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="LogText" type="RichTextLabel" parent="Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll"]
+[node name="LogText" type="RichTextLabel" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll"]
 custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -173,64 +166,64 @@ fit_content = false
 selection_enabled = true
 autowrap_mode = 2
 
-[node name="BoardPane" type="PanelContainer" parent="Main/V/Body"]
+[node name="BoardPane" type="PanelContainer" parent="SafeArea/Main/V/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 1.25
 
-[node name="BoardMargin" type="MarginContainer" parent="Main/V/Body/BoardPane"]
+[node name="BoardMargin" type="MarginContainer" parent="SafeArea/Main/V/Body/BoardPane"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 
-[node name="BoardV" type="VBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin"]
+[node name="BoardV" type="VBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="LockIndicator" parent="Main/V/Body/BoardPane/BoardMargin/BoardV" instance=ExtResource("5_lock_indicator")]
+[node name="LockIndicator" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV" instance=ExtResource("5_lock_indicator")]
 layout_mode = 2
 
-[node name="BitBoard" type="VBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="RowIpLine" type="HBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard"]
+[node name="BitBoard" type="VBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="LblRowIp" type="Label" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowIpLine"]
+[node name="RowIpLine" type="HBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LblRowIp" type="Label" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowIpLine"]
 custom_minimum_size = Vector2(62, 44)
 layout_mode = 2
 text = "IP"
 vertical_alignment = 1
 
-[node name="RowIp" type="HBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowIpLine"]
+[node name="RowIp" type="HBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowIpLine"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="RowMaskLine" type="HBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard"]
+[node name="RowMaskLine" type="HBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="LblRowMask" type="Label" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine"]
+[node name="LblRowMask" type="Label" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine"]
 custom_minimum_size = Vector2(62, 44)
 layout_mode = 2
 text = "МАСКА"
 vertical_alignment = 1
 
-[node name="MaskDropTarget" type="PanelContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine"]
+[node name="MaskDropTarget" type="PanelContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("8_drop_target")
 
-[node name="RowMask" type="HBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine/MaskDropTarget"]
+[node name="RowMask" type="HBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowMaskLine/MaskDropTarget"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -243,138 +236,138 @@ offset_right = -6.0
 offset_bottom = -4.0
 theme_override_constants/separation = 4
 
-[node name="RowResLine" type="HBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard"]
+[node name="RowResLine" type="HBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard"]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="LblRowRes" type="Label" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowResLine"]
+[node name="LblRowRes" type="Label" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowResLine"]
 custom_minimum_size = Vector2(62, 44)
 layout_mode = 2
 text = "РЕЗУЛЬТАТ"
 vertical_alignment = 1
 
-[node name="RowRes" type="HBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowResLine"]
+[node name="RowRes" type="HBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BitBoard/RowResLine"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="MaskTray" type="HBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV"]
+[node name="MaskTray" type="HBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="LblMaskTray" type="Label" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/MaskTray"]
+[node name="LblMaskTray" type="Label" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/MaskTray"]
 custom_minimum_size = Vector2(94, 52)
 layout_mode = 2
 text = "МАСКА"
 vertical_alignment = 1
 
-[node name="MaskOverlay" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/MaskTray" instance=ExtResource("6_mask_overlay")]
+[node name="MaskOverlay" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/MaskTray" instance=ExtResource("6_mask_overlay")]
 layout_mode = 2
 
-[node name="Ruler" parent="Main/V/Body/BoardPane/BoardMargin/BoardV" instance=ExtResource("7_subnet_ruler")]
+[node name="Ruler" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV" instance=ExtResource("7_subnet_ruler")]
 layout_mode = 2
 
-[node name="BoardActions" type="HBoxContainer" parent="Main/V/Body/BoardPane/BoardMargin/BoardV"]
+[node name="BoardActions" type="HBoxContainer" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BtnAnalyze" type="Button" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions"]
+[node name="BtnAnalyze" type="Button" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "АНАЛИЗ"
 
-[node name="BtnApplyAnd" type="Button" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions"]
+[node name="BtnApplyAnd" type="Button" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "ПРИМЕНИТЬ И"
 
-[node name="BtnReset" type="Button" parent="Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions"]
+[node name="BtnReset" type="Button" parent="SafeArea/Main/V/Body/BoardPane/BoardMargin/BoardV/BoardActions"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "СБРОС"
 
-[node name="AnswersPane" type="PanelContainer" parent="Main/V/Body"]
+[node name="AnswersPane" type="PanelContainer" parent="SafeArea/Main/V/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 1.0
 
-[node name="AnswersMargin" type="MarginContainer" parent="Main/V/Body/AnswersPane"]
+[node name="AnswersMargin" type="MarginContainer" parent="SafeArea/Main/V/Body/AnswersPane"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 
-[node name="AnswersV" type="VBoxContainer" parent="Main/V/Body/AnswersPane/AnswersMargin"]
+[node name="AnswersV" type="VBoxContainer" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="OptionsGrid" type="GridContainer" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV"]
+[node name="OptionsGrid" type="GridContainer" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 2
 
-[node name="ActionBtn1" type="Button" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
+[node name="ActionBtn1" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
 text = ""
 
-[node name="ActionBtn2" type="Button" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
+[node name="ActionBtn2" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
 text = ""
 
-[node name="ActionBtn3" type="Button" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
+[node name="ActionBtn3" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
 text = ""
 
-[node name="ActionBtn4" type="Button" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
+[node name="ActionBtn4" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
 text = ""
 
-[node name="ActionBtn5" type="Button" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
+[node name="ActionBtn5" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
 text = ""
 
-[node name="ActionBtn6" type="Button" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
+[node name="ActionBtn6" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
 text = ""
 
-[node name="LblStatus" type="Label" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV"]
+[node name="LblStatus" type="Label" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 autowrap_mode = 2
 text = "Статус"
 
-[node name="BottomRow" type="HBoxContainer" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV"]
+[node name="BottomRow" type="HBoxContainer" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BtnNext" type="Button" parent="Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow"]
+[node name="BtnNext" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3

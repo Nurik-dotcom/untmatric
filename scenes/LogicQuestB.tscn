@@ -1,18 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://c856hihjj58j"]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scenes/LogicQuestB.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_noir_pencil.tres" id="2_theme"]
-[ext_resource type="Shader" path="res://ui/shaders/noir_pencil_overlay.gdshader" id="3_shader"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_noir"]
-shader = ExtResource("3_shader")
-shader_parameter/intensity = 0.34
-shader_parameter/grain_strength = 0.33
-shader_parameter/hatch_strength = 0.26
-shader_parameter/vignette_strength = 0.42
-shader_parameter/fx_quality = 1
-shader_parameter/pulse = 0.0
-shader_parameter/jitter_strength = 0.0
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
+[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_u1woe"]
 
 [node name="LogicQuestB" type="Control"]
 layout_mode = 3
@@ -31,88 +22,85 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.05, 0.05, 0.05, 1)
+color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("3_noir")]
 layer = 100
+script = ExtResource("4_u1woe")
+intensity = 0.18
+fx_quality = 1
+tint_color = Color(0.93, 0.93, 0.93, 1)
 
-[node name="NoirOverlay" type="ColorRect" parent="CanvasLayer"]
-material = SubResource("ShaderMaterial_noir")
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(1, 1, 1, 0)
-
-[node name="MainLayout" type="VBoxContainer" parent="."]
+[node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 12.0
-offset_right = -16.0
-offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="MainLayout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="Header" type="HBoxContainer" parent="MainLayout"]
+[node name="MainLayout#Header" type="HBoxContainer" parent="."]
 layout_mode = 2
 alignment = 1
 
-[node name="BtnBack" type="Button" parent="MainLayout/Header"]
+[node name="SafeArea_MainLayout_Header#BtnBack" type="Button" parent="."]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
 text = "НАЗАД"
 
-[node name="LblClueTitle" type="Label" parent="MainLayout/Header"]
+[node name="SafeArea_MainLayout_Header#LblClueTitle" type="Label" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ДЕТЕКТОР ЛЖИ B-01"
 
-[node name="LblSessionId" type="Label" parent="MainLayout/Header"]
+[node name="SafeArea_MainLayout_Header#LblSessionId" type="Label" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "СЕССИЯ: 00/00 • CASE B_00"
 horizontal_alignment = 2
 
-[node name="BarsRow" type="HBoxContainer" parent="MainLayout"]
+[node name="MainLayout#BarsRow" type="HBoxContainer" parent="."]
 layout_mode = 2
 alignment = 1
 
-[node name="FactsBar" type="ProgressBar" parent="MainLayout/BarsRow"]
+[node name="SafeArea_MainLayout_BarsRow#FactsBar" type="ProgressBar" parent="."]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_horizontal = 3
 show_percentage = false
 
-[node name="EnergyBar" type="ProgressBar" parent="MainLayout/BarsRow"]
+[node name="SafeArea_MainLayout_BarsRow#EnergyBar" type="ProgressBar" parent="."]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_horizontal = 3
 value = 100.0
 show_percentage = false
 
-[node name="TargetDisplay" type="PanelContainer" parent="MainLayout"]
+[node name="MainLayout#TargetDisplay" type="PanelContainer" parent="."]
 layout_mode = 2
 
-[node name="LblTarget" type="Label" parent="MainLayout/TargetDisplay"]
+[node name="SafeArea_MainLayout_TargetDisplay#LblTarget" type="Label" parent="."]
 layout_mode = 2
 text = "ШАГ 1/3: выберите слот и установите 2 модуля"
 horizontal_alignment = 1
 
-[node name="TerminalFrame" type="PanelContainer" parent="MainLayout"]
+[node name="MainLayout#TerminalFrame" type="PanelContainer" parent="."]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="TerminalScroll" type="ScrollContainer" parent="MainLayout/TerminalFrame"]
+[node name="SafeArea_MainLayout_TerminalFrame#TerminalScroll" type="ScrollContainer" parent="."]
 layout_mode = 2
 
-[node name="TerminalRichText" type="RichTextLabel" parent="MainLayout/TerminalFrame/TerminalScroll"]
+[node name="SafeArea_MainLayout_TerminalFrame_TerminalScroll#TerminalRichText" type="RichTextLabel" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -121,234 +109,239 @@ bbcode_enabled = true
 text = "[b]БРИФИНГ[/b]"
 fit_content = true
 
-[node name="InteractionRow" type="HBoxContainer" parent="MainLayout"]
+[node name="MainLayout#InteractionRow" type="HBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="InputAFrame" type="PanelContainer" parent="MainLayout/InteractionRow"]
+[node name="SafeArea_MainLayout_InteractionRow#InputAFrame" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(200, 96)
 layout_mode = 2
 
-[node name="InputAVBox" type="VBoxContainer" parent="MainLayout/InteractionRow/InputAFrame"]
+[node name="SafeArea_MainLayout_InteractionRow_InputAFrame#InputAVBox" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="InputATitle" type="Label" parent="MainLayout/InteractionRow/InputAFrame/InputAVBox"]
+[node name="SafeArea_MainLayout_InteractionRow_InputAFrame_InputAVBox#InputATitle" type="Label" parent="."]
 layout_mode = 2
 text = "ВХОД A"
 horizontal_alignment = 1
 
-[node name="InputA_Btn" type="Button" parent="MainLayout/InteractionRow/InputAFrame/InputAVBox"]
+[node name="SafeArea_MainLayout_InteractionRow_InputAFrame_InputAVBox#InputA_Btn" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 toggle_mode = true
-text = "A\n[0]"
+text = "A
+[0]"
 
-[node name="InputBFrame" type="PanelContainer" parent="MainLayout/InteractionRow"]
+[node name="SafeArea_MainLayout_InteractionRow#InputBFrame" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(200, 96)
 layout_mode = 2
 
-[node name="InputBVBox" type="VBoxContainer" parent="MainLayout/InteractionRow/InputBFrame"]
+[node name="SafeArea_MainLayout_InteractionRow_InputBFrame#InputBVBox" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="InputBTitle" type="Label" parent="MainLayout/InteractionRow/InputBFrame/InputBVBox"]
+[node name="SafeArea_MainLayout_InteractionRow_InputBFrame_InputBVBox#InputBTitle" type="Label" parent="."]
 layout_mode = 2
 text = "ВХОД B"
 horizontal_alignment = 1
 
-[node name="InputB_Btn" type="Button" parent="MainLayout/InteractionRow/InputBFrame/InputBVBox"]
+[node name="SafeArea_MainLayout_InteractionRow_InputBFrame_InputBVBox#InputB_Btn" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 toggle_mode = true
-text = "B\n[0]"
+text = "B
+[0]"
 
-[node name="InputCFrame" type="PanelContainer" parent="MainLayout/InteractionRow"]
+[node name="SafeArea_MainLayout_InteractionRow#InputCFrame" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(200, 96)
 layout_mode = 2
 
-[node name="InputCVBox" type="VBoxContainer" parent="MainLayout/InteractionRow/InputCFrame"]
+[node name="SafeArea_MainLayout_InteractionRow_InputCFrame#InputCVBox" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="InputCTitle" type="Label" parent="MainLayout/InteractionRow/InputCFrame/InputCVBox"]
+[node name="SafeArea_MainLayout_InteractionRow_InputCFrame_InputCVBox#InputCTitle" type="Label" parent="."]
 layout_mode = 2
 text = "ВХОД C"
 horizontal_alignment = 1
 
-[node name="InputC_Btn" type="Button" parent="MainLayout/InteractionRow/InputCFrame/InputCVBox"]
+[node name="SafeArea_MainLayout_InteractionRow_InputCFrame_InputCVBox#InputC_Btn" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 toggle_mode = true
-text = "C\n[0]"
+text = "C
+[0]"
 
-[node name="Slot1Frame" type="PanelContainer" parent="MainLayout/InteractionRow"]
+[node name="SafeArea_MainLayout_InteractionRow#Slot1Frame" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(200, 96)
 layout_mode = 2
 
-[node name="Slot1VBox" type="VBoxContainer" parent="MainLayout/InteractionRow/Slot1Frame"]
+[node name="SafeArea_MainLayout_InteractionRow_Slot1Frame#Slot1VBox" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Slot1Title" type="Label" parent="MainLayout/InteractionRow/Slot1Frame/Slot1VBox"]
+[node name="SafeArea_MainLayout_InteractionRow_Slot1Frame_Slot1VBox#Slot1Title" type="Label" parent="."]
 layout_mode = 2
 text = "SLOT 1"
 horizontal_alignment = 1
 
-[node name="Slot1SelectBtn" type="Button" parent="MainLayout/InteractionRow/Slot1Frame/Slot1VBox"]
+[node name="SafeArea_MainLayout_InteractionRow_Slot1Frame_Slot1VBox#Slot1SelectBtn" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "УСТАНОВИТЬ\n?"
+text = "УСТАНОВИТЬ
+?"
 
-[node name="Slot2Frame" type="PanelContainer" parent="MainLayout/InteractionRow"]
+[node name="SafeArea_MainLayout_InteractionRow#Slot2Frame" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(200, 96)
 layout_mode = 2
 
-[node name="Slot2VBox" type="VBoxContainer" parent="MainLayout/InteractionRow/Slot2Frame"]
+[node name="SafeArea_MainLayout_InteractionRow_Slot2Frame#Slot2VBox" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Slot2Title" type="Label" parent="MainLayout/InteractionRow/Slot2Frame/Slot2VBox"]
+[node name="SafeArea_MainLayout_InteractionRow_Slot2Frame_Slot2VBox#Slot2Title" type="Label" parent="."]
 layout_mode = 2
 text = "SLOT 2"
 horizontal_alignment = 1
 
-[node name="Slot2SelectBtn" type="Button" parent="MainLayout/InteractionRow/Slot2Frame/Slot2VBox"]
+[node name="SafeArea_MainLayout_InteractionRow_Slot2Frame_Slot2VBox#Slot2SelectBtn" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "УСТАНОВИТЬ\n?"
+text = "УСТАНОВИТЬ
+?"
 
-[node name="InterSlot" type="PanelContainer" parent="MainLayout/InteractionRow"]
+[node name="SafeArea_MainLayout_InteractionRow#InterSlot" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(160, 96)
 layout_mode = 2
 
-[node name="InterVBox" type="VBoxContainer" parent="MainLayout/InteractionRow/InterSlot"]
+[node name="SafeArea_MainLayout_InteractionRow_InterSlot#InterVBox" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="InterTitle" type="Label" parent="MainLayout/InteractionRow/InterSlot/InterVBox"]
+[node name="SafeArea_MainLayout_InteractionRow_InterSlot_InterVBox#InterTitle" type="Label" parent="."]
 layout_mode = 2
 text = "INTER"
 horizontal_alignment = 1
 
-[node name="InterValueLabel" type="Label" parent="MainLayout/InteractionRow/InterSlot/InterVBox"]
+[node name="SafeArea_MainLayout_InteractionRow_InterSlot_InterVBox#InterValueLabel" type="Label" parent="."]
 layout_mode = 2
 text = "I = 0"
 horizontal_alignment = 1
 
-[node name="OutputSlot" type="PanelContainer" parent="MainLayout/InteractionRow"]
+[node name="SafeArea_MainLayout_InteractionRow#OutputSlot" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(160, 96)
 layout_mode = 2
 
-[node name="OutputVBox" type="VBoxContainer" parent="MainLayout/InteractionRow/OutputSlot"]
+[node name="SafeArea_MainLayout_InteractionRow_OutputSlot#OutputVBox" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="OutputTitle" type="Label" parent="MainLayout/InteractionRow/OutputSlot/OutputVBox"]
+[node name="SafeArea_MainLayout_InteractionRow_OutputSlot_OutputVBox#OutputTitle" type="Label" parent="."]
 layout_mode = 2
 text = "OUTPUT"
 horizontal_alignment = 1
 
-[node name="OutputValueLabel" type="Label" parent="MainLayout/InteractionRow/OutputSlot/OutputVBox"]
+[node name="SafeArea_MainLayout_InteractionRow_OutputSlot_OutputVBox#OutputValueLabel" type="Label" parent="."]
 layout_mode = 2
 text = "F = 0"
 horizontal_alignment = 1
 
-[node name="InventoryFrame" type="PanelContainer" parent="MainLayout"]
+[node name="MainLayout#InventoryFrame" type="PanelContainer" parent="."]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 0.5
 
-[node name="InventoryMargin" type="MarginContainer" parent="MainLayout/InventoryFrame"]
+[node name="SafeArea_MainLayout_InventoryFrame#InventoryMargin" type="MarginContainer" parent="."]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="InventoryScroll" type="ScrollContainer" parent="MainLayout/InventoryFrame/InventoryMargin"]
+[node name="SafeArea_MainLayout_InventoryFrame_InventoryMargin#InventoryScroll" type="ScrollContainer" parent="."]
 layout_mode = 2
 
-[node name="GatesContainer" type="HBoxContainer" parent="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll"]
+[node name="SafeArea_MainLayout_InventoryFrame_InventoryMargin_InventoryScroll#GatesContainer" type="HBoxContainer" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 14
 alignment = 1
 
-[node name="GateAndBtn" type="Button" parent="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
+[node name="SafeArea_MainLayout_InventoryFrame_InventoryMargin_InventoryScroll_GatesContainer#GateAndBtn" type="Button" parent="."]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
 text = "∧ AND"
 
-[node name="GateOrBtn" type="Button" parent="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
+[node name="SafeArea_MainLayout_InventoryFrame_InventoryMargin_InventoryScroll_GatesContainer#GateOrBtn" type="Button" parent="."]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
 text = "∨ OR"
 
-[node name="GateNotBtn" type="Button" parent="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
+[node name="SafeArea_MainLayout_InventoryFrame_InventoryMargin_InventoryScroll_GatesContainer#GateNotBtn" type="Button" parent="."]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
 text = "¬ NOT"
 
-[node name="GateXorBtn" type="Button" parent="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
+[node name="SafeArea_MainLayout_InventoryFrame_InventoryMargin_InventoryScroll_GatesContainer#GateXorBtn" type="Button" parent="."]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
 text = "⊕ XOR"
 
-[node name="GateNandBtn" type="Button" parent="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
+[node name="SafeArea_MainLayout_InventoryFrame_InventoryMargin_InventoryScroll_GatesContainer#GateNandBtn" type="Button" parent="."]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
 text = "⊼ NAND"
 
-[node name="GateNorBtn" type="Button" parent="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
+[node name="SafeArea_MainLayout_InventoryFrame_InventoryMargin_InventoryScroll_GatesContainer#GateNorBtn" type="Button" parent="."]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
 text = "⊽ NOR"
 
-[node name="StatusRow" type="HBoxContainer" parent="MainLayout"]
+[node name="MainLayout#StatusRow" type="HBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="StatsLabel" type="Label" parent="MainLayout/StatusRow"]
+[node name="SafeArea_MainLayout_StatusRow#StatsLabel" type="Label" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ПОП: 0/3 • ТЕСТЫ: 0 • СТАБ: 100%"
 
-[node name="FeedbackLabel" type="Label" parent="MainLayout/StatusRow"]
+[node name="SafeArea_MainLayout_StatusRow#FeedbackLabel" type="Label" parent="."]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 text = "..."
 horizontal_alignment = 2
 
-[node name="Actions" type="HBoxContainer" parent="MainLayout"]
+[node name="MainLayout#Actions" type="HBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="BtnHint" type="Button" parent="MainLayout/Actions"]
+[node name="SafeArea_MainLayout_Actions#BtnHint" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ПОДСКАЗКА"
 
-[node name="BtnTest" type="Button" parent="MainLayout/Actions"]
+[node name="SafeArea_MainLayout_Actions#BtnTest" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "ПРОВЕРИТЬ"
 
-[node name="BtnNext" type="Button" parent="MainLayout/Actions"]
+[node name="SafeArea_MainLayout_Actions#BtnNext" type="Button" parent="."]
 visible = false
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
@@ -365,7 +358,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 color = Color(0, 0, 0, 0.45)
 
 [node name="DiagnosticsPanelB" type="PanelContainer" parent="."]
@@ -382,7 +374,6 @@ offset_right = 360.0
 offset_bottom = 210.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 
 [node name="PopupMargin" type="MarginContainer" parent="DiagnosticsPanelB"]
 layout_mode = 2
@@ -413,19 +404,4 @@ custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 text = "ДАЛЕЕ"
 
-[connection signal="pressed" from="MainLayout/Header/BtnBack" to="." method="_on_back_button_pressed"]
-[connection signal="toggled" from="MainLayout/InteractionRow/InputAFrame/InputAVBox/InputA_Btn" to="." method="_on_input_a_toggled"]
-[connection signal="toggled" from="MainLayout/InteractionRow/InputBFrame/InputBVBox/InputB_Btn" to="." method="_on_input_b_toggled"]
-[connection signal="toggled" from="MainLayout/InteractionRow/InputCFrame/InputCVBox/InputC_Btn" to="." method="_on_input_c_toggled"]
-[connection signal="pressed" from="MainLayout/InteractionRow/Slot1Frame/Slot1VBox/Slot1SelectBtn" to="." method="_on_slot1_pressed"]
-[connection signal="pressed" from="MainLayout/InteractionRow/Slot2Frame/Slot2VBox/Slot2SelectBtn" to="." method="_on_slot2_pressed"]
-[connection signal="toggled" from="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateAndBtn" to="." method="_on_gate_button_toggled" binds= ["AND"]]
-[connection signal="toggled" from="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateOrBtn" to="." method="_on_gate_button_toggled" binds= ["OR"]]
-[connection signal="toggled" from="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNotBtn" to="." method="_on_gate_button_toggled" binds= ["NOT"]]
-[connection signal="toggled" from="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateXorBtn" to="." method="_on_gate_button_toggled" binds= ["XOR"]]
-[connection signal="toggled" from="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNandBtn" to="." method="_on_gate_button_toggled" binds= ["NAND"]]
-[connection signal="toggled" from="MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNorBtn" to="." method="_on_gate_button_toggled" binds= ["NOR"]]
-[connection signal="pressed" from="MainLayout/Actions/BtnHint" to="." method="_on_hint_pressed"]
-[connection signal="pressed" from="MainLayout/Actions/BtnTest" to="." method="_on_test_pressed"]
-[connection signal="pressed" from="MainLayout/Actions/BtnNext" to="." method="_on_next_button_pressed"]
 [connection signal="pressed" from="DiagnosticsPanelB/PopupMargin/PopupVBox/PopupBtnNext" to="." method="_on_diagnostics_close_pressed"]

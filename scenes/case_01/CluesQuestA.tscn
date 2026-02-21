@@ -1,8 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://cluesquesta"]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scenes/case_01/CluesQuestA.gd" id="1_script"]
-[ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="Script" path="res://scripts/ui/ClueBucketZone.gd" id="3_bucket"]
+[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_6etxf"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="4_noir"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dimmer"]
 bg_color = Color(0, 0, 0, 0.7)
@@ -26,6 +28,13 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.07, 0.08, 1)
 
+[node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("4_noir")]
+layer = 100
+script = ExtResource("4_6etxf")
+intensity = 0.18
+fx_quality = 1
+tint_color = Color(0.93, 0.93, 0.93, 1)
+
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -33,10 +42,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
 
 [node name="MainVBox" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
@@ -225,8 +234,8 @@ horizontal_alignment = 1
 
 [node name="HBox" type="HBoxContainer" parent="ResultPopup/VBox"]
 layout_mode = 2
-alignment = 1
 theme_override_constants/separation = 20
+alignment = 1
 
 [node name="BtnRetry" type="Button" parent="ResultPopup/VBox/HBox"]
 custom_minimum_size = Vector2(100, 50)
@@ -237,4 +246,3 @@ text = "ПОВТОРИТЬ"
 custom_minimum_size = Vector2(100, 50)
 layout_mode = 2
 text = "В МЕНЮ"
-

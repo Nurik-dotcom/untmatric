@@ -57,6 +57,7 @@ const COLOR_ERR = Color(1.0, 0.3, 0.3, 1)
 
 const SWIPE_MIN: float = 60.0
 const SWIPE_MAX_Y: float = 40.0
+const DETAILS_SHEET_H: float = 380.0
 
 var current_target: int = 0
 var current_input: int = 0
@@ -271,6 +272,17 @@ func _on_check_pressed() -> void:
 	var submitted_input := current_input
 	var result: Dictionary = GlobalMetrics.check_solution(current_target, current_input)
 	_register_trial(result, submitted_input)
+	var error_code := str(result.get("error", ""))
+
+	if error_code.begins_with("SHIELD"):
+		var shield_message := str(result.get("message", "Shield active."))
+		hint_text.text = shield_message
+		if error_code == "SHIELD_ACTIVE":
+			var now_sec := Time.get_ticks_msec() / 1000.0
+			var cooldown_left := maxi(0.0, float(GlobalMetrics.blocked_until) - now_sec)
+			_show_toast("SHIELD: COOLDOWN %.1fs" % cooldown_left, COLOR_WARN)
+			_log_message("Shield cooldown %.1fs." % cooldown_left, COLOR_WARN)
+		return
 
 	if result.success:
 		AudioManager.play("relay")
@@ -398,15 +410,18 @@ func _set_details_open(open: bool, immediate: bool) -> void:
 	if open:
 		details_sheet.visible = true
 
-	var target_offset = -details_sheet.size.y if open else 0.0
+	var target_top := -DETAILS_SHEET_H if open else 0.0
+	var target_bottom := 0.0 if open else DETAILS_SHEET_H
 	if immediate:
-		details_sheet.offset_top = target_offset
+		details_sheet.offset_top = target_top
+		details_sheet.offset_bottom = target_bottom
 		if not open:
 			details_sheet.visible = false
 		return
 
 	var tween = create_tween()
-	tween.tween_property(details_sheet, "offset_top", target_offset, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(details_sheet, "offset_top", target_top, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(details_sheet, "offset_bottom", target_bottom, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if not open:
 		tween.tween_callback(func(): details_sheet.visible = false)
 func _hide_overlays() -> void:
@@ -503,6 +518,9 @@ func _format_example(mode: String) -> String:
 		return "%s << %s" % [a_txt, b_txt]
 
 func _unhandled_input(event):
+	if not _is_shift_swipe_allowed():
+		_swipe_tracking = false
+		return
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if _is_in_switches(event.position):
@@ -529,7 +547,12 @@ func _unhandled_input(event):
 func _is_in_switches(pos: Vector2) -> bool:
 	return upper_bits.get_global_rect().has_point(pos) or lower_bits.get_global_rect().has_point(pos)
 
+func _is_shift_swipe_allowed() -> bool:
+	return GlobalMetrics.current_level_index >= 15 and GlobalMetrics.current_operator == GlobalMetrics.Operator.SHIFT_L
+
 func _apply_shift_left() -> void:
+	if not _is_shift_swipe_allowed():
+		return
 	_mark_first_action()
 	current_input = (current_input << 1) & 0xFF
 	_sync_switches_to_input()

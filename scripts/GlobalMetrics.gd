@@ -157,11 +157,15 @@ func check_solution(target_val: int, input_val: int) -> Dictionary:
 	# Lazy Search Shield Check (if HD > 2 and user is making small changes)
 	# (Simplified implementation: check if input changed little from last time)
 	if _check_lazy_search(input_val, hd):
-		# Apply delay penalty
 		blocked_until = current_time + 3.0
 		emit_signal("shield_triggered", "LAZY", 3.0)
-		# We still process the error but maybe with extra penalty?
-		# TDD says "penalty delay". We just blocked.
+		_record_input_history(input_val)
+		return {
+			"success": false,
+			"error": "SHIELD_LAZY",
+			"message": "Blocked: lazy search detected. Change input in larger steps.",
+			"penalty": 0
+		}
 
 	_record_input_history(input_val)
 
