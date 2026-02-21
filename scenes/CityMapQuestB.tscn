@@ -68,7 +68,7 @@ text = "РЕЖИМ: B"
 [node name="LabelProgress" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "TASK: 1/1"
+text = "ЗАДАНИЕ: 1/1"
 
 [node name="Spacer" type="Control" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
@@ -230,7 +230,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
 disabled = true
-text = "NEXT"
+text = "ДАЛЕЕ"
 
 [node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 custom_minimum_size = Vector2(0, 64)

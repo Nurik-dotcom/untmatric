@@ -1,0 +1,61 @@
+{
+  "contract_version": "city_map.v2.1.0",
+  "level_id": "6_2_02",
+  "directed_default": true,
+  "time_limit_sec": 120,
+  "start_node": "A",
+  "end_node": "E",
+  "min_sum": 9,
+  "min_path_examples": [
+    ["A", "B", "F", "E"]
+  ],
+  "ui": {
+    "accent_color": "#67B8FF",
+    "node_radius_px": 50
+  },
+  "constraints": {
+    "must_visit": ["F"]
+  },
+  "rules": {
+    "require_end_node_to_submit": true,
+    "input_regex": "^[0-9]+$"
+  },
+  "trust": {
+    "initial": 100,
+    "penalty_calc": 25,
+    "penalty_opt": 25,
+    "penalty_parse": 5,
+    "penalty_reset": 5,
+    "penalty_transit": 25,
+    "penalty_cycle": 10,
+    "overtime_div": 2
+  },
+  "nodes": [
+    { "id": "A", "label": "A", "pos": { "x": 0.08, "y": 0.50 } },
+    { "id": "B", "label": "B", "pos": { "x": 0.25, "y": 0.24 } },
+    { "id": "C", "label": "C", "pos": { "x": 0.45, "y": 0.50 } },
+    { "id": "D", "label": "D", "pos": { "x": 0.25, "y": 0.76 } },
+    { "id": "E", "label": "E", "pos": { "x": 0.82, "y": 0.50 } },
+    { "id": "F", "label": "F", "pos": { "x": 0.62, "y": 0.24 } },
+    { "id": "G", "label": "G", "pos": { "x": 0.62, "y": 0.76 } },
+    { "id": "H", "label": "H", "pos": { "x": 0.92, "y": 0.24 } }
+  ],
+  "edges": [
+    { "id": "e1", "from": "A", "to": "B", "w": 3, "two_way": false },
+    { "id": "e2", "from": "A", "to": "D", "w": 5, "two_way": false },
+    { "id": "e3", "from": "D", "to": "C", "w": 3, "two_way": false },
+    { "id": "e4", "from": "B", "to": "C", "w": 5, "two_way": true },
+    { "id": "e5", "from": "B", "to": "F", "w": 2, "two_way": false },
+    { "id": "e6", "from": "C", "to": "F", "w": 2, "two_way": true },
+    { "id": "e7", "from": "C", "to": "G", "w": 4, "two_way": true },
+    { "id": "e8", "from": "F", "to": "E", "w": 4, "two_way": false },
+    { "id": "e9", "from": "G", "to": "E", "w": 5, "two_way": false },
+    { "id": "e10", "from": "D", "to": "G", "w": 7, "two_way": false },
+    { "id": "e11", "from": "F", "to": "H", "w": 2, "two_way": false },
+    { "id": "e12", "from": "H", "to": "E", "w": 4, "two_way": false }
+  ],
+  "analytics": {
+    "enabled": true,
+    "log_prefix": "case_6_2"
+  }
+}

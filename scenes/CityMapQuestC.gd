@@ -218,12 +218,15 @@ func _current_level_entry() -> Dictionary:
 	return level_var
 
 func _set_progress_ui() -> void:
-	var shown_index := maxi(0, level_index + 1)
-	label_progress.text = "TASK: %d/%d" % [shown_index, maxi(1, level_total)]
-	if level_index >= level_total - 1:
-		btn_next.text = "FINISH"
+	var shown_index := maxi(1, level_index + 1)
+	var total := maxi(1, level_total)
+	var level_entry := _current_level_entry()
+	var sub_id := str(level_entry.get("id", ""))
+	label_progress.text = "ЗАДАНИЕ: %d/%d%s" % [shown_index, total, ("" if sub_id.is_empty() else " • " + sub_id)]
+	if level_index >= total - 1:
+		btn_next.text = "ЗАВЕРШИТЬ"
 	else:
-		btn_next.text = "NEXT"
+		btn_next.text = "ДАЛЕЕ"
 
 func _is_round_locked() -> bool:
 	return is_game_over or stage_completed or input_locked
@@ -1014,10 +1017,14 @@ func _save_json_log(data: Dictionary, is_summary: bool = false) -> void:
 	if not dir.dir_exists("research_logs"):
 		dir.make_dir("research_logs")
 
-	var stamp := Time.get_unix_time_from_system()
-	var filename := "user://research_logs/%s_%d.json" % [LOG_PREFIX, stamp]
+	var stamp_msec: int = Time.get_ticks_msec()
+	var attempt_tag := ""
+	if data.has("attempt_in_run"):
+		attempt_tag = "_a%s" % str(data.get("attempt_in_run"))
+
+	var filename := "user://research_logs/%s_%s_%d%s.json" % [LOG_PREFIX, run_id, stamp_msec, attempt_tag]
 	if is_summary:
-		filename = "user://research_logs/%s_run_%s_%d.json" % [LOG_PREFIX, run_id, stamp]
+		filename = "user://research_logs/%s_run_%s_%d.json" % [LOG_PREFIX, run_id, stamp_msec]
 	var file := FileAccess.open(filename, FileAccess.WRITE)
 	if file != null:
 		file.store_string(JSON.stringify(data, "\t"))

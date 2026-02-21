@@ -10,11 +10,11 @@
 		},
 		{
 			"id": "6_2_02",
-			"path": "res://data/city_map/level_6_2.json"
+			"path": "res://data/city_map/level_6_2_02.json"
 		},
 		{
 			"id": "6_2_03",
-			"path": "res://data/city_map/level_6_2.json"
+			"path": "res://data/city_map/level_6_2_03.json"
 		}
 	]
 }

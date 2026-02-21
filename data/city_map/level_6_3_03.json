@@ -1,0 +1,98 @@
+{
+  "contract_version": "city_map.v2.1.0",
+  "level_id": "6_3_03",
+  "time_limit_sec": 150,
+  "start_node": "A",
+  "end_node": "L",
+  "min_sum": 60,
+  "min_path_examples": [
+    ["A", "E", "I", "L"]
+  ],
+  "ui": {
+    "accent_color": "#67B8FF",
+    "node_radius_px": 50
+  },
+  "rules": {
+    "require_end_node_to_submit": true,
+    "input_regex": "^[0-9]+$"
+  },
+  "nodes": [
+    { "id": "A", "label": "A", "pos": { "x": 0.08, "y": 0.12 } },
+    { "id": "B", "label": "B", "pos": { "x": 0.28, "y": 0.12 } },
+    { "id": "C", "label": "C", "pos": { "x": 0.48, "y": 0.12 } },
+    { "id": "D", "label": "D", "pos": { "x": 0.68, "y": 0.12 } },
+    { "id": "E", "label": "E", "pos": { "x": 0.08, "y": 0.45 } },
+    { "id": "F", "label": "F", "pos": { "x": 0.28, "y": 0.45 } },
+    { "id": "G", "label": "G", "pos": { "x": 0.48, "y": 0.45 } },
+    { "id": "H", "label": "H", "pos": { "x": 0.68, "y": 0.45 } },
+    { "id": "I", "label": "I", "pos": { "x": 0.18, "y": 0.80 } },
+    { "id": "J", "label": "J", "pos": { "x": 0.38, "y": 0.80 } },
+    { "id": "K", "label": "K", "pos": { "x": 0.58, "y": 0.80 } },
+    { "id": "L", "label": "L", "pos": { "x": 0.82, "y": 0.80 } }
+  ],
+  "edges": [
+    { "id": "e1", "from": "A", "to": "B", "w": 10 },
+    { "id": "e2", "from": "B", "to": "C", "w": 10 },
+    { "id": "e3", "from": "C", "to": "D", "w": 10 },
+    { "id": "e4", "from": "A", "to": "E", "w": 15 },
+    { "id": "e5", "from": "B", "to": "F", "w": 15 },
+    { "id": "e6", "from": "C", "to": "G", "w": 15 },
+    { "id": "e7", "from": "D", "to": "H", "w": 15 },
+    { "id": "e8", "from": "E", "to": "F", "w": 12 },
+    { "id": "e9", "from": "F", "to": "G", "w": 12 },
+    { "id": "e10", "from": "G", "to": "H", "w": 12 },
+    { "id": "e11", "from": "E", "to": "I", "w": 20 },
+    { "id": "e12", "from": "F", "to": "J", "w": 20 },
+    { "id": "e13", "from": "G", "to": "K", "w": 20 },
+    { "id": "e14", "from": "H", "to": "L", "w": 20 },
+    { "id": "e15", "from": "I", "to": "J", "w": 10 },
+    { "id": "e16", "from": "J", "to": "K", "w": 10 },
+    { "id": "e17", "from": "K", "to": "L", "w": 10 },
+    { "id": "e18", "from": "B", "to": "G", "w": 25 },
+    { "id": "e19", "from": "F", "to": "C", "w": 25 },
+    {
+      "id": "e_patrol_1",
+      "from": "C",
+      "to": "H",
+      "w": 10,
+      "schedule": [
+        { "t_from": 0, "t_to": 50, "w": 10, "state": "open" },
+        { "t_from": 50, "t_to": 999, "w": 45, "state": "open" }
+      ],
+      "tags": ["patrol"]
+    },
+    {
+      "id": "e_patrol_2",
+      "from": "I",
+      "to": "L",
+      "w": 25,
+      "schedule": [
+        { "t_from": 0, "t_to": 60, "w": 25, "state": "open" },
+        { "t_from": 60, "t_to": 999, "w": 100, "state": "closed" }
+      ],
+      "tags": ["patrol", "close_trap"]
+    }
+  ],
+  "constraints": {
+    "must_visit": ["E"],
+    "blacklist_nodes": ["G"],
+    "xor_groups": [
+      { "id": "xor_entry", "type": "AT_MOST_ONE", "nodes": ["B", "E"] }
+    ]
+  },
+  "trust": {
+    "initial": 100,
+    "penalty_calc": 25,
+    "penalty_opt": 25,
+    "penalty_parse": 5,
+    "penalty_reset": 5,
+    "penalty_logic_violation": 30,
+    "ambush_multiplier": 0.5,
+    "overtime_div": 2,
+    "fail_threshold": 10
+  },
+  "analytics": {
+    "enabled": true,
+    "log_prefix": "case_6_3"
+  }
+}
