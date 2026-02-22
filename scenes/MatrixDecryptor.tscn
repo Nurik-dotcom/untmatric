@@ -11,6 +11,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
+mode = 1
+level_id = "C_STAGES_001"
 
 [node name="UI" parent="." instance=ExtResource("2_ui")]
 layout_mode = 1

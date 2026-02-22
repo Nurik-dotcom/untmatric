@@ -135,7 +135,7 @@ theme_override_constants/separation = 8
 
 [node name="MatrixTitle" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
 layout_mode = 2
-text = "MATRIX LADDER"
+text = "Этап 1/5 | 2x2 | DEC"
 
 [node name="MatrixBoard" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
 layout_mode = 2
@@ -165,7 +165,7 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
-columns = 6
+columns = 2
 
 [node name="InOutRow" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
 layout_mode = 2
@@ -200,15 +200,15 @@ theme_override_constants/separation = 4
 
 [node name="StatusTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/StatusPanel/StatusContent"]
 layout_mode = 2
-text = "FLOW STATUS"
+text = "STAGE STATUS"
 
 [node name="ProgressLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/StatusPanel/StatusContent"]
 layout_mode = 2
-text = "STAGE 1/5"
+text = "STAGE 1/5 | BASE DEC"
 
 [node name="ModeLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/StatusPanel/StatusContent"]
 layout_mode = 2
-text = "MODE: RUN"
+text = "MODE: STAGES | SHIELD: READY"
 
 [node name="TargetsPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
 layout_mode = 2
@@ -236,7 +236,7 @@ theme_override_constants/separation = 6
 
 [node name="LiveLogTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/LiveLogPanel/LiveLogContent"]
 layout_mode = 2
-text = "LIVE TERMINAL"
+text = "TERMINAL LOG"
 
 [node name="LiveLogText" type="RichTextLabel" parent="SafeArea/Main/ContentSplit/RightPanel/LiveLogPanel/LiveLogContent"]
 layout_mode = 2
@@ -253,7 +253,7 @@ theme_override_constants/separation = 4
 
 [node name="HintTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/HintPanel/HintContent"]
 layout_mode = 2
-text = "LAST DIAGNOSTIC"
+text = "HINT"
 
 [node name="HintText" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/HintPanel/HintContent"]
 layout_mode = 2
