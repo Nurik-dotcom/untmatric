@@ -1,9 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=4 format=3 uid="uid://cb2xapj3l2o0l"]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestB.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_untformatic.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://jxdl2tctb0ca" path="res://ui/theme_untformatic.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
-[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_tmvn2"]
 
 [node name="RadioQuestB" type="Control"]
 layout_mode = 3
@@ -24,12 +23,8 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("3_noir")]
-layer = 100
-script = ExtResource("4_tmvn2")
+[node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
 intensity = 0.12
-fx_quality = 1
-tint_color = Color(0.93, 0.93, 0.93, 1)
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -327,8 +322,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -354,8 +349,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -381,8 +376,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -408,8 +403,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -435,8 +430,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -462,8 +457,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -489,8 +484,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -569,4 +564,3 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 text = "CLOSE"
-

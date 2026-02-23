@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 
 enum Mode { CLASSIC, STAGES_RC }
 
@@ -89,7 +89,7 @@ func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 
-	btn_back.pressed.connect(_on_menu_pressed)
+		btn_back.pressed.connect(_on_menu_pressed)
 	btn_details.pressed.connect(_on_details_pressed)
 	btn_close_details.pressed.connect(_on_details_pressed)
 	btn_hint.pressed.connect(_on_hint_pressed)

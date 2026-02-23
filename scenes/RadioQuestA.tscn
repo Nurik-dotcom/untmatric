@@ -1,9 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=5 format=3 uid="uid://d1vpidf0t4e2l"]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestA.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_untformatic.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://jxdl2tctb0ca" path="res://ui/theme_untformatic.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
-[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_5mfhd"]
 [ext_resource type="Script" path="res://scenes/BitKnob.gd" id="4_knob_script"]
 
 [node name="RadioQuestA" type="Control"]
@@ -25,12 +24,8 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("3_noir")]
-layer = 100
-script = ExtResource("4_5mfhd")
+[node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
 intensity = 0.12
-fx_quality = 1
-tint_color = Color(0.93, 0.93, 0.93, 1)
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -191,11 +186,6 @@ custom_minimum_size = Vector2(220, 220)
 layout_mode = 2
 size_flags_horizontal = 4
 script = ExtResource("4_knob_script")
-min_value = 1
-max_value = 12
-value = 1
-min_angle_deg = -135.0
-max_angle_deg = 135.0
 
 [node name="KnobHint" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 layout_mode = 2
@@ -260,8 +250,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -287,8 +277,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -314,8 +304,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -341,8 +331,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -368,8 +358,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -395,8 +385,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -422,8 +412,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -439,21 +429,6 @@ autowrap_mode = 2
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 text = "DETAILS"
-
-[node name="Footer" type="PanelContainer" parent="SafeArea/RootVBox"]
-custom_minimum_size = Vector2(0, 56)
-layout_mode = 2
-
-[node name="FooterMargin" type="MarginContainer" parent="SafeArea/RootVBox/Footer"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 8
-
-[node name="FooterLabel" type="Label" parent="SafeArea/RootVBox/Footer/FooterMargin"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
 
 [node name="Dimmer" type="ColorRect" parent="."]
 visible = false
@@ -502,4 +477,3 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 text = "CLOSE"
-

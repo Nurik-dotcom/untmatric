@@ -21,6 +21,9 @@ const STATUS_HINT := "\u041f\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u04
 const STATUS_INCOMPLETE := "\u041d\u0435 \u0432\u0441\u0435 \u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u044b \u0432\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u044b"
 const STATUS_NEXT_HINT := "\u0413\u043e\u0442\u043e\u0432\u043e. \u0416\u043c\u0438\u0442\u0435 \u0414\u0410\u041b\u0415\u0415."
 const STATUS_SOLVE_FIRST := "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0440\u0435\u0448\u0438\u0442\u0435 \u0443\u0440\u043e\u0432\u0435\u043d\u044c"
+const RENDER_ERROR := "[RENDER ERROR]"
+const RENDER_WARN := "RENDER: UNSTABLE"
+const RENDER_OK := "SECTOR HEALED"
 
 var levels: Array = []
 var level_data: Dictionary = {}
@@ -40,6 +43,7 @@ var trace: Array = []
 
 var level_solved: bool = false
 var confirm_locked: bool = false
+var last_render_state: String = ""
 
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
 @onready var body: BoxContainer = $SafeArea/MainLayout/Body
@@ -48,6 +52,8 @@ var confirm_locked: bool = false
 @onready var pile_zone: Node = $SafeArea/MainLayout/Body/FragmentsCard/CardVBox/PileZone
 @onready var slots_grid: GridContainer = $SafeArea/MainLayout/Body/EditorCard/CardVBox/SlotsGrid
 @onready var code_preview: RichTextLabel = $SafeArea/MainLayout/Body/EditorCard/CardVBox/CodePreviewCard/CodePreview
+@onready var render_status: Label = $SafeArea/MainLayout/Body/EditorCard/CardVBox/RenderPreviewCard/RenderVBox/RenderStatus
+@onready var render_preview: RichTextLabel = $SafeArea/MainLayout/Body/EditorCard/CardVBox/RenderPreviewCard/RenderVBox/RenderPreview
 @onready var status_label: Label = $SafeArea/MainLayout/BottomBar/StatusLabel
 @onready var btn_reset: Button = $SafeArea/MainLayout/BottomBar/BtnReset
 @onready var btn_confirm: Button = $SafeArea/MainLayout/BottomBar/BtnConfirm
@@ -168,10 +174,11 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 	drag_count = 0
 	swap_count = 0
 	trace.clear()
-	_log_event("СБРОС", {"level_start": is_level_start})
+	_log_event("RESET", {"level_start": is_level_start})
 
 	level_solved = false
 	confirm_locked = false
+	last_render_state = ""
 	btn_confirm.disabled = false
 	btn_next.disabled = true
 	btn_next.text = TEXT_FINISH if _is_last_level() else TEXT_NEXT
@@ -225,6 +232,8 @@ func _on_item_placed(fragment_id: String, to_zone: String, from_zone: String) ->
 	_set_status(STATUS_HINT, COLOR_INFO)
 
 func handle_drop_to_slot(target_zone_id: String, payload: Dictionary) -> Dictionary:
+	if confirm_locked:
+		return {"success": false}
 	if not slot_nodes.has(target_zone_id):
 		return {"success": false}
 
@@ -263,6 +272,8 @@ func handle_drop_to_slot(target_zone_id: String, payload: Dictionary) -> Diction
 	}
 
 func handle_drop_to_pile(payload: Dictionary) -> Dictionary:
+	if confirm_locked:
+		return {"success": false}
 	var parsed: Dictionary = _parse_payload(payload)
 	if parsed.is_empty():
 		return {"success": false}
@@ -364,6 +375,7 @@ func _on_confirm_pressed() -> void:
 		"hierarchy_ok": false,
 		"order_ok": false
 	}) as Dictionary
+	_update_render_preview(sequence, evaluation)
 
 	var points: int = int(score.get("points", 0))
 	var max_points: int = int(score.get("max_points", 2))
@@ -424,6 +436,7 @@ func _on_confirm_pressed() -> void:
 			_set_status(STATUS_INCOMPLETE, COLOR_ERR)
 		else:
 			_set_status(feedback_text, COLOR_ERR)
+		_flash_wrong_slots()
 
 	_play_confirm_audio(verdict_code)
 	if verdict_code in ["FAIL", "EMPTY"]:
@@ -474,66 +487,185 @@ func _count_filled_slots(sequence: Array[String]) -> int:
 	return filled
 
 func _update_code_preview() -> void:
+	var sequence: Array[String] = _collect_sequence()
 	var raw_lines: Array[String] = []
-	var live_lines: Array[String] = []
-	var noisy_preview: bool = false
-
 	for i in range(slot_ids.size()):
 		var slot_id: String = slot_ids[i]
-		var fragment_id: String = _fragment_in_slot(slot_id)
-		var token: String = "____"
-		if not fragment_id.is_empty() and fragment_by_id.has(fragment_id):
-			var fragment_data: Dictionary = fragment_by_id.get(fragment_id, {}) as Dictionary
-			token = str(fragment_data.get("token", fragment_data.get("label", fragment_id)))
-			var normalized_id: String = fragment_id.to_lower()
-			if normalized_id.find("noise") >= 0 or normalized_id.find("fake") >= 0:
-				noisy_preview = true
-
+		var fragment_id: String = sequence[i] if i < sequence.size() else ""
+		var token: String = "____" if fragment_id.is_empty() else _token_for_fragment(fragment_id)
 		var token_color: String = "#7fffb4" if token != "____" else "#ffd07f"
 		raw_lines.append("[color=#7f7f7f]%s[/color] [color=%s]%s[/color]" % [slot_id, token_color, _escape_bbcode(token)])
-		live_lines.append(_build_live_preview_line(token))
 
-	var output_header: String = "[b][color=#8fffb2]ВЫВОД ЭКРАНА[/color][/b]"
-	if noisy_preview:
-		output_header = "[shake rate=20.0 level=5 connected=1][color=#ff5959][b]ВЫВОД ЭКРАНА // ПОМЕХИ[/b][/color][/shake]"
-
+	var profile: String = str(level_data.get("validator_profile", FR8Scoring.PROFILE_LIST_BASIC)).to_upper()
 	code_preview.text = "\n".join([
 		"[b][color=#ffd25f]RAW CODE[/color][/b]",
 		"[code]%s[/code]" % "\n".join(raw_lines),
 		"",
-		output_header,
-		"\n".join(live_lines)
+		"[b][color=#8fffb2]PROFILE: %s[/color][/b]" % _escape_bbcode(profile)
+	])
+	_update_render_preview(sequence)
+
+func _update_render_preview(sequence: Array[String], evaluation_override: Dictionary = {}) -> void:
+	if render_preview == null or render_status == null:
+		return
+
+	var evaluation: Dictionary = evaluation_override
+	if evaluation.is_empty():
+		evaluation = FR8Scoring.evaluate(level_data, sequence, fragment_by_id)
+
+	var checks: Dictionary = evaluation.get("checks", {}) as Dictionary
+	var render_state: String = "error"
+	if bool(checks.get("container_ok", false)) and bool(checks.get("hierarchy_ok", false)):
+		render_state = "ok" if bool(checks.get("order_ok", false)) else "warn"
+
+	if render_state == "error" and last_render_state != "error" and _count_filled_slots(sequence) > 0:
+		_trigger_glitch()
+	last_render_state = render_state
+
+	var profile: String = str(level_data.get("validator_profile", FR8Scoring.PROFILE_LIST_BASIC)).to_upper()
+	var mock_lines: Array[String] = _build_profile_render_lines(profile, sequence)
+
+	var header_line: String = "[b][color=#ffd25f]MOCK RENDER | %s[/color][/b]" % _escape_bbcode(profile)
+	match render_state:
+		"ok":
+			render_status.text = RENDER_OK
+			render_status.modulate = COLOR_OK
+		"warn":
+			render_status.text = RENDER_WARN
+			render_status.modulate = COLOR_WARN
+		_:
+			render_status.text = RENDER_ERROR
+			render_status.modulate = COLOR_ERR
+			header_line = "[shake rate=15.0 level=5 connected=1][b][color=#ff6363]%s[/color][/b][/shake]" % RENDER_ERROR
+
+	render_preview.text = "\n".join([
+		header_line,
+		"",
+		"\n".join(mock_lines)
 	])
 
-	if AudioManager != null:
-		AudioManager.play("click")
+func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Array[String]:
+	var lines: Array[String] = []
+	var inner_tokens: Array[String] = _inner_tokens_from_sequence(sequence)
 
-func _build_live_preview_line(token: String) -> String:
-	var normalized: String = token.strip_edges().to_lower()
-	if normalized == "____":
-		return "[color=#5f5f5f]·[/color]"
+	match profile:
+		"LIST_BASIC":
+			for token in inner_tokens:
+				if token.to_lower().begins_with("<li"):
+					var item_text: String = _extract_tag_text(token)
+					lines.append("[color=#d8f5d8]• %s[/color]" % _escape_bbcode(item_text if not item_text.is_empty() else "item"))
+			if lines.is_empty():
+				lines.append("[color=#808080]• ...[/color]")
+		"NAV_MENU":
+			var labels: Array[String] = []
+			for token in inner_tokens:
+				if token.to_lower().find("<a") >= 0:
+					var label: String = _extract_tag_text(token)
+					if not label.is_empty():
+						labels.append(label)
+			if labels.is_empty():
+				labels = ["home", "news", "about"]
+			var menu_line: String = ""
+			for i in range(labels.size()):
+				if i > 0:
+					menu_line += " "
+				menu_line += "[color=#f6e7a2][%s][/color]" % _escape_bbcode(labels[i].to_upper())
+			lines.append("[bgcolor=#1d2430]  %s  [/bgcolor]" % menu_line)
+		"TABLE_LOG":
+			var row_count: int = 0
+			for token in inner_tokens:
+				if token.to_lower().find("<tr") >= 0:
+					row_count += 1
+			row_count = max(row_count, 2)
+			lines.append("[bgcolor=#25291f][color=#d6ffb0]  time  |  event  [/color][/bgcolor]")
+			for i in range(row_count):
+				lines.append("[color=#bac6b4]  0%d:%02d  |  entry_%d  [/color]" % [8 + i, 10 + i, i + 1])
+		"FORM_SIMPLE":
+			var field_count: int = 0
+			var has_button: bool = false
+			for token in inner_tokens:
+				var lower: String = token.to_lower()
+				if lower.find("<input") >= 0:
+					field_count += 1
+				if lower.find("<button") >= 0:
+					has_button = true
+			field_count = max(field_count, 2)
+			lines.append("[bgcolor=#1f2a1f][color=#d8ffd8]  AUTH FORM  [/color][/bgcolor]")
+			for i in range(field_count):
+				lines.append("[color=#c6d7c6][ field_%d ]________________[/color]" % (i + 1))
+			lines.append("[color=#ffd07a]%s[/color]" % ("[ SUBMIT ]" if has_button else "[ ACTION ]"))
+		"ARTICLE_NOTE":
+			var title_text: String = ""
+			var body_text: String = ""
+			for token in inner_tokens:
+				var lower: String = token.to_lower()
+				if title_text.is_empty() and (lower.find("<h1") >= 0 or lower.find("<h2") >= 0):
+					title_text = _extract_tag_text(token)
+				elif body_text.is_empty() and lower.find("<p") >= 0:
+					body_text = _extract_tag_text(token)
+			title_text = "Case note" if title_text.is_empty() else title_text
+			body_text = "..." if body_text.is_empty() else body_text
+			lines.append("[b][color=#ece7cc]%s[/color][/b]" % _escape_bbcode(title_text))
+			lines.append("[color=#b8b5a3]%s[/color]" % _escape_bbcode(body_text))
+		"FIGURE_MEDIA":
+			var has_image: bool = false
+			var caption: String = ""
+			for token in inner_tokens:
+				var lower: String = token.to_lower()
+				if lower.find("<img") >= 0:
+					has_image = true
+				if caption.is_empty() and lower.find("<figcaption") >= 0:
+					caption = _extract_tag_text(token)
+			lines.append("[bgcolor=#252a36][color=#b8c8ff]%s[/color][/bgcolor]" % ("  [ media frame ]  " if has_image else "  [ no media ]  "))
+			lines.append("[color=#d4c8a0]%s[/color]" % _escape_bbcode(caption if not caption.is_empty() else "caption pending"))
+		_:
+			for token in inner_tokens:
+				lines.append("[color=#c2c2c2]%s[/color]" % _escape_bbcode(_extract_tag_text(token)))
 
-	if normalized.begins_with("<form"):
-		return "[bgcolor=#1f2a1f][color=#d8ffd8]  FORM // AUTH PANEL  [/color][/bgcolor]"
-	if normalized.begins_with("<img"):
-		return "[bgcolor=#222535][color=#ffd07a]  ИЗОБРАЖЕНИЕ  [/color][/bgcolor]"
-	if normalized.begins_with("<li"):
-		var item_text: String = _extract_list_item_text(token)
-		return "[color=#d8f5d8]• %s[/color]" % _escape_bbcode(item_text if not item_text.is_empty() else "Пункт")
-	if normalized.begins_with("</"):
-		return "[color=#8e9c8e]%s[/color]" % _escape_bbcode(token)
-	return "[color=#b7c9b7]%s[/color]" % _escape_bbcode(token)
+	if lines.is_empty():
+		lines.append("[color=#7d7d7d][RENDER OFFLINE][/color]")
+	return lines
 
-func _extract_list_item_text(token: String) -> String:
-	var text_value: String = token.strip_edges()
-	var open_pos: int = text_value.find(">")
-	if open_pos >= 0 and open_pos < text_value.length() - 1:
-		text_value = text_value.substr(open_pos + 1)
-	var lower_text: String = text_value.to_lower()
-	var close_pos: int = lower_text.find("</li>")
-	if close_pos >= 0:
-		text_value = text_value.substr(0, close_pos)
+func _inner_tokens_from_sequence(sequence: Array[String]) -> Array[String]:
+	var out: Array[String] = []
+	for fragment_id in sequence:
+		if fragment_id.is_empty() or not fragment_by_id.has(fragment_id):
+			continue
+		var fragment_data: Dictionary = fragment_by_id.get(fragment_id, {}) as Dictionary
+		var kind: String = str(fragment_data.get("kind", "")).to_upper()
+		if kind == "CONTAINER_OPEN" or kind == "CONTAINER_CLOSE":
+			continue
+		out.append(str(fragment_data.get("token", fragment_data.get("label", fragment_id))))
+	return out
+
+func _token_for_fragment(fragment_id: String) -> String:
+	if fragment_id.is_empty() or not fragment_by_id.has(fragment_id):
+		return ""
+	var fragment_data: Dictionary = fragment_by_id.get(fragment_id, {}) as Dictionary
+	return str(fragment_data.get("token", fragment_data.get("label", fragment_id)))
+
+func _extract_tag_text(token: String) -> String:
+	var text_value: String = token
+	while true:
+		var open_pos: int = text_value.find("<")
+		if open_pos < 0:
+			break
+		var close_pos: int = text_value.find(">", open_pos + 1)
+		if close_pos < 0:
+			break
+		text_value = text_value.substr(0, open_pos) + text_value.substr(close_pos + 1)
 	return text_value.strip_edges()
+
+func _flash_wrong_slots() -> void:
+	for i in range(slot_ids.size()):
+		var slot_id: String = slot_ids[i]
+		var actual_fragment_id: String = _fragment_in_slot(slot_id)
+		var expected_fragment_id: String = expected_sequence[i] if i < expected_sequence.size() else ""
+		if actual_fragment_id.is_empty() or actual_fragment_id == expected_fragment_id:
+			continue
+		var slot_node: Node = slot_nodes.get(slot_id, null) as Node
+		if slot_node != null and slot_node.has_method("flash_wrong"):
+			slot_node.call("flash_wrong")
 
 func _update_slot_feedback() -> void:
 	for i in range(slot_ids.size()):
@@ -629,4 +761,5 @@ func _update_stability_ui() -> void:
 	var shared_overlay: Node = get_tree().get_first_node_in_group("noir_overlay")
 	if shared_overlay != null and shared_overlay.has_method("set_danger_level"):
 		shared_overlay.call("set_danger_level", GlobalMetrics.stability)
+
 

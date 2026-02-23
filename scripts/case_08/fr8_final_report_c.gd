@@ -326,6 +326,7 @@ func _on_confirm_pressed() -> void:
 
 	var evaluation: Dictionary = FR8CScoring.evaluate(level_data, selected_option_id)
 	var feedback_text: String = FR8CScoring.feedback_text(level_data, evaluation)
+	var cascade_explanation: String = str(evaluation.get("cascade_explanation", "")).strip_edges()
 	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
 	var level_id: String = str(level_data.get("id", "FR8-C-00"))
 	var match_key: String = "FR8_C|%s|%d" % [level_id, GlobalMetrics.session_history.size()]
@@ -336,10 +337,13 @@ func _on_confirm_pressed() -> void:
 		"level_id": level_id,
 		"format": "CSS_CASCADE",
 		"match_key": match_key,
+		"selected": (evaluation.get("selected", {}) as Dictionary).duplicate(true),
 		"selected_option_id": selected_option_id,
 		"correct_option_id": str(evaluation.get("correct_option_id", "")),
 		"winner_source_id": str(evaluation.get("winner_source_id", "")),
 		"winner": (evaluation.get("winner", {}) as Dictionary).duplicate(true),
+		"winner_source": str(evaluation.get("winner_source_id", "")),
+		"cascade_explanation": cascade_explanation,
 		"elapsed_ms": elapsed_ms,
 		"inspect_count": inspect_count,
 		"reset_count": reset_count,
@@ -361,13 +365,13 @@ func _on_confirm_pressed() -> void:
 	bars_tween.tween_property(attack_bar, "value", actual_attack, 0.6).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 	bars_tween.tween_property(defense_bar, "value", actual_defense, 0.6).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 	if AudioManager != null:
-		AudioManager.play("relay")
+		AudioManager.play("relay" if bool(evaluation.get("is_correct", false)) else "click")
 	await get_tree().create_timer(0.6).timeout
 
 	GlobalMetrics.register_trial(payload)
 	_update_stability_ui()
 
-	explain_label.text = feedback_text
+	explain_label.text = cascade_explanation if not cascade_explanation.is_empty() else feedback_text
 
 	if bool(evaluation.get("is_correct", false)):
 		level_solved = true
@@ -387,7 +391,7 @@ func _on_confirm_pressed() -> void:
 		trial_locked = false
 		btn_next.disabled = true
 		btn_confirm.disabled = false
-		_set_status(feedback_text, COLOR_ERR)
+		_set_status("%s \u0412\u0430\u0448 \u0443\u0434\u0430\u0440: %d, \u0429\u0438\u0442: %d." % [feedback_text, actual_attack, actual_defense], COLOR_ERR)
 		var defense_flash: Tween = create_tween()
 		defense_flash.tween_property(defense_bar, "modulate", Color(2.0, 0.25, 0.25, 1.0), 0.12)
 		defense_flash.tween_property(defense_bar, "modulate", Color.WHITE, 0.16)

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scenes/QuestSelect.gd" id="1_script"]
 [ext_resource type="Shader" path="res://scenes/Blur.gdshader" id="2_shader"]
-[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="3_theme"]
+[ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="3_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="4_noir"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_1"]

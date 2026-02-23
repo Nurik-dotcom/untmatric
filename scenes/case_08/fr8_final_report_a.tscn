@@ -169,6 +169,36 @@ text = "[code]S1 ____[/code]"
 fit_content = false
 scroll_active = false
 
+[node name="RenderPreviewCard" type="PanelContainer" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox"]
+custom_minimum_size = Vector2(0, 130)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RenderVBox" type="VBoxContainer" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox/RenderPreviewCard"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="RenderHeader" type="Label" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox/RenderPreviewCard/RenderVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "LIVE PREVIEW"
+
+[node name="RenderStatus" type="Label" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox/RenderPreviewCard/RenderVBox"]
+layout_mode = 2
+text = "SECTOR OFFLINE"
+
+[node name="RenderPreview" type="RichTextLabel" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox/RenderPreviewCard/RenderVBox"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = false
+scroll_active = false
+text = "[color=#7d7d7d][RENDER OFFLINE][/color]"
+
 [node name="SlotsTitle" type="Label" parent="SafeArea/MainLayout/Body/EditorCard/CardVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18

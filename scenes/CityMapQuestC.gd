@@ -141,7 +141,12 @@ var _traffic_texture: Texture2D
 var _closed_texture: Texture2D
 
 func _ready() -> void:
-	btn_back.pressed.connect(_on_back_pressed)
+	if not btn_back.pressed.is_connected(_on_back_pressed):
+		btn_back.pressed.connect(_on_back_pressed)
+	btn_back.disabled = false
+	btn_back.mouse_filter = Control.MOUSE_FILTER_STOP
+	btn_back.focus_mode = Control.FOCUS_ALL
+	btn_back.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_submit.pressed.connect(_on_submit_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
@@ -157,6 +162,7 @@ func _ready() -> void:
 
 func _setup_noir_ui() -> void:
 	_ensure_info_scroll_container()
+	_configure_info_text_wrapping()
 
 	_btn_help = Button.new()
 	_btn_help.text = "?"
@@ -209,6 +215,11 @@ func _setup_noir_ui() -> void:
 	graph_container.move_child(_traffic_layer, nodes_layer.get_index())
 
 	briefing_card.visible = false
+
+func _configure_info_text_wrapping() -> void:
+	constraint_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	constraint_info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	constraint_info_label.clip_text = true
 
 func _ensure_info_scroll_container() -> void:
 	var parent: Node = info_vbox.get_parent()
@@ -520,6 +531,7 @@ func _apply_content_layout_mode() -> void:
 	var is_landscape: bool = viewport.x >= viewport.y
 	content_split.vertical = not is_landscape
 	var compact_landscape: bool = is_landscape and viewport.y <= 760.0
+	var compact_portrait: bool = not is_landscape and viewport.x <= 480.0
 	if content_split.vertical:
 		graph_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		info_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -530,7 +542,7 @@ func _apply_content_layout_mode() -> void:
 		info_panel.size_flags_horizontal = Control.SIZE_FILL
 		graph_panel.size_flags_stretch_ratio = 1.0
 		info_panel.size_flags_stretch_ratio = 1.0
-	_apply_compact_phone_layout(compact_landscape)
+	_apply_compact_phone_layout(compact_landscape or compact_portrait)
 
 func _apply_compact_phone_layout(compact: bool) -> void:
 	var viewport: Vector2 = get_viewport_rect().size
@@ -913,12 +925,9 @@ func _animate_graph_fit() -> void:
 	var fit := _renderer.compute_fit_transform(_node_positions, graph_container.size, AUTO_FIT_MARGIN_PX)
 	var target_scale := Vector2(float(fit.get("scale", 1.0)), float(fit.get("scale", 1.0)))
 	var target_pos := Vector2(fit.get("offset", Vector2.ZERO))
-	var tween := create_tween()
-	tween.set_ease(Tween.EASE_OUT)
-	tween.set_trans(Tween.TRANS_CUBIC)
 	for layer in [edges_layer, _traffic_layer, nodes_layer]:
-		tween.parallel().tween_property(layer, "scale", target_scale, 0.3)
-		tween.parallel().tween_property(layer, "position", target_pos, 0.3)
+		layer.scale = target_scale
+		layer.position = target_pos
 
 func _get_traffic_shader() -> Shader:
 	if _traffic_shader != null:
@@ -1548,5 +1557,3 @@ func _save_json_log(data: Dictionary, is_summary: bool = false) -> void:
 	if file != null:
 		file.store_string(JSON.stringify(data, "\t"))
 		file.close()
-
-

@@ -9,6 +9,7 @@ const ERROR_OK := "OK"
 
 const VERDICT_PERFECT := "PERFECT"
 const VERDICT_FAIL := "FAIL"
+const INLINE_SELECTOR := "\u0432\u0441\u0442\u0440\u043e\u0435\u043d\u043d\u044b\u0439 style"
 
 static func evaluate(level: Dictionary, selected_option_id: String) -> Dictionary:
 	var candidates: Array = _build_candidates(level)
@@ -32,6 +33,7 @@ static func evaluate(level: Dictionary, selected_option_id: String) -> Dictionar
 	var points: int = 2 if is_correct else 0
 	var stability_delta: int = 0 if is_correct else -25
 	var verdict_code: String = VERDICT_PERFECT if is_correct else VERDICT_FAIL
+	var explanation: String = _compose_cascade_explanation(selected_candidate, winner)
 
 	return {
 		"error_code": ERROR_OK if is_correct else error_code,
@@ -44,11 +46,20 @@ static func evaluate(level: Dictionary, selected_option_id: String) -> Dictionar
 		"correct_option_id": correct_option_id,
 		"winner_source_id": str(winner.get("source_id", "")),
 		"winner": {
+			"source_id": str(winner.get("source_id", "")),
+			"selector": str(winner.get("selector", "")),
 			"important": bool(winner.get("important", false)),
 			"weight": int(winner.get("weight", 0)),
 			"order": int(winner.get("order", 0)),
 			"color": str(winner.get("color", ""))
 		},
+		"selected": {
+			"option_id": selected_option_id,
+			"value": selected_value,
+			"source_id": str(selected_candidate.get("source_id", "")),
+			"selector": str(selected_candidate.get("selector", ""))
+		},
+		"cascade_explanation": explanation,
 		"attack_strength": _strength_of(selected_candidate),
 		"defense_strength": _strength_of(winner)
 	}
@@ -56,6 +67,7 @@ static func evaluate(level: Dictionary, selected_option_id: String) -> Dictionar
 static func feedback_text(level: Dictionary, evaluation: Dictionary) -> String:
 	var error_code: String = str(evaluation.get("error_code", ERROR_SPECIFICITY))
 	var feedback_rules: Dictionary = level.get("feedback_rules", {}) as Dictionary
+
 	if error_code == ERROR_EMPTY_CHOICE:
 		return "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0430\u0440\u0438\u0430\u043d\u0442 \u0446\u0432\u0435\u0442\u0430."
 	if feedback_rules.has(error_code):
@@ -63,9 +75,9 @@ static func feedback_text(level: Dictionary, evaluation: Dictionary) -> String:
 	if error_code == ERROR_IMPORTANT:
 		return "!important \u043f\u0435\u0440\u0435\u0431\u0438\u0432\u0430\u0435\u0442 \u043e\u0431\u044b\u0447\u043d\u044b\u0435 \u043f\u0440\u0430\u0432\u0438\u043b\u0430."
 	if error_code == ERROR_INLINE:
-		return "Встроенный стиль перекрывает правила из CSS."
+		return "\u0412\u0441\u0442\u0440\u043e\u0435\u043d\u043d\u044b\u0439 style \u0441\u0438\u043b\u044c\u043d\u0435\u0435 \u0447\u0435\u043c #id \u0438 .class."
 	if error_code == ERROR_ORDER_TIE:
-		return "\u041f\u0440\u0438 \u0440\u0430\u0432\u043d\u043e\u0439 \u0441\u0438\u043b\u0435 \u043f\u043e\u0431\u0435\u0436\u0434\u0430\u0435\u0442 \u043f\u0440\u0430\u0432\u0438\u043b\u043e, \u043a\u043e\u0442\u043e\u0440\u043e\u0435 \u0438\u0434\u0451\u0442 \u043f\u043e\u0437\u0436\u0435."
+		return "\u041f\u0440\u0438 \u0440\u0430\u0432\u043d\u043e\u0439 \u0441\u0438\u043b\u0435 \u043f\u043e\u0431\u0435\u0436\u0434\u0430\u0435\u0442 \u043f\u0440\u0430\u0432\u0438\u043b\u043e, \u043a\u043e\u0442\u043e\u0440\u043e\u0435 \u0438\u0434\u0435\u0442 \u043f\u043e\u0437\u0436\u0435."
 	if error_code == ERROR_SPECIFICITY:
 		return "\u041f\u043e\u0431\u0435\u0434\u0438\u043b \u0431\u043e\u043b\u0435\u0435 \u0441\u043f\u0435\u0446\u0438\u0444\u0438\u0447\u043d\u044b\u0439 \u0441\u0435\u043b\u0435\u043a\u0442\u043e\u0440."
 	if feedback_rules.has(ERROR_OK):
@@ -82,7 +94,7 @@ static func inspect_source(level: Dictionary, source_id: String) -> Dictionary:
 		var decl: Dictionary = inline_decl.get("decl", {}) as Dictionary
 		return {
 			"source_id": str(inline_decl.get("source_id", "INLINE")),
-			"selector": "встроенный стиль",
+			"selector": INLINE_SELECTOR,
 			"kind": str(inline_decl.get("kind", "inline")),
 			"weight": int(inline_decl.get("weight", 1000)),
 			"important": bool(inline_decl.get("important", false)),
@@ -142,7 +154,7 @@ static func _build_candidates(level: Dictionary) -> Array:
 		var inline_decl_data: Dictionary = inline_decl.get("decl", {}) as Dictionary
 		out.append({
 			"source_id": str(inline_decl.get("source_id", "INLINE")).strip_edges(),
-			"selector": "встроенный стиль",
+			"selector": INLINE_SELECTOR,
 			"kind": str(inline_decl.get("kind", "inline")),
 			"weight": int(inline_decl.get("weight", 1000)),
 			"important": bool(inline_decl.get("important", false)),
@@ -223,6 +235,43 @@ static func _infer_error_code(selected_candidate: Dictionary, winner: Dictionary
 			return ERROR_SPECIFICITY
 
 	return ERROR_SPECIFICITY
+
+static func _compose_cascade_explanation(selected_candidate: Dictionary, winner: Dictionary) -> String:
+	if winner.is_empty():
+		return ""
+
+	var sel_imp: bool = bool(selected_candidate.get("important", false))
+	var win_imp: bool = bool(winner.get("important", false))
+	var sel_weight: int = int(selected_candidate.get("weight", 0))
+	var win_weight: int = int(winner.get("weight", 0))
+	var sel_order: int = int(selected_candidate.get("order", 0))
+	var win_order: int = int(winner.get("order", 0))
+
+	var step_important: String
+	if sel_imp == win_imp:
+		step_important = "important: \u0440\u0430\u0432\u043d\u043e"
+	else:
+		step_important = "important: \u043f\u043e\u0431\u0435\u0434\u0438\u043b %s" % ("\u043f\u043e\u043c\u0435\u0447\u0435\u043d\u043d\u044b\u0439 !important" if win_imp else "\u043e\u0431\u044b\u0447\u043d\u044b\u0439")
+
+	var step_weight: String
+	if sel_weight == win_weight:
+		step_weight = "weight: %d = %d" % [sel_weight, win_weight]
+	else:
+		step_weight = "weight: %d < %d" % [sel_weight, win_weight]
+
+	var step_order: String
+	if sel_order == win_order:
+		step_order = "order: %d = %d" % [sel_order, win_order]
+	else:
+		step_order = "order: %d vs %d (\u043f\u043e\u0437\u0436\u0435 \u0441\u0438\u043b\u044c\u043d\u0435\u0435)" % [sel_order, win_order]
+
+	var winner_source: String = str(winner.get("source_id", "")).strip_edges()
+	if winner_source.is_empty():
+		winner_source = "UNKNOWN"
+	var winner_color: String = str(winner.get("color", "")).strip_edges()
+	var step_winner: String = "winner: %s -> %s" % [winner_source, winner_color if not winner_color.is_empty() else "-"]
+
+	return "%s -> %s -> %s -> %s" % [step_important, step_weight, step_order, step_winner]
 
 static func _option_by_id(level: Dictionary, option_id: String) -> Dictionary:
 	var oid: String = option_id.strip_edges()

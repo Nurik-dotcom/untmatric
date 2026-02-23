@@ -4,13 +4,19 @@ signal item_placed(fragment_id: String, to_zone: String, from_zone: String)
 
 @export var title_path: NodePath = NodePath("VBox/SlotTitle")
 @export var items_container_path: NodePath = NodePath("VBox/Center/Items")
+@export var empty_overlay_path: NodePath = NodePath("EmptyOverlay")
+@export var empty_label_path: NodePath = NodePath("EmptyOverlay/Center/EmptyLabel")
 
 var zone_id: String = ""
 var _feedback_state: String = "neutral"
 var _drag_hovered: bool = false
+var _wrong_flash_active: bool = false
+var _wrong_flash_tween: Tween
 
 @onready var _title_label: Label = get_node_or_null(title_path) as Label
 @onready var _items_container: Control = get_node_or_null(items_container_path) as Control
+@onready var _empty_overlay: ColorRect = get_node_or_null(empty_overlay_path) as ColorRect
+@onready var _empty_label: Label = get_node_or_null(empty_label_path) as Label
 
 func _ready() -> void:
 	mouse_exited.connect(func() -> void:
@@ -36,6 +42,7 @@ func clear_items() -> void:
 	for child in _items_container.get_children():
 		_items_container.remove_child(child)
 		child.queue_free()
+	_apply_visual_state()
 
 func add_item_control(item_control: Control) -> void:
 	if not is_instance_valid(_items_container):
@@ -53,6 +60,7 @@ func add_item_control(item_control: Control) -> void:
 	var tween: Tween = create_tween()
 	item_control.scale = Vector2(1.05, 1.05)
 	tween.tween_property(item_control, "scale", Vector2.ONE, 0.1)
+	_apply_visual_state()
 
 func get_current_fragment_id() -> String:
 	if not is_instance_valid(_items_container):
@@ -67,6 +75,22 @@ func get_current_fragment_id() -> String:
 func set_feedback_state(state: String) -> void:
 	_feedback_state = state
 	_apply_visual_state()
+
+func flash_wrong() -> void:
+	if _empty_overlay == null:
+		return
+	if _wrong_flash_tween != null and _wrong_flash_tween.is_running():
+		_wrong_flash_tween.kill()
+	_wrong_flash_active = true
+	_empty_overlay.visible = true
+	_empty_overlay.modulate = Color(1.0, 0.26, 0.26, 0.0)
+	_wrong_flash_tween = create_tween()
+	_wrong_flash_tween.tween_property(_empty_overlay, "modulate:a", 0.84, 0.06)
+	_wrong_flash_tween.tween_property(_empty_overlay, "modulate:a", 0.0, 0.18)
+	_wrong_flash_tween.finished.connect(func() -> void:
+		_wrong_flash_active = false
+		_apply_visual_state()
+	)
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	if typeof(data) != TYPE_DICTIONARY:
@@ -110,6 +134,10 @@ func _get_drop_controller() -> Node:
 	return get_tree().get_first_node_in_group("fr8_drop_controller")
 
 func _apply_visual_state() -> void:
+	var occupied: bool = false
+	if is_instance_valid(_items_container):
+		occupied = _items_container.get_child_count() > 0
+
 	var tone: Color = Color(1.0, 1.0, 1.0, 1.0)
 	match _feedback_state:
 		"ok":
@@ -123,6 +151,12 @@ func _apply_visual_state() -> void:
 		tone = Color(tone.r * 1.08, tone.g * 1.08, tone.b * 1.08, tone.a)
 
 	self_modulate = tone
+
+	if _empty_overlay != null and not _wrong_flash_active:
+		_empty_overlay.visible = not occupied
+		_empty_overlay.modulate = Color(1.0, 1.0, 1.0, 0.42) if not occupied else Color(1.0, 1.0, 1.0, 0.0)
+	if _empty_label != null:
+		_empty_label.visible = not occupied and not _wrong_flash_active
 
 func _pulse() -> void:
 	var tween: Tween = create_tween()

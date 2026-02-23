@@ -70,7 +70,6 @@ const TXT_RESULT_WARN: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0412\u0
 @onready var sample_strip: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/SampleStrip
 @onready var status_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusLabel
 @onready var btn_details: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/BtnDetails
-@onready var footer_label: Label = $SafeArea/RootVBox/Footer/FooterMargin/FooterLabel
 
 @onready var dimmer: ColorRect = $Dimmer
 @onready var details_sheet: PanelContainer = $DetailsSheet
@@ -277,7 +276,6 @@ func _start_trial() -> void:
 
 	status_label.text = TXT_STATUS_PLAN
 	status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
-	footer_label.text = ""
 	_update_header_meta()
 	_update_details_text()
 

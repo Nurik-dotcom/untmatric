@@ -38,6 +38,7 @@ var time_to_first_action_ms: int = -1
 var trial_locked: bool = false
 var level_solved: bool = false
 var trace: Array = []
+var dependency_lines: Array = []
 
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
 @onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
@@ -46,6 +47,7 @@ var trace: Array = []
 @onready var stability_bar: ProgressBar = $SafeArea/MainLayout/Header/StabilityBar
 @onready var briefing_label: RichTextLabel = $SafeArea/MainLayout/BriefingCard/BriefingLabel
 @onready var cards_row: HBoxContainer = $SafeArea/MainLayout/TimelineCard/CardVBox/CardsRow
+@onready var dependency_overlay: Control = $SafeArea/MainLayout/TimelineCard/DependencyOverlay
 @onready var status_label: Label = $SafeArea/MainLayout/StatusLabel
 @onready var btn_reset: Button = $SafeArea/MainLayout/BottomBar/BtnReset
 @onready var btn_confirm: Button = $SafeArea/MainLayout/BottomBar/BtnConfirm
@@ -56,6 +58,8 @@ func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	if dependency_overlay != null and not dependency_overlay.draw.is_connected(_on_dependency_overlay_draw):
+		dependency_overlay.draw.connect(_on_dependency_overlay_draw)
 
 	_connect_ui_signals()
 	_load_levels()
@@ -167,6 +171,7 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 	btn_confirm.disabled = false
 	btn_next.disabled = true
 	btn_next.text = TEXT_FINISH if _is_last_level() else TEXT_NEXT
+	_clear_dependency_overlay()
 
 	_rebuild_cards()
 	_set_status(STATUS_HINT, COLOR_INFO)
@@ -195,6 +200,7 @@ func _rebuild_cards() -> void:
 			card_node.connect("hint_requested", Callable(self, "_on_card_hint_requested"))
 
 	_apply_layout_mode()
+	_queue_dependency_overlay_redraw()
 
 func _on_card_move_requested(stage_id: String, dir: int) -> void:
 	if trial_locked:
@@ -208,6 +214,7 @@ func _on_card_move_requested(stage_id: String, dir: int) -> void:
 		return
 
 	_mark_first_action()
+	_clear_dependency_overlay()
 
 	var other_stage: String = current_order[target_index]
 	current_order[target_index] = stage_id
@@ -258,6 +265,7 @@ func _on_confirm_pressed() -> void:
 	var evaluation: Dictionary = FR8BScoring.evaluate(level_data, current_order)
 	var score: Dictionary = FR8BScoring.resolve_score(level_data, evaluation)
 	var feedback_text: String = FR8BScoring.feedback_text(level_data, evaluation)
+	_build_dependency_overlay_lines(evaluation)
 	var scan_triggered_glitch: bool = await _run_logic_scan(evaluation)
 	await _restore_cards_color()
 
@@ -366,6 +374,7 @@ func _apply_layout_mode() -> void:
 		if child is Control:
 			var control: Control = child as Control
 			control.custom_minimum_size = Vector2(card_width, 120)
+	_queue_dependency_overlay_redraw()
 
 func _mark_first_action() -> void:
 	if time_to_first_action_ms >= 0:
@@ -424,6 +433,104 @@ func _highlight_card_node(card: Control, target_color: Color, duration: float) -
 	var tween: Tween = create_tween()
 	tween.tween_property(card, "modulate", target_color, duration)
 	return tween.finished
+
+func _build_dependency_overlay_lines(evaluation: Dictionary) -> void:
+	dependency_lines.clear()
+
+	var broken_map: Dictionary = {}
+	for violation_var in evaluation.get("violations", []) as Array:
+		if typeof(violation_var) != TYPE_DICTIONARY:
+			continue
+		var violation: Dictionary = violation_var as Dictionary
+		var key: String = "%s->%s" % [
+			str(violation.get("a", "")).strip_edges(),
+			str(violation.get("b", "")).strip_edges()
+		]
+		broken_map[key] = true
+
+	for dep_var in level_data.get("dependencies", []) as Array:
+		if typeof(dep_var) != TYPE_DICTIONARY:
+			continue
+		var dep: Dictionary = dep_var as Dictionary
+		var a: String = str(dep.get("a", "")).strip_edges()
+		var b: String = str(dep.get("b", "")).strip_edges()
+		if a.is_empty() or b.is_empty():
+			continue
+		dependency_lines.append({
+			"a": a,
+			"b": b,
+			"broken": broken_map.has("%s->%s" % [a, b])
+		})
+
+	_queue_dependency_overlay_redraw()
+
+func _clear_dependency_overlay() -> void:
+	if dependency_lines.is_empty():
+		return
+	dependency_lines.clear()
+	_queue_dependency_overlay_redraw()
+
+func _queue_dependency_overlay_redraw() -> void:
+	if dependency_overlay != null:
+		dependency_overlay.queue_redraw()
+
+func _card_by_stage_id(stage_id: String) -> Control:
+	for child in cards_row.get_children():
+		if not (child is Control):
+			continue
+		if str(child.get_meta("stage_id", "")).strip_edges() == stage_id:
+			return child as Control
+	return null
+
+func _on_dependency_overlay_draw() -> void:
+	if dependency_overlay == null or dependency_lines.is_empty():
+		return
+
+	for line_var in dependency_lines:
+		if typeof(line_var) != TYPE_DICTIONARY:
+			continue
+		var line_data: Dictionary = line_var as Dictionary
+		var card_a: Control = _card_by_stage_id(str(line_data.get("a", "")))
+		var card_b: Control = _card_by_stage_id(str(line_data.get("b", "")))
+		if card_a == null or card_b == null:
+			continue
+
+		var rect_a: Rect2 = card_a.get_global_rect()
+		var rect_b: Rect2 = card_b.get_global_rect()
+		var p1: Vector2 = dependency_overlay.to_local(rect_a.position + Vector2(rect_a.size.x * 0.5, rect_a.size.y * 0.18))
+		var p2: Vector2 = dependency_overlay.to_local(rect_b.position + Vector2(rect_b.size.x * 0.5, rect_b.size.y * 0.18))
+		var arc_y: float = min(p1.y, p2.y) - 18.0
+		var v1: Vector2 = Vector2(p1.x, arc_y)
+		var v2: Vector2 = Vector2(p2.x, arc_y)
+
+		var broken: bool = bool(line_data.get("broken", false))
+		var color_value: Color = Color(1.0, 0.34, 0.34, 0.95) if broken else Color(1.0, 0.82, 0.35, 0.86)
+		var width: float = 2.2 if broken else 1.7
+
+		_draw_dependency_segment(p1, v1, color_value, width, broken)
+		_draw_dependency_segment(v1, v2, color_value, width, broken)
+		_draw_dependency_segment(v2, p2, color_value, width, broken)
+
+func _draw_dependency_segment(from_point: Vector2, to_point: Vector2, color_value: Color, width: float, broken: bool) -> void:
+	if dependency_overlay == null:
+		return
+	if not broken:
+		dependency_overlay.draw_line(from_point, to_point, color_value, width, true)
+		return
+
+	var delta: Vector2 = to_point - from_point
+	var dist: float = delta.length()
+	if dist <= 2.0:
+		return
+	var dir: Vector2 = delta / dist
+	var gap: float = min(14.0, dist * 0.48)
+	var segment_len: float = (dist - gap) * 0.5
+	if segment_len <= 0.0:
+		return
+	var first_end: Vector2 = from_point + dir * segment_len
+	var second_start: Vector2 = to_point - dir * segment_len
+	dependency_overlay.draw_line(from_point, first_end, color_value, width, true)
+	dependency_overlay.draw_line(second_start, to_point, color_value, width, true)
 
 func _trigger_glitch() -> void:
 	var shader_material: ShaderMaterial = crt_overlay.material as ShaderMaterial
