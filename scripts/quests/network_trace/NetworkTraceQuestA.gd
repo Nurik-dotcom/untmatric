@@ -161,24 +161,22 @@ func _load_levels() -> bool:
 
 func _validate_level(level: Dictionary) -> bool:
 	var required_keys: Array[String] = [
-		"id", "incident_id", "briefing", "prompt", "required_evidence", "logs", "topology", "options", "correct_id", "explain_short", "explain_full", "tags"
+		"id", "briefing", "prompt", "topology", "options", "correct_id", "explain_short", "explain_full", "tags"
 	]
 	for key in required_keys:
 		if not level.has(key):
 			return false
 
-	if typeof(level.get("logs")) != TYPE_ARRAY:
-		return false
 	if typeof(level.get("options")) != TYPE_ARRAY:
 		return false
 	if typeof(level.get("topology")) != TYPE_DICTIONARY:
 		return false
 
-	var logs: Array = level.get("logs", [])
-	if logs.size() < 3:
+	var logs: Array[String] = _extract_level_logs(level)
+	if logs.size() < 2:
 		return false
 
-	var required_count: int = int(level.get("required_evidence", 0))
+	var required_count: int = _extract_required_evidence(level, logs.size())
 	if required_count <= 0 or required_count > logs.size():
 		return false
 
@@ -207,6 +205,16 @@ func _validate_level(level: Dictionary) -> bool:
 		return false
 	if typeof(topology.get("edges", [])) != TYPE_ARRAY:
 		return false
+	var nodes_var: Variant = topology.get("nodes", [])
+	if typeof(nodes_var) != TYPE_ARRAY:
+		return false
+	var nodes: Array = nodes_var
+	for node_var in nodes:
+		if typeof(node_var) == TYPE_DICTIONARY:
+			var node_data: Dictionary = node_var
+			var node_id: String = str(node_data.get("id", "")).strip_edges()
+			if node_id.is_empty():
+				return false
 
 	return true
 
@@ -249,7 +257,7 @@ func _start_level(index: int) -> void:
 	time_left_sec = float(time_limit_sec)
 	timer_running = true
 
-	required_evidence = int(current_level.get("required_evidence", 2))
+	required_evidence = _extract_required_evidence(current_level, _extract_level_logs(current_level).size())
 
 	task_session = {
 		"task_id": str(current_level.get("id", "NT_A_UNKNOWN")),
@@ -294,7 +302,7 @@ func _build_log_items() -> void:
 		child.queue_free()
 	log_buttons.clear()
 
-	var logs: Array = current_level.get("logs", [])
+	var logs: Array[String] = _extract_level_logs(current_level)
 	for idx in range(logs.size()):
 		var log_line: String = str(logs[idx])
 		var btn: Button = Button.new()
@@ -326,8 +334,11 @@ func _build_evidence_slots() -> void:
 	_update_evidence_visuals()
 
 func _setup_topology() -> void:
-	var topology: Dictionary = current_level.get("topology", {})
-	topology_board.setup_topology(topology)
+	var topology_variant: Variant = current_level.get("topology", {})
+	var topology: Dictionary = {}
+	if typeof(topology_variant) == TYPE_DICTIONARY:
+		topology = topology_variant
+	topology_board.setup_topology(_normalize_topology(topology))
 	topology_board.set_tools_locked(true)
 
 func _build_palette() -> void:
@@ -391,7 +402,7 @@ func _on_log_pressed(log_index: int) -> void:
 		lbl_status.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
 func _update_evidence_visuals() -> void:
-	var logs: Array = current_level.get("logs", [])
+	var logs: Array[String] = _extract_level_logs(current_level)
 	for slot_index in range(evidence_slot_labels.size()):
 		var slot_label: Label = evidence_slot_labels[slot_index]
 		if slot_index < selected_evidence_indices.size():
@@ -673,7 +684,7 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"quest": "network_trace",
 		"stage": "A",
 		"task_id": str(current_level.get("id", "")),
-		"incident_id": str(current_level.get("incident_id", "")),
+		"incident_id": str(current_level.get("incident_id", current_level.get("id", ""))),
 		"match_key": "NETTRACE_A|%s" % str(current_level.get("id", "")),
 		"variant_hash": variant_hash,
 		"is_correct": is_correct,
@@ -695,12 +706,84 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 	GlobalMetrics.register_trial(payload)
 
 func _collect_selected_evidence_lines() -> Array[String]:
-	var logs: Array = current_level.get("logs", [])
+	var logs: Array[String] = _extract_level_logs(current_level)
 	var out: Array[String] = []
 	for index in selected_evidence_indices:
 		if index >= 0 and index < logs.size():
 			out.append(str(logs[index]))
 	return out
+
+func _extract_level_logs(level: Dictionary) -> Array[String]:
+	var logs_out: Array[String] = []
+	var logs_variant: Variant = level.get("logs", null)
+	if typeof(logs_variant) == TYPE_ARRAY:
+		var logs: Array = logs_variant
+		for log_var in logs:
+			var line: String = str(log_var).strip_edges()
+			if not line.is_empty():
+				logs_out.append(line)
+	if logs_out.is_empty():
+		var pois_variant: Variant = level.get("pois", null)
+		if typeof(pois_variant) == TYPE_ARRAY:
+			var pois: Array = pois_variant
+			for poi_var in pois:
+				if typeof(poi_var) != TYPE_DICTIONARY:
+					continue
+				var poi: Dictionary = poi_var
+				var poi_line: String = str(poi.get("log_line", "")).strip_edges()
+				if poi_line.is_empty():
+					poi_line = str(poi.get("id", "POI")).strip_edges()
+				if not poi_line.is_empty():
+					logs_out.append(poi_line)
+	return logs_out
+
+func _extract_required_evidence(level: Dictionary, logs_count: int) -> int:
+	if logs_count <= 0:
+		return 0
+	var required_count: int = int(level.get("required_evidence", 0))
+	if required_count <= 0:
+		required_count = int(level.get("required_poi", 0))
+	if required_count <= 0:
+		required_count = mini(2, logs_count)
+	return clampi(required_count, 1, logs_count)
+
+func _normalize_topology(topology: Dictionary) -> Dictionary:
+	var normalized: Dictionary = {
+		"nodes": [],
+		"edges": [],
+		"labels": {}
+	}
+	var nodes_variant: Variant = topology.get("nodes", [])
+	if typeof(nodes_variant) == TYPE_ARRAY:
+		var nodes: Array = nodes_variant
+		var normalized_nodes: Array = []
+		var labels: Dictionary = {}
+		for node_var in nodes:
+			if typeof(node_var) == TYPE_DICTIONARY:
+				var node_data: Dictionary = node_var
+				var node_id: String = str(node_data.get("id", "")).strip_edges()
+				if node_id.is_empty():
+					continue
+				normalized_nodes.append(node_data.duplicate(true))
+				var label_value: String = str(node_data.get("label", "")).strip_edges()
+				if not label_value.is_empty():
+					labels[node_id] = label_value
+			else:
+				var node_name: String = str(node_var).strip_edges()
+				if not node_name.is_empty():
+					normalized_nodes.append(node_name)
+		normalized["nodes"] = normalized_nodes
+		var labels_variant: Variant = topology.get("labels", {})
+		if typeof(labels_variant) == TYPE_DICTIONARY:
+			var labels_dict: Dictionary = labels_variant
+			for key_var in labels_dict.keys():
+				labels[str(key_var)] = str(labels_dict[key_var])
+		normalized["labels"] = labels
+	var edges_variant: Variant = topology.get("edges", [])
+	if typeof(edges_variant) == TYPE_ARRAY:
+		var edges: Array = edges_variant
+		normalized["edges"] = edges.duplicate(true)
+	return normalized
 
 func _log_event(name: String, payload: Dictionary) -> void:
 	var events: Array = task_session.get("events", [])
@@ -728,5 +811,3 @@ func _build_variant_key(level: Dictionary) -> String:
 func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	body.vertical = viewport_size.x < viewport_size.y
-
-

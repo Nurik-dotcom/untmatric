@@ -78,10 +78,12 @@ func compute_node_positions(
 		effective_padding + (usable.y - fitted.y) * 0.5
 	)
 
-	for node_id in raw_points.keys():
-		var fitted_pos := origin + (raw_points[node_id] - min_point) * scale
+	for node_id_var in raw_points.keys():
+		var node_id := str(node_id_var)
+		var raw_point: Vector2 = Vector2(raw_points[node_id_var])
+		var fitted_pos: Vector2 = origin + (raw_point - min_point) * scale
 		if jitter_offsets.has(node_id):
-			fitted_pos += jitter_offsets[node_id]
+			fitted_pos += Vector2(jitter_offsets[node_id])
 		positions[node_id] = fitted_pos
 
 	return positions

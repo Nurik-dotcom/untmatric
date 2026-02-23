@@ -94,6 +94,8 @@ var last_error_code: String = ""
 var attempts: Array[Dictionary] = []
 var task_session: Dictionary = {}
 var variant_hash: String = ""
+var level_mode: String = "EXAM"
+var level_mask_editable: bool = false
 
 func _ready() -> void:
 	_setup_runtime_controls()
@@ -252,6 +254,10 @@ func _validate_level(level: Dictionary) -> bool:
 
 	if typeof(level.get("tags", [])) != TYPE_ARRAY:
 		return false
+	if level.has("mode"):
+		var mode: String = str(level.get("mode", "EXAM")).to_upper()
+		if mode != "TRAIN" and mode != "EXAM":
+			return false
 
 	return true
 
@@ -273,6 +279,8 @@ func _start_level(index: int) -> void:
 	current_level_index = index
 	current_level = levels[index].duplicate(true)
 	variant_hash = str(hash(_build_variant_key(current_level)))
+	level_mode = str(current_level.get("mode", "EXAM")).to_upper()
+	level_mask_editable = bool(current_level.get("mask_editable", level_mode == "TRAIN"))
 
 	level_started_ms = Time.get_ticks_msec()
 	first_action_ms = -1
@@ -311,15 +319,19 @@ func _start_level(index: int) -> void:
 
 	mask_overlay.setup(int(current_level.get("cidr", 26)), int(current_level.get("mask_last", 192)))
 	mask_overlay.set_selected(false)
-	mask_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	mask_drop_target.mouse_filter = Control.MOUSE_FILTER_STOP
+	mask_overlay.mouse_filter = Control.MOUSE_FILTER_STOP if level_mask_editable else Control.MOUSE_FILTER_IGNORE
+	mask_drop_target.mouse_filter = Control.MOUSE_FILTER_STOP if level_mask_editable else Control.MOUSE_FILTER_IGNORE
 	lock_indicator.set_locked()
 	ruler.configure(int(current_level.get("step", 64)), int(current_level.get("ip_last", 0)))
 	ruler.reset_state()
 	row_res_line.visible = false
 
 	_set_row_bits(row_ip_cells, int(current_level.get("ip_last", 0)))
-	_clear_row(row_mask_cells)
+	if level_mask_editable:
+		_clear_row(row_mask_cells)
+	else:
+		_set_row_bits(row_mask_cells, int(current_level.get("mask_last", 0)))
+		mask_placed = true
 	_clear_row(row_res_cells)
 
 	btn_next.visible = false
@@ -335,6 +347,12 @@ func _start_level(index: int) -> void:
 	state = QuestState.BOARD_LOCKED
 	lbl_status.text = "Установите маску и нажмите ПРИМЕНИТЬ И."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.84, 0.82))
+	if not level_mask_editable:
+		state = QuestState.MASK_PLACED
+		btn_apply_and.disabled = false
+		lock_indicator.set_ready()
+		lbl_status.text = "Маска задана по CIDR. Нажмите ПРИМЕНИТЬ И."
+		lbl_status.add_theme_color_override("font_color", Color(0.72, 0.9, 0.82))
 	_update_meta_label()
 	_log_event("task_start", {"level": str(current_level.get("id", ""))})
 
@@ -390,6 +408,8 @@ func _render_options() -> void:
 func _on_mask_selected(mask_data: Dictionary, sender: Node) -> void:
 	if level_finished:
 		return
+	if not level_mask_editable:
+		return
 	_register_first_action()
 	pending_mask_data = mask_data.duplicate(true)
 	mask_overlay.set_selected(sender == mask_overlay)
@@ -401,6 +421,8 @@ func _on_mask_selected(mask_data: Dictionary, sender: Node) -> void:
 func _on_mask_drag_started(mask_data: Dictionary) -> void:
 	if level_finished:
 		return
+	if not level_mask_editable:
+		return
 	_register_first_action()
 	pending_mask_data = mask_data.duplicate(true)
 	mask_overlay.set_selected(false)
@@ -408,6 +430,8 @@ func _on_mask_drag_started(mask_data: Dictionary) -> void:
 
 func _on_mask_target_tapped() -> void:
 	if level_finished:
+		return
+	if not level_mask_editable:
 		return
 	_register_first_action()
 	if pending_mask_data.is_empty():
@@ -419,11 +443,15 @@ func _on_mask_target_tapped() -> void:
 func _on_mask_dropped(mask_data: Dictionary) -> void:
 	if level_finished:
 		return
+	if not level_mask_editable:
+		return
 	_register_first_action()
 	_apply_mask_placement(mask_data, "drag")
 
 func _on_mask_bad_drop(_data: Dictionary) -> void:
 	if level_finished:
+		return
+	if not level_mask_editable:
 		return
 	_register_first_action()
 	mask_drop_target.flash_bad_drop()
@@ -640,22 +668,31 @@ func _on_reset_pressed() -> void:
 		return
 	_register_first_action()
 	reset_count += 1
-	mask_placed = false
+	mask_placed = not level_mask_editable
 	and_applied = false
 	and_result_last = -1
 	pending_mask_data.clear()
 	mask_overlay.set_selected(false)
-	_clear_row(row_mask_cells)
+	if level_mask_editable:
+		_clear_row(row_mask_cells)
+	else:
+		_set_row_bits(row_mask_cells, int(current_level.get("mask_last", 0)))
 	_clear_row(row_res_cells)
 	row_res_line.visible = false
-	btn_apply_and.disabled = true
+	btn_apply_and.disabled = level_mask_editable
 	_enable_answer_buttons(false)
-	lock_indicator.set_locked()
+	if level_mask_editable:
+		lock_indicator.set_locked()
+	else:
+		lock_indicator.set_ready()
 	ruler.reset_state()
 	diagnostics_panel.visible = false
-	state = QuestState.BOARD_LOCKED
+	state = QuestState.BOARD_LOCKED if level_mask_editable else QuestState.MASK_PLACED
 	_play_audio("click")
-	lbl_status.text = "Поле сброшено. Установите маску и примените И."
+	if level_mask_editable:
+		lbl_status.text = "Поле сброшено. Установите маску и примените И."
+	else:
+		lbl_status.text = "Сброс выполнен. Маска снова задана по CIDR, нажмите ПРИМЕНИТЬ И."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.86, 0.95))
 	_log_event("reset_pressed", {})
 
@@ -775,6 +812,8 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"match_key": "NETTRACE_C|%s" % str(current_level.get("id", "")),
 		"variant_hash": variant_hash,
 		"target_ip": str(current_level.get("target_ip", "")),
+		"mode": level_mode,
+		"mask_editable": level_mask_editable,
 		"cidr": int(current_level.get("cidr", 0)),
 		"ip_last": int(current_level.get("ip_last", 0)),
 		"mask_last": int(current_level.get("mask_last", 0)),
@@ -875,5 +914,3 @@ func _byte_to_binary(value: int) -> String:
 func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	body.vertical = viewport_size.x < viewport_size.y
-
-

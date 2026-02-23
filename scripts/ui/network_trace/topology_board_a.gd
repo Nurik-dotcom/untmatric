@@ -11,6 +11,8 @@ var node_names: Array[String] = []
 var edge_pairs: Array = []
 var node_labels: Dictionary = {}
 var node_positions: Dictionary = {}
+var node_normalized_positions: Dictionary = {}
+var slot_node_id: String = SLOT_NODE_NAME
 
 var slot_size: Vector2 = Vector2(170.0, 90.0)
 var tools_locked: bool = true
@@ -39,12 +41,39 @@ func setup_topology(data: Dictionary) -> void:
 	edge_pairs.clear()
 	node_labels.clear()
 	node_positions.clear()
+	node_normalized_positions.clear()
+	slot_node_id = SLOT_NODE_NAME
 
 	var nodes_variant: Variant = data.get("nodes", [])
 	if typeof(nodes_variant) == TYPE_ARRAY:
 		var nodes_array: Array = nodes_variant
 		for node_var in nodes_array:
-			node_names.append(str(node_var))
+			if typeof(node_var) == TYPE_DICTIONARY:
+				var node_data: Dictionary = node_var
+				var node_id: String = str(node_data.get("id", "")).strip_edges()
+				if node_id.is_empty():
+					continue
+				node_names.append(node_id)
+				var node_label: String = str(node_data.get("label", "")).strip_edges()
+				if not node_label.is_empty():
+					node_labels[node_id] = node_label
+				var node_type: String = str(node_data.get("type", "")).strip_edges().to_lower()
+				if node_type == "slot" or node_id == SLOT_NODE_NAME or node_label == SLOT_NODE_NAME:
+					slot_node_id = node_id
+				var pos_variant: Variant = node_data.get("pos", null)
+				if typeof(pos_variant) == TYPE_ARRAY:
+					var pos_array: Array = pos_variant
+					if pos_array.size() >= 2:
+						var nx: float = clampf(float(pos_array[0]), 0.0, 1.0)
+						var ny: float = clampf(float(pos_array[1]), 0.0, 1.0)
+						node_normalized_positions[node_id] = Vector2(nx, ny)
+			else:
+				var node_name: String = str(node_var).strip_edges()
+				if node_name.is_empty():
+					continue
+				node_names.append(node_name)
+				if node_name == SLOT_NODE_NAME:
+					slot_node_id = node_name
 
 	var edges_variant: Variant = data.get("edges", [])
 	if typeof(edges_variant) == TYPE_ARRAY:
@@ -59,11 +88,14 @@ func setup_topology(data: Dictionary) -> void:
 
 	var labels_variant: Variant = data.get("labels", {})
 	if typeof(labels_variant) == TYPE_DICTIONARY:
-		node_labels = (labels_variant as Dictionary).duplicate(true)
+		var labels: Dictionary = labels_variant
+		for key_var in labels.keys():
+			node_labels[str(key_var)] = str(labels[key_var])
 
 	if node_names.is_empty():
 		node_names = ["SRC", SLOT_NODE_NAME, "DST"]
 		edge_pairs = [["SRC", SLOT_NODE_NAME], [SLOT_NODE_NAME, "DST"]]
+		slot_node_id = SLOT_NODE_NAME
 
 	_recalculate_layout()
 	clear_installed_device()
@@ -149,18 +181,36 @@ func _recalculate_layout() -> void:
 		return
 
 	var count: int = node_names.size()
-	var width_available: float = maxf(120.0, size.x - 64.0)
-	var x_start: float = (size.x - width_available) * 0.5
-	var y_line: float = size.y * 0.44
-
-	if count == 1:
-		node_positions[node_names[0]] = Vector2(size.x * 0.5, y_line)
+	var has_explicit_positions: bool = not node_normalized_positions.is_empty()
+	if has_explicit_positions:
+		var margin_x: float = 56.0
+		var margin_y: float = 72.0
+		var usable_width: float = maxf(120.0, size.x - margin_x * 2.0)
+		var usable_height: float = maxf(120.0, size.y - margin_y * 2.0)
+		for node_name in node_names:
+			if node_normalized_positions.has(node_name):
+				var normalized_variant: Variant = node_normalized_positions.get(node_name, Vector2(0.5, 0.5))
+				var normalized: Vector2 = Vector2(0.5, 0.5)
+				if normalized_variant is Vector2:
+					normalized = normalized_variant
+				var px: float = margin_x + normalized.x * usable_width
+				var py: float = margin_y + normalized.y * usable_height
+				node_positions[node_name] = Vector2(px, py)
+			else:
+				node_positions[node_name] = Vector2(size.x * 0.5, size.y * 0.5)
 	else:
-		var step: float = width_available / float(count - 1)
-		for idx in range(count):
-			var node_name: String = node_names[idx]
-			var pos: Vector2 = Vector2(x_start + float(idx) * step, y_line)
-			node_positions[node_name] = pos
+		var width_available: float = maxf(120.0, size.x - 64.0)
+		var x_start: float = (size.x - width_available) * 0.5
+		var y_line: float = size.y * 0.44
+
+		if count == 1:
+			node_positions[node_names[0]] = Vector2(size.x * 0.5, y_line)
+		else:
+			var step: float = width_available / float(count - 1)
+			for idx in range(count):
+				var node_name: String = node_names[idx]
+				var pos: Vector2 = Vector2(x_start + float(idx) * step, y_line)
+				node_positions[node_name] = pos
 
 	_build_packet_path()
 
@@ -182,8 +232,8 @@ func _build_packet_path() -> void:
 	packet_path.append(end_pos)
 
 func _slot_center() -> Vector2:
-	if node_positions.has(SLOT_NODE_NAME):
-		return node_positions[SLOT_NODE_NAME]
+	if node_positions.has(slot_node_id):
+		return node_positions[slot_node_id]
 	return Vector2(size.x * 0.5, size.y * 0.44)
 
 func _slot_rect() -> Rect2:
@@ -213,7 +263,7 @@ func _draw() -> void:
 		if not node_positions.has(node_name):
 			continue
 		var node_pos: Vector2 = node_positions[node_name]
-		if node_name == SLOT_NODE_NAME:
+		if node_name == slot_node_id:
 			continue
 		draw_circle(node_pos, 16.0, Color(0.12, 0.25, 0.2, 1.0))
 		draw_arc(node_pos, 16.0, 0.0, TAU, 24, Color(0.3, 0.85, 0.6, 0.75), 2.0)

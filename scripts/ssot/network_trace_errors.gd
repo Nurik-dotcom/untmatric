@@ -1,178 +1,155 @@
 extends RefCounted
 class_name NetworkTraceErrors
 
+const A_WRONG_EVIDENCE := "A_WRONG_EVIDENCE"
+const A_L1_BROADCAST := "A_L1_BROADCAST"
+const A_L2_SEGMENT_LIMIT := "A_L2_SEGMENT_LIMIT"
+const A_L1_PHYSICAL := "A_L1_PHYSICAL"
+const A_PASSIVE := "A_PASSIVE"
+const A_L3_OVERKILL := "A_L3_OVERKILL"
+const A_L2_BRIDGE_LIMIT := "A_L2_BRIDGE_LIMIT"
+
+const B_MATH_X8 := "B_MATH_X8"
+const B_MATH_1024 := "B_MATH_1024"
+const B_MATH_DIV := "B_MATH_DIV"
+const B_UNIT_TRAP := "B_UNIT_TRAP"
+const B_PIPELINE_INCOMPLETE := "B_PIPELINE_INCOMPLETE"
+const B_PIPELINE_BAD_DROP := "B_PIPELINE_BAD_DROP"
+const B_PIPELINE_MISMATCH := "B_PIPELINE_MISMATCH"
+const B_SPAM_TRACE := "B_SPAM_TRACE"
+const B_GARBAGE := "B_GARBAGE"
+
+const C_NOT_APPLIED := "C_NOT_APPLIED"
+const C_MASK_VAL := "C_MASK_VAL"
+const C_L24_FALLBACK := "C_L24_FALLBACK"
+const C_BOUNDARY_SHIFT := "C_BOUNDARY_SHIFT"
+const C_BROADCAST := "C_BROADCAST"
+const C_MASK_INVALID := "C_MASK_INVALID"
+const C_BAD_STEP := "C_BAD_STEP"
+const C_BAD_DROP := "C_BAD_DROP"
+const C_IP_VAL := "C_IP_VAL"
+
+const TIMEOUT := "TIMEOUT"
+const UNKNOWN := "UNKNOWN"
+
+const TITLES: Dictionary = {
+	A_WRONG_EVIDENCE: "НЕДОСТАТОЧНО УЛИК",
+	A_L1_BROADCAST: "L1 ШТОРМ",
+	A_L2_SEGMENT_LIMIT: "ОГРАНИЧЕНИЕ L2",
+	A_L1_PHYSICAL: "ТОЛЬКО ФИЗИКА",
+	A_PASSIVE: "ПАССИВНЫЙ ЭЛЕМЕНТ",
+	A_L3_OVERKILL: "ИЗБЫТОЧНОЕ РЕШЕНИЕ",
+	A_L2_BRIDGE_LIMIT: "ОГРАНИЧЕНИЕ BRIDGE",
+	B_MATH_X8: "ОШИБКА ПЕРЕВОДА В БИТЫ",
+	B_MATH_1024: "ОШИБКА БАЗЫ",
+	B_MATH_DIV: "ОШИБКА ФОРМУЛЫ",
+	B_UNIT_TRAP: "ЛОВУШКА ЕДИНИЦ",
+	B_PIPELINE_INCOMPLETE: "ЯДРО НЕ СОБРАНО",
+	B_PIPELINE_BAD_DROP: "НЕВЕРНЫЙ СЛОТ",
+	B_PIPELINE_MISMATCH: "PIPELINE MISMATCH",
+	B_SPAM_TRACE: "ЧАСТЫЕ ЗАПУСКИ",
+	B_GARBAGE: "НЕКОРРЕКТНЫЙ РЕЗУЛЬТАТ",
+	C_NOT_APPLIED: "AND НЕ ПРИМЕНЕН",
+	C_MASK_VAL: "ЭТО ЗНАЧЕНИЕ МАСКИ",
+	C_L24_FALLBACK: "ЛОВУШКА /24",
+	C_BOUNDARY_SHIFT: "СДВИГ ГРАНИЦ",
+	C_BROADCAST: "BROADCAST",
+	C_MASK_INVALID: "НЕКОРРЕКТНАЯ МАСКА",
+	C_BAD_STEP: "НЕВЕРНЫЙ ШАГ",
+	C_BAD_DROP: "МАСКА НЕ УСТАНОВЛЕНА",
+	C_IP_VAL: "ЭТО ЗНАЧЕНИЕ IP",
+	TIMEOUT: "ТАЙМ-АУТ",
+	UNKNOWN: "НЕВЕРНОЕ РЕШЕНИЕ"
+}
+
 const SHORT_MESSAGES: Dictionary = {
 	"": "",
-	"A_WRONG_EVIDENCE": "Соберите достаточно улик перед запуском.",
-	"A_L1_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": "Хаб дублирует кадры на все порты. Сегмент остаётся шумным.",
-	"A_L2_SEGMENT_LIMIT": "Коммутатор не маршрутизирует между подсетями.",
-	"A_L1_PHYSICAL": "Репитер только усиливает сигнал.",
-	"A_PASSIVE": "Патч-панель — пассивная коммутация.",
-	"B_MATH_X8": "Байты не переведены в биты.",
-	"B_MATH_1024": "Пропущен двоичный множитель 1024.",
-	"B_MATH_DIV": "Скорость нужно делить на время.",
-	"B_UNIT_TRAP": "Требуемая единица — бит/с, а не кбит/с.",
-	"B_PIPELINE_INCOMPLETE": "Соберите и запустите конвейер перед ответом.",
-	"B_PIPELINE_BAD_DROP": "Модуль не подходит к этому слоту.",
-	"B_PIPELINE_MISMATCH": "Ответ выбран при неверном конвейере.",
-	"B_SPAM_TRACE": "Обнаружен спам-команд трассировки.",
-	"B_GARBAGE": "Результат не совпадает с моделью передачи.",
-	"C_MASK_VAL": "Значение маски не является адресом сети.",
-	"C_NOT_APPLIED": "Сначала примените AND, затем выбирайте ответ.",
-	"C_L24_FALLBACK": "Автоподстановка /24 здесь неверна.",
-	"C_BOUNDARY_SHIFT": "Граница подсети сдвинута.",
-	"C_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": "Выбран широковещательный адрес.",
-	"C_BAD_STEP": "Шаг подсети вычислен неверно.",
-	"C_BAD_DROP": "Маску нужно поместить в строку «МАСКА».",
-	"TIMEOUT": "Время вышло.",
-	"UNKNOWN": "Неверный вариант для текущего контекста."
+	A_WRONG_EVIDENCE: "Соберите улики перед запуском трассировки.",
+	A_L1_BROADCAST: "Hub раздаёт всем: сегмент тонет в широковещании.",
+	A_L2_SEGMENT_LIMIT: "L2 не маршрутизирует между подсетями.",
+	A_L1_PHYSICAL: "Это решение для физического уровня, а не адресации.",
+	A_PASSIVE: "Пассивный элемент не принимает логических решений.",
+	A_L3_OVERKILL: "Router здесь избыточен, проблема решается на L2.",
+	A_L2_BRIDGE_LIMIT: "Bridge не закрывает условие кейса.",
+	B_MATH_X8: "Забыт перевод байт в биты (×8).",
+	B_MATH_1024: "Использована десятичная база вместо 1024.",
+	B_MATH_DIV: "Скорость нужно делить на время.",
+	B_UNIT_TRAP: "Перепутаны единицы вывода (bps/kbps/байт/с).",
+	B_PIPELINE_INCOMPLETE: "Сначала соберите ядро и нажмите RUN CALC.",
+	B_PIPELINE_BAD_DROP: "Модуль не подходит к этому слоту.",
+	B_PIPELINE_MISMATCH: "Ответ совпал, но pipeline собран неверно.",
+	B_SPAM_TRACE: "Слишком частые запуски. Дождитесь окончания цикла.",
+	B_GARBAGE: "Результат не совпадает с расчётной моделью.",
+	C_NOT_APPLIED: "Сначала APPLY AND, затем выбирайте ответ.",
+	C_MASK_VAL: "Это маска, а не Network ID.",
+	C_L24_FALLBACK: "Рефлекс /24 тут не работает.",
+	C_BOUNDARY_SHIFT: "Выбран неверный диапазон шага сети.",
+	C_BROADCAST: "255 - это broadcast, не адрес сети.",
+	C_MASK_INVALID: "Маска должна быть непрерывной: 111..000..",
+	C_BAD_STEP: "Шаг подсети рассчитан неверно.",
+	C_BAD_DROP: "Установите карту маски в строку MASK.",
+	C_IP_VAL: "Это значение IP, нужен Network ID.",
+	TIMEOUT: "Время задачи вышло.",
+	UNKNOWN: "Неверный вариант для текущего кейса."
 }
 
 const DETAIL_MESSAGES: Dictionary = {
-	"A_WRONG_EVIDENCE": [
-		"Порог по уликам предотвращает случайный перебор.",
-		"Сначала выберите обязательные лог-улики."
+	A_L1_BROADCAST: [
+		"Hub дублирует кадры на все порты и усиливает шум.",
+		"Для адресной доставки в сегменте нужен Switch."
 	],
-	"A_L1_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": [
-		"Хаб отправляет копии кадров на все порты.",
-		"Для сегментации L2 нужен коммутатор, для подсетей — маршрутизатор."
+	A_L2_SEGMENT_LIMIT: [
+		"Switch и Bridge работают внутри L2-домена.",
+		"Для обмена между разными подсетями нужен Router."
 	],
-	"A_L2_SEGMENT_LIMIT": [
-		"Коммутатор пересылает по MAC внутри одного широковещательного домена.",
-		"Трафик между подсетями требует маршрутизатора или L3-коммутатора."
+	B_MATH_X8: [
+		"Формула пропускной способности оперирует битами.",
+		"Сначала переведите байты в биты: ×8."
 	],
-	"A_L1_PHYSICAL": [
-		"Репитер только восстанавливает мощность сигнала.",
-		"Он не анализирует адреса и не применяет правила."
+	B_MATH_1024: [
+		"Для KB/MB в задаче используется двоичная база.",
+		"Применяйте 1024, а не 1000."
 	],
-	"A_PASSIVE": [
-		"Патч-панель — это точка коммутации кабелей.",
-		"Она не фильтрует и не маршрутизирует трафик."
+	B_UNIT_TRAP: [
+		"Проверьте требуемую единицу в prompt.",
+		"Число может быть верным, но единица - нет."
 	],
-	"B_MATH_X8": [
-		"Формула скорости: биты/время.",
-		"Сначала переведите байты в биты, умножив на 8."
+	C_MASK_VAL: [
+		"Значение mask_last не равно Network ID.",
+		"Сеть вычисляется через IP AND MASK."
 	],
-	"B_MATH_1024": [
-		"Двоичные единицы хранения используют 1024.",
-		"Когда нужна двоичная конверсия, используйте множители KiB и MiB."
+	C_BOUNDARY_SHIFT: [
+		"Определите шаг: 256 - mask_last.",
+		"Возьмите ближайшую нижнюю границу диапазона."
 	],
-	"B_MATH_DIV": [
-		"Пропускная способность — это общее число бит, делённое на секунды передачи.",
-		"Без деления результат получается завышенным."
-	],
-	"B_UNIT_TRAP": [
-		"Ответ должен точно совпадать с требуемой единицей.",
-		"Если требуется бит/с, не подставляйте кбит/с."
-	],
-	"B_PIPELINE_INCOMPLETE": [
-		"Панель ответов открывается только после КАЛЬКУЛЯЦИИ.",
-		"Сначала выберите основание, шаг байт->бит и деление на время."
-	],
-	"B_PIPELINE_BAD_DROP": [
-		"Каждый слот принимает только свою категорию модуля.",
-		"Сопоставьте slot_type модуля с подписью разъёма."
-	],
-	"B_PIPELINE_MISMATCH": [
-		"Финальный ответ можно угадать даже при неверной сборке.",
-		"Проверьте этапы конвейера, чтобы избежать ошибок единиц и формулы."
-	],
-	"B_SPAM_TRACE": [
-		"Частые быстрые клики снижают надёжность.",
-		"Дождитесь окончания кулдауна перед повторным запуском."
-	],
-	"B_GARBAGE": [
-		"Выбранное число не соответствует конвейеру преобразования.",
-		"Проверьте каждую операцию перед выбором финального ответа."
-	],
-	"C_MASK_VAL": [
-		"Маска сама по себе не является ID сети.",
-		"Вычисляйте сеть как IP И маска."
-	],
-	"C_NOT_APPLIED": [
-		"Варианты ответа заблокированы, пока не выполнен операция И.",
-		"Сначала установите маску и выполните операцию И."
-	],
-	"C_L24_FALLBACK": [
-		"Только маски /24 по умолчанию дают границу .0.",
-		"Для остальных масок используйте реальный размер блока."
-	],
-	"C_BOUNDARY_SHIFT": [
-		"Размер блока берётся из последнего октета маски, отличного от 255.",
-		"ID сети — ближайшая нижняя граница блока."
-	],
-	"C_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": [
-		"Широковещательный адрес — верхняя граница подсети.",
-		"ID сети — нижняя граница."
-	],
-	"C_BAD_STEP": [
-		"Шаг равен 256 минус значение маски в последнем октете.",
-		"Используйте начала сегментов по этому шагу."
-	],
-	"C_BAD_DROP": [
-		"Карту маски нужно помещать в зону сброса строки «МАСКА».",
-		"Зона сброса отклоняет неподходящие объекты."
-	],
-	"TIMEOUT": [
-		"Временной режим достиг лимита.",
-		"Используйте быстрые преобразования единиц и проверку границ."
-	],
-	"UNKNOWN": [
-		"Вариант не удовлетворяет условиям задачи.",
-		"Перепроверьте контекст и выберите единственное корректное совпадение."
+	UNKNOWN: [
+		"Сопоставьте действие с условиями задачи.",
+		"Проверьте улики, формулу или битовый шаг."
 	]
-}
-
-const TITLES: Dictionary = {
-	"A_WRONG_EVIDENCE": "ТРЕБУЮТСЯ УЛИКИ",
-	"A_L1_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": "ШТОРМ ШИРОКОВЕЩАНИЯ",
-	"A_L2_SEGMENT_LIMIT": "ОГРАНИЧЕНИЕ L2",
-	"A_L1_PHYSICAL": "ТОЛЬКО ФИЗИЧЕСКИЙ УРОВЕНЬ",
-	"A_PASSIVE": "ПАССИВНЫЙ КОМПОНЕНТ",
-	"B_MATH_X8": "ОШИБКА ПЕРЕВОДА В БИТЫ",
-	"B_MATH_1024": "ОШИБКА ДВОИЧНОЙ ЕДИНИЦЫ",
-	"B_MATH_DIV": "ОШИБКА ФОРМУЛЫ СКОРОСТИ",
-	"B_UNIT_TRAP": "НЕСОВПАДЕНИЕ ЕДИНИЦ",
-	"B_PIPELINE_INCOMPLETE": "КОНВЕЙЕР НЕ ЗАВЕРШЁН",
-	"B_PIPELINE_BAD_DROP": "НЕВЕРНАЯ ЗОНА СБРОСА",
-	"B_PIPELINE_MISMATCH": "НЕСОВПАДЕНИЕ КОНВЕЙЕРА",
-	"B_SPAM_TRACE": "СПАМ ТРАССИРОВКИ",
-	"B_GARBAGE": "НЕКОРРЕКТНЫЙ РЕЗУЛЬТАТ",
-	"C_MASK_VAL": "ПУТАНИЦА С МАСКОЙ",
-	"C_NOT_APPLIED": "ОПЕРАЦИЯ И НЕ ПРИМЕНЁН",
-	"C_L24_FALLBACK": "ЛОВУШКА /24 ПО УМОЛЧАНИЮ",
-	"C_BOUNDARY_SHIFT": "СДВИГ ГРАНИЦЫ",
-	"C_ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС": "ВЫБРАН ШИРОКОВЕЩАТЕЛЬНЫЙ АДРЕС",
-	"C_BAD_STEP": "НЕВЕРНЫЙ ШАГ",
-	"C_BAD_DROP": "НЕВЕРНАЯ ЗОНА СБРОСА",
-	"TIMEOUT": "ТАЙМАУТ",
-	"UNKNOWN": "НЕВЕРНОЕ РЕШЕНИЕ"
 }
 
 static func short_message(code: String) -> String:
 	var normalized: String = code.strip_edges()
 	if SHORT_MESSAGES.has(normalized):
 		return str(SHORT_MESSAGES[normalized])
-	return str(SHORT_MESSAGES["UNKNOWN"])
+	return str(SHORT_MESSAGES[UNKNOWN])
 
 static func get_error_title(code: String) -> String:
 	var normalized: String = code.strip_edges()
 	if TITLES.has(normalized):
 		return str(TITLES[normalized])
-	return str(TITLES["UNKNOWN"])
+	return str(TITLES[UNKNOWN])
 
 static func get_error_tip(code: String) -> String:
 	return short_message(code)
 
 static func detail_messages(code: String) -> Array[String]:
 	var normalized: String = code.strip_edges()
+	var source_variant: Variant = DETAIL_MESSAGES.get(normalized, DETAIL_MESSAGES.get(UNKNOWN, []))
 	var source: Array = []
-	if DETAIL_MESSAGES.has(normalized):
-		source = DETAIL_MESSAGES[normalized]
-	else:
-		source = DETAIL_MESSAGES["UNKNOWN"]
-	var details: Array[String] = []
+	if typeof(source_variant) == TYPE_ARRAY:
+		source = source_variant
+	var result: Array[String] = []
 	for line_var in source:
-		details.append(str(line_var))
-	return details
-
+		result.append(str(line_var))
+	return result

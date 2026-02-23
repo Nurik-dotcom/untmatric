@@ -5,16 +5,27 @@ const LOG_PREFIX := "case_6_3"
 const DEFAULT_ACCENT := Color(0.40, 0.72, 1.0, 1.0)
 const ARROW_ANGLE_RAD := 0.52
 const ARROW_LEN := 16.0
+const AUTO_FIT_MARGIN_PX := 24.0
+const TRAFFIC_BASE_SPEED := 2.4
 
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
+@onready var header: HBoxContainer = $SafeArea/MainVBox/Header
 @onready var content_split: BoxContainer = $SafeArea/MainVBox/ContentSplit
+@onready var graph_panel: PanelContainer = $SafeArea/MainVBox/ContentSplit/GraphPanel
+@onready var info_panel: PanelContainer = $SafeArea/MainVBox/ContentSplit/InfoPanel
 @onready var graph_container: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer
 @onready var edges_layer: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer/EdgesLayer
 @onready var nodes_layer: Control = $SafeArea/MainVBox/ContentSplit/GraphPanel/GraphMargin/GraphContainer/NodesLayer
 @onready var btn_back: Button = $SafeArea/MainVBox/Header/BtnBack
+@onready var label_case: Label = $SafeArea/MainVBox/Header/LabelCase
+@onready var label_mode: Label = $SafeArea/MainVBox/Header/LabelMode
 @onready var label_progress: Label = $SafeArea/MainVBox/Header/LabelProgress
 @onready var btn_reset: Button = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow/BtnReset
 @onready var btn_submit: Button = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow/BtnSubmit
 @onready var btn_next: Button = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow/BtnNext
+@onready var buttons_row: HBoxContainer = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow
+@onready var info_vbox: VBoxContainer = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox
 @onready var sum_input: LineEdit = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SumInput
 @onready var path_display: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/PathDisplay
 @onready var sim_time_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SimTimeLabel
@@ -23,9 +34,12 @@ const ARROW_LEN := 16.0
 @onready var warning_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/WarningLabel
 @onready var status_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/StatusLabel
 @onready var schedule_list: VBoxContainer = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel/ScheduleMargin/ScheduleVBox/ScheduleScroll/ScheduleList
+@onready var schedule_panel: PanelContainer = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel
 @onready var label_state: Label = $SafeArea/MainVBox/Header/LabelState
 @onready var label_timer: Label = $SafeArea/MainVBox/Header/LabelTimer
+@onready var footer_row: HBoxContainer = $SafeArea/MainVBox/Footer
 @onready var footer_label: Label = $SafeArea/MainVBox/Footer/FooterLabel
+@onready var briefing_card: PanelContainer = $SafeArea/MainVBox/BriefingCard
 @onready var briefing_title: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/BriefingTitle
 @onready var briefing_text: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/BriefingText
 @onready var briefing_constraint: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/ConstraintLabel
@@ -61,6 +75,7 @@ var run_total_ambush_hits: int = 0
 var min_sum: int = 0
 var accent_color: Color = DEFAULT_ACCENT
 var node_radius_px: float = 25.0
+var node_hit_target_px: float = 48.0
 var must_visit_nodes: Array[String] = []
 var blacklist_nodes: Array[String] = []
 var xor_groups: Array = []
@@ -96,6 +111,34 @@ var n_reset: int = 0
 var n_transit: int = 0
 var n_logic: int = 0
 var n_closed: int = 0
+var undo_count: int = 0
+var numpad_input_count: int = 0
+var backspace_count: int = 0
+var dossier_open_count: int = 0
+var time_dossier_open_ms: int = 0
+var wait_count: int = 0
+var wait_total_sim_sec: int = 0
+var think_time_before_move_ms: Array[int] = []
+
+var _last_move_ms: int = 0
+var _dossier_open_started_ms: int = -1
+var _jitter_map: Dictionary = {}
+var _node_positions: Dictionary = {}
+var _traffic_visuals: Dictionary = {}
+var _undo_stack: Array[Dictionary] = []
+var _renderer: GraphRenderer = GraphRenderer.new()
+
+var _traffic_layer: Control
+var _btn_help: Button
+var _btn_undo: Button
+var _btn_wait: Button
+var _numpad_panel: PanelContainer
+var _numpad_grid: GridContainer
+var _info_scroll: ScrollContainer
+var _numpad_buttons: Array[Button] = []
+var _traffic_shader: Shader
+var _traffic_texture: Texture2D
+var _closed_texture: Texture2D
 
 func _ready() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -104,11 +147,184 @@ func _ready() -> void:
 	btn_next.pressed.connect(_on_next_pressed)
 	sum_input.text_changed.connect(_on_sum_input_changed)
 	graph_container.resized.connect(_on_graph_resized)
+	_setup_noir_ui()
+	_configure_sum_input_display()
 
 	_load_pack(PACK_PATH)
 	_apply_content_layout_mode()
 	_setup_timer()
 	call_deferred("_start_pack_run")
+
+func _setup_noir_ui() -> void:
+	_ensure_info_scroll_container()
+
+	_btn_help = Button.new()
+	_btn_help.text = "?"
+	_btn_help.custom_minimum_size = Vector2(44, 44)
+	_btn_help.tooltip_text = "DOSSIER"
+	_btn_help.pressed.connect(_on_help_pressed)
+	header.add_child(_btn_help)
+
+	_btn_undo = Button.new()
+	_btn_undo.text = "UNDO"
+	_btn_undo.custom_minimum_size = Vector2(0, 44)
+	_btn_undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_btn_undo.pressed.connect(_on_undo_pressed)
+	buttons_row.add_child(_btn_undo)
+	buttons_row.move_child(_btn_undo, 0)
+
+	_btn_wait = Button.new()
+	_btn_wait.text = "WAIT +5"
+	_btn_wait.custom_minimum_size = Vector2(0, 44)
+	_btn_wait.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_btn_wait.pressed.connect(_on_wait_pressed)
+	buttons_row.add_child(_btn_wait)
+	buttons_row.move_child(_btn_wait, 1)
+
+	_numpad_panel = PanelContainer.new()
+	_numpad_panel.name = "NumpadPanel"
+	_numpad_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_vbox.add_child(_numpad_panel)
+	_numpad_grid = GridContainer.new()
+	_numpad_grid.columns = 3
+	_numpad_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_numpad_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_numpad_panel.add_child(_numpad_grid)
+	var labels := ["7", "8", "9", "4", "5", "6", "1", "2", "3", "C", "0", "<"]
+	for key in labels:
+		var btn := Button.new()
+		btn.text = key
+		btn.custom_minimum_size = Vector2(0, 44)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.pressed.connect(_on_numpad_button_pressed.bind(key))
+		_numpad_grid.add_child(btn)
+		_numpad_buttons.append(btn)
+	info_vbox.move_child(_numpad_panel, info_vbox.get_child_count() - 2)
+
+	_traffic_layer = Control.new()
+	_traffic_layer.name = "TrafficLayer"
+	_traffic_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_traffic_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	graph_container.add_child(_traffic_layer)
+	graph_container.move_child(_traffic_layer, nodes_layer.get_index())
+
+	briefing_card.visible = false
+
+func _ensure_info_scroll_container() -> void:
+	var parent: Node = info_vbox.get_parent()
+	if parent is ScrollContainer:
+		_info_scroll = parent as ScrollContainer
+		return
+	if parent == null:
+		return
+	var insertion_index: int = info_vbox.get_index()
+	parent.remove_child(info_vbox)
+	_info_scroll = ScrollContainer.new()
+	_info_scroll.name = "InfoScrollRuntime"
+	_info_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_info_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(_info_scroll)
+	parent.move_child(_info_scroll, insertion_index)
+	_info_scroll.add_child(info_vbox)
+	info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_vbox.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+
+func _configure_sum_input_display() -> void:
+	sum_input.editable = false
+	sum_input.selecting_enabled = false
+	sum_input.shortcut_keys_enabled = false
+	sum_input.context_menu_enabled = false
+	sum_input.focus_mode = Control.FOCUS_CLICK
+	sum_input.set("virtual_keyboard_enabled", false)
+	sum_input.set("virtual_keyboard_show_on_focus", false)
+
+func _on_help_pressed() -> void:
+	_set_dossier_open(not briefing_card.visible)
+
+func _set_dossier_open(opened: bool) -> void:
+	if briefing_card.visible == opened:
+		return
+	briefing_card.visible = opened
+	if opened:
+		dossier_open_count += 1
+		_dossier_open_started_ms = Time.get_ticks_msec()
+	else:
+		if _dossier_open_started_ms >= 0:
+			time_dossier_open_ms += Time.get_ticks_msec() - _dossier_open_started_ms
+		_dossier_open_started_ms = -1
+
+func _on_numpad_button_pressed(key: String) -> void:
+	if _is_round_locked():
+		return
+	var text := sum_input.text
+	match key:
+		"C":
+			if not text.is_empty():
+				sum_input.clear()
+		"<":
+			backspace_count += 1
+			if text.length() > 0:
+				sum_input.text = text.substr(0, text.length() - 1)
+		_:
+			if text.length() >= sum_input.max_length:
+				return
+			sum_input.text = "%s%s" % [text, key]
+			numpad_input_count += 1
+
+func _on_wait_pressed() -> void:
+	if _is_round_locked():
+		return
+	wait_count += 1
+	wait_total_sim_sec += 5
+	sim_time_sec += 5
+	_last_move_ms = Time.get_ticks_msec()
+	status_label.text = "WAIT +5: SIM обновлено, стабильность -1"
+	status_label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.34))
+	_recalculate_stability()
+	_update_visuals()
+
+func _on_undo_pressed() -> void:
+	if _is_round_locked() or _undo_stack.is_empty():
+		return
+	var snapshot: Dictionary = _undo_stack.pop_back()
+	current_node = str(snapshot.get("current_node", current_node))
+	path = snapshot.get("path", path).duplicate()
+	path_sum = int(snapshot.get("path_sum", path_sum))
+	step_weights = snapshot.get("step_weights", step_weights).duplicate()
+	sim_time_sec = int(snapshot.get("sim_time_sec", sim_time_sec))
+	backtrack_count = int(snapshot.get("backtrack_count", backtrack_count))
+	cycle_events = int(snapshot.get("cycle_events", cycle_events))
+	cycle_detected = bool(snapshot.get("cycle_detected", cycle_detected))
+	constraint_violations = int(snapshot.get("constraint_violations", constraint_violations))
+	closed_edge_attempts = int(snapshot.get("closed_edge_attempts", closed_edge_attempts))
+	ambush_hits = int(snapshot.get("ambush_hits", ambush_hits))
+	xor_violation = bool(snapshot.get("xor_violation", xor_violation))
+	dynamic_weight_awareness = bool(snapshot.get("dynamic_weight_awareness", dynamic_weight_awareness))
+	first_attempt_edge = str(snapshot.get("first_attempt_edge", first_attempt_edge))
+	first_action_ms = int(snapshot.get("first_action_ms", first_action_ms))
+	undo_count += 1
+	_last_move_ms = Time.get_ticks_msec()
+	_recalculate_stability()
+	_update_visuals()
+
+func _push_undo_snapshot() -> void:
+	_undo_stack.append({
+		"current_node": current_node,
+		"path": path.duplicate(),
+		"path_sum": path_sum,
+		"step_weights": step_weights.duplicate(),
+		"sim_time_sec": sim_time_sec,
+		"backtrack_count": backtrack_count,
+		"cycle_events": cycle_events,
+		"cycle_detected": cycle_detected,
+		"constraint_violations": constraint_violations,
+		"closed_edge_attempts": closed_edge_attempts,
+		"ambush_hits": ambush_hits,
+		"xor_violation": xor_violation,
+		"dynamic_weight_awareness": dynamic_weight_awareness,
+		"first_attempt_edge": first_attempt_edge,
+		"first_action_ms": first_action_ms
+	})
 
 func _start_pack_run() -> void:
 	run_started_unix = int(Time.get_unix_time_from_system())
@@ -195,6 +411,17 @@ func _load_sublevel(index: int) -> void:
 	ambush_hits = 0
 	xor_violation = false
 	dynamic_weight_awareness = true
+	undo_count = 0
+	numpad_input_count = 0
+	backspace_count = 0
+	dossier_open_count = 0
+	time_dossier_open_ms = 0
+	wait_count = 0
+	wait_total_sim_sec = 0
+	think_time_before_move_ms.clear()
+	_last_move_ms = Time.get_ticks_msec()
+	_dossier_open_started_ms = -1
+	briefing_card.visible = false
 
 	_set_briefing()
 	_rebuild_graph_ui()
@@ -233,9 +460,13 @@ func _is_round_locked() -> bool:
 
 func _lock_input(locked: bool) -> void:
 	input_locked = locked
-	sum_input.editable = not locked and not is_game_over and not stage_completed
+	sum_input.editable = false
 	btn_submit.disabled = locked or is_game_over or stage_completed
 	btn_reset.disabled = locked or is_game_over or stage_completed
+	if is_instance_valid(_btn_undo):
+		_btn_undo.disabled = locked or is_game_over or stage_completed or _undo_stack.is_empty()
+	if is_instance_valid(_btn_wait):
+		_btn_wait.disabled = locked or is_game_over or stage_completed
 	_update_visuals()
 
 func _on_next_pressed() -> void:
@@ -285,7 +516,76 @@ func _notification(what: int) -> void:
 			get_node("ResearchTimer").paused = false
 
 func _apply_content_layout_mode() -> void:
-	content_split.vertical = get_viewport_rect().size.x < get_viewport_rect().size.y
+	var viewport: Vector2 = get_viewport_rect().size
+	var is_landscape: bool = viewport.x >= viewport.y
+	content_split.vertical = not is_landscape
+	var compact_landscape: bool = is_landscape and viewport.y <= 760.0
+	if content_split.vertical:
+		graph_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		graph_panel.size_flags_stretch_ratio = 3.2
+		info_panel.size_flags_stretch_ratio = 1.8
+	else:
+		graph_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info_panel.size_flags_horizontal = Control.SIZE_FILL
+		graph_panel.size_flags_stretch_ratio = 1.0
+		info_panel.size_flags_stretch_ratio = 1.0
+	_apply_compact_phone_layout(compact_landscape)
+
+func _apply_compact_phone_layout(compact: bool) -> void:
+	var viewport: Vector2 = get_viewport_rect().size
+	var is_landscape: bool = viewport.x >= viewport.y
+	safe_area.add_theme_constant_override("margin_left", 8 if compact else 16)
+	safe_area.add_theme_constant_override("margin_right", 8 if compact else 16)
+	safe_area.add_theme_constant_override("margin_top", 8 if compact else 12)
+	safe_area.add_theme_constant_override("margin_bottom", 8 if compact else 12)
+	main_vbox.add_theme_constant_override("separation", 6 if compact else 12)
+	header.add_theme_constant_override("separation", 6 if compact else 10)
+	buttons_row.add_theme_constant_override("separation", 4 if compact else 8)
+	content_split.add_theme_constant_override("separation", 8 if compact else 12)
+	header.custom_minimum_size.y = 42.0 if compact else 56.0
+	btn_back.custom_minimum_size = Vector2(44.0, 44.0) if compact else Vector2(56.0, 56.0)
+	label_case.visible = not compact
+	label_mode.visible = not compact
+	label_progress.add_theme_font_size_override("font_size", 14 if compact else 18)
+	label_state.add_theme_font_size_override("font_size", 14 if compact else 18)
+	label_timer.add_theme_font_size_override("font_size", 14 if compact else 18)
+	footer_row.visible = not compact
+	graph_panel.custom_minimum_size = Vector2.ZERO
+	graph_container.custom_minimum_size = Vector2.ZERO
+	if is_landscape:
+		var info_width_max: float = viewport.x * 0.30
+		var info_width_min: float = minf(220.0, info_width_max)
+		var info_width_target: float = viewport.x * (0.26 if compact else 0.28)
+		var info_width: float = clampf(info_width_target, info_width_min, info_width_max)
+		info_panel.custom_minimum_size = Vector2(info_width, 0.0)
+	else:
+		info_panel.custom_minimum_size = Vector2(0.0, 0.0)
+	sum_input.custom_minimum_size.y = 36.0 if compact else 44.0
+	status_label.custom_minimum_size.y = 44.0 if compact else 64.0
+	_btn_undo.text = "U" if compact else "UNDO"
+	_btn_wait.text = "W+5" if compact else "WAIT +5"
+	btn_reset.text = "СБР" if compact else "СБРОС"
+	btn_submit.text = "ОК" if compact else "ОТПРАВИТЬ"
+	if is_instance_valid(_btn_help):
+		_btn_help.custom_minimum_size = Vector2(36.0, 36.0) if compact else Vector2(44.0, 44.0)
+	if is_instance_valid(_btn_undo):
+		_btn_undo.custom_minimum_size.y = 34.0 if compact else 44.0
+	if is_instance_valid(_btn_wait):
+		_btn_wait.custom_minimum_size.y = 34.0 if compact else 44.0
+	btn_reset.custom_minimum_size.y = 34.0 if compact else 44.0
+	btn_submit.custom_minimum_size.y = 34.0 if compact else 44.0
+	btn_next.custom_minimum_size.y = 34.0 if compact else 44.0
+	for np_btn in _numpad_buttons:
+		np_btn.custom_minimum_size.y = 30.0 if compact else 44.0
+	if is_instance_valid(_numpad_grid):
+		_numpad_grid.columns = 6 if compact else 3
+	if is_instance_valid(schedule_panel):
+		schedule_panel.custom_minimum_size.y = 108.0 if compact else 0.0
+		schedule_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if compact else Control.SIZE_EXPAND_FILL
+	if is_instance_valid(_info_scroll):
+		_info_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_info_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 
 func _setup_timer() -> void:
 	var timer := Timer.new()
@@ -302,6 +602,18 @@ func _on_timer_tick() -> void:
 	_update_timer_display()
 	if real_time_sec > int(level_data.get("time_limit_sec", 140)):
 		_recalculate_stability()
+
+func _process(delta: float) -> void:
+	for key_var in _traffic_visuals.keys():
+		var key := str(key_var)
+		var item: Dictionary = _traffic_visuals[key]
+		var speed := float(item.get("speed", 0.0))
+		var offset := float(item.get("offset", 0.0))
+		offset = fposmod(offset + speed * delta, 1.0)
+		var mat: ShaderMaterial = item["material"]
+		mat.set_shader_parameter("scroll", offset)
+		item["offset"] = offset
+		_traffic_visuals[key] = item
 
 func _load_level_data(path_to_file: String) -> void:
 	var file := FileAccess.open(path_to_file, FileAccess.READ)
@@ -361,6 +673,14 @@ func _load_level_data(path_to_file: String) -> void:
 			var raw_radius := float(level_data.ui.node_radius_px)
 			node_radius_px = raw_radius * 0.5 if raw_radius > 32.0 else raw_radius
 			node_radius_px = maxf(16.0, node_radius_px)
+		if level_data.ui.has("node_hit_target_px"):
+			node_hit_target_px = maxf(44.0, float(level_data.ui.node_hit_target_px))
+		else:
+			node_hit_target_px = 48.0
+	else:
+		node_hit_target_px = 48.0
+
+	_jitter_map = _renderer.build_deterministic_jitter(node_defs, config_hash, 8.0)
 
 func _set_briefing() -> void:
 	briefing_title.text = "ОКНО КОМЕНДАНТСКОГО ЧАСА"
@@ -464,11 +784,23 @@ func _rebuild_graph_ui() -> void:
 		child.queue_free()
 	for child in nodes_layer.get_children():
 		child.queue_free()
+	for child in _traffic_layer.get_children():
+		child.queue_free()
+	_traffic_visuals.clear()
 	edge_visuals.clear()
 	node_buttons.clear()
+	_node_positions.clear()
 
 	if graph_container.size.x <= 0.0 or graph_container.size.y <= 0.0:
 		return
+
+	_node_positions = _renderer.compute_node_positions(
+		node_defs,
+		graph_container.size,
+		node_radius_px,
+		_jitter_map,
+		AUTO_FIT_MARGIN_PX
+	)
 
 	for edge_var in level_data.get("edges", []):
 		var edge: Dictionary = edge_var
@@ -479,19 +811,21 @@ func _rebuild_graph_ui() -> void:
 
 		var start_pos := _node_screen_pos(node_defs[from_id])
 		var end_pos := _node_screen_pos(node_defs[to_id])
+		var bend := float(edge.get("bend", 0.0))
+		var baked := _renderer.build_edge_points(start_pos, end_pos, bend, 10.0)
 		var line := Line2D.new()
 		line.width = 4.0
-		line.points = PackedVector2Array([start_pos, end_pos])
+		line.points = baked
 		line.gradient = _build_gradient(Color(0.18, 0.22, 0.30, 0.28), Color(0.30, 0.38, 0.52, 0.48))
 		edges_layer.add_child(line)
 
-		var arrow := _create_arrow_polygon(start_pos, end_pos)
+		var arrow := _create_arrow_polygon_from_points(baked)
 		edges_layer.add_child(arrow)
 
 		var label := Label.new()
 		label.text = str(edge.get("w", 0))
 		label.add_theme_font_size_override("font_size", 15)
-		label.position = _edge_label_pos(start_pos, end_pos)
+		label.position = _renderer.edge_label_position(baked, 14.0)
 		label.add_theme_color_override("font_color", Color(0.62, 0.74, 0.90))
 		edges_layer.add_child(label)
 
@@ -502,25 +836,35 @@ func _rebuild_graph_ui() -> void:
 			"edge": edge
 		}
 
+	var hit_radius := _renderer.minimum_hit_radius(node_radius_px, node_hit_target_px)
 	for node_id in node_defs.keys():
 		var node: Dictionary = node_defs[node_id]
 		var btn := Button.new()
 		btn.text = str(node.get("label", node_id))
-		var diameter := node_radius_px * 2.0
+		btn.flat = false
+		var diameter := hit_radius * 2.0
 		btn.size = Vector2(diameter, diameter)
-		btn.position = _node_screen_pos(node) - Vector2(node_radius_px, node_radius_px)
+		btn.position = _node_screen_pos(node) - Vector2(hit_radius, hit_radius)
 		btn.pressed.connect(_on_node_pressed.bind(node_id))
 		nodes_layer.add_child(btn)
 		node_buttons[node_id] = btn
+
+	_animate_graph_fit()
 
 func _edge_label_pos(start_pos: Vector2, end_pos: Vector2) -> Vector2:
 	var dir := (end_pos - start_pos).normalized()
 	var normal := Vector2(-dir.y, dir.x)
 	return ((start_pos + end_pos) * 0.5) + (normal * 12.0) - Vector2(10.0, 10.0)
 
-func _create_arrow_polygon(start_pos: Vector2, end_pos: Vector2) -> Polygon2D:
-	var dir := (end_pos - start_pos).normalized()
-	var tip := end_pos - dir * (node_radius_px + 4.0)
+func _create_arrow_polygon_from_points(points: PackedVector2Array) -> Polygon2D:
+	if points.size() < 2:
+		points = PackedVector2Array([Vector2.ZERO, Vector2.RIGHT])
+	var tip := points[points.size() - 1]
+	var prev := points[maxi(0, points.size() - 2)]
+	var dir := (tip - prev).normalized()
+	if dir.length() <= 0.0001:
+		dir = Vector2.RIGHT
+	tip -= dir * (node_radius_px + 4.0)
 	var base := tip - dir * ARROW_LEN
 	var side_len := ARROW_LEN * 0.65
 
@@ -540,6 +884,10 @@ func _build_gradient(start_color: Color, end_color: Color) -> Gradient:
 	return gradient
 
 func _node_screen_pos(node_data: Dictionary) -> Vector2:
+	var node_id := str(node_data.get("id", ""))
+	if _node_positions.has(node_id):
+		return _node_positions[node_id]
+
 	var pos: Dictionary = node_data.get("pos", {})
 	var x := float(pos.get("x", 0.0))
 	var y := float(pos.get("y", 0.0))
@@ -549,9 +897,121 @@ func _node_screen_pos(node_data: Dictionary) -> Vector2:
 		var usable := graph_container.size - Vector2(padding * 2.0, padding * 2.0)
 		usable.x = maxf(1.0, usable.x)
 		usable.y = maxf(1.0, usable.y)
-		return Vector2(padding + x * usable.x, padding + y * usable.y)
+		var p := Vector2(padding + x * usable.x, padding + y * usable.y)
+		if _jitter_map.has(node_id):
+			p += _jitter_map[node_id]
+		return p
 
-	return Vector2(x, y)
+	var p_abs := Vector2(x, y)
+	if _jitter_map.has(node_id):
+		p_abs += _jitter_map[node_id]
+	return p_abs
+
+func _animate_graph_fit() -> void:
+	if _node_positions.is_empty():
+		return
+	var fit := _renderer.compute_fit_transform(_node_positions, graph_container.size, AUTO_FIT_MARGIN_PX)
+	var target_scale := Vector2(float(fit.get("scale", 1.0)), float(fit.get("scale", 1.0)))
+	var target_pos := Vector2(fit.get("offset", Vector2.ZERO))
+	var tween := create_tween()
+	tween.set_ease(Tween.EASE_OUT)
+	tween.set_trans(Tween.TRANS_CUBIC)
+	for layer in [edges_layer, _traffic_layer, nodes_layer]:
+		tween.parallel().tween_property(layer, "scale", target_scale, 0.3)
+		tween.parallel().tween_property(layer, "position", target_pos, 0.3)
+
+func _get_traffic_shader() -> Shader:
+	if _traffic_shader != null:
+		return _traffic_shader
+	_traffic_shader = Shader.new()
+	_traffic_shader.code = """
+shader_type canvas_item;
+uniform float scroll = 0.0;
+uniform vec4 tint : source_color = vec4(0.60, 0.86, 1.0, 0.95);
+
+void fragment() {
+	vec2 uv = UV;
+	uv.x = fract(uv.x + scroll);
+	vec4 tex = texture(TEXTURE, uv);
+	COLOR = tex * tint;
+}
+"""
+	return _traffic_shader
+
+func _get_traffic_texture() -> Texture2D:
+	if _traffic_texture != null:
+		return _traffic_texture
+	var img := Image.create(16, 4, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0.0, 0.0, 0.0, 0.0))
+	for x in range(16):
+		var alpha := 0.0
+		if x % 8 <= 2:
+			alpha = 1.0
+		for y in range(4):
+			img.set_pixel(x, y, Color(1.0, 1.0, 1.0, alpha))
+	_traffic_texture = ImageTexture.create_from_image(img)
+	return _traffic_texture
+
+func _get_closed_texture() -> Texture2D:
+	if _closed_texture != null:
+		return _closed_texture
+	var img := Image.create(12, 4, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0.0, 0.0, 0.0, 0.0))
+	for x in range(12):
+		var alpha := 0.0
+		if x % 4 <= 1:
+			alpha = 1.0
+		for y in range(4):
+			img.set_pixel(x, y, Color(1.0, 0.4, 0.4, alpha))
+	_closed_texture = ImageTexture.create_from_image(img)
+	return _closed_texture
+
+func _sync_traffic_visuals() -> void:
+	var active_edges: Dictionary = {}
+	for i in range(path.size() - 1):
+		var key := _edge_key(path[i], path[i + 1])
+		active_edges[key] = true
+		if _traffic_visuals.has(key):
+			continue
+		if not edge_visuals.has(key):
+			continue
+		var visual: Dictionary = edge_visuals[key]
+		var edge: Dictionary = visual.get("edge", {})
+		var line := Line2D.new()
+		line.width = 2.5
+		line.points = (visual["line"] as Line2D).points
+		line.texture = _get_traffic_texture()
+		line.texture_mode = Line2D.LINE_TEXTURE_TILE
+		line.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+		line.default_color = Color(1.0, 1.0, 1.0, 0.95)
+		var mat := ShaderMaterial.new()
+		mat.shader = _get_traffic_shader()
+		mat.set_shader_parameter("scroll", 0.0)
+		line.material = mat
+		_traffic_layer.add_child(line)
+		var speed := TRAFFIC_BASE_SPEED / maxf(1.0, float(edge.get("w", 1)))
+		_traffic_visuals[key] = {
+			"line": line,
+			"material": mat,
+			"speed": speed,
+			"offset": 0.0
+		}
+
+	var stale: Array[String] = []
+	for key_var in _traffic_visuals.keys():
+		var key := str(key_var)
+		if active_edges.has(key):
+			var tv: Dictionary = _traffic_visuals[key]
+			if edge_visuals.has(key):
+				(tv["line"] as Line2D).points = (edge_visuals[key]["line"] as Line2D).points
+			_traffic_visuals[key] = tv
+			continue
+		stale.append(key)
+
+	for stale_key in stale:
+		var entry: Dictionary = _traffic_visuals[stale_key]
+		(entry["line"] as Line2D).queue_free()
+		_traffic_visuals.erase(stale_key)
 
 func _reset_round_state(full_reset: bool) -> void:
 	current_node = str(level_data.get("start_node", "A"))
@@ -572,6 +1032,8 @@ func _reset_round_state(full_reset: bool) -> void:
 	planning_time_ms = 0
 	sum_input.clear()
 	status_label.text = ""
+	_undo_stack.clear()
+	_last_move_ms = Time.get_ticks_msec()
 
 	if full_reset:
 		level_started_ms = Time.get_ticks_msec()
@@ -598,7 +1060,10 @@ func _update_visuals() -> void:
 	for node_id in node_buttons.keys():
 		var btn: Button = node_buttons[node_id]
 		var is_current: bool = node_id == current_node
-		var is_available: bool = adjacency.has(current_node) and adjacency[current_node].has(node_id)
+		var is_available := false
+		if adjacency.has(current_node) and adjacency[current_node].has(node_id):
+			var runtime_to_node := _edge_runtime_state(adjacency[current_node][node_id], sim_time_sec)
+			is_available = str(runtime_to_node.get("state", "open")) != "closed"
 		btn.disabled = is_current or not is_available or _is_round_locked()
 		if is_current:
 			btn.modulate = Color(0.95, 0.86, 0.45)
@@ -611,20 +1076,33 @@ func _update_visuals() -> void:
 		var visual: Dictionary = edge_visuals[key]
 		var edge: Dictionary = visual.edge
 		var runtime := _edge_runtime_state(edge, sim_time_sec)
-		var is_available: bool = adjacency.has(current_node) and adjacency[current_node].has(str(edge.get("to", ""))) and str(edge.get("from", "")) == current_node
+		var is_available: bool = (
+			str(edge.get("from", "")) == current_node
+			and adjacency.has(current_node)
+			and adjacency[current_node].has(str(edge.get("to", "")))
+			and str(runtime.get("state", "open")) != "closed"
+		)
 		var is_traversed: bool = _path_contains_edge(str(edge.get("from", "")), str(edge.get("to", "")))
+		var next_change_sec := int(runtime.get("next_change_sec", -1))
+		var closing_soon := str(runtime.get("state", "open")) != "closed" and next_change_sec >= 0 and next_change_sec < 15
 
 		var state := "dim"
 		if is_traversed:
 			state = "traversed"
-		elif runtime.state == "closed":
+		elif str(runtime.get("state", "open")) == "closed":
 			state = "closed"
-		elif runtime.danger:
+		elif bool(runtime.get("danger", false)) or closing_soon:
 			state = "danger"
 		elif is_available:
 			state = "available"
 
 		_apply_edge_style(key, state, runtime)
+
+	_sync_traffic_visuals()
+	if is_instance_valid(_btn_undo):
+		_btn_undo.disabled = _is_round_locked() or _undo_stack.is_empty()
+	if is_instance_valid(_btn_wait):
+		_btn_wait.disabled = _is_round_locked()
 
 func _apply_edge_style(key: String, state: String, runtime: Dictionary) -> void:
 	if not edge_visuals.has(key):
@@ -636,25 +1114,40 @@ func _apply_edge_style(key: String, state: String, runtime: Dictionary) -> void:
 
 	var start_color := Color(0.18, 0.22, 0.30, 0.28)
 	var end_color := Color(0.30, 0.38, 0.52, 0.48)
-	var label_text := str(runtime.weight)
+	var label_text := str(runtime.get("weight", 0))
 
 	match state:
 		"available":
 			start_color = Color(0.24, 0.40, 0.62, 0.48)
 			end_color = accent_color
 			end_color.a = 0.95
+			line.texture = null
 		"traversed":
 			start_color = accent_color.lightened(0.10)
 			start_color.a = 0.80
 			end_color = Color(0.92, 0.97, 1.0, 1.0)
+			line.texture = null
 		"closed":
 			start_color = Color(0.58, 0.14, 0.14, 0.55)
 			end_color = Color(1.0, 0.25, 0.25, 1.0)
-			label_text = "ЗАКРЫТО"
+			label_text = "CLOSED"
+			line.texture = _get_closed_texture()
+			line.texture_mode = Line2D.LINE_TEXTURE_TILE
+			line.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 		"danger":
 			start_color = Color(0.62, 0.35, 0.12, 0.60)
 			end_color = Color(1.0, 0.62, 0.18, 1.0)
-			label_text = "%d ОПАСНО" % int(runtime.weight)
+			label_text = "%d DANGER" % int(runtime.get("weight", 0))
+			line.texture = null
+		_:
+			line.texture = null
+
+	var next_change_sec := int(runtime.get("next_change_sec", -1))
+	if next_change_sec >= 0 and state != "closed":
+		label_text = "%s ⏱%ds" % [label_text, next_change_sec]
+	if state == "danger" and next_change_sec >= 0 and next_change_sec < 15:
+		var pulse := 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) / 120.0)
+		end_color = end_color.lerp(Color(1.0, 0.24, 0.24, 1.0), pulse * 0.6)
 
 	line.gradient = _build_gradient(start_color, end_color)
 	arrow.color = end_color
@@ -674,6 +1167,7 @@ func _edge_runtime_state(edge: Dictionary, time_sec: int) -> Dictionary:
 	var base_weight := int(edge.get("w", 0))
 	var active_weight := base_weight
 	var active_state := "open"
+	var next_change_sec := -1
 
 	if edge.has("schedule"):
 		for slot_var in edge.schedule:
@@ -683,12 +1177,18 @@ func _edge_runtime_state(edge: Dictionary, time_sec: int) -> Dictionary:
 			if time_sec >= from_t and time_sec < to_t:
 				active_state = str(slot.get("state", "open"))
 				active_weight = int(slot.get("w", base_weight))
+				next_change_sec = max(0, to_t - time_sec)
 				break
+			if time_sec < from_t:
+				var delta := from_t - time_sec
+				if next_change_sec < 0 or delta < next_change_sec:
+					next_change_sec = delta
 
 	return {
 		"weight": active_weight,
 		"state": active_state,
-		"danger": active_state != "closed" and active_weight > base_weight
+		"danger": active_state != "closed" and active_weight > base_weight,
+		"next_change_sec": next_change_sec
 	}
 
 func _on_node_pressed(node_id: String) -> void:
@@ -697,9 +1197,15 @@ func _on_node_pressed(node_id: String) -> void:
 	if not adjacency.has(current_node) or not adjacency[current_node].has(node_id):
 		return
 
+	var now_ms := Time.get_ticks_msec()
+	if _last_move_ms > 0:
+		think_time_before_move_ms.append(now_ms - _last_move_ms)
+	_last_move_ms = now_ms
+	_push_undo_snapshot()
+
 	if first_attempt_edge.is_empty():
 		first_attempt_edge = _edge_key(current_node, node_id)
-		first_action_ms = Time.get_ticks_msec() - level_started_ms
+		first_action_ms = now_ms - level_started_ms
 		planning_time_ms = first_action_ms
 
 	if path.size() >= 2 and path[path.size() - 2] == node_id:
@@ -728,6 +1234,8 @@ func _on_node_pressed(node_id: String) -> void:
 	sim_time_sec += int(runtime.weight)
 	path.append(node_id)
 	current_node = node_id
+	if path.size() == 2:
+		_set_dossier_open(false)
 
 	if blacklist_nodes.has(node_id):
 		ambush_hits += 1
@@ -767,6 +1275,7 @@ func _on_sum_input_changed(new_text: String) -> void:
 func _on_submit_pressed() -> void:
 	if _is_round_locked():
 		return
+	_set_dossier_open(false)
 
 	attempt_in_sublevel += 1
 	attempt_in_run += 1
@@ -910,6 +1419,7 @@ func _recalculate_stability() -> void:
 		+ n_transit * int(trust_cfg.get("penalty_transit", 25))
 		+ n_logic * int(trust_cfg.get("penalty_logic_violation", 30))
 		+ n_closed * int(trust_cfg.get("penalty_closed_edge", 8))
+		+ maxi(0, undo_count - 1) * 5
 		+ overtime_penalty
 	)
 
@@ -917,6 +1427,7 @@ func _recalculate_stability() -> void:
 	var ambush_multiplier := float(trust_cfg.get("ambush_multiplier", 0.5))
 	for _i in range(ambush_hits):
 		effective *= ambush_multiplier
+	effective -= float(wait_count)
 
 	stability = clampf(effective, 0.0, 100.0)
 	label_state.text = "СТАБИЛЬНОСТЬ: %d%%" % int(stability)
@@ -998,6 +1509,14 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"n_transit": n_transit,
 		"n_logic": n_logic,
 		"n_closed": n_closed,
+		"undo_count": undo_count,
+		"wait_count": wait_count,
+		"wait_total_sim_sec": wait_total_sim_sec,
+		"dossier_open_count": dossier_open_count,
+		"time_dossier_open_ms": time_dossier_open_ms,
+		"numpad_input_count": numpad_input_count,
+		"backspace_count": backspace_count,
+		"think_time_before_move_ms": think_time_before_move_ms.duplicate(),
 		"is_correct": result_code == "OK",
 		"is_fit": result_code == "OK",
 		"stability_delta": 0,
@@ -1029,3 +1548,5 @@ func _save_json_log(data: Dictionary, is_summary: bool = false) -> void:
 	if file != null:
 		file.store_string(JSON.stringify(data, "\t"))
 		file.close()
+
+
