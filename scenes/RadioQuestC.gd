@@ -21,11 +21,15 @@ enum Outcome {
 	MISSED_WINDOW
 }
 
+const RadioLevels := preload("res://scripts/radio_intercept/RadioLevels.gd")
+
 const EPS: float = 0.05
 const MIN_ESTIMATE: float = 0.0
 const MAX_ESTIMATE: float = 30.0
 const SAMPLE_SLOTS: int = 7
 const PHONE_LANDSCAPE_MAX_HEIGHT: float = 520.0
+const ANALYZE_LOCK_SECONDS: float = 3.0
+const ANALYZE_COOLDOWN_SECONDS: float = 6.0
 
 const UNIT_MB := "\u041c\u0411"
 const UNIT_GB := "\u0413\u0411"
@@ -68,10 +72,10 @@ const TXT_OUT_INTERCEPT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0420\u
 const TXT_OUT_SAFE_ABORT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0420\u0410\u0412\u0418\u041b\u042c\u041d\u041e. \u041e\u0442\u043a\u0430\u0437 \u0441\u043f\u0430\u0441 \u043c\u0438\u0441\u0441\u0438\u044e."
 const TXT_OUT_MISSED := "\u0421\u0422\u0410\u0422\u0423\u0421: \u0423\u041f\u0423\u0429\u0415\u041d\u041e. \u0412\u044b \u043c\u043e\u0433\u043b\u0438 \u0443\u0441\u043f\u0435\u0442\u044c."
 
-const POOL_MB_NORMAL: Array[float] = [1.0, 2.0, 4.0, 5.0, 8.0, 10.0, 12.0, 16.0, 20.0, 25.0, 40.0]
-const POOL_GB_NORMAL: Array[float] = [0.5, 1.0, 1.5, 2.0]
-const POOL_SPEED_INT: Array[float] = [1.0, 2.0, 4.0, 5.0, 8.0, 10.0, 16.0, 20.0, 25.0]
-const POOL_SPEED_FRAC: Array[float] = [1.5, 2.5, 7.5, 12.5]
+const FALLBACK_POOL_MB_NORMAL: Array[float] = [1.0, 2.0, 4.0, 5.0, 8.0, 10.0, 12.0, 16.0, 20.0, 25.0]
+const FALLBACK_POOL_GB_NORMAL: Array[float] = [0.5, 1.0, 1.5, 2.0]
+const FALLBACK_POOL_SPEED_INT: Array[float] = [1.0, 2.0, 4.0, 5.0, 8.0, 10.0, 16.0, 20.0, 25.0]
+const FALLBACK_POOL_SPEED_FRAC: Array[float] = [1.5, 2.5, 7.5, 12.5]
 
 const COLOR_SAMPLE_IDLE: Color = Color(0.18, 0.18, 0.18, 1.0)
 const COLOR_SAMPLE_SUCCESS: Color = Color(0.20, 0.90, 0.30, 1.0)
@@ -87,6 +91,7 @@ const COLOR_SAMPLE_WARN: Color = Color(0.95, 0.75, 0.20, 1.0)
 @onready var title_label: Label = $SafeArea/RootVBox/TopBar/TopBarHBox/TitleLabel
 @onready var mode_chip: Label = $SafeArea/RootVBox/TopBar/TopBarHBox/ModeChip
 @onready var stability_label: Label = $SafeArea/RootVBox/TopBar/TopBarHBox/StabilityLabel
+@onready var noir_overlay: CanvasLayer = $NoirOverlay
 @onready var btn_back: Button = $SafeArea/RootVBox/TopBar/TopBarHBox/BtnBack
 
 @onready var mission_title: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox/MissionTitle
@@ -159,6 +164,18 @@ var analyze_count: int = 0
 var knob_moves_count: int = 0
 var direction_changes: int = 0
 var _last_move_sign: int = 0
+var analyze_lock_active: bool = false
+var analyze_lock_until: float = 0.0
+var analyze_cooldown_until: float = 0.0
+
+var _pool_mb_normal: Array[float] = []
+var _pool_gb_normal: Array[float] = []
+var _pool_speed_int: Array[float] = []
+var _pool_speed_frac: Array[float] = []
+var _t_true_min: float = 2.0
+var _t_true_max: float = 20.0
+var _anchor_every_min: int = 7
+var _anchor_every_max: int = 10
 
 var sample_cursor: int = 0
 var sample_refs: Array = []
@@ -166,6 +183,7 @@ var _ui_ready: bool = false
 
 func _ready() -> void:
 	randomize()
+	_load_level_config()
 	_apply_static_texts()
 	_connect_signals()
 	_collect_sample_refs()
@@ -178,7 +196,7 @@ func _ready() -> void:
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	_on_stability_changed(GlobalMetrics.stability, 0.0)
 
-	anchor_countdown = randi_range(7, 10)
+	anchor_countdown = _random_anchor_gap()
 	_start_trial()
 	_ui_ready = true
 
@@ -188,6 +206,20 @@ func _notification(what: int) -> void:
 		_configure_layout()
 
 func _process(delta: float) -> void:
+	if state == State.TUNE and analyze_lock_active:
+		var now_sec: float = Time.get_ticks_msec() / 1000.0
+		var left: float = maxf(0.0, analyze_lock_until - now_sec)
+		status_label.text = "STATUS: channel scan %.1fs" % left
+		if now_sec < analyze_lock_until:
+			return
+		analyze_lock_active = false
+		btn_details.disabled = false
+		btn_units.disabled = false
+		detection_elapsed = 0.0
+		transfer_elapsed = 0.0
+		_set_analyzed_state_ui()
+		_update_details_text()
+
 	if state != State.ANALYZED and state != State.EXEC:
 		return
 
@@ -347,6 +379,9 @@ func _start_trial() -> void:
 	knob_moves_count = 0
 	direction_changes = 0
 	_last_move_sign = 0
+	analyze_lock_active = false
+	analyze_lock_until = 0.0
+	analyze_cooldown_until = 0.0
 
 	start_ms = Time.get_ticks_msec()
 	first_action_ms = -1
@@ -360,6 +395,7 @@ func _start_trial() -> void:
 
 	time_knob.call("set_knob_value", 0.0, false)
 	_set_estimate(0.0)
+	btn_details.disabled = false
 	_update_details_text()
 
 func _generate_trial() -> void:
@@ -376,7 +412,7 @@ func _generate_trial() -> void:
 		if generated.is_empty():
 			generated = _generate_normal_trial()
 			pool_type = "NORMAL"
-		anchor_countdown = randi_range(7, 10)
+		anchor_countdown = _random_anchor_gap()
 	else:
 		pool_type = "NORMAL"
 		generated = _generate_normal_trial()
@@ -395,15 +431,15 @@ func _generate_normal_trial() -> Dictionary:
 		var size_value: float = 0.0
 		var size_unit: String = UNIT_MB
 		if use_gb:
-			size_value = POOL_GB_NORMAL[randi() % POOL_GB_NORMAL.size()]
+			size_value = _pick_from_float_pool(_pool_gb_normal, 1.0)
 			size_unit = UNIT_GB
 		else:
-			size_value = POOL_MB_NORMAL[randi() % POOL_MB_NORMAL.size()]
+			size_value = _pick_from_float_pool(_pool_mb_normal, 10.0)
 			size_unit = UNIT_MB
 
 		var speed: float = _pick_speed()
 		var true_time: float = _compute_true_time(size_value, size_unit, speed)
-		if true_time < 2.0 or true_time > 20.0:
+		if true_time < _t_true_min or true_time > _t_true_max:
 			continue
 
 		var detect_time: float = clampf(true_time + randf_range(-3.0, 3.0), 0.8, 24.0)
@@ -430,10 +466,10 @@ func _generate_normal_trial() -> Dictionary:
 
 func _generate_anchor_forgot_x8() -> Dictionary:
 	for _i in range(500):
-		var size_value: float = POOL_MB_NORMAL[randi() % POOL_MB_NORMAL.size()]
+		var size_value: float = _pick_from_float_pool(_pool_mb_normal, 10.0)
 		var speed: float = _pick_speed()
 		var true_time: float = _compute_true_time(size_value, UNIT_MB, speed)
-		if true_time < 4.0 or true_time > 20.0:
+		if true_time < maxf(_t_true_min + 2.0, 4.0) or true_time > _t_true_max:
 			continue
 
 		var fake_time: float = size_value / speed
@@ -458,15 +494,15 @@ func _generate_anchor_boundary() -> Dictionary:
 		var size_value: float = 0.0
 		var size_unit: String = UNIT_MB
 		if use_gb:
-			size_value = POOL_GB_NORMAL[randi() % POOL_GB_NORMAL.size()]
+			size_value = _pick_from_float_pool(_pool_gb_normal, 1.0)
 			size_unit = UNIT_GB
 		else:
-			size_value = POOL_MB_NORMAL[randi() % POOL_MB_NORMAL.size()]
+			size_value = _pick_from_float_pool(_pool_mb_normal, 10.0)
 			size_unit = UNIT_MB
 
 		var speed: float = _pick_speed()
 		var true_time: float = _compute_true_time(size_value, size_unit, speed)
-		if true_time < 2.0 or true_time > 20.0:
+		if true_time < _t_true_min or true_time > _t_true_max:
 			continue
 
 		var detect_time: float = clampf(true_time + randf_range(-0.18, 0.18), 0.8, 24.0)
@@ -483,10 +519,10 @@ func _generate_anchor_boundary() -> Dictionary:
 
 func _generate_anchor_gb() -> Dictionary:
 	for _i in range(500):
-		var size_value: float = POOL_GB_NORMAL[randi() % POOL_GB_NORMAL.size()]
+		var size_value: float = _pick_from_float_pool(_pool_gb_normal, 1.0)
 		var speed: float = _pick_speed()
 		var true_time: float = _compute_true_time(size_value, UNIT_GB, speed)
-		if true_time < 6.0 or true_time > 20.0:
+		if true_time < maxf(_t_true_min + 4.0, 6.0) or true_time > _t_true_max:
 			continue
 
 		var fake_time: float = (size_value * 8.0) / speed
@@ -507,8 +543,8 @@ func _generate_anchor_gb() -> Dictionary:
 
 func _pick_speed() -> float:
 	if randf() < 0.30:
-		return POOL_SPEED_FRAC[randi() % POOL_SPEED_FRAC.size()]
-	return POOL_SPEED_INT[randi() % POOL_SPEED_INT.size()]
+		return _pick_from_float_pool(_pool_speed_frac, 2.5)
+	return _pick_from_float_pool(_pool_speed_int, 8.0)
 
 func _compute_true_time(size_value: float, size_unit: String, speed: float) -> float:
 	var i_mbit: float = size_value * 8.0
@@ -532,12 +568,14 @@ func _reset_runtime_ui() -> void:
 func _set_tune_state_ui() -> void:
 	state = State.TUNE
 	_set_knob_interactive(true)
-	btn_analyze.disabled = false
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	btn_analyze.disabled = analyze_lock_active or (now_sec < analyze_cooldown_until)
 	btn_risk.disabled = true
 	btn_abort.disabled = true
 	btn_units.disabled = false
 	btn_next.visible = false
 	status_label.text = TXT_PLAN_STATUS
+	_apply_phantom_preview()
 
 func _set_analyzed_state_ui() -> void:
 	state = State.ANALYZED
@@ -557,6 +595,7 @@ func _set_analyzed_state_ui() -> void:
 		status_label.text = TXT_ANALYZED_BAD
 
 	risk_label.text = "\u0420\u0438\u0441\u043a: %s" % _estimate_risk_text()
+	_apply_phantom_preview()
 
 func _set_exec_state_ui() -> void:
 	state = State.EXEC
@@ -584,32 +623,32 @@ func _set_knob_interactive(is_enabled: bool) -> void:
 	btn_plus_1.disabled = not is_enabled
 
 func _on_knob_value_changed(new_value: float, delta: float) -> void:
-	if state != State.TUNE:
+	if state != State.TUNE or analyze_lock_active:
 		return
 	_register_first_action()
 	_set_estimate(new_value)
 	_register_knob_move(delta)
 
 func _on_minus_01_pressed() -> void:
-	if state != State.TUNE:
+	if state != State.TUNE or analyze_lock_active:
 		return
 	_register_first_action()
 	_apply_estimate_delta(-0.1)
 
 func _on_plus_01_pressed() -> void:
-	if state != State.TUNE:
+	if state != State.TUNE or analyze_lock_active:
 		return
 	_register_first_action()
 	_apply_estimate_delta(0.1)
 
 func _on_minus_1_pressed() -> void:
-	if state != State.TUNE:
+	if state != State.TUNE or analyze_lock_active:
 		return
 	_register_first_action()
 	_apply_estimate_delta(-1.0)
 
 func _on_plus_1_pressed() -> void:
-	if state != State.TUNE:
+	if state != State.TUNE or analyze_lock_active:
 		return
 	_register_first_action()
 	_apply_estimate_delta(1.0)
@@ -625,6 +664,7 @@ func _apply_estimate_delta(delta: float) -> void:
 func _set_estimate(value_sec: float) -> void:
 	t_est = clampf(value_sec, MIN_ESTIMATE, MAX_ESTIMATE)
 	estimate_value_label.text = "t = %s %s" % [_format_num(t_est), SYMBOL_SEC]
+	_apply_phantom_preview()
 	_update_details_text()
 
 func _register_first_action() -> void:
@@ -641,19 +681,31 @@ func _register_knob_move(delta: float) -> void:
 	_last_move_sign = sign
 
 func _on_analyze_pressed() -> void:
-	if state != State.TUNE:
+	if state != State.TUNE or analyze_lock_active:
 		return
 	_register_first_action()
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	if now_sec < analyze_cooldown_until:
+		var left: float = analyze_cooldown_until - now_sec
+		status_label.text = "STATUS: analyze cooldown %.1fs" % left
+		return
 	analyze_count += 1
 	if check_ms < 0:
 		check_ms = Time.get_ticks_msec()
-	detection_elapsed = 0.0
-	transfer_elapsed = 0.0
-	_set_analyzed_state_ui()
+	analyze_lock_active = true
+	analyze_lock_until = now_sec + ANALYZE_LOCK_SECONDS
+	analyze_cooldown_until = now_sec + ANALYZE_COOLDOWN_SECONDS
+	_set_knob_interactive(false)
+	btn_analyze.disabled = true
+	btn_risk.disabled = true
+	btn_abort.disabled = true
+	btn_units.disabled = true
+	btn_details.disabled = true
+	status_label.text = "STATUS: channel scan active..."
 	_update_details_text()
 
 func _on_risk_pressed() -> void:
-	if state != State.ANALYZED and state != State.EXEC:
+	if (state != State.ANALYZED and state != State.EXEC) or analyze_lock_active:
 		return
 	_register_first_action()
 	if decision == Decision.RISK:
@@ -669,7 +721,7 @@ func _on_risk_pressed() -> void:
 	_update_details_text()
 
 func _on_abort_pressed() -> void:
-	if state != State.ANALYZED and state != State.EXEC:
+	if (state != State.ANALYZED and state != State.EXEC) or analyze_lock_active:
 		return
 	_register_first_action()
 	if decision_ms < 0:
@@ -682,7 +734,7 @@ func _on_abort_pressed() -> void:
 		_finalize_trial(Outcome.MISSED_WINDOW, "ABORT")
 
 func _on_units_pressed() -> void:
-	if state == State.DONE:
+	if state == State.DONE or analyze_lock_active:
 		return
 	_register_first_action()
 	used_units = true
@@ -716,8 +768,16 @@ func _update_runtime_ui() -> void:
 		transfer_bar.value = transfer_ratio * 100.0
 		transfer_countdown.text = "%s %s" % [_format_num(maxf(0.0, t_true - transfer_elapsed)), SYMBOL_SEC]
 	else:
-		transfer_bar.value = 0.0
-		transfer_countdown.text = "\u043e\u0436\u0438\u0434\u0430\u043d\u0438\u0435"
+		if state == State.ANALYZED:
+			_apply_phantom_preview()
+		else:
+			transfer_bar.value = 0.0
+			transfer_countdown.text = "\u043e\u0436\u0438\u0434\u0430\u043d\u0438\u0435"
+
+func _apply_phantom_preview() -> void:
+	var phantom_ratio: float = clampf(t_est / maxf(_t_true_max, 0.1), 0.0, 1.0)
+	transfer_bar.value = phantom_ratio * 100.0
+	transfer_countdown.text = "est: %s %s" % [_format_num(t_est), SYMBOL_SEC]
 
 func _estimate_risk_text() -> String:
 	if t_est <= t_detect - 0.5:
@@ -906,5 +966,61 @@ func _play_alarm_flash() -> void:
 	tw.tween_property(alarm_flash, "color:a", 0.35, 0.10)
 	tw.tween_property(alarm_flash, "color:a", 0.0, 0.24)
 
+func _load_level_config() -> void:
+	_pool_mb_normal = _to_float_array(
+		RadioLevels.get_pool("C", "size_pool_mb", FALLBACK_POOL_MB_NORMAL),
+		FALLBACK_POOL_MB_NORMAL
+	)
+	_pool_gb_normal = _to_float_array(
+		RadioLevels.get_pool("C", "size_pool_gb", FALLBACK_POOL_GB_NORMAL),
+		FALLBACK_POOL_GB_NORMAL
+	)
+	_pool_speed_int = _to_float_array(
+		RadioLevels.get_pool("C", "speed_pool_int", FALLBACK_POOL_SPEED_INT),
+		FALLBACK_POOL_SPEED_INT
+	)
+	_pool_speed_frac = _to_float_array(
+		RadioLevels.get_pool("C", "speed_pool_frac", FALLBACK_POOL_SPEED_FRAC),
+		FALLBACK_POOL_SPEED_FRAC
+	)
+	_t_true_min = float(RadioLevels.get_value("C", "t_true_min", 2.0))
+	_t_true_max = float(RadioLevels.get_value("C", "t_true_max", 20.0))
+	if _t_true_min < 0.5:
+		_t_true_min = 2.0
+	if _t_true_max <= _t_true_min:
+		_t_true_max = _t_true_min + 10.0
+
+	_anchor_every_min = int(RadioLevels.get_value("C", "anchor_every_min", 7))
+	_anchor_every_max = int(RadioLevels.get_value("C", "anchor_every_max", 10))
+	if _anchor_every_min <= 0:
+		_anchor_every_min = 7
+	if _anchor_every_max < _anchor_every_min:
+		_anchor_every_max = _anchor_every_min
+
+func _to_float_array(raw: Array, fallback: Array[float]) -> Array[float]:
+	var result: Array[float] = []
+	for value_var in raw:
+		var typed: Variant = value_var
+		match typeof(typed):
+			TYPE_INT, TYPE_FLOAT:
+				result.append(float(typed))
+			TYPE_STRING:
+				var text: String = String(typed).strip_edges()
+				if text.is_valid_float():
+					result.append(text.to_float())
+	if result.is_empty():
+		result.append_array(fallback)
+	return result
+
+func _random_anchor_gap() -> int:
+	return randi_range(_anchor_every_min, _anchor_every_max)
+
+func _pick_from_float_pool(pool: Array[float], fallback_value: float) -> float:
+	if pool.is_empty():
+		return fallback_value
+	return pool[randi() % pool.size()]
+
 func _on_stability_changed(new_value: float, _change: float) -> void:
 	stability_label.text = "\u0421\u0422\u0410\u0411\u0418\u041b\u042c\u041d\u041e\u0421\u0422\u042c: %d%%" % int(new_value)
+	if noir_overlay != null and noir_overlay.has_method("set_danger_level"):
+		noir_overlay.call("set_danger_level", new_value)

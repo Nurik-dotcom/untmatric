@@ -75,12 +75,13 @@ static func score(level: Dictionary, snapshot: Dictionary, placed_count: int) ->
 
 static func calculate_stage_b_result(stage_b_data: Dictionary, snapshot: Dictionary) -> Dictionary:
 	var selected_option_id: String = str(snapshot.get("selected_option_id", "")).strip_edges()
+	var classified_as: String = str(snapshot.get("classified_as", selected_option_id)).strip_edges()
 	var scoring_model: Dictionary = stage_b_data.get("scoring_model", {}) as Dictionary
 	var feedback_rules: Dictionary = stage_b_data.get("feedback_rules", {}) as Dictionary
-	var correct_option_id: String = str(stage_b_data.get("correct_option_id", ""))
+	var correct_option_id: String = str(stage_b_data.get("correct_option_id", "OPTIMAL"))
 	var max_points: int = int(stage_b_data.get("stage_max_points", int(scoring_model.get("correct_points", 2))))
 
-	if selected_option_id == "":
+	if classified_as == "":
 		var default_rule: Dictionary = scoring_model.get("default_rule", {}) as Dictionary
 		return {
 			"points": int(default_rule.get("points", 0)),
@@ -90,21 +91,22 @@ static func calculate_stage_b_result(stage_b_data: Dictionary, snapshot: Diction
 			"stability_delta": int(default_rule.get("stability_delta", -50)),
 			"verdict_code": str(default_rule.get("verdict_code", "EMPTY")),
 			"error_code": "EMPTY",
-			"diagnostic_headline": "Вариант не выбран",
-			"diagnostic_details": ["Выберите один из 4 вариантов и подтвердите решение."]
+			"diagnostic_headline": "No benchmark class available",
+			"diagnostic_details": ["Run benchmark and classify the tuning profile before confirm."],
+			"classified_as": ""
 		}
 
-	var is_correct: bool = selected_option_id == correct_option_id
+	var is_correct: bool = classified_as == correct_option_id
 	var points: int = int(scoring_model.get("correct_points", 2)) if is_correct else int(scoring_model.get("wrong_points", 0))
 	var stability_delta: int = int(scoring_model.get("stability_delta_correct", 0)) if is_correct else int(scoring_model.get("stability_delta_wrong", -10))
 	var verdict_code: String = "SUCCESS" if is_correct else "WRONG"
 
-	var feedback: Dictionary = feedback_rules.get(selected_option_id, {}) as Dictionary
+	var feedback: Dictionary = feedback_rules.get(classified_as, {}) as Dictionary
 	if feedback.is_empty() and feedback_rules.has(correct_option_id):
 		feedback = feedback_rules.get(correct_option_id, {}) as Dictionary
 
 	var error_code: String = str(feedback.get("error_code", "OK" if is_correct else "WRONG"))
-	var headline: String = str(feedback.get("headline", "Конфигурация проверена"))
+	var headline: String = str(feedback.get("headline", "Classification complete"))
 	var details: Array = (feedback.get("details", []) as Array).duplicate()
 
 	return {
@@ -116,7 +118,8 @@ static func calculate_stage_b_result(stage_b_data: Dictionary, snapshot: Diction
 		"verdict_code": verdict_code,
 		"error_code": error_code,
 		"diagnostic_headline": headline,
-		"diagnostic_details": details
+		"diagnostic_details": details,
+		"classified_as": classified_as
 	}
 
 static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Dictionary) -> Dictionary:
@@ -171,7 +174,7 @@ static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Diction
 			"option_id": selected_id,
 			"label": str(option_data.get("label", selected_id)),
 			"is_correct": is_option_correct,
-			"why": str(option_data.get("why", "Пояснение отсутствует."))
+			"why": str(option_data.get("why", "No explanation"))
 		})
 
 	var selected_count: int = selected_ids.size()

@@ -1,288 +1,333 @@
 extends Control
 
-const LEVELS_PATH := "res://data/clues_levels.json"
-const CONFIG_CARD_SCENE := preload("res://scenes/ui/ConfigCard.tscn")
-const ResusData := preload("res://scripts/case_01/ResusData.gd")
-const ResusScoring := preload("res://scripts/case_01/ResusScoring.gd")
+const LEVELS_PATH: String = "res://data/clues_levels.json"
+const ResusData = preload("res://scripts/case_01/ResusData.gd")
+const ResusScoring = preload("res://scripts/case_01/ResusScoring.gd")
 
-const COLOR_OK := Color(0.92, 0.92, 0.92, 1.0)
-const COLOR_WARN := Color(0.86, 0.73, 0.56, 1.0)
-const COLOR_ERR := Color(0.93, 0.34, 0.38, 1.0)
+const COLOR_OK: Color = Color(0.9, 0.93, 0.98, 1.0)
+const COLOR_WARN: Color = Color(0.98, 0.8, 0.52, 1.0)
+const COLOR_ERR: Color = Color(0.95, 0.36, 0.38, 1.0)
+
+const CPU_ORDER: Array[String] = ["LOW", "MID", "HIGH"]
+const RAM_ORDER: Array[String] = ["LOW", "GOOD", "TOP"]
+const GPU_ORDER: Array[String] = ["NONE", "MID", "TOP"]
 
 var stage_b_data: Dictionary = {}
-var options_by_id: Dictionary = {}
-var option_cards_by_id: Dictionary = {}
-
-var selected_option_id: String = ""
 var trace: Array = []
+
 var stage_started_ms: int = 0
-var time_to_first_select_ms: int = -1
-var selection_count: int = 0
+var time_to_first_action_ms: int = -1
+var tune_change_count: int = 0
 var attempt_index: int = 0
 var input_locked: bool = false
 
+var snapshot_b: Dictionary = {
+	"tuning": {"cpu": "MID", "ram": "GOOD", "gpu": "NONE"},
+	"total_price": 0,
+	"classified_as": "UNKNOWN",
+	"benchmark_ran": false
+}
+
+@onready var noir_overlay: Node = $NoirOverlay
 @onready var title_label: Label = $SafeArea/MainVBox/Header/TitleLabel
 @onready var stage_label: Label = $SafeArea/MainVBox/Header/StageLabel
 @onready var stability_bar: ProgressBar = $SafeArea/MainVBox/Header/StabilityBar
 @onready var btn_back: Button = $SafeArea/MainVBox/Header/BtnBack
 
 @onready var context_label: Label = $SafeArea/MainVBox/ContextCard/ContextVBox/ContextLabel
-@onready var budget_label: Label = $SafeArea/MainVBox/ContextCard/ContextVBox/BudgetRow/BudgetValue
+@onready var budget_value: Label = $SafeArea/MainVBox/ContextCard/ContextVBox/BudgetRow/BudgetValue
 
-@onready var options_vbox: VBoxContainer = $SafeArea/MainVBox/OptionsCard/Scroll/OptionsVBox
+@onready var cpu_level: OptionButton = $SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid/CpuLevel
+@onready var ram_level: OptionButton = $SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid/RamLevel
+@onready var gpu_level: OptionButton = $SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid/GpuLevel
+@onready var used_budget_value: Label = $SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid/UsedBudgetValue
+@onready var budget_bar: ProgressBar = $SafeArea/MainVBox/BiosCard/BiosVBox/BudgetBar
+@onready var risk_value: Label = $SafeArea/MainVBox/BiosCard/BiosVBox/RiskRow/RiskValue
+@onready var risk_bar: ProgressBar = $SafeArea/MainVBox/BiosCard/BiosVBox/RiskBar
 
-@onready var diagnostic_card: PanelContainer = $SafeArea/MainVBox/DiagnosticCard
-@onready var diag_headline: Label = $SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox/DiagHeadline
-@onready var diag_body: RichTextLabel = $SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox/DiagBody
-@onready var diag_hint: Label = $SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox/DiagHint
+@onready var terminal_output: RichTextLabel = $SafeArea/MainVBox/TerminalCard/TerminalVBox/TerminalOutput
 
 @onready var status_label: Label = $SafeArea/MainVBox/BottomBar/StatusLabel
+@onready var btn_benchmark: Button = $SafeArea/MainVBox/BottomBar/BtnBenchmark
 @onready var btn_reset: Button = $SafeArea/MainVBox/BottomBar/BtnReset
 @onready var btn_confirm: Button = $SafeArea/MainVBox/BottomBar/BtnConfirm
 
 func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
+
 	btn_back.pressed.connect(_on_back_pressed)
+	btn_benchmark.pressed.connect(_on_benchmark_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_confirm.pressed.connect(_on_confirm_pressed)
+	cpu_level.item_selected.connect(_on_cpu_changed)
+	ram_level.item_selected.connect(_on_ram_changed)
+	gpu_level.item_selected.connect(_on_gpu_changed)
 
 	stage_b_data = ResusData.load_stage_b(LEVELS_PATH)
 	if stage_b_data.is_empty():
-		_show_error("Этап B не загрузился: проверьте данные уровня.")
+		_show_error("Failed to load Case 01 stage B data")
 		return
 
 	_setup_ui()
 	_begin_attempt()
 
 func _setup_ui() -> void:
-	title_label.text = "ДЕЛО №1: ЦИФРОВАЯ РЕАНИМАЦИЯ"
-	stage_label.text = "ЭТАП B"
-	btn_reset.text = "СБРОС"
-	btn_confirm.text = "ПОДТВЕРДИТЬ"
-
-	context_label.text = str(stage_b_data.get("context", ""))
-	budget_label.text = "%d$" % int(stage_b_data.get("budget", 0))
+	title_label.text = "Case 01: Digital Reanimation"
+	stage_label.text = "STAGE B"
+	context_label.text = str(stage_b_data.get("context", "Tune profile and run benchmark"))
+	budget_value.text = "%d$" % int(stage_b_data.get("budget", 0))
+	btn_reset.text = "RESET"
+	btn_confirm.text = "CONFIRM"
+	btn_benchmark.text = "RUN BENCHMARK"
+	_populate_levels()
 	_update_stability_ui()
-	_build_option_cards()
-
-func _build_option_cards() -> void:
-	for child in options_vbox.get_children():
-		child.queue_free()
-	options_by_id.clear()
-	option_cards_by_id.clear()
-
-	var budget: int = int(stage_b_data.get("budget", 0))
-	var options: Array = stage_b_data.get("options", []) as Array
-	for option_v in options:
-		if typeof(option_v) != TYPE_DICTIONARY:
-			continue
-		var option_data: Dictionary = option_v as Dictionary
-		var option_id: String = str(option_data.get("option_id", ""))
-		if option_id == "":
-			continue
-		options_by_id[option_id] = option_data
-
-		var card_node: Node = CONFIG_CARD_SCENE.instantiate()
-		if not (card_node is PanelContainer):
-			continue
-		var card: PanelContainer = card_node as PanelContainer
-		options_vbox.add_child(card)
-		if card.has_method("setup"):
-			card.call("setup", option_data, budget)
-		if card.has_signal("selected"):
-			card.connect("selected", Callable(self, "_on_option_selected"))
-		option_cards_by_id[option_id] = card
 
 func _begin_attempt() -> void:
-	selected_option_id = ""
 	trace.clear()
-	selection_count = 0
-	time_to_first_select_ms = -1
-	stage_started_ms = Time.get_ticks_msec()
+	tune_change_count = 0
+	time_to_first_action_ms = -1
 	input_locked = false
+	stage_started_ms = Time.get_ticks_msec()
+	btn_benchmark.disabled = false
 	btn_confirm.disabled = true
-	diagnostic_card.visible = true
-	status_label.text = "Выберите конфигурацию и проверьте прогноз до подтверждения."
+	_set_tuning({"cpu": "MID", "ram": "GOOD", "gpu": "NONE"}, false)
+	snapshot_b["classified_as"] = "UNKNOWN"
+	snapshot_b["benchmark_ran"] = false
+	terminal_output.text = "[READY] Select tuning profile and run benchmark."
+	status_label.text = "READY"
 	status_label.modulate = COLOR_WARN
-	_update_selection_visuals()
-	_set_option_lock_state(false)
-	_show_preview()
 
-func _on_option_selected(option_id: String) -> void:
+func _populate_levels() -> void:
+	_fill_option_button(cpu_level, CPU_ORDER)
+	_fill_option_button(ram_level, RAM_ORDER)
+	_fill_option_button(gpu_level, GPU_ORDER)
+
+func _fill_option_button(button: OptionButton, ordered_ids: Array[String]) -> void:
+	button.clear()
+	for id in ordered_ids:
+		button.add_item(id)
+
+func _on_cpu_changed(_index: int) -> void:
+	_on_tuning_changed()
+
+func _on_ram_changed(_index: int) -> void:
+	_on_tuning_changed()
+
+func _on_gpu_changed(_index: int) -> void:
+	_on_tuning_changed()
+
+func _on_tuning_changed() -> void:
 	if input_locked:
 		return
-	selected_option_id = option_id
-	selection_count += 1
-	if time_to_first_select_ms < 0:
-		time_to_first_select_ms = Time.get_ticks_msec() - stage_started_ms
-	_log_event("SELECT_OPTION", {
-		"option_id": option_id,
-		"selection_index": selection_count
+	_mark_first_action()
+	tune_change_count += 1
+
+	var tuning: Dictionary = _read_tuning_from_controls()
+	snapshot_b["tuning"] = tuning
+	snapshot_b["benchmark_ran"] = false
+	snapshot_b["classified_as"] = "UNKNOWN"
+	btn_confirm.disabled = true
+	_recompute_preview()
+
+	_log_event("TUNE_CHANGED", {
+		"cpu": str(tuning.get("cpu", "")),
+		"ram": str(tuning.get("ram", "")),
+		"gpu": str(tuning.get("gpu", "")),
+		"total_price": int(snapshot_b.get("total_price", 0))
 	})
-	_update_selection_visuals()
+	_play_sfx("click")
+
+func _on_benchmark_pressed() -> void:
+	if input_locked:
+		return
+	_mark_first_action()
+	var class_code: String = _classify_current_profile()
+	snapshot_b["classified_as"] = class_code
+	snapshot_b["benchmark_ran"] = true
 	btn_confirm.disabled = false
-	status_label.text = "Выбрано: %s" % option_id
-	status_label.modulate = COLOR_WARN
-	_show_preview()
-	if has_node("/root/AudioManager"):
-		AudioManager.play("click")
 
-func _update_selection_visuals() -> void:
-	for option_id_v in option_cards_by_id.keys():
-		var option_id: String = str(option_id_v)
-		var card_v: Variant = option_cards_by_id[option_id]
-		if card_v == null:
-			continue
-		if card_v.has_method("set_selected_state"):
-			card_v.call("set_selected_state", option_id == selected_option_id)
+	var lines: Array[String] = _benchmark_lines(class_code)
+	terminal_output.text = ""
+	for line in lines:
+		terminal_output.text += line + "\n"
+	terminal_output.scroll_to_line(max(0, terminal_output.get_line_count() - 1))
 
-func _set_option_lock_state(locked: bool) -> void:
-	for card_v in option_cards_by_id.values():
-		if card_v == null:
-			continue
-		if card_v.has_method("set_locked"):
-			card_v.call("set_locked", locked)
+	status_label.text = "RESULT: %s" % class_code
+	status_label.modulate = COLOR_OK if class_code == "OPTIMAL" else COLOR_WARN
+	_log_event("BENCHMARK_RUN", {
+		"class": class_code,
+		"result_lines_count": lines.size()
+	})
+	_play_sfx("relay")
 
 func _on_confirm_pressed() -> void:
 	if input_locked:
 		return
-	_log_event("CONFIRM_PRESSED", {
-		"option_id": selected_option_id,
-		"has_selection": selected_option_id != ""
-	})
 
-	var snapshot: Dictionary = {"selected_option_id": selected_option_id}
-	var result: Dictionary = ResusScoring.calculate_stage_b_result(stage_b_data, snapshot)
-	_register_trial(result)
-	_show_diagnostic(result)
-	_update_stability_ui()
-	attempt_index += 1
+	var class_code: String = str(snapshot_b.get("classified_as", ""))
+	_log_event("CONFIRM_PRESSED", {"class": class_code})
 
 	input_locked = true
-	_set_option_lock_state(true)
 	btn_confirm.disabled = true
+	btn_benchmark.disabled = true
+	cpu_level.disabled = true
+	ram_level.disabled = true
+	gpu_level.disabled = true
+
+	var scoring_snapshot: Dictionary = {
+		"selected_option_id": class_code,
+		"classified_as": class_code
+	}
+	var result: Dictionary = ResusScoring.calculate_stage_b_result(stage_b_data, scoring_snapshot)
+	_register_trial(result)
+	attempt_index += 1
+	_show_result(result)
+	_update_stability_ui()
 
 	if bool(result.get("is_correct", false)):
-		if has_node("/root/AudioManager"):
-			AudioManager.play("relay")
+		_play_sfx("relay")
 	else:
-		if has_node("/root/AudioManager"):
-			AudioManager.play("error")
+		_play_sfx("error")
+
+func _show_result(result: Dictionary) -> void:
+	var headline: String = str(result.get("diagnostic_headline", "Classification complete"))
+	var details: Array = result.get("diagnostic_details", []) as Array
+	var report_lines: Array[String] = [
+		headline,
+		"",
+		"CLASS: %s" % str(snapshot_b.get("classified_as", "UNKNOWN")),
+		"USED: %d$ / %d$" % [int(snapshot_b.get("total_price", 0)), int(stage_b_data.get("budget", 0))],
+		""
+	]
+	for detail_v in details:
+		report_lines.append("- %s" % str(detail_v))
+	terminal_output.text = "\n".join(report_lines)
+
+	status_label.text = "LOCKED | %s" % str(result.get("verdict_code", "WRONG"))
+	status_label.modulate = COLOR_OK if bool(result.get("is_correct", false)) else COLOR_ERR
 
 func _on_reset_pressed() -> void:
-	_log_event("RESET_PRESSED", {"prev_option_id": selected_option_id})
-	if input_locked:
-		_begin_attempt()
-		return
-	selected_option_id = ""
-	_update_selection_visuals()
-	btn_confirm.disabled = true
-	_show_preview()
-	status_label.text = "Выбор сброшен."
-	status_label.modulate = COLOR_WARN
-	if has_node("/root/AudioManager"):
-		AudioManager.play("click")
+	_log_event("RESET_PRESSED", {
+		"classified_as": str(snapshot_b.get("classified_as", "UNKNOWN"))
+	})
+	cpu_level.disabled = false
+	ram_level.disabled = false
+	gpu_level.disabled = false
+	_begin_attempt()
+	_play_sfx("click")
 
-func _show_preview() -> void:
-	diagnostic_card.visible = true
-	if selected_option_id == "":
-		diag_headline.text = "Прогноз конфигурации"
-		diag_headline.modulate = COLOR_WARN
-		diag_body.text = "\n".join([
-			"- Рендер-поток: ?",
-			"- Бюджет: ?",
-			"- Узкое место: ?"
-		])
-		diag_hint.text = "Выберите один вариант, чтобы увидеть прогноз."
-		diag_hint.modulate = COLOR_WARN
-		return
+func _set_tuning(tuning: Dictionary, emit_event: bool) -> void:
+	_set_option_button_value(cpu_level, CPU_ORDER, str(tuning.get("cpu", "MID")))
+	_set_option_button_value(ram_level, RAM_ORDER, str(tuning.get("ram", "GOOD")))
+	_set_option_button_value(gpu_level, GPU_ORDER, str(tuning.get("gpu", "NONE")))
+	snapshot_b["tuning"] = _read_tuning_from_controls()
+	if emit_event:
+		_on_tuning_changed()
+	else:
+		_recompute_preview()
 
-	var option_data: Dictionary = _selected_option_data()
-	var preview: Dictionary = _build_preview(option_data)
-	var render_stream: String = str(preview.get("render_stream", "WARNING"))
-	var budget_status: String = str(preview.get("budget_status", "UNKNOWN"))
-	var bottleneck: String = str(preview.get("bottleneck", "UNKNOWN"))
-	var total_price: int = int(option_data.get("total_price", 0))
-	var budget: int = int(stage_b_data.get("budget", 0))
+func _set_option_button_value(button: OptionButton, order: Array[String], value: String) -> void:
+	var target_idx: int = 0
+	for i in range(order.size()):
+		if order[i] == value:
+			target_idx = i
+			break
+	button.select(target_idx)
 
-	diag_headline.text = "Прогноз до подтверждения"
-	diag_headline.modulate = _render_status_color(render_stream)
-	diag_body.text = "\n".join([
-		"- Рендер-поток: %s" % render_stream,
-		"- Бюджет: %d$ / %d$ (%s)" % [total_price, budget, budget_status],
-		"- Узкое место: %s" % bottleneck
-	])
-	diag_hint.text = str(preview.get("hint", ""))
-	diag_hint.modulate = COLOR_WARN if render_stream != "OK" else COLOR_OK
-
-func _build_preview(option_data: Dictionary) -> Dictionary:
-	var budget: int = int(stage_b_data.get("budget", 0))
-	var total_price: int = int(option_data.get("total_price", 0))
-	var cpu_price: int = _part_price(option_data, "CPU")
-	var ram_price: int = _part_price(option_data, "RAM")
-	var gpu_price: int = _part_price(option_data, "GPU")
-
-	var render_stream: String = "OK"
-	var budget_status: String = "IN_RANGE"
-	var bottleneck: String = "NONE"
-	var hint: String = "Конфигурация выглядит сбалансированно."
-
-	if total_price > budget:
-		render_stream = "FAIL"
-		budget_status = "OVER"
-		bottleneck = "BUDGET"
-		hint = "Превышение бюджета даже при нормальной производительности."
-	elif cpu_price >= 500 and ram_price <= 120:
-		render_stream = "WARNING"
-		bottleneck = "RAM"
-		hint = "Сильный CPU упирается в слабую RAM."
-	elif cpu_price <= 220 and ram_price <= 140 and gpu_price <= 180:
-		render_stream = "FAIL"
-		bottleneck = "CPU"
-		hint = "Конфигурация слишком слабая для цели."
-	elif ram_price <= 140:
-		render_stream = "WARNING"
-		bottleneck = "RAM"
-		hint = "Есть риск ограничения по памяти."
-	elif gpu_price > 0 and gpu_price <= 180:
-		render_stream = "WARNING"
-		bottleneck = "GPU"
-		hint = "Рендер будет работать, но есть запас для GPU."
-
+func _read_tuning_from_controls() -> Dictionary:
 	return {
-		"render_stream": render_stream,
-		"budget_status": budget_status,
-		"bottleneck": bottleneck,
-		"hint": hint
+		"cpu": cpu_level.get_item_text(cpu_level.selected),
+		"ram": ram_level.get_item_text(ram_level.selected),
+		"gpu": gpu_level.get_item_text(gpu_level.selected)
 	}
 
-func _part_price(option_data: Dictionary, key: String) -> int:
-	var parts: Array = option_data.get("parts", []) as Array
-	for part_v in parts:
-		if typeof(part_v) != TYPE_DICTIONARY:
-			continue
-		var part: Dictionary = part_v as Dictionary
-		if str(part.get("k", "")).to_upper() == key.to_upper():
-			return int(part.get("price", 0))
-	return 0
+func _recompute_preview() -> void:
+	var tuning: Dictionary = snapshot_b.get("tuning", {}) as Dictionary
+	var metrics: Dictionary = _calculate_metrics(tuning)
+	var total_price: int = int(metrics.get("total_price", 0))
+	var risk_score: int = int(metrics.get("risk_score", 0))
+	var budget: int = int(stage_b_data.get("budget", 0))
 
-func _render_status_color(render_stream: String) -> Color:
-	match render_stream:
-		"OK":
-			return COLOR_OK
-		"WARNING":
-			return COLOR_WARN
-		_:
-			return COLOR_ERR
+	snapshot_b["total_price"] = total_price
+	used_budget_value.text = "%d$" % total_price
+	budget_bar.max_value = max(1.0, float(budget))
+	budget_bar.value = float(total_price)
+	risk_bar.value = float(risk_score)
+	risk_value.text = _risk_label(risk_score)
+	risk_value.modulate = _risk_color(risk_score)
 
-func _selected_option_data() -> Dictionary:
-	return options_by_id.get(selected_option_id, {}) as Dictionary
+	status_label.text = "PROFILE READY | used %d$ / %d$" % [total_price, budget]
+	status_label.modulate = COLOR_WARN
+
+func _calculate_metrics(tuning: Dictionary) -> Dictionary:
+	var tuning_model: Dictionary = stage_b_data.get("tuning_model", {}) as Dictionary
+	var cpu_id: String = str(tuning.get("cpu", "MID"))
+	var ram_id: String = str(tuning.get("ram", "GOOD"))
+	var gpu_id: String = str(tuning.get("gpu", "NONE"))
+
+	var cpu_data: Dictionary = (tuning_model.get("cpu", {}) as Dictionary).get(cpu_id, {}) as Dictionary
+	var ram_data: Dictionary = (tuning_model.get("ram", {}) as Dictionary).get(ram_id, {}) as Dictionary
+	var gpu_data: Dictionary = (tuning_model.get("gpu", {}) as Dictionary).get(gpu_id, {}) as Dictionary
+
+	var total_price: int = int(cpu_data.get("price", 0)) + int(ram_data.get("price", 0)) + int(gpu_data.get("price", 0))
+	var perf_score: int = int(cpu_data.get("perf", 0)) + int(ram_data.get("perf", 0)) + int(gpu_data.get("perf", 0))
+
+	var risk_score: int = 20
+	if total_price > int(stage_b_data.get("budget", 0)):
+		risk_score = 95
+	elif cpu_id == "HIGH" and ram_id == "LOW":
+		risk_score = 78
+	elif perf_score <= int((stage_b_data.get("classifier_thresholds", {}) as Dictionary).get("lowpower_perf_max", 4)):
+		risk_score = 68
+
+	return {
+		"total_price": total_price,
+		"perf_score": perf_score,
+		"risk_score": risk_score
+	}
+
+func _classify_current_profile() -> String:
+	var tuning: Dictionary = snapshot_b.get("tuning", {}) as Dictionary
+	var metrics: Dictionary = _calculate_metrics(tuning)
+	var total_price: int = int(metrics.get("total_price", 0))
+	var perf_score: int = int(metrics.get("perf_score", 0))
+	var budget: int = int(stage_b_data.get("budget", 0))
+	var thresholds: Dictionary = stage_b_data.get("classifier_thresholds", {}) as Dictionary
+
+	if total_price > budget:
+		return "OVERBUDGET"
+	if str(tuning.get("cpu", "")) == str(thresholds.get("bottleneck_cpu", "HIGH")) and str(tuning.get("ram", "")) == str(thresholds.get("bottleneck_ram", "LOW")):
+		return "BOTTLENECK"
+	if perf_score <= int(thresholds.get("lowpower_perf_max", 4)):
+		return "LOWPOWER"
+	return "OPTIMAL"
+
+func _benchmark_lines(class_code: String) -> Array[String]:
+	var outputs: Dictionary = stage_b_data.get("benchmark_outputs", {}) as Dictionary
+	var lines: Array[String] = _to_string_array(outputs.get(class_code, []))
+	if lines.is_empty():
+		lines.append("[RESULT] %s" % class_code)
+	return lines
+
+func _risk_label(score: int) -> String:
+	if score >= 80:
+		return "HIGH"
+	if score >= 50:
+		return "MID"
+	return "LOW"
+
+func _risk_color(score: int) -> Color:
+	if score >= 80:
+		return COLOR_ERR
+	if score >= 50:
+		return COLOR_WARN
+	return COLOR_OK
 
 func _register_trial(result: Dictionary) -> void:
 	var elapsed_ms: int = Time.get_ticks_msec() - stage_started_ms
-	var option_data: Dictionary = _selected_option_data()
-	var preview: Dictionary = _build_preview(option_data) if not option_data.is_empty() else {}
+	var tuning: Dictionary = snapshot_b.get("tuning", {}) as Dictionary
+	var class_code: String = str(snapshot_b.get("classified_as", "UNKNOWN"))
 	var payload: Dictionary = {
 		"quest_id": "CASE_01_DIGITAL_RESUS",
 		"stage": "B",
@@ -291,10 +336,12 @@ func _register_trial(result: Dictionary) -> void:
 		"match_key": "CASE01_B_%d" % attempt_index,
 		"context": str(stage_b_data.get("context", "")),
 		"budget": int(stage_b_data.get("budget", 0)),
-		"selected_option_id": selected_option_id,
-		"total_price": int(option_data.get("total_price", 0)),
-		"selection_count": selection_count,
-		"time_to_first_select_ms": max(-1, time_to_first_select_ms),
+		"selected_option_id": class_code,
+		"classified_as": class_code,
+		"tuning_state": tuning.duplicate(true),
+		"total_price": int(snapshot_b.get("total_price", 0)),
+		"selection_count": tune_change_count,
+		"time_to_first_select_ms": max(-1, time_to_first_action_ms),
 		"elapsed_ms": elapsed_ms,
 		"points": int(result.get("points", 0)),
 		"max_points": int(result.get("max_points", 2)),
@@ -305,54 +352,33 @@ func _register_trial(result: Dictionary) -> void:
 		"error_code": str(result.get("error_code", "UNKNOWN")),
 		"diagnostic_headline": str(result.get("diagnostic_headline", "")),
 		"diagnostic_details": (result.get("diagnostic_details", []) as Array).duplicate(),
-		"preview_render_stream": str(preview.get("render_stream", "UNKNOWN")),
-		"preview_budget_status": str(preview.get("budget_status", "UNKNOWN")),
-		"preview_bottleneck": str(preview.get("bottleneck", "UNKNOWN")),
+		"benchmark_ran": bool(snapshot_b.get("benchmark_ran", false)),
 		"trace": trace.duplicate(true)
 	}
 	GlobalMetrics.register_trial(payload)
 
-func _show_diagnostic(result: Dictionary) -> void:
-	diagnostic_card.visible = true
-	var is_correct: bool = bool(result.get("is_correct", false))
-	var headline: String = str(result.get("diagnostic_headline", ""))
-	var details: Array = result.get("diagnostic_details", []) as Array
-	var option_data: Dictionary = _selected_option_data()
-	var preview: Dictionary = _build_preview(option_data) if not option_data.is_empty() else {}
+func _mark_first_action() -> void:
+	if time_to_first_action_ms < 0:
+		time_to_first_action_ms = Time.get_ticks_msec() - stage_started_ms
 
-	diag_headline.text = headline
-	diag_headline.modulate = COLOR_OK if is_correct else COLOR_ERR
-
-	var detail_lines: Array[String] = []
-	detail_lines.append("- Рендер-поток: %s" % str(preview.get("render_stream", "UNKNOWN")))
-	detail_lines.append("- Бюджет: %d$ / %d$" % [int(option_data.get("total_price", 0)), int(stage_b_data.get("budget", 0))])
-	detail_lines.append("- Узкое место: %s" % str(preview.get("bottleneck", "UNKNOWN")))
-	detail_lines.append("")
-	for detail_v in details:
-		detail_lines.append("- %s" % str(detail_v))
-	diag_body.text = "\n".join(detail_lines)
-
-	var hint_text: String = ""
-	var budget: int = int(stage_b_data.get("budget", 0))
-	var total_price: int = int(option_data.get("total_price", 0))
-	if total_price > budget:
-		hint_text = "Превышение бюджета: +%d$." % (total_price - budget)
-	elif selected_option_id == "":
-		hint_text = "Сначала выберите один вариант."
-	else:
-		hint_text = "Можно сделать сброс и проверить другую конфигурацию."
-	diag_hint.text = hint_text
-	diag_hint.modulate = COLOR_WARN
-
-	status_label.text = "Разбор зафиксирован. Для новой попытки нажмите СБРОС."
-	status_label.modulate = COLOR_OK if is_correct else COLOR_WARN
-
-func _log_event(event_name: String, data: Dictionary = {}) -> void:
+func _log_event(name: String, data: Dictionary = {}) -> void:
 	trace.append({
 		"t_ms": Time.get_ticks_msec() - stage_started_ms,
-		"event": event_name,
+		"event": name,
 		"data": data.duplicate(true)
 	})
+
+func _to_string_array(values: Variant) -> Array[String]:
+	var out: Array[String] = []
+	if typeof(values) != TYPE_ARRAY:
+		return out
+	for value_v in values as Array:
+		out.append(str(value_v))
+	return out
+
+func _play_sfx(event_name: String) -> void:
+	if has_node("/root/AudioManager"):
+		AudioManager.play(event_name)
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
@@ -362,11 +388,12 @@ func _on_stability_changed(_new_value: float, _delta: float) -> void:
 
 func _update_stability_ui() -> void:
 	stability_bar.value = GlobalMetrics.stability
+	if noir_overlay != null and noir_overlay.has_method("set_danger_level"):
+		noir_overlay.call("set_danger_level", float(GlobalMetrics.stability))
 
 func _show_error(message: String) -> void:
 	status_label.text = message
 	status_label.modulate = COLOR_ERR
 	btn_confirm.disabled = true
 	btn_reset.disabled = true
-	await get_tree().create_timer(1.2).timeout
-	_on_back_pressed()
+	btn_benchmark.disabled = true

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://da7archive001"]
+[gd_scene load_steps=9 format=3 uid="uid://da7archive001"]
 
 [ext_resource type="Script" path="res://scripts/case_07/da7_data_archive_a.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
@@ -7,6 +7,7 @@
 [ext_resource type="AudioStream" path="res://audio/click.wav" id="5_click"]
 [ext_resource type="PackedScene" path="res://scenes/ui/ResultStamp.tscn" id="6_stamp"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="7_noir_overlay"]
+[ext_resource type="Script" path="res://scripts/ui/ScannerOverlay.gd" id="8_scanner"]
 
 [node name="DA7_DataArchiveQuestA" type="Control"]
 layout_mode = 3
@@ -111,6 +112,17 @@ size_flags_vertical = 3
 columns = 3
 hide_root = true
 select_mode = 1
+
+[node name="ScannerOverlay" type="Control" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 10
+script = ExtResource("8_scanner")
 
 [node name="InspectPanel" type="PanelContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection"]
 custom_minimum_size = Vector2(0, 108)

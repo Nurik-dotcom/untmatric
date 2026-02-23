@@ -1,321 +1,275 @@
-extends Node
+﻿extends Node
 
-const SCHEMA_VERSION = "DA7.B.v1"
-const LEVEL = "B"
-
-# --- F_REASON Constants (Ladder Priority) ---
-const F_REASON_FILTER = [
-	"EMPTY_SELECTION",
-	"PURE_OPPOSITE",
-	"INCLUDED_BOUNDARY",
-	"OVERSELECT_DECOY",
-	"FALSE_POSITIVE",
-	"OMISSION",
-	"NONE"
-]
-
-const F_REASON_RELATION = [
-	"RELATION_CONFUSION_1TO1_1TOM",
-	"RELATION_CONFUSION_1TOM_MTOM",
-	"FK_DIRECTION_SWAP",
-	"GUESS_FAST_CLICK",
-	"CORRECT"
-]
+const SCHEMA_VERSION := "DA7.B.v2"
+const LEVEL := "B"
 
 const CASES_B: Array = [
-	# --- 1. FILTER_ROWS (Strict >) ---
 	{
-		"id": "DA7-B-01",
-		"schema_version": "DA7.B.v1",
-		"level": "B",
+		"id": "DA7-B2-01",
+		"schema_version": SCHEMA_VERSION,
+		"level": LEVEL,
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Терминал: выберите агентов с уровнем доступа строго больше 3.",
-		"predicate": {
-			"field_col_id": "c_access",
-			"operator": ">",
-			"value": "3",
-			"value_type": "INT",
-			"strict_expected": true
-		},
+		"interaction_variant": "REDACTION",
+		"prompt": "Redact all rows that do NOT match Access > 3.",
+		"predicate": {"field_col_id": "acc", "operator": ">", "value": "3", "value_type": "INT", "strict_expected": true},
 		"table": {
 			"columns": [
-				{"col_id": "c_name", "title": "Имя"},
-				{"col_id": "c_access", "title": "Доступ"}
+				{"col_id": "id", "title": "ID"},
+				{"col_id": "name", "title": "Name"},
+				{"col_id": "acc", "title": "Access"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"c_name": "Альфа", "c_access": "2"}},
-				{"row_id": "r2", "cells": {"c_name": "Бета", "c_access": "5"}},
-				{"row_id": "r3", "cells": {"c_name": "Гамма", "c_access": "3"}},
-				{"row_id": "r4", "cells": {"c_name": "Дельта", "c_access": "4"}}
+				{"row_id": "r1", "cells": {"id": "101", "name": "Alpha", "acc": "2"}},
+				{"row_id": "r2", "cells": {"id": "102", "name": "Beta", "acc": "5"}},
+				{"row_id": "r3", "cells": {"id": "103", "name": "Gamma", "acc": "3"}},
+				{"row_id": "r4", "cells": {"id": "104", "name": "Delta", "acc": "4"}},
+				{"row_id": "r5", "cells": {"id": "???", "name": "CORRUPT", "acc": "N/A"}}
 			]
 		},
 		"answer_row_ids": ["r2", "r4"],
 		"boundary_row_ids": ["r3"],
 		"opposite_row_ids": ["r1"],
+		"unrelated_row_ids": ["r5"],
 		"decoy_row_ids": [],
-		"unrelated_row_ids": [],
-		"difficulty_tags": ["strict_inequality", "boundary_case"],
-		"anti_cheat": {"shuffle_rows": true, "shuffle_options": false},
+		"anti_cheat": {"shuffle_rows": true},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
-	# --- 2. FILTER_ROWS (Non-Strict >=) ---
 	{
-		"id": "DA7-B-02",
-		"schema_version": "DA7.B.v1",
-		"level": "B",
+		"id": "DA7-B2-02",
+		"schema_version": SCHEMA_VERSION,
+		"level": LEVEL,
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Система: выберите инциденты с уровнем серьёзности >= 2.",
-		"predicate": {
-			"field_col_id": "c_sev",
-			"operator": ">=",
-			"value": "2",
-			"value_type": "INT",
-			"strict_expected": false
-		},
+		"interaction_variant": "REDACTION",
+		"prompt": "Redact incidents that do NOT satisfy Sev >= 2.",
+		"predicate": {"field_col_id": "sev", "operator": ">=", "value": "2", "value_type": "INT", "strict_expected": false},
 		"table": {
 			"columns": [
-				{"col_id": "c_id", "title": "ID"},
-				{"col_id": "c_sev", "title": "Серьёзн."}
+				{"col_id": "iid", "title": "INC_ID"},
+				{"col_id": "sev", "title": "Sev"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"c_id": "101", "c_sev": "1"}},
-				{"row_id": "r2", "cells": {"c_id": "102", "c_sev": "2"}},
-				{"row_id": "r3", "cells": {"c_id": "103", "c_sev": "3"}},
-				{"row_id": "r4", "cells": {"c_id": "104", "c_sev": "1"}}
+				{"row_id": "r1", "cells": {"iid": "201", "sev": "1"}},
+				{"row_id": "r2", "cells": {"iid": "202", "sev": "2"}},
+				{"row_id": "r3", "cells": {"iid": "203", "sev": "3"}},
+				{"row_id": "r4", "cells": {"iid": "204", "sev": "0"}},
+				{"row_id": "r5", "cells": {"iid": "205", "sev": "?"}}
 			]
 		},
 		"answer_row_ids": ["r2", "r3"],
 		"boundary_row_ids": ["r2"],
 		"opposite_row_ids": ["r1", "r4"],
+		"unrelated_row_ids": ["r5"],
 		"decoy_row_ids": [],
-		"unrelated_row_ids": [],
-		"difficulty_tags": ["non_strict_inequality", "boundary_in_answer"],
-		"anti_cheat": {"shuffle_rows": true, "shuffle_options": false},
+		"anti_cheat": {"shuffle_rows": true},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
-	# --- 3. FILTER_ROWS (String equality ==) ---
 	{
-		"id": "DA7-B-03",
-		"schema_version": "DA7.B.v1",
-		"level": "B",
+		"id": "DA7-B2-03",
+		"schema_version": SCHEMA_VERSION,
+		"level": LEVEL,
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Поиск: выберите все строки со статусом ОШИБКА.",
-		"predicate": {
-			"field_col_id": "c_stat",
-			"operator": "==",
-			"value": "ОШИБКА",
-			"value_type": "TEXT",
-			"strict_expected": true
-		},
+		"interaction_variant": "REDACTION",
+		"prompt": "Redact rows that are NOT status ERROR.",
+		"predicate": {"field_col_id": "stat", "operator": "==", "value": "ERROR", "value_type": "TEXT", "strict_expected": true},
 		"table": {
 			"columns": [
-				{"col_id": "c_ts", "title": "Время"},
-				{"col_id": "c_stat", "title": "Статус"}
+				{"col_id": "ts", "title": "Time"},
+				{"col_id": "stat", "title": "Status"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"c_ts": "09:00", "c_stat": "НОРМА"}},
-				{"row_id": "r2", "cells": {"c_ts": "09:05", "c_stat": "ОШИБКА"}},
-				{"row_id": "r3", "cells": {"c_ts": "09:10", "c_stat": "ПРЕДУПРЕЖДЕНИЕ"}},
-				{"row_id": "r4", "cells": {"c_ts": "09:15", "c_stat": "ОШИБКА"}}
+				{"row_id": "r1", "cells": {"ts": "09:00", "stat": "OK"}},
+				{"row_id": "r2", "cells": {"ts": "09:05", "stat": "ERROR"}},
+				{"row_id": "r3", "cells": {"ts": "09:10", "stat": "WARN"}},
+				{"row_id": "r4", "cells": {"ts": "09:15", "stat": "ERROR"}},
+				{"row_id": "r5", "cells": {"ts": "??:??", "stat": "???"}}
 			]
 		},
 		"answer_row_ids": ["r2", "r4"],
 		"boundary_row_ids": [],
 		"opposite_row_ids": ["r1", "r3"],
+		"unrelated_row_ids": ["r5"],
 		"decoy_row_ids": [],
-		"unrelated_row_ids": [],
-		"difficulty_tags": ["equality_filter"],
-		"anti_cheat": {"shuffle_rows": true, "shuffle_options": false},
+		"anti_cheat": {"shuffle_rows": true},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
-	# --- 4. FILTER_ROWS (Strict <) ---
 	{
-		"id": "DA7-B-04",
-		"schema_version": "DA7.B.v1",
-		"level": "B",
+		"id": "DA7-B2-04",
+		"schema_version": SCHEMA_VERSION,
+		"level": LEVEL,
 		"topic": "DB_FILTERING",
 		"case_kind": "FILTER_ROWS",
 		"interaction_type": "MULTI_SELECT_ROWS",
-		"prompt": "Фильтр: найдите транзакции с суммой < 100.",
-		"predicate": {
-			"field_col_id": "c_sum",
-			"operator": "<",
-			"value": "100",
-			"value_type": "INT",
-			"strict_expected": true
-		},
+		"interaction_variant": "REDACTION",
+		"prompt": "Redact transactions that do NOT satisfy Amount < 100.",
+		"predicate": {"field_col_id": "sum", "operator": "<", "value": "100", "value_type": "INT", "strict_expected": true},
 		"table": {
 			"columns": [
-				{"col_id": "c_id", "title": "TX_ID"},
-				{"col_id": "c_sum", "title": "Сумма"}
+				{"col_id": "tx", "title": "TX_ID"},
+				{"col_id": "sum", "title": "Amount"}
 			],
 			"rows": [
-				{"row_id": "r1", "cells": {"c_id": "1", "c_sum": "50"}},
-				{"row_id": "r2", "cells": {"c_id": "2", "c_sum": "100"}},
-				{"row_id": "r3", "cells": {"c_id": "3", "c_sum": "150"}},
-				{"row_id": "r4", "cells": {"c_id": "4", "c_sum": "99"}}
+				{"row_id": "r1", "cells": {"tx": "1", "sum": "50"}},
+				{"row_id": "r2", "cells": {"tx": "2", "sum": "100"}},
+				{"row_id": "r3", "cells": {"tx": "3", "sum": "150"}},
+				{"row_id": "r4", "cells": {"tx": "4", "sum": "99"}},
+				{"row_id": "r5", "cells": {"tx": "5", "sum": "NaN"}}
 			]
 		},
 		"answer_row_ids": ["r1", "r4"],
 		"boundary_row_ids": ["r2"],
 		"opposite_row_ids": ["r3"],
+		"unrelated_row_ids": ["r5"],
 		"decoy_row_ids": [],
-		"unrelated_row_ids": [],
-		"difficulty_tags": ["strict_inequality", "boundary_case"],
-		"anti_cheat": {"shuffle_rows": true, "shuffle_options": false},
+		"anti_cheat": {"shuffle_rows": true},
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
-	# --- 5. RELATIONSHIP (1:M) ---
 	{
-		"id": "DA7-B-05",
-		"schema_version": "DA7.B.v1",
-		"level": "B",
+		"id": "DA7-B2-R1",
+		"schema_version": SCHEMA_VERSION,
+		"level": LEVEL,
 		"topic": "DB_RELATIONSHIPS",
-		"case_kind": "RELATION_TYPE",
+		"case_kind": "RELATIONSHIP",
 		"interaction_type": "RELATIONSHIP_CHOICE",
-		"prompt": "Схема: определите связь между Пользователи и Посты.",
-		"schema_visual": {
-			"left_table": {
-				"title": "Пользователи",
-				"columns": [{"col_id":"u_id","title":"ID"}, {"col_id":"u_name","title":"Имя"}],
-				"rows_preview": [
-					{"row_id":"u1", "cells":{"u_id":"1","u_name":"Алиса"}},
-					{"row_id":"u2", "cells":{"u_id":"2","u_name":"Боб"}}
-				]
-			},
-			"right_table": {
-				"title": "Посты",
-				"columns": [{"col_id":"p_id","title":"ID"}, {"col_id":"p_uid","title":"ID_пользователя"}, {"col_id":"p_txt","title":"Текст"}],
-				"rows_preview": [
-					{"row_id":"p1", "cells":{"p_id":"10","p_uid":"1","p_txt":"Привет"}},
-					{"row_id":"p2", "cells":{"p_id":"11","p_uid":"1","p_txt":"Обновление"}},
-					{"row_id":"p3", "cells":{"p_id":"12","p_uid":"2","p_txt":"Здравствуй"}}
-				]
-			},
-			"link": {
-				"hint_label": "Пользователи.ID -> Посты.ID_пользователя"
-			}
+		"interaction_variant": "PATCH_CABLE",
+		"prompt": "Patch cable: connect PK in Users to FK in Posts.",
+		"left_table": {
+			"title": "Users",
+			"columns": [
+				{"col_id": "u_id", "title": "ID (PK)"},
+				{"col_id": "u_name", "title": "Name"}
+			],
+			"rows_preview": [
+				{"row_id": "u1", "cells": {"u_id": "1", "u_name": "Alice"}},
+				{"row_id": "u2", "cells": {"u_id": "2", "u_name": "Bob"}}
+			]
 		},
+		"right_table": {
+			"title": "Posts",
+			"columns": [
+				{"col_id": "p_id", "title": "ID"},
+				{"col_id": "p_uid", "title": "UserID (FK)"},
+				{"col_id": "p_txt", "title": "Text"}
+			],
+			"rows_preview": [
+				{"row_id": "p1", "cells": {"p_id": "10", "p_uid": "1", "p_txt": "Hello"}},
+				{"row_id": "p2", "cells": {"p_id": "11", "p_uid": "1", "p_txt": "Update"}},
+				{"row_id": "p3", "cells": {"p_id": "12", "p_uid": "2", "p_txt": "Hi"}}
+			]
+		},
+		"pk_target": {"table": "left", "col_id": "u_id"},
+		"fk_target": {"table": "right", "col_id": "p_uid"},
 		"expected_relation": "1:M",
 		"options": [
-			{"id": "opt1", "text": "1:1 (Один-к-одному)", "f_reason": "RELATION_CONFUSION_1TO1_1TOM"},
-			{"id": "opt2", "text": "1:M (Один-ко-многим)", "f_reason": null},
-			{"id": "opt3", "text": "M:M (Многие-ко-многим)", "f_reason": "RELATION_CONFUSION_1TOM_MTOM"}
+			{"id": "opt1", "text": "1:1", "f_reason": "RELATION_CONFUSION_1TO1_1TOM"},
+			{"id": "opt2", "text": "1:M", "f_reason": null},
+			{"id": "opt3", "text": "M:M", "f_reason": "RELATION_CONFUSION_1TOM_MTOM"}
 		],
 		"answer_id": "opt2",
-		"timing_policy": {"mode": "LEARNING", "limit_sec": 120},
-		"anti_cheat": {"shuffle_rows": false, "shuffle_options": true}
+		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
-	# --- 6. RELATIONSHIP (1:1) ---
 	{
-		"id": "DA7-B-06",
-		"schema_version": "DA7.B.v1",
-		"level": "B",
+		"id": "DA7-B2-R2",
+		"schema_version": SCHEMA_VERSION,
+		"level": LEVEL,
 		"topic": "DB_RELATIONSHIPS",
-		"case_kind": "RELATION_TYPE",
+		"case_kind": "RELATIONSHIP",
 		"interaction_type": "RELATIONSHIP_CHOICE",
-		"prompt": "Схема: определите связь между Сотрудники и Паспортные_данные (уникальный паспорт).",
-		"schema_visual": {
-			"left_table": {
-				"title": "Сотрудники",
-				"columns": [{"col_id":"e_id","title":"ID"}, {"col_id":"e_name","title":"Имя"}],
-				"rows_preview": [
-					{"row_id":"e1", "cells":{"e_id":"101","e_name":"Иван"}},
-					{"row_id":"e2", "cells":{"e_id":"102","e_name":"Жанна"}}
-				]
-			},
-			"right_table": {
-				"title": "Паспортные_данные",
-				"columns": [{"col_id":"pd_id","title":"ID_паспорта"}, {"col_id":"pd_eid","title":"ID_сотрудника"}, {"col_id":"pd_num","title":"Номер"}],
-				"rows_preview": [
-					{"row_id":"p1", "cells":{"pd_id":"55","pd_eid":"101","pd_num":"A-001"}},
-					{"row_id":"p2", "cells":{"pd_id":"56","pd_eid":"102","pd_num":"B-002"}}
-				]
-			},
-			"link": {
-				"hint_label": "Сотрудники.ID -> Паспорт.ID_сотрудника (Уникально)"
-			}
+		"interaction_variant": "PATCH_CABLE",
+		"prompt": "Patch cable: connect PK in Employees to FK in PassportData.",
+		"left_table": {
+			"title": "Employees",
+			"columns": [
+				{"col_id": "e_id", "title": "ID (PK)"},
+				{"col_id": "e_name", "title": "Name"}
+			],
+			"rows_preview": [
+				{"row_id": "e1", "cells": {"e_id": "101", "e_name": "Ivan"}},
+				{"row_id": "e2", "cells": {"e_id": "102", "e_name": "Zhanna"}}
+			]
 		},
+		"right_table": {
+			"title": "PassportData",
+			"columns": [
+				{"col_id": "pd_id", "title": "PassportID"},
+				{"col_id": "pd_eid", "title": "EmployeeID (FK)"},
+				{"col_id": "pd_num", "title": "Number"}
+			],
+			"rows_preview": [
+				{"row_id": "p1", "cells": {"pd_id": "55", "pd_eid": "101", "pd_num": "A-001"}},
+				{"row_id": "p2", "cells": {"pd_id": "56", "pd_eid": "102", "pd_num": "B-002"}}
+			]
+		},
+		"pk_target": {"table": "left", "col_id": "e_id"},
+		"fk_target": {"table": "right", "col_id": "pd_eid"},
 		"expected_relation": "1:1",
 		"options": [
-			{"id": "opt1", "text": "1:1 (Один-к-одному)", "f_reason": null},
-			{"id": "opt2", "text": "1:M (Один-ко-многим)", "f_reason": "RELATION_CONFUSION_1TO1_1TOM"},
-			{"id": "opt3", "text": "M:M (Многие-ко-многим)", "f_reason": "RELATION_CONFUSION_1TOM_MTOM"}
+			{"id": "opt1", "text": "1:1", "f_reason": null},
+			{"id": "opt2", "text": "1:M", "f_reason": "RELATION_CONFUSION_1TO1_1TOM"},
+			{"id": "opt3", "text": "M:M", "f_reason": "RELATION_CONFUSION_1TOM_MTOM"}
 		],
 		"answer_id": "opt1",
-		"timing_policy": {"mode": "LEARNING", "limit_sec": 120},
-		"anti_cheat": {"shuffle_rows": false, "shuffle_options": true}
+		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	}
 ]
 
-static func validate_case_b(c: Dictionary) -> bool:
-	var case_id: String = str(c.get("id", "UNKNOWN"))
-	if str(c.get("schema_version", "")) != SCHEMA_VERSION:
-		push_error("Case %s bad schema" % case_id)
+static func validate_case_b(case_data: Dictionary) -> bool:
+	if str(case_data.get("schema_version", "")) != SCHEMA_VERSION:
 		return false
-
-	if str(c.get("interaction_type", "")) == "MULTI_SELECT_ROWS":
-		# Validation for disjoint sets (basic existence checks).
-		if not c.has("answer_row_ids") or not c.has("boundary_row_ids") or not c.has("opposite_row_ids") or not c.has("unrelated_row_ids") or not c.has("decoy_row_ids"):
-			push_error("Case %s missing sets" % case_id)
+	var interaction_type := str(case_data.get("interaction_type", ""))
+	if interaction_type == "MULTI_SELECT_ROWS":
+		if str(case_data.get("interaction_variant", "")) != "REDACTION":
 			return false
-		if not c.has("predicate"):
-			push_error("Case %s missing predicate" % case_id)
+		if not case_data.has_all(["answer_row_ids", "boundary_row_ids", "opposite_row_ids", "unrelated_row_ids", "decoy_row_ids", "predicate", "table"]):
 			return false
-		if not c.has("table"):
-			push_error("Case %s missing table" % case_id)
-			return false
-		var table: Dictionary = c.get("table", {}) as Dictionary
+		var table: Dictionary = case_data.get("table", {}) as Dictionary
 		var rows: Array = table.get("rows", []) as Array
-		var all_row_ids: Dictionary = {}
+		var allowed: Dictionary = {}
 		for row_v in rows:
 			if typeof(row_v) != TYPE_DICTIONARY:
 				continue
-			var row_id: String = str((row_v as Dictionary).get("row_id", ""))
-			if row_id == "":
-				continue
-			all_row_ids[row_id] = true
-		var answer_ids: Array = c.get("answer_row_ids", []) as Array
-		var boundary_ids: Array = c.get("boundary_row_ids", []) as Array
-		var opposite_ids: Array = c.get("opposite_row_ids", []) as Array
-		var unrelated_ids: Array = c.get("unrelated_row_ids", []) as Array
-		var decoy_ids: Array = c.get("decoy_row_ids", []) as Array
-		if not _all_exist_in(answer_ids, all_row_ids) or not _all_exist_in(boundary_ids, all_row_ids) or not _all_exist_in(opposite_ids, all_row_ids) or not _all_exist_in(unrelated_ids, all_row_ids) or not _all_exist_in(decoy_ids, all_row_ids):
-			push_error("Case %s has unknown row ids in sets" % case_id)
+			allowed[str((row_v as Dictionary).get("row_id", ""))] = true
+		var answer: Array = case_data.get("answer_row_ids", []) as Array
+		var boundary: Array = case_data.get("boundary_row_ids", []) as Array
+		var opposite: Array = case_data.get("opposite_row_ids", []) as Array
+		var unrelated: Array = case_data.get("unrelated_row_ids", []) as Array
+		var decoy: Array = case_data.get("decoy_row_ids", []) as Array
+		if not _all_exist_in(answer, allowed):
 			return false
-		# Boundary rows may overlap with answer rows for non-strict predicates (e.g. >=).
-		var predicate: Dictionary = c.get("predicate", {}) as Dictionary
-		var strict_expected: bool = bool(predicate.get("strict_expected", false))
-		if not _are_disjoint([answer_ids, opposite_ids, unrelated_ids, decoy_ids]):
-			push_error("Case %s has intersecting sets (A/O/U/D)" % case_id)
+		if not _all_exist_in(boundary, allowed):
 			return false
-		if _has_intersection(boundary_ids, opposite_ids) or _has_intersection(boundary_ids, unrelated_ids) or _has_intersection(boundary_ids, decoy_ids):
-			push_error("Case %s has invalid boundary overlap with O/U/D sets" % case_id)
+		if not _all_exist_in(opposite, allowed):
 			return false
-		if strict_expected and _has_intersection(boundary_ids, answer_ids):
-			push_error("Case %s has strict predicate but boundary overlaps answer set" % case_id)
+		if not _all_exist_in(unrelated, allowed):
 			return false
-
-	elif str(c.get("interaction_type", "")) == "RELATIONSHIP_CHOICE":
-		if not c.has("schema_visual"):
-			push_error("Case %s missing schema_visual" % case_id)
+		if not _all_exist_in(decoy, allowed):
 			return false
-		if not c.has("options"):
-			push_error("Case %s missing options" % case_id)
+		if not _are_disjoint([answer, opposite, unrelated, decoy]):
 			return false
-
-	return true
+		if _has_intersection(boundary, opposite) or _has_intersection(boundary, unrelated) or _has_intersection(boundary, decoy):
+			return false
+		var predicate: Dictionary = case_data.get("predicate", {}) as Dictionary
+		if bool(predicate.get("strict_expected", false)) and _has_intersection(boundary, answer):
+			return false
+		return true
+	if interaction_type == "RELATIONSHIP_CHOICE":
+		if str(case_data.get("interaction_variant", "")) != "PATCH_CABLE":
+			return false
+		if not case_data.has_all(["left_table", "right_table", "pk_target", "fk_target"]):
+			return false
+		if case_data.has("options") and not case_data.has("answer_id"):
+			return false
+		return true
+	return false
 
 static func _all_exist_in(ids: Array, allowed: Dictionary) -> bool:
 	for id_v in ids:
-		var row_id: String = str(id_v)
-		if not allowed.has(row_id):
+		if not allowed.has(str(id_v)):
 			return false
 	return true
 
@@ -324,19 +278,18 @@ static func _are_disjoint(grouped_ids: Array) -> bool:
 	for group_v in grouped_ids:
 		if typeof(group_v) != TYPE_ARRAY:
 			continue
-		var group: Array = group_v
-		for id_v in group:
-			var key: String = str(id_v)
+		for id_v in group_v:
+			var key := str(id_v)
 			if seen.has(key):
 				return false
 			seen[key] = true
 	return true
 
-static func _has_intersection(arr1: Array, arr2: Array) -> bool:
+static func _has_intersection(a1: Array, a2: Array) -> bool:
 	var lookup: Dictionary = {}
-	for id_v in arr2:
-		lookup[str(id_v)] = true
-	for id_v in arr1:
-		if lookup.has(str(id_v)):
+	for v in a2:
+		lookup[str(v)] = true
+	for v in a1:
+		if lookup.has(str(v)):
 			return true
 	return false

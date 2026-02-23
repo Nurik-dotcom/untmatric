@@ -11,6 +11,10 @@ var _anchor_root: Control
 var _watched_controls: Array = []
 var _anchor_mode: String = ANCHOR_CENTER
 var _orientation: String = ORIENTATION_AUTO
+var _drag_active := false
+var _drag_committed := false
+var _drag_from := Vector2.ZERO
+var _drag_to := Vector2.ZERO
 
 @export var line_color: Color = Color(0.88, 0.64, 0.16, 0.9)
 @export var line_width: float = 3.0
@@ -34,6 +38,10 @@ func set_links(links: Array, anchor_root: Control, anchor_mode: String = ANCHOR_
 	_anchor_root = anchor_root
 	_anchor_mode = anchor_mode.to_lower()
 	_orientation = orientation.to_lower()
+	_drag_active = false
+	_drag_committed = false
+	_drag_from = Vector2.ZERO
+	_drag_to = Vector2.ZERO
 	for link_v in links:
 		if typeof(link_v) != TYPE_DICTIONARY:
 			continue
@@ -46,6 +54,33 @@ func set_links(links: Array, anchor_root: Control, anchor_mode: String = ANCHOR_
 			_connect_signal_safe(to_control)
 	if is_instance_valid(_anchor_root):
 		_connect_signal_safe(_anchor_root)
+	queue_redraw()
+
+func start_drag(from_point: Vector2) -> void:
+	_drag_active = true
+	_drag_committed = false
+	_drag_from = from_point
+	_drag_to = from_point
+	queue_redraw()
+
+func update_drag(current_point: Vector2) -> void:
+	if not _drag_active:
+		return
+	_drag_to = current_point
+	queue_redraw()
+
+func commit_connection(from_point: Vector2, to_point: Vector2) -> void:
+	_drag_active = false
+	_drag_committed = true
+	_drag_from = from_point
+	_drag_to = to_point
+	queue_redraw()
+
+func clear_connection() -> void:
+	_drag_active = false
+	_drag_committed = false
+	_drag_from = Vector2.ZERO
+	_drag_to = Vector2.ZERO
 	queue_redraw()
 
 func _notification(what: int) -> void:
@@ -68,6 +103,9 @@ func _draw() -> void:
 		var to_point: Vector2 = _global_to_local(to_global)
 		draw_line(from_point, to_point, line_color, line_width, true)
 		_draw_arrow(from_point, to_point)
+	if _drag_active or _drag_committed:
+		draw_line(_drag_from, _drag_to, line_color, line_width, true)
+		_draw_arrow(_drag_from, _drag_to)
 
 func _resolve_points(from_rect: Rect2, to_rect: Rect2) -> Dictionary:
 	if _anchor_mode != ANCHOR_EDGE:

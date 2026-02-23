@@ -1,13 +1,13 @@
 extends Control
 
-const LEVELS_PATH := "res://data/clues_levels.json"
-const NET_ITEM_SCENE := preload("res://scenes/ui/NetItem.tscn")
-const ResusData := preload("res://scripts/case_01/ResusData.gd")
-const ResusScoring := preload("res://scripts/case_01/ResusScoring.gd")
+const LEVELS_PATH: String = "res://data/clues_levels.json"
+const NET_ITEM_SCENE: PackedScene = preload("res://scenes/ui/NetItem.tscn")
+const ResusData = preload("res://scripts/case_01/ResusData.gd")
+const ResusScoring = preload("res://scripts/case_01/ResusScoring.gd")
 
-const COLOR_OK := Color(0.92, 0.92, 0.92, 1.0)
-const COLOR_WARN := Color(0.86, 0.73, 0.56, 1.0)
-const COLOR_ERR := Color(0.93, 0.34, 0.38, 1.0)
+const COLOR_OK: Color = Color(0.9, 0.93, 0.98, 1.0)
+const COLOR_WARN: Color = Color(0.98, 0.8, 0.52, 1.0)
+const COLOR_ERR: Color = Color(0.95, 0.36, 0.38, 1.0)
 
 var stage_c_data: Dictionary = {}
 var option_by_id: Dictionary = {}
@@ -27,12 +27,14 @@ var unique_used_set: Dictionary = {}
 var time_to_first_action_ms: int = -1
 var input_locked: bool = false
 
+@onready var noir_overlay: Node = $NoirOverlay
 @onready var title_label: Label = $SafeArea/MainVBox/Header/TitleLabel
 @onready var stage_label: Label = $SafeArea/MainVBox/Header/StageLabel
 @onready var stability_bar: ProgressBar = $SafeArea/MainVBox/Header/StabilityBar
 @onready var btn_back: Button = $SafeArea/MainVBox/Header/BtnBack
 
 @onready var prompt_label: Label = $SafeArea/MainVBox/PromptCard/PromptLabel
+@onready var packets_layer: Node = $SafeArea/MainVBox/DiagramCard/PacketsLayer
 
 @onready var slot_1: Node = $SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow/Slot1
 @onready var slot_2: Node = $SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow/Slot2
@@ -58,7 +60,6 @@ var _slot_nodes: Array[Node] = []
 
 func _ready() -> void:
 	add_to_group("resus_c_controller")
-
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
@@ -72,7 +73,7 @@ func _ready() -> void:
 
 	stage_c_data = ResusData.load_stage_c(LEVELS_PATH)
 	if stage_c_data.is_empty():
-		_show_error("Данные этапа C некорректны. Возврат в меню.")
+		_show_error("Failed to load Case 01 stage C data")
 		return
 
 	_setup_ui()
@@ -80,11 +81,11 @@ func _ready() -> void:
 	_on_viewport_size_changed()
 
 func _setup_ui() -> void:
-	title_label.text = "ДЕЛО №1: ЦИФРОВАЯ РЕАНИМАЦИЯ"
-	stage_label.text = "ЭТАП C"
-	btn_reset.text = "СБРОС"
-	btn_analyze.text = "АНАЛИЗ"
-	prompt_label.text = str(stage_c_data.get("prompt", ""))
+	title_label.text = "Case 01: Digital Reanimation"
+	stage_label.text = "STAGE C"
+	prompt_label.text = str(stage_c_data.get("prompt", "Mount modules and secure link"))
+	btn_reset.text = "RESET"
+	btn_analyze.text = "LINK START"
 
 	_build_option_catalog()
 	_build_palette()
@@ -188,7 +189,10 @@ func _begin_attempt() -> void:
 		if slot_node.has_method("set_locked"):
 			slot_node.call("set_locked", false)
 
-	_update_status_line("Соберите защищённый периметр")
+	if packets_layer != null and packets_layer.has_method("reset_to_idle"):
+		packets_layer.call("reset_to_idle")
+
+	_update_status_line("Ready to mount modules")
 	_update_risk_dashboard()
 	_update_stability_ui()
 
@@ -200,17 +204,17 @@ func handle_drop_to_slot(slot_index: int, data: Dictionary) -> Dictionary:
 		return {"success": false}
 	if not _is_slot_index_valid(slot_index):
 		return {"success": false}
-	if str(data.get("kind", "")) != "NET_ITEM":
+	if str(data.get("kind", "")) != "NET_MODULE":
 		return {"success": false}
 
-	var option_id: String = str(data.get("option_id", "")).strip_edges()
-	if option_id == "" or not option_by_id.has(option_id):
+	var module_id: String = str(data.get("module_id", "")).strip_edges()
+	if module_id == "" or not option_by_id.has(module_id):
 		return {"success": false}
 
 	var source_path: String = str(data.get("node_path", ""))
 	var source_node: Node = get_node_or_null(source_path)
 	if source_node == null:
-		var fallback_node: Variant = item_nodes_by_option.get(option_id, null)
+		var fallback_node: Variant = item_nodes_by_option.get(module_id, null)
 		if fallback_node is Node:
 			source_node = fallback_node as Node
 	if source_node == null or not (source_node is Control):
@@ -218,14 +222,14 @@ func handle_drop_to_slot(slot_index: int, data: Dictionary) -> Dictionary:
 
 	var from_slot: int = int(data.get("from_slot", -1))
 	var target_idx: int = slot_index - 1
-	var prev_option_id: String = slots[target_idx]
+	var prev_module_id: String = slots[target_idx]
 
-	if from_slot == slot_index and prev_option_id == option_id:
+	if from_slot == slot_index and prev_module_id == module_id:
 		return {
 			"success": true,
-			"option_id": option_id,
-			"prev_option_id": prev_option_id,
-			"label": str((option_by_id.get(option_id, {}) as Dictionary).get("label", option_id))
+			"module_id": module_id,
+			"prev_module_id": prev_module_id,
+			"label": str((option_by_id.get(module_id, {}) as Dictionary).get("label", module_id))
 		}
 
 	if from_slot >= 1 and from_slot <= 3 and from_slot != slot_index:
@@ -236,16 +240,16 @@ func handle_drop_to_slot(slot_index: int, data: Dictionary) -> Dictionary:
 		_move_item_to_palette(prev_node_v as Control)
 
 	_attach_item_to_slot(source_node as Control, slot_index)
-	slots[target_idx] = option_id
+	slots[target_idx] = module_id
 	slot_item_by_index[slot_index] = source_node
 
 	_mark_first_action()
 	slot_change_count += 1
-	unique_used_set[option_id] = true
+	unique_used_set[module_id] = true
 	_log_event("SLOT_CHANGED", {
-		"slot_index": slot_index,
-		"option_id": option_id,
-		"prev_option_id": prev_option_id
+		"slot": slot_index,
+		"module_id": module_id,
+		"prev_module_id": prev_module_id
 	})
 	_update_status_line("")
 	_update_risk_dashboard()
@@ -253,9 +257,9 @@ func handle_drop_to_slot(slot_index: int, data: Dictionary) -> Dictionary:
 
 	return {
 		"success": true,
-		"option_id": option_id,
-		"prev_option_id": prev_option_id,
-		"label": str((option_by_id.get(option_id, {}) as Dictionary).get("label", option_id))
+		"module_id": module_id,
+		"prev_module_id": prev_module_id,
+		"label": str((option_by_id.get(module_id, {}) as Dictionary).get("label", module_id))
 	}
 
 func handle_clear_slot(slot_index: int) -> Dictionary:
@@ -265,8 +269,8 @@ func handle_clear_slot(slot_index: int) -> Dictionary:
 		return {"success": false}
 
 	var idx: int = slot_index - 1
-	var prev_option_id: String = slots[idx]
-	if prev_option_id == "":
+	var prev_module_id: String = slots[idx]
+	if prev_module_id == "":
 		return {"success": false}
 
 	var prev_node_v: Variant = slot_item_by_index.get(slot_index, null)
@@ -277,8 +281,8 @@ func handle_clear_slot(slot_index: int) -> Dictionary:
 	_mark_first_action()
 	slot_change_count += 1
 	_log_event("SLOT_CLEARED", {
-		"slot_index": slot_index,
-		"prev_option_id": prev_option_id
+		"slot": slot_index,
+		"prev_module_id": prev_module_id
 	})
 	_update_status_line("")
 	_update_risk_dashboard()
@@ -286,7 +290,7 @@ func handle_clear_slot(slot_index: int) -> Dictionary:
 
 	return {
 		"success": true,
-		"prev_option_id": prev_option_id
+		"prev_module_id": prev_module_id
 	}
 
 func _attach_item_to_slot(item_node: Control, slot_index: int) -> void:
@@ -326,14 +330,14 @@ func _clear_slot_state(slot_index: int) -> void:
 	if not input_locked and slot_node.has_method("set_feedback_state"):
 		slot_node.call("set_feedback_state", "neutral")
 
-func _on_item_drag_started(option_id: String, source: String, from_slot: int) -> void:
+func _on_item_drag_started(module_id: String, source: String, from_slot: int) -> void:
 	if input_locked:
 		return
 	_mark_first_action()
 	drag_count += 1
 	_log_event("DRAG_START", {
-		"option_id": option_id,
-		"source": source,
+		"module_id": module_id,
+		"from": source,
 		"from_slot": from_slot
 	})
 
@@ -341,23 +345,25 @@ func _on_analyze_pressed() -> void:
 	if input_locked:
 		return
 
-	var filled_slots: int = _filled_slots_count()
-	var unique_used_count: int = unique_used_set.size()
-	_log_event("ANALYZE_PRESSED", {
-		"filled_slots": filled_slots,
-		"unique_used_count": unique_used_count
-	})
-
 	var selected_ids: Array[String] = _collect_selected_ids()
+	var risk: Dictionary = _calculate_risk(slots)
 	var snapshot: Dictionary = {
 		"slots": slots.duplicate(),
 		"selected": selected_ids.duplicate(),
-		"unique_used_count": unique_used_count
+		"unique_used_count": unique_used_set.size()
 	}
+
+	_log_event("LINK_START", {
+		"selected_count": selected_ids.size(),
+		"filled_slots": _filled_slots_count()
+	})
+
 	var result: Dictionary = ResusScoring.calculate_stage_c_result(stage_c_data, snapshot)
-	var risk: Dictionary = _calculate_risk(slots)
+	if packets_layer != null and packets_layer.has_method("configure_from_verdict"):
+		packets_layer.call("configure_from_verdict", str(result.get("verdict_code", "FAIL")), stage_c_data.get("visual_sim", {}))
 
 	_register_trial(result, risk)
+	attempt_index += 1
 	_show_explanation(result, risk)
 	_apply_result_highlight(result)
 	_update_stability_ui()
@@ -374,7 +380,7 @@ func _on_analyze_pressed() -> void:
 		_play_sfx("error")
 
 func _on_reset_pressed() -> void:
-	_log_event("RESET_PRESSED", {
+	_log_event("RESET", {
 		"prev_filled_slots": _filled_slots_count()
 	})
 	_begin_attempt()
@@ -385,7 +391,7 @@ func _set_input_locked(locked: bool) -> void:
 		if slot_node != null and slot_node.has_method("set_locked"):
 			slot_node.call("set_locked", locked)
 	for item_v in item_nodes_by_option.values():
-		if item_v is Node and item_v.has_method("set_locked"):
+		if item_v is Node and (item_v as Node).has_method("set_locked"):
 			(item_v as Node).call("set_locked", locked)
 
 func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
@@ -404,11 +410,11 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 	for detail_v in (result.get("feedback_details", []) as Array):
 		detail_lines.append("- %s" % str(detail_v))
 	detail_lines.append("")
-	detail_lines.append("Сборка сети дала риск-профиль: коллизии=%s | перехват=%s | фильтрация=%s | среда=%s" % [
-		_translate_risk_value(str(risk.get("collisions", "MID"))),
-		_translate_risk_value(str(risk.get("eavesdrop", "MID"))),
-		_translate_risk_value(str(risk.get("filtering", "OFF"))),
-		_translate_risk_value(str(risk.get("media", "UNKNOWN")))
+	detail_lines.append("Risk: collisions=%s | eavesdrop=%s | filtering=%s | media=%s" % [
+		str(risk.get("collisions", "MID")),
+		str(risk.get("eavesdrop", "MID")),
+		str(risk.get("filtering", "OFF")),
+		str(risk.get("media", "UNKNOWN"))
 	])
 	expl_details.text = "\n".join(detail_lines)
 
@@ -417,41 +423,23 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 	var missing_required: Array = result.get("missing_required", []) as Array
 	var wrong_selected: int = int(result.get("wrong_selected", 0))
 
-	why_lines.append("Почему это важно:")
-	if str(risk.get("filtering", "OFF")) == "OFF":
-		why_lines.append("- Без фильтрации трафика периметр остается уязвимым для внешних соединений.")
-	else:
-		why_lines.append("- Фильтрация включена: риск несанкционированного доступа ниже.")
+	why_lines.append("Selected modules:")
+	for selected_id in _collect_selected_ids():
+		why_lines.append("- %s" % selected_id)
 
 	if missing_required.is_empty() and wrong_selected == 0:
-		why_lines.append("- Выбраны все критически важные элементы периметра.")
+		why_lines.append("All required modules are present.")
 	elif not missing_required.is_empty():
-		why_lines.append("- Не хватает ключевых звеньев: %s." % ", ".join(_to_string_array(missing_required)))
-	else:
-		why_lines.append("- Есть лишние или шумные выборы, они повышают общий риск периметра.")
+		why_lines.append("Missing required: %s" % ", ".join(_to_string_array(missing_required)))
+	if wrong_selected > 0:
+		why_lines.append("Harmful modules selected: %d" % wrong_selected)
 
 	if strategy_flags.has("TOUCHED_ALL_OPTIONS"):
-		why_lines.append("")
-		why_lines.append("Зафиксирована переборная стратегия (использованы все варианты).")
-
-	var explain_selected: Array = result.get("explain_selected", []) as Array
-	if not explain_selected.is_empty():
-		why_lines.append("")
-		why_lines.append("Разбор выбранных элементов:")
-		for explain_v in explain_selected:
-			if typeof(explain_v) != TYPE_DICTIONARY:
-				continue
-			var explain_item: Dictionary = explain_v as Dictionary
-			var marker: String = "[OK]" if bool(explain_item.get("is_correct", false)) else "[X]"
-			why_lines.append("%s %s: %s" % [
-				marker,
-				str(explain_item.get("label", explain_item.get("option_id", "?"))),
-				str(explain_item.get("why", ""))
-			])
+		why_lines.append("Strategy flag: TOUCHED_ALL_OPTIONS")
 
 	expl_why.text = "\n".join(why_lines)
 
-	status_label.text = "Результат: %s | Установлено: %d/3" % [verdict_code, _filled_slots_count()]
+	status_label.text = "LOCKED | %s | slots %d/3" % [verdict_code, _filled_slots_count()]
 	status_label.modulate = expl_headline.modulate
 
 func _apply_result_highlight(result: Dictionary) -> void:
@@ -488,6 +476,12 @@ func _apply_result_highlight(result: Dictionary) -> void:
 func _register_trial(result: Dictionary, risk: Dictionary) -> void:
 	var elapsed_ms: int = Time.get_ticks_msec() - stage_started_ms
 	var selected_ids: Array[String] = _collect_selected_ids()
+	var snapshot_c: Dictionary = {
+		"slots": slots.duplicate(),
+		"selected": selected_ids.duplicate(),
+		"risk": risk.duplicate(true),
+		"strategy_flags": _to_string_array(result.get("strategy_flags", []) as Array)
+	}
 	var payload: Dictionary = {
 		"quest_id": "CASE_01_DIGITAL_RESUS",
 		"stage": "C",
@@ -495,12 +489,13 @@ func _register_trial(result: Dictionary, risk: Dictionary) -> void:
 		"level_id": str(stage_c_data.get("id", "CASE01_C_01")),
 		"match_key": "CASE01_C_%d" % attempt_index,
 		"prompt": str(stage_c_data.get("prompt", "")),
+		"snapshot": snapshot_c,
 		"slots": slots.duplicate(),
 		"selected": selected_ids.duplicate(),
 		"selected_count": int(result.get("selected_count", selected_ids.size())),
 		"correct_selected": int(result.get("correct_selected", 0)),
 		"wrong_selected": int(result.get("wrong_selected", 0)),
-		"risk": risk.duplicate(),
+		"risk_state": risk.duplicate(true),
 		"points": int(result.get("points", 0)),
 		"max_points": int(result.get("max_points", 2)),
 		"is_correct": bool(result.get("is_correct", false)),
@@ -517,7 +512,6 @@ func _register_trial(result: Dictionary, risk: Dictionary) -> void:
 		"trace": trace.duplicate(true)
 	}
 	GlobalMetrics.register_trial(payload)
-	attempt_index += 1
 
 func _update_status_line(prefix: String) -> void:
 	if input_locked:
@@ -525,9 +519,9 @@ func _update_status_line(prefix: String) -> void:
 	var filled: int = _filled_slots_count()
 	var used_unique: int = unique_used_set.size()
 	if prefix.strip_edges() == "":
-		status_label.text = "Установлено: %d/3 | Использовано уникальных: %d" % [filled, used_unique]
+		status_label.text = "Slots %d/3 | unique modules %d" % [filled, used_unique]
 	else:
-		status_label.text = "%s | Установлено: %d/3 | Использовано уникальных: %d" % [prefix, filled, used_unique]
+		status_label.text = "%s | slots %d/3 | unique modules %d" % [prefix, filled, used_unique]
 	status_label.modulate = COLOR_WARN
 
 func _update_risk_dashboard() -> void:
@@ -537,38 +531,15 @@ func _update_risk_dashboard() -> void:
 	var filtering_raw: String = str(risk.get("filtering", "OFF"))
 	var media_raw: String = str(risk.get("media", "UNKNOWN"))
 
-	collisions_value.text = _translate_risk_value(collisions_raw)
-	eavesdrop_value.text = _translate_risk_value(eavesdrop_raw)
-	filtering_value.text = _translate_risk_value(filtering_raw)
-	media_value.text = _translate_risk_value(media_raw)
+	collisions_value.text = collisions_raw
+	eavesdrop_value.text = eavesdrop_raw
+	filtering_value.text = filtering_raw
+	media_value.text = media_raw
 
 	collisions_value.modulate = _risk_color("collisions", collisions_raw)
 	eavesdrop_value.modulate = _risk_color("eavesdrop", eavesdrop_raw)
 	filtering_value.modulate = _risk_color("filtering", filtering_raw)
 	media_value.modulate = _risk_color("media", media_raw)
-
-func _translate_risk_value(value: String) -> String:
-	match value:
-		"LOW":
-			return "НИЗКИЙ"
-		"MID":
-			return "СРЕДНИЙ"
-		"HIGH":
-			return "ВЫСОКИЙ"
-		"ON":
-			return "ВКЛ"
-		"OFF":
-			return "ВЫКЛ"
-		"NEUTRAL":
-			return "НЕЙТРАЛЬНО"
-		"UNKNOWN":
-			return "НЕИЗВЕСТНО"
-		"FIBER":
-			return "ОПТИКА"
-		"COAX":
-			return "КОАКСИАЛ"
-		_:
-			return value
 
 func _calculate_risk(slot_values: Array[String]) -> Dictionary:
 	var selected_set: Dictionary = {}
@@ -577,25 +548,40 @@ func _calculate_risk(slot_values: Array[String]) -> Dictionary:
 			continue
 		selected_set[option_id] = true
 
+	var effects_list: Array = []
+	for option_id_v in selected_set.keys():
+		var option_id: String = str(option_id_v)
+		var option_data: Dictionary = option_by_id.get(option_id, {}) as Dictionary
+		effects_list.append(option_data.get("effects", {}) as Dictionary)
+
 	var collisions: String = "MID"
-	if selected_set.has("HUB"):
-		collisions = "HIGH"
-	elif selected_set.has("SWITCH"):
-		collisions = "LOW"
-
-	var filtering: String = "ON" if selected_set.has("FIREWALL") else "OFF"
-
+	var filtering: String = "OFF"
 	var eavesdrop: String = "MID"
-	if selected_set.has("FIBER"):
-		eavesdrop = "LOW"
-	elif selected_set.has("COAX"):
-		eavesdrop = "HIGH"
-
 	var media: String = "UNKNOWN"
-	if selected_set.has("FIBER"):
-		media = "FIBER"
-	elif selected_set.has("COAX"):
-		media = "COAX"
+
+	for effect_v in effects_list:
+		var effect: Dictionary = effect_v as Dictionary
+		var coll_val: String = str(effect.get("collisions", "NEUTRAL"))
+		if coll_val == "HIGH":
+			collisions = "HIGH"
+		elif coll_val == "LOW" and collisions != "HIGH":
+			collisions = "LOW"
+
+		var filt_val: String = str(effect.get("filtering", "OFF"))
+		if filt_val == "ON":
+			filtering = "ON"
+
+		var eav_val: String = str(effect.get("eavesdrop", "MID"))
+		if eav_val == "HIGH":
+			eavesdrop = "HIGH"
+		elif eav_val == "LOW" and eavesdrop != "HIGH":
+			eavesdrop = "LOW"
+
+		var media_val: String = str(effect.get("media", "NEUTRAL"))
+		if media_val == "FIBER":
+			media = "FIBER"
+		elif media_val == "COAX" and media != "FIBER":
+			media = "COAX"
 
 	return {
 		"collisions": collisions,
@@ -678,10 +664,10 @@ func _to_string_array(values: Array) -> Array[String]:
 		out.append(str(value_v))
 	return out
 
-func _log_event(event_name: String, data: Dictionary = {}) -> void:
+func _log_event(name: String, data: Dictionary = {}) -> void:
 	trace.append({
 		"t_ms": Time.get_ticks_msec() - stage_started_ms,
-		"event": event_name,
+		"event": name,
 		"data": data.duplicate(true)
 	})
 
@@ -697,10 +683,12 @@ func _on_stability_changed(_new_value: float, _delta: float) -> void:
 
 func _update_stability_ui() -> void:
 	stability_bar.value = GlobalMetrics.stability
+	if noir_overlay != null and noir_overlay.has_method("set_danger_level"):
+		noir_overlay.call("set_danger_level", float(GlobalMetrics.stability))
 
 func _on_viewport_size_changed() -> void:
 	var size: Vector2 = get_viewport_rect().size
-	var compact: bool = size.x < 900.0 or size.x < size.y
+	var compact: bool = size.x < 960.0 or size.x < size.y
 	palette_flow.columns = 1 if compact else 2
 
 	for slot_node in _slot_nodes:
@@ -715,5 +703,3 @@ func _show_error(message: String) -> void:
 	status_label.modulate = COLOR_ERR
 	btn_analyze.disabled = true
 	btn_reset.disabled = true
-	await get_tree().create_timer(1.2).timeout
-	_on_back_pressed()

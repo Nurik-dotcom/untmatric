@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestC.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="Theme" path="res://ui/theme_untformatic.tres" id="2_theme"]
 [ext_resource type="Script" path="res://scenes/TimeKnob.gd" id="3_knob_script"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="4_noir"]
 [ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_w857s"]
@@ -28,7 +28,7 @@ color = Color(0.06, 0.07, 0.08, 1)
 [node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("4_noir")]
 layer = 100
 script = ExtResource("4_w857s")
-intensity = 0.18
+intensity = 0.12
 fx_quality = 1
 tint_color = Color(0.93, 0.93, 0.93, 1)
 

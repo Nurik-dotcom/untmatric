@@ -12,6 +12,7 @@ func setup(item_data: Dictionary) -> void:
 	correct_bucket_id = str(item_data.get("correct_bucket_id", "")).to_upper()
 	text = item_label
 	custom_minimum_size = Vector2(0, 76)
+	set_meta("item_id", item_id)
 	set_meta("zone_id", "PILE")
 
 func set_zone_id(zone_id: String) -> void:
@@ -20,15 +21,18 @@ func set_zone_id(zone_id: String) -> void:
 func get_zone_id() -> String:
 	return str(get_meta("zone_id", "PILE"))
 
+func get_item_id() -> String:
+	return item_id
+
 func _get_drag_data(_at_position: Vector2) -> Variant:
 	var from_zone: String = get_zone_id()
 	drag_started.emit(item_id, from_zone)
 
 	var data: Dictionary = {
-		"kind": "RESUS_ITEM",
+		"kind": "RESUS_PART",
 		"item_id": item_id,
 		"label": item_label,
-		"source_path": get_path(),
+		"node_path": str(get_path()),
 		"from_zone": from_zone
 	}
 

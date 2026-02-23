@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scenes/case_01/DigitalResusQuestB.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
@@ -24,6 +24,7 @@ grow_vertical = 2
 color = Color(0.06, 0.07, 0.08, 1)
 
 [node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
+intensity = 0.12
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -56,13 +57,13 @@ text = "<"
 [node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ЗАГОЛОВОК"
+text = "Case 01: Digital Reanimation"
 vertical_alignment = 1
 
 [node name="StageLabel" type="Label" parent="SafeArea/MainVBox/Header"]
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
-text = "B"
+text = "STAGE B"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -81,9 +82,9 @@ layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="ContextLabel" type="Label" parent="SafeArea/MainVBox/ContextCard/ContextVBox"]
-custom_minimum_size = Vector2(0, 70)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "Контекст"
+text = "Tune BIOS profile before benchmark."
 autowrap_mode = 2
 
 [node name="BudgetRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContextCard/ContextVBox"]
@@ -91,53 +92,100 @@ layout_mode = 2
 
 [node name="BudgetLabel" type="Label" parent="SafeArea/MainVBox/ContextCard/ContextVBox/BudgetRow"]
 layout_mode = 2
-text = "Бюджет:"
+text = "BUDGET"
 
 [node name="BudgetValue" type="Label" parent="SafeArea/MainVBox/ContextCard/ContextVBox/BudgetRow"]
 layout_mode = 2
 text = "0$"
 
-[node name="OptionsCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="BiosCard" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
 
-[node name="Scroll" type="ScrollContainer" parent="SafeArea/MainVBox/OptionsCard"]
+[node name="BiosVBox" type="VBoxContainer" parent="SafeArea/MainVBox/BiosCard"]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="OptionsVBox" type="VBoxContainer" parent="SafeArea/MainVBox/OptionsCard/Scroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="DiagnosticCard" type="PanelContainer" parent="SafeArea/MainVBox"]
-visible = false
-custom_minimum_size = Vector2(0, 170)
+[node name="TuneGrid" type="GridContainer" parent="SafeArea/MainVBox/BiosCard/BiosVBox"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+
+[node name="CpuLabel" type="Label" parent="SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid"]
+layout_mode = 2
+text = "CPU"
+
+[node name="CpuLevel" type="OptionButton" parent="SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid"]
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 
-[node name="DiagnosticVBox" type="VBoxContainer" parent="SafeArea/MainVBox/DiagnosticCard"]
+[node name="RamLabel" type="Label" parent="SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid"]
+layout_mode = 2
+text = "RAM"
+
+[node name="RamLevel" type="OptionButton" parent="SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+
+[node name="GpuLabel" type="Label" parent="SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid"]
+layout_mode = 2
+text = "GPU"
+
+[node name="GpuLevel" type="OptionButton" parent="SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+
+[node name="UsedBudgetLabel" type="Label" parent="SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid"]
+layout_mode = 2
+text = "USED"
+
+[node name="UsedBudgetValue" type="Label" parent="SafeArea/MainVBox/BiosCard/BiosVBox/TuneGrid"]
+layout_mode = 2
+text = "0$"
+
+[node name="BudgetBar" type="ProgressBar" parent="SafeArea/MainVBox/BiosCard/BiosVBox"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
+[node name="RiskRow" type="HBoxContainer" parent="SafeArea/MainVBox/BiosCard/BiosVBox"]
+layout_mode = 2
+
+[node name="RiskLabel" type="Label" parent="SafeArea/MainVBox/BiosCard/BiosVBox/RiskRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "RISK"
+
+[node name="RiskValue" type="Label" parent="SafeArea/MainVBox/BiosCard/BiosVBox/RiskRow"]
+layout_mode = 2
+text = "LOW"
+
+[node name="RiskBar" type="ProgressBar" parent="SafeArea/MainVBox/BiosCard/BiosVBox"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
+[node name="TerminalCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TerminalVBox" type="VBoxContainer" parent="SafeArea/MainVBox/TerminalCard"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="DiagHeadline" type="Label" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
+[node name="TerminalTitle" type="Label" parent="SafeArea/MainVBox/TerminalCard/TerminalVBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Заголовок"
+text = "BENCHMARK TERMINAL"
 
-[node name="DiagBody" type="RichTextLabel" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
-custom_minimum_size = Vector2(0, 82)
+[node name="TerminalOutput" type="RichTextLabel" parent="SafeArea/MainVBox/TerminalCard/TerminalVBox"]
+custom_minimum_size = Vector2(0, 130)
 layout_mode = 2
+size_flags_vertical = 3
 fit_content = false
 scroll_active = true
 text = ""
-autowrap_mode = 2
-
-[node name="DiagHint" type="Label" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
-layout_mode = 2
-text = "Подсказка"
 autowrap_mode = 2
 
 [node name="BottomBar" type="HBoxContainer" parent="SafeArea/MainVBox"]
@@ -148,17 +196,21 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "СТАТУС"
+text = "READY"
 autowrap_mode = 2
 vertical_alignment = 1
 
-[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
-custom_minimum_size = Vector2(160, 72)
+[node name="BtnBenchmark" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(190, 72)
 layout_mode = 2
-text = "СБРОС"
+text = "RUN BENCHMARK"
+
+[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(150, 72)
+layout_mode = 2
+text = "RESET"
 
 [node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar"]
-custom_minimum_size = Vector2(220, 72)
+custom_minimum_size = Vector2(160, 72)
 layout_mode = 2
-text = "ПОДТВЕРДИТЬ"
-
+text = "CONFIRM"

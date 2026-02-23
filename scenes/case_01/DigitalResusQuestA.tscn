@@ -1,12 +1,10 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/case_01/DigitalResusQuestA.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
-[ext_resource type="Script" path="res://scripts/ui/ResusDropZone.gd" id="3_drop"]
+[ext_resource type="Script" path="res://scripts/ui/SocketZone.gd" id="3_socket"]
 [ext_resource type="Script" path="res://scripts/ui/ResusPileZone.gd" id="4_pile"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="5_noir"]
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dimmer"]
-bg_color = Color(0, 0, 0, 0.65)
 
 [node name="DigitalResusQuestA" type="Control"]
 layout_mode = 3
@@ -26,7 +24,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.07, 0.08, 1)
+
 [node name="NoirOverlay" parent="." instance=ExtResource("5_noir")]
+intensity = 0.12
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -59,13 +59,13 @@ text = "<"
 [node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ДЕЛО №1: ЦИФРОВАЯ РЕАНИМАЦИЯ"
+text = "Case 01: Digital Reanimation"
 vertical_alignment = 1
 
 [node name="StageLabel" type="Label" parent="SafeArea/MainVBox/Header"]
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
-text = "A"
+text = "STAGE A"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -82,7 +82,7 @@ layout_mode = 2
 [node name="BriefingLabel" type="Label" parent="SafeArea/MainVBox/BriefingCard"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-text = "Брифинг"
+text = "Briefing"
 autowrap_mode = 3
 
 [node name="SystemCard" type="PanelContainer" parent="SafeArea/MainVBox"]
@@ -94,7 +94,7 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="MonitorFrame" type="PanelContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox"]
-custom_minimum_size = Vector2(0, 150)
+custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
 
 [node name="MonitorScreen" type="ColorRect" parent="SafeArea/MainVBox/SystemCard/SystemVBox/MonitorFrame"]
@@ -124,12 +124,56 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="BootConsole" type="RichTextLabel" parent="SafeArea/MainVBox/SystemCard/SystemVBox"]
-custom_minimum_size = Vector2(0, 180)
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 fit_content = false
 scroll_active = true
 text = ""
 autowrap_mode = 2
+
+[node name="DiagPanel" type="PanelContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox"]
+custom_minimum_size = Vector2(0, 104)
+layout_mode = 2
+
+[node name="DiagVBox" type="VBoxContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="VideoRow" type="HBoxContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox"]
+layout_mode = 2
+
+[node name="VideoLabel" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/VideoRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "VIDEO"
+
+[node name="VideoValue" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/VideoRow"]
+layout_mode = 2
+text = "VIDEO: NO SIGNAL"
+
+[node name="MemoryRow" type="HBoxContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox"]
+layout_mode = 2
+
+[node name="MemoryLabel" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/MemoryRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MEMORY"
+
+[node name="MemoryValue" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/MemoryRow"]
+layout_mode = 2
+text = "MEMORY: READ ERROR"
+
+[node name="BufferRow" type="HBoxContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox"]
+layout_mode = 2
+
+[node name="BufferLabel" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/BufferRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "BUFFER"
+
+[node name="BufferValue" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/BufferRow"]
+layout_mode = 2
+text = "BUFFER: SLOW"
 
 [node name="ZonesCard" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
@@ -140,48 +184,48 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="ZoneInput" type="PanelContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox"]
-custom_minimum_size = Vector2(0, 120)
+custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
-script = ExtResource("3_drop")
+script = ExtResource("3_socket")
 
 [node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput"]
 layout_mode = 2
 
 [node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput/VBox"]
 layout_mode = 2
-text = "ВВОД"
+text = "INPUT"
 
 [node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
 [node name="ZoneOutput" type="PanelContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox"]
-custom_minimum_size = Vector2(0, 120)
+custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
-script = ExtResource("3_drop")
+script = ExtResource("3_socket")
 
 [node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput"]
 layout_mode = 2
 
 [node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput/VBox"]
 layout_mode = 2
-text = "ВЫВОД"
+text = "OUTPUT"
 
 [node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
 [node name="ZoneMemory" type="PanelContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox"]
-custom_minimum_size = Vector2(0, 120)
+custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
-script = ExtResource("3_drop")
+script = ExtResource("3_socket")
 
 [node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory"]
 layout_mode = 2
 
 [node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory/VBox"]
 layout_mode = 2
-text = "ПАМЯТЬ"
+text = "MEMORY"
 
 [node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory/VBox"]
 layout_mode = 2
@@ -200,7 +244,7 @@ layout_mode = 2
 
 [node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/PartsPileCard/VBox"]
 layout_mode = 2
-text = "ДЕТАЛИ"
+text = "PARTS"
 
 [node name="Scroll" type="ScrollContainer" parent="SafeArea/MainVBox/PartsPileCard/VBox"]
 layout_mode = 2
@@ -223,19 +267,19 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "СТАТУС"
+text = "READY"
 autowrap_mode = 2
 vertical_alignment = 1
 
 [node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(160, 72)
 layout_mode = 2
-text = "СБРОС"
+text = "RESET"
 
 [node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(180, 72)
 layout_mode = 2
-text = "ПОДТВЕРДИТЬ"
+text = "CONFIRM"
 
 [node name="Dimmer" type="ColorRect" parent="."]
 visible = false
@@ -270,17 +314,17 @@ theme_override_constants/separation = 12
 [node name="VerdictLabel" type="Label" parent="ResultPopup/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "ВЕРДИКТ"
+text = "VERDICT"
 horizontal_alignment = 1
 
 [node name="ScoreLabel" type="Label" parent="ResultPopup/VBox"]
 layout_mode = 2
-text = "СЧЁТ"
+text = "SCORE"
 horizontal_alignment = 1
 
 [node name="StabilityLabel" type="Label" parent="ResultPopup/VBox"]
 layout_mode = 2
-text = "СТАБИЛЬНОСТЬ"
+text = "STABILITY"
 horizontal_alignment = 1
 
 [node name="Buttons" type="HBoxContainer" parent="ResultPopup/VBox"]
@@ -291,10 +335,9 @@ theme_override_constants/separation = 12
 [node name="BtnRetry" type="Button" parent="ResultPopup/VBox/Buttons"]
 custom_minimum_size = Vector2(140, 56)
 layout_mode = 2
-text = "ПОВТОРИТЬ"
+text = "RETRY"
 
 [node name="BtnBack" type="Button" parent="ResultPopup/VBox/Buttons"]
 custom_minimum_size = Vector2(140, 56)
 layout_mode = 2
-text = "НАЗАД"
-
+text = "BACK"

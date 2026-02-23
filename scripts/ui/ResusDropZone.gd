@@ -42,7 +42,7 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	if typeof(data) != TYPE_DICTIONARY:
 		return false
 	var payload: Dictionary = data as Dictionary
-	if str(payload.get("kind", "")) != "RESUS_ITEM":
+	if str(payload.get("kind", "")) != "RESUS_PART":
 		return false
 	modulate = Color(1.08, 1.03, 1.03, 1.0)
 	return true
@@ -52,7 +52,7 @@ func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	if typeof(data) != TYPE_DICTIONARY:
 		return
 	var payload: Dictionary = data as Dictionary
-	var source_path: String = str(payload.get("source_path", ""))
+	var source_path: String = str(payload.get("node_path", ""))
 	if source_path == "":
 		return
 	var source_node: Node = get_node_or_null(source_path)

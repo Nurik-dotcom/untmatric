@@ -177,6 +177,16 @@ static func validate_level(level: Dictionary) -> bool:
 		push_error("ResusData: system_state_rules are incomplete in level %s" % str(level.get("id", "UNKNOWN")))
 		return false
 
+	if bool(level.get("diegetic_mode", false)):
+		var socket_map: Dictionary = level.get("socket_map", {}) as Dictionary
+		if socket_map.is_empty():
+			push_error("ResusData: diegetic level %s missing socket_map" % str(level.get("id", "UNKNOWN")))
+			return false
+		for required_bucket in REQUIRED_BUCKET_IDS:
+			if not socket_map.has(required_bucket):
+				push_error("ResusData: socket_map missing bucket %s in level %s" % [required_bucket, str(level.get("id", "UNKNOWN"))])
+				return false
+
 	return true
 
 static func validate_stage_b(stage_b: Dictionary) -> bool:
@@ -193,6 +203,29 @@ static func validate_stage_b(stage_b: Dictionary) -> bool:
 	if options.size() != 4:
 		push_error("ResusData: Stage B must contain exactly 4 options")
 		return false
+
+	var tuning_model: Dictionary = stage_b.get("tuning_model", {}) as Dictionary
+	if tuning_model.is_empty():
+		push_error("ResusData: Stage B tuning_model is missing")
+		return false
+	for tuning_key in ["cpu", "ram", "gpu"]:
+		if not tuning_model.has(tuning_key):
+			push_error("ResusData: Stage B tuning_model missing %s" % tuning_key)
+			return false
+
+	var classifier_thresholds: Dictionary = stage_b.get("classifier_thresholds", {}) as Dictionary
+	if classifier_thresholds.is_empty():
+		push_error("ResusData: Stage B classifier_thresholds is missing")
+		return false
+	if not classifier_thresholds.has_all(["bottleneck_cpu", "bottleneck_ram", "lowpower_perf_max"]):
+		push_error("ResusData: Stage B classifier_thresholds incomplete")
+		return false
+
+	var benchmark_outputs: Dictionary = stage_b.get("benchmark_outputs", {}) as Dictionary
+	for class_code in ["BOTTLENECK", "OPTIMAL", "OVERBUDGET", "LOWPOWER"]:
+		if not benchmark_outputs.has(class_code):
+			push_error("ResusData: Stage B benchmark output is missing for %s" % class_code)
+			return false
 
 	var option_ids: Dictionary = {}
 	for option_v in options:
@@ -249,6 +282,11 @@ static func validate_stage_c(stage_c: Dictionary) -> bool:
 		push_error("ResusData: Stage C must contain exactly 5 options")
 		return false
 
+	var modules: Array = stage_c.get("modules", []) as Array
+	if modules.size() > 0 and modules.size() != options.size():
+		push_error("ResusData: Stage C modules size must match options size")
+		return false
+
 	var required_effect_keys: Array[String] = ["collisions", "filtering", "eavesdrop", "media"]
 	var option_ids: Dictionary = {}
 	var correct_count: int = 0
@@ -290,6 +328,15 @@ static func validate_stage_c(stage_c: Dictionary) -> bool:
 	for feedback_key in required_feedback_keys:
 		if not feedback_rules.has(feedback_key):
 			push_error("ResusData: Stage C feedback rule '%s' is missing" % feedback_key)
+			return false
+
+	var visual_sim: Dictionary = stage_c.get("visual_sim", {}) as Dictionary
+	if visual_sim.is_empty():
+		push_error("ResusData: Stage C visual_sim is missing")
+		return false
+	for verdict_code in required_feedback_keys:
+		if not visual_sim.has(verdict_code):
+			push_error("ResusData: Stage C visual_sim missing verdict %s" % verdict_code)
 			return false
 
 	return true

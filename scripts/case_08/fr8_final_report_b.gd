@@ -184,6 +184,9 @@ func _rebuild_cards() -> void:
 		cards_row.add_child(card_node)
 		if card_node.has_method("setup"):
 			card_node.call("setup", cards_by_stage_id[stage_id])
+		card_node.set_meta("stage_id", stage_id)
+		if card_node is CanvasItem:
+			(card_node as CanvasItem).modulate = Color.WHITE
 		if card_node.has_method("set_move_enabled"):
 			card_node.call("set_move_enabled", i > 0 and not trial_locked, i < current_order.size() - 1 and not trial_locked)
 		if card_node.has_signal("move_requested"):
@@ -248,10 +251,15 @@ func _on_confirm_pressed() -> void:
 	_log_event("CONFIRM_PRESSED", {
 		"final_order": current_order.duplicate()
 	})
+	trial_locked = true
+	btn_confirm.disabled = true
+	_set_status("ИНИЦИАЛИЗАЦИЯ ЛОГИЧЕСКОГО СКАНИРОВАНИЯ...", COLOR_WARN)
 
 	var evaluation: Dictionary = FR8BScoring.evaluate(level_data, current_order)
 	var score: Dictionary = FR8BScoring.resolve_score(level_data, evaluation)
 	var feedback_text: String = FR8BScoring.feedback_text(level_data, evaluation)
+	var scan_triggered_glitch: bool = await _run_logic_scan(evaluation)
+	await _restore_cards_color()
 
 	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
 	var tffa_ms: int = elapsed_ms if time_to_first_action_ms < 0 else time_to_first_action_ms
@@ -301,8 +309,9 @@ func _on_confirm_pressed() -> void:
 		btn_confirm.disabled = false
 		btn_next.disabled = true
 		_set_status(feedback_text, COLOR_ERR)
-		_trigger_glitch()
-		_shake_main_layout()
+		if not scan_triggered_glitch:
+			_trigger_glitch()
+			_shake_main_layout()
 		if AudioManager != null:
 			AudioManager.play("error")
 
@@ -375,6 +384,47 @@ func _set_status(text_value: String, color_value: Color) -> void:
 	status_label.text = text_value
 	status_label.modulate = color_value
 
+func _run_logic_scan(evaluation: Dictionary) -> bool:
+	var top_violation: Dictionary = evaluation.get("top_violation", {}) as Dictionary
+	var violating_stage_id: String = str(top_violation.get("a", "")).strip_edges()
+	var scan_triggered_glitch: bool = false
+
+	for child in cards_row.get_children():
+		if not (child is Control):
+			continue
+		var card: Control = child as Control
+		var stage_id: String = str(card.get_meta("stage_id", "")).strip_edges()
+
+		await _highlight_card_node(card, Color(1.5, 1.5, 1.5, 1.0), 0.14)
+		if AudioManager != null:
+			AudioManager.play("click")
+		await get_tree().create_timer(0.3).timeout
+
+		if not violating_stage_id.is_empty() and stage_id == violating_stage_id:
+			await _highlight_card_node(card, Color(2.0, 0.2, 0.2, 1.0), 0.18)
+			_trigger_glitch()
+			_shake_main_layout()
+			await get_tree().create_timer(0.5).timeout
+			scan_triggered_glitch = true
+			break
+
+		await _highlight_card_node(card, Color(0.45, 1.35, 0.55, 1.0), 0.15)
+
+	return scan_triggered_glitch
+
+func _restore_cards_color() -> Signal:
+	var tween: Tween = create_tween()
+	tween.set_parallel(true)
+	for child in cards_row.get_children():
+		if child is Control:
+			tween.tween_property(child, "modulate", Color.WHITE, 0.3)
+	return tween.finished
+
+func _highlight_card_node(card: Control, target_color: Color, duration: float) -> Signal:
+	var tween: Tween = create_tween()
+	tween.tween_property(card, "modulate", target_color, duration)
+	return tween.finished
+
 func _trigger_glitch() -> void:
 	var shader_material: ShaderMaterial = crt_overlay.material as ShaderMaterial
 	if shader_material == null:
@@ -408,3 +458,10 @@ func _on_stability_changed(_new_value: float, _delta: float) -> void:
 
 func _update_stability_ui() -> void:
 	stability_bar.value = GlobalMetrics.stability
+	var overlay_controller: Node = get_node_or_null("CanvasLayer")
+	if overlay_controller != null and overlay_controller.has_method("set_danger_level"):
+		overlay_controller.call("set_danger_level", GlobalMetrics.stability)
+		return
+	var shared_overlay: Node = get_tree().get_first_node_in_group("noir_overlay")
+	if shared_overlay != null and shared_overlay.has_method("set_danger_level"):
+		shared_overlay.call("set_danger_level", GlobalMetrics.stability)

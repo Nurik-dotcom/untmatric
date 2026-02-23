@@ -45,20 +45,24 @@ func add_item_control(item_control: Control) -> void:
 		item_control.set_meta("zone_id", bucket_id)
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+	if _is_input_locked():
+		return false
 	if typeof(data) != TYPE_DICTIONARY:
 		return false
 	var payload: Dictionary = data as Dictionary
-	if str(payload.get("kind", "")) != "RESUS_ITEM":
+	if str(payload.get("kind", "")) != "RESUS_PART":
 		return false
 	modulate = Color(1.08, 1.03, 1.03, 1.0)
 	return true
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	modulate = Color(1, 1, 1, 1)
+	if _is_input_locked():
+		return
 	if typeof(data) != TYPE_DICTIONARY:
 		return
 	var payload: Dictionary = data as Dictionary
-	var source_path: String = str(payload.get("source_path", ""))
+	var source_path: String = str(payload.get("node_path", ""))
 	if source_path == "":
 		return
 	var source_node: Node = get_node_or_null(source_path)
@@ -85,3 +89,9 @@ func _drop_data(_at_position: Vector2, data: Variant) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END and not is_drag_successful():
 		modulate = Color(1, 1, 1, 1)
+
+func _is_input_locked() -> bool:
+	var controller: Node = get_tree().get_first_node_in_group("resus_a_controller")
+	if controller != null and controller.has_method("is_input_locked"):
+		return bool(controller.call("is_input_locked"))
+	return false

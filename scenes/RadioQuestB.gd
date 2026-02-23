@@ -6,10 +6,16 @@ enum Phase {
 	DONE
 }
 
-const POOL_NORMAL: Array[int] = [64, 80, 100, 128, 256, 512, 1024]
-const POOL_ANCHOR: Array[int] = [75, 110, 125, 300, 750, 1000]
+const RadioLevels := preload("res://scripts/radio_intercept/RadioLevels.gd")
+
+const FALLBACK_POOL_NORMAL: Array[int] = [64, 80, 100, 128, 256, 512, 1024]
+const FALLBACK_POOL_ANCHOR: Array[int] = [75, 110, 125, 300, 750, 1000]
+const FALLBACK_CAPACITY_STEPS_BITS: Array[int] = [128, 256, 512, 1024, 2048, 4096, 8192, 16384]
+const FALLBACK_ANSWER_MODES: Array[String] = ["bits", "bytes"]
 const SAMPLE_SLOTS: int = 7
 const PHONE_LANDSCAPE_MAX_HEIGHT: float = 520.0
+const CONVERTER_LOCK_SECONDS: float = 3.0
+const CONVERTER_COOLDOWN_SECONDS: float = 6.0
 
 const COLOR_IDLE: Color = Color(0.18, 0.18, 0.18, 1.0)
 const COLOR_GOOD: Color = Color(0.20, 0.90, 0.30, 1.0)
@@ -22,7 +28,7 @@ const TXT_STORAGE_TITLE: String = "\u0421\u041a\u041b\u0410\u0414 \u041d\u041e\u
 const TXT_CONTEXT_TITLE: String = "\u0422\u0415\u0420\u041c\u0418\u041d\u0410\u041b"
 const TXT_TASK: String = "\u0412\u044b\u0447\u0438\u0441\u043b\u0438\u0442\u0435 I = K*i \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u043f\u0442\u0438\u043c\u0430\u043b\u044c\u043d\u044b\u0439 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c."
 const TXT_CALC_TITLE: String = "\u0420\u0410\u0421\u0427\u0401\u0422 I"
-const TXT_BTN_CHECK: String = "\u041f\u0420\u041e\u0412\u0415\u0420\u0418\u0422\u042c"
+const TXT_BTN_CHECK: String = "\u0412\u0412\u041e\u0414"
 const TXT_PREVIEW_TITLE: String = "\u0414\u0418\u0410\u0413\u041d\u041e\u0421\u0422\u0418\u041a\u0410"
 const TXT_BTN_CONVERTER: String = "\u041a\u041e\u041d\u0412\u0415\u0420\u0422\u0415\u0420"
 const TXT_BTN_CONFIRM: String = "\u041f\u041e\u0414\u0422\u0412\u0415\u0420\u0414\u0418\u0422\u042c"
@@ -78,6 +84,7 @@ const TXT_RESULT_OVER: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0412\u0
 @onready var preview_class_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox/PreviewClassLabel
 
 @onready var btn_converter: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnConverter
+@onready var noir_overlay: CanvasLayer = $NoirOverlay
 @onready var btn_capture: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnCapture
 @onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnNext
 @onready var sample_strip: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/SampleStrip
@@ -109,14 +116,29 @@ var current_trial_idx: int = 0
 var anchor_countdown: int = 0
 var pool_type: String = "NORMAL"
 var sample_refs: Array[Dictionary] = []
+var converter_lock_active: bool = false
+var converter_lock_until: float = 0.0
+var converter_cooldown_until: float = 0.0
+var converter_use_count: int = 0
+var input_buffer: String = ""
+var numpad_grid: GridContainer
+
+var _pool_normal: Array[int] = []
+var _pool_anchor: Array[int] = []
+var _capacity_steps_bits: Array[int] = []
+var _answer_unit_modes: Array[String] = []
+var _anchor_every_min: int = 7
+var _anchor_every_max: int = 10
 
 var _current_stability: float = 100.0
 var _ui_ready: bool = false
 
 func _ready() -> void:
 	randomize()
+	_load_level_config()
 	_apply_static_texts()
 	_connect_signals()
+	_install_numpad()
 	_collect_sample_refs()
 	_reset_sample_strip()
 	_set_details_visible(false)
@@ -127,7 +149,7 @@ func _ready() -> void:
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	_on_stability_changed(GlobalMetrics.stability, 0.0)
 
-	anchor_countdown = randi_range(7, 10)
+	anchor_countdown = _random_anchor_gap()
 	_start_trial()
 	_ui_ready = true
 
@@ -135,6 +157,25 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and _ui_ready:
 		_apply_safe_area_padding()
 		_configure_layout()
+
+func _process(_delta: float) -> void:
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	if converter_lock_active:
+		var left: float = maxf(0.0, converter_lock_until - now_sec)
+		status_label.text = "STATUS: converter lock %.1fs" % left
+		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		if now_sec < converter_lock_until:
+			return
+		converter_lock_active = false
+		_apply_phase_controls()
+		status_label.text = TXT_STATUS_CONVERTER % [i_bits_true, i_bits_true / 8]
+		status_label.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0, 1.0))
+		return
+
+	if phase != Phase.DONE:
+		var cooldown_active: bool = now_sec < converter_cooldown_until
+		if btn_converter.disabled != cooldown_active:
+			_apply_phase_controls()
 
 func _apply_static_texts() -> void:
 	title_label.text = TXT_TITLE
@@ -169,6 +210,59 @@ func _connect_signals() -> void:
 	for idx in range(storage_btns.size()):
 		storage_btns[idx].pressed.connect(_on_storage_selected.bind(idx))
 
+func _install_numpad() -> void:
+	var calc_vbox: VBoxContainer = btn_check_calc.get_parent() as VBoxContainer
+	if calc_vbox == null:
+		return
+	btn_minus.visible = false
+	btn_plus.visible = false
+
+	numpad_grid = GridContainer.new()
+	numpad_grid.name = "NumpadGrid"
+	numpad_grid.columns = 3
+	numpad_grid.custom_minimum_size = Vector2(0.0, 220.0)
+	numpad_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	numpad_grid.theme = theme
+	numpad_grid.add_theme_constant_override("h_separation", 8)
+	numpad_grid.add_theme_constant_override("v_separation", 8)
+
+	var keys: Array[String] = ["7", "8", "9", "4", "5", "6", "1", "2", "3", "C", "0", "ENTER"]
+	for key in keys:
+		var btn: Button = Button.new()
+		btn.text = key
+		btn.custom_minimum_size = Vector2(0.0, 56.0)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.pressed.connect(_on_numpad_pressed.bind(key))
+		numpad_grid.add_child(btn)
+
+	calc_vbox.add_child(numpad_grid)
+	calc_vbox.move_child(numpad_grid, calc_vbox.get_child_count() - 1)
+
+func _on_numpad_pressed(key: String) -> void:
+	if phase != Phase.CALC or converter_lock_active:
+		return
+	match key:
+		"C":
+			_register_action()
+			input_buffer = ""
+		"ENTER":
+			_on_check_calc_pressed()
+			return
+		_:
+			_register_action()
+			if input_buffer.length() < 9:
+				input_buffer += key
+	_sync_input_buffer()
+
+func _sync_input_buffer() -> void:
+	if input_buffer.is_empty():
+		i_bits_user = 0
+	else:
+		i_bits_user = input_buffer.to_int()
+	i_bits_value_label.text = str(i_bits_user)
+	_update_preview()
+	_update_details_text()
+
 func _collect_sample_refs() -> void:
 	sample_refs.clear()
 	for child_var in sample_strip.get_children():
@@ -192,16 +286,21 @@ func _start_trial() -> void:
 	calc_checked = false
 	selected_storage_idx = -1
 	used_converter = false
+	converter_use_count = 0
+	input_buffer = ""
+	converter_lock_active = false
+	converter_lock_until = 0.0
+	converter_cooldown_until = 0.0
 	i_bits_user = 0
 	start_ms = Time.get_ticks_msec()
 	first_action_ms = -1
 
 	if anchor_countdown <= 0:
-		k_symbols = POOL_ANCHOR.pick_random()
+		k_symbols = _random_from_int_pool(_pool_anchor, FALLBACK_POOL_ANCHOR.pick_random())
 		pool_type = "ANCHOR"
-		anchor_countdown = randi_range(7, 10)
+		anchor_countdown = _random_anchor_gap()
 	else:
-		k_symbols = POOL_NORMAL.pick_random()
+		k_symbols = _random_from_int_pool(_pool_normal, FALLBACK_POOL_NORMAL.pick_random())
 		pool_type = "NORMAL"
 		anchor_countdown -= 1
 
@@ -226,6 +325,7 @@ func _start_trial() -> void:
 		btn.button_pressed = false
 		btn.text = _format_storage_option(storage_options[idx])
 		btn.modulate = Color(1, 1, 1, 1)
+	_apply_phase_controls()
 
 	status_label.text = TXT_STATUS_PLAN
 	status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
@@ -237,17 +337,14 @@ func _start_trial() -> void:
 func _generate_storage_options() -> void:
 	storage_options.clear()
 
-	var best_cap: int = 1
-	while best_cap <= i_bits_true:
-		best_cap *= 2
-	if best_cap == i_bits_true:
-		best_cap *= 2
+	var best_cap: int = _find_best_fit_cap(i_bits_true)
 	storage_options.append(_make_auto_option(best_cap, "BEST"))
 
-	var under_cap: int = maxi(1, int(floor(float(i_bits_true) * 0.75)))
+	var under_cap: int = _find_underfit_cap(i_bits_true)
 	storage_options.append(_make_auto_option(under_cap, "UNDER"))
 
-	if i_bits_true % 8 == 0:
+	var wants_bytes: bool = _answer_unit_modes.has("bytes")
+	if wants_bytes:
 		storage_options.append({
 			"capacity_bits": i_bits_true * 8,
 			"display_size": i_bits_true,
@@ -256,13 +353,13 @@ func _generate_storage_options() -> void:
 		})
 	else:
 		storage_options.append({
-			"capacity_bits": i_bits_true * 8192,
+			"capacity_bits": i_bits_true * 8,
 			"display_size": i_bits_true,
-			"display_unit": "\u041a\u0411",
+			"display_unit": "\u0431\u0430\u0439\u0442",
 			"tag": "UNIT_TRAP"
 		})
 
-	var over_cap: int = int(ceil((float(i_bits_true) * 4.0) / 100.0) * 100.0)
+	var over_cap: int = _find_overkill_cap(best_cap)
 	storage_options.append(_make_auto_option(over_cap, "OVER"))
 
 	storage_options.shuffle()
@@ -291,37 +388,37 @@ func _register_action() -> void:
 		first_action_ms = Time.get_ticks_msec()
 
 func _on_minus_pressed() -> void:
-	if phase != Phase.CALC:
+	if phase != Phase.CALC or converter_lock_active:
 		return
 	_register_action()
 	i_bits_user = maxi(0, i_bits_user - 8)
+	input_buffer = str(i_bits_user)
 	i_bits_value_label.text = str(i_bits_user)
 	_update_preview()
 	_update_details_text()
 
 func _on_plus_pressed() -> void:
-	if phase != Phase.CALC:
+	if phase != Phase.CALC or converter_lock_active:
 		return
 	_register_action()
 	i_bits_user += 8
+	input_buffer = str(i_bits_user)
 	i_bits_value_label.text = str(i_bits_user)
 	_update_preview()
 	_update_details_text()
 
 func _on_check_calc_pressed() -> void:
-	if phase != Phase.CALC:
+	if phase != Phase.CALC or converter_lock_active:
 		return
+	if not input_buffer.is_empty():
+		i_bits_user = input_buffer.to_int()
+		i_bits_value_label.text = str(i_bits_user)
 	_register_action()
 
 	calc_checked = true
 	phase = Phase.SELECT
 
-	for btn in storage_btns:
-		btn.disabled = false
-
-	btn_minus.disabled = true
-	btn_plus.disabled = true
-	btn_check_calc.disabled = true
+	_apply_phase_controls()
 
 	if i_bits_user == i_bits_true:
 		status_label.text = TXT_STATUS_CALC_OK
@@ -336,7 +433,7 @@ func _on_check_calc_pressed() -> void:
 	_update_details_text()
 
 func _on_storage_selected(idx: int) -> void:
-	if phase != Phase.SELECT:
+	if phase != Phase.SELECT or converter_lock_active:
 		return
 	_register_action()
 
@@ -345,22 +442,33 @@ func _on_storage_selected(idx: int) -> void:
 		storage_btns[i].button_pressed = (i == idx)
 		storage_btns[i].modulate = Color(1, 1, 0.75, 1) if i == idx else Color(1, 1, 1, 1)
 
-	btn_capture.disabled = false
+	_apply_phase_controls()
 	_update_preview()
 	_update_details_text()
 
 func _on_converter_pressed() -> void:
 	if phase == Phase.DONE:
 		return
+	if converter_lock_active:
+		return
 	_register_action()
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	if now_sec < converter_cooldown_until:
+		var left: float = converter_cooldown_until - now_sec
+		status_label.text = "STATUS: converter cooldown %.1fs" % left
+		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		return
 	used_converter = true
-	status_label.text = TXT_STATUS_CONVERTER % [i_bits_true, i_bits_true / 8]
-	status_label.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0, 1.0))
+	converter_use_count += 1
+	converter_lock_active = true
+	converter_lock_until = now_sec + CONVERTER_LOCK_SECONDS
+	converter_cooldown_until = now_sec + CONVERTER_COOLDOWN_SECONDS
+	_apply_phase_controls()
 	_update_preview()
 	_update_details_text()
 
 func _on_capture_pressed() -> void:
-	if phase != Phase.SELECT or selected_storage_idx < 0:
+	if phase != Phase.SELECT or selected_storage_idx < 0 or converter_lock_active:
 		return
 	_register_action()
 	_finish_trial()
@@ -369,6 +477,7 @@ func _finish_trial() -> void:
 	phase = Phase.DONE
 	btn_capture.visible = false
 	btn_next.visible = true
+	_apply_phase_controls()
 
 	var choice: Dictionary = storage_options[selected_storage_idx]
 	var choice_cap: int = int(choice["capacity_bits"])
@@ -397,7 +506,7 @@ func _finish_trial() -> void:
 		error_type = "overkill_soft"
 		is_overkill = true
 
-	var valid_mastery: bool = (not used_converter) and calc_correct and is_best_fit
+	var valid_mastery: bool = (converter_use_count == 0) and calc_correct and is_best_fit
 
 	if error_type == "best_fit":
 		status_label.text = TXT_RESULT_BEST
@@ -432,6 +541,7 @@ func _finish_trial() -> void:
 		"I_bits_user": i_bits_user,
 		"calc_correct": calc_correct,
 		"used_converter": used_converter,
+		"converter_use_count": converter_use_count,
 		"choice_capacity_bits": choice_cap,
 		"choice_display_size": int(choice["display_size"]),
 		"choice_display_unit": str(choice["display_unit"]),
@@ -447,6 +557,12 @@ func _finish_trial() -> void:
 		"is_timed": is_timed,
 		"forced_sampling": forced_sampling
 	}
+	var stability_delta: float = 0.0
+	if not is_fit:
+		stability_delta -= 10.0
+	if converter_use_count > 0:
+		stability_delta -= 5.0 * float(converter_use_count)
+	payload["stability_delta"] = stability_delta
 	GlobalMetrics.register_trial(payload)
 
 	_update_preview()
@@ -523,6 +639,8 @@ func _update_details_text() -> void:
 		lines.append("choice_bits: %d" % int(opt["capacity_bits"]))
 	if used_converter:
 		lines.append("converter: used")
+	if converter_lock_active:
+		lines.append("converter_lock: active")
 	details_text.text = "\n".join(lines)
 
 func _on_next_pressed() -> void:
@@ -552,7 +670,128 @@ func _update_header_meta() -> void:
 
 func _on_stability_changed(new_value: float, _delta: float) -> void:
 	_current_stability = new_value
+	if noir_overlay != null and noir_overlay.has_method("set_danger_level"):
+		noir_overlay.call("set_danger_level", new_value)
 	_update_header_meta()
+
+func _apply_phase_controls() -> void:
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	var cooldown_active: bool = now_sec < converter_cooldown_until
+	var numpad_enabled: bool = (phase == Phase.CALC) and (not converter_lock_active)
+	if numpad_grid != null:
+		for child in numpad_grid.get_children():
+			var key_btn: Button = child as Button
+			if key_btn != null:
+				key_btn.disabled = not numpad_enabled
+
+	if phase == Phase.CALC:
+		btn_minus.disabled = converter_lock_active
+		btn_plus.disabled = converter_lock_active
+		btn_check_calc.disabled = converter_lock_active
+		for btn in storage_btns:
+			btn.disabled = true
+		btn_capture.disabled = true
+	elif phase == Phase.SELECT:
+		btn_minus.disabled = true
+		btn_plus.disabled = true
+		btn_check_calc.disabled = true
+		for btn in storage_btns:
+			btn.disabled = converter_lock_active
+		btn_capture.disabled = converter_lock_active or selected_storage_idx < 0
+	else:
+		btn_minus.disabled = true
+		btn_plus.disabled = true
+		btn_check_calc.disabled = true
+		for btn in storage_btns:
+			btn.disabled = true
+		btn_capture.disabled = true
+
+	btn_converter.disabled = (phase == Phase.DONE) or converter_lock_active or cooldown_active
+
+func _find_best_fit_cap(required_bits: int) -> int:
+	var best: int = 0
+	for step in _capacity_steps_bits:
+		if step > required_bits:
+			best = step
+			break
+	if best <= 0:
+		best = 1
+		while best <= required_bits:
+			best *= 2
+		if best == required_bits:
+			best *= 2
+	return best
+
+func _find_underfit_cap(required_bits: int) -> int:
+	var candidate: int = 0
+	for step in _capacity_steps_bits:
+		if step < required_bits:
+			candidate = step
+		else:
+			break
+	if candidate <= 0:
+		candidate = maxi(1, int(floor(float(required_bits) * 0.75)))
+	return candidate
+
+func _find_overkill_cap(best_cap: int) -> int:
+	for step in _capacity_steps_bits:
+		if step > best_cap:
+			return step
+	return int(maxi(best_cap * 2, best_cap + 256))
+
+func _load_level_config() -> void:
+	_pool_normal = _to_int_array(RadioLevels.get_pool("B", "K_pool_normal", FALLBACK_POOL_NORMAL), FALLBACK_POOL_NORMAL)
+	_pool_anchor = _to_int_array(RadioLevels.get_pool("B", "K_pool_anchor", FALLBACK_POOL_ANCHOR), FALLBACK_POOL_ANCHOR)
+	_capacity_steps_bits = _to_int_array(
+		RadioLevels.get_pool("B", "capacity_steps_bits", FALLBACK_CAPACITY_STEPS_BITS),
+		FALLBACK_CAPACITY_STEPS_BITS
+	)
+	_capacity_steps_bits.sort()
+	_answer_unit_modes = _to_string_array(
+		RadioLevels.get_pool("B", "answer_unit_modes", FALLBACK_ANSWER_MODES),
+		FALLBACK_ANSWER_MODES
+	)
+	_anchor_every_min = int(RadioLevels.get_value("B", "anchor_every_min", 7))
+	_anchor_every_max = int(RadioLevels.get_value("B", "anchor_every_max", 10))
+	if _anchor_every_min <= 0:
+		_anchor_every_min = 7
+	if _anchor_every_max < _anchor_every_min:
+		_anchor_every_max = _anchor_every_min
+
+func _to_int_array(raw: Array, fallback: Array[int]) -> Array[int]:
+	var result: Array[int] = []
+	for value_var in raw:
+		var typed: Variant = value_var
+		match typeof(typed):
+			TYPE_INT:
+				result.append(int(typed))
+			TYPE_FLOAT:
+				result.append(int(round(float(typed))))
+			TYPE_STRING:
+				var text: String = String(typed).strip_edges()
+				if text.is_valid_int():
+					result.append(text.to_int())
+	if result.is_empty():
+		result.append_array(fallback)
+	return result
+
+func _to_string_array(raw: Array, fallback: Array[String]) -> Array[String]:
+	var result: Array[String] = []
+	for value_var in raw:
+		var text: String = String(value_var).strip_edges().to_lower()
+		if not text.is_empty():
+			result.append(text)
+	if result.is_empty():
+		result.append_array(fallback)
+	return result
+
+func _random_anchor_gap() -> int:
+	return randi_range(_anchor_every_min, _anchor_every_max)
+
+func _random_from_int_pool(pool: Array[int], fallback_value: int) -> int:
+	if pool.is_empty():
+		return fallback_value
+	return pool[randi() % pool.size()]
 
 func _apply_safe_area_padding() -> void:
 	var left: float = 16.0

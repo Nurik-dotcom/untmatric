@@ -1,10 +1,13 @@
 extends Control
 
-const ANCHOR_POOL: Array[int] = [100, 500, 1000]
-const POWERS_OF_2: Array[int] = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
-const TRAPS: Array[int] = [10, 50, 2000]
+const RadioLevels := preload("res://scripts/radio_intercept/RadioLevels.gd")
+
+const FALLBACK_ANCHOR_POOL: Array[int] = [100, 500, 1000]
+const FALLBACK_NORMAL_POOL: Array[int] = [16, 32, 64, 128, 256, 512, 1024]
+const FALLBACK_TRAP_POOL: Array[int] = [10, 50, 100, 500, 1000, 2000]
 const SAMPLE_SLOTS: int = 7
-const ANALYZE_REVEAL_SECONDS: float = 1.8
+const ANALYZE_REVEAL_SECONDS: float = 3.0
+const ANALYZE_COOLDOWN_SECONDS: float = 6.0
 const PHONE_LANDSCAPE_MAX_HEIGHT: float = 520.0
 
 const COLOR_IDLE: Color = Color(0.18, 0.18, 0.18, 1.0)
@@ -53,6 +56,7 @@ const TXT_RESULT_WARN: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0412\u0
 @onready var rule_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox/RuleLabel
 @onready var wave_layer: Control = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ScopeCard/ScopeMargin/ScopeLayer
 @onready var wave_line: Line2D = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ScopeCard/ScopeMargin/ScopeLayer/WaveLine
+@onready var noir_overlay: CanvasLayer = $NoirOverlay
 @onready var bits_value_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutRow/BitsValueLabel
 @onready var fit_value_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutRow/FitValueLabel
 
@@ -101,10 +105,21 @@ var anchor_countdown: int = 0
 var sample_refs: Array[Dictionary] = []
 
 var analysis_committed: bool = false
+var analysis_revealing: bool = false
 var analyze_reveal_until: float = 0.0
+var analyze_cooldown_until: float = 0.0
 var last_analysis_fit: bool = false
 var last_analysis_minimal: bool = false
 var last_analysis_overkill: bool = false
+
+var _normal_pool: Array[int] = []
+var _trap_pool: Array[int] = []
+var _anchor_pool: Array[int] = []
+var _i_min: int = 1
+var _i_max: int = 12
+var _anchor_every_min: int = 7
+var _anchor_every_max: int = 10
+var _target_wave_line: Line2D
 
 var osc_phase: float = 0.0
 var _ui_ready: bool = false
@@ -112,9 +127,11 @@ var _current_stability: float = 100.0
 
 func _ready() -> void:
 	randomize()
+	_load_level_config()
 	_apply_static_texts()
 	_connect_signals()
 	_collect_sample_refs()
+	_ensure_target_wave_line()
 	_reset_sample_strip()
 	_set_details_visible(false)
 	_apply_safe_area_padding()
@@ -124,7 +141,7 @@ func _ready() -> void:
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	_on_stability_changed(GlobalMetrics.stability, 0.0)
 
-	anchor_countdown = randi_range(7, 10)
+	anchor_countdown = _random_anchor_gap()
 	_start_trial()
 	_ui_ready = true
 
@@ -135,22 +152,26 @@ func _notification(what: int) -> void:
 
 func _process(delta: float) -> void:
 	osc_phase += delta * 2.6
-
 	if trial_active and is_timed_mode:
 		time_remaining = maxf(0.0, time_remaining - delta)
 		if time_remaining <= 0.0:
 			_finish_trial(true)
-
-	if trial_active and analysis_committed and btn_capture.disabled:
-		var now_sec: float = Time.get_ticks_msec() / 1000.0
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	if trial_active and analysis_revealing:
+		var remaining: float = maxf(0.0, analyze_reveal_until - now_sec)
+		status_label.text = "STATUS: analyzing channel... %.1fs" % remaining
+		status_label.add_theme_color_override("font_color", COLOR_WARN)
 		if now_sec >= analyze_reveal_until:
+			analysis_revealing = false
+			bit_knob.mouse_filter = Control.MOUSE_FILTER_STOP
+			btn_hint.disabled = false
 			btn_capture.disabled = false
 			status_label.text = TXT_ANALYZE_DONE
 			status_label.add_theme_color_override("font_color", COLOR_GOOD)
-
+	if trial_active and not analysis_revealing:
+		btn_analyze.disabled = now_sec < analyze_cooldown_until
 	_update_header_meta()
 	_update_waveform()
-
 func _apply_static_texts() -> void:
 	title_label.text = TXT_TITLE
 	btn_back.text = TXT_BACK
@@ -211,13 +232,15 @@ func _start_trial() -> void:
 	last_diff_sign = 0
 
 	analysis_committed = false
+	analysis_revealing = false
 	analyze_reveal_until = 0.0
+	analyze_cooldown_until = 0.0
 	last_analysis_fit = false
 	last_analysis_minimal = false
 	last_analysis_overkill = false
 
 	btn_capture.visible = true
-	btn_capture.disabled = true
+	btn_capture.disabled = false
 	btn_analyze.disabled = false
 	btn_next.visible = false
 	btn_hint.disabled = false
@@ -228,23 +251,29 @@ func _start_trial() -> void:
 	time_remaining = trial_duration if is_timed_mode else 0.0
 
 	if anchor_countdown <= 0:
-		target_n = ANCHOR_POOL.pick_random()
+		target_n = _random_from_int_pool(_anchor_pool, FALLBACK_ANCHOR_POOL.pick_random())
 		pool_type = "ANCHOR"
-		anchor_countdown = randi_range(7, 10)
+		anchor_countdown = _random_anchor_gap()
 	else:
 		pool_type = "NORMAL"
 		anchor_countdown -= 1
 		var pool: Array[int] = []
-		pool.append_array(POWERS_OF_2)
-		pool.append_array(TRAPS)
+		pool.append_array(_normal_pool)
+		pool.append_array(_trap_pool)
+		if pool.is_empty():
+			pool.append_array(FALLBACK_NORMAL_POOL)
+			pool.append_array(FALLBACK_TRAP_POOL)
 		target_n = pool.pick_random()
 
 	target_bits = int(ceil(log(float(target_n)) / log(2.0)))
 	target_label.text = "N = %d" % target_n
 
-	current_bits = 1
-	bit_knob.set("value", 1)
-	_apply_user_bits(1, false)
+	current_bits = _i_min
+	bit_knob.set("value", _i_min)
+	_apply_user_bits(_i_min, false)
+	if _target_wave_line != null:
+		_target_wave_line.visible = false
+		_target_wave_line.points = PackedVector2Array()
 
 	status_label.text = TXT_STATUS_PLAN
 	status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
@@ -257,7 +286,7 @@ func _mark_first_action() -> void:
 		first_action_timestamp = Time.get_ticks_msec() / 1000.0
 
 func _on_knob_value_changed(new_value: int) -> void:
-	if not trial_active or analysis_committed:
+	if not trial_active or analysis_revealing:
 		return
 	_apply_user_bits(new_value, true)
 
@@ -265,7 +294,7 @@ func _apply_user_bits(i_value: int, from_user: bool) -> void:
 	if from_user:
 		_mark_first_action()
 
-	current_bits = clampi(i_value, 1, 12)
+	current_bits = clampi(i_value, _i_min, _i_max)
 	var pow_val: int = int(pow(2.0, current_bits))
 	var is_fit: bool = pow_val >= target_n
 
@@ -292,21 +321,26 @@ func _on_hint_pressed() -> void:
 	_update_details_text()
 
 func _on_analyze_pressed() -> void:
-	if not trial_active or analysis_committed:
+	if not trial_active or analysis_revealing:
 		return
-
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	if now_sec < analyze_cooldown_until:
+		var cooldown_left: float = analyze_cooldown_until - now_sec
+		status_label.text = "STATUS: analyze cooldown %.1fs" % cooldown_left
+		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		return
 	_mark_first_action()
 	analyze_count += 1
 	analysis_committed = true
+	analysis_revealing = true
 	btn_analyze.disabled = true
 	btn_capture.disabled = true
+	btn_hint.disabled = true
 	bit_knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
 	var capacity: int = int(pow(2.0, current_bits))
 	last_analysis_fit = capacity >= target_n
 	last_analysis_minimal = current_bits == target_bits
 	last_analysis_overkill = last_analysis_fit and not last_analysis_minimal
-
 	if not last_analysis_fit:
 		status_label.text = TXT_ANALYZE_UNDERFIT
 		status_label.add_theme_color_override("font_color", COLOR_WARN)
@@ -316,10 +350,9 @@ func _on_analyze_pressed() -> void:
 	else:
 		status_label.text = TXT_ANALYZE_OK
 		status_label.add_theme_color_override("font_color", COLOR_GOOD)
-
-	analyze_reveal_until = Time.get_ticks_msec() / 1000.0 + ANALYZE_REVEAL_SECONDS
+	analyze_reveal_until = now_sec + ANALYZE_REVEAL_SECONDS
+	analyze_cooldown_until = now_sec + ANALYZE_COOLDOWN_SECONDS
 	_update_details_text()
-
 func _on_capture_pressed() -> void:
 	if not trial_active or btn_capture.disabled:
 		return
@@ -380,7 +413,9 @@ func _finish_trial(is_timeout: bool) -> void:
 		"is_correct": is_fit,
 		"is_minimal": is_minimal,
 		"is_overkill": is_overkill,
+		"used_analyze": analysis_committed,
 		"used_hint": hint_used,
+		"valid_for_mastery": is_fit and is_minimal and (not hint_used) and (analyze_count == 0),
 		"forced_sampling": forced_sampling,
 		"analyze_count": analyze_count,
 		"knob_change_count": knob_change_count,
@@ -388,6 +423,12 @@ func _finish_trial(is_timeout: bool) -> void:
 		"cross_target_count": cross_target_count,
 		"elapsed_ms": duration * 1000.0
 	}
+	var stability_delta: float = 0.0
+	if not is_fit:
+		stability_delta -= 10.0
+	if analyze_count > 0:
+		stability_delta -= 5.0 * float(analyze_count)
+	payload["stability_delta"] = stability_delta
 	GlobalMetrics.register_trial(payload)
 	_update_details_text()
 
@@ -438,8 +479,9 @@ func _update_details_text() -> void:
 	lines.append("pool: %s" % pool_type)
 	if hint_used:
 		lines.append("hint: used")
-	if analysis_committed:
-		lines.append("analysis: done")
+	lines.append("analyze_count: %d" % analyze_count)
+	if analysis_revealing:
+		lines.append("analysis: reveal")
 	details_text.text = "\n".join(lines)
 
 func _update_header_meta() -> void:
@@ -451,6 +493,8 @@ func _update_header_meta() -> void:
 
 func _on_stability_changed(new_value: float, _delta: float) -> void:
 	_current_stability = new_value
+	if noir_overlay != null and noir_overlay.has_method("set_danger_level"):
+		noir_overlay.call("set_danger_level", new_value)
 	_update_header_meta()
 
 func _apply_safe_area_padding() -> void:
@@ -517,43 +561,97 @@ func _update_waveform() -> void:
 	if wave_layer.size.x <= 1.0 or wave_layer.size.y <= 1.0:
 		return
 
-	if analysis_committed:
+	_draw_idle_wave(wave_layer.size)
+	if analysis_revealing:
 		_draw_analysis_wave(wave_layer.size)
-	else:
-		_draw_idle_wave(wave_layer.size)
+	elif _target_wave_line != null:
+		_target_wave_line.visible = false
 
 func _draw_idle_wave(draw_size: Vector2) -> void:
 	var points: PackedVector2Array = PackedVector2Array()
 	var center_y: float = draw_size.y * 0.5
+	var diff_ratio: float = clampf(absf(float(current_bits - target_bits)) / maxf(1.0, float(_i_max - _i_min + 1)), 0.0, 1.0)
+	var main_amp: float = draw_size.y * (0.10 + diff_ratio * 0.16)
+	var noise_amp: float = draw_size.y * 0.05
 	for x in range(0, int(draw_size.x) + 1, 6):
 		var t: float = float(x) / maxf(1.0, draw_size.x)
-		var y: float = center_y
-		y += sin(t * TAU * 2.2 + 0.7) * draw_size.y * 0.12
-		y += sin(t * TAU * 9.0 + 1.1) * draw_size.y * 0.05
-		y += cos(t * TAU * 18.0 + 0.4) * draw_size.y * 0.03
+		var y: float = center_y + sin((t * TAU * 2.0) + osc_phase * 0.9) * main_amp
+		y += sin((t * TAU * 11.0) + osc_phase * 1.4) * noise_amp * 0.45
+		y += cos((t * TAU * 23.0) + osc_phase * 0.7) * noise_amp * 0.30
 		points.append(Vector2(x, y))
+	wave_line.default_color = Color(0.20, 1.0, 0.20, 1.0)
 	wave_line.points = points
 
 func _draw_analysis_wave(draw_size: Vector2) -> void:
+	if _target_wave_line == null:
+		return
 	var points: PackedVector2Array = PackedVector2Array()
 	var center_y: float = draw_size.y * 0.5
-	var main_amp: float = draw_size.y * 0.22
-	var noise_amp: float = 0.0
-
-	if not last_analysis_fit:
-		noise_amp = draw_size.y * 0.24
-	elif last_analysis_overkill:
-		noise_amp = draw_size.y * 0.08
-		main_amp = draw_size.y * 0.16
-	else:
-		noise_amp = draw_size.y * 0.02
-		main_amp = draw_size.y * 0.20
-
+	var normalized: float = float(target_bits - _i_min) / maxf(1.0, float(_i_max - _i_min))
+	var amp: float = draw_size.y * (0.10 + normalized * 0.14)
 	for x in range(0, int(draw_size.x) + 1, 6):
 		var t: float = float(x) / maxf(1.0, draw_size.x)
-		var y: float = center_y + sin((t * TAU * 2.0) + osc_phase) * main_amp
-		if noise_amp > 0.0:
-			y += sin((t * TAU * 13.0) + osc_phase * 1.7) * noise_amp * 0.5
-			y += cos((t * TAU * 29.0) + osc_phase * 0.9) * noise_amp * 0.4
+		var y: float = center_y + sin((t * TAU * 2.0) + 0.15) * amp
 		points.append(Vector2(x, y))
-	wave_line.points = points
+	_target_wave_line.visible = true
+	_target_wave_line.default_color = Color(0.95, 0.25, 0.25, 0.95)
+	_target_wave_line.points = points
+
+func _load_level_config() -> void:
+	var normal_pool: Array = RadioLevels.get_pool("A", "N_pool_normal", FALLBACK_NORMAL_POOL)
+	var trap_pool: Array = RadioLevels.get_pool("A", "N_pool_trap", FALLBACK_TRAP_POOL)
+	var anchor_pool: Array = RadioLevels.get_pool("A", "N_pool_anchor", FALLBACK_ANCHOR_POOL)
+	_normal_pool = _to_int_array(normal_pool, FALLBACK_NORMAL_POOL)
+	_trap_pool = _to_int_array(trap_pool, FALLBACK_TRAP_POOL)
+	_anchor_pool = _to_int_array(anchor_pool, FALLBACK_ANCHOR_POOL)
+
+	_i_min = int(RadioLevels.get_value("A", "i_min", 1))
+	_i_max = int(RadioLevels.get_value("A", "i_max", 12))
+	if _i_min >= _i_max:
+		_i_min = 1
+		_i_max = 12
+
+	_anchor_every_min = int(RadioLevels.get_value("A", "anchor_every_min", 7))
+	_anchor_every_max = int(RadioLevels.get_value("A", "anchor_every_max", 10))
+	if _anchor_every_min <= 0:
+		_anchor_every_min = 7
+	if _anchor_every_max < _anchor_every_min:
+		_anchor_every_max = _anchor_every_min
+
+	bit_knob.set("min_value", _i_min)
+	bit_knob.set("max_value", _i_max)
+
+func _to_int_array(raw: Array, fallback: Array[int]) -> Array[int]:
+	var result: Array[int] = []
+	for value_var in raw:
+		var typed: Variant = value_var
+		match typeof(typed):
+			TYPE_INT:
+				result.append(int(typed))
+			TYPE_FLOAT:
+				result.append(int(round(float(typed))))
+			TYPE_STRING:
+				var text: String = String(typed).strip_edges()
+				if text.is_valid_int():
+					result.append(text.to_int())
+	if result.is_empty():
+		result.append_array(fallback)
+	return result
+
+func _random_anchor_gap() -> int:
+	return randi_range(_anchor_every_min, _anchor_every_max)
+
+func _random_from_int_pool(pool: Array[int], fallback_value: int) -> int:
+	if pool.is_empty():
+		return fallback_value
+	return pool[randi() % pool.size()]
+
+func _ensure_target_wave_line() -> void:
+	_target_wave_line = wave_layer.get_node_or_null("TargetWaveLine") as Line2D
+	if _target_wave_line == null:
+		_target_wave_line = Line2D.new()
+		_target_wave_line.name = "TargetWaveLine"
+		_target_wave_line.width = 2.0
+		_target_wave_line.default_color = Color(0.95, 0.25, 0.25, 0.95)
+		wave_layer.add_child(_target_wave_line)
+	_target_wave_line.visible = false

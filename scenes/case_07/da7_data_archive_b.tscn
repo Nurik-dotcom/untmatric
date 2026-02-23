@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://da7archive002"]
+[gd_scene load_steps=8 format=3 uid="uid://da7archive002"]
 
 [ext_resource type="Script" path="res://scripts/case_07/da7_data_archive_b.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
@@ -6,6 +6,7 @@
 [ext_resource type="AudioStream" path="res://audio/relay.wav" id="4_relay"]
 [ext_resource type="Script" path="res://scripts/ui/ConnectorOverlay.gd" id="5_connector"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="6_noir_overlay"]
+[ext_resource type="AudioStream" path="res://audio/click.wav" id="7_click"]
 
 [node name="DA7_DataArchiveQuestB" type="Control"]
 layout_mode = 3
@@ -241,6 +242,7 @@ value = 100.0
 [node name="Audio" type="Node" parent="Runtime"]
 
 [node name="SfxClick" type="AudioStreamPlayer" parent="Runtime/Audio"]
+stream = ExtResource("7_click")
 
 [node name="SfxError" type="AudioStreamPlayer" parent="Runtime/Audio"]
 stream = ExtResource("3_error")

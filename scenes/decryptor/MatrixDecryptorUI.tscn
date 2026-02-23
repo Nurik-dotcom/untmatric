@@ -121,7 +121,7 @@ theme_override_constants/separation = 12
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.45
+size_flags_stretch_ratio = 1.55
 theme_override_constants/separation = 10
 
 [node name="MatrixPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/LeftPanel"]
@@ -131,58 +131,24 @@ size_flags_vertical = 3
 [node name="MatrixContent" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
 [node name="MatrixTitle" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
 layout_mode = 2
-text = "Этап 1/5 | 2x2 | DEC"
+text = "STAGE 1/5 | 2x2 | DEC"
 
-[node name="MatrixBoard" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
+[node name="MatrixFrame" type="PanelContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 8
 
-[node name="RowLabels" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/MatrixBoard"]
-custom_minimum_size = Vector2(92, 0)
-layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
-
-[node name="MatrixStack" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/MatrixBoard"]
+[node name="MatrixLayout" type="GridContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/MatrixFrame"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 8
-
-[node name="ColumnLabels" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/MatrixBoard/MatrixStack"]
-layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
-
-[node name="Grid" type="GridContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/MatrixBoard/MatrixStack"]
-layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
-columns = 2
-
-[node name="InOutRow" type="HBoxContainer" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="InletTag" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/InOutRow"]
-layout_mode = 2
-text = "IN [0,0]"
-
-[node name="OutletTag" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent/InOutRow"]
-layout_mode = 2
-text = "OUT [5,5]"
-
-[node name="ConstraintHint" type="Label" parent="SafeArea/Main/ContentSplit/LeftPanel/MatrixPanel/MatrixContent"]
-layout_mode = 2
-text = "Rows use stage target base (DEC/OCT/HEX)."
-autowrap_mode = 3
+columns = 3
 
 [node name="RightPanel" type="VBoxContainer" parent="SafeArea/Main/ContentSplit"]
 layout_mode = 2
@@ -208,22 +174,7 @@ text = "STAGE 1/5 | BASE DEC"
 
 [node name="ModeLabel" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/StatusPanel/StatusContent"]
 layout_mode = 2
-text = "MODE: STAGES | SHIELD: READY"
-
-[node name="TargetsPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
-layout_mode = 2
-
-[node name="TargetsContent" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/RightPanel/TargetsPanel"]
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="TargetsTitle" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/TargetsPanel/TargetsContent"]
-layout_mode = 2
-text = "ROW TARGETS"
-
-[node name="TargetsRows" type="VBoxContainer" parent="SafeArea/Main/ContentSplit/RightPanel/TargetsPanel/TargetsContent"]
-layout_mode = 2
-theme_override_constants/separation = 3
+text = "WRONG ROWS: 0 | WRONG COLS: 0"
 
 [node name="LiveLogPanel" type="PanelContainer" parent="SafeArea/Main/ContentSplit/RightPanel"]
 layout_mode = 2
@@ -257,7 +208,7 @@ text = "HINT"
 
 [node name="HintText" type="Label" parent="SafeArea/Main/ContentSplit/RightPanel/HintPanel/HintContent"]
 layout_mode = 2
-text = "Hints and diagnostics appear here."
+text = "Match targets on the left and top."
 autowrap_mode = 3
 
 [node name="BottomBar" type="PanelContainer" parent="SafeArea/Main"]
@@ -340,4 +291,3 @@ custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
 bbcode_enabled = true
 text = ""
-

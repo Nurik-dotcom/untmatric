@@ -1,0 +1,30 @@
+{
+  "schema_version": "RI_levels_v1",
+  "A": {
+    "N_pool_normal": [16, 32, 64, 128, 256, 512, 1024],
+    "N_pool_trap": [10, 50, 100, 500, 1000, 2000],
+    "N_pool_anchor": [100, 500, 1000],
+    "i_min": 1,
+    "i_max": 12,
+    "anchor_every_min": 7,
+    "anchor_every_max": 10
+  },
+  "B": {
+    "K_pool_normal": [64, 80, 100, 128, 256, 512, 1024],
+    "K_pool_anchor": [75, 110, 125, 300, 750, 1000],
+    "answer_unit_modes": ["bits", "bytes"],
+    "capacity_steps_bits": [128, 256, 512, 1024, 2048, 4096, 8192, 16384],
+    "anchor_every_min": 7,
+    "anchor_every_max": 10
+  },
+  "C": {
+    "size_pool_mb": [1, 2, 4, 5, 8, 10, 12, 16, 20, 25],
+    "size_pool_gb": [0.5, 1.0, 1.5, 2.0],
+    "speed_pool_int": [1, 2, 4, 5, 8, 10, 16, 20, 25],
+    "speed_pool_frac": [1.5, 2.5, 7.5, 12.5],
+    "t_true_min": 2.0,
+    "t_true_max": 20.0,
+    "anchor_every_min": 7,
+    "anchor_every_max": 10
+  }
+}

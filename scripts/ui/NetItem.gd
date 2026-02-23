@@ -1,9 +1,9 @@
 extends Button
 
-signal drag_started(option_id: String, source: String, from_slot: int)
+signal drag_started(module_id: String, source: String, from_slot: int)
 
-var option_id: String = ""
-var option_label: String = ""
+var module_id: String = ""
+var module_label: String = ""
 var source: String = "PALETTE"
 var from_slot: int = -1
 
@@ -11,10 +11,10 @@ var _locked: bool = false
 var _feedback_state: String = "neutral"
 
 func setup(option_data: Dictionary) -> void:
-	option_id = str(option_data.get("option_id", "")).strip_edges()
-	option_label = str(option_data.get("label", option_id))
-	text = option_label
-	tooltip_text = "Модуль: %s\n%s" % [option_label, str(option_data.get("why", ""))]
+	module_id = str(option_data.get("module_id", option_data.get("option_id", ""))).strip_edges()
+	module_label = str(option_data.get("label", module_id))
+	text = module_label
+	tooltip_text = "MODULE %s\n%s" % [module_label, str(option_data.get("why", ""))]
 	custom_minimum_size = Vector2(0, 88)
 	set_source("PALETTE", -1)
 	set_feedback_state("neutral")
@@ -34,10 +34,10 @@ func set_feedback_state(state: String) -> void:
 	_apply_visual_state()
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
-	if _locked or option_id == "":
+	if _locked or module_id == "":
 		return null
 
-	drag_started.emit(option_id, source, from_slot)
+	drag_started.emit(module_id, source, from_slot)
 
 	var preview: Button = duplicate() as Button
 	preview.disabled = true
@@ -48,11 +48,12 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	set_drag_preview(holder)
 
 	return {
-		"kind": "NET_ITEM",
-		"option_id": option_id,
-		"source": source,
+		"kind": "NET_MODULE",
+		"module_id": module_id,
+		"from": source,
 		"from_slot": from_slot,
-		"node_path": str(get_path())
+		"node_path": str(get_path()),
+		"label": module_label
 	}
 
 func _apply_visual_state() -> void:

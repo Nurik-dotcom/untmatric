@@ -8,7 +8,9 @@ shader = ExtResource("2_shader")
 shader_parameter/tint_color = Color(0.93, 0.93, 0.93, 1)
 shader_parameter/intensity = 0.18
 shader_parameter/fx_quality = 1
+shader_parameter/jitter_strength = 0.0
 shader_parameter/glitch_strength = 0.0
+shader_parameter/pulse = 0.0
 
 [node name="NoirOverlay" type="CanvasLayer"]
 layer = 100

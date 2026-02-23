@@ -1,16 +1,19 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/case_08/fr8_final_report_a.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://bc6epa3jyjbri" path="res://ui/theme_terminal_amber.tres" id="2_theme"]
 [ext_resource type="Shader" path="res://ui/shaders/crt_overlay.gdshader" id="3_shader"]
 [ext_resource type="PackedScene" path="res://scenes/ui/TagPileZone.tscn" id="4_pile"]
+[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="5_noir_overlay_script"]
 
 [sub_resource type="ShaderMaterial" id="1_overlay_material"]
 shader = ExtResource("3_shader")
 shader_parameter/tint_color = Color(1, 0.7, 0.1, 1)
 shader_parameter/intensity = 0.13
 shader_parameter/fx_quality = 0
+shader_parameter/jitter_strength = 0.0
 shader_parameter/glitch_strength = 0.0
+shader_parameter/pulse = 0.0
 
 [node name="FR8_FinalReportA" type="Control"]
 layout_mode = 3
@@ -33,6 +36,10 @@ color = Color(0.05, 0.06, 0.06, 1)
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 layer = 100
+script = ExtResource("5_noir_overlay_script")
+tint_color = Color(1, 0.7, 0.1, 1)
+intensity = 0.13
+fx_quality = 0
 
 [node name="CRT_Overlay" type="ColorRect" parent="CanvasLayer"]
 layout_mode = 1

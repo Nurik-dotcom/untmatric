@@ -253,7 +253,17 @@ func _on_option_pressed(option_id: String) -> void:
 		return
 
 	selected_option_id = option_id
-	attack_bar.value = FR8CScoring.preview_attack_strength(level_data, selected_option_id)
+	var projected_attack: int = FR8CScoring.preview_attack_strength(level_data, selected_option_id)
+	var attack_tween: Tween = create_tween()
+	attack_tween.tween_property(attack_bar, "value", projected_attack, 0.4).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+
+	var selected_button: Button = option_buttons.get(option_id, null) as Button
+	if selected_button != null:
+		selected_button.pivot_offset = selected_button.size / 2.0
+		var button_tween: Tween = create_tween()
+		button_tween.tween_property(selected_button, "scale", Vector2(0.9, 0.9), 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		button_tween.tween_property(selected_button, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
 	_refresh_option_state()
 	_set_status(STATUS_OPTION_SELECTED, COLOR_INFO)
 	_log_event("OPTION_SELECTED", {"option_id": option_id})
@@ -306,6 +316,8 @@ func _on_confirm_pressed() -> void:
 		_set_status(FR8CScoring.feedback_text(level_data, {"error_code": FR8CScoring.ERROR_EMPTY_CHOICE}), COLOR_WARN)
 		return
 
+	trial_locked = true
+	btn_confirm.disabled = true
 	attempts += 1
 	_log_event("CONFIRM_PRESSED", {
 		"selected_option_id": selected_option_id,
@@ -341,11 +353,20 @@ func _on_confirm_pressed() -> void:
 		"error_code": str(evaluation.get("error_code", FR8CScoring.ERROR_SPECIFICITY)),
 		"trace": trace.duplicate(true)
 	}
+
+	var actual_attack: int = int(evaluation.get("attack_strength", 0))
+	var actual_defense: int = int(evaluation.get("defense_strength", 0))
+	var bars_tween: Tween = create_tween()
+	bars_tween.set_parallel(true)
+	bars_tween.tween_property(attack_bar, "value", actual_attack, 0.6).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	bars_tween.tween_property(defense_bar, "value", actual_defense, 0.6).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	if AudioManager != null:
+		AudioManager.play("relay")
+	await get_tree().create_timer(0.6).timeout
+
 	GlobalMetrics.register_trial(payload)
 	_update_stability_ui()
 
-	attack_bar.value = int(evaluation.get("attack_strength", 0))
-	defense_bar.value = int(evaluation.get("defense_strength", 0))
 	explain_label.text = feedback_text
 
 	if bool(evaluation.get("is_correct", false)):
@@ -357,15 +378,21 @@ func _on_confirm_pressed() -> void:
 		_set_status("%s %s" % [feedback_text, STATUS_NEXT_HINT], COLOR_OK)
 
 		var winner_data: Dictionary = evaluation.get("winner", {}) as Dictionary
-		target_preview.modulate = _color_from_hex(str(winner_data.get("color", "")), COLOR_OK)
-		if AudioManager != null:
-			AudioManager.play("relay")
+		var winner_color: Color = _color_from_hex(str(winner_data.get("color", "")), COLOR_OK)
+		var flash_tween: Tween = create_tween()
+		flash_tween.tween_property(target_preview, "modulate", Color(3.0, 3.0, 3.0, 1.0), 0.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		flash_tween.tween_property(target_preview, "modulate", winner_color, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	else:
 		level_solved = false
 		trial_locked = false
 		btn_next.disabled = true
 		btn_confirm.disabled = false
 		_set_status(feedback_text, COLOR_ERR)
+		var defense_flash: Tween = create_tween()
+		defense_flash.tween_property(defense_bar, "modulate", Color(2.0, 0.25, 0.25, 1.0), 0.12)
+		defense_flash.tween_property(defense_bar, "modulate", Color.WHITE, 0.16)
+		defense_flash.tween_property(defense_bar, "modulate", Color(2.0, 0.25, 0.25, 1.0), 0.12)
+		defense_flash.tween_property(defense_bar, "modulate", Color.WHITE, 0.16)
 		_trigger_glitch()
 		_shake_main_layout()
 		if AudioManager != null:
@@ -459,6 +486,13 @@ func _on_stability_changed(_new_value: float, _delta: float) -> void:
 
 func _update_stability_ui() -> void:
 	stability_bar.value = GlobalMetrics.stability
+	var overlay_controller: Node = get_node_or_null("CanvasLayer")
+	if overlay_controller != null and overlay_controller.has_method("set_danger_level"):
+		overlay_controller.call("set_danger_level", GlobalMetrics.stability)
+		return
+	var shared_overlay: Node = get_tree().get_first_node_in_group("noir_overlay")
+	if shared_overlay != null and shared_overlay.has_method("set_danger_level"):
+		shared_overlay.call("set_danger_level", GlobalMetrics.stability)
 
 func _selector_of(rule: Dictionary) -> String:
 	var selector: String = str(rule.get("selector", "")).strip_edges()

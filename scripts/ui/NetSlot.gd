@@ -1,7 +1,7 @@
 extends PanelContainer
 
-signal slot_changed(slot_index: int, option_id: String, prev_option_id: String)
-signal slot_cleared(slot_index: int, prev_option_id: String)
+signal slot_changed(slot_index: int, module_id: String, prev_module_id: String)
+signal slot_cleared(slot_index: int, prev_module_id: String)
 
 @export var slot_index: int = 1
 @export var title_path: NodePath = NodePath("Margin/VBox/TopRow/SlotTitle")
@@ -9,7 +9,7 @@ signal slot_cleared(slot_index: int, prev_option_id: String)
 @export var item_holder_path: NodePath = NodePath("Margin/VBox/ItemHolder")
 @export var clear_button_path: NodePath = NodePath("Margin/VBox/TopRow/BtnClear")
 
-var current_option_id: String = ""
+var current_module_id: String = ""
 
 var _locked: bool = false
 var _drag_hovered: bool = false
@@ -37,7 +37,7 @@ func _ready() -> void:
 func set_slot_title(index: int) -> void:
 	slot_index = index
 	if is_instance_valid(_title_label):
-		_title_label.text = "КАНАЛ %d" % slot_index
+		_title_label.text = "SLOT %d" % slot_index
 
 func set_locked(locked: bool) -> void:
 	_locked = locked
@@ -48,15 +48,15 @@ func set_feedback_state(state: String) -> void:
 	_feedback_state = state
 	_apply_visual_state()
 
-func set_current_option(option_id: String, option_label: String = "") -> void:
-	current_option_id = option_id
+func set_current_option(module_id: String, module_label: String = "") -> void:
+	current_module_id = module_id
 	if is_instance_valid(_item_label):
-		if current_option_id == "":
-			_item_label.text = "<пусто>"
-		elif option_label != "":
-			_item_label.text = option_label
+		if current_module_id == "":
+			_item_label.text = "<empty>"
+		elif module_label != "":
+			_item_label.text = module_label
 		else:
-			_item_label.text = current_option_id
+			_item_label.text = current_module_id
 	_update_clear_button_state()
 	_apply_visual_state()
 
@@ -86,7 +86,7 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 		return false
 
 	var payload: Dictionary = data as Dictionary
-	if str(payload.get("kind", "")) != "NET_ITEM":
+	if str(payload.get("kind", "")) != "NET_MODULE":
 		return false
 
 	var controller: Node = _get_controller()
@@ -116,11 +116,11 @@ func _drop_data(_at_position: Vector2, data: Variant) -> void:
 		_flash_reject()
 		return
 
-	var new_option_id: String = str(result.get("option_id", ""))
-	var prev_option_id: String = str(result.get("prev_option_id", ""))
-	var label: String = str(result.get("label", new_option_id))
-	set_current_option(new_option_id, label)
-	slot_changed.emit(slot_index, new_option_id, prev_option_id)
+	var new_module_id: String = str(result.get("module_id", ""))
+	var prev_module_id: String = str(result.get("prev_module_id", ""))
+	var label: String = str(result.get("label", new_module_id))
+	set_current_option(new_module_id, label)
+	slot_changed.emit(slot_index, new_module_id, prev_module_id)
 
 func _on_clear_pressed() -> void:
 	if _locked:
@@ -136,9 +136,9 @@ func _on_clear_pressed() -> void:
 	if not bool(result.get("success", false)):
 		return
 
-	var prev_option_id: String = str(result.get("prev_option_id", ""))
+	var prev_module_id: String = str(result.get("prev_module_id", ""))
 	set_current_option("", "")
-	slot_cleared.emit(slot_index, prev_option_id)
+	slot_cleared.emit(slot_index, prev_module_id)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END and not is_drag_successful():
@@ -151,7 +151,7 @@ func _get_controller() -> Node:
 func _update_clear_button_state() -> void:
 	if not is_instance_valid(_btn_clear):
 		return
-	_btn_clear.disabled = _locked or current_option_id == ""
+	_btn_clear.disabled = _locked or current_module_id == ""
 
 func _apply_visual_state() -> void:
 	var tone: Color = Color(1.0, 1.0, 1.0, 1.0)

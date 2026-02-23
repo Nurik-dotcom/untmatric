@@ -1,39 +1,40 @@
 [
   {
     "quest_id": "CASE_01_DIGITAL_RESUS",
-    "schema_version": "1.3.0",
+    "schema_version": "3.0.0",
     "id": "RESUS-A-01",
     "bucket": "newbie",
-    "briefing": "Восстановите рабочую станцию: распределите все детали по ВВОД / ВЫВОД / ПАМЯТЬ. GPU нужен для сигнала, RAM — для стабильной загрузки, CACHE — для быстрой диагностики.",
+    "briefing": "Rebuild the forensic workstation by wiring each part to the correct socket groups.",
     "format": "MATCHING",
+    "diegetic_mode": true,
     "buckets": [
       {
         "bucket_id": "INPUT",
-        "label": "Ввод"
+        "label": "INPUT SOCKET"
       },
       {
         "bucket_id": "OUTPUT",
-        "label": "Вывод"
+        "label": "OUTPUT SOCKET"
       },
       {
         "bucket_id": "MEMORY",
-        "label": "Память"
+        "label": "MEMORY BUS"
       }
     ],
     "items": [
       {
         "item_id": "keyboard",
-        "label": "Клавиатура",
+        "label": "KBD",
         "correct_bucket_id": "INPUT"
       },
       {
         "item_id": "mouse",
-        "label": "Мышь",
+        "label": "MOUSE",
         "correct_bucket_id": "INPUT"
       },
       {
         "item_id": "microphone",
-        "label": "Микрофон",
+        "label": "MIC",
         "correct_bucket_id": "INPUT"
       },
       {
@@ -43,12 +44,12 @@
       },
       {
         "item_id": "monitor",
-        "label": "Монитор",
+        "label": "MON",
         "correct_bucket_id": "OUTPUT"
       },
       {
         "item_id": "speaker",
-        "label": "Динамик",
+        "label": "SPK",
         "correct_bucket_id": "OUTPUT"
       },
       {
@@ -58,10 +59,59 @@
       },
       {
         "item_id": "cache",
-        "label": "Кэш",
+        "label": "CACHE",
         "correct_bucket_id": "MEMORY"
       }
     ],
+    "socket_map": {
+      "INPUT": [
+        "keyboard",
+        "mouse",
+        "microphone"
+      ],
+      "OUTPUT": [
+        "gpu",
+        "monitor",
+        "speaker"
+      ],
+      "MEMORY": [
+        "ram",
+        "cache"
+      ]
+    },
+    "diag_panel": {
+      "GPU": {
+        "ok": "VIDEO: OK",
+        "bad": "VIDEO: NO SIGNAL"
+      },
+      "RAM": {
+        "ok": "MEMORY: OK",
+        "bad": "MEMORY: READ ERROR"
+      },
+      "CACHE": {
+        "ok": "BUFFER: FAST",
+        "bad": "BUFFER: SLOW"
+      }
+    },
+    "fx_rules": {
+      "gpu_on": {
+        "item_id": "gpu",
+        "bucket_id": "OUTPUT"
+      },
+      "ram_ok": {
+        "item_id": "ram",
+        "bucket_id": "MEMORY"
+      },
+      "cache_ok": {
+        "item_id": "cache",
+        "bucket_id": "MEMORY"
+      },
+      "hid_lines_on_input": [
+        "HID CONNECTED",
+        "INPUT DRIVER OK"
+      ]
+    },
+    "scoring_rules": [],
     "scoring_model": {
       "rules": [
         {
@@ -95,23 +145,22 @@
     },
     "feedback_rules": {
       "NO_GPU": {
-        "status": "GPU отсутствует в OUTPUT: монитор остаётся тёмным.",
-        "monitor": "НЕТ СИГНАЛА"
+        "status": "GPU missing on OUTPUT. Monitor signal unavailable."
       },
       "NO_RAM": {
-        "status": "RAM отсутствует в MEMORY: загрузка продолжает сбоить.",
+        "status": "RAM missing on MEMORY. Boot failed during memory probe.",
         "console_lines": [
-          "[ОШИБКА] Ошибка чтения памяти",
-          "[СИСТЕМА] Повторная инициализация шины памяти...",
-          "[ОШИБКА] Ошибка чтения памяти",
-          "[СИСТЕМА] Загрузка остановлена"
+          "[BOOT] memory probe started",
+          "[ALERT] no RAM module detected",
+          "[BOOT] retry memory probe",
+          "[ALERT] aborting startup"
         ]
       },
       "NO_CACHE": {
-        "status": "CACHE отсутствует: диагностика работает медленно."
+        "status": "CACHE is missing. Diagnostic stream is degraded."
       },
       "HEALTHY": {
-        "status": "Система восстановлена. Готова к диагностике."
+        "status": "All critical nodes online. Continue to performance tuning."
       }
     },
     "system_state_rules": {
@@ -128,112 +177,186 @@
         "zone_id": "MEMORY"
       },
       "boot_ok_lines": [
-        "[СИСТЕМА] Линии питания: ОК",
-        "[СИСТЕМА] Карта памяти: ГОТОВО",
-        "[СИСТЕМА] Устройства PCIe: ОБНАРУЖЕНЫ",
-        "[СИСТЕМА] Последовательность загрузки завершена"
+        "[BOOT] peripheral scan complete",
+        "[BOOT] memory check complete",
+        "[BOOT] pci bus attached",
+        "[BOOT] diagnostic stream online"
       ]
     },
     "stages": {
       "A": {
-        "level_id": "RESUS-A-01"
+        "level_id": "RESUS-A-01",
+        "diegetic_mode": true
       },
       "B": {
         "id": "CASE01_B_01",
         "stage_max_points": 2,
         "format": "SINGLE_CHOICE_CONTEXT",
-        "context": "Чтобы завершить взлом архива, система должна вывести видеопоток в реальном времени. Бюджет ограничен 1000$. Выберите лучшую конфигурацию.",
+        "interaction_variant": "BIOS_TUNING",
+        "diegetic_mode": true,
+        "context": "Tune CPU/RAM/GPU in the BIOS panel and pass benchmark within the budget.",
         "budget": 1000,
+        "tuning_model": {
+          "cpu": {
+            "LOW": {
+              "price": 150,
+              "perf": 1
+            },
+            "MID": {
+              "price": 400,
+              "perf": 2
+            },
+            "HIGH": {
+              "price": 600,
+              "perf": 3
+            }
+          },
+          "ram": {
+            "LOW": {
+              "price": 50,
+              "perf": 1
+            },
+            "GOOD": {
+              "price": 300,
+              "perf": 2
+            },
+            "TOP": {
+              "price": 400,
+              "perf": 3
+            }
+          },
+          "gpu": {
+            "NONE": {
+              "price": 0,
+              "perf": 0
+            },
+            "MID": {
+              "price": 200,
+              "perf": 2
+            },
+            "TOP": {
+              "price": 300,
+              "perf": 3
+            }
+          }
+        },
+        "classifier_thresholds": {
+          "bottleneck_cpu": "HIGH",
+          "bottleneck_ram": "LOW",
+          "lowpower_perf_max": 4
+        },
+        "benchmark_outputs": {
+          "BOTTLENECK": [
+            "[SCAN] memory throughput below target",
+            "[SCAN] cpu queue congestion detected",
+            "[RESULT] BOTTLENECK"
+          ],
+          "OPTIMAL": [
+            "[SCAN] thermal envelope stable",
+            "[SCAN] throughput and latency in range",
+            "[RESULT] OPTIMAL"
+          ],
+          "OVERBUDGET": [
+            "[SCAN] spending envelope breached",
+            "[SCAN] procurement policy violation",
+            "[RESULT] OVERBUDGET"
+          ],
+          "LOWPOWER": [
+            "[SCAN] baseline compute below threshold",
+            "[SCAN] render pipeline under-provisioned",
+            "[RESULT] LOWPOWER"
+          ]
+        },
         "options": [
           {
-            "option_id": "B1_BOTTLENECK",
-            "title": "Узкое место",
+            "option_id": "BOTTLENECK",
+            "title": "CPU high + RAM low",
             "total_price": 650,
             "parts": [
               {
                 "k": "CPU",
-                "v": "Высокий",
+                "v": "HIGH",
                 "price": 600
               },
               {
                 "k": "RAM",
-                "v": "Низкий",
+                "v": "LOW",
                 "price": 50
               }
             ],
             "tags": [
-              "Риск простоя CPU",
-              "Недостаток RAM"
+              "single-point stress",
+              "memory starved"
             ]
           },
           {
-            "option_id": "B2_OPTIMAL",
-            "title": "Оптимальный баланс",
+            "option_id": "OPTIMAL",
+            "title": "CPU mid + RAM good",
             "total_price": 700,
             "parts": [
               {
                 "k": "CPU",
-                "v": "Средний",
+                "v": "MID",
                 "price": 400
               },
               {
                 "k": "RAM",
-                "v": "Хороший",
+                "v": "GOOD",
                 "price": 300
               }
             ],
             "tags": [
-              "сбалансировано",
-              "стабильный рендер"
+              "balanced",
+              "budget safe"
             ]
           },
           {
-            "option_id": "B3_OVERBUDGET",
-            "title": "Превышение бюджета",
+            "option_id": "OVERBUDGET",
+            "title": "Top stack",
             "total_price": 1200,
             "parts": [
               {
                 "k": "CPU",
-                "v": "Топ",
+                "v": "HIGH",
                 "price": 600
               },
               {
                 "k": "RAM",
-                "v": "Топ",
+                "v": "TOP",
                 "price": 300
               },
               {
                 "k": "GPU",
-                "v": "Топ",
+                "v": "TOP",
                 "price": 300
               }
             ],
             "tags": [
-              "превышен лимит"
+              "budget breach"
             ]
           },
           {
-            "option_id": "B4_LOWPOWER",
-            "title": "Низкая мощность",
+            "option_id": "LOWPOWER",
+            "title": "Low stack",
             "total_price": 250,
             "parts": [
               {
                 "k": "CPU",
-                "v": "Низкий",
+                "v": "LOW",
                 "price": 150
               },
               {
                 "k": "RAM",
-                "v": "Низкий",
+                "v": "LOW",
                 "price": 100
               }
             ],
             "tags": [
-              "недостаточно"
+              "under-powered"
             ]
           }
         ],
-        "correct_option_id": "B2_OPTIMAL",
+        "correct_option_id": "OPTIMAL",
         "scoring_model": {
           "correct_points": 2,
           "wrong_points": 0,
@@ -247,36 +370,32 @@
           }
         },
         "feedback_rules": {
-          "B1_BOTTLENECK": {
+          "BOTTLENECK": {
             "error_code": "BOTTLENECK_RAM",
-            "headline": "CPU ограничен памятью",
+            "headline": "CPU queue overloaded by weak RAM",
             "details": [
-              "RAM слишком слабая, поэтому система постоянно выгружает страницы памяти.",
-              "Потенциал CPU теряется, потому что пропускной способности памяти недостаточно."
+              "Raise RAM class to GOOD or TOP before confirm."
             ]
           },
-          "B2_OPTIMAL": {
+          "OPTIMAL": {
             "error_code": "OK",
-            "headline": "Сбалансированная конфигурация",
+            "headline": "Balanced tuning profile confirmed",
             "details": [
-              "Ресурсов достаточно для потокового рендера.",
-              "Критических узких мест не обнаружено."
+              "Performance and budget constraints are both satisfied."
             ]
           },
-          "B3_OVERBUDGET": {
+          "OVERBUDGET": {
             "error_code": "OVER_BUDGET",
-            "headline": "Превышен лимит бюджета",
+            "headline": "Budget guardrail exceeded",
             "details": [
-              "Эта сборка превышает лимит бюджета 1000$.",
-              "По условиям миссии требуется экономичность."
+              "Reduce one or more tiers to stay within limit."
             ]
           },
-          "B4_LOWPOWER": {
+          "LOWPOWER": {
             "error_code": "LOW_POWER",
-            "headline": "Недостаточная производительность",
+            "headline": "Compute envelope too low",
             "details": [
-              "Эта сборка не тянет рендер в реальном времени.",
-              "Подберите более сбалансированное сочетание CPU и RAM."
+              "Increase CPU and/or GPU class to pass benchmark."
             ]
           }
         }
@@ -285,14 +404,68 @@
         "id": "CASE01_C_01",
         "stage_max_points": 2,
         "format": "MULTI_CHOICE_SLOTS",
-        "prompt": "Подозреваемый передавал данные через оптический кабель. Соберите защищённую сеть, исключающую прослушивание и коллизии.",
+        "interaction_variant": "MODULE_SLOTS",
+        "diegetic_mode": true,
+        "prompt": "Mount exactly three network modules to secure the archive link.",
         "max_slots": 3,
+        "modules": [
+          {
+            "module_id": "SWITCH",
+            "is_correct": true,
+            "effects": {
+              "collisions": "LOW",
+              "filtering": "OFF",
+              "eavesdrop": "MID",
+              "media": "NEUTRAL"
+            }
+          },
+          {
+            "module_id": "FIREWALL",
+            "is_correct": true,
+            "effects": {
+              "collisions": "NEUTRAL",
+              "filtering": "ON",
+              "eavesdrop": "MID",
+              "media": "NEUTRAL"
+            }
+          },
+          {
+            "module_id": "FIBER",
+            "is_correct": true,
+            "effects": {
+              "collisions": "NEUTRAL",
+              "filtering": "OFF",
+              "eavesdrop": "LOW",
+              "media": "FIBER"
+            }
+          },
+          {
+            "module_id": "HUB",
+            "is_correct": false,
+            "effects": {
+              "collisions": "HIGH",
+              "filtering": "OFF",
+              "eavesdrop": "HIGH",
+              "media": "NEUTRAL"
+            }
+          },
+          {
+            "module_id": "COAX",
+            "is_correct": false,
+            "effects": {
+              "collisions": "MID",
+              "filtering": "OFF",
+              "eavesdrop": "HIGH",
+              "media": "COAX"
+            }
+          }
+        ],
         "options": [
           {
             "option_id": "SWITCH",
-            "label": "Коммутатор",
+            "label": "SWITCH",
             "is_correct": true,
-            "why": "Адресная передача, снижает коллизии (в отличие от концентратора).",
+            "why": "Segments traffic and lowers collision noise.",
             "effects": {
               "collisions": "LOW",
               "filtering": "OFF",
@@ -302,9 +475,9 @@
           },
           {
             "option_id": "FIREWALL",
-            "label": "Межсетевой экран",
+            "label": "FIREWALL",
             "is_correct": true,
-            "why": "Фильтрация трафика и контроль доступа.",
+            "why": "Adds filtering barrier against hostile traffic.",
             "effects": {
               "collisions": "NEUTRAL",
               "filtering": "ON",
@@ -314,9 +487,9 @@
           },
           {
             "option_id": "FIBER",
-            "label": "Оптоволокно",
+            "label": "FIBER",
             "is_correct": true,
-            "why": "Соответствует условию оптики, сложнее скрытно подключиться.",
+            "why": "Reduces sniffing risk and improves throughput.",
             "effects": {
               "collisions": "NEUTRAL",
               "filtering": "OFF",
@@ -326,9 +499,9 @@
           },
           {
             "option_id": "HUB",
-            "label": "Концентратор",
+            "label": "HUB",
             "is_correct": false,
-            "why": "Широковещание, коллизии, хуже для безопасности.",
+            "why": "Broadcast behavior increases collisions and interception.",
             "effects": {
               "collisions": "HIGH",
               "filtering": "OFF",
@@ -338,9 +511,9 @@
           },
           {
             "option_id": "COAX",
-            "label": "Коаксиальный кабель",
+            "label": "COAX",
             "is_correct": false,
-            "why": "Не соответствует условию оптики и устаревшая среда.",
+            "why": "Legacy medium leaks more and adds noise.",
             "effects": {
               "collisions": "MID",
               "filtering": "OFF",
@@ -349,6 +522,38 @@
             }
           }
         ],
+        "visual_sim": {
+          "PERFECT": {
+            "speed": 1.3,
+            "scatter": 0.08,
+            "steal_rate": 0.0
+          },
+          "GOOD": {
+            "speed": 1.15,
+            "scatter": 0.14,
+            "steal_rate": 0.1
+          },
+          "NOISY": {
+            "speed": 1.0,
+            "scatter": 0.24,
+            "steal_rate": 0.2
+          },
+          "FAIL": {
+            "speed": 0.85,
+            "scatter": 0.35,
+            "steal_rate": 0.45
+          },
+          "EMPTY": {
+            "speed": 0.8,
+            "scatter": 0.4,
+            "steal_rate": 0.6
+          },
+          "SELECT_ALL": {
+            "speed": 0.82,
+            "scatter": 0.38,
+            "steal_rate": 0.55
+          }
+        },
         "scoring_model": {
           "rule_2": {
             "need_correct": 3,
@@ -389,44 +594,42 @@
         },
         "feedback_rules": {
           "PERFECT": {
-            "headline": "Периметр защищён",
+            "headline": "Link hardened",
             "details": [
-              "Коллизии минимальны.",
-              "Фильтрация включена.",
-              "Среда соответствует оптике."
+              "Collision profile minimized.",
+              "Filtering is active.",
+              "Interception surface is reduced."
             ]
           },
           "GOOD": {
-            "headline": "Почти правильно",
+            "headline": "Link acceptable",
             "details": [
-              "Вы выбрали 2 ключевых компонента.",
-              "Не хватает одного элемента защищённого контура."
+              "Most critical defenses are active.",
+              "One required module is still missing."
             ]
           },
           "NOISY": {
-            "headline": "Есть лишний элемент",
+            "headline": "Defense mixed with noise",
             "details": [
-              "Основной набор собран, но добавлен лишний компонент.",
-              "Это ухудшает безопасность и стабильность."
+              "Correct core modules present, but one harmful module added."
             ]
           },
           "FAIL": {
-            "headline": "Периметр уязвим",
+            "headline": "Link remains exposed",
             "details": [
-              "Комбинация противоречит условию или не защищает сеть."
+              "Current module set does not meet secure profile."
             ]
           },
           "EMPTY": {
-            "headline": "Пустое подтверждение",
+            "headline": "No modules mounted",
             "details": [
-              "Вы не установили ни одного элемента."
+              "Install modules before LINK START."
             ]
           },
           "SELECT_ALL": {
-            "headline": "Выбрано всё сразу",
+            "headline": "Brute-force selection detected",
             "details": [
-              "Это угадайка.",
-              "В ЕНТ это считается ошибкой."
+              "Selecting every module is not a valid strategy."
             ]
           }
         }
@@ -434,8 +637,3 @@
     }
   }
 ]
-
-
-
-
-

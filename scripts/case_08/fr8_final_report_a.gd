@@ -474,7 +474,10 @@ func _count_filled_slots(sequence: Array[String]) -> int:
 	return filled
 
 func _update_code_preview() -> void:
-	var lines: Array[String] = []
+	var raw_lines: Array[String] = []
+	var live_lines: Array[String] = []
+	var noisy_preview: bool = false
+
 	for i in range(slot_ids.size()):
 		var slot_id: String = slot_ids[i]
 		var fragment_id: String = _fragment_in_slot(slot_id)
@@ -482,8 +485,55 @@ func _update_code_preview() -> void:
 		if not fragment_id.is_empty() and fragment_by_id.has(fragment_id):
 			var fragment_data: Dictionary = fragment_by_id.get(fragment_id, {}) as Dictionary
 			token = str(fragment_data.get("token", fragment_data.get("label", fragment_id)))
-		lines.append("%s  %s" % [slot_id, token])
-	code_preview.text = "[code]%s[/code]" % "\n".join(lines)
+			var normalized_id: String = fragment_id.to_lower()
+			if normalized_id.find("noise") >= 0 or normalized_id.find("fake") >= 0:
+				noisy_preview = true
+
+		var token_color: String = "#7fffb4" if token != "____" else "#ffd07f"
+		raw_lines.append("[color=#7f7f7f]%s[/color] [color=%s]%s[/color]" % [slot_id, token_color, _escape_bbcode(token)])
+		live_lines.append(_build_live_preview_line(token))
+
+	var output_header: String = "[b][color=#8fffb2]ВЫВОД ЭКРАНА[/color][/b]"
+	if noisy_preview:
+		output_header = "[shake rate=20.0 level=5 connected=1][color=#ff5959][b]ВЫВОД ЭКРАНА // ПОМЕХИ[/b][/color][/shake]"
+
+	code_preview.text = "\n".join([
+		"[b][color=#ffd25f]RAW CODE[/color][/b]",
+		"[code]%s[/code]" % "\n".join(raw_lines),
+		"",
+		output_header,
+		"\n".join(live_lines)
+	])
+
+	if AudioManager != null:
+		AudioManager.play("click")
+
+func _build_live_preview_line(token: String) -> String:
+	var normalized: String = token.strip_edges().to_lower()
+	if normalized == "____":
+		return "[color=#5f5f5f]·[/color]"
+
+	if normalized.begins_with("<form"):
+		return "[bgcolor=#1f2a1f][color=#d8ffd8]  FORM // AUTH PANEL  [/color][/bgcolor]"
+	if normalized.begins_with("<img"):
+		return "[bgcolor=#222535][color=#ffd07a]  ИЗОБРАЖЕНИЕ  [/color][/bgcolor]"
+	if normalized.begins_with("<li"):
+		var item_text: String = _extract_list_item_text(token)
+		return "[color=#d8f5d8]• %s[/color]" % _escape_bbcode(item_text if not item_text.is_empty() else "Пункт")
+	if normalized.begins_with("</"):
+		return "[color=#8e9c8e]%s[/color]" % _escape_bbcode(token)
+	return "[color=#b7c9b7]%s[/color]" % _escape_bbcode(token)
+
+func _extract_list_item_text(token: String) -> String:
+	var text_value: String = token.strip_edges()
+	var open_pos: int = text_value.find(">")
+	if open_pos >= 0 and open_pos < text_value.length() - 1:
+		text_value = text_value.substr(open_pos + 1)
+	var lower_text: String = text_value.to_lower()
+	var close_pos: int = lower_text.find("</li>")
+	if close_pos >= 0:
+		text_value = text_value.substr(0, close_pos)
+	return text_value.strip_edges()
 
 func _update_slot_feedback() -> void:
 	for i in range(slot_ids.size()):
@@ -564,9 +614,19 @@ func _log_event(event_name: String, data: Dictionary = {}) -> void:
 		"data": data.duplicate(true)
 	})
 
+func _escape_bbcode(text_value: String) -> String:
+	return text_value.replace("[", "[lb]").replace("]", "[rb]")
+
 func _on_stability_changed(_new_value: float, _delta: float) -> void:
 	_update_stability_ui()
 
 func _update_stability_ui() -> void:
 	stability_bar.value = GlobalMetrics.stability
+	var overlay_controller: Node = get_node_or_null("CanvasLayer")
+	if overlay_controller != null and overlay_controller.has_method("set_danger_level"):
+		overlay_controller.call("set_danger_level", GlobalMetrics.stability)
+		return
+	var shared_overlay: Node = get_tree().get_first_node_in_group("noir_overlay")
+	if shared_overlay != null and shared_overlay.has_method("set_danger_level"):
+		shared_overlay.call("set_danger_level", GlobalMetrics.stability)
 
