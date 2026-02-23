@@ -1,0 +1,91 @@
+{
+  "contract_version": "city_map.v3.0.0",
+  "level_id": "6_x_01",
+  "time_limit_sec": 140,
+  "start_node": "A",
+  "end_node": "E",
+  "min_sum": -1,
+  "min_path_examples": [
+    ["A", "B", "E"]
+  ],
+  "ui": {
+    "accent_color": "#67B8FF",
+    "node_radius_px": 52,
+    "graph_fill_ratio": 0.86,
+    "node_hit_target_px": 48,
+    "dossier_auto_hide_on_first_move": true
+  },
+  "numpad": {
+    "enabled": true,
+    "max_len": 6,
+    "allow_backspace_hold_clear": true
+  },
+  "traffic": {
+    "enabled": true,
+    "mode": "tile_scroll",
+    "base_speed": 1.0,
+    "weight_speed_curve": "inverse_linear"
+  },
+  "schedule_overlay": {
+    "enabled": true,
+    "danger_threshold_sec": 15,
+    "closed_behavior": "disable_neighbor"
+  },
+  "rules": {
+    "require_end_node_to_submit": true,
+    "input_regex": "^[0-9]+$"
+  },
+  "constraints": {
+    "must_visit": [],
+    "blacklist_nodes": [],
+    "xor_groups": []
+  },
+  "nodes": [
+    { "id": "A", "label": "A", "pos": { "x": 0.10, "y": 0.50 } },
+    { "id": "B", "label": "B", "pos": { "x": 0.45, "y": 0.25 } },
+    { "id": "E", "label": "E", "pos": { "x": 0.82, "y": 0.50 } }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "A",
+      "to": "B",
+      "w": 8,
+      "two_way": false,
+      "bend": 0.25
+    },
+    {
+      "id": "e2",
+      "from": "B",
+      "to": "E",
+      "w": 12,
+      "two_way": false,
+      "bend": -0.2,
+      "schedule": [
+        { "t_from": 0, "t_to": 45, "w": 12, "state": "open" },
+        { "t_from": 45, "t_to": 90, "w": 20, "state": "open" },
+        { "t_from": 90, "t_to": 999, "w": 99, "state": "closed" }
+      ],
+      "tags": ["patrol"]
+    }
+  ],
+  "trust": {
+    "initial": 100,
+    "penalty_calc": 25,
+    "penalty_opt": 25,
+    "penalty_parse": 5,
+    "penalty_reset": 5,
+    "penalty_transit": 25,
+    "penalty_cycle": 10,
+    "penalty_logic_violation": 30,
+    "penalty_closed_edge": 8,
+    "ambush_multiplier": 0.5,
+    "overtime_div": 2,
+    "fail_threshold": 10
+  },
+  "analytics": {
+    "enabled": true,
+    "log_prefix": "case_6_x",
+    "schema_version": "city_map.v3.0.0"
+  }
+}
