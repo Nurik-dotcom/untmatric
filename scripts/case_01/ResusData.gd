@@ -1,8 +1,10 @@
 extends RefCounted
 
-const REQUIRED_LEVEL_KEYS: Array[String] = ["id", "briefing", "format", "buckets", "items", "scoring_model", "feedback_rules", "system_state_rules"]
+const REQUIRED_LEVEL_KEYS: Array[String] = ["id", "briefing", "format", "buckets", "items", "scoring_model"]
+const REQUIRED_LEGACY_KEYS: Array[String] = ["feedback_rules", "system_state_rules"]
 const REQUIRED_BUCKET_IDS: Array[String] = ["INPUT", "OUTPUT", "MEMORY"]
 const REQUIRED_PARTS: Array[String] = ["gpu", "ram", "cache"]
+const CIA_ITEM_TYPES: Array[String] = ["INC", "CTRL"]
 
 static func load_levels(path: String) -> Array:
 	var root: Variant = _parse_root(path)
@@ -126,13 +128,25 @@ static func validate_level(level: Dictionary) -> bool:
 			push_error("ResusData: missing key '%s' in level %s" % [key, str(level.get("id", "UNKNOWN"))])
 			return false
 
-	if str(level.get("format", "")) != "MATCHING":
-		push_error("ResusData: unsupported format in level %s" % str(level.get("id", "UNKNOWN")))
-		return false
+	var level_id: String = str(level.get("id", "UNKNOWN"))
+	var format: String = str(level.get("format", "")).to_upper()
+	if format == "MATCHING":
+		return _validate_matching_legacy(level, level_id)
+	if format == "MATCHING_CIA":
+		return _validate_matching_cia(level, level_id)
+
+	push_error("ResusData: unsupported format in level %s" % level_id)
+	return false
+
+static func _validate_matching_legacy(level: Dictionary, level_id: String) -> bool:
+	for key in REQUIRED_LEGACY_KEYS:
+		if not level.has(key):
+			push_error("ResusData: missing key '%s' in level %s" % [key, level_id])
+			return false
 
 	var buckets: Array = level.get("buckets", []) as Array
 	if buckets.size() != 3:
-		push_error("ResusData: level %s must have exactly 3 buckets" % str(level.get("id", "UNKNOWN")))
+		push_error("ResusData: level %s must have exactly 3 buckets" % level_id)
 		return false
 
 	var bucket_ids: Dictionary = {}
@@ -142,18 +156,18 @@ static func validate_level(level: Dictionary) -> bool:
 		var bucket: Dictionary = bucket_v as Dictionary
 		var bucket_id: String = str(bucket.get("bucket_id", "")).to_upper()
 		if bucket_id == "" or bucket_ids.has(bucket_id):
-			push_error("ResusData: duplicate or empty bucket_id in level %s" % str(level.get("id", "UNKNOWN")))
+			push_error("ResusData: duplicate or empty bucket_id in level %s" % level_id)
 			return false
 		bucket_ids[bucket_id] = true
 
 	for required_bucket in REQUIRED_BUCKET_IDS:
 		if not bucket_ids.has(required_bucket):
-			push_error("ResusData: bucket %s is required in level %s" % [required_bucket, str(level.get("id", "UNKNOWN"))])
+			push_error("ResusData: bucket %s is required in level %s" % [required_bucket, level_id])
 			return false
 
 	var items: Array = level.get("items", []) as Array
 	if items.size() != 8:
-		push_error("ResusData: level %s must have exactly 8 items" % str(level.get("id", "UNKNOWN")))
+		push_error("ResusData: level %s must have exactly 8 items" % level_id)
 		return false
 
 	var item_ids: Dictionary = {}
@@ -165,10 +179,10 @@ static func validate_level(level: Dictionary) -> bool:
 		var label: String = str(item.get("label", ""))
 		var correct_bucket_id: String = str(item.get("correct_bucket_id", "")).to_upper()
 		if item_id == "" or label == "" or correct_bucket_id == "":
-			push_error("ResusData: item contract is incomplete in level %s" % str(level.get("id", "UNKNOWN")))
+			push_error("ResusData: item contract is incomplete in level %s" % level_id)
 			return false
 		if item_ids.has(item_id):
-			push_error("ResusData: duplicate item_id %s in level %s" % [item_id, str(level.get("id", "UNKNOWN"))])
+			push_error("ResusData: duplicate item_id %s in level %s" % [item_id, level_id])
 			return false
 		if not bucket_ids.has(correct_bucket_id):
 			push_error("ResusData: item %s references missing bucket %s" % [item_id, correct_bucket_id])
@@ -181,10 +195,86 @@ static func validate_level(level: Dictionary) -> bool:
 			return false
 
 	var scoring_model: Dictionary = level.get("scoring_model", {}) as Dictionary
+	if not _validate_scoring_model(level_id, scoring_model, true):
+		return false
+
+	var system_rules: Dictionary = level.get("system_state_rules", {}) as Dictionary
+	if not system_rules.has_all(["monitor_on_if", "ram_ok_if", "fast_type_if"]):
+		push_error("ResusData: system_state_rules are incomplete in level %s" % level_id)
+		return false
+
+	if bool(level.get("diegetic_mode", false)):
+		var socket_map: Dictionary = level.get("socket_map", {}) as Dictionary
+		if socket_map.is_empty():
+			push_error("ResusData: diegetic level %s missing socket_map" % level_id)
+			return false
+		for required_bucket in REQUIRED_BUCKET_IDS:
+			if not socket_map.has(required_bucket):
+				push_error("ResusData: socket_map missing bucket %s in level %s" % [required_bucket, level_id])
+				return false
+
+	return true
+
+static func _validate_matching_cia(level: Dictionary, level_id: String) -> bool:
+	var buckets: Array = level.get("buckets", []) as Array
+	if buckets.size() != 3:
+		push_error("ResusData: CIA level %s must have exactly 3 buckets" % level_id)
+		return false
+
+	var bucket_ids: Dictionary = {}
+	for bucket_v in buckets:
+		if typeof(bucket_v) != TYPE_DICTIONARY:
+			return false
+		var bucket: Dictionary = bucket_v as Dictionary
+		var bucket_id: String = str(bucket.get("bucket_id", "")).to_upper()
+		if bucket_id == "" or bucket_ids.has(bucket_id):
+			push_error("ResusData: CIA level %s has invalid bucket_id" % level_id)
+			return false
+		bucket_ids[bucket_id] = true
+
+	var items: Array = level.get("items", []) as Array
+	if items.size() != 8:
+		push_error("ResusData: CIA level %s must have exactly 8 items" % level_id)
+		return false
+
+	var item_ids: Dictionary = {}
+	for item_v in items:
+		if typeof(item_v) != TYPE_DICTIONARY:
+			return false
+		var item: Dictionary = item_v as Dictionary
+		var item_id: String = str(item.get("item_id", "")).strip_edges()
+		var label: String = str(item.get("label", "")).strip_edges()
+		var correct_bucket_id: String = str(item.get("correct_bucket_id", "")).to_upper()
+		var item_type: String = str(item.get("type", "")).to_upper()
+		var explain_short: String = str(item.get("explain_short", "")).strip_edges()
+		if item_id == "" or label == "" or correct_bucket_id == "":
+			push_error("ResusData: CIA item contract is incomplete in level %s" % level_id)
+			return false
+		if item_ids.has(item_id):
+			push_error("ResusData: CIA level %s has duplicate item_id %s" % [level_id, item_id])
+			return false
+		if not bucket_ids.has(correct_bucket_id):
+			push_error("ResusData: CIA item %s references missing bucket %s" % [item_id, correct_bucket_id])
+			return false
+		if not CIA_ITEM_TYPES.has(item_type):
+			push_error("ResusData: CIA item %s has invalid type '%s'" % [item_id, item_type])
+			return false
+		if explain_short.length() < 6:
+			push_error("ResusData: CIA item %s must have explain_short" % item_id)
+			return false
+		item_ids[item_id] = true
+
+	var scoring_model: Dictionary = level.get("scoring_model", {}) as Dictionary
+	if not _validate_scoring_model(level_id, scoring_model, false):
+		return false
+
+	return true
+
+static func _validate_scoring_model(level_id: String, scoring_model: Dictionary, require_default_code: bool) -> bool:
 	var rules: Array = scoring_model.get("rules", []) as Array
 	var default_rule: Dictionary = scoring_model.get("default_rule", {}) as Dictionary
 	if rules.is_empty() or default_rule.is_empty():
-		push_error("ResusData: scoring_model is incomplete in level %s" % str(level.get("id", "UNKNOWN")))
+		push_error("ResusData: scoring_model is incomplete in level %s" % level_id)
 		return false
 
 	for rule_v in rules:
@@ -192,27 +282,20 @@ static func validate_level(level: Dictionary) -> bool:
 			return false
 		var rule: Dictionary = rule_v as Dictionary
 		if not rule.has_all(["min_correct", "points", "stability_delta", "verdict_code"]):
-			push_error("ResusData: scoring rule is incomplete in level %s" % str(level.get("id", "UNKNOWN")))
+			push_error("ResusData: scoring rule is incomplete in level %s" % level_id)
 			return false
 
-	if not default_rule.has_all(["code", "points", "stability_delta", "verdict_code"]):
-		push_error("ResusData: default_rule is incomplete in level %s" % str(level.get("id", "UNKNOWN")))
+	if not default_rule.has_all(["points", "stability_delta", "verdict_code"]):
+		push_error("ResusData: default_rule is incomplete in level %s" % level_id)
 		return false
 
-	var system_rules: Dictionary = level.get("system_state_rules", {}) as Dictionary
-	if not system_rules.has_all(["monitor_on_if", "ram_ok_if", "fast_type_if"]):
-		push_error("ResusData: system_state_rules are incomplete in level %s" % str(level.get("id", "UNKNOWN")))
+	if require_default_code and not default_rule.has("code"):
+		push_error("ResusData: default_rule is missing code in level %s" % level_id)
 		return false
 
-	if bool(level.get("diegetic_mode", false)):
-		var socket_map: Dictionary = level.get("socket_map", {}) as Dictionary
-		if socket_map.is_empty():
-			push_error("ResusData: diegetic level %s missing socket_map" % str(level.get("id", "UNKNOWN")))
-			return false
-		for required_bucket in REQUIRED_BUCKET_IDS:
-			if not socket_map.has(required_bucket):
-				push_error("ResusData: socket_map missing bucket %s in level %s" % [required_bucket, str(level.get("id", "UNKNOWN"))])
-				return false
+	if not require_default_code and not default_rule.has("code") and not default_rule.has("when"):
+		push_error("ResusData: default_rule must contain 'code' or 'when' in level %s" % level_id)
+		return false
 
 	return true
 

@@ -19,6 +19,9 @@ var start_time_ms: int = 0
 var drag_count: int = 0
 var trace: Array = []
 var item_nodes: Dictionary = {}
+var item_contracts: Dictionary = {}
+var bucket_labels_runtime: Dictionary = {}
+var bucket_to_zone: Dictionary = {}
 var input_locked: bool = false
 
 var console_target_text: String = ""
@@ -65,6 +68,7 @@ var _briefing_toggle_button: Button = null
 @onready var result_verdict_label: Label = $ResultPopup/VBox/VerdictLabel
 @onready var result_score_label: Label = $ResultPopup/VBox/ScoreLabel
 @onready var result_stability_label: Label = $ResultPopup/VBox/StabilityLabel
+@onready var result_details_label: RichTextLabel = $ResultPopup/VBox/ResultDetails
 @onready var result_retry_button: Button = $ResultPopup/VBox/Buttons/BtnRetry
 @onready var result_back_button: Button = $ResultPopup/VBox/Buttons/BtnBack
 
@@ -119,6 +123,7 @@ func _load_levels() -> void:
 func _start_level(index: int) -> void:
 	current_level_index = clamp(index, 0, max(0, levels.size() - 1))
 	level_data = (levels[current_level_index] as Dictionary).duplicate(true)
+	item_contracts = _item_contract_map(level_data.get("items", []) as Array)
 	title_label.text = "Кейс 01: Цифровая реанимация"
 	stage_label.text = "ЭТАП А"
 	briefing_label.text = str(level_data.get("briefing", ""))
@@ -131,18 +136,29 @@ func _start_level(index: int) -> void:
 	_reset_attempt()
 
 func _configure_zones() -> void:
-	var bucket_labels: Dictionary = _bucket_label_map(level_data.get("buckets", []) as Array)
-	var socket_map: Dictionary = level_data.get("socket_map", {}) as Dictionary
+	var buckets: Array = level_data.get("buckets", []) as Array
+	bucket_labels_runtime = _bucket_label_map(buckets)
+	bucket_to_zone.clear()
+	var bucket_ids: Array[String] = _bucket_ids(buckets)
+	var zones: Array = _socket_zones()
 
 	if pile_zone.has_method("setup"):
-		pile_zone.call("setup", "PILE", "КУЧА ЧАСТЕЙ")
+		pile_zone.call("setup", "PILE", "УЛИКИ")
 
-	if zone_input.has_method("setup"):
-		zone_input.call("setup", "INPUT", str(bucket_labels.get("INPUT", "INPUT")), _string_array(socket_map.get("INPUT", [])))
-	if zone_output.has_method("setup"):
-		zone_output.call("setup", "OUTPUT", str(bucket_labels.get("OUTPUT", "OUTPUT")), _string_array(socket_map.get("OUTPUT", [])))
-	if zone_memory.has_method("setup"):
-		zone_memory.call("setup", "MEMORY", str(bucket_labels.get("MEMORY", "MEMORY")), _string_array(socket_map.get("MEMORY", [])))
+	var setup_count: int = int(min(bucket_ids.size(), zones.size()))
+	for i in range(setup_count):
+		var bucket_id: String = bucket_ids[i]
+		var zone_value: Variant = zones[i]
+		if not (zone_value is Node):
+			continue
+		var zone_node: Node = zone_value as Node
+		bucket_to_zone[bucket_id] = zone_node
+		if zone_node.has_method("setup"):
+			var bucket_label: String = str(bucket_labels_runtime.get(bucket_id, bucket_id))
+			if _is_cia_level():
+				bucket_label = "ПАПКА: %s" % bucket_label
+			var accepted_ids: Array[String] = _accepted_item_ids_for_bucket(bucket_id)
+			zone_node.call("setup", bucket_id, bucket_label, accepted_ids)
 
 func _reset_attempt() -> void:
 	start_time_ms = Time.get_ticks_msec()
@@ -258,6 +274,11 @@ func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> v
 		var zone: Node = _zone_for_socket(socket_id)
 		if zone != null and zone.has_method("add_item_control"):
 			zone.call("add_item_control", source_node)
+		_log_event("ITEM_PLACED", {
+			"item_id": item_id,
+			"to_bucket": socket_id.to_upper(),
+			"from_bucket": str(payload.get("from_zone", "PILE")).to_upper()
+		})
 		_refresh_system_state(_build_placements_snapshot())
 		_play_sfx("click")
 		return
@@ -274,6 +295,11 @@ func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> v
 func _on_pile_item_placed(item_id: String, _to_bucket: String, from_bucket: String) -> void:
 	if input_locked:
 		return
+	_log_event("ITEM_PLACED", {
+		"item_id": item_id,
+		"to_bucket": "PILE",
+		"from_bucket": from_bucket.to_upper()
+	})
 	_log_event("DROP_OK", {
 		"item_id": item_id,
 		"socket": "PILE",
@@ -301,6 +327,15 @@ func _count_placed(placements: Dictionary) -> int:
 	return count
 
 func _evaluate_system_state(placements: Dictionary) -> Dictionary:
+	if _is_cia_level():
+		return {
+			"gpu_ok": true,
+			"ram_ok": true,
+			"cache_ok": true,
+			"monitor_on": true,
+			"fast_type": true
+		}
+
 	var rules: Dictionary = level_data.get("system_state_rules", {}) as Dictionary
 	var fx_rules: Dictionary = level_data.get("fx_rules", {}) as Dictionary
 	var monitor_rule: Dictionary = fx_rules.get("gpu_on", rules.get("monitor_on_if", {})) as Dictionary
@@ -348,12 +383,17 @@ func _refresh_system_state(placements: Dictionary) -> void:
 	var console_text: String = "\n".join(console_lines)
 	_set_console_target(console_text)
 
-	status_label.text = "ВИДЕО %s | ПАМЯТЬ %s | БУФЕР %s" % [
-		"OK" if gpu_ok else "FAIL",
-		"OK" if ram_ok else "FAIL",
-		"FAST" if cache_ok else "SLOW"
-	]
-	status_label.modulate = COLOR_OK if gpu_ok and ram_ok and cache_ok else (COLOR_ERR if not ram_ok or not gpu_ok else COLOR_WARN)
+	if _is_cia_level():
+		var placed_count: int = _count_placed(placements)
+		status_label.text = "Разложите улики по CIA: %d/8" % placed_count
+		status_label.modulate = COLOR_OK
+	else:
+		status_label.text = "ВИДЕО %s | ПАМЯТЬ %s | БУФЕР %s" % [
+			"OK" if gpu_ok else "FAIL",
+			"OK" if ram_ok else "FAIL",
+			"FAST" if cache_ok else "SLOW"
+		]
+		status_label.modulate = COLOR_OK if gpu_ok and ram_ok and cache_ok else (COLOR_ERR if not ram_ok or not gpu_ok else COLOR_WARN)
 
 	_log_event("DIAG_STATE", {
 		"gpu_ok": gpu_ok,
@@ -362,6 +402,12 @@ func _refresh_system_state(placements: Dictionary) -> void:
 	})
 
 func _update_monitor(monitor_on: bool) -> void:
+	if _is_cia_level():
+		monitor_screen.color = Color(0.08, 0.2, 0.12, 1.0)
+		monitor_label.text = "АНАЛИЗ УЛИК"
+		monitor_label.modulate = COLOR_OK
+		return
+
 	if monitor_on:
 		monitor_screen.color = Color(0.08, 0.2, 0.12, 1.0)
 		monitor_label.text = "СИГНАЛ ЕСТЬ"
@@ -386,6 +432,14 @@ func _update_diag_panel(gpu_ok: bool, ram_ok: bool, cache_ok: bool) -> void:
 	diag_buffer_value.modulate = COLOR_OK if cache_ok else COLOR_WARN
 
 func _build_console_lines(gpu_ok: bool, ram_ok: bool, placements: Dictionary) -> Array[String]:
+	if _is_cia_level():
+		return [
+			"[CASE] Классифицируйте улики по CIA",
+			"[HINT] CONF: доступ посторонних",
+			"[HINT] INTE: подмена/искажение",
+			"[HINT] AVAI: доступность сервиса"
+		]
+
 	var feedback_rules: Dictionary = level_data.get("feedback_rules", {}) as Dictionary
 	var system_rules: Dictionary = level_data.get("system_state_rules", {}) as Dictionary
 	var fx_rules: Dictionary = level_data.get("fx_rules", {}) as Dictionary
@@ -407,8 +461,7 @@ func _build_console_lines(gpu_ok: bool, ram_ok: bool, placements: Dictionary) ->
 	return lines
 
 func _input_devices_connected(placements: Dictionary) -> bool:
-	var socket_map: Dictionary = level_data.get("socket_map", {}) as Dictionary
-	var input_ids: Array[String] = _string_array(socket_map.get("INPUT", []))
+	var input_ids: Array[String] = _accepted_item_ids_for_bucket("INPUT")
 	for item_id in input_ids:
 		if str(placements.get(item_id, "PILE")).to_upper() == "INPUT":
 			return true
@@ -449,9 +502,11 @@ func _on_confirm_pressed() -> void:
 	btn_confirm.disabled = true
 
 	var result: Dictionary = ResusScoring.score(level_data, placements, placed_count)
+	var errors: Array = _build_errors(placements)
 	var system_state: Dictionary = _evaluate_system_state(placements)
 	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
 	var match_key: String = "RESUS_A|%s|%d" % [str(level_data.get("id", "RESUS-A")), GlobalMetrics.session_history.size()]
+	var bucket_labels: Dictionary = bucket_labels_runtime.duplicate(true)
 
 	var snapshot_a: Dictionary = {
 		"placements": placements.duplicate(true),
@@ -462,8 +517,10 @@ func _on_confirm_pressed() -> void:
 		"quest_id": "CASE_01_DIGITAL_RESUS",
 		"stage": "A",
 		"level_id": str(level_data.get("id", "RESUS-A-00")),
-		"format": "MATCHING",
+		"format": str(level_data.get("format", "MATCHING")),
 		"match_key": match_key,
+		"placements": placements.duplicate(true),
+		"bucket_labels": bucket_labels,
 		"snapshot": placements.duplicate(true),
 		"diegetic_snapshot": snapshot_a,
 		"trace": trace.duplicate(true),
@@ -479,11 +536,12 @@ func _on_confirm_pressed() -> void:
 		"stability_delta": int(result.get("stability_delta", 0)),
 		"verdict_code": str(result.get("verdict_code", "FAIL")),
 		"rule_code": str(result.get("rule_code", "SCORING_RULE")),
+		"errors": errors.duplicate(true),
 		"system_state": system_state.duplicate(true)
 	}
 	GlobalMetrics.register_trial(payload)
 	_update_stability_ui()
-	_show_result(result)
+	_show_result(result, errors)
 
 	if bool(result.get("is_correct", false)):
 		_play_sfx("relay")
@@ -492,7 +550,7 @@ func _on_confirm_pressed() -> void:
 	else:
 		_play_sfx("error")
 
-func _show_result(result: Dictionary) -> void:
+func _show_result(result: Dictionary, errors: Array) -> void:
 	var verdict_code: String = str(result.get("verdict_code", "FAIL"))
 	result_verdict_label.text = verdict_code
 	result_score_label.text = "%d/%d | %d/%d" % [
@@ -502,6 +560,8 @@ func _show_result(result: Dictionary) -> void:
 		int(result.get("max_points", 2))
 	]
 	result_stability_label.text = "СТАБИЛЬНОСТЬ %d" % int(result.get("stability_delta", 0))
+	if result_details_label != null:
+		result_details_label.text = _build_result_error_text(errors)
 
 	if verdict_code == "PERFECT":
 		result_verdict_label.modulate = COLOR_OK
@@ -538,10 +598,18 @@ func _highlight_hint_socket(item_id: String) -> void:
 	tween.tween_property(zone, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.28)
 
 func _expected_socket_for_item(item_id: String) -> String:
+	var item_contract_v: Variant = item_contracts.get(item_id, null)
+	if item_contract_v is Dictionary:
+		var item_contract: Dictionary = item_contract_v as Dictionary
+		var expected_bucket_id: String = str(item_contract.get("correct_bucket_id", "")).to_upper()
+		if expected_bucket_id != "":
+			return expected_bucket_id
+
 	var socket_map: Dictionary = level_data.get("socket_map", {}) as Dictionary
 	for socket_id_v in socket_map.keys():
 		var socket_id: String = str(socket_id_v).to_upper()
-		for accepted_id in _string_array(socket_map.get(socket_id, [])):
+		var accepted_ids: Array[String] = _string_array(socket_map.get(socket_id, []))
+		for accepted_id in accepted_ids:
 			if accepted_id == item_id:
 				return socket_id
 	return ""
@@ -555,7 +623,12 @@ func _socket_zones() -> Array:
 	return [zone_input, zone_output, zone_memory]
 
 func _zone_for_socket(socket_id: String) -> Node:
-	match socket_id.to_upper():
+	var normalized_socket_id: String = socket_id.to_upper()
+	var dynamic_zone_v: Variant = bucket_to_zone.get(normalized_socket_id, null)
+	if dynamic_zone_v is Node:
+		return dynamic_zone_v as Node
+
+	match normalized_socket_id:
 		"INPUT":
 			return zone_input
 		"OUTPUT":
@@ -576,6 +649,106 @@ func _bucket_label_map(buckets: Array) -> Dictionary:
 			continue
 		out[bucket_id] = str(bucket.get("label", bucket_id))
 	return out
+
+func _bucket_ids(buckets: Array) -> Array[String]:
+	var out: Array[String] = []
+	for bucket_v in buckets:
+		if typeof(bucket_v) != TYPE_DICTIONARY:
+			continue
+		var bucket: Dictionary = bucket_v as Dictionary
+		var bucket_id: String = str(bucket.get("bucket_id", "")).to_upper()
+		if bucket_id == "" or out.has(bucket_id):
+			continue
+		out.append(bucket_id)
+	return out
+
+func _item_contract_map(items: Array) -> Dictionary:
+	var out: Dictionary = {}
+	for item_v in items:
+		if typeof(item_v) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_v as Dictionary
+		var item_id: String = str(item.get("item_id", ""))
+		if item_id == "":
+			continue
+		out[item_id] = item
+	return out
+
+func _accepted_item_ids_for_bucket(bucket_id: String) -> Array[String]:
+	var out: Array[String] = []
+	var normalized_bucket: String = bucket_id.to_upper()
+	var known_item_ids: Dictionary = {}
+
+	var items: Array = level_data.get("items", []) as Array
+	for item_v in items:
+		if typeof(item_v) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_v as Dictionary
+		var item_id: String = str(item.get("item_id", ""))
+		if item_id == "":
+			continue
+		known_item_ids[item_id] = true
+		var expected_bucket: String = str(item.get("correct_bucket_id", "")).to_upper()
+		if expected_bucket == normalized_bucket and not out.has(item_id):
+			out.append(item_id)
+
+	var socket_map: Dictionary = level_data.get("socket_map", {}) as Dictionary
+	var mapped_ids: Array[String] = _string_array(socket_map.get(normalized_bucket, []))
+	for mapped_id in mapped_ids:
+		if known_item_ids.has(mapped_id) and not out.has(mapped_id):
+			out.append(mapped_id)
+
+	return out
+
+func _bucket_label(bucket_id: String) -> String:
+	var normalized_bucket: String = bucket_id.to_upper()
+	if normalized_bucket == "PILE":
+		return "КУЧА"
+	return str(bucket_labels_runtime.get(normalized_bucket, normalized_bucket))
+
+func _is_cia_level() -> bool:
+	return str(level_data.get("format", "")).to_upper() == "MATCHING_CIA"
+
+func _build_errors(placements: Dictionary) -> Array:
+	var errors: Array = []
+	var items: Array = level_data.get("items", []) as Array
+	for item_v in items:
+		if typeof(item_v) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_v as Dictionary
+		var item_id: String = str(item.get("item_id", ""))
+		if item_id == "":
+			continue
+		var chosen_bucket: String = str(placements.get(item_id, "PILE")).to_upper()
+		var correct_bucket: String = str(item.get("correct_bucket_id", "")).to_upper()
+		if chosen_bucket == correct_bucket:
+			continue
+		errors.append({
+			"item_id": item_id,
+			"chosen": chosen_bucket,
+			"correct": correct_bucket,
+			"explain_short": str(item.get("explain_short", ""))
+		})
+	return errors
+
+func _build_result_error_text(errors: Array) -> String:
+	if errors.is_empty():
+		return "Ошибок нет."
+
+	var lines: Array[String] = []
+	for error_v in errors:
+		if typeof(error_v) != TYPE_DICTIONARY:
+			continue
+		var error_data: Dictionary = error_v as Dictionary
+		var item_id: String = str(error_data.get("item_id", ""))
+		var chosen_bucket: String = str(error_data.get("chosen", "PILE"))
+		var correct_bucket: String = str(error_data.get("correct", ""))
+		var explain_short: String = str(error_data.get("explain_short", "")).strip_edges()
+		lines.append("%s -> выбрано %s, должно быть %s" % [item_id, _bucket_label(chosen_bucket), _bucket_label(correct_bucket)])
+		if explain_short != "":
+			lines.append(explain_short)
+
+	return "\n".join(lines)
 
 func _string_array(values: Variant) -> Array[String]:
 	var out: Array[String] = []
@@ -721,7 +894,7 @@ func _on_viewport_size_changed() -> void:
 		parts_grid.columns = 2
 
 	var popup_width: float = clampf(viewport_size.x - (24.0 if compact else 120.0), 300.0, 460.0)
-	var popup_height: float = clampf(viewport_size.y - (24.0 if compact else 120.0), 240.0, 380.0)
+	var popup_height: float = clampf(viewport_size.y - (24.0 if compact else 120.0), 300.0, 520.0)
 	result_popup.offset_left = -popup_width * 0.5
 	result_popup.offset_top = -popup_height * 0.5
 	result_popup.offset_right = popup_width * 0.5
@@ -745,3 +918,4 @@ func _apply_safe_area_padding(compact: bool) -> void:
 	safe_area.add_theme_constant_override("margin_top", int(round(top)))
 	safe_area.add_theme_constant_override("margin_right", int(round(right)))
 	safe_area.add_theme_constant_override("margin_bottom", int(round(bottom)))
+

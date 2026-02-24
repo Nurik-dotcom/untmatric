@@ -72,6 +72,10 @@ func _ready() -> void:
 	if not prompt_label.gui_input.is_connected(_on_scroll_input):
 		prompt_label.gui_input.connect(_on_scroll_input)
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	if is_instance_valid(result_stamp):
+		result_stamp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if is_instance_valid(scanner_overlay):
+		scanner_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	options_grid.visible = false
 	_init_session()
@@ -125,10 +129,13 @@ func _load_next_case() -> void:
 	_press_active = false
 	_press_moved = false
 	_press_hit.clear()
+	_set_tree_locked(false)
 
 	_render_case()
 
 func _render_case() -> void:
+	_set_tree_locked(false)
+	trial_locked = false
 	title_label.text = "Дело №7: Секретный архив [A %d/%d]" % [current_case_index + 1, session_cases.size()]
 	case_title_label.text = "ДЕЛО %s" % str(current_case.get("case_title", current_case.get("id", "UNKNOWN")))
 	briefing_label.bbcode_enabled = false
@@ -399,6 +406,10 @@ func _submit_target(target: Dictionary, clicked_kind: String, row_id: String, co
 	_update_stability_ui()
 
 	await get_tree().create_timer(0.9).timeout
+	if not is_inside_tree():
+		return
+	if current_case_index >= session_cases.size():
+		return
 	if GlobalMetrics.stability <= 0.0:
 		_game_over()
 	else:
@@ -583,6 +594,7 @@ func _on_scroll_input(event: InputEvent) -> void:
 
 func _finish_session() -> void:
 	trial_locked = true
+	_set_tree_locked(true)
 	title_label.text = "АРХИВ ДАННЫХ // СЕССИЯ ЗАВЕРШЕНА [A]"
 	prompt_label.bbcode_enabled = true
 	prompt_label.text = "[b]Расследование завершено.[/b]"
@@ -591,6 +603,7 @@ func _finish_session() -> void:
 
 func _game_over() -> void:
 	trial_locked = true
+	_set_tree_locked(true)
 	title_label.text = "АРХИВ ДАННЫХ // БЛОКИРОВКА СИСТЕМЫ [A]"
 	prompt_label.bbcode_enabled = true
 	prompt_label.text = "[b]Стабильность упала до нуля.[/b]"
@@ -612,6 +625,7 @@ func _show_fatal(text: String) -> void:
 	prompt_label.bbcode_enabled = false
 	prompt_label.text = text
 	trial_locked = true
+	_set_tree_locked(true)
 
 func _play_sound(sound_name: String, fallback: AudioStreamPlayer) -> void:
 	var manager := get_node_or_null("/root/AudioManager")

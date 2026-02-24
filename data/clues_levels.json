@@ -2244,5 +2244,117 @@
         "[BOOT] диагностическая трансляция онлайн"
       ]
     }
+  },
+  {
+    "quest_id": "CASE_01_DIGITAL_RESUS",
+    "schema_version": "3.1.0",
+    "id": "A_CIA_01",
+    "bucket": "infosec",
+    "briefing": "Разложите улики по свойствам информации (CIA): Конфиденциальность, Целостность, Доступность. Часть улик — атаки, часть — меры защиты.",
+    "format": "MATCHING_CIA",
+    "buckets": [
+      {
+        "bucket_id": "CONF",
+        "label": "КОНФИДЕНЦИАЛЬНОСТЬ"
+      },
+      {
+        "bucket_id": "INTE",
+        "label": "ЦЕЛОСТНОСТЬ"
+      },
+      {
+        "bucket_id": "AVAI",
+        "label": "ДОСТУПНОСТЬ"
+      }
+    ],
+    "items": [
+      {
+        "item_id": "LEAK",
+        "type": "INC",
+        "label": "[INC] Слив паролей в сеть",
+        "correct_bucket_id": "CONF",
+        "explain_short": "Данные становятся доступны посторонним."
+      },
+      {
+        "item_id": "VIRUS",
+        "type": "INC",
+        "label": "[INC] Искажение файла вирусом",
+        "correct_bucket_id": "INTE",
+        "explain_short": "Данные изменены, теряют достоверность."
+      },
+      {
+        "item_id": "DDOS",
+        "type": "INC",
+        "label": "[INC] DDoS атака на сервер",
+        "correct_bucket_id": "AVAI",
+        "explain_short": "Сервис недоступен пользователям."
+      },
+      {
+        "item_id": "DNS",
+        "type": "INC",
+        "label": "[INC] Подмена DNS записи",
+        "correct_bucket_id": "INTE",
+        "explain_short": "Адрес подменён, целостность информации нарушена."
+      },
+      {
+        "item_id": "ENC",
+        "type": "CTRL",
+        "label": "[CTRL] Шифрование данных",
+        "correct_bucket_id": "CONF",
+        "explain_short": "Скрывает содержимое от посторонних."
+      },
+      {
+        "item_id": "HASH",
+        "type": "CTRL",
+        "label": "[CTRL] Хэш-сумма файла",
+        "correct_bucket_id": "INTE",
+        "explain_short": "Позволяет проверить, что файл не изменили."
+      },
+      {
+        "item_id": "BACKUP",
+        "type": "CTRL",
+        "label": "[CTRL] Резервное копирование",
+        "correct_bucket_id": "AVAI",
+        "explain_short": "Восстановление после сбоя повышает доступность."
+      },
+      {
+        "item_id": "ACL",
+        "type": "CTRL",
+        "label": "[CTRL] Контроль доступа (ACL)",
+        "correct_bucket_id": "CONF",
+        "explain_short": "Ограничивает доступ к данным."
+      }
+    ],
+    "scoring_model": {
+      "rules": [
+        {
+          "code": "PERFECT",
+          "min_correct": 8,
+          "points": 2,
+          "stability_delta": 0,
+          "verdict_code": "PERFECT"
+        },
+        {
+          "code": "PARTIAL",
+          "min_correct": 6,
+          "points": 1,
+          "stability_delta": -10,
+          "verdict_code": "PARTIAL"
+        },
+        {
+          "code": "FAIL",
+          "min_correct": 0,
+          "points": 0,
+          "stability_delta": -30,
+          "verdict_code": "FAIL"
+        }
+      ],
+      "default_rule": {
+        "when": "EMPTY_CONFIRM",
+        "code": "EMPTY_CONFIRM",
+        "points": 0,
+        "stability_delta": -50,
+        "verdict_code": "EMPTY"
+      }
+    }
   }
 ]

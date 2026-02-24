@@ -7,18 +7,19 @@ const ORIENTATION_HORIZONTAL := "horizontal"
 const ORIENTATION_VERTICAL := "vertical"
 
 var _links: Array = []
+var _committed_cables: Array = []
 var _anchor_root: Control
 var _watched_controls: Array = []
 var _anchor_mode: String = ANCHOR_CENTER
 var _orientation: String = ORIENTATION_AUTO
 var _drag_active := false
-var _drag_committed := false
 var _drag_from := Vector2.ZERO
 var _drag_to := Vector2.ZERO
 
 @export var line_color: Color = Color(0.88, 0.64, 0.16, 0.9)
 @export var line_width: float = 3.0
 @export var arrow_size: float = 10.0
+@export var parallel_line_gap: float = 5.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -38,10 +39,9 @@ func set_links(links: Array, anchor_root: Control, anchor_mode: String = ANCHOR_
 	_anchor_root = anchor_root
 	_anchor_mode = anchor_mode.to_lower()
 	_orientation = orientation.to_lower()
-	_drag_active = false
-	_drag_committed = false
-	_drag_from = Vector2.ZERO
-	_drag_to = Vector2.ZERO
+	_committed_cables.clear()
+	clear_drag()
+
 	for link_v in links:
 		if typeof(link_v) != TYPE_DICTIONARY:
 			continue
@@ -58,7 +58,6 @@ func set_links(links: Array, anchor_root: Control, anchor_mode: String = ANCHOR_
 
 func start_drag(from_point: Vector2) -> void:
 	_drag_active = true
-	_drag_committed = false
 	_drag_from = from_point
 	_drag_to = from_point
 	queue_redraw()
@@ -69,25 +68,42 @@ func update_drag(current_point: Vector2) -> void:
 	_drag_to = current_point
 	queue_redraw()
 
-func commit_connection(from_point: Vector2, to_point: Vector2) -> void:
-	_drag_active = false
-	_drag_committed = true
-	_drag_from = from_point
-	_drag_to = to_point
+func commit_cable(from_point: Vector2, to_point: Vector2) -> void:
+	_committed_cables.append({
+		"from": from_point,
+		"to": to_point
+	})
+	clear_drag()
 	queue_redraw()
 
-func clear_connection() -> void:
+func clear_drag() -> void:
 	_drag_active = false
-	_drag_committed = false
 	_drag_from = Vector2.ZERO
 	_drag_to = Vector2.ZERO
 	queue_redraw()
+
+func clear_all() -> void:
+	_disconnect_signals()
+	_links.clear()
+	_anchor_root = null
+	_committed_cables.clear()
+	clear_drag()
+	queue_redraw()
+
+# Backward-compatible API
+func commit_connection(from_point: Vector2, to_point: Vector2) -> void:
+	commit_cable(from_point, to_point)
+
+# Backward-compatible API
+func clear_connection() -> void:
+	clear_all()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED or what == NOTIFICATION_TRANSFORM_CHANGED or what == NOTIFICATION_VISIBILITY_CHANGED:
 		queue_redraw()
 
 func _draw() -> void:
+	var static_lines: Array = []
 	for link_v in _links:
 		if typeof(link_v) != TYPE_DICTIONARY:
 			continue
@@ -99,13 +115,43 @@ func _draw() -> void:
 		var points: Dictionary = _resolve_points(from_control.get_global_rect(), to_control.get_global_rect())
 		var from_global: Vector2 = points.get("from", Vector2.ZERO)
 		var to_global: Vector2 = points.get("to", Vector2.ZERO)
-		var from_point: Vector2 = _global_to_local(from_global)
-		var to_point: Vector2 = _global_to_local(to_global)
-		draw_line(from_point, to_point, line_color, line_width, true)
-		_draw_arrow(from_point, to_point)
-	if _drag_active or _drag_committed:
-		draw_line(_drag_from, _drag_to, line_color, line_width, true)
-		_draw_arrow(_drag_from, _drag_to)
+		static_lines.append({
+			"from": _global_to_local(from_global),
+			"to": _global_to_local(to_global)
+		})
+
+	_draw_lines(static_lines)
+	_draw_lines(_committed_cables)
+
+	if _drag_active:
+		_draw_line_with_offset(_drag_from, _drag_to, 0, 1)
+
+func _draw_lines(lines: Array) -> void:
+	var total := lines.size()
+	for i in range(total):
+		if typeof(lines[i]) != TYPE_DICTIONARY:
+			continue
+		var line: Dictionary = lines[i] as Dictionary
+		var from_point: Vector2 = line.get("from", Vector2.ZERO)
+		var to_point: Vector2 = line.get("to", Vector2.ZERO)
+		_draw_line_with_offset(from_point, to_point, i, total)
+
+func _draw_line_with_offset(from_point: Vector2, to_point: Vector2, index: int, total: int) -> void:
+	var direction := to_point - from_point
+	if direction.length() <= 0.001:
+		return
+	var offset := Vector2.ZERO
+	if total > 1:
+		var normal := Vector2(-direction.y, direction.x).normalized()
+		offset = normal * _parallel_offset(index, total)
+	var start := from_point + offset
+	var finish := to_point + offset
+	draw_line(start, finish, line_color, line_width, true)
+	_draw_arrow(start, finish)
+
+func _parallel_offset(index: int, total: int) -> float:
+	var center := float(total - 1) * 0.5
+	return (float(index) - center) * maxf(parallel_line_gap, line_width + 1.0)
 
 func _resolve_points(from_rect: Rect2, to_rect: Rect2) -> Dictionary:
 	if _anchor_mode != ANCHOR_EDGE:

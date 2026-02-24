@@ -39,6 +39,7 @@ var rel_drag_started_ts := 0
 var rel_cable_committed := false
 var rel_connected_pk := ""
 var rel_connected_fk := ""
+var rel_committed: Array = []
 var connect_attempts := 0
 var miss_connects := 0
 var drag_time_ms := 0
@@ -164,6 +165,7 @@ func _load_next_case() -> void:
 	rel_cable_committed = false
 	rel_connected_pk = ""
 	rel_connected_fk = ""
+	rel_committed.clear()
 	connect_attempts = 0
 	miss_connects = 0
 	drag_time_ms = 0
@@ -248,9 +250,16 @@ func _render_relation_ui() -> void:
 	rel_prompt.text = str(current_case.get("prompt", ""))
 	rel_arrow_label.text = ""
 	rel_link_label.text = "Drag cable from PK to FK"
+	rel_committed.clear()
+	rel_cable_committed = false
+	rel_connected_pk = ""
+	rel_connected_fk = ""
 
-	if is_instance_valid(connector_overlay) and connector_overlay.has_method("clear_connection"):
-		connector_overlay.call("clear_connection")
+	if is_instance_valid(connector_overlay):
+		if connector_overlay.has_method("clear_all"):
+			connector_overlay.call("clear_all")
+		elif connector_overlay.has_method("clear_connection"):
+			connector_overlay.call("clear_connection")
 
 	var options: Array = current_case.get("options", []) as Array
 	for opt_v in options:
@@ -457,10 +466,16 @@ func _try_start_relation_drag(tree: Tree, local_pos: Vector2) -> void:
 	if hit.is_empty():
 		miss_connects += 1
 		return
-	var pk_target: Dictionary = current_case.get("pk_target", {}) as Dictionary
-	var expected_pk_col := str(pk_target.get("col_id", ""))
 	var hit_col := str(hit.get("col_id", ""))
-	if hit_col != expected_pk_col:
+	var allowed_pk: Dictionary = {}
+	for pair_v in _get_required_connections():
+		if typeof(pair_v) != TYPE_DICTIONARY:
+			continue
+		var pair: Dictionary = pair_v as Dictionary
+		var pk_col := str(pair.get("pk_col_id", ""))
+		if not pk_col.is_empty():
+			allowed_pk[pk_col] = true
+	if not allowed_pk.has(hit_col):
 		miss_connects += 1
 		rel_link_label.text = "Start cable from PK column"
 		return
@@ -468,10 +483,8 @@ func _try_start_relation_drag(tree: Tree, local_pos: Vector2) -> void:
 	rel_drag_active = true
 	rel_drag_started_ts = Time.get_ticks_msec()
 	rel_drag_start_global = hit.get("center_global", Vector2.ZERO)
-	rel_connected_pk = expected_pk_col
+	rel_connected_pk = hit_col
 	rel_connected_fk = ""
-	rel_cable_committed = false
-	_set_relation_options_enabled(false)
 	if is_instance_valid(connector_overlay) and connector_overlay.has_method("start_drag"):
 		connector_overlay.call("start_drag", _global_to_overlay(rel_drag_start_global))
 	_play_sound("click", sfx_click)
@@ -488,29 +501,54 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 	rel_drag_active = false
 	drag_time_ms += maxi(0, Time.get_ticks_msec() - rel_drag_started_ts)
 	var hit := _resolve_tree_hit_global(rel_tree_r, global_pos, rel_right_col_ids)
-	var fk_target: Dictionary = current_case.get("fk_target", {}) as Dictionary
-	var expected_fk_col := str(fk_target.get("col_id", ""))
-	if not hit.is_empty() and str(hit.get("col_id", "")) == expected_fk_col:
+	var fk_col := str(hit.get("col_id", ""))
+	if not hit.is_empty() and _is_valid_relation_pair(rel_connected_pk, fk_col):
+		if _is_pair_already_committed(rel_connected_pk, fk_col):
+			if is_instance_valid(connector_overlay):
+				if connector_overlay.has_method("clear_drag"):
+					connector_overlay.call("clear_drag")
+				elif connector_overlay.has_method("clear_connection"):
+					connector_overlay.call("clear_connection")
+			rel_link_label.text = "Pair already linked"
+			_set_relation_options_enabled(_is_relation_ready_to_submit())
+			return
+
 		rel_cable_committed = true
-		rel_connected_fk = expected_fk_col
-		if is_instance_valid(connector_overlay) and connector_overlay.has_method("commit_connection"):
-			connector_overlay.call("commit_connection", _global_to_overlay(rel_drag_start_global), _global_to_overlay(hit.get("center_global", global_pos)))
-		rel_link_label.text = "Cable linked: PK -> FK"
-		_set_relation_options_enabled(true)
-		if (current_case.get("options", []) as Array).is_empty():
+		rel_connected_fk = fk_col
+		var to_overlay := _global_to_overlay(hit.get("center_global", global_pos))
+		if is_instance_valid(connector_overlay):
+			if connector_overlay.has_method("commit_cable"):
+				connector_overlay.call("commit_cable", _global_to_overlay(rel_drag_start_global), to_overlay)
+			elif connector_overlay.has_method("commit_connection"):
+				connector_overlay.call("commit_connection", _global_to_overlay(rel_drag_start_global), to_overlay)
+		rel_committed.append({
+			"pk_col_id": rel_connected_pk,
+			"fk_col_id": rel_connected_fk,
+			"from_global": rel_drag_start_global,
+			"to_global": hit.get("center_global", global_pos)
+		})
+
+		var needed := _get_required_connections().size()
+		var linked := rel_committed.size()
+		rel_link_label.text = "Cable linked (%d/%d)" % [linked, maxi(1, needed)]
+		var ready := _is_relation_ready_to_submit()
+		_set_relation_options_enabled(ready)
+		if (current_case.get("options", []) as Array).is_empty() and ready:
 			_handle_result(true, null, {
 				"connected_pk": rel_connected_pk,
 				"connected_fk": rel_connected_fk,
-				"relation_choice": ""
+				"relation_choice": "",
+				"committed_connections": rel_committed.duplicate(true)
 			})
 	else:
 		miss_connects += 1
-		rel_cable_committed = false
-		rel_connected_fk = ""
-		if is_instance_valid(connector_overlay) and connector_overlay.has_method("clear_connection"):
-			connector_overlay.call("clear_connection")
+		if is_instance_valid(connector_overlay):
+			if connector_overlay.has_method("clear_drag"):
+				connector_overlay.call("clear_drag")
+			elif connector_overlay.has_method("clear_connection"):
+				connector_overlay.call("clear_connection")
 		rel_link_label.text = "Missed FK target"
-		_set_relation_options_enabled(false)
+		_set_relation_options_enabled(_is_relation_ready_to_submit())
 
 func _on_relation_option_selected(opt: Dictionary) -> void:
 	if mode != MODE_RELATION or not is_trial_active:
@@ -519,9 +557,10 @@ func _on_relation_option_selected(opt: Dictionary) -> void:
 	is_trial_active = false
 	var selected_id := str(opt.get("id", ""))
 	relation_choice_id = selected_id
-	var is_correct := rel_cable_committed and selected_id == str(current_case.get("answer_id", ""))
+	var relation_ready := _is_relation_ready_to_submit()
+	var is_correct := relation_ready and selected_id == str(current_case.get("answer_id", ""))
 	var reason: Variant = null
-	if not rel_cable_committed:
+	if not relation_ready:
 		reason = "FK_DIRECTION_SWAP"
 	elif not is_correct:
 		reason = opt.get("f_reason", "WRONG_RELATION")
@@ -529,7 +568,8 @@ func _on_relation_option_selected(opt: Dictionary) -> void:
 		"selected_option_id": selected_id,
 		"connected_pk": rel_connected_pk,
 		"connected_fk": rel_connected_fk,
-		"relation_choice": selected_id
+		"relation_choice": selected_id,
+		"committed_connections": rel_committed.duplicate(true)
 	})
 
 func _set_relation_options_enabled(enabled: bool) -> void:
@@ -537,10 +577,64 @@ func _set_relation_options_enabled(enabled: bool) -> void:
 		if child is Button:
 			(child as Button).disabled = not enabled
 
+func _get_required_connections() -> Array:
+	var pairs: Array = []
+	var required: Array = current_case.get("required_connections", []) as Array
+	for pair_v in required:
+		if typeof(pair_v) != TYPE_DICTIONARY:
+			continue
+		var pair: Dictionary = pair_v as Dictionary
+		var pk_col := str(pair.get("pk_col_id", ""))
+		var fk_col := str(pair.get("fk_col_id", ""))
+		if pk_col.is_empty() or fk_col.is_empty():
+			continue
+		pairs.append({"pk_col_id": pk_col, "fk_col_id": fk_col})
+	if not pairs.is_empty():
+		return pairs
+
+	var fallback_pk: Dictionary = current_case.get("pk_target", {}) as Dictionary
+	var fallback_fk: Dictionary = current_case.get("fk_target", {}) as Dictionary
+	var fallback_pk_id := str(fallback_pk.get("col_id", ""))
+	var fallback_fk_id := str(fallback_fk.get("col_id", ""))
+	if not fallback_pk_id.is_empty() and not fallback_fk_id.is_empty():
+		pairs.append({"pk_col_id": fallback_pk_id, "fk_col_id": fallback_fk_id})
+	return pairs
+
+func _is_valid_relation_pair(pk_col_id: String, fk_col_id: String) -> bool:
+	for pair_v in _get_required_connections():
+		if typeof(pair_v) != TYPE_DICTIONARY:
+			continue
+		var pair: Dictionary = pair_v as Dictionary
+		if str(pair.get("pk_col_id", "")) == pk_col_id and str(pair.get("fk_col_id", "")) == fk_col_id:
+			return true
+	return false
+
+func _is_pair_already_committed(pk_col_id: String, fk_col_id: String) -> bool:
+	for row_v in rel_committed:
+		if typeof(row_v) != TYPE_DICTIONARY:
+			continue
+		var row: Dictionary = row_v as Dictionary
+		if str(row.get("pk_col_id", "")) == pk_col_id and str(row.get("fk_col_id", "")) == fk_col_id:
+			return true
+	return false
+
+func _is_relation_ready_to_submit() -> bool:
+	var required := _get_required_connections()
+	if required.is_empty():
+		return rel_cable_committed or not rel_committed.is_empty()
+	for pair_v in required:
+		if typeof(pair_v) != TYPE_DICTIONARY:
+			continue
+		var pair: Dictionary = pair_v as Dictionary
+		if not _is_pair_already_committed(str(pair.get("pk_col_id", "")), str(pair.get("fk_col_id", ""))):
+			return false
+	return true
+
 func _handle_result(is_correct: bool, reason: Variant, extra_data: Dictionary) -> void:
 	is_trial_active = false
 	btn_submit.disabled = true
 	btn_clear.disabled = true
+	rel_drag_active = false
 	_set_relation_options_enabled(false)
 	if not is_correct:
 		_play_sound("error", sfx_error)
@@ -549,6 +643,10 @@ func _handle_result(is_correct: bool, reason: Variant, extra_data: Dictionary) -
 	_log_trial(is_correct, reason, extra_data)
 	_update_stability_ui()
 	await get_tree().create_timer(1.0).timeout
+	if not is_inside_tree():
+		return
+	if current_case_index >= session_cases.size():
+		return
 	if GlobalMetrics.stability <= 0.0:
 		_game_over()
 	else:
@@ -619,13 +717,15 @@ func _log_trial(is_correct: bool, f_reason: Variant, extra_data: Dictionary) -> 
 		payload["answer"] = {
 			"connected_pk": str(extra_data.get("connected_pk", "")),
 			"connected_fk": str(extra_data.get("connected_fk", "")),
-			"relation_choice": str(extra_data.get("relation_choice", ""))
+			"relation_choice": str(extra_data.get("relation_choice", "")),
+			"committed_connections": extra_data.get("committed_connections", rel_committed.duplicate(true))
 		}
 		payload["expected"] = {
 			"pk_target": current_case.get("pk_target", {}),
 			"fk_target": current_case.get("fk_target", {}),
 			"expected_relation": str(current_case.get("expected_relation", "")),
-			"answer_id": str(current_case.get("answer_id", ""))
+			"answer_id": str(current_case.get("answer_id", "")),
+			"required_connections": _get_required_connections()
 		}
 		payload["telemetry"] = {
 			"connect_attempts": connect_attempts,
@@ -812,14 +912,14 @@ func _sets_equal(arr1: Array, arr2: Array) -> bool:
 	return _is_subset(arr1, arr2) and _is_subset(arr2, arr1)
 
 func _finish_session() -> void:
-	is_trial_active = false
+	_teardown_interaction(true)
 	title_label.text = "DATA ARCHIVE // SESSION COMPLETE [B]"
 	prompt_label.text = "Investigation complete."
 	rel_prompt.text = "Investigation complete."
 	_ensure_exit_button()
 
 func _game_over() -> void:
-	is_trial_active = false
+	_teardown_interaction(true)
 	title_label.text = "DATA ARCHIVE // SYSTEM LOCK [B]"
 	prompt_label.text = "Stability dropped to zero."
 	rel_prompt.text = "Stability dropped to zero."
@@ -839,7 +939,22 @@ func _ensure_exit_button() -> void:
 func _show_fatal(text: String) -> void:
 	prompt_label.text = text
 	rel_prompt.text = text
+	_teardown_interaction(true)
+
+func _teardown_interaction(clear_overlay: bool) -> void:
 	is_trial_active = false
+	rel_drag_active = false
+	btn_submit.disabled = true
+	btn_clear.disabled = true
+	_set_relation_options_enabled(false)
+	if not clear_overlay or not is_instance_valid(connector_overlay):
+		return
+	if connector_overlay.has_method("clear_all"):
+		connector_overlay.call("clear_all")
+	elif connector_overlay.has_method("clear_drag"):
+		connector_overlay.call("clear_drag")
+	elif connector_overlay.has_method("clear_connection"):
+		connector_overlay.call("clear_connection")
 
 func _play_sound(sound_name: String, fallback: AudioStreamPlayer) -> void:
 	var manager := get_node_or_null("/root/AudioManager")
