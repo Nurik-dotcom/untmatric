@@ -1,4 +1,4 @@
-extends Control
+﻿extends Control
 class_name NetworkTraceTopologyBoardA
 
 signal device_installed(device_id: String, label_text: String, error_code: String)
@@ -206,10 +206,10 @@ func _recalculate_layout() -> void:
 		if count == 1:
 			node_positions[node_names[0]] = Vector2(size.x * 0.5, y_line)
 		else:
-			var step: float = width_available / float(count - 1)
+			var step_px: float = width_available / float(count - 1)
 			for idx in range(count):
 				var node_name: String = node_names[idx]
-				var pos: Vector2 = Vector2(x_start + float(idx) * step, y_line)
+				var pos: Vector2 = Vector2(x_start + float(idx) * step_px, y_line)
 				node_positions[node_name] = pos
 
 	_build_packet_path()
@@ -275,9 +275,9 @@ func _draw() -> void:
 	draw_rect(slot_rect, Color(0.08, 0.12, 0.1, 0.95), true)
 	draw_rect(slot_rect, Color(0.95, 0.75, 0.25, 0.9), false, 3.0)
 	if tools_locked:
-		_draw_centered_text("ЗАБЛОКИРОВАНО", slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.45, 0.4, 1.0), 18)
+		_draw_centered_text("Collect clues first", slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.45, 0.4, 1.0), 18)
 	elif installed_device_id.is_empty():
-		_draw_centered_text("ПОМЕСТИТЕ УСТРОЙСТВО", slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.95, 0.8, 1.0), 18)
+		_draw_centered_text("Drop device here", slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.95, 0.8, 1.0), 18)
 	else:
 		_draw_centered_text(installed_device_label, slot_rect.get_center() + Vector2(0.0, 0.0), slot_rect.size.x - 8.0, Color(0.75, 1.0, 0.82, 1.0), 18)
 

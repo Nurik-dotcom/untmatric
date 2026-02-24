@@ -8,13 +8,17 @@ const AUDIO_RELAY: AudioStream = preload("res://audio/relay.wav")
 
 const LEVELS_PATH := "res://data/suspect_a_levels.json"
 const MAX_ATTEMPTS := 3
-const PALETTE_ID_NOIR := 0
 const FX_ID_LOW := 0
 const FX_ID_HIGH := 1
+const OVERLAY_ID_PENCIL := 0
+const OVERLAY_ID_CRT := 1
 
-const STATUS_COLOR_NEUTRAL := Color(0.72, 0.72, 0.7)
+const PHONE_PORTRAIT_MAX_WIDTH := 560.0
+const PHONE_LANDSCAPE_MAX_HEIGHT := 760.0
+
+const STATUS_COLOR_NEUTRAL := Color(0.72, 0.72, 0.70)
 const STATUS_COLOR_READY := Color(0.93, 0.93, 0.91)
-const STATUS_COLOR_FAIL := Color(0.82, 0.82, 0.8)
+const STATUS_COLOR_FAIL := Color(0.82, 0.82, 0.80)
 const STATUS_COLOR_WARN := Color(0.78, 0.78, 0.76)
 const STATUS_COLOR_SUCCESS := Color(0.97, 0.97, 0.95)
 
@@ -28,12 +32,21 @@ enum State {
 	DIAGNOSTIC
 }
 
-@export_enum("noir") var terminal_palette: String = "noir"
-@export_enum("low", "high") var fx_quality: String = "low"
+@export_enum("low", "high") var fx_quality: String = "high"
+@export_enum("pencil", "crt") var overlay_mode: String = "pencil"
 @export var typewriter_delay_sec: float = 0.03
 
+@onready var safe_area: MarginContainer = $SafeArea
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
+@onready var header_row: HBoxContainer = $SafeArea/MainLayout/Header
+@onready var terminal_frame: PanelContainer = $SafeArea/MainLayout/TerminalFrame
+@onready var actions_row: HBoxContainer = $SafeArea/MainLayout/Actions
+@onready var settings_row: HBoxContainer = $SafeArea/MainLayout/SettingsRow
 @onready var noir_overlay: CanvasLayer = $NoirOverlay
+
+@onready var briefing_goal: Label = $SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox/LblGoal
+@onready var briefing_hint: Label = $SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox/LblHint
+
 @onready var code_label: RichTextLabel = $SafeArea/MainLayout/TerminalFrame/ScrollContainer/CodeLabel
 @onready var code_scroll: ScrollContainer = $SafeArea/MainLayout/TerminalFrame/ScrollContainer
 @onready var input_display: Label = $SafeArea/MainLayout/InputFrame/InputDisplay
@@ -41,19 +54,25 @@ enum State {
 @onready var lbl_attempts: Label = $SafeArea/MainLayout/StatusRow/LblAttempts
 @onready var decrypt_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/DecryptBar
 @onready var energy_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/EnergyBar
+
 @onready var diag_panel: PanelContainer = $DiagnosticsPanel
 @onready var diag_trace: RichTextLabel = $DiagnosticsPanel/VBoxContainer/TraceList
 @onready var diag_explain: RichTextLabel = $DiagnosticsPanel/VBoxContainer/ExplainList
+
 @onready var btn_enter: Button = $SafeArea/MainLayout/Actions/BtnEnter
 @onready var btn_analyze: Button = $SafeArea/MainLayout/Actions/BtnAnalyze
 @onready var btn_next: Button = $SafeArea/MainLayout/Actions/BtnNext
 @onready var btn_close_diag: Button = $DiagnosticsPanel/VBoxContainer/BtnCloseDiag
 @onready var btn_quest_back: Button = $SafeArea/MainLayout/Header/BtnQuestBack
+@onready var btn_settings: Button = $SafeArea/MainLayout/Header/BtnSettings
 @onready var lbl_clue_title: Label = $SafeArea/MainLayout/Header/LblClueTitle
 @onready var lbl_session: Label = $SafeArea/MainLayout/Header/LblSessionId
-@onready var palette_select: OptionButton = $SafeArea/MainLayout/SettingsRow/PaletteSelect
-@onready var fx_select: OptionButton = $SafeArea/MainLayout/SettingsRow/FxSelect
 @onready var numpad: GridContainer = $SafeArea/MainLayout/Numpad
+
+@onready var inspector_popup: PopupPanel = $InspectorPopup
+@onready var popup_fx_select: OptionButton = $InspectorPopup/Root/SettingsGrid/FxSelect
+@onready var popup_overlay_select: OptionButton = $InspectorPopup/Root/SettingsGrid/OverlaySelect
+@onready var popup_close: Button = $InspectorPopup/Root/BtnClose
 
 var levels: Array = []
 var current_level_idx := 0
@@ -79,9 +98,10 @@ func _ready() -> void:
 	_init_audio_player()
 	_connect_signals()
 	_apply_mobile_min_sizes()
+	_apply_layout_mode()
 
 	if not _load_levels_from_json():
-		_show_boot_error("Не удалось загрузить уровни подозреваемых.")
+		_show_boot_error("Failed to load suspect levels.")
 		return
 
 	if levels.size() != 18:
@@ -90,38 +110,68 @@ func _ready() -> void:
 	GlobalMetrics.current_level_index = 0
 	_load_level(0)
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and is_node_ready():
+		_apply_layout_mode()
+
 func _apply_theme() -> void:
 	theme = THEME_NOIR
 
 func _setup_runtime_controls() -> void:
-	palette_select.clear()
-	palette_select.add_item("NOIR", PALETTE_ID_NOIR)
-	palette_select.select(PALETTE_ID_NOIR)
-	palette_select.disabled = true
+	settings_row.visible = false
 
-	fx_select.clear()
-	fx_select.add_item("НИЗКИЙ", FX_ID_LOW)
-	fx_select.add_item("ВЫСОКИЙ", FX_ID_HIGH)
-	fx_select.select(FX_ID_HIGH if fx_quality == "high" else FX_ID_LOW)
+	popup_fx_select.clear()
+	popup_fx_select.add_item("LOW", FX_ID_LOW)
+	popup_fx_select.add_item("HIGH", FX_ID_HIGH)
+	popup_fx_select.select(FX_ID_HIGH if fx_quality == "high" else FX_ID_LOW)
 
-	palette_select.item_selected.connect(_on_palette_selected)
-	fx_select.item_selected.connect(_on_fx_selected)
+	popup_overlay_select.clear()
+	popup_overlay_select.add_item("PENCIL", OVERLAY_ID_PENCIL)
+	popup_overlay_select.add_item("CRT", OVERLAY_ID_CRT)
+	popup_overlay_select.select(OVERLAY_ID_PENCIL if overlay_mode == "pencil" else OVERLAY_ID_CRT)
 
 func _configure_overlay_shader() -> void:
-	var crt_overlay := noir_overlay.get_node("CRT_Overlay") as ColorRect
-	if crt_overlay == null:
+	if noir_overlay != null and noir_overlay.has_method("set_overlay_mode"):
+		noir_overlay.call("set_overlay_mode", "PENCIL" if overlay_mode == "pencil" else "CRT")
+
+	var overlay_rect: ColorRect = noir_overlay.get_node_or_null("CRT_Overlay") as ColorRect
+	if overlay_rect == null:
 		return
-	var shader_mat := crt_overlay.material as ShaderMaterial
+	var shader_mat: ShaderMaterial = overlay_rect.material as ShaderMaterial
 	if shader_mat == null:
 		return
-	var high_fx := fx_quality == "high"
-	shader_mat.set_shader_parameter("fx_quality", 1 if high_fx else 0)
-	shader_mat.set_shader_parameter("intensity", 0.34)
-	shader_mat.set_shader_parameter("grain_strength", 0.35 if high_fx else 0.24)
-	shader_mat.set_shader_parameter("hatch_strength", 0.30 if high_fx else 0.08)
-	shader_mat.set_shader_parameter("vignette_strength", 0.45)
-	shader_mat.set_shader_parameter("pulse", 0.0)
-	shader_mat.set_shader_parameter("jitter_strength", 0.0)
+
+	var high_fx: bool = fx_quality == "high"
+	if overlay_mode == "pencil":
+		_set_overlay_param(shader_mat, "intensity", 0.35)
+		_set_overlay_param(shader_mat, "fx_quality", 1 if high_fx else 0)
+		_set_overlay_param(shader_mat, "grain_strength", 0.36 if high_fx else 0.24)
+		_set_overlay_param(shader_mat, "hatch_strength", 0.30 if high_fx else 0.14)
+		_set_overlay_param(shader_mat, "vignette_strength", 0.44)
+		_set_overlay_param(shader_mat, "jitter_strength", 0.0)
+		_set_overlay_param(shader_mat, "pulse", 0.0)
+		_set_overlay_param(shader_mat, "glitch_strength", 0.0)
+	else:
+		_set_overlay_param(shader_mat, "tint_color", Color(0.93, 0.93, 0.93, 1.0))
+		_set_overlay_param(shader_mat, "intensity", 0.18)
+		_set_overlay_param(shader_mat, "fx_quality", 1 if high_fx else 0)
+		_set_overlay_param(shader_mat, "jitter_strength", 0.0)
+		_set_overlay_param(shader_mat, "pulse", 0.0)
+		_set_overlay_param(shader_mat, "glitch_strength", 0.0)
+
+func _set_overlay_param(shader_mat: ShaderMaterial, param_name: String, value: Variant) -> void:
+	if shader_mat == null:
+		return
+	var shader: Shader = shader_mat.shader
+	if shader == null:
+		return
+	for uniform_var in shader.get_shader_uniform_list():
+		if typeof(uniform_var) != TYPE_DICTIONARY:
+			continue
+		var uniform: Dictionary = uniform_var
+		if str(uniform.get("name", "")) == param_name:
+			shader_mat.set_shader_parameter(param_name, value)
+			return
 
 func _init_audio_player() -> void:
 	sfx_player = AudioStreamPlayer.new()
@@ -129,54 +179,86 @@ func _init_audio_player() -> void:
 	add_child(sfx_player)
 
 func _connect_signals() -> void:
-	for btn in numpad.get_children():
-		if btn is Button:
-			(btn as Button).pressed.connect(_on_numpad_pressed.bind(btn))
+	for btn_var in numpad.get_children():
+		if btn_var is Button:
+			(btn_var as Button).pressed.connect(_on_numpad_pressed.bind(btn_var))
 
 	btn_enter.pressed.connect(_on_enter_pressed)
 	btn_analyze.pressed.connect(_on_analyze_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
 	btn_close_diag.pressed.connect(_on_close_diag_pressed)
 	btn_quest_back.pressed.connect(_on_back_pressed)
+	btn_settings.pressed.connect(_on_settings_pressed)
+	popup_close.pressed.connect(_on_settings_close_pressed)
+	popup_fx_select.item_selected.connect(_on_popup_fx_selected)
+	popup_overlay_select.item_selected.connect(_on_popup_overlay_selected)
 
-func _on_palette_selected(index: int) -> void:
-	palette_select.get_item_id(index)
-	terminal_palette = "noir"
-	_apply_theme()
-	_configure_overlay_shader()
+func _on_settings_pressed() -> void:
+	inspector_popup.popup_centered_ratio(0.38)
 
-func _on_fx_selected(index: int) -> void:
-	var item_id: int = fx_select.get_item_id(index)
+func _on_settings_close_pressed() -> void:
+	inspector_popup.hide()
+
+func _on_popup_fx_selected(index: int) -> void:
+	var item_id: int = popup_fx_select.get_item_id(index)
 	fx_quality = "high" if item_id == FX_ID_HIGH else "low"
 	_configure_overlay_shader()
 
+func _on_popup_overlay_selected(index: int) -> void:
+	var item_id: int = popup_overlay_select.get_item_id(index)
+	overlay_mode = "pencil" if item_id == OVERLAY_ID_PENCIL else "crt"
+	_configure_overlay_shader()
+
 func _apply_mobile_min_sizes() -> void:
-	palette_select.custom_minimum_size = Vector2(120, 44)
-	fx_select.custom_minimum_size = Vector2(110, 44)
-	for btn in numpad.get_children():
-		if btn is Button:
-			(btn as Button).custom_minimum_size = Vector2(64, 64)
+	for btn_var in numpad.get_children():
+		if btn_var is Button:
+			(btn_var as Button).custom_minimum_size = Vector2(64, 64)
 	btn_enter.custom_minimum_size = Vector2(0, 56)
 	btn_analyze.custom_minimum_size = Vector2(0, 56)
 	btn_next.custom_minimum_size = Vector2(0, 56)
+	popup_fx_select.custom_minimum_size = Vector2(220, 48)
+	popup_overlay_select.custom_minimum_size = Vector2(220, 48)
+
+func _apply_layout_mode() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var portrait: bool = viewport_size.x < viewport_size.y
+	var compact: bool = (portrait and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH) or ((not portrait) and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT)
+
+	safe_area.add_theme_constant_override("margin_left", 10 if compact else 16)
+	safe_area.add_theme_constant_override("margin_top", 8 if compact else 12)
+	safe_area.add_theme_constant_override("margin_right", 10 if compact else 16)
+	safe_area.add_theme_constant_override("margin_bottom", 8 if compact else 12)
+
+	main_layout.add_theme_constant_override("separation", 6 if compact else 8)
+	header_row.add_theme_constant_override("separation", 6 if compact else 8)
+	terminal_frame.size_flags_stretch_ratio = 1.55 if compact else 1.6
+	numpad.size_flags_stretch_ratio = 0.8
+	actions_row.size_flags_stretch_ratio = 0.4
+	code_label.add_theme_font_size_override("normal_font_size", 18 if compact else 20)
+	briefing_goal.add_theme_font_size_override("font_size", 18 if compact else 20)
+	briefing_hint.add_theme_font_size_override("font_size", 15 if compact else 16)
+
+	for btn_var in numpad.get_children():
+		if btn_var is Button:
+			(btn_var as Button).custom_minimum_size = Vector2(64, 64)
 
 func _load_levels_from_json() -> bool:
-	var f := FileAccess.open(LEVELS_PATH, FileAccess.READ)
-	if f == null:
+	var file: FileAccess = FileAccess.open(LEVELS_PATH, FileAccess.READ)
+	if file == null:
 		push_error("Cannot open %s" % LEVELS_PATH)
 		return false
 
-	var parsed = JSON.parse_string(f.get_as_text())
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_ARRAY:
 		push_error("%s is not an array" % LEVELS_PATH)
 		return false
 
 	var loaded_levels: Array = parsed
 	var valid_levels: Array = []
-	for item in loaded_levels:
-		if typeof(item) != TYPE_DICTIONARY:
+	for item_var in loaded_levels:
+		if typeof(item_var) != TYPE_DICTIONARY:
 			continue
-		var level: Dictionary = item
+		var level: Dictionary = item_var
 		if _validate_level(level):
 			valid_levels.append(level)
 		else:
@@ -186,7 +268,7 @@ func _load_levels_from_json() -> bool:
 	return levels.size() > 0
 
 func _validate_level(level: Dictionary) -> bool:
-	var required_keys := ["id", "bucket", "briefing", "code", "expected", "trace", "explain", "economy"]
+	var required_keys: Array[String] = ["id", "bucket", "briefing", "code", "expected", "trace", "economy", "topic_tags", "explain_short"]
 	for key in required_keys:
 		if not level.has(key):
 			return false
@@ -195,20 +277,22 @@ func _validate_level(level: Dictionary) -> bool:
 		return false
 	if typeof(level.get("trace")) != TYPE_ARRAY:
 		return false
-	if typeof(level.get("explain")) != TYPE_ARRAY:
-		return false
 	if typeof(level.get("economy")) != TYPE_DICTIONARY:
+		return false
+	if typeof(level.get("topic_tags")) != TYPE_ARRAY:
+		return false
+	if typeof(level.get("explain_short")) != TYPE_ARRAY:
 		return false
 
 	var trace: Array = level.get("trace", [])
 	if trace.is_empty():
 		return false
 
-	for step in trace:
-		if typeof(step) != TYPE_DICTIONARY:
+	for step_var in trace:
+		if typeof(step_var) != TYPE_DICTIONARY:
 			return false
-		var d: Dictionary = step
-		if not d.has("i") or not d.has("cond") or not d.has("s_before") or not d.has("s_after"):
+		var step: Dictionary = step_var
+		if not step.has("i") or not step.has("cond") or not step.has("s_before") or not step.has("s_after"):
 			return false
 
 	return true
@@ -250,11 +334,11 @@ func _load_level(idx: int) -> void:
 	task_finished = false
 	task_result_sent = false
 
-	lbl_clue_title.text = "УЛИКА #%s" % str(current_task.get("id", "A-00"))
-	lbl_session.text = "СЕСС %04d" % (randi() % 10000)
-	lbl_status.text = "ДЕШИФРОВКА..."
+	lbl_clue_title.text = "CLUE #%s" % str(current_task.get("id", "A-00"))
+	lbl_session.text = "SESSION %04d" % (randi() % 10000)
+	lbl_status.text = "Reading suspect script..."
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_NEUTRAL)
-	lbl_attempts.text = "ОШ: 0/%d" % MAX_ATTEMPTS
+	lbl_attempts.text = "ATTEMPTS: 0/%d" % MAX_ATTEMPTS
 	decrypt_bar.value = float(current_level_idx) / maxf(1.0, float(levels.size() - 1)) * 100.0
 	energy_bar.value = energy
 
@@ -264,22 +348,51 @@ func _load_level(idx: int) -> void:
 	diag_panel.visible = false
 
 	_update_input_display()
+	_update_briefing_card()
 	_log_event("task_start", {"bucket": str(current_task.get("bucket", "unknown"))})
 
-	var briefing := str(current_task.get("briefing", ""))
-	code_label.text = "[color=#7A7A7A]%s[/color]\n\n" % briefing
+	var briefing: String = str(current_task.get("briefing", ""))
+	code_label.text = "[color=#8A8A8A]%s[/color]\n\n" % briefing
 	await _typewrite_code(current_task.get("code", []))
 
 	is_code_ready = true
 	state = State.SOLVING
 	btn_enter.disabled = false
 	btn_analyze.disabled = false
-	lbl_status.text = "ВВОД ГОТОВ"
+	lbl_status.text = "Compute final s and submit it."
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_READY)
 
+func _update_briefing_card() -> void:
+	briefing_goal.text = "Goal: find the final value of s"
+
+	var hints: Array[String] = []
+	for tag_var in current_task.get("topic_tags", []):
+		var tag: String = str(tag_var)
+		match tag:
+			"range_stop_exclusive":
+				hints.append("range stop is not included")
+			"while_boundary":
+				hints.append("watch while boundary")
+			"break_flow":
+				hints.append("break stops the loop")
+			"continue_flow":
+				hints.append("continue skips current step")
+			"list_iteration":
+				hints.append("loop over explicit list values")
+			"step_trap":
+				hints.append("check range step carefully")
+			_:
+				hints.append(tag.replace("_", " "))
+	if hints.is_empty():
+		var explain_short: Array = current_task.get("explain_short", [])
+		if not explain_short.is_empty():
+			hints.append(str(explain_short[0]))
+
+	briefing_hint.text = "Hint: %s" % ", ".join(hints.slice(0, min(2, hints.size())))
+
 func _typewrite_code(lines: Array) -> void:
-	for line_variant in lines:
-		var line := str(line_variant)
+	for line_var in lines:
+		var line: String = str(line_var)
 		code_label.append_text("[code]%s[/code]\n" % line)
 		code_scroll.scroll_vertical = 1000000
 		await get_tree().create_timer(typewriter_delay_sec).timeout
@@ -289,13 +402,13 @@ func _on_numpad_pressed(btn_node: Node) -> void:
 	if state != State.SOLVING or not is_code_ready or task_finished:
 		return
 
-	var btn := btn_node as Button
+	var btn: Button = btn_node as Button
 	if btn == null:
 		return
 
 	_play_sfx(AUDIO_CLICK)
-	var char := btn.text
-	if char == "CLR" or char == "СБР":
+	var char: String = btn.text
+	if char == "CLR":
 		user_input = ""
 	elif char == "<-":
 		if user_input.length() > 0:
@@ -309,12 +422,12 @@ func _update_input_display() -> void:
 	input_display.text = "----" if user_input.is_empty() else user_input
 
 func _normalize(raw: String) -> Dictionary:
-	var stripped := raw.strip_edges().replace(" ", "")
+	var stripped: String = raw.strip_edges().replace(" ", "")
 	if stripped.is_empty():
 		return {"ok": false, "error": "EMPTY"}
 	if not stripped.is_valid_int():
 		return {"ok": false, "error": "NAN"}
-	var value := int(stripped)
+	var value: int = int(stripped)
 	if value < 0 or value > 9999:
 		return {"ok": false, "error": "RANGE"}
 	return {"ok": true, "val": value, "str": str(value)}
@@ -323,15 +436,15 @@ func _on_enter_pressed() -> void:
 	if state != State.SOLVING or not is_code_ready or task_finished:
 		return
 
-	var now := Time.get_ticks_msec()
-	var normalized := _normalize(user_input)
+	var now: int = Time.get_ticks_msec()
+	var normalized: Dictionary = _normalize(user_input)
 	if not bool(normalized.get("ok", false)):
 		_play_sfx(AUDIO_ERROR)
 		_trigger_glitch()
 		_shake_screen()
-		lbl_status.text = "НЕКОРРЕКТНЫЙ ВВОД"
+		lbl_status.text = "Invalid input format."
 		lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
-		task_session["attempts"].append({
+		(task_session["attempts"] as Array).append({
 			"kind": "numpad",
 			"raw": user_input,
 			"norm": "",
@@ -344,9 +457,9 @@ func _on_enter_pressed() -> void:
 		})
 		return
 
-	var expected := int(current_task.get("expected", 0))
-	var is_correct := int(normalized.get("val", -1)) == expected
-	var state_after := "SOLVING"
+	var expected: int = int(current_task.get("expected", 0))
+	var is_correct: bool = int(normalized.get("val", -1)) == expected
+	var state_after: String = "SOLVING"
 
 	if is_correct:
 		_handle_success_feedback()
@@ -358,7 +471,7 @@ func _on_enter_pressed() -> void:
 		elif state == State.FEEDBACK_FAIL:
 			state_after = "FEEDBACK_FAIL"
 
-	var attempt := {
+	var attempt: Dictionary = {
 		"kind": "numpad",
 		"raw": user_input,
 		"norm": str(normalized.get("str", "")),
@@ -369,7 +482,7 @@ func _on_enter_pressed() -> void:
 		"energy_after": energy,
 		"wrong_count_after": wrong_count
 	}
-	task_session["attempts"].append(attempt)
+	(task_session["attempts"] as Array).append(attempt)
 
 	if is_correct:
 		_finalize_task_result(true, "SUCCESS")
@@ -382,7 +495,7 @@ func _on_enter_pressed() -> void:
 
 func _handle_success_feedback() -> void:
 	state = State.FEEDBACK_SUCCESS
-	lbl_status.text = "ДОСТУП РАЗРЕШЁН"
+	lbl_status.text = "Correct. Optimal result confirmed."
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_SUCCESS)
 	btn_enter.disabled = true
 	btn_analyze.disabled = true
@@ -393,11 +506,11 @@ func _handle_success_feedback() -> void:
 
 func _handle_fail_feedback() -> void:
 	wrong_count += 1
-	lbl_attempts.text = "ОШ: %d/%d" % [wrong_count, MAX_ATTEMPTS]
-	lbl_status.text = "ДОСТУП ЗАПРЕЩЁН"
+	lbl_attempts.text = "ATTEMPTS: %d/%d" % [wrong_count, MAX_ATTEMPTS]
+	lbl_status.text = "Mismatch. Re-check loop flow."
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
 
-	var wrong_penalty := int(current_task.get("economy", {}).get("wrong", 10))
+	var wrong_penalty: int = int(current_task.get("economy", {}).get("wrong", 10))
 	energy = maxf(0.0, energy - float(wrong_penalty))
 	energy_bar.value = energy
 
@@ -408,7 +521,6 @@ func _handle_fail_feedback() -> void:
 	if wrong_count >= MAX_ATTEMPTS:
 		_trigger_safe_mode()
 	else:
-		state = State.FEEDBACK_FAIL
 		state = State.SOLVING
 
 func _trigger_safe_mode() -> void:
@@ -416,7 +528,7 @@ func _trigger_safe_mode() -> void:
 	is_safe_mode = true
 	btn_enter.disabled = true
 	btn_next.visible = true
-	lbl_status.text = "БЕЗОПАСНЫЙ РЕЖИМ АКТИВЕН"
+	lbl_status.text = "Safe mode activated. Use analysis trace."
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_WARN)
 
 	btn_analyze.disabled = false
@@ -431,9 +543,9 @@ func _on_analyze_pressed(free: bool = false) -> void:
 		return
 
 	if not free:
-		var analyze_cost := int(current_task.get("economy", {}).get("analyze", 20))
+		var analyze_cost: int = int(current_task.get("economy", {}).get("analyze", 20))
 		if energy < float(analyze_cost):
-			lbl_status.text = "НЕДОСТАТОЧНО ЭНЕРГИИ"
+			lbl_status.text = "Not enough energy for analysis."
 			lbl_status.add_theme_color_override("font_color", STATUS_COLOR_WARN)
 			_play_sfx(AUDIO_ERROR)
 			return
@@ -446,22 +558,29 @@ func _on_analyze_pressed(free: bool = false) -> void:
 	state = State.DIAGNOSTIC if state == State.SOLVING else state
 
 func _render_diagnostic() -> void:
-	var explain_lines: Array = current_task.get("explain", [])
-	var explain_text := "[b]ANALYSIS[/b]\n"
+	var explain_lines: Array = current_task.get("explain_short", [])
+	if explain_lines.is_empty():
+		explain_lines = current_task.get("explain", [])
+
+	var explain_text: String = "[b]ANALYSIS[/b]\n"
 	for line_var in explain_lines:
 		explain_text += "- %s\n" % str(line_var)
 	diag_explain.text = explain_text
 
 	var trace: Array = current_task.get("trace", [])
-	var trace_text := ""
+	var i_values: Array[String] = []
+	var trace_lines: Array[String] = []
 	for step_var in trace:
 		var step: Dictionary = step_var
-		trace_text += "i=%s | cond=%s | s: %s -> %s\n" % [
+		i_values.append(str(step.get("i", "?")))
+		trace_lines.append("i=%s | cond=%s | s: %s -> %s" % [
 			str(step.get("i", "?")),
 			str(step.get("cond", "?")),
 			str(step.get("s_before", "?")),
 			str(step.get("s_after", "?"))
-		]
+		])
+
+	var trace_text: String = "i sequence: [%s]\n\n%s" % [", ".join(i_values), "\n".join(trace_lines)]
 	diag_trace.text = trace_text
 
 func _on_close_diag_pressed() -> void:
@@ -487,15 +606,15 @@ func _finalize_task_result(is_correct: bool, reason: String) -> void:
 
 	task_result_sent = true
 	task_finished = true
-	var ended := Time.get_ticks_msec()
+	var ended: int = Time.get_ticks_msec()
 	task_session["ended_at_ticks"] = ended
 	_log_event("task_end", {"reason": reason, "is_correct": is_correct})
 
-	var level_id := str(current_task.get("id", "A-00"))
-	var bucket := str(current_task.get("bucket", "unknown"))
-	var elapsed_ms := ended - task_started_at
+	var level_id: String = str(current_task.get("id", "A-00"))
+	var bucket: String = str(current_task.get("bucket", "unknown"))
+	var elapsed_ms: int = ended - task_started_at
 
-	var result_data := {
+	var result_data: Dictionary = {
 		"quest": "suspect_script",
 		"stage": "A",
 		"match_key": "SUSPECT_A|%s" % level_id,
@@ -520,49 +639,44 @@ func _play_sfx(stream: AudioStream) -> void:
 	sfx_player.play()
 
 func _trigger_glitch() -> void:
-	var crt_overlay := noir_overlay.get_node("CRT_Overlay") as ColorRect
-	if crt_overlay == null:
+	var overlay_rect: ColorRect = noir_overlay.get_node_or_null("CRT_Overlay") as ColorRect
+	if overlay_rect == null:
 		return
-	var shader_mat := crt_overlay.material as ShaderMaterial
+	var shader_mat: ShaderMaterial = overlay_rect.material as ShaderMaterial
 	if shader_mat == null:
 		return
-	var is_high_fx := fx_quality == "high"
-	var pulse_strength := 1.0 if is_high_fx else 0.65
-	var jitter := 0.8 if is_high_fx else 0.35
-	shader_mat.set_shader_parameter("pulse", pulse_strength)
-	shader_mat.set_shader_parameter("jitter_strength", jitter)
-	var tw := create_tween()
-	tw.tween_method(func(v: float): shader_mat.set_shader_parameter("pulse", v), pulse_strength, 0.0, 0.26)
-	tw.parallel().tween_method(func(v: float): shader_mat.set_shader_parameter("jitter_strength", v), jitter, 0.0, 0.22)
+	var high_fx: bool = fx_quality == "high"
+	_set_overlay_param(shader_mat, "pulse", 1.0 if high_fx else 0.65)
+	_set_overlay_param(shader_mat, "jitter_strength", 0.8 if high_fx else 0.35)
+	_set_overlay_param(shader_mat, "glitch_strength", 0.9 if high_fx else 0.55)
+	var tw: Tween = create_tween()
+	tw.tween_method(func(v: float) -> void: _set_overlay_param(shader_mat, "pulse", v), 1.0 if high_fx else 0.65, 0.0, 0.26)
+	tw.parallel().tween_method(func(v: float) -> void: _set_overlay_param(shader_mat, "jitter_strength", v), 0.8 if high_fx else 0.35, 0.0, 0.22)
+	tw.parallel().tween_method(func(v: float) -> void: _set_overlay_param(shader_mat, "glitch_strength", v), 0.9 if high_fx else 0.55, 0.0, 0.22)
 
 func _shake_screen() -> void:
-	var original_pos := main_layout.position
-	var tw := create_tween()
+	var original_pos: Vector2 = main_layout.position
+	var tw: Tween = create_tween()
 	for _i in range(4):
 		tw.tween_property(main_layout, "position", original_pos + Vector2(randf_range(-2.0, 2.0), randf_range(-1.5, 1.5)), 0.04)
 	tw.tween_property(main_layout, "position", original_pos, 0.05)
 
 func _play_success_clean_effect() -> void:
-	var crt_overlay := noir_overlay.get_node("CRT_Overlay") as ColorRect
-	if crt_overlay == null:
+	var overlay_rect: ColorRect = noir_overlay.get_node_or_null("CRT_Overlay") as ColorRect
+	if overlay_rect == null:
 		return
-	var shader_mat := crt_overlay.material as ShaderMaterial
+	var shader_mat: ShaderMaterial = overlay_rect.material as ShaderMaterial
 	if shader_mat == null:
 		return
-	var is_high_fx := fx_quality == "high"
-	var base_grain := 0.35 if is_high_fx else 0.24
-	var base_hatch := 0.30 if is_high_fx else 0.08
-	var reduced_grain := base_grain * 0.42
-	var reduced_hatch := base_hatch * 0.35
-	var tw := create_tween()
-	tw.tween_method(func(v: float): shader_mat.set_shader_parameter("grain_strength", v), base_grain, reduced_grain, 0.18)
-	tw.parallel().tween_method(func(v: float): shader_mat.set_shader_parameter("hatch_strength", v), base_hatch, reduced_hatch, 0.18)
-	tw.tween_interval(0.14)
-	tw.tween_method(func(v: float): shader_mat.set_shader_parameter("grain_strength", v), reduced_grain, base_grain, 0.28)
-	tw.parallel().tween_method(func(v: float): shader_mat.set_shader_parameter("hatch_strength", v), reduced_hatch, base_hatch, 0.28)
+	var tw: Tween = create_tween()
+	tw.tween_method(func(v: float) -> void: _set_overlay_param(shader_mat, "grain_strength", v), 0.32, 0.16, 0.20)
+	tw.parallel().tween_method(func(v: float) -> void: _set_overlay_param(shader_mat, "hatch_strength", v), 0.24, 0.10, 0.20)
+	tw.tween_interval(0.12)
+	tw.tween_method(func(v: float) -> void: _set_overlay_param(shader_mat, "grain_strength", v), 0.16, 0.32, 0.28)
+	tw.parallel().tween_method(func(v: float) -> void: _set_overlay_param(shader_mat, "hatch_strength", v), 0.10, 0.24, 0.28)
 
 func _log_event(name: String, payload: Dictionary) -> void:
-	var elapsed := Time.get_ticks_msec() - task_started_at
+	var elapsed: int = Time.get_ticks_msec() - task_started_at
 	var events: Array = task_session.get("events", [])
 	events.append({
 		"name": name,

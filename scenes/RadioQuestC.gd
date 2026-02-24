@@ -30,6 +30,7 @@ const SAMPLE_SLOTS: int = 7
 const PHONE_LANDSCAPE_MAX_HEIGHT: float = 520.0
 const ANALYZE_LOCK_SECONDS: float = 3.0
 const ANALYZE_COOLDOWN_SECONDS: float = 6.0
+const ARCADE_MODE_ENABLED: bool = false
 
 const UNIT_MB := "\u041c\u0411"
 const UNIT_GB := "\u0413\u0411"
@@ -852,6 +853,7 @@ func _send_trial_payload(is_success: bool, decision_label: String) -> void:
 	var payload: Dictionary = {
 		"quest_id": "radio_intercept",
 		"stage_id": "C",
+		"mode": "ARCADE" if ARCADE_MODE_ENABLED else "DIAGNOSTIC",
 		"match_key": _build_match_key(),
 		"pool_type": pool_type,
 		"anchor_type": anchor_type,
@@ -934,6 +936,7 @@ func _outcome_to_text(current_outcome: Outcome) -> String:
 
 func _update_details_text() -> void:
 	var lines: Array[String] = []
+	lines.append("mode: %s" % ("ARCADE" if ARCADE_MODE_ENABLED else "DIAGNOSTIC"))
 	lines.append("\u0424\u043e\u0440\u043c\u0443\u043b\u0430: t = I / v")
 	lines.append("I (%s): %s" % [file_size_unit, _format_num(file_size_value)])
 	lines.append("v (%s): %s" % [UNIT_MBIT_SEC, _format_num(speed_mbit)])

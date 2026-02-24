@@ -1,11 +1,10 @@
-extends PanelContainer
+﻿extends PanelContainer
 class_name PipelineModuleCard
 
 signal module_selected(module_data: Dictionary, sender: Node)
 signal module_drag_started(module_data: Dictionary)
 
 var label_text: Label = null
-
 var module_data: Dictionary = {}
 
 func _ready() -> void:
@@ -20,10 +19,14 @@ func setup(data: Dictionary) -> void:
 		label_text = get_node_or_null("Margin/Label") as Label
 	if label_text != null:
 		label_text.text = str(module_data.get("display", "?"))
-	tooltip_text = "%s [%s]" % [
-		str(module_data.get("module_id", "unknown")),
-		str(module_data.get("slot_type", ""))
-	]
+
+	var module_id: String = str(module_data.get("module_id", "unknown"))
+	var slot_name: String = str(module_data.get("slot_type", ""))
+	var meaning: String = str(module_data.get("meaning", ""))
+	tooltip_text = "%s [%s]" % [module_id, slot_name]
+	if not meaning.is_empty():
+		tooltip_text += "\n" + meaning
+
 	set_selected(false)
 
 func get_module_data() -> Dictionary:

@@ -1,7 +1,6 @@
 extends Control
 
-const THEME_GREEN: Theme = preload("res://ui/theme_terminal_green.tres")
-const THEME_AMBER: Theme = preload("res://ui/theme_terminal_amber.tres")
+const NOIR_THEME: Theme = preload("res://ui/theme_noir_detective.tres")
 const ERROR_MAP = preload("res://scripts/ssot/network_trace_errors.gd")
 const MODULE_CARD_SCENE: PackedScene = preload("res://scenes/ui/pipeline/ModuleCard.tscn")
 
@@ -13,9 +12,6 @@ const ANSWER_COOLDOWN_MS: int = 200
 const FAIL_STABILITY_DELTA: float = -10.0
 const HINT_STABILITY_DELTA: float = -5.0
 const PIPELINE_MISMATCH_DELTA: float = -5.0
-
-const PALETTE_GREEN_ID: int = 0
-const PALETTE_AMBER_ID: int = 1
 const SLOT_TYPES: Array[String] = ["kilo", "bit", "time", "out"]
 const DEFAULT_MODULE_POOL: Array = [
 	{"module_id": "KILO_1024", "slot_type": "kilo", "display": "x1024", "k": 1024, "is_trap": false},
@@ -43,15 +39,19 @@ enum QuestState { INIT, PIPELINE_BUILD, PIPELINE_READY, CALC_DONE, ANSWERING, FE
 @onready var lbl_target_unit: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox/LblTargetUnit
 @onready var btn_analyze: Button = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/BtnAnalyze
 @onready var log_text: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll/LogText
+@onready var pipeline_board: GridContainer = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard
 @onready var slot_kilo: PipelineSlotControl = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotKilo
 @onready var slot_bit: PipelineSlotControl = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotBit
 @onready var slot_time: PipelineSlotControl = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotTime
 @onready var slot_out: PipelineSlotControl = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotOut
+@onready var lbl_console_title: Label = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/LblConsoleTitle
+@onready var lbl_module_tray: Label = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/LblModuleTray
 @onready var module_tray: GridContainer = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/ModuleTrayScroll/ModuleTray
 @onready var btn_run_calc: Button = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/BtnRunCalc
 @onready var lbl_preview: Label = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/LblPreview
 @onready var transfer_bar: ProgressBar = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/TransferBar
 @onready var lbl_status: Label = $SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/LblStatus
+@onready var options_grid: GridContainer = $SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid
 @onready var btn_reset: Button = $SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow/BtnReset
 @onready var btn_next: Button = $SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow/BtnNext
 @onready var diagnostics_panel: PanelContainer = $DiagnosticsPanel
@@ -79,11 +79,13 @@ var run_calc_cooldown_until_ms: int = 0
 var answer_cooldown_until_ms: int = 0
 var spam_clicks: int = 0
 var calc_done: bool = false
+var benchmark_done: bool = false
 var calc_bps: int = -1
 var calc_display_value: float = 0.0
 var calc_display_unit: String = "bps"
 var selected_option_id: String = ""
 var last_error_code: String = ""
+var preview_metrics: Dictionary = {}
 var safe_mode_used: bool = false
 var hint_used: bool = false
 var logs_expanded: bool = false
@@ -102,12 +104,12 @@ var variant_hash: String = ""
 func _ready() -> void:
 	_setup_runtime_controls()
 	_connect_signals()
-	_apply_palette(PALETTE_GREEN_ID)
+	_apply_noir_theme()
 	_apply_layout_mode()
 	if GlobalMetrics != null and not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	if not _load_levels():
-		_show_boot_error("Данные Network Trace B отсутствуют или повреждены.")
+		_show_boot_error("Network Trace B levels failed to load.")
 		return
 	_start_level(0)
 
@@ -132,15 +134,20 @@ func _notification(what: int) -> void:
 		_apply_layout_mode()
 
 func _setup_runtime_controls() -> void:
-	lbl_title.text = "СЕТЕВОЙ СЛЕД | B"
-	palette_select.clear()
-	palette_select.add_item("ЗЕЛЁНЫЙ", PALETTE_GREEN_ID)
-	palette_select.add_item("ЯНТАРНЫЙ", PALETTE_AMBER_ID)
-	palette_select.select(PALETTE_GREEN_ID)
-	slot_kilo.setup("kilo", "БАЗА KILO")
-	slot_bit.setup("bit", "БАЙТ В БИТ")
-	slot_time.setup("time", "ВРЕМЯ")
-	slot_out.setup("out", "ЕДИНИЦА ВЫВОДА")
+	btn_back.text = "Back"
+	btn_run_calc.text = "RUN CALC"
+	btn_reset.text = "RESET"
+	btn_next.text = "NEXT"
+	lbl_console_title.text = "Gateway Console"
+	lbl_module_tray.text = "Module Tray"
+	lbl_title.text = "Network Trace | B"
+	palette_select.visible = false
+	palette_select.disabled = true
+	palette_select.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot_kilo.setup("kilo", "SLOT 1: x1024")
+	slot_bit.setup("bit", "SLOT 2: x8")
+	slot_time.setup("time", "SLOT 3: /t")
+	slot_out.setup("out", "SLOT 4: unit")
 	transfer_bar.value = 0.0
 	btn_next.visible = false
 	diagnostics_panel.visible = false
@@ -152,7 +159,6 @@ func _connect_signals() -> void:
 	btn_run_calc.pressed.connect(_on_run_calc_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
-	palette_select.item_selected.connect(_on_palette_selected)
 	var slots: Array[PipelineSlotControl] = [slot_kilo, slot_bit, slot_time, slot_out]
 	for slot in slots:
 		slot.module_dropped.connect(_on_slot_module_dropped)
@@ -180,7 +186,7 @@ func _load_levels() -> bool:
 	return not levels.is_empty()
 
 func _validate_level(level: Dictionary) -> bool:
-	for key in ["id", "briefing", "prompt", "payload_value", "payload_unit", "time_sec", "ask_unit", "expected_bps", "options", "correct_id", "explain_short", "explain_full", "tags"]:
+	for key in ["id", "briefing", "prompt", "payload_value", "payload_unit", "time_sec", "ask_unit", "expected_bps", "options", "correct_id", "explain_short", "explain_full", "tags", "preview_metrics", "benchmark_lines"]:
 		if not level.has(key):
 			return false
 	var payload_unit: String = str(level.get("payload_unit", ""))
@@ -209,6 +215,19 @@ func _validate_level(level: Dictionary) -> bool:
 			return false
 		ids[option_id] = true
 	if not ids.has(str(level.get("correct_id", ""))):
+		return false
+	var preview_variant: Variant = level.get("preview_metrics", {})
+	if typeof(preview_variant) != TYPE_DICTIONARY:
+		return false
+	var preview: Dictionary = preview_variant
+	for metric_key in ["budget_limit", "budget_used", "bottleneck", "fps", "ram_usage", "cpu_load", "total_price"]:
+		if not preview.has(metric_key):
+			return false
+	var benchmark_lines_var: Variant = level.get("benchmark_lines", [])
+	if typeof(benchmark_lines_var) != TYPE_ARRAY:
+		return false
+	var benchmark_lines: Array = benchmark_lines_var
+	if benchmark_lines.size() < 4 or benchmark_lines.size() > 8:
 		return false
 	var modules_var: Variant = level.get("modules_pool", DEFAULT_MODULE_POOL)
 	if typeof(modules_var) != TYPE_ARRAY:
@@ -264,11 +283,13 @@ func _start_level(index: int) -> void:
 	level_finished = false
 	result_sent = false
 	calc_done = false
+	benchmark_done = false
 	calc_bps = -1
 	calc_display_value = 0.0
 	calc_display_unit = "bps"
 	selected_option_id = ""
 	last_error_code = ""
+	preview_metrics = _get_preview_metrics()
 	pipeline_slots_filled_at_ms = -1
 	module_moves_count = 0
 	pipeline_mismatch = false
@@ -281,14 +302,15 @@ func _start_level(index: int) -> void:
 	timer_running = true
 	task_session = {"task_id": str(current_level.get("id", "NT_B_UNKNOWN")), "variant_hash": variant_hash, "started_at_ticks": level_started_ms, "ended_at_ticks": 0, "attempts": [], "events": []}
 	btn_next.visible = false
-	btn_analyze.text = "АНАЛИЗ"
+	btn_analyze.text = "Explain"
 	btn_analyze.disabled = false
 	diagnostics_panel.visible = false
 	_render_terminal_panel()
 	_render_options()
 	_build_module_tray()
 	_reset_pipeline_state()
-	lbl_status.text = "Соберите конвейер, запустите расчёт, затем выберите ответ."
+	_update_preview_card()
+	lbl_status.text = "Build pipeline and press RUN CALC before answering."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.82, 0.82))
 	state = QuestState.PIPELINE_BUILD
 	_update_meta_label()
@@ -296,15 +318,15 @@ func _start_level(index: int) -> void:
 
 func _render_terminal_panel() -> void:
 	lbl_briefing.clear()
-	lbl_briefing.append_text("[color=#7a7a7a]ИНСТРУКТАЖ[/color]\n%s" % str(current_level.get("briefing", "")))
+	lbl_briefing.append_text("[color=#7a7a7a]GOAL[/color]\n%s" % str(current_level.get("briefing", "")))
 	lbl_prompt.clear()
-	lbl_prompt.append_text("[color=#9de6b3]ЗАДАНИЕ[/color]\n%s" % str(current_level.get("prompt", "")))
-	lbl_payload.text = "Данные: %s %s" % [str(current_level.get("payload_value", 0)), str(current_level.get("payload_unit", "KB"))]
-	lbl_window.text = "Окно: %s с" % str(current_level.get("time_sec", 0))
-	lbl_target_unit.text = "Целевая единица: %s" % str(current_level.get("ask_unit", "bps"))
+	lbl_prompt.append_text("[color=#9de6b3]TASK[/color]\n%s" % str(current_level.get("prompt", "")))
+	lbl_payload.text = "Payload: %s %s" % [str(current_level.get("payload_value", 0)), str(current_level.get("payload_unit", "KB"))]
+	lbl_window.text = "Window: %s s" % str(current_level.get("time_sec", 0))
+	lbl_target_unit.text = "Target unit: %s" % str(current_level.get("ask_unit", "bps"))
 	_render_log_text()
 
-func _render_log_text() -> void:
+func _render_log_text(benchmark_lines_count: int = -1) -> void:
 	var lines: Array[String] = []
 	var logs_var: Variant = current_level.get("logs", [])
 	if typeof(logs_var) == TYPE_ARRAY:
@@ -315,10 +337,69 @@ func _render_log_text() -> void:
 		if typeof(extra_var) == TYPE_ARRAY:
 			for line_var in extra_var:
 				lines.append(str(line_var))
+	var benchmark_lines: Array[String] = _get_benchmark_lines()
+	if benchmark_lines_count < 0:
+		if benchmark_done:
+			for benchmark_line in benchmark_lines:
+				lines.append("[BENCH] %s" % benchmark_line)
+	else:
+		for idx in range(mini(benchmark_lines_count, benchmark_lines.size())):
+			lines.append("[BENCH] %s" % benchmark_lines[idx])
 	var text: String = ""
+	text += "- speed = bits / time\n"
+	text += "- bits = payload * 1024 * 8\n"
 	for line in lines:
 		text += "- %s\n" % line
 	log_text.text = text
+
+func _get_preview_metrics() -> Dictionary:
+	var raw_variant: Variant = current_level.get("preview_metrics", {})
+	if typeof(raw_variant) != TYPE_DICTIONARY:
+		return {
+			"budget_limit": 1000,
+			"budget_used": 0,
+			"bottleneck": "OK",
+			"fps": 60,
+			"ram_usage": 45,
+			"cpu_load": 40,
+			"total_price": 0
+		}
+	var raw: Dictionary = raw_variant
+	var out: Dictionary = {}
+	out["budget_limit"] = int(raw.get("budget_limit", 1000))
+	out["budget_used"] = int(raw.get("budget_used", 0))
+	out["bottleneck"] = str(raw.get("bottleneck", "OK"))
+	out["fps"] = int(raw.get("fps", 60))
+	out["ram_usage"] = int(raw.get("ram_usage", 45))
+	out["cpu_load"] = int(raw.get("cpu_load", 40))
+	out["total_price"] = int(raw.get("total_price", out["budget_used"]))
+	return out
+
+func _get_benchmark_lines() -> Array[String]:
+	var out: Array[String] = []
+	var lines_variant: Variant = current_level.get("benchmark_lines", [])
+	if typeof(lines_variant) != TYPE_ARRAY:
+		return out
+	var lines: Array = lines_variant
+	for line_var in lines:
+		out.append(str(line_var))
+	return out
+
+func _update_preview_card() -> void:
+	var budget_limit: int = int(preview_metrics.get("budget_limit", 1000))
+	var budget_used: int = int(preview_metrics.get("budget_used", 0))
+	var bottleneck: String = str(preview_metrics.get("bottleneck", "OK"))
+	var fps_value: int = int(preview_metrics.get("fps", 60))
+	var ram_usage: int = int(preview_metrics.get("ram_usage", 45))
+	var cpu_load: int = int(preview_metrics.get("cpu_load", 40))
+	var preview_text: String = ""
+	preview_text += "Budget: %d / %d | Bottleneck: %s\n" % [budget_used, budget_limit, bottleneck]
+	preview_text += "FPS: %d | RAM: %d%% | CPU: %d%%\n" % [fps_value, ram_usage, cpu_load]
+	if benchmark_done and calc_bps >= 0:
+		preview_text += "Output: %s" % _format_rate(calc_bps, calc_display_unit)
+	else:
+		preview_text += "Output: pending benchmark"
+	lbl_preview.text = preview_text
 
 func _render_options() -> void:
 	var options_variant: Variant = current_level.get("options", [])
@@ -371,6 +452,7 @@ func _reset_pipeline_state() -> void:
 	slot_time.clear_module()
 	slot_out.clear_module()
 	calc_done = false
+	benchmark_done = false
 	calc_bps = -1
 	calc_display_value = 0.0
 	calc_display_unit = "bps"
@@ -378,7 +460,7 @@ func _reset_pipeline_state() -> void:
 	last_error_code = ""
 	selected_tray_module.clear()
 	_set_selected_module_card(null)
-	lbl_preview.text = "СКОРОСТЬ = ???"
+	_update_preview_card()
 	transfer_bar.value = 0.0
 	btn_run_calc.disabled = true
 	_enable_answer_buttons(false)
@@ -391,7 +473,7 @@ func _on_module_card_selected(module_data: Dictionary, sender: Node) -> void:
 	_play_audio("click")
 	selected_tray_module = module_data.duplicate(true)
 	_set_selected_module_card(sender as PipelineModuleCard)
-	lbl_status.text = "Модуль выбран. Нажмите подходящий слот."
+	lbl_status.text = "Module selected. Place it into a matching slot."
 	lbl_status.add_theme_color_override("font_color", Color(0.84, 0.91, 1.0))
 	_log_event("module_selected", {"module_id": str(module_data.get("module_id", ""))})
 
@@ -408,7 +490,7 @@ func _on_slot_tapped(slot_type: String) -> void:
 		return
 	_register_first_action()
 	if selected_tray_module.is_empty():
-		lbl_status.text = "Сначала выберите модуль из лотка."
+		lbl_status.text = "Select a module first."
 		lbl_status.add_theme_color_override("font_color", Color(0.95, 0.86, 0.68))
 		return
 	_place_module_into_slot(slot_type, selected_tray_module, "tap")
@@ -428,7 +510,7 @@ func _on_slot_bad_drop(slot_type: String, module_data: Dictionary) -> void:
 		slot.flash_bad_drop()
 	_play_audio("error")
 	last_error_code = "B_PIPELINE_BAD_DROP"
-	lbl_status.text = "Неверный разъём для этого модуля."
+	lbl_status.text = "Wrong module type for this slot."
 	lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
 	_log_event("pipeline_bad_drop", {"slot": slot_type, "module_id": str(module_data.get("module_id", ""))})
 
@@ -445,10 +527,11 @@ func _on_slot_clear_pressed(slot_type: String) -> void:
 	_play_audio("click")
 	if calc_done:
 		calc_done = false
+		benchmark_done = false
 		calc_bps = -1
-		lbl_preview.text = "СКОРОСТЬ = ???"
+		_update_preview_card()
 		_enable_answer_buttons(false)
-	lbl_status.text = "Конвейер изменён. Запустите расчёт снова."
+	lbl_status.text = "Slot cleared. Rebuild pipeline if needed."
 	lbl_status.add_theme_color_override("font_color", Color(0.92, 0.88, 0.62))
 	_log_event("pipeline_clear", {"slot": slot_type, "module_id": removed_id})
 	_update_pipeline_gate()
@@ -468,10 +551,11 @@ func _place_module_into_slot(slot_type: String, module_data: Dictionary, source:
 	_play_audio("click")
 	if calc_done:
 		calc_done = false
+		benchmark_done = false
 		calc_bps = -1
-		lbl_preview.text = "СКОРОСТЬ = ???"
+		_update_preview_card()
 		_enable_answer_buttons(false)
-	lbl_status.text = "Модуль установлен. Продолжайте сборку."
+	lbl_status.text = "Module placed. Continue assembly."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.92, 0.86))
 	_log_event("pipeline_set", {"slot": slot_type, "module_id": str(module_data.get("module_id", "")), "source": source})
 	_update_pipeline_gate()
@@ -500,7 +584,7 @@ func _update_pipeline_gate() -> void:
 	btn_run_calc.disabled = (not ready) or level_finished
 	if ready and pipeline_slots_filled_at_ms < 0:
 		pipeline_slots_filled_at_ms = Time.get_ticks_msec() - level_started_ms
-		lbl_status.text = "КОНВЕЙЕР ЗАФИКСИРОВАН. Запустите расчёт."
+		lbl_status.text = "Pipeline core ready. Press RUN CALC."
 		lbl_status.add_theme_color_override("font_color", Color(0.72, 0.95, 0.86))
 		_log_event("pipeline_complete", {"t_ms": pipeline_slots_filled_at_ms})
 	if not calc_done:
@@ -525,16 +609,32 @@ func _on_run_calc_pressed() -> void:
 	run_calc_cooldown_until_ms = now_ms + RUN_COOLDOWN_MS
 	_register_first_action()
 	_play_audio("click")
+	btn_run_calc.disabled = true
+	state = QuestState.CALC_DONE
+	benchmark_done = false
+	_render_log_text(0)
+	await _play_benchmark_sequence()
 	calc_bps = _calculate_bps_from_pipeline()
 	calc_display_unit = _current_output_unit()
 	calc_display_value = float(calc_bps) / 1000.0 if calc_display_unit == "kbps" else float(calc_bps)
 	calc_done = true
-	lbl_preview.text = "СКОРОСТЬ = %s" % _format_rate(calc_bps, calc_display_unit)
-	lbl_status.text = "Расчёт завершён. Выберите финальный ответ."
+	benchmark_done = true
+	_update_preview_card()
+	lbl_status.text = "Benchmark complete. Choose final answer."
 	lbl_status.add_theme_color_override("font_color", Color(0.68, 0.95, 0.72))
 	_enable_answer_buttons(true)
 	state = QuestState.ANSWERING
+	_log_event("BENCHMARK_RUN", {"lines": _get_benchmark_lines().size()})
 	_log_event("run_calc", {"calc_bps": calc_bps, "display_unit": calc_display_unit, "display_value": calc_display_value, "pipeline_correct": _is_pipeline_correct(), "pipeline_error": _derive_pipeline_error_code()})
+	_update_pipeline_gate()
+
+func _play_benchmark_sequence() -> void:
+	var lines: Array[String] = _get_benchmark_lines()
+	if lines.is_empty():
+		return
+	for idx in range(lines.size()):
+		_render_log_text(idx + 1)
+		await get_tree().create_timer(0.06).timeout
 
 func _calculate_bps_from_pipeline() -> int:
 	var payload_value: int = int(current_level.get("payload_value", 0))
@@ -586,7 +686,7 @@ func _on_answer_pressed(index: int) -> void:
 		return
 	answer_cooldown_until_ms = now_ms + ANSWER_COOLDOWN_MS
 	_register_first_action()
-	if state != QuestState.ANSWERING or not calc_done:
+	if state != QuestState.ANSWERING or not calc_done or not benchmark_done:
 		_record_pipeline_incomplete("answer_before_calc")
 		lbl_status.text = ERROR_MAP.get_error_tip("B_PIPELINE_INCOMPLETE")
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
@@ -595,6 +695,8 @@ func _on_answer_pressed(index: int) -> void:
 	selected_option_id = str(btn.get_meta("option_id", ""))
 	if selected_option_id.is_empty():
 		return
+	_log_event("OPTION_SELECTED", {"option_id": selected_option_id})
+	_log_event("CONFIRM_PRESSED", {"option_id": selected_option_id})
 	_play_audio("click")
 	_enable_answer_buttons(false)
 	var answer_correct: bool = selected_option_id == str(current_level.get("correct_id", ""))
@@ -634,10 +736,10 @@ func _simulate_transfer(success: bool) -> void:
 func _handle_success(has_pipeline_mismatch: bool) -> void:
 	state = QuestState.FEEDBACK_SUCCESS
 	if has_pipeline_mismatch:
-		lbl_status.text = "Ответ принят. Отмечено расхождение в конвейере."
+		lbl_status.text = "Answer is correct, but your pipeline logic is inconsistent."
 		lbl_status.add_theme_color_override("font_color", Color(0.98, 0.82, 0.56))
 	else:
-		lbl_status.text = "ЗАГРУЗКА ЗАВЕРШЕНА. %s" % str(current_level.get("explain_short", ""))
+		lbl_status.text = "Gateway check passed: %s" % str(current_level.get("explain_short", ""))
 		lbl_status.add_theme_color_override("font_color", Color(0.35, 1.0, 0.45))
 	_play_audio("relay")
 	_finish_level(true, "success_with_mismatch" if has_pipeline_mismatch else "success")
@@ -652,8 +754,8 @@ func _handle_failure(error_code: String) -> void:
 	_update_meta_label()
 	if wrong_count >= 2 and not safe_mode_used:
 		safe_mode_used = true
-		btn_analyze.text = "ДИАГНОСТИКА"
-		lbl_status.text = "Безопасный режим разблокирован. Откройте диагностику."
+		btn_analyze.text = "Safe diagnostics"
+		lbl_status.text = "Safe mode unlocked. Use diagnostics for step-by-step review."
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.75, 0.45))
 	if wrong_count >= MAX_ATTEMPTS:
 		_show_diagnostics("attempt_limit")
@@ -673,36 +775,36 @@ func _on_analyze_pressed() -> void:
 		state = QuestState.DIAGNOSTIC
 		return
 	if logs_expanded:
-		lbl_status.text = "Строки анализа уже раскрыты."
+		lbl_status.text = "Detailed notes are already visible."
 		lbl_status.add_theme_color_override("font_color", Color(0.9, 0.85, 0.65))
 		return
 	logs_expanded = true
 	hint_used = true
 	_render_log_text()
-	lbl_status.text = "Дополнительная телеметрия разблокирована."
+	lbl_status.text = "Formula hints expanded."
 	lbl_status.add_theme_color_override("font_color", Color(0.72, 0.95, 0.86))
 	_log_event("analyze_reveal", {})
 
 func _show_diagnostics(reason: String) -> void:
 	var lines: Array[String] = []
-	lines.append("Дело: %s" % str(current_level.get("id", "")))
-	lines.append("Причина: %s" % reason)
-	lines.append("Конвейер собран к: %d мс" % pipeline_slots_filled_at_ms)
-	lines.append("Перемещений модулей: %d" % module_moves_count)
-	lines.append("Кило: %s" % slot_kilo.get_module_id())
-	lines.append("Бит: %s" % slot_bit.get_module_id())
-	lines.append("Время: %s" % slot_time.get_module_id())
-	lines.append("Выход: %s" % slot_out.get_module_id())
+	lines.append("Level: %s" % str(current_level.get("id", "")))
+	lines.append("Reason: %s" % reason)
+	lines.append("Pipeline ready at: %d ms" % pipeline_slots_filled_at_ms)
+	lines.append("Module moves: %d" % module_moves_count)
+	lines.append("Kilo: %s" % slot_kilo.get_module_id())
+	lines.append("Bit: %s" % slot_bit.get_module_id())
+	lines.append("Time: %s" % slot_time.get_module_id())
+	lines.append("Out: %s" % slot_out.get_module_id())
 	if calc_bps >= 0:
-		lines.append("Рассчитано: %s" % _format_rate(calc_bps, calc_display_unit))
-	lines.append("Ожидается: %d bps" % int(current_level.get("expected_bps", 0)))
-	lines.append("Конвейер корректен: %s" % ("да" if _is_pipeline_correct() else "нет"))
+		lines.append("Calculated: %s" % _format_rate(calc_bps, calc_display_unit))
+	lines.append("Expected: %d bps" % int(current_level.get("expected_bps", 0)))
+	lines.append("Pipeline valid: %s" % ("yes" if _is_pipeline_correct() else "no"))
 	var pipeline_error: String = _derive_pipeline_error_code()
 	if not pipeline_error.is_empty():
-		lines.append("Ошибка конвейера: %s" % pipeline_error)
+		lines.append("Pipeline error: %s" % pipeline_error)
 		lines.append(ERROR_MAP.get_error_tip(pipeline_error))
 	if not last_error_code.is_empty():
-		lines.append("Ошибка ответа: %s" % last_error_code)
+		lines.append("Last answer error: %s" % last_error_code)
 		lines.append(ERROR_MAP.get_error_tip(last_error_code))
 		for detail in ERROR_MAP.detail_messages(last_error_code):
 			lines.append(detail)
@@ -713,7 +815,7 @@ func _show_diagnostics(reason: String) -> void:
 			if not explain_line.is_empty():
 				lines.append(explain_line)
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", "ДИАГНОСТИКА", lines)
+		diagnostics_panel.call("setup", "Safe Diagnostics", lines)
 	diagnostics_panel.visible = true
 	_log_event("diagnostics_open", {"reason": reason})
 
@@ -723,8 +825,9 @@ func _on_reset_pressed() -> void:
 	_register_first_action()
 	_play_audio("click")
 	_reset_pipeline_state()
-	lbl_status.text = "Конвейер сброшен. Соберите и запустите снова."
+	lbl_status.text = "Pipeline reset. Assemble it again and run calculation."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.86, 0.96))
+	_log_event("RESET_PRESSED", {})
 	_log_event("reset_pressed", {})
 
 func _on_next_pressed() -> void:
@@ -737,19 +840,12 @@ func _on_back_pressed() -> void:
 	_play_audio("click")
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
-func _on_palette_selected(index: int) -> void:
-	_apply_palette(palette_select.get_item_id(index))
-
-func _apply_palette(palette_id: int) -> void:
+func _apply_noir_theme() -> void:
+	theme = NOIR_THEME
 	var shader_material: ShaderMaterial = crt_overlay.material as ShaderMaterial
-	if palette_id == PALETTE_AMBER_ID:
-		theme = THEME_AMBER
-		if shader_material != null:
-			shader_material.set_shader_parameter("tint_color", Color(1.0, 0.69, 0.0, 1.0))
-	else:
-		theme = THEME_GREEN
-		if shader_material != null:
-			shader_material.set_shader_parameter("tint_color", Color(0.0, 1.0, 0.25, 1.0))
+	if shader_material != null:
+		shader_material.set_shader_parameter("tint_color", Color(0.93, 0.93, 0.93, 1.0))
+		shader_material.set_shader_parameter("intensity", 0.18)
 
 func _trigger_glitch() -> void:
 	var shader_material: ShaderMaterial = crt_overlay.material as ShaderMaterial
@@ -768,7 +864,7 @@ func _update_meta_label() -> void:
 	var stability_value: float = 100.0
 	if GlobalMetrics != null:
 		stability_value = float(GlobalMetrics.stability)
-	lbl_meta.text = "ДЕЛО %s | ОШ %d/%d | T-%02d:%02d" % [str(current_level.get("id", "--")), wrong_count, MAX_ATTEMPTS, total_seconds / 60, total_seconds % 60]
+	lbl_meta.text = "CASE %d/%d | FAIL %d/%d | T-%02d:%02d" % [current_level_index + 1, levels.size(), wrong_count, MAX_ATTEMPTS, total_seconds / 60, total_seconds % 60]
 	stability_bar.value = stability_value
 
 func _on_stability_changed(_new_value: float, _delta: float) -> void:
@@ -817,7 +913,7 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 	task_session["ended_at_ticks"] = end_tick
 	_log_event("task_end", {"is_correct": is_correct, "reason": reason})
 	if not is_correct and reason != "timeout":
-		lbl_status.text = str(current_level.get("explain_short", "Проверьте диагностику."))
+		lbl_status.text = str(current_level.get("explain_short", "Review formula and unit conversion."))
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.62, 0.45))
 	var elapsed_ms: int = end_tick - level_started_ms
 	var stability_delta: float = float(wrong_count) * FAIL_STABILITY_DELTA
@@ -829,6 +925,7 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		stability_delta += PIPELINE_MISMATCH_DELTA
 	var payload: Dictionary = {
 		"quest": "network_trace",
+		"quest_id": "NETWORK_TRACE",
 		"stage": "B",
 		"task_id": str(current_level.get("id", "")),
 		"match_key": "NETTRACE_B|%s" % str(current_level.get("id", "")),
@@ -845,6 +942,8 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"pipeline_selected": {"kilo_module_id": slot_kilo.get_module_id(), "bit_module_id": slot_bit.get_module_id(), "time_module_id": slot_time.get_module_id(), "out_module_id": slot_out.get_module_id()},
 		"pipeline_correct": _is_pipeline_correct(),
 		"pipeline_mismatch": pipeline_mismatch,
+		"benchmark_done": benchmark_done,
+		"preview_metrics": preview_metrics,
 		"calc_bps": calc_bps,
 		"calc_display_value": calc_display_value,
 		"calc_display_unit": calc_display_unit,
@@ -891,7 +990,19 @@ func _format_rate(value_bps: int, ask_unit: String) -> String:
 
 func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
-	body.vertical = viewport_size.x < viewport_size.y
-	module_tray.columns = 2 if body.vertical else 4
+	var portrait: bool = viewport_size.x < viewport_size.y
+	body.vertical = portrait
+	module_tray.columns = 4
+	options_grid.columns = 1 if portrait else 2
+	pipeline_board.columns = 1 if portrait else 2
+	lbl_briefing.custom_minimum_size.y = 56.0 if portrait else 76.0
+	lbl_prompt.custom_minimum_size.y = 52.0 if portrait else 70.0
+	log_text.custom_minimum_size.y = 150.0 if portrait else 190.0
+	btn_run_calc.custom_minimum_size.y = 72.0 if portrait else 58.0
+	btn_reset.custom_minimum_size.y = 72.0 if portrait else 58.0
+	btn_next.custom_minimum_size.y = 72.0 if portrait else 58.0
+	for btn in action_buttons:
+		btn.custom_minimum_size.y = 72.0 if portrait else 78.0
+
 
 

@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://d1vpidf0t4e2l"]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestA.gd" id="1_script"]
-[ext_resource type="Theme" uid="uid://jxdl2tctb0ca" path="res://ui/theme_untformatic.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
 [ext_resource type="Script" path="res://scenes/BitKnob.gd" id="4_knob_script"]
 

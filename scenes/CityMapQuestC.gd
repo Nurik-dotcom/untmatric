@@ -118,6 +118,7 @@ var dossier_open_count: int = 0
 var time_dossier_open_ms: int = 0
 var wait_count: int = 0
 var wait_total_sim_sec: int = 0
+var schedule_panel_open_count: int = 0
 var think_time_before_move_ms: Array[int] = []
 
 var _last_move_ms: int = 0
@@ -139,6 +140,9 @@ var _numpad_buttons: Array[Button] = []
 var _traffic_shader: Shader
 var _traffic_texture: Texture2D
 var _closed_texture: Texture2D
+var _schedule_rows: Array[Dictionary] = []
+var _danger_edges_seen: Dictionary = {}
+var _closed_edges_seen: Dictionary = {}
 
 func _ready() -> void:
 	if not btn_back.pressed.is_connected(_on_back_pressed):
@@ -429,9 +433,12 @@ func _load_sublevel(index: int) -> void:
 	time_dossier_open_ms = 0
 	wait_count = 0
 	wait_total_sim_sec = 0
+	schedule_panel_open_count = 1
 	think_time_before_move_ms.clear()
 	_last_move_ms = Time.get_ticks_msec()
 	_dossier_open_started_ms = -1
+	_danger_edges_seen.clear()
+	_closed_edges_seen.clear()
 	briefing_card.visible = false
 
 	_set_briefing()
@@ -612,6 +619,7 @@ func _on_timer_tick() -> void:
 		return
 	real_time_sec += 1
 	_update_timer_display()
+	refresh_edge_states()
 	if real_time_sec > int(level_data.get("time_limit_sec", 140)):
 		_recalculate_stability()
 
@@ -697,33 +705,95 @@ func _load_level_data(path_to_file: String) -> void:
 func _set_briefing() -> void:
 	briefing_title.text = "ОКНО КОМЕНДАНТСКОГО ЧАСА"
 	briefing_text.text = "Доберитесь до узла L в условиях динамических окон патруля. Рёбра ЗАКРЫТО заблокированы, рёбра ОПАСНО имеют повышенную стоимость."
-	var constraint_text := "ОГРАНИЧЕНИЕ: ОБЯЗАТЕЛЬНО %s | НЕ БОЛЕЕ ОДНОГО ИЗ (E,G) | ИЗБЕГАТЬ %s" % [
-		"-" if must_visit_nodes.is_empty() else ",".join(must_visit_nodes),
-		"-" if blacklist_nodes.is_empty() else ",".join(blacklist_nodes)
-	]
-	briefing_constraint.text = constraint_text
-	constraint_info_label.text = constraint_text
+	update_conditions_panel()
 	footer_label.text = "РЕАЛЬНЫЙ таймер в заголовке. СИМ-время меняется только при успешном перемещении."
 
 func _build_schedule_ui() -> void:
 	for child in schedule_list.get_children():
 		child.queue_free()
+	_schedule_rows.clear()
 
 	for edge_var in level_data.get("edges", []):
 		var edge: Dictionary = edge_var
 		if not edge.has("schedule"):
 			continue
-		var parts: Array[String] = []
-		for slot_var in edge.schedule:
-			var slot: Dictionary = slot_var
-			var state := str(slot.get("state", "open"))
-			var w_text := "ЗАКРЫТО" if state == "closed" else str(slot.get("w", edge.get("w", 0)))
-			parts.append("[%d-%d: %s]" % [int(slot.get("t_from", 0)), int(slot.get("t_to", 0)), w_text])
-
 		var row := Label.new()
 		row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		row.text = "%s->%s: %s" % [str(edge.get("from", "")), str(edge.get("to", "")), " ".join(parts)]
+		row.clip_text = false
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		schedule_list.add_child(row)
+		_schedule_rows.append({
+			"label": row,
+			"edge": edge.duplicate(true)
+		})
+	refresh_schedule_ui()
+
+func update_conditions_panel() -> void:
+	var must_visit_text: String = "-" if must_visit_nodes.is_empty() else ",".join(must_visit_nodes)
+	var blacklist_text: String = "-" if blacklist_nodes.is_empty() else ",".join(blacklist_nodes)
+	var xor_text: String = "-"
+	if not xor_groups.is_empty():
+		var xor_parts: Array[String] = []
+		for group_var in xor_groups:
+			var group: Dictionary = group_var
+			if str(group.get("type", "")) == "AT_MOST_ONE":
+				var nodes_list: Array[String] = []
+				for node_var in group.get("nodes", []):
+					nodes_list.append(str(node_var))
+				var nodes_joined := ",".join(nodes_list)
+				xor_parts.append("%s (не более одного)" % nodes_joined)
+		if not xor_parts.is_empty():
+			xor_text = " | ".join(xor_parts)
+
+	var lines: Array[String] = [
+		"УСЛОВИЯ:",
+		"MUST VISIT: %s" % must_visit_text,
+		"XOR: %s" % xor_text,
+		"BLACKLIST: %s" % blacklist_text
+	]
+	var conditions_text: String = "\n".join(lines)
+	constraint_info_label.text = conditions_text
+	briefing_constraint.text = conditions_text
+	constraint_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+func refresh_schedule_ui() -> void:
+	for row_var in _schedule_rows:
+		var row: Dictionary = row_var
+		var row_label: Label = row.get("label", null) as Label
+		var edge: Dictionary = row.get("edge", {})
+		if row_label == null:
+			continue
+		var runtime: Dictionary = get_edge_runtime_state(edge, sim_time_sec)
+		var parts: Array[String] = []
+		for slot_var in edge.get("schedule", []):
+			var slot: Dictionary = slot_var
+			var from_t: int = int(slot.get("t_from", 0))
+			var to_t: int = int(slot.get("t_to", 0))
+			var slot_state: String = str(slot.get("state", "open")).to_upper()
+			var slot_w_text: String = "CLOSED" if slot_state == "CLOSED" else str(int(slot.get("w", edge.get("w", 0))))
+			var to_text: String = "∞" if to_t >= 999 else str(to_t)
+			var slot_text: String = "[%d-%s: %s]" % [from_t, to_text, slot_w_text]
+			var is_active: bool = sim_time_sec >= from_t and sim_time_sec < to_t
+			if is_active:
+				slot_text = ">>%s<<" % slot_text
+			parts.append(slot_text)
+
+		var edge_from: String = str(edge.get("from", ""))
+		var edge_to: String = str(edge.get("to", ""))
+		var ttc: int = int(runtime.get("time_to_change", -1))
+		var state_text: String = str(runtime.get("state", "OPEN"))
+		row_label.text = "%s→%s: %s | %s" % [edge_from, edge_to, " ".join(parts), state_text]
+
+		var warning_soon: bool = ttc >= 0 and ttc <= 15
+		if state_text == "CLOSED":
+			row_label.add_theme_color_override("font_color", Color(1.0, 0.32, 0.32, 1.0))
+		elif state_text == "DANGER" or warning_soon:
+			row_label.add_theme_color_override("font_color", Color(1.0, 0.76, 0.30, 1.0))
+		else:
+			row_label.add_theme_color_override("font_color", Color(0.82, 0.88, 0.94, 1.0))
+
+func refresh_edge_states() -> void:
+	_update_visuals()
 
 func _calculate_min_sum_dynamic() -> int:
 	var start_node := str(level_data.get("start_node", ""))
@@ -1048,31 +1118,22 @@ func _reset_round_state(full_reset: bool) -> void:
 		level_started_ms = Time.get_ticks_msec()
 		real_time_sec = 0
 
+	update_conditions_panel()
 	_update_visuals()
 
 func _update_visuals() -> void:
 	path_display.text = "ПУТЬ: %s" % " -> ".join(path)
 	sim_time_label.text = "СИМ: %d" % sim_time_sec
 	sum_live_label.text = "СУММА: %d" % path_sum
-
-	if xor_violation:
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: НАРУШЕНИЕ XOR"
-	elif _path_has_blacklist(path):
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: ВХОД В ЧЁРНЫЙ СПИСОК"
-	elif closed_edge_attempts > 0:
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: ЗАКРЫТОЕ РЕБРО ЗАБЛОКИРОВАНО"
-	elif cycle_detected:
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: ОБНАРУЖЕН ЦИКЛ"
-	else:
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: -"
+	update_warnings_panel()
 
 	for node_id in node_buttons.keys():
 		var btn: Button = node_buttons[node_id]
 		var is_current: bool = node_id == current_node
 		var is_available := false
 		if adjacency.has(current_node) and adjacency[current_node].has(node_id):
-			var runtime_to_node := _edge_runtime_state(adjacency[current_node][node_id], sim_time_sec)
-			is_available = str(runtime_to_node.get("state", "open")) != "closed"
+			var runtime_to_node := get_edge_runtime_state(adjacency[current_node][node_id], sim_time_sec)
+			is_available = str(runtime_to_node.get("state", "OPEN")) != "CLOSED"
 		btn.disabled = is_current or not is_available or _is_round_locked()
 		if is_current:
 			btn.modulate = Color(0.95, 0.86, 0.45)
@@ -1084,34 +1145,64 @@ func _update_visuals() -> void:
 	for key in edge_visuals.keys():
 		var visual: Dictionary = edge_visuals[key]
 		var edge: Dictionary = visual.edge
-		var runtime := _edge_runtime_state(edge, sim_time_sec)
+		var runtime := get_edge_runtime_state(edge, sim_time_sec)
 		var is_available: bool = (
 			str(edge.get("from", "")) == current_node
 			and adjacency.has(current_node)
 			and adjacency[current_node].has(str(edge.get("to", "")))
-			and str(runtime.get("state", "open")) != "closed"
+			and str(runtime.get("state", "OPEN")) != "CLOSED"
 		)
 		var is_traversed: bool = _path_contains_edge(str(edge.get("from", "")), str(edge.get("to", "")))
-		var next_change_sec := int(runtime.get("next_change_sec", -1))
-		var closing_soon := str(runtime.get("state", "open")) != "closed" and next_change_sec >= 0 and next_change_sec < 15
+		var time_to_change := int(runtime.get("time_to_change", -1))
+		var closing_soon := str(runtime.get("state", "OPEN")) != "CLOSED" and time_to_change >= 0 and time_to_change < 15
 
 		var state := "dim"
 		if is_traversed:
 			state = "traversed"
-		elif str(runtime.get("state", "open")) == "closed":
+		elif str(runtime.get("state", "OPEN")) == "CLOSED":
 			state = "closed"
-		elif bool(runtime.get("danger", false)) or closing_soon:
+		elif str(runtime.get("state", "OPEN")) == "DANGER" or closing_soon:
 			state = "danger"
 		elif is_available:
 			state = "available"
 
 		_apply_edge_style(key, state, runtime)
+		if str(runtime.get("state", "OPEN")) == "DANGER":
+			_danger_edges_seen[key] = true
+		if str(runtime.get("state", "OPEN")) == "CLOSED":
+			_closed_edges_seen[key] = true
 
+	refresh_schedule_ui()
 	_sync_traffic_visuals()
 	if is_instance_valid(_btn_undo):
 		_btn_undo.disabled = _is_round_locked() or _undo_stack.is_empty()
 	if is_instance_valid(_btn_wait):
 		_btn_wait.disabled = _is_round_locked()
+
+func update_warnings_panel() -> void:
+	var warnings: Array[String] = []
+	var missing_must: Array[String] = []
+	for must_node in must_visit_nodes:
+		if not path.has(must_node):
+			missing_must.append(must_node)
+
+	if not missing_must.is_empty():
+		warnings.append("⚠ НЕ ПОСЕЩЁН MUST VISIT: %s" % ",".join(missing_must))
+	if xor_violation:
+		warnings.append("⚠ НАРУШЕНИЕ XOR")
+	if _path_has_blacklist(path):
+		warnings.append("⚠ ВХОД В BLACKLIST")
+	if closed_edge_attempts > 0:
+		warnings.append("⚠ CLOSED-РЕБРО ЗАБЛОКИРОВАНО")
+	if cycle_events > 0:
+		warnings.append("⚠ ОБНАРУЖЕН ЦИКЛ")
+	if backtrack_count > 0:
+		warnings.append("⚠ ОТКАТ ВЫПОЛНЕН")
+
+	if warnings.is_empty():
+		warning_label.text = "WARNINGS:\n-"
+	else:
+		warning_label.text = "WARNINGS:\n%s" % "\n".join(warnings)
 
 func _apply_edge_style(key: String, state: String, runtime: Dictionary) -> void:
 	if not edge_visuals.has(key):
@@ -1146,15 +1237,15 @@ func _apply_edge_style(key: String, state: String, runtime: Dictionary) -> void:
 		"danger":
 			start_color = Color(0.62, 0.35, 0.12, 0.60)
 			end_color = Color(1.0, 0.62, 0.18, 1.0)
-			label_text = "%d DANGER" % int(runtime.get("weight", 0))
+			label_text = "%d DANGER" % int(runtime.get("w", runtime.get("weight", 0)))
 			line.texture = null
 		_:
 			line.texture = null
 
-	var next_change_sec := int(runtime.get("next_change_sec", -1))
-	if next_change_sec >= 0 and state != "closed":
-		label_text = "%s ⏱%ds" % [label_text, next_change_sec]
-	if state == "danger" and next_change_sec >= 0 and next_change_sec < 15:
+	var time_to_change := int(runtime.get("time_to_change", runtime.get("next_change_sec", -1)))
+	if time_to_change >= 0 and state != "closed":
+		label_text = "%s ⏱%ds" % [label_text, time_to_change]
+	if state == "danger" and time_to_change >= 0 and time_to_change < 15:
 		var pulse := 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) / 120.0)
 		end_color = end_color.lerp(Color(1.0, 0.24, 0.24, 1.0), pulse * 0.6)
 
@@ -1200,6 +1291,25 @@ func _edge_runtime_state(edge: Dictionary, time_sec: int) -> Dictionary:
 		"next_change_sec": next_change_sec
 	}
 
+func get_edge_runtime_state(edge: Dictionary, time_sec: int) -> Dictionary:
+	var raw_runtime: Dictionary = _edge_runtime_state(edge, time_sec)
+	var state_raw: String = str(raw_runtime.get("state", "open")).to_lower()
+	var time_to_change: int = int(raw_runtime.get("next_change_sec", -1))
+	var state: String = "OPEN"
+	if state_raw == "closed":
+		state = "CLOSED"
+	elif bool(raw_runtime.get("danger", false)) or (time_to_change >= 0 and time_to_change <= 15):
+		state = "DANGER"
+
+	return {
+		"state": state,
+		"w": int(raw_runtime.get("weight", edge.get("w", 0))),
+		"time_to_change": time_to_change,
+		"danger": state == "DANGER",
+		"next_change_sec": time_to_change,
+		"weight": int(raw_runtime.get("weight", edge.get("w", 0)))
+	}
+
 func _on_node_pressed(node_id: String) -> void:
 	if _is_round_locked():
 		return
@@ -1217,15 +1327,17 @@ func _on_node_pressed(node_id: String) -> void:
 		first_action_ms = now_ms - level_started_ms
 		planning_time_ms = first_action_ms
 
-	if path.size() >= 2 and path[path.size() - 2] == node_id:
+	var is_backtrack: bool = path.size() >= 2 and path[path.size() - 2] == node_id
+	if is_backtrack:
 		backtrack_count += 1
-	if path.has(node_id):
+	var is_cycle_revisit: bool = path.has(node_id) and (not is_backtrack or path.size() > 2)
+	if is_cycle_revisit:
 		cycle_events += 1
 		cycle_detected = true
 
 	var edge: Dictionary = adjacency[current_node][node_id]
-	var runtime := _edge_runtime_state(edge, sim_time_sec)
-	if runtime.state == "closed":
+	var runtime := get_edge_runtime_state(edge, sim_time_sec)
+	if str(runtime.get("state", "OPEN")) == "CLOSED":
 		closed_edge_attempts += 1
 		n_closed += 1
 		dynamic_weight_awareness = false
@@ -1235,12 +1347,13 @@ func _on_node_pressed(node_id: String) -> void:
 		_update_visuals()
 		return
 
-	if runtime.danger:
+	if bool(runtime.get("danger", false)):
 		dynamic_weight_awareness = false
 
-	path_sum += int(runtime.weight)
-	step_weights.append(int(runtime.weight))
-	sim_time_sec += int(runtime.weight)
+	var edge_weight: int = int(runtime.get("w", 0))
+	path_sum += edge_weight
+	step_weights.append(edge_weight)
+	sim_time_sec += edge_weight
 	path.append(node_id)
 	current_node = node_id
 	if path.size() == 2:
@@ -1521,6 +1634,9 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"undo_count": undo_count,
 		"wait_count": wait_count,
 		"wait_total_sim_sec": wait_total_sim_sec,
+		"schedule_panel_open_count": schedule_panel_open_count,
+		"danger_edges_seen_count": _danger_edges_seen.size(),
+		"closed_edges_seen_count": _closed_edges_seen.size(),
 		"dossier_open_count": dossier_open_count,
 		"time_dossier_open_ms": time_dossier_open_ms,
 		"numpad_input_count": numpad_input_count,

@@ -1,9 +1,9 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/SuspectQuestA.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="Theme" path="res://ui/theme_noir_pencil.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
-[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_cc18y"]
+[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_noir_script"]
 
 [node name="SuspectQuestA" type="Control"]
 layout_mode = 3
@@ -26,10 +26,11 @@ color = Color(0.06, 0.07, 0.08, 1)
 
 [node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("3_noir")]
 layer = 100
-script = ExtResource("4_cc18y")
+script = ExtResource("4_noir_script")
 intensity = 0.18
 fx_quality = 1
 tint_color = Color(0.93, 0.93, 0.93, 1)
+overlay_mode = "PENCIL"
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -45,37 +46,47 @@ theme_override_constants/margin_bottom = 12
 
 [node name="MainLayout" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 8
-alignment = 1
+alignment = 0
 
 [node name="Header" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
-alignment = 1
+theme_override_constants/separation = 8
 
 [node name="BtnQuestBack" type="Button" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "НАЗАД"
+text = "BACK"
 
 [node name="LblClueTitle" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
-text = "УЛИКА #A-01"
+size_flags_horizontal = 3
+text = "CLUE #A-01"
 horizontal_alignment = 1
 
 [node name="LblSessionId" type="Label" parent="SafeArea/MainLayout/Header"]
+custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
-size_flags_horizontal = 10
-text = "СЕССИЯ ИНИЦ."
+size_flags_horizontal = 1
+text = "SESSION 0000"
 horizontal_alignment = 2
 
+[node name="BtnSettings" type="Button" parent="SafeArea/MainLayout/Header"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+text = "SET"
+
 [node name="SettingsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
+visible = false
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
 [node name="PaletteTitle" type="Label" parent="SafeArea/MainLayout/SettingsRow"]
 layout_mode = 2
-text = "ПАЛИТРА"
+text = "PALETTE"
 
 [node name="PaletteSelect" type="OptionButton" parent="SafeArea/MainLayout/SettingsRow"]
 custom_minimum_size = Vector2(120, 0)
@@ -83,7 +94,7 @@ layout_mode = 2
 
 [node name="FxTitle" type="Label" parent="SafeArea/MainLayout/SettingsRow"]
 layout_mode = 2
-text = "ЭФФЕКТЫ"
+text = "FX"
 
 [node name="FxSelect" type="OptionButton" parent="SafeArea/MainLayout/SettingsRow"]
 custom_minimum_size = Vector2(110, 0)
@@ -106,12 +117,42 @@ size_flags_horizontal = 3
 value = 100.0
 show_percentage = false
 
+[node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainLayout"]
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+
+[node name="BriefingMargin" type="MarginContainer" parent="SafeArea/MainLayout/BriefingCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="BriefingVBox" type="VBoxContainer" parent="SafeArea/MainLayout/BriefingCard/BriefingMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="LblGoal" type="Label" parent="SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Goal: find final s"
+autowrap_mode = 2
+
+[node name="LblHint" type="Label" parent="SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Hint: range stop is excluded"
+autowrap_mode = 2
+
 [node name="TerminalFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3
+size_flags_stretch_ratio = 1.6
 
 [node name="ScrollContainer" type="ScrollContainer" parent="SafeArea/MainLayout/TerminalFrame"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="CodeLabel" type="RichTextLabel" parent="SafeArea/MainLayout/TerminalFrame/ScrollContainer"]
 layout_mode = 2
@@ -119,7 +160,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
-text = "[code]Инициализация...[/code]"
+text = "[code]loading...[/code]"
 
 [node name="StatusRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
@@ -128,11 +169,11 @@ alignment = 1
 [node name="LblStatus" type="Label" parent="SafeArea/MainLayout/StatusRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ДОСТУП ОЖИДАЕТ"
+text = "STATUS"
 
 [node name="LblAttempts" type="Label" parent="SafeArea/MainLayout/StatusRow"]
 layout_mode = 2
-text = "ОШ: 0/3"
+text = "ATTEMPTS: 0/3"
 
 [node name="InputFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
@@ -147,7 +188,7 @@ horizontal_alignment = 1
 [node name="Numpad" type="GridContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 0.6
+size_flags_stretch_ratio = 0.8
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 3
@@ -220,7 +261,7 @@ custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "СБР"
+text = "CLR"
 
 [node name="Btn0" type="Button" parent="SafeArea/MainLayout/Numpad"]
 custom_minimum_size = Vector2(64, 64)
@@ -238,6 +279,8 @@ text = "<-"
 
 [node name="Actions" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.4
 theme_override_constants/separation = 16
 alignment = 1
 
@@ -245,14 +288,14 @@ alignment = 1
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "АНАЛИЗ"
+text = "ANALYZE"
 
 [node name="BtnEnter" type="Button" parent="SafeArea/MainLayout/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "ВВОД"
+text = "ENTER"
 
 [node name="BtnNext" type="Button" parent="SafeArea/MainLayout/Actions"]
 visible = false
@@ -260,7 +303,49 @@ custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "ДАЛЕЕ"
+text = "NEXT"
+
+[node name="InspectorPopup" type="PopupPanel" parent="."]
+initial_position = 1
+size = Vector2i(520, 300)
+theme = ExtResource("2_theme")
+
+[node name="Root" type="VBoxContainer" parent="InspectorPopup"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LblTitle" type="Label" parent="InspectorPopup/Root"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "SETTINGS"
+horizontal_alignment = 1
+
+[node name="SettingsGrid" type="GridContainer" parent="InspectorPopup/Root"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="LblFx" type="Label" parent="InspectorPopup/Root/SettingsGrid"]
+layout_mode = 2
+text = "FX"
+
+[node name="FxSelect" type="OptionButton" parent="InspectorPopup/Root/SettingsGrid"]
+custom_minimum_size = Vector2(220, 48)
+layout_mode = 2
+
+[node name="LblOverlay" type="Label" parent="InspectorPopup/Root/SettingsGrid"]
+layout_mode = 2
+text = "OVERLAY"
+
+[node name="OverlaySelect" type="OptionButton" parent="InspectorPopup/Root/SettingsGrid"]
+custom_minimum_size = Vector2(220, 48)
+layout_mode = 2
+
+[node name="BtnClose" type="Button" parent="InspectorPopup/Root"]
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "CLOSE"
 
 [node name="DiagnosticsPanel" type="PanelContainer" parent="."]
 visible = false
@@ -277,7 +362,7 @@ theme_override_constants/separation = 16
 
 [node name="Label" type="Label" parent="DiagnosticsPanel/VBoxContainer"]
 layout_mode = 2
-text = "ДИАГНОСТИЧЕСКИЙ ТРЕЙС"
+text = "DIAGNOSTIC TRACE"
 horizontal_alignment = 1
 
 [node name="ExplainList" type="RichTextLabel" parent="DiagnosticsPanel/VBoxContainer"]
@@ -287,9 +372,9 @@ layout_mode = 2
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "Журнал трассировки..."
+text = "Trace..."
 
 [node name="BtnCloseDiag" type="Button" parent="DiagnosticsPanel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "ЗАКРЫТЬ"
+text = "CLOSE"

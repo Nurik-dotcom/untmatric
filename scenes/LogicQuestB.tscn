@@ -65,7 +65,7 @@ text = "ДЕТЕКТОР ЛЖИ B-01"
 [node name="LblSessionId" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "СЕССИЯ: 00/00 • CASE B_00"
+text = "СЕССИЯ: 00/00 | CASE B_00"
 horizontal_alignment = 2
 
 [node name="BarsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
@@ -274,37 +274,37 @@ alignment = 1
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "∧ AND"
+text = "AND"
 
 [node name="GateOrBtn" type="Button" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "∨ OR"
+text = "OR"
 
 [node name="GateNotBtn" type="Button" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "¬ NOT"
+text = "NOT"
 
 [node name="GateXorBtn" type="Button" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "⊕ XOR"
+text = "XOR"
 
 [node name="GateNandBtn" type="Button" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "⊼ NAND"
+text = "NAND"
 
 [node name="GateNorBtn" type="Button" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "⊽ NOR"
+text = "NOR"
 
 [node name="StatusRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
@@ -314,7 +314,7 @@ alignment = 1
 [node name="StatsLabel" type="Label" parent="SafeArea/MainLayout/StatusRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ПОП: 0/3 • ТЕСТЫ: 0 • СТАБ: 100%"
+text = "ПОП: 0/3 | ТЕСТЫ: 0 | СТАБ: 100%"
 
 [node name="FeedbackLabel" type="Label" parent="SafeArea/MainLayout/StatusRow"]
 visible = false
@@ -332,7 +332,7 @@ alignment = 1
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ПОДСКАЗКА"
+text = "АНАЛИЗ"
 
 [node name="BtnTest" type="Button" parent="SafeArea/MainLayout/Actions"]
 custom_minimum_size = Vector2(0, 56)

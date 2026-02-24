@@ -1,4 +1,4 @@
-extends PanelContainer
+﻿extends PanelContainer
 class_name PipelineSlotControl
 
 signal module_dropped(slot_type: String, module_data: Dictionary)
@@ -40,7 +40,7 @@ func set_module(module_data: Dictionary) -> void:
 
 func clear_module() -> void:
 	current_module.clear()
-	label_module_name.text = "<пусто>"
+	label_module_name.text = "<empty>"
 	_update_visual_state()
 
 func flash_bad_drop() -> void:
@@ -101,4 +101,3 @@ func _update_visual_state() -> void:
 		modulate = Color(1.0, 1.0, 1.0, 1.0)
 	else:
 		modulate = Color(0.86, 1.0, 0.9, 1.0)
-

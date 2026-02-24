@@ -14,6 +14,9 @@ const FALLBACK_CAPACITY_STEPS_BITS: Array[int] = [128, 256, 512, 1024, 2048, 409
 const FALLBACK_ANSWER_MODES: Array[String] = ["bits", "bytes"]
 const SAMPLE_SLOTS: int = 7
 const PHONE_LANDSCAPE_MAX_HEIGHT: float = 520.0
+const PHONE_PORTRAIT_MAX_WIDTH: float = 900.0
+const COMPACT_STACK_MAX_HEIGHT: float = 820.0
+const COMPACT_STACK_MAX_WIDTH: float = 1500.0
 const CONVERTER_LOCK_SECONDS: float = 3.0
 const CONVERTER_COOLDOWN_SECONDS: float = 6.0
 
@@ -27,6 +30,9 @@ const TXT_BACK: String = "\u041d\u0410\u0417\u0410\u0414"
 const TXT_STORAGE_TITLE: String = "\u0421\u041a\u041b\u0410\u0414 \u041d\u041e\u0421\u0418\u0422\u0415\u041b\u0415\u0419"
 const TXT_CONTEXT_TITLE: String = "\u0422\u0415\u0420\u041c\u0418\u041d\u0410\u041b"
 const TXT_TASK: String = "\u0412\u044b\u0447\u0438\u0441\u043b\u0438\u0442\u0435 I = K*i \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u043f\u0442\u0438\u043c\u0430\u043b\u044c\u043d\u044b\u0439 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c."
+const TXT_TASK_BITS_SUFFIX: String = "\u041e\u0442\u0432\u0435\u0442 \u0432 \u0411\u0418\u0422\u0410\u0425."
+const TXT_TASK_BYTES_SUFFIX: String = "\u041e\u0442\u0432\u0435\u0442 \u0432 \u0411\u0410\u0419\u0422\u0410\u0425."
+const TXT_TOGGLE_BYTES: String = "\u041e\u0442\u0432\u0435\u0442 \u0432 \u0411\u0410\u0419\u0422\u0410\u0425 (/8)"
 const TXT_CALC_TITLE: String = "\u0420\u0410\u0421\u0427\u0401\u0422 I"
 const TXT_BTN_CHECK: String = "\u0412\u0412\u041e\u0414"
 const TXT_PREVIEW_TITLE: String = "\u0414\u0418\u0410\u0413\u041d\u041e\u0421\u0422\u0418\u041a\u0410"
@@ -41,6 +47,7 @@ const TXT_DETAILS_CLOSE: String = "\u0417\u0410\u041a\u0420\u042b\u0422\u042c"
 const TXT_STATUS_PLAN: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u043f\u043e\u0441\u0447\u0438\u0442\u0430\u0439\u0442\u0435 I, \u0437\u0430\u0442\u0435\u043c \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c."
 const TXT_STATUS_CALC_OK: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0420\u0430\u0441\u0447\u0451\u0442 I \u0432\u0435\u0440\u043d\u044b\u0439. \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c."
 const TXT_STATUS_CALC_WARN: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0420\u0430\u0441\u0447\u0451\u0442 I \u043d\u0435\u0442\u043e\u0447\u043d\u044b\u0439. \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c \u043e\u0441\u043e\u0437\u043d\u0430\u043d\u043d\u043e."
+const TXT_STATUS_UNIT_WARN: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0427\u0438\u0441\u043b\u043e \u0431\u043b\u0438\u0437\u043a\u043e, \u043d\u043e \u043f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0435\u0434\u0438\u043d\u0438\u0446\u044b (\u0431\u0438\u0442/\u0431\u0430\u0439\u0442)."
 const TXT_STATUS_CONVERTER: String = "\u0421\u0422\u0410\u0422\u0423\u0421: I = %d \u0431\u0438\u0442 (%d \u0431\u0430\u0439\u0442)."
 const TXT_RESULT_BEST: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u041e\u0442\u043b\u0438\u0447\u043d\u043e. \u041e\u043f\u0442\u0438\u043c\u0430\u043b\u044c\u043d\u044b\u0439 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c."
 const TXT_RESULT_UNDER: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u041d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u043e. \u041d\u043e\u0441\u0438\u0442\u0435\u043b\u044c \u043d\u0435 \u0432\u043c\u0435\u0449\u0430\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0435."
@@ -52,9 +59,12 @@ const TXT_RESULT_OVER: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0412\u0
 @onready var root_vbox: VBoxContainer = $SafeArea/RootVBox
 @onready var body_split: HSplitContainer = $SafeArea/RootVBox/BodyHSplit
 @onready var left_pane: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane
+@onready var right_pane: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightPane
+@onready var right_margin: MarginContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin
 @onready var right_vbox: VBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox
 @onready var storage_grid: GridContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid
 
+@onready var header_panel: PanelContainer = $SafeArea/RootVBox/Header
 @onready var btn_back: Button = $SafeArea/RootVBox/Header/HeaderHBox/BtnBack
 @onready var title_label: Label = $SafeArea/RootVBox/Header/HeaderHBox/TitleLabel
 @onready var meta_label: Label = $SafeArea/RootVBox/Header/HeaderHBox/MetaLabel
@@ -71,17 +81,20 @@ const TXT_RESULT_OVER: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0412\u0
 @onready var i_info_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox/IInfoLabel
 @onready var k_info_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox/KInfoLabel
 @onready var task_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox/TaskLabel
+@onready var context_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard
 
 @onready var calc_title: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox/CalcTitle
 @onready var btn_minus: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox/IBitsRow/BtnMinus
 @onready var i_bits_value_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox/IBitsRow/IBitsValue
 @onready var btn_plus: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox/IBitsRow/BtnPlus
 @onready var btn_check_calc: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox/BtnCheckCalc
+@onready var calc_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard
 
 @onready var preview_title: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox/PreviewTitle
 @onready var preview_calc_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox/PreviewCalcLabel
 @onready var preview_fit_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox/PreviewFitLabel
 @onready var preview_class_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox/PreviewClassLabel
+@onready var preview_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard
 
 @onready var btn_converter: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnConverter
 @onready var noir_overlay: CanvasLayer = $NoirOverlay
@@ -90,7 +103,7 @@ const TXT_RESULT_OVER: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0412\u0
 @onready var sample_strip: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/SampleStrip
 @onready var status_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusLabel
 @onready var btn_details: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/BtnDetails
-@onready var footer_label: Label = $SafeArea/RootVBox/Footer/FooterMargin/FooterLabel
+@onready var footer_label: Label = get_node_or_null("SafeArea/RootVBox/Footer/FooterMargin/FooterLabel") as Label
 
 @onready var dimmer: ColorRect = $Dimmer
 @onready var details_sheet: PanelContainer = $DetailsSheet
@@ -122,6 +135,9 @@ var converter_cooldown_until: float = 0.0
 var converter_use_count: int = 0
 var input_buffer: String = ""
 var numpad_grid: GridContainer
+var answer_unit_mode: String = "bits"
+var answer_in_bytes: bool = false
+var answer_unit_toggle: CheckButton
 
 var _pool_normal: Array[int] = []
 var _pool_anchor: Array[int] = []
@@ -132,9 +148,12 @@ var _anchor_every_max: int = 10
 
 var _current_stability: float = 100.0
 var _ui_ready: bool = false
+var _right_scroll_installed: bool = false
 
 func _ready() -> void:
 	randomize()
+	_ensure_fullscreen_layout()
+	_install_right_scroll()
 	_load_level_config()
 	_apply_static_texts()
 	_connect_signals()
@@ -155,6 +174,7 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and _ui_ready:
+		_ensure_fullscreen_layout()
 		_apply_safe_area_padding()
 		_configure_layout()
 
@@ -194,6 +214,8 @@ func _apply_static_texts() -> void:
 	btn_details.text = TXT_BTN_DETAILS_CLOSED
 	details_title.text = TXT_DETAILS_TITLE
 	btn_close_details.text = TXT_DETAILS_CLOSE
+	if answer_unit_toggle != null:
+		answer_unit_toggle.text = TXT_TOGGLE_BYTES
 
 func _connect_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -217,6 +239,14 @@ func _install_numpad() -> void:
 	btn_minus.visible = false
 	btn_plus.visible = false
 
+	answer_unit_toggle = CheckButton.new()
+	answer_unit_toggle.name = "AnswerUnitToggle"
+	answer_unit_toggle.text = TXT_TOGGLE_BYTES
+	answer_unit_toggle.custom_minimum_size = Vector2(0.0, 52.0)
+	answer_unit_toggle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	answer_unit_toggle.toggled.connect(_on_answer_unit_toggled)
+	calc_vbox.add_child(answer_unit_toggle)
+
 	numpad_grid = GridContainer.new()
 	numpad_grid.name = "NumpadGrid"
 	numpad_grid.columns = 3
@@ -237,6 +267,16 @@ func _install_numpad() -> void:
 
 	calc_vbox.add_child(numpad_grid)
 	calc_vbox.move_child(numpad_grid, calc_vbox.get_child_count() - 1)
+
+func _on_answer_unit_toggled(pressed: bool) -> void:
+	if phase != Phase.CALC or converter_lock_active:
+		if answer_unit_toggle != null:
+			answer_unit_toggle.set_pressed_no_signal(answer_in_bytes)
+		return
+	_register_action()
+	answer_in_bytes = pressed
+	_update_preview()
+	_update_details_text()
 
 func _on_numpad_pressed(key: String) -> void:
 	if phase != Phase.CALC or converter_lock_active:
@@ -292,6 +332,10 @@ func _start_trial() -> void:
 	converter_lock_until = 0.0
 	converter_cooldown_until = 0.0
 	i_bits_user = 0
+	answer_unit_mode = _pick_answer_unit_mode()
+	answer_in_bytes = false
+	if answer_unit_toggle != null:
+		answer_unit_toggle.set_pressed_no_signal(false)
 	start_ms = Time.get_ticks_msec()
 	first_action_ms = -1
 
@@ -307,6 +351,7 @@ func _start_trial() -> void:
 	i_bits_true = k_symbols * i_bits
 	_generate_storage_options()
 
+	task_label.text = _build_task_text()
 	i_info_label.text = "i = %d \u0431\u0438\u0442" % i_bits
 	k_info_label.text = "K = %d \u0441\u0438\u043c\u0432\u043e\u043b\u043e\u0432" % k_symbols
 	i_bits_value_label.text = str(i_bits_user)
@@ -329,7 +374,8 @@ func _start_trial() -> void:
 
 	status_label.text = TXT_STATUS_PLAN
 	status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
-	footer_label.text = ""
+	if footer_label != null:
+		footer_label.text = ""
 	_update_preview()
 	_update_header_meta()
 	_update_details_text()
@@ -414,16 +460,23 @@ func _on_check_calc_pressed() -> void:
 		i_bits_user = input_buffer.to_int()
 		i_bits_value_label.text = str(i_bits_user)
 	_register_action()
+	var user_bits: int = _get_user_answer_bits()
+	var unit_mode_correct: bool = _is_unit_mode_correct()
+	var calc_correct: bool = user_bits == i_bits_true and unit_mode_correct
 
 	calc_checked = true
 	phase = Phase.SELECT
 
 	_apply_phase_controls()
 
-	if i_bits_user == i_bits_true:
+	if calc_correct:
 		status_label.text = TXT_STATUS_CALC_OK
 		status_label.add_theme_color_override("font_color", COLOR_GOOD)
 		i_bits_value_label.add_theme_color_override("font_color", COLOR_GOOD)
+	elif user_bits == i_bits_true:
+		status_label.text = TXT_STATUS_UNIT_WARN
+		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		i_bits_value_label.add_theme_color_override("font_color", COLOR_WARN)
 	else:
 		status_label.text = TXT_STATUS_CALC_WARN
 		status_label.add_theme_color_override("font_color", COLOR_WARN)
@@ -481,7 +534,9 @@ func _finish_trial() -> void:
 
 	var choice: Dictionary = storage_options[selected_storage_idx]
 	var choice_cap: int = int(choice["capacity_bits"])
-	var calc_correct: bool = (i_bits_user == i_bits_true)
+	var user_bits: int = _get_user_answer_bits()
+	var unit_mode_correct: bool = _is_unit_mode_correct()
+	var calc_correct: bool = (user_bits == i_bits_true) and unit_mode_correct
 	var is_fit: bool = choice_cap >= i_bits_true
 	var is_best_fit: bool = false
 	var is_overkill: bool = false
@@ -493,7 +548,7 @@ func _finish_trial() -> void:
 	if choice_cap < i_bits_true:
 		error_type = "underfit"
 	elif not calc_correct:
-		error_type = "calc_wrong"
+		error_type = "unit_mode_mismatch" if user_bits == i_bits_true else "calc_wrong"
 	elif str(choice["tag"]) == "UNIT_TRAP":
 		error_type = "unit_confusion_bits_bytes"
 	elif str(choice["tag"]) == "BEST":
@@ -520,6 +575,10 @@ func _finish_trial() -> void:
 		status_label.text = TXT_RESULT_CALC
 		status_label.add_theme_color_override("font_color", COLOR_BAD)
 		_update_sample_slot(COLOR_BAD)
+	elif error_type == "unit_mode_mismatch":
+		status_label.text = TXT_RESULT_UNIT
+		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_update_sample_slot(COLOR_WARN)
 	elif error_type == "unit_confusion_bits_bytes":
 		status_label.text = TXT_RESULT_UNIT
 		status_label.add_theme_color_override("font_color", COLOR_WARN)
@@ -539,7 +598,11 @@ func _finish_trial() -> void:
 		"K_symbols": k_symbols,
 		"I_bits_true": i_bits_true,
 		"I_bits_user": i_bits_user,
+		"I_bits_user_interpreted": user_bits,
 		"calc_correct": calc_correct,
+		"required_answer_unit": answer_unit_mode,
+		"answer_interpretation": "bytes" if answer_in_bytes else "bits",
+		"unit_mode_correct": unit_mode_correct,
 		"used_converter": used_converter,
 		"converter_use_count": converter_use_count,
 		"choice_capacity_bits": choice_cap,
@@ -579,14 +642,19 @@ func _update_sample_slot(color: Color) -> void:
 	current_trial_idx = (current_trial_idx + 1) % min(SAMPLE_SLOTS, sample_refs.size())
 
 func _update_preview() -> void:
+	var user_bits: int = _get_user_answer_bits()
+	var unit_mode_correct: bool = _is_unit_mode_correct()
 	if i_bits_user <= 0:
 		preview_calc_label.text = "\u0420\u0430\u0441\u0447\u0451\u0442 I: \u043d\u0435 \u0432\u044b\u043f\u043e\u043b\u043d\u0435\u043d"
 		preview_calc_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1.0))
-	elif i_bits_user == i_bits_true:
+	elif user_bits == i_bits_true and unit_mode_correct:
 		preview_calc_label.text = "\u0420\u0430\u0441\u0447\u0451\u0442 I: \u0432\u0435\u0440\u043d\u043e (%d \u0431\u0438\u0442)" % i_bits_true
 		preview_calc_label.add_theme_color_override("font_color", COLOR_GOOD)
+	elif user_bits == i_bits_true:
+		preview_calc_label.text = "\u0420\u0430\u0441\u0447\u0451\u0442 I: \u0447\u0438\u0441\u043b\u043e \u0441\u043e\u0448\u043b\u043e\u0441\u044c, \u043d\u043e \u0435\u0434\u0438\u043d\u0438\u0446\u044b \u043d\u0435 \u0441\u043e\u0432\u043f\u0430\u043b\u0438"
+		preview_calc_label.add_theme_color_override("font_color", COLOR_WARN)
 	else:
-		preview_calc_label.text = "\u0420\u0430\u0441\u0447\u0451\u0442 I: \u043e\u0442\u043a\u043b\u043e\u043d\u0435\u043d\u0438\u0435 (%d vs %d)" % [i_bits_user, i_bits_true]
+		preview_calc_label.text = "\u0420\u0430\u0441\u0447\u0451\u0442 I: \u043e\u0442\u043a\u043b\u043e\u043d\u0435\u043d\u0438\u0435 (%d vs %d)" % [user_bits, i_bits_true]
 		preview_calc_label.add_theme_color_override("font_color", COLOR_WARN)
 
 	if selected_storage_idx < 0:
@@ -631,7 +699,10 @@ func _update_details_text() -> void:
 	lines.append("i: %d" % i_bits)
 	lines.append("K: %d" % k_symbols)
 	lines.append("I_true: %d" % i_bits_true)
-	lines.append("I_user: %d" % i_bits_user)
+	lines.append("I_user_raw: %d" % i_bits_user)
+	lines.append("I_user_interp: %d" % _get_user_answer_bits())
+	lines.append("unit_required: %s" % answer_unit_mode)
+	lines.append("unit_selected: %s" % ("bytes" if answer_in_bytes else "bits"))
 	lines.append("pool: %s" % pool_type)
 	if selected_storage_idx >= 0:
 		var opt: Dictionary = storage_options[selected_storage_idx]
@@ -678,6 +749,8 @@ func _apply_phase_controls() -> void:
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	var cooldown_active: bool = now_sec < converter_cooldown_until
 	var numpad_enabled: bool = (phase == Phase.CALC) and (not converter_lock_active)
+	if answer_unit_toggle != null:
+		answer_unit_toggle.disabled = (phase != Phase.CALC) or converter_lock_active
 	if numpad_grid != null:
 		for child in numpad_grid.get_children():
 			var key_btn: Button = child as Button
@@ -707,6 +780,28 @@ func _apply_phase_controls() -> void:
 		btn_capture.disabled = true
 
 	btn_converter.disabled = (phase == Phase.DONE) or converter_lock_active or cooldown_active
+
+func _pick_answer_unit_mode() -> String:
+	if _answer_unit_modes.is_empty():
+		return "bits"
+	var mode: String = _answer_unit_modes[randi() % _answer_unit_modes.size()]
+	return "bytes" if mode == "bytes" else "bits"
+
+func _build_task_text() -> String:
+	var suffix: String = TXT_TASK_BITS_SUFFIX
+	if answer_unit_mode == "bytes":
+		suffix = TXT_TASK_BYTES_SUFFIX
+	return "%s %s" % [TXT_TASK, suffix]
+
+func _get_user_answer_bits() -> int:
+	var raw_value: int = maxi(i_bits_user, 0)
+	if answer_in_bytes:
+		return raw_value * 8
+	return raw_value
+
+func _is_unit_mode_correct() -> bool:
+	var selected_mode: String = "bytes" if answer_in_bytes else "bits"
+	return selected_mode == answer_unit_mode
 
 func _find_best_fit_cap(required_bits: int) -> int:
 	var best: int = 0
@@ -793,15 +888,55 @@ func _random_from_int_pool(pool: Array[int], fallback_value: int) -> int:
 		return fallback_value
 	return pool[randi() % pool.size()]
 
+func _ensure_fullscreen_layout() -> void:
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
+	safe_area.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	safe_area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	safe_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+func _install_right_scroll() -> void:
+	if _right_scroll_installed:
+		return
+	if right_margin == null or right_vbox == null:
+		return
+
+	var right_scroll: ScrollContainer = ScrollContainer.new()
+	right_scroll.name = "RightScroll"
+	right_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	right_scroll.follow_focus = true
+
+	right_margin.remove_child(right_vbox)
+	right_margin.add_child(right_scroll)
+	right_scroll.add_child(right_vbox)
+
+	right_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_vbox.size_flags_vertical = Control.SIZE_FILL
+	_right_scroll_installed = true
+
 func _apply_safe_area_padding() -> void:
-	var left: float = 16.0
-	var top: float = 12.0
-	var right: float = 16.0
-	var bottom: float = 12.0
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var portrait_phone: bool = viewport_size.x < viewport_size.y and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
+	var compact_landscape: bool = viewport_size.x > viewport_size.y and viewport_size.y <= COMPACT_STACK_MAX_HEIGHT and viewport_size.x <= COMPACT_STACK_MAX_WIDTH
+	var compact_layout: bool = portrait_phone or compact_landscape
+	var left: float = 10.0 if portrait_phone else 16.0
+	var top: float = 8.0 if portrait_phone else 12.0
+	var right: float = 10.0 if portrait_phone else 16.0
+	var bottom: float = 8.0 if portrait_phone else 12.0
+	if compact_layout:
+		left = minf(left, 10.0)
+		right = minf(right, 10.0)
+		top = minf(top, 8.0)
+		bottom = minf(bottom, 8.0)
 
 	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
 	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
-		var viewport_size: Vector2 = get_viewport_rect().size
 		left = maxf(left, float(safe_rect.position.x))
 		top = maxf(top, float(safe_rect.position.y))
 		right = maxf(right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
@@ -814,35 +949,114 @@ func _apply_safe_area_padding() -> void:
 
 func _configure_layout() -> void:
 	var size: Vector2 = get_viewport_rect().size
+	var portrait_phone: bool = size.x < size.y and size.x <= PHONE_PORTRAIT_MAX_WIDTH
+	var compact_landscape: bool = size.x > size.y and size.y <= COMPACT_STACK_MAX_HEIGHT and size.x <= COMPACT_STACK_MAX_WIDTH
+	var compact_stack: bool = portrait_phone or compact_landscape
 	var phone_landscape: bool = size.x > size.y and size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
 
-	if phone_landscape:
+	body_split.vertical = compact_stack
+	storage_grid.columns = 2
+
+	if compact_stack:
+		var landscape_stack: bool = size.x > size.y
+		body_split.split_offset = int(size.y * (0.30 if landscape_stack else 0.38))
+		root_vbox.add_theme_constant_override("separation", 8)
+		right_vbox.add_theme_constant_override("separation", 8)
+		left_pane.size_flags_stretch_ratio = 0.8 if landscape_stack else 1.15
+		right_pane.size_flags_stretch_ratio = 1.45
+		storage_grid.size_flags_vertical = Control.SIZE_FILL
+		header_panel.custom_minimum_size.y = 54
+		title_label.add_theme_font_size_override("font_size", 22)
+		meta_label.visible = false
+		context_title.add_theme_font_size_override("font_size", 18)
+		task_label.add_theme_font_size_override("font_size", 15)
+		calc_title.add_theme_font_size_override("font_size", 18)
+		preview_title.add_theme_font_size_override("font_size", 18)
+		status_label.add_theme_font_size_override("font_size", 15)
+		context_card.custom_minimum_size.y = 94 if landscape_stack else 108
+		calc_card.custom_minimum_size.y = 96 if landscape_stack else 108
+		preview_card.custom_minimum_size.y = 90 if landscape_stack else 102
+		for btn in storage_btns:
+			btn.custom_minimum_size.y = 58 if landscape_stack else 68
+		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details]:
+			btn.custom_minimum_size.y = 58 if landscape_stack else 64
+		if numpad_grid != null:
+			numpad_grid.custom_minimum_size.y = 146 if landscape_stack else 188
+	elif phone_landscape:
 		body_split.split_offset = int(size.x * 0.52)
 		root_vbox.add_theme_constant_override("separation", 8)
-		storage_grid.columns = 2
+		right_vbox.add_theme_constant_override("separation", 8)
+		left_pane.size_flags_stretch_ratio = 1.0
+		right_pane.size_flags_stretch_ratio = 1.0
+		storage_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		header_panel.custom_minimum_size.y = 58
+		title_label.add_theme_font_size_override("font_size", 24)
+		meta_label.visible = true
+		meta_label.custom_minimum_size.x = 180.0
+		context_title.add_theme_font_size_override("font_size", 19)
+		task_label.add_theme_font_size_override("font_size", 16)
+		calc_title.add_theme_font_size_override("font_size", 19)
+		preview_title.add_theme_font_size_override("font_size", 19)
+		status_label.add_theme_font_size_override("font_size", 16)
+		context_card.custom_minimum_size.y = 116
+		calc_card.custom_minimum_size.y = 114
+		preview_card.custom_minimum_size.y = 108
 		for btn in storage_btns:
-			btn.custom_minimum_size.y = 80
+			btn.custom_minimum_size.y = 72
 		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details]:
 			btn.custom_minimum_size.y = 56
-		meta_label.add_theme_font_size_override("font_size", 16)
-		status_label.add_theme_font_size_override("font_size", 16)
+		if numpad_grid != null:
+			numpad_grid.custom_minimum_size.y = 210
+		meta_label.add_theme_font_size_override("font_size", 15)
 	elif size.x < 1280.0:
 		body_split.split_offset = int(size.x * 0.54)
 		root_vbox.add_theme_constant_override("separation", 10)
-		storage_grid.columns = 2
+		right_vbox.add_theme_constant_override("separation", 10)
+		left_pane.size_flags_stretch_ratio = 1.0
+		right_pane.size_flags_stretch_ratio = 1.0
+		storage_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		header_panel.custom_minimum_size.y = 62
+		title_label.add_theme_font_size_override("font_size", 28)
+		meta_label.visible = true
+		meta_label.custom_minimum_size.x = 260.0
+		context_title.add_theme_font_size_override("font_size", 22)
+		task_label.add_theme_font_size_override("font_size", 18)
+		calc_title.add_theme_font_size_override("font_size", 20)
+		preview_title.add_theme_font_size_override("font_size", 20)
+		context_card.custom_minimum_size.y = 124
+		calc_card.custom_minimum_size.y = 120
+		preview_card.custom_minimum_size.y = 120
 		for btn in storage_btns:
-			btn.custom_minimum_size.y = 88
+			btn.custom_minimum_size.y = 82
 		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details]:
 			btn.custom_minimum_size.y = 58
 		meta_label.add_theme_font_size_override("font_size", 17)
 		status_label.add_theme_font_size_override("font_size", 18)
+		if numpad_grid != null:
+			numpad_grid.custom_minimum_size.y = 220
 	else:
-		body_split.split_offset = int(size.x * 0.55)
+		body_split.split_offset = int(size.x * 0.56)
 		root_vbox.add_theme_constant_override("separation", 10)
-		storage_grid.columns = 2
+		right_vbox.add_theme_constant_override("separation", 10)
+		left_pane.size_flags_stretch_ratio = 1.0
+		right_pane.size_flags_stretch_ratio = 1.0
+		storage_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		header_panel.custom_minimum_size.y = 62
+		title_label.add_theme_font_size_override("font_size", 28)
+		meta_label.visible = true
+		meta_label.custom_minimum_size.x = 360.0
+		context_title.add_theme_font_size_override("font_size", 22)
+		task_label.add_theme_font_size_override("font_size", 18)
+		calc_title.add_theme_font_size_override("font_size", 20)
+		preview_title.add_theme_font_size_override("font_size", 20)
+		context_card.custom_minimum_size.y = 124
+		calc_card.custom_minimum_size.y = 120
+		preview_card.custom_minimum_size.y = 120
 		for btn in storage_btns:
-			btn.custom_minimum_size.y = 92
+			btn.custom_minimum_size.y = 86
 		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details]:
 			btn.custom_minimum_size.y = 58
 		meta_label.add_theme_font_size_override("font_size", 18)
 		status_label.add_theme_font_size_override("font_size", 18)
+		if numpad_grid != null:
+			numpad_grid.custom_minimum_size.y = 220

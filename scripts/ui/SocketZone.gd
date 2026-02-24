@@ -1,6 +1,7 @@
 extends PanelContainer
 
 signal hint_requested(item_id: String, socket_id: String)
+signal hint_hover(item_id: String, socket_id: String)
 signal drop_accepted(item_id: String, socket_id: String)
 signal drop_rejected(item_id: String, socket_id: String)
 
@@ -70,8 +71,9 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	_hover_accepts = _accepts_item(_drag_item_id)
 	if _hover_accepts:
 		hint_requested.emit(_drag_item_id, socket_id)
+		hint_hover.emit(_drag_item_id, socket_id)
 	_apply_hover(true, _hover_accepts)
-	return true
+	return _hover_accepts
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	_apply_hover(false, false)

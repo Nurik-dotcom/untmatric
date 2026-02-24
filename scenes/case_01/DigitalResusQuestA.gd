@@ -4,6 +4,8 @@ const LEVELS_PATH: String = "res://data/clues_levels.json"
 const ITEM_SCENE: PackedScene = preload("res://scenes/ui/ResusPartItem.tscn")
 const ResusData = preload("res://scripts/case_01/ResusData.gd")
 const ResusScoring = preload("res://scripts/case_01/ResusScoring.gd")
+const PHONE_LANDSCAPE_MAX_HEIGHT := 740.0
+const PHONE_PORTRAIT_MAX_WIDTH := 520.0
 
 const COLOR_OK: Color = Color(0.9, 0.93, 0.98, 1.0)
 const COLOR_WARN: Color = Color(0.98, 0.8, 0.52, 1.0)
@@ -24,8 +26,18 @@ var console_visible_chars: int = 0
 var console_cps: float = 16.0
 var console_accum: float = 0.0
 var _last_state_key: String = ""
+var _content_scroll: ScrollContainer = null
+var _content_vbox: VBoxContainer = null
+var _briefing_collapsed: bool = true
+var _briefing_toggle_button: Button = null
 
 @onready var noir_overlay: Node = $NoirOverlay
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
+@onready var header: HBoxContainer = $SafeArea/MainVBox/Header
+@onready var bottom_bar: HBoxContainer = $SafeArea/MainVBox/BottomBar
+@onready var briefing_card: PanelContainer = $SafeArea/MainVBox/BriefingCard
+@onready var parts_grid: GridContainer = $SafeArea/MainVBox/PartsPileCard/VBox/Scroll/PartsGrid
 @onready var title_label: Label = $SafeArea/MainVBox/Header/TitleLabel
 @onready var stage_label: Label = $SafeArea/MainVBox/Header/StageLabel
 @onready var stability_bar: ProgressBar = $SafeArea/MainVBox/Header/StabilityBar
@@ -67,12 +79,21 @@ func _ready() -> void:
 	result_retry_button.pressed.connect(_on_retry_pressed)
 	result_back_button.pressed.connect(_on_back_pressed)
 
+	_ensure_scroll_layout()
+	_setup_collapsible_briefing()
 	_connect_zone_signals()
 	_load_levels()
 	if levels.is_empty():
 		_show_error("Failed to load Case 01 stage A data")
 		return
 	_start_level(current_level_index)
+	_on_viewport_size_changed()
+	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+
+func _exit_tree() -> void:
+	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
 func _process(delta: float) -> void:
 	_update_console(delta)
@@ -158,6 +179,8 @@ func _spawn_items() -> void:
 			item_node.call("setup", item_data)
 		if item_node.has_signal("drag_started"):
 			item_node.connect("drag_started", Callable(self, "_on_drag_started"))
+		if item_node.has_signal("drag_cancelled"):
+			item_node.connect("drag_cancelled", Callable(self, "_on_drag_cancelled"))
 		if pile_zone.has_method("add_item_control"):
 			pile_zone.call("add_item_control", item_node)
 		var item_id: String = str(item_data.get("item_id", ""))
@@ -172,6 +195,27 @@ func _on_drag_started(item_id: String, from_zone: String) -> void:
 		"item_id": item_id,
 		"from_zone": from_zone
 	})
+	_highlight_hint_socket(item_id)
+
+func _on_drag_cancelled(item_id: String, from_zone: String) -> void:
+	if input_locked:
+		return
+	if item_id == "":
+		return
+
+	var item_node_v: Variant = item_nodes.get(item_id, null)
+	if item_node_v is Control and pile_zone.has_method("add_item_control"):
+		pile_zone.call("add_item_control", item_node_v as Control)
+		_bounce_node(item_node_v as Control)
+
+	_refresh_system_state(_build_placements_snapshot())
+	_log_event("DROP_BOUNCE", {
+		"item_id": item_id,
+		"from_zone": from_zone,
+		"attempted_socket": "INVALID"
+	})
+	_play_sfx("error")
+	_show_socket_error("Неверный сокет")
 	_highlight_hint_socket(item_id)
 
 func _on_socket_hint_requested(item_id: String, socket_id: String) -> void:
@@ -197,6 +241,7 @@ func _on_socket_drop_rejected(item_id: String, socket_id: String) -> void:
 		"item_id": item_id,
 		"attempted_socket": socket_id
 	})
+	_show_socket_error("Неверный сокет")
 
 func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> void:
 	if input_locked:
@@ -222,6 +267,7 @@ func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> v
 	_refresh_system_state(_build_placements_snapshot())
 	_bounce_node(source_node as Control)
 	_play_sfx("error")
+	_show_socket_error("Неверный сокет")
 	if item_id != "":
 		_highlight_hint_socket(item_id)
 
@@ -289,16 +335,18 @@ func _refresh_system_state(placements: Dictionary) -> void:
 	var ram_ok: bool = bool(state.get("ram_ok", false))
 	var cache_ok: bool = bool(state.get("cache_ok", false))
 
+	var state_key: String = "%s|%s|%s" % [str(gpu_ok), str(ram_ok), str(cache_ok)]
+	if _last_state_key == state_key:
+		return
+	_last_state_key = state_key
+
 	_update_monitor(gpu_ok)
 	_update_diag_panel(gpu_ok, ram_ok, cache_ok)
 
 	console_cps = 42.0 if cache_ok else 16.0
-	var console_lines: Array[String] = _build_console_lines(gpu_ok, ram_ok)
+	var console_lines: Array[String] = _build_console_lines(gpu_ok, ram_ok, placements)
 	var console_text: String = "\n".join(console_lines)
-	var state_key: String = "%s|%s|%s|%s" % [str(gpu_ok), str(ram_ok), str(cache_ok), console_text]
-	if _last_state_key != state_key:
-		_last_state_key = state_key
-		_set_console_target(console_text)
+	_set_console_target(console_text)
 
 	status_label.text = "VIDEO %s | MEMORY %s | BUFFER %s" % [
 		"OK" if gpu_ok else "FAIL",
@@ -337,7 +385,7 @@ func _update_diag_panel(gpu_ok: bool, ram_ok: bool, cache_ok: bool) -> void:
 	diag_memory_value.modulate = COLOR_OK if ram_ok else COLOR_ERR
 	diag_buffer_value.modulate = COLOR_OK if cache_ok else COLOR_WARN
 
-func _build_console_lines(gpu_ok: bool, ram_ok: bool) -> Array[String]:
+func _build_console_lines(gpu_ok: bool, ram_ok: bool, placements: Dictionary) -> Array[String]:
 	var feedback_rules: Dictionary = level_data.get("feedback_rules", {}) as Dictionary
 	var system_rules: Dictionary = level_data.get("system_state_rules", {}) as Dictionary
 	var fx_rules: Dictionary = level_data.get("fx_rules", {}) as Dictionary
@@ -347,7 +395,7 @@ func _build_console_lines(gpu_ok: bool, ram_ok: bool) -> Array[String]:
 		return _string_array(no_ram.get("console_lines", []))
 
 	var lines: Array[String] = _string_array(system_rules.get("boot_ok_lines", []))
-	if _input_devices_connected(_build_placements_snapshot()):
+	if _input_devices_connected(placements):
 		for line in _string_array(fx_rules.get("hid_lines_on_input", [])):
 			lines.append(line)
 
@@ -560,3 +608,140 @@ func _show_error(message: String) -> void:
 	status_label.text = message
 	status_label.modulate = COLOR_ERR
 	btn_confirm.disabled = true
+
+func _show_socket_error(message: String) -> void:
+	status_label.text = message
+	status_label.modulate = COLOR_ERR
+
+func _ensure_scroll_layout() -> void:
+	if _content_scroll != null and is_instance_valid(_content_scroll):
+		return
+
+	_content_scroll = ScrollContainer.new()
+	_content_scroll.name = "ContentScroll"
+	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+	_content_vbox = VBoxContainer.new()
+	_content_vbox.name = "ContentVBox"
+	_content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_content_vbox.add_theme_constant_override("separation", 10)
+	_content_scroll.add_child(_content_vbox)
+
+	var move_nodes: Array[Node] = []
+	for child in main_vbox.get_children():
+		if child == header or child == bottom_bar:
+			continue
+		move_nodes.append(child)
+
+	for node in move_nodes:
+		node.reparent(_content_vbox)
+
+	main_vbox.add_child(_content_scroll)
+	var bottom_index: int = main_vbox.get_children().find(bottom_bar)
+	if bottom_index >= 0:
+		main_vbox.move_child(_content_scroll, bottom_index)
+
+func _setup_collapsible_briefing() -> void:
+	if briefing_card == null or briefing_label == null:
+		return
+
+	var briefing_parent: Node = briefing_label.get_parent()
+	if briefing_parent == briefing_card:
+		var wrapper: VBoxContainer = VBoxContainer.new()
+		wrapper.name = "BriefingVBox"
+		wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		wrapper.add_theme_constant_override("separation", 6)
+
+		var top_row: HBoxContainer = HBoxContainer.new()
+		top_row.name = "BriefingTopRow"
+		top_row.add_theme_constant_override("separation", 8)
+
+		var title: Label = Label.new()
+		title.text = "BRIEFING"
+		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		top_row.add_child(title)
+
+		_briefing_toggle_button = Button.new()
+		_briefing_toggle_button.name = "BriefingToggleButton"
+		_briefing_toggle_button.text = "?"
+		_briefing_toggle_button.custom_minimum_size = Vector2(40.0, 36.0)
+		_briefing_toggle_button.pressed.connect(_on_briefing_toggle_pressed)
+		top_row.add_child(_briefing_toggle_button)
+
+		briefing_card.remove_child(briefing_label)
+		wrapper.add_child(top_row)
+		wrapper.add_child(briefing_label)
+		briefing_card.add_child(wrapper)
+	elif _briefing_toggle_button == null:
+		var existing_btn: Button = briefing_card.find_child("BriefingToggleButton", true, false) as Button
+		if existing_btn != null:
+			_briefing_toggle_button = existing_btn
+
+	_apply_briefing_state()
+
+func _on_briefing_toggle_pressed() -> void:
+	_briefing_collapsed = not _briefing_collapsed
+	_apply_briefing_state()
+
+func _apply_briefing_state() -> void:
+	if briefing_label == null:
+		return
+	briefing_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	briefing_label.max_lines_visible = 2 if _briefing_collapsed else 0
+	if _briefing_toggle_button != null:
+		_briefing_toggle_button.text = "?" if _briefing_collapsed else "x"
+
+func _on_viewport_size_changed() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var is_landscape: bool = viewport_size.x >= viewport_size.y
+	var phone_landscape: bool = is_landscape and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
+	var phone_portrait: bool = (not is_landscape) and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
+	var compact: bool = phone_landscape or phone_portrait
+
+	_apply_safe_area_padding(compact)
+	main_vbox.add_theme_constant_override("separation", 8 if compact else 10)
+	if _content_vbox != null:
+		_content_vbox.add_theme_constant_override("separation", 8 if compact else 10)
+	header.add_theme_constant_override("separation", 8 if compact else 10)
+	bottom_bar.add_theme_constant_override("separation", 8 if compact else 10)
+	stability_bar.custom_minimum_size.x = 160.0 if compact else 220.0
+
+	btn_back.custom_minimum_size = Vector2(56.0 if compact else 72.0, 56.0 if compact else 72.0)
+	btn_reset.custom_minimum_size = Vector2(120.0 if compact else 160.0, 60.0 if compact else 72.0)
+	btn_confirm.custom_minimum_size = Vector2(140.0 if compact else 180.0, 60.0 if compact else 72.0)
+	status_label.custom_minimum_size.y = 60.0 if compact else 72.0
+
+	if phone_portrait:
+		parts_grid.columns = 1
+	elif compact:
+		parts_grid.columns = 2
+	else:
+		parts_grid.columns = 2
+
+	var popup_width: float = clampf(viewport_size.x - (24.0 if compact else 120.0), 300.0, 460.0)
+	var popup_height: float = clampf(viewport_size.y - (24.0 if compact else 120.0), 240.0, 380.0)
+	result_popup.offset_left = -popup_width * 0.5
+	result_popup.offset_top = -popup_height * 0.5
+	result_popup.offset_right = popup_width * 0.5
+	result_popup.offset_bottom = popup_height * 0.5
+
+func _apply_safe_area_padding(compact: bool) -> void:
+	var left: float = 8.0 if compact else 16.0
+	var top: float = 8.0 if compact else 12.0
+	var right: float = 8.0 if compact else 16.0
+	var bottom: float = 8.0 if compact else 12.0
+
+	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
+	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
+		var viewport_size: Vector2 = get_viewport_rect().size
+		left = maxf(left, float(safe_rect.position.x))
+		top = maxf(top, float(safe_rect.position.y))
+		right = maxf(right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
+		bottom = maxf(bottom, viewport_size.y - float(safe_rect.position.y + safe_rect.size.y))
+
+	safe_area.add_theme_constant_override("margin_left", int(round(left)))
+	safe_area.add_theme_constant_override("margin_top", int(round(top)))
+	safe_area.add_theme_constant_override("margin_right", int(round(right)))
+	safe_area.add_theme_constant_override("margin_bottom", int(round(bottom)))

@@ -1,302 +1,1236 @@
 [
-  {
-    "id": "NT_A_01",
-    "briefing": "Офис молчит. Серверная отвечает только тишиной.",
-    "prompt": "Что нужно поставить, чтобы трафик ходил между 192.168.1.0/24 и 10.0.0.0/24?",
-    "time_limit_sec": 120,
-    "required_poi": 2,
-    "pois": [
-      {
-        "id": "POI_OFFICE",
-        "pos": [0.18, 0.28],
-        "log_line": "SRC 192.168.1.10 -> DST 10.0.0.5 : NO ROUTE",
-        "tag": "route"
-      },
-      {
-        "id": "POI_GATE",
-        "pos": [0.52, 0.52],
-        "log_line": "ARP OK inside 192.168.1.0/24; next hop unknown",
-        "tag": "gateway"
-      },
-      {
-        "id": "POI_SERVER",
-        "pos": [0.82, 0.35],
-        "log_line": "ICMP to 10.0.0.5 : unreachable",
-        "tag": "subnet"
-      }
-    ],
-    "topology": {
-      "nodes": [
-        { "id": "OFFICE", "label": "Office LAN\n192.168.1.0/24", "type": "lan", "pos": [0.15, 0.35] },
-        { "id": "SLOT", "label": "?", "type": "slot", "pos": [0.52, 0.55] },
-        { "id": "SERVER", "label": "Server LAN\n10.0.0.0/24", "type": "lan", "pos": [0.85, 0.35] }
-      ],
-      "edges": [
-        ["OFFICE", "SLOT"],
-        ["SLOT", "SERVER"]
-      ]
+    {
+        "id":  "NT_A_01",
+        "briefing":  "Clues point to failed inter-subnet routing between office and archive LANs.",
+        "prompt":  "Inspect clues and install the device that restores traffic between 192.168.1.0/24 and 10.0.0.0/24.",
+        "time_limit_sec":  120,
+        "required_poi":  2,
+        "pois":  [
+                     {
+                         "id":  "POI_ROUTE",
+                         "pos":  [
+                                     0.18,
+                                     0.28
+                                 ],
+                         "log_line":  "SRC 192.168.1.10 -\u003e DST 10.0.0.5 : NO ROUTE",
+                         "tag":  "route",
+                         "meaning_short":  "Missing L3 forwarding path between subnets.",
+                         "hint_layer":  "L3"
+                     },
+                     {
+                         "id":  "POI_ARP",
+                         "pos":  [
+                                     0.52,
+                                     0.52
+                                 ],
+                         "log_line":  "ARP works inside 192.168.1.0/24 only",
+                         "tag":  "gateway",
+                         "meaning_short":  "Local L2 is healthy; gateway function is missing.",
+                         "hint_layer":  "L3"
+                     },
+                     {
+                         "id":  "POI_ICMP",
+                         "pos":  [
+                                     0.82,
+                                     0.35
+                                 ],
+                         "log_line":  "ICMP to 10.0.0.5 unreachable",
+                         "tag":  "icmp",
+                         "meaning_short":  "Host is reachable only if routing exists.",
+                         "hint_layer":  "L3"
+                     }
+                 ],
+        "topology":  {
+                         "nodes":  [
+                                       {
+                                           "id":  "OFFICE",
+                                           "label":  "Office LAN`n192.168.1.0/24",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.15,
+                                                       0.35
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "SLOT",
+                                           "label":  "?",
+                                           "type":  "slot",
+                                           "pos":  [
+                                                       0.52,
+                                                       0.55
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "ARCHIVE",
+                                           "label":  "Archive LAN`n10.0.0.0/24",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.85,
+                                                       0.35
+                                                   ]
+                                       }
+                                   ],
+                         "edges":  [
+                                       [
+                                           "OFFICE",
+                                           "SLOT"
+                                       ],
+                                       [
+                                           "SLOT",
+                                           "ARCHIVE"
+                                       ]
+                                   ]
+                     },
+        "options":  [
+                        {
+                            "id":  "router",
+                            "label":  "Router",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "switch",
+                            "label":  "Switch",
+                            "error_code":  "A_L2_SEGMENT_LIMIT"
+                        },
+                        {
+                            "id":  "hub",
+                            "label":  "Hub",
+                            "error_code":  "A_L1_BROADCAST"
+                        },
+                        {
+                            "id":  "repeater",
+                            "label":  "Repeater",
+                            "error_code":  "A_L1_PHYSICAL"
+                        },
+                        {
+                            "id":  "bridge",
+                            "label":  "Bridge",
+                            "error_code":  "A_L2_BRIDGE_LIMIT"
+                        },
+                        {
+                            "id":  "patch",
+                            "label":  "Patch Panel",
+                            "error_code":  "A_PASSIVE"
+                        }
+                    ],
+        "correct_id":  "router",
+        "explain_short":  "Router is required for inter-subnet forwarding.",
+        "explain_full":  "Switch and bridge operate inside one L2 domain. This case requires L3 routing between two different /24 networks.",
+        "tags":  [
+                     "net",
+                     "osi",
+                     "l3",
+                     "routing"
+                 ]
     },
-    "options": [
-      { "id": "router", "label": "Router", "error_code": "" },
-      { "id": "switch", "label": "Switch", "error_code": "A_L2_SEGMENT_LIMIT" },
-      { "id": "hub", "label": "Hub", "error_code": "A_L1_BROADCAST" },
-      { "id": "repeater", "label": "Repeater", "error_code": "A_L1_PHYSICAL" },
-      { "id": "bridge", "label": "Bridge", "error_code": "A_L2_SEGMENT_LIMIT" },
-      { "id": "patch", "label": "Patch-panel", "error_code": "A_PASSIVE" }
-    ],
-    "correct_id": "router",
-    "explain_short": "Нужна маршрутизация между разными подсетями (L3).",
-    "explain_full": "Разные подсети требуют устройства L3. Switch/Bridge работают на L2 и не маршрутизируют. Hub/Repeater не решают адресацию.",
-    "tags": ["net", "osi", "l3", "routing"]
-  },
-  {
-    "id": "NT_A_02",
-    "briefing": "Отдел продаж задыхается. Сеть шумит, как старый вентилятор.",
-    "prompt": "Какое устройство снизит коллизии и начнёт отправлять кадры адресно?",
-    "time_limit_sec": 120,
-    "required_poi": 2,
-    "pois": [
-      {
-        "id": "POI_COLL",
-        "pos": [0.24, 0.62],
-        "log_line": "COLLISIONS HIGH: 47% (segment SALES)",
-        "tag": "collision"
-      },
-      {
-        "id": "POI_BCAST",
-        "pos": [0.45, 0.36],
-        "log_line": "BROADCAST RATE SPIKE (frames flooding)",
-        "tag": "broadcast"
-      },
-      {
-        "id": "POI_DROP",
-        "pos": [0.72, 0.55],
-        "log_line": "PACKET LOSS observed during peak minutes",
-        "tag": "loss"
-      }
-    ],
-    "topology": {
-      "nodes": [
-        { "id": "PCs", "label": "Sales PCs", "type": "host_group", "pos": [0.18, 0.55] },
-        { "id": "SLOT", "label": "?", "type": "slot", "pos": [0.52, 0.55] },
-        { "id": "CORE", "label": "Core", "type": "uplink", "pos": [0.85, 0.55] }
-      ],
-      "edges": [
-        ["PCs", "SLOT"],
-        ["SLOT", "CORE"]
-      ]
+    {
+        "id":  "NT_A_02",
+        "briefing":  "Collision and broadcast spikes indicate one oversized collision domain.",
+        "prompt":  "Pick the device that segments the LAN and reduces collision storms.",
+        "time_limit_sec":  120,
+        "required_poi":  2,
+        "pois":  [
+                     {
+                         "id":  "POI_COLL",
+                         "pos":  [
+                                     0.24,
+                                     0.62
+                                 ],
+                         "log_line":  "COLLISIONS HIGH: 47% on SALES segment",
+                         "tag":  "collision",
+                         "meaning_short":  "Shared medium saturation points to L1/L2 bottleneck.",
+                         "hint_layer":  "L2"
+                     },
+                     {
+                         "id":  "POI_BCAST",
+                         "pos":  [
+                                     0.45,
+                                     0.36
+                                 ],
+                         "log_line":  "Broadcast frames flood all hosts",
+                         "tag":  "broadcast",
+                         "meaning_short":  "Flooded frames need MAC-based forwarding.",
+                         "hint_layer":  "L2"
+                     },
+                     {
+                         "id":  "POI_DROP",
+                         "pos":  [
+                                     0.72,
+                                     0.55
+                                 ],
+                         "log_line":  "Packet loss appears during office peak",
+                         "tag":  "loss",
+                         "meaning_short":  "Segmentation with switching reduces contention.",
+                         "hint_layer":  "L2"
+                     }
+                 ],
+        "topology":  {
+                         "nodes":  [
+                                       {
+                                           "id":  "SALES",
+                                           "label":  "Sales PCs",
+                                           "type":  "host_group",
+                                           "pos":  [
+                                                       0.18,
+                                                       0.55
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "SLOT",
+                                           "label":  "?",
+                                           "type":  "slot",
+                                           "pos":  [
+                                                       0.52,
+                                                       0.55
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "CORE",
+                                           "label":  "Core Uplink",
+                                           "type":  "uplink",
+                                           "pos":  [
+                                                       0.85,
+                                                       0.55
+                                                   ]
+                                       }
+                                   ],
+                         "edges":  [
+                                       [
+                                           "SALES",
+                                           "SLOT"
+                                       ],
+                                       [
+                                           "SLOT",
+                                           "CORE"
+                                       ]
+                                   ]
+                     },
+        "options":  [
+                        {
+                            "id":  "router",
+                            "label":  "Router",
+                            "error_code":  "A_L3_OVERKILL"
+                        },
+                        {
+                            "id":  "switch",
+                            "label":  "Switch",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "hub",
+                            "label":  "Hub",
+                            "error_code":  "A_L1_BROADCAST"
+                        },
+                        {
+                            "id":  "repeater",
+                            "label":  "Repeater",
+                            "error_code":  "A_L1_PHYSICAL"
+                        },
+                        {
+                            "id":  "bridge",
+                            "label":  "Bridge",
+                            "error_code":  "A_L2_BRIDGE_LIMIT"
+                        },
+                        {
+                            "id":  "patch",
+                            "label":  "Patch Panel",
+                            "error_code":  "A_PASSIVE"
+                        }
+                    ],
+        "correct_id":  "switch",
+        "explain_short":  "Switch isolates collisions and forwards by MAC table.",
+        "explain_full":  "Hub repeats frames to everyone. Switch learns MAC addresses and forwards traffic only to target ports.",
+        "tags":  [
+                     "net",
+                     "osi",
+                     "l2",
+                     "switching"
+                 ]
     },
-    "options": [
-      { "id": "switch", "label": "Switch", "error_code": "" },
-      { "id": "hub", "label": "Hub", "error_code": "A_L1_BROADCAST" },
-      { "id": "router", "label": "Router", "error_code": "A_L3_OVERKILL" },
-      { "id": "repeater", "label": "Repeater", "error_code": "A_L1_PHYSICAL" },
-      { "id": "bridge", "label": "Bridge", "error_code": "A_L2_BRIDGE_LIMIT" },
-      { "id": "patch", "label": "Patch-panel", "error_code": "A_PASSIVE" }
-    ],
-    "correct_id": "switch",
-    "explain_short": "Switch уменьшает коллизии и отправляет кадры адресно (L2).",
-    "explain_full": "Hub раздаёт всем и усиливает широковещание. Switch учит MAC-таблицу и отправляет кадры адресно. Router тут не обязателен.",
-    "tags": ["net", "osi", "l2", "switching"]
-  },
-  {
-    "id": "NT_A_03",
-    "briefing": "Принтер видят все, но печатает только избранным. Подозрительно.",
-    "prompt": "Что обеспечит доставку кадров только получателю и снизит лишний трафик в сегменте?",
-    "time_limit_sec": 120,
-    "required_poi": 2,
-    "pois": [
-      {
-        "id": "POI_MAC",
-        "pos": [0.22, 0.30],
-        "log_line": "Unknown unicast flooding detected",
-        "tag": "mac"
-      },
-      {
-        "id": "POI_QUEUE",
-        "pos": [0.56, 0.30],
-        "log_line": "Queue spikes on shared segment during print jobs",
-        "tag": "queue"
-      },
-      {
-        "id": "POI_HINT",
-        "pos": [0.78, 0.42],
-        "log_line": "Multiple hosts receive frames not addressed to them",
-        "tag": "flood"
-      }
-    ],
-    "topology": {
-      "nodes": [
-        { "id": "HOSTS", "label": "Workstations", "type": "host_group", "pos": [0.18, 0.35] },
-        { "id": "SLOT", "label": "?", "type": "slot", "pos": [0.52, 0.40] },
-        { "id": "PRN", "label": "Printer", "type": "device", "pos": [0.85, 0.32] }
-      ],
-      "edges": [
-        ["HOSTS", "SLOT"],
-        ["SLOT", "PRN"]
-      ]
+    {
+        "id":  "NT_A_03",
+        "briefing":  "Unknown unicast flooding appears around printer traffic bursts.",
+        "prompt":  "Install the device that stops frame flooding while keeping the same subnet.",
+        "time_limit_sec":  120,
+        "required_poi":  2,
+        "pois":  [
+                     {
+                         "id":  "POI_UNI",
+                         "pos":  [
+                                     0.22,
+                                     0.3
+                                 ],
+                         "log_line":  "Unknown unicast flooding detected",
+                         "tag":  "mac",
+                         "meaning_short":  "Frames are broadcast due to missing MAC learning.",
+                         "hint_layer":  "L2"
+                     },
+                     {
+                         "id":  "POI_QUEUE",
+                         "pos":  [
+                                     0.56,
+                                     0.3
+                                 ],
+                         "log_line":  "Queue spikes on shared segment during print jobs",
+                         "tag":  "queue",
+                         "meaning_short":  "Traffic contention grows in non-switched segments.",
+                         "hint_layer":  "L2"
+                     },
+                     {
+                         "id":  "POI_MIRROR",
+                         "pos":  [
+                                     0.78,
+                                     0.42
+                                 ],
+                         "log_line":  "Hosts receive frames not addressed to them",
+                         "tag":  "flood",
+                         "meaning_short":  "Selective forwarding is required.",
+                         "hint_layer":  "L2"
+                     }
+                 ],
+        "topology":  {
+                         "nodes":  [
+                                       {
+                                           "id":  "HOSTS",
+                                           "label":  "Workstations",
+                                           "type":  "host_group",
+                                           "pos":  [
+                                                       0.18,
+                                                       0.35
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "SLOT",
+                                           "label":  "?",
+                                           "type":  "slot",
+                                           "pos":  [
+                                                       0.52,
+                                                       0.4
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "PRINTER",
+                                           "label":  "Printer",
+                                           "type":  "device",
+                                           "pos":  [
+                                                       0.85,
+                                                       0.32
+                                                   ]
+                                       }
+                                   ],
+                         "edges":  [
+                                       [
+                                           "HOSTS",
+                                           "SLOT"
+                                       ],
+                                       [
+                                           "SLOT",
+                                           "PRINTER"
+                                       ]
+                                   ]
+                     },
+        "options":  [
+                        {
+                            "id":  "router",
+                            "label":  "Router",
+                            "error_code":  "A_L3_OVERKILL"
+                        },
+                        {
+                            "id":  "switch",
+                            "label":  "Switch",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "hub",
+                            "label":  "Hub",
+                            "error_code":  "A_L1_BROADCAST"
+                        },
+                        {
+                            "id":  "repeater",
+                            "label":  "Repeater",
+                            "error_code":  "A_L1_PHYSICAL"
+                        },
+                        {
+                            "id":  "bridge",
+                            "label":  "Bridge",
+                            "error_code":  "A_L2_BRIDGE_LIMIT"
+                        },
+                        {
+                            "id":  "patch",
+                            "label":  "Patch Panel",
+                            "error_code":  "A_PASSIVE"
+                        }
+                    ],
+        "correct_id":  "switch",
+        "explain_short":  "Switch learns MAC addresses and limits flooding.",
+        "explain_full":  "The issue is not routing. It is uncontrolled frame replication in one broadcast domain.",
+        "tags":  [
+                     "net",
+                     "l2",
+                     "mac",
+                     "unicast"
+                 ]
     },
-    "options": [
-      { "id": "switch", "label": "Switch", "error_code": "" },
-      { "id": "hub", "label": "Hub", "error_code": "A_L1_BROADCAST" },
-      { "id": "repeater", "label": "Repeater", "error_code": "A_L1_PHYSICAL" },
-      { "id": "router", "label": "Router", "error_code": "A_L3_OVERKILL" },
-      { "id": "bridge", "label": "Bridge", "error_code": "A_L2_BRIDGE_LIMIT" },
-      { "id": "patch", "label": "Patch-panel", "error_code": "A_PASSIVE" }
-    ],
-    "correct_id": "switch",
-    "explain_short": "Switch учит MAC-адреса и уменьшает лишний flood в сегменте.",
-    "explain_full": "Unknown unicast flood и “все получают чужие кадры” лечится нормальной коммутацией L2. Hub только ухудшит.",
-    "tags": ["net", "l2", "mac", "unicast"]
-  },
-  {
-    "id": "NT_A_04",
-    "briefing": "Линия длинная, сигнал умирает где-то посередине. Классика.",
-    "prompt": "Что нужно, чтобы усилить сигнал и восстановить физический уровень?",
-    "time_limit_sec": 120,
-    "required_poi": 2,
-    "pois": [
-      {
-        "id": "POI_CRC",
-        "pos": [0.30, 0.60],
-        "log_line": "CRC errors rising on uplink cable",
-        "tag": "crc"
-      },
-      {
-        "id": "POI_WEAK",
-        "pos": [0.58, 0.70],
-        "log_line": "Signal weak: link flaps under load",
-        "tag": "physical"
-      },
-      {
-        "id": "POI_OK",
-        "pos": [0.78, 0.45],
-        "log_line": "IP config correct; issue persists",
-        "tag": "not_ip"
-      }
-    ],
-    "topology": {
-      "nodes": [
-        { "id": "NODE_A", "label": "Segment A", "type": "lan", "pos": [0.15, 0.60] },
-        { "id": "SLOT", "label": "?", "type": "slot", "pos": [0.52, 0.60] },
-        { "id": "NODE_B", "label": "Segment B", "type": "lan", "pos": [0.85, 0.60] }
-      ],
-      "edges": [
-        ["NODE_A", "SLOT"],
-        ["SLOT", "NODE_B"]
-      ]
+    {
+        "id":  "NT_A_04",
+        "briefing":  "CRC errors and link flaps rise under load on a long cable run.",
+        "prompt":  "Choose the device that restores physical signal integrity on this segment.",
+        "time_limit_sec":  120,
+        "required_poi":  2,
+        "pois":  [
+                     {
+                         "id":  "POI_CRC",
+                         "pos":  [
+                                     0.3,
+                                     0.6
+                                 ],
+                         "log_line":  "CRC errors rising on uplink cable",
+                         "tag":  "crc",
+                         "meaning_short":  "Signal corruption occurs before higher-layer logic.",
+                         "hint_layer":  "L1"
+                     },
+                     {
+                         "id":  "POI_FLAP",
+                         "pos":  [
+                                     0.58,
+                                     0.7
+                                 ],
+                         "log_line":  "Link flaps when traffic spikes",
+                         "tag":  "physical",
+                         "meaning_short":  "Physical regeneration is needed.",
+                         "hint_layer":  "L1"
+                     },
+                     {
+                         "id":  "POI_IP_OK",
+                         "pos":  [
+                                     0.78,
+                                     0.45
+                                 ],
+                         "log_line":  "IP config verified; fault persists",
+                         "tag":  "not_ip",
+                         "meaning_short":  "Problem is below L3 configuration.",
+                         "hint_layer":  "L1"
+                     }
+                 ],
+        "topology":  {
+                         "nodes":  [
+                                       {
+                                           "id":  "NODE_A",
+                                           "label":  "Segment A",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.15,
+                                                       0.6
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "SLOT",
+                                           "label":  "?",
+                                           "type":  "slot",
+                                           "pos":  [
+                                                       0.52,
+                                                       0.6
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "NODE_B",
+                                           "label":  "Segment B",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.85,
+                                                       0.6
+                                                   ]
+                                       }
+                                   ],
+                         "edges":  [
+                                       [
+                                           "NODE_A",
+                                           "SLOT"
+                                       ],
+                                       [
+                                           "SLOT",
+                                           "NODE_B"
+                                       ]
+                                   ]
+                     },
+        "options":  [
+                        {
+                            "id":  "router",
+                            "label":  "Router",
+                            "error_code":  "A_L3_OVERKILL"
+                        },
+                        {
+                            "id":  "switch",
+                            "label":  "Switch",
+                            "error_code":  "A_L2_SEGMENT_LIMIT"
+                        },
+                        {
+                            "id":  "hub",
+                            "label":  "Hub",
+                            "error_code":  "A_L1_BROADCAST"
+                        },
+                        {
+                            "id":  "repeater",
+                            "label":  "Repeater",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "bridge",
+                            "label":  "Bridge",
+                            "error_code":  "A_L2_BRIDGE_LIMIT"
+                        },
+                        {
+                            "id":  "patch",
+                            "label":  "Patch Panel",
+                            "error_code":  "A_PASSIVE"
+                        }
+                    ],
+        "correct_id":  "repeater",
+        "explain_short":  "Repeater regenerates weakened electrical signal at Layer 1.",
+        "explain_full":  "L2/L3 devices do not fix damaged signal quality. This case is a physical link degradation.",
+        "tags":  [
+                     "net",
+                     "osi",
+                     "l1",
+                     "physical"
+                 ]
     },
-    "options": [
-      { "id": "repeater", "label": "Repeater", "error_code": "" },
-      { "id": "hub", "label": "Hub", "error_code": "A_L1_BROADCAST" },
-      { "id": "switch", "label": "Switch", "error_code": "A_L2_SEGMENT_LIMIT" },
-      { "id": "router", "label": "Router", "error_code": "A_L3_OVERKILL" },
-      { "id": "bridge", "label": "Bridge", "error_code": "A_L2_SEGMENT_LIMIT" },
-      { "id": "patch", "label": "Patch-panel", "error_code": "A_PASSIVE" }
-    ],
-    "correct_id": "repeater",
-    "explain_short": "Повреждение/затухание сигнала решается на физическом уровне (L1).",
-    "explain_full": "CRC, link flaps и слабый сигнал указывают на L1. Repeater усиливает/повторяет сигнал. L2/L3 тут не помогут.",
-    "tags": ["net", "osi", "l1", "physical"]
-  },
-  {
-    "id": "NT_A_05",
-    "briefing": "Пакеты ходят внутри офиса, но за пределами сети всё мёртво.",
-    "prompt": "Какое устройство нужно, чтобы отправлять трафик в другую сеть через шлюз?",
-    "time_limit_sec": 120,
-    "required_poi": 2,
-    "pois": [
-      {
-        "id": "POI_GW",
-        "pos": [0.20, 0.40],
-        "log_line": "Default gateway missing or unreachable",
-        "tag": "gateway"
-      },
-      {
-        "id": "POI_LOCAL",
-        "pos": [0.42, 0.65],
-        "log_line": "LAN pings OK: 192.168.1.x reachable",
-        "tag": "local_ok"
-      },
-      {
-        "id": "POI_OUT",
-        "pos": [0.80, 0.45],
-        "log_line": "External ping fails: 8.8.8.8 unreachable",
-        "tag": "external"
-      }
-    ],
-    "topology": {
-      "nodes": [
-        { "id": "LAN", "label": "Office LAN\n192.168.1.0/24", "type": "lan", "pos": [0.15, 0.50] },
-        { "id": "SLOT", "label": "?", "type": "slot", "pos": [0.52, 0.55] },
-        { "id": "WAN", "label": "Outside", "type": "wan", "pos": [0.85, 0.50] }
-      ],
-      "edges": [
-        ["LAN", "SLOT"],
-        ["SLOT", "WAN"]
-      ]
+    {
+        "id":  "NT_A_05",
+        "briefing":  "Local pings work, but external addresses stay unreachable.",
+        "prompt":  "Select the device that provides default gateway routing to outside network.",
+        "time_limit_sec":  120,
+        "required_poi":  2,
+        "pois":  [
+                     {
+                         "id":  "POI_GW",
+                         "pos":  [
+                                     0.2,
+                                     0.4
+                                 ],
+                         "log_line":  "Default gateway missing or unreachable",
+                         "tag":  "gateway",
+                         "meaning_short":  "No path from LAN to external networks.",
+                         "hint_layer":  "L3"
+                     },
+                     {
+                         "id":  "POI_LOCAL",
+                         "pos":  [
+                                     0.42,
+                                     0.65
+                                 ],
+                         "log_line":  "LAN pings OK: 192.168.1.x reachable",
+                         "tag":  "local",
+                         "meaning_short":  "Internal switching works; external route is absent.",
+                         "hint_layer":  "L3"
+                     },
+                     {
+                         "id":  "POI_EXT",
+                         "pos":  [
+                                     0.8,
+                                     0.45
+                                 ],
+                         "log_line":  "Ping 8.8.8.8 fails consistently",
+                         "tag":  "internet",
+                         "meaning_short":  "Need gateway routing beyond local subnet.",
+                         "hint_layer":  "L3"
+                     }
+                 ],
+        "topology":  {
+                         "nodes":  [
+                                       {
+                                           "id":  "LAN",
+                                           "label":  "Office LAN`n192.168.1.0/24",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.15,
+                                                       0.5
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "SLOT",
+                                           "label":  "?",
+                                           "type":  "slot",
+                                           "pos":  [
+                                                       0.52,
+                                                       0.55
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "WAN",
+                                           "label":  "WAN",
+                                           "type":  "wan",
+                                           "pos":  [
+                                                       0.85,
+                                                       0.5
+                                                   ]
+                                       }
+                                   ],
+                         "edges":  [
+                                       [
+                                           "LAN",
+                                           "SLOT"
+                                       ],
+                                       [
+                                           "SLOT",
+                                           "WAN"
+                                       ]
+                                   ]
+                     },
+        "options":  [
+                        {
+                            "id":  "router",
+                            "label":  "Router",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "switch",
+                            "label":  "Switch",
+                            "error_code":  "A_L2_SEGMENT_LIMIT"
+                        },
+                        {
+                            "id":  "hub",
+                            "label":  "Hub",
+                            "error_code":  "A_L1_BROADCAST"
+                        },
+                        {
+                            "id":  "repeater",
+                            "label":  "Repeater",
+                            "error_code":  "A_L1_PHYSICAL"
+                        },
+                        {
+                            "id":  "bridge",
+                            "label":  "Bridge",
+                            "error_code":  "A_L2_BRIDGE_LIMIT"
+                        },
+                        {
+                            "id":  "patch",
+                            "label":  "Patch Panel",
+                            "error_code":  "A_PASSIVE"
+                        }
+                    ],
+        "correct_id":  "router",
+        "explain_short":  "Router provides default gateway and route selection.",
+        "explain_full":  "Without a router, hosts can only communicate inside the local subnet.",
+        "tags":  [
+                     "net",
+                     "routing",
+                     "gateway"
+                 ]
     },
-    "options": [
-      { "id": "router", "label": "Router", "error_code": "" },
-      { "id": "switch", "label": "Switch", "error_code": "A_L2_SEGMENT_LIMIT" },
-      { "id": "hub", "label": "Hub", "error_code": "A_L1_BROADCAST" },
-      { "id": "repeater", "label": "Repeater", "error_code": "A_L1_PHYSICAL" },
-      { "id": "bridge", "label": "Bridge", "error_code": "A_L2_SEGMENT_LIMIT" },
-      { "id": "patch", "label": "Patch-panel", "error_code": "A_PASSIVE" }
-    ],
-    "correct_id": "router",
-    "explain_short": "Для выхода в другую сеть нужен шлюз маршрутизации (Router).",
-    "explain_full": "Если локалка работает, но внешний трафик не идёт, проблема в L3 маршрутизации/шлюзе. L2/L1 не решают.",
-    "tags": ["net", "l3", "gateway"]
-  },
-  {
-    "id": "NT_A_06",
-    "briefing": "Канал краснеет. Кадры тонут в мусоре.",
-    "prompt": "Какое устройство предотвратит “шторм” и начнёт доставлять кадры адресно?",
-    "time_limit_sec": 120,
-    "required_poi": 2,
-    "pois": [
-      {
-        "id": "POI_STORM",
-        "pos": [0.30, 0.35],
-        "log_line": "Broadcast storm signature detected",
-        "tag": "broadcast"
-      },
-      {
-        "id": "POI_FLOOD",
-        "pos": [0.55, 0.42],
-        "log_line": "Frames replicated across all ports",
-        "tag": "replicate"
-      },
-      {
-        "id": "POI_LAT",
-        "pos": [0.78, 0.58],
-        "log_line": "Latency spikes: 1200ms during storm",
-        "tag": "latency"
-      }
-    ],
-    "topology": {
-      "nodes": [
-        { "id": "USERS", "label": "Users", "type": "host_group", "pos": [0.18, 0.45] },
-        { "id": "SLOT", "label": "?", "type": "slot", "pos": [0.52, 0.48] },
-        { "id": "UPLINK", "label": "Uplink", "type": "uplink", "pos": [0.85, 0.45] }
-      ],
-      "edges": [
-        ["USERS", "SLOT"],
-        ["SLOT", "UPLINK"]
-      ]
+    {
+        "id":  "NT_A_06",
+        "briefing":  "Two VLANs must exchange traffic; each VLAN is healthy alone.",
+        "prompt":  "Install the correct device for inter-VLAN communication.",
+        "time_limit_sec":  120,
+        "required_poi":  2,
+        "pois":  [
+                     {
+                         "id":  "POI_VL10",
+                         "pos":  [
+                                     0.18,
+                                     0.3
+                                 ],
+                         "log_line":  "VLAN10 hosts communicate internally",
+                         "tag":  "vlan10",
+                         "meaning_short":  "Intra-VLAN L2 works.",
+                         "hint_layer":  "L2"
+                     },
+                     {
+                         "id":  "POI_VL20",
+                         "pos":  [
+                                     0.78,
+                                     0.3
+                                 ],
+                         "log_line":  "VLAN20 hosts communicate internally",
+                         "tag":  "vlan20",
+                         "meaning_short":  "Issue is only across VLAN boundaries.",
+                         "hint_layer":  "L3"
+                     },
+                     {
+                         "id":  "POI_INTER",
+                         "pos":  [
+                                     0.5,
+                                     0.68
+                                 ],
+                         "log_line":  "Inter-VLAN ping blocked by policy path",
+                         "tag":  "intervlan",
+                         "meaning_short":  "Needs Layer 3 gateway between VLANs.",
+                         "hint_layer":  "L3"
+                     }
+                 ],
+        "topology":  {
+                         "nodes":  [
+                                       {
+                                           "id":  "VLAN10",
+                                           "label":  "VLAN10",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.15,
+                                                       0.4
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "SLOT",
+                                           "label":  "?",
+                                           "type":  "slot",
+                                           "pos":  [
+                                                       0.5,
+                                                       0.55
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "VLAN20",
+                                           "label":  "VLAN20",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.85,
+                                                       0.4
+                                                   ]
+                                       }
+                                   ],
+                         "edges":  [
+                                       [
+                                           "VLAN10",
+                                           "SLOT"
+                                       ],
+                                       [
+                                           "SLOT",
+                                           "VLAN20"
+                                       ]
+                                   ]
+                     },
+        "options":  [
+                        {
+                            "id":  "router",
+                            "label":  "Router",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "switch",
+                            "label":  "Switch",
+                            "error_code":  "A_L2_SEGMENT_LIMIT"
+                        },
+                        {
+                            "id":  "hub",
+                            "label":  "Hub",
+                            "error_code":  "A_L1_BROADCAST"
+                        },
+                        {
+                            "id":  "repeater",
+                            "label":  "Repeater",
+                            "error_code":  "A_L1_PHYSICAL"
+                        },
+                        {
+                            "id":  "bridge",
+                            "label":  "Bridge",
+                            "error_code":  "A_L2_BRIDGE_LIMIT"
+                        },
+                        {
+                            "id":  "patch",
+                            "label":  "Patch Panel",
+                            "error_code":  "A_PASSIVE"
+                        }
+                    ],
+        "correct_id":  "router",
+        "explain_short":  "Inter-VLAN communication requires Layer 3 routing.",
+        "explain_full":  "Switching alone keeps VLANs isolated. Router (or L3 switching) is required for inter-VLAN traffic.",
+        "tags":  [
+                     "net",
+                     "vlan",
+                     "l3"
+                 ]
     },
-    "options": [
-      { "id": "switch", "label": "Switch", "error_code": "" },
-      { "id": "hub", "label": "Hub", "error_code": "A_L1_BROADCAST" },
-      { "id": "router", "label": "Router", "error_code": "A_L3_OVERKILL" },
-      { "id": "repeater", "label": "Repeater", "error_code": "A_L1_PHYSICAL" },
-      { "id": "bridge", "label": "Bridge", "error_code": "A_L2_BRIDGE_LIMIT" },
-      { "id": "patch", "label": "Patch-panel", "error_code": "A_PASSIVE" }
-    ],
-    "correct_id": "switch",
-    "explain_short": "Нужна L2-коммутация, чтобы не раздавать кадры всем подряд.",
-    "explain_full": "Шторм и репликация по всем портам типичны для Hub/плохой L1 среды. Switch ограничивает доставку по MAC и снижает шум.",
-    "tags": ["net", "broadcast", "l2"]
-  }
+    {
+        "id":  "NT_A_07",
+        "briefing":  "Annex office link is too weak at distance and drops under burst load.",
+        "prompt":  "Pick the device that restores the long physical segment.",
+        "time_limit_sec":  120,
+        "required_poi":  2,
+        "pois":  [
+                     {
+                         "id":  "POI_DIST",
+                         "pos":  [
+                                     0.22,
+                                     0.62
+                                 ],
+                         "log_line":  "Signal attenuation exceeds cable tolerance",
+                         "tag":  "distance",
+                         "meaning_short":  "Distance causes L1 attenuation.",
+                         "hint_layer":  "L1"
+                     },
+                     {
+                         "id":  "POI_RETRY",
+                         "pos":  [
+                                     0.56,
+                                     0.73
+                                 ],
+                         "log_line":  "Frequent frame retries from annex side",
+                         "tag":  "retry",
+                         "meaning_short":  "Physical errors trigger retransmissions.",
+                         "hint_layer":  "L1"
+                     },
+                     {
+                         "id":  "POI_CFG",
+                         "pos":  [
+                                     0.8,
+                                     0.48
+                                 ],
+                         "log_line":  "IP and VLAN settings validated",
+                         "tag":  "config",
+                         "meaning_short":  "Configuration is not the root cause.",
+                         "hint_layer":  "L1"
+                     }
+                 ],
+        "topology":  {
+                         "nodes":  [
+                                       {
+                                           "id":  "HQ",
+                                           "label":  "HQ",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.15,
+                                                       0.6
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "SLOT",
+                                           "label":  "?",
+                                           "type":  "slot",
+                                           "pos":  [
+                                                       0.5,
+                                                       0.55
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "ANNEX",
+                                           "label":  "Annex",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.85,
+                                                       0.6
+                                                   ]
+                                       }
+                                   ],
+                         "edges":  [
+                                       [
+                                           "HQ",
+                                           "SLOT"
+                                       ],
+                                       [
+                                           "SLOT",
+                                           "ANNEX"
+                                       ]
+                                   ]
+                     },
+        "options":  [
+                        {
+                            "id":  "router",
+                            "label":  "Router",
+                            "error_code":  "A_L3_OVERKILL"
+                        },
+                        {
+                            "id":  "switch",
+                            "label":  "Switch",
+                            "error_code":  "A_L2_SEGMENT_LIMIT"
+                        },
+                        {
+                            "id":  "hub",
+                            "label":  "Hub",
+                            "error_code":  "A_L1_BROADCAST"
+                        },
+                        {
+                            "id":  "repeater",
+                            "label":  "Repeater",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "bridge",
+                            "label":  "Bridge",
+                            "error_code":  "A_L2_BRIDGE_LIMIT"
+                        },
+                        {
+                            "id":  "patch",
+                            "label":  "Patch Panel",
+                            "error_code":  "A_PASSIVE"
+                        }
+                    ],
+        "correct_id":  "repeater",
+        "explain_short":  "Repeater restores signal over long cable paths.",
+        "explain_full":  "The evidence indicates physical attenuation, not logical forwarding mistakes.",
+        "tags":  [
+                     "net",
+                     "distance",
+                     "l1"
+                 ]
+    },
+    {
+        "id":  "NT_A_08",
+        "briefing":  "A temporary floor segment suffers heavy contention during meetings.",
+        "prompt":  "Choose the device that isolates endpoints and lowers collision pressure.",
+        "time_limit_sec":  120,
+        "required_poi":  2,
+        "pois":  [
+                     {
+                         "id":  "POI_STORM",
+                         "pos":  [
+                                     0.22,
+                                     0.62
+                                 ],
+                         "log_line":  "Broadcast storms during peak attendance",
+                         "tag":  "storm",
+                         "meaning_short":  "Flooding must be constrained with MAC forwarding.",
+                         "hint_layer":  "L2"
+                     },
+                     {
+                         "id":  "POI_COLL2",
+                         "pos":  [
+                                     0.48,
+                                     0.35
+                                 ],
+                         "log_line":  "Collision ratio jumps beyond threshold",
+                         "tag":  "collision",
+                         "meaning_short":  "Shared-medium behavior indicates non-switched segment.",
+                         "hint_layer":  "L2"
+                     },
+                     {
+                         "id":  "POI_LAT",
+                         "pos":  [
+                                     0.78,
+                                     0.56
+                                 ],
+                         "log_line":  "Latency spikes only inside floor segment",
+                         "tag":  "latency",
+                         "meaning_short":  "Access-layer segmentation is required.",
+                         "hint_layer":  "L2"
+                     }
+                 ],
+        "topology":  {
+                         "nodes":  [
+                                       {
+                                           "id":  "FLOOR",
+                                           "label":  "Meeting Floor",
+                                           "type":  "host_group",
+                                           "pos":  [
+                                                       0.16,
+                                                       0.52
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "SLOT",
+                                           "label":  "?",
+                                           "type":  "slot",
+                                           "pos":  [
+                                                       0.5,
+                                                       0.55
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "DIST",
+                                           "label":  "Distribution",
+                                           "type":  "uplink",
+                                           "pos":  [
+                                                       0.84,
+                                                       0.5
+                                                   ]
+                                       }
+                                   ],
+                         "edges":  [
+                                       [
+                                           "FLOOR",
+                                           "SLOT"
+                                       ],
+                                       [
+                                           "SLOT",
+                                           "DIST"
+                                       ]
+                                   ]
+                     },
+        "options":  [
+                        {
+                            "id":  "router",
+                            "label":  "Router",
+                            "error_code":  "A_L3_OVERKILL"
+                        },
+                        {
+                            "id":  "switch",
+                            "label":  "Switch",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "hub",
+                            "label":  "Hub",
+                            "error_code":  "A_L1_BROADCAST"
+                        },
+                        {
+                            "id":  "repeater",
+                            "label":  "Repeater",
+                            "error_code":  "A_L1_PHYSICAL"
+                        },
+                        {
+                            "id":  "bridge",
+                            "label":  "Bridge",
+                            "error_code":  "A_L2_BRIDGE_LIMIT"
+                        },
+                        {
+                            "id":  "patch",
+                            "label":  "Patch Panel",
+                            "error_code":  "A_PASSIVE"
+                        }
+                    ],
+        "correct_id":  "switch",
+        "explain_short":  "Switch provides dedicated collision domains per port.",
+        "explain_full":  "This is a classic access-layer contention case, solved by switching not by routing.",
+        "tags":  [
+                     "net",
+                     "access",
+                     "l2"
+                 ]
+    },
+    {
+        "id":  "NT_A_09",
+        "briefing":  "Archive subnet cannot reach update mirror in another subnet.",
+        "prompt":  "Install the correct forwarding device to cross subnet boundary.",
+        "time_limit_sec":  120,
+        "required_poi":  2,
+        "pois":  [
+                     {
+                         "id":  "POI_SUBNET_A",
+                         "pos":  [
+                                     0.18,
+                                     0.26
+                                 ],
+                         "log_line":  "Archive hosts in 10.20.0.0/24 communicate locally",
+                         "tag":  "local",
+                         "meaning_short":  "Local L2 domain works on source side.",
+                         "hint_layer":  "L3"
+                     },
+                     {
+                         "id":  "POI_SUBNET_B",
+                         "pos":  [
+                                     0.8,
+                                     0.26
+                                 ],
+                         "log_line":  "Mirror hosts in 10.30.0.0/24 communicate locally",
+                         "tag":  "remote",
+                         "meaning_short":  "Destination subnet is alive, but isolated.",
+                         "hint_layer":  "L3"
+                     },
+                     {
+                         "id":  "POI_GW2",
+                         "pos":  [
+                                     0.52,
+                                     0.62
+                                 ],
+                         "log_line":  "No route entry between /24 networks",
+                         "tag":  "route",
+                         "meaning_short":  "A routing decision point is missing.",
+                         "hint_layer":  "L3"
+                     }
+                 ],
+        "topology":  {
+                         "nodes":  [
+                                       {
+                                           "id":  "ARCH",
+                                           "label":  "Archive`n10.20.0.0/24",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.16,
+                                                       0.34
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "SLOT",
+                                           "label":  "?",
+                                           "type":  "slot",
+                                           "pos":  [
+                                                       0.5,
+                                                       0.5
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "MIRROR",
+                                           "label":  "Mirror`n10.30.0.0/24",
+                                           "type":  "lan",
+                                           "pos":  [
+                                                       0.84,
+                                                       0.34
+                                                   ]
+                                       }
+                                   ],
+                         "edges":  [
+                                       [
+                                           "ARCH",
+                                           "SLOT"
+                                       ],
+                                       [
+                                           "SLOT",
+                                           "MIRROR"
+                                       ]
+                                   ]
+                     },
+        "options":  [
+                        {
+                            "id":  "router",
+                            "label":  "Router",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "switch",
+                            "label":  "Switch",
+                            "error_code":  "A_L2_SEGMENT_LIMIT"
+                        },
+                        {
+                            "id":  "hub",
+                            "label":  "Hub",
+                            "error_code":  "A_L1_BROADCAST"
+                        },
+                        {
+                            "id":  "repeater",
+                            "label":  "Repeater",
+                            "error_code":  "A_L1_PHYSICAL"
+                        },
+                        {
+                            "id":  "bridge",
+                            "label":  "Bridge",
+                            "error_code":  "A_L2_BRIDGE_LIMIT"
+                        },
+                        {
+                            "id":  "patch",
+                            "label":  "Patch Panel",
+                            "error_code":  "A_PASSIVE"
+                        }
+                    ],
+        "correct_id":  "router",
+        "explain_short":  "Router is needed to forward between different /24 ranges.",
+        "explain_full":  "Bridge and switch stay in Layer 2 and cannot route across IP subnet boundaries.",
+        "tags":  [
+                     "net",
+                     "gateway",
+                     "l3"
+                 ]
+    },
+    {
+        "id":  "NT_A_10",
+        "briefing":  "Legacy lab segment reports frame flooding and duplicated traffic.",
+        "prompt":  "Pick the device that stabilizes this lab segment without changing subnet plan.",
+        "time_limit_sec":  120,
+        "required_poi":  2,
+        "pois":  [
+                     {
+                         "id":  "POI_DUP",
+                         "pos":  [
+                                     0.2,
+                                     0.4
+                                 ],
+                         "log_line":  "Duplicate frames observed at multiple hosts",
+                         "tag":  "dup",
+                         "meaning_short":  "Frames are not being selectively forwarded.",
+                         "hint_layer":  "L2"
+                     },
+                     {
+                         "id":  "POI_BC2",
+                         "pos":  [
+                                     0.5,
+                                     0.32
+                                 ],
+                         "log_line":  "Broadcast counters surge under file copy",
+                         "tag":  "broadcast",
+                         "meaning_short":  "Broadcast containment is required at access edge.",
+                         "hint_layer":  "L2"
+                     },
+                     {
+                         "id":  "POI_RT_OK",
+                         "pos":  [
+                                     0.8,
+                                     0.62
+                                 ],
+                         "log_line":  "Routing table is unchanged and valid",
+                         "tag":  "routing_ok",
+                         "meaning_short":  "Problem is not route policy.",
+                         "hint_layer":  "L2"
+                     }
+                 ],
+        "topology":  {
+                         "nodes":  [
+                                       {
+                                           "id":  "LAB",
+                                           "label":  "Legacy Lab",
+                                           "type":  "host_group",
+                                           "pos":  [
+                                                       0.17,
+                                                       0.52
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "SLOT",
+                                           "label":  "?",
+                                           "type":  "slot",
+                                           "pos":  [
+                                                       0.5,
+                                                       0.55
+                                                   ]
+                                       },
+                                       {
+                                           "id":  "UPLINK",
+                                           "label":  "Backbone",
+                                           "type":  "uplink",
+                                           "pos":  [
+                                                       0.85,
+                                                       0.52
+                                                   ]
+                                       }
+                                   ],
+                         "edges":  [
+                                       [
+                                           "LAB",
+                                           "SLOT"
+                                       ],
+                                       [
+                                           "SLOT",
+                                           "UPLINK"
+                                       ]
+                                   ]
+                     },
+        "options":  [
+                        {
+                            "id":  "router",
+                            "label":  "Router",
+                            "error_code":  "A_L3_OVERKILL"
+                        },
+                        {
+                            "id":  "switch",
+                            "label":  "Switch",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "hub",
+                            "label":  "Hub",
+                            "error_code":  "A_L1_BROADCAST"
+                        },
+                        {
+                            "id":  "repeater",
+                            "label":  "Repeater",
+                            "error_code":  "A_L1_PHYSICAL"
+                        },
+                        {
+                            "id":  "bridge",
+                            "label":  "Bridge",
+                            "error_code":  "A_L2_BRIDGE_LIMIT"
+                        },
+                        {
+                            "id":  "patch",
+                            "label":  "Patch Panel",
+                            "error_code":  "A_PASSIVE"
+                        }
+                    ],
+        "correct_id":  "switch",
+        "explain_short":  "Switching addresses frame flooding inside one subnet.",
+        "explain_full":  "Evidence indicates an L2 forwarding issue. Installing a switch resolves per-port forwarding behavior.",
+        "tags":  [
+                     "net",
+                     "legacy",
+                     "l2"
+                 ]
+    }
 ]

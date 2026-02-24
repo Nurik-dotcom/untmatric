@@ -1,10 +1,12 @@
 extends Button
 
 signal drag_started(item_id: String, from_zone: String)
+signal drag_cancelled(item_id: String, from_zone: String)
 
 var item_id: String = ""
 var item_label: String = ""
 var correct_bucket_id: String = ""
+var _drag_from_zone: String = "PILE"
 
 func setup(item_data: Dictionary) -> void:
 	item_id = str(item_data.get("item_id", ""))
@@ -26,6 +28,7 @@ func get_item_id() -> String:
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
 	var from_zone: String = get_zone_id()
+	_drag_from_zone = from_zone
 	drag_started.emit(item_id, from_zone)
 
 	var data: Dictionary = {
@@ -44,3 +47,7 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	set_drag_preview(holder)
 
 	return data
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_DRAG_END and not is_drag_successful():
+		drag_cancelled.emit(item_id, _drag_from_zone)

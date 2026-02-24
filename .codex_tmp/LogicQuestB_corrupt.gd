@@ -1,4 +1,4 @@
-extends Control
+﻿extends Control
 
 const LAYOUT_CASCADE_TOP := "CASCADE_TOP" # (A op B) op C
 const LAYOUT_CASCADE_BOTTOM := "CASCADE_BOTTOM" # A op (B op C)
@@ -12,51 +12,63 @@ const GATE_NAND := "NAND"
 const GATE_NOR := "NOR"
 
 const MAX_ATTEMPTS := 3
-const ANALYZE_COOLDOWN_SEC := 4.0
+const ANALYZE_COOLDOWN_SECONDS := 4.0
 
 const CASES := [
 	{
 		"id": "B_01",
 		"layout": LAYOUT_CASCADE_TOP,
-		"story": "Соберите двухэтапную схему: сначала узел A/B, затем результат с C.",
-		"labels": ["ДАТЧИК A", "ДАТЧИК B", "ДАТЧИК C"],
+		"story": "ﾐ｡ﾐｾﾐｱﾐｵﾑﾐｸﾑひｵ ﾐｴﾐｲﾑτ・采ひｰﾐｿﾐｽﾑτ・ﾑ・・ｵﾐｼﾑ・ ﾑ・ｽﾐｰﾑ・ｰﾐｻﾐｰ ﾑσｷﾐｵﾐｻ A/B, ﾐｷﾐｰﾑひｵﾐｼ ﾑﾐｵﾐｷﾑσｻﾑ袴ひｰﾑ・ﾑ・C.",
+		"labels": ["ﾐ頒籍｢ﾐｧﾐ侑・A", "ﾐ頒籍｢ﾐｧﾐ侑・B", "ﾐ頒籍｢ﾐｧﾐ侑・C"],
 		"correct_gates": [GATE_OR, GATE_AND],
-		"hint": "Сначала объедините A и B через OR, затем примените AND с C."
+		"hint": "ﾐ｡ﾐｽﾐｰﾑ・ｰﾐｻﾐｰ ﾐｾﾐｱﾑ諌ｵﾐｴﾐｸﾐｽﾐｸﾑひｵ A ﾐｸ B ﾑ・ｵﾑﾐｵﾐｷ OR, ﾐｷﾐｰﾑひｵﾐｼ ﾐｿﾑﾐｸﾐｼﾐｵﾐｽﾐｸﾑひｵ AND ﾑ・C."
 	},
 	{
 		"id": "B_02",
 		"layout": LAYOUT_CASCADE_BOTTOM,
-		"story": "Схема перестроена: сначала обрабатывается пара B/C, затем узел A.",
-		"labels": ["КЛЮЧ A", "КЛЮЧ B", "КЛЮЧ C"],
+		"story": "ﾐ｡ﾑ・ｵﾐｼﾐｰ ﾐｿﾐｵﾑﾐｵﾑ・びﾐｾﾐｵﾐｽﾐｰ: ﾑ・ｽﾐｰﾑ・ｰﾐｻﾐｰ ﾐｾﾐｱﾑﾐｰﾐｱﾐｰﾑび巾ｲﾐｰﾐｵﾑび・・ﾐｿﾐｰﾑﾐｰ B/C, ﾐｷﾐｰﾑひｵﾐｼ ﾑσｷﾐｵﾐｻ A.",
+		"labels": ["ﾐ墟嶢ｮﾐｧ A", "ﾐ墟嶢ｮﾐｧ B", "ﾐ墟嶢ｮﾐｧ C"],
 		"correct_gates": [GATE_AND, GATE_OR],
-		"hint": "Во внутреннем слоте нужен AND, во внешнем слоте - OR."
+		"hint": "ﾐ漬ｾ ﾐｲﾐｽﾑτびﾐｵﾐｽﾐｽﾐｵﾐｼ ﾑ・ｻﾐｾﾑひｵ ﾐｽﾑσｶﾐｵﾐｽ AND, ﾐｲﾐｾ ﾐｲﾐｽﾐｵﾑ威ｽﾐｵﾐｼ ﾑ・ｻﾐｾﾑひｵ - OR."
 	},
 	{
 		"id": "B_03",
 		"layout": LAYOUT_CASCADE_TOP,
-		"story": "Нужен канал, где первый этап ловит различие A/B, а второй фильтрует через C.",
-		"labels": ["КАНАЛ A", "КАНАЛ B", "ФИЛЬТР C"],
+		"story": "ﾐ旃σｶﾐｵﾐｽ ﾐｺﾐｰﾐｽﾐｰﾐｻ, ﾐｳﾐｴﾐｵ ﾐｿﾐｵﾑﾐｲﾑ巾ｹ ﾑ采ひｰﾐｿ ﾐｻﾐｾﾐｲﾐｸﾑ・ﾑﾐｰﾐｷﾐｻﾐｸﾑ・ｸﾐｵ A/B, ﾐｰ ﾐｲﾑひｾﾑﾐｾﾐｹ ﾑ・ｸﾐｻﾑ袴びﾑσｵﾑ・ﾑ・ｵﾑﾐｵﾐｷ C.",
+		"labels": ["ﾐ墟籍斷籍・A", "ﾐ墟籍斷籍・B", "ﾐ､ﾐ侑嶢ｬﾐ｢ﾐ C"],
 		"correct_gates": [GATE_XOR, GATE_AND],
-		"hint": "Различие на первом этапе даёт XOR."
+		"hint": "ﾐﾐｰﾐｷﾐｻﾐｸﾑ・ｸﾐｵ ﾐｽﾐｰ ﾐｿﾐｵﾑﾐｲﾐｾﾐｼ ﾑ采ひｰﾐｿﾐｵ ﾐｴﾐｰﾑ帯・XOR."
 	},
 	{
 		"id": "B_04",
 		"layout": LAYOUT_CASCADE_BOTTOM,
-		"story": "Схема с инверсией: сначала инвертируется B/C, затем объединяется с A.",
-		"labels": ["ОПОРНЫЙ A", "ШУМ B", "ШУМ C"],
+		"story": "ﾐ｡ﾑ・ｵﾐｼﾐｰ ﾑ・ﾐｸﾐｽﾐｲﾐｵﾑﾑ・ｸﾐｵﾐｹ: ﾑ・ｽﾐｰﾑ・ｰﾐｻﾐｰ ﾐｸﾐｽﾐｲﾐｵﾑﾑひｸﾑﾑσｵﾑび・・B/C, ﾐｷﾐｰﾑひｵﾐｼ ﾐｾﾐｱﾑ諌ｵﾐｴﾐｸﾐｽﾑ紹ｵﾑび・・ﾑ・A.",
+		"labels": ["ﾐ榧渙榧ﾐ斷ｫﾐ・A", "ﾐｨﾐ｣ﾐ・B", "ﾐｨﾐ｣ﾐ・C"],
 		"correct_gates": [GATE_NOR, GATE_OR],
-		"hint": "Внутренний этап - NOR, внешний - OR."
+		"hint": "ﾐ漬ｽﾑτびﾐｵﾐｽﾐｽﾐｸﾐｹ ﾑ采ひｰﾐｿ - NOR, ﾐｲﾐｽﾐｵﾑ威ｽﾐｸﾐｹ - OR."
 	},
 	{
 		"id": "B_05",
 		"layout": LAYOUT_CASCADE_TOP,
-		"story": "Соберите устойчивый тракт с финальным отрицанием совпадения.",
-		"labels": ["ЛИНИЯ A", "ЛИНИЯ B", "ЛИНИЯ C"],
+		"story": "ﾐ｡ﾐｾﾐｱﾐｵﾑﾐｸﾑひｵ ﾑτ・ひｾﾐｹﾑ・ｸﾐｲﾑ巾ｹ ﾑびﾐｰﾐｺﾑ・ﾑ・ﾑ・ｸﾐｽﾐｰﾐｻﾑ糊ｽﾑ巾ｼ ﾐｾﾑびﾐｸﾑ・ｰﾐｽﾐｸﾐｵﾐｼ ﾑ・ｾﾐｲﾐｿﾐｰﾐｴﾐｵﾐｽﾐｸﾑ・",
+		"labels": ["ﾐ嶢侑斷侑ｯ A", "ﾐ嶢侑斷侑ｯ B", "ﾐ嶢侑斷侑ｯ C"],
 		"correct_gates": [GATE_AND, GATE_NAND],
-		"hint": "Сначала нужно совпадение A и B, затем отрицание с C."
+		"hint": "ﾐ｡ﾐｽﾐｰﾑ・ｰﾐｻﾐｰ ﾐｽﾑσｶﾐｽﾐｾ ﾑ・ｾﾐｲﾐｿﾐｰﾐｴﾐｵﾐｽﾐｸﾐｵ A ﾐｸ B, ﾐｷﾐｰﾑひｵﾐｼ ﾐｾﾑびﾐｸﾑ・ｰﾐｽﾐｸﾐｵ ﾑ・C."
 	}
 ]
 
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var main_layout: VBoxContainer = $SafeArea/MainLayout
+@onready var interaction_row: HBoxContainer = $SafeArea/MainLayout/InteractionRow
+@onready var actions_row: HBoxContainer = $SafeArea/MainLayout/Actions
+@onready var gates_container: HBoxContainer = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer
+@onready var input_a_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/InputAFrame
+@onready var input_b_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/InputBFrame
+@onready var input_c_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/InputCFrame
+@onready var slot1_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/Slot1Frame
+@onready var slot2_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/Slot2Frame
+@onready var inter_slot: PanelContainer = $SafeArea/MainLayout/InteractionRow/InterSlot
+@onready var output_slot: PanelContainer = $SafeArea/MainLayout/InteractionRow/OutputSlot
 @onready var clue_title_label: Label = $SafeArea/MainLayout/Header/LblClueTitle
 @onready var session_label: Label = $SafeArea/MainLayout/Header/LblSessionId
 @onready var facts_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/FactsBar
@@ -65,9 +77,6 @@ const CASES := [
 @onready var terminal_text: RichTextLabel = $SafeArea/MainLayout/TerminalFrame/TerminalScroll/TerminalRichText
 @onready var stats_label: Label = $SafeArea/MainLayout/StatusRow/StatsLabel
 @onready var feedback_label: Label = $SafeArea/MainLayout/StatusRow/FeedbackLabel
-@onready var terminal_frame: PanelContainer = $SafeArea/MainLayout/TerminalFrame
-@onready var interaction_row: HBoxContainer = $SafeArea/MainLayout/InteractionRow
-@onready var inventory_frame: PanelContainer = $SafeArea/MainLayout/InventoryFrame
 
 @onready var input_a_btn: Button = $SafeArea/MainLayout/InteractionRow/InputAFrame/InputAVBox/InputA_Btn
 @onready var input_b_btn: Button = $SafeArea/MainLayout/InteractionRow/InputBFrame/InputBVBox/InputB_Btn
@@ -106,18 +115,16 @@ var selected_slot_idx: int = -1
 var attempts: int = 0
 var hints_used: int = 0
 var test_count: int = 0
-var analyze_count: int = 0
+var analyze_cooldown_until: float = 0.0
 var is_complete: bool = false
 var is_safe_mode: bool = false
 var case_started_ms: int = 0
 var first_action_ms: int = -1
 var trace_lines: Array[String] = []
-var vector_cache: Array[Dictionary] = []
 var last_counterexample: Dictionary = {}
-var is_landscape_layout: bool = false
 
 var gate_buttons: Dictionary = {}
-var analyze_timer: Timer = null
+var _interaction_mobile_layout: VBoxContainer = null
 
 func _ready() -> void:
 	_connect_ui_signals()
@@ -127,16 +134,14 @@ func _ready() -> void:
 		GlobalMetrics.stability_changed.connect(_update_stability_ui)
 	if not GlobalMetrics.game_over.is_connected(_on_game_over):
 		GlobalMetrics.game_over.connect(_on_game_over)
-	if not get_viewport().size_changed.is_connected(_on_viewport_resized):
-		get_viewport().size_changed.connect(_on_viewport_resized)
-
-	analyze_timer = Timer.new()
-	analyze_timer.one_shot = true
-	analyze_timer.timeout.connect(_on_analyze_unlock)
-	add_child(analyze_timer)
-
-	_apply_responsive_layout()
 	load_case(0)
+	_on_viewport_size_changed()
+	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+
+func _exit_tree() -> void:
+	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
 func _connect_ui_signals() -> void:
 	if not btn_back.pressed.is_connected(_on_back_button_pressed):
@@ -175,19 +180,6 @@ func _connect_ui_signals() -> void:
 	if not diagnostics_next_button.pressed.is_connected(_on_diagnostics_close_pressed):
 		diagnostics_next_button.pressed.connect(_on_diagnostics_close_pressed)
 
-func _on_viewport_resized() -> void:
-	_apply_responsive_layout()
-
-func _apply_responsive_layout() -> void:
-	var viewport_size: Vector2 = get_viewport_rect().size
-	var landscape := viewport_size.x > viewport_size.y
-	if is_landscape_layout == landscape:
-		return
-	is_landscape_layout = landscape
-	terminal_frame.size_flags_vertical = 0 if landscape else Control.SIZE_EXPAND_FILL
-	inventory_frame.size_flags_stretch_ratio = 0.35 if landscape else 0.55
-	interaction_row.theme_override_constants.separation = 10 if landscape else 12
-
 func _setup_gate_buttons() -> void:
 	gate_buttons = {
 		GATE_AND: gate_and_btn,
@@ -211,18 +203,15 @@ func load_case(idx: int) -> void:
 	attempts = 0
 	hints_used = 0
 	test_count = 0
-	analyze_count = 0
+	analyze_cooldown_until = 0.0
 	is_complete = false
 	is_safe_mode = false
 	case_started_ms = Time.get_ticks_msec()
 	first_action_ms = -1
 	trace_lines.clear()
 	last_counterexample.clear()
-	vector_cache = _build_control_vectors(current_case)
-	if analyze_timer != null:
-		analyze_timer.stop()
 
-	clue_title_label.text = "ДЕТЕКТОР ЛЖИ B-01"
+	clue_title_label.text = "ﾐ頒片｢ﾐ片墟｢ﾐ榧 ﾐ嶢孟・B-01"
 	input_a_btn.text = "%s\n[0]" % str(current_case.get("labels", ["A"])[0])
 	input_b_btn.text = "%s\n[0]" % str(current_case.get("labels", ["A", "B"])[1])
 	input_c_btn.text = "%s\n[0]" % str(current_case.get("labels", ["A", "B", "C"])[2])
@@ -234,6 +223,7 @@ func load_case(idx: int) -> void:
 	input_c_btn.disabled = false
 
 	btn_hint.disabled = false
+	btn_hint.text = "ANALYZE"
 	btn_test.disabled = true
 	btn_next.visible = false
 	feedback_label.visible = false
@@ -245,8 +235,7 @@ func load_case(idx: int) -> void:
 	_update_slot_visual(0)
 	_update_slot_visual(1)
 	_update_outputs()
-	_append_trace("Сценарий загружен. Выберите слот и установите модуль.")
-	_append_trace("Контрольные векторы: %d" % vector_cache.size())
+	_append_trace("ﾐ｡ﾑ・ｵﾐｽﾐｰﾑﾐｸﾐｹ ﾐｷﾐｰﾐｳﾑﾑσｶﾐｵﾐｽ. ﾐ柘巾ｱﾐｵﾑﾐｸﾑひｵ ﾑ・ｻﾐｾﾑ・ﾐｸ ﾑτ・ひｰﾐｽﾐｾﾐｲﾐｸﾑひｵ ﾐｼﾐｾﾐｴﾑσｻﾑ・")
 	_update_terminal()
 	_update_stats_ui()
 	_update_ui_state()
@@ -285,7 +274,7 @@ func _on_slot1_pressed() -> void:
 	selected_slot_idx = 0
 	_update_slot_selection_visual()
 	_set_gate_buttons_enabled(true)
-	_show_feedback("Выбран SLOT 1. Установите модуль из инвентаря.", Color(0.56, 0.78, 0.96))
+	_show_feedback("ﾐ柘巾ｱﾑﾐｰﾐｽ SLOT 1. ﾐ｣ﾑ・ひｰﾐｽﾐｾﾐｲﾐｸﾑひｵ ﾐｼﾐｾﾐｴﾑσｻﾑ・ﾐｸﾐｷ ﾐｸﾐｽﾐｲﾐｵﾐｽﾑひｰﾑﾑ・", Color(0.56, 0.78, 0.96))
 	_play_click()
 
 func _on_slot2_pressed() -> void:
@@ -295,7 +284,7 @@ func _on_slot2_pressed() -> void:
 	selected_slot_idx = 1
 	_update_slot_selection_visual()
 	_set_gate_buttons_enabled(true)
-	_show_feedback("Выбран SLOT 2. Установите модуль из инвентаря.", Color(0.56, 0.78, 0.96))
+	_show_feedback("ﾐ柘巾ｱﾑﾐｰﾐｽ SLOT 2. ﾐ｣ﾑ・ひｰﾐｽﾐｾﾐｲﾐｸﾑひｵ ﾐｼﾐｾﾐｴﾑσｻﾑ・ﾐｸﾐｷ ﾐｸﾐｽﾐｲﾐｵﾐｽﾑひｰﾑﾑ・", Color(0.56, 0.78, 0.96))
 	_play_click()
 
 func _on_gate_button_toggled(arg1: Variant, arg2: Variant = null) -> void:
@@ -316,7 +305,7 @@ func _on_gate_button_toggled(arg1: Variant, arg2: Variant = null) -> void:
 		_clear_gate_button_presses()
 		return
 	if selected_slot_idx < 0:
-		_show_feedback("Сначала выберите SLOT 1 или SLOT 2.", Color(1.0, 0.78, 0.32))
+		_show_feedback("ﾐ｡ﾐｽﾐｰﾑ・ｰﾐｻﾐｰ ﾐｲﾑ巾ｱﾐｵﾑﾐｸﾑひｵ SLOT 1 ﾐｸﾐｻﾐｸ SLOT 2.", Color(1.0, 0.78, 0.32))
 		_clear_gate_button_presses()
 		return
 
@@ -337,9 +326,9 @@ func _update_slot_visual(idx: int) -> void:
 	var gate_id := placed_gates[idx]
 	var slot_btn := slot1_btn if idx == 0 else slot2_btn
 	if gate_id == GATE_NONE:
-		slot_btn.text = "УСТАНОВИТЬ\n?"
+		slot_btn.text = "ﾐ｣ﾐ｡ﾐ｢ﾐ籍斷榧漬侑｢ﾐｬ\n?"
 	else:
-		slot_btn.text = "УСТАНОВЛЕНО\n%s" % _gate_symbol(gate_id)
+		slot_btn.text = "ﾐ｣ﾐ｡ﾐ｢ﾐ籍斷榧漬嶢片斷杤n%s" % _gate_symbol(gate_id)
 
 func _update_slot_selection_visual() -> void:
 	slot1_btn.add_theme_color_override("font_color", Color(0.95, 0.95, 0.90, 1.0) if selected_slot_idx == 0 else Color(0.74, 0.74, 0.70, 1.0))
@@ -353,69 +342,60 @@ func _update_outputs() -> void:
 	output_value_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.90, 1.0) if bool(result.get("final", false)) else Color(0.55, 0.55, 0.55, 1.0))
 
 func _calculate_circuit() -> Dictionary:
-	var g1 := placed_gates[0]
-	var g2 := placed_gates[1]
+	return _calculate_circuit_for(inputs, placed_gates)
+
+func _calculate_circuit_for(in_vals: Array[bool], gate_vals: Array[String]) -> Dictionary:
+	var g1 := gate_vals[0]
+	var g2 := gate_vals[1]
 	var inter := false
 	var final := false
 
 	if str(current_case.get("layout", LAYOUT_CASCADE_TOP)) == LAYOUT_CASCADE_TOP:
 		if g1 != GATE_NONE:
-			inter = _gate_op(inputs[0], inputs[1], g1)
+			inter = _gate_op(in_vals[0], in_vals[1], g1)
 		if g2 != GATE_NONE:
-			final = _gate_op(inter, inputs[2], g2)
+			final = _gate_op(inter, in_vals[2], g2)
 	else:
 		if g1 != GATE_NONE:
-			inter = _gate_op(inputs[1], inputs[2], g1)
+			inter = _gate_op(in_vals[1], in_vals[2], g1)
 		if g2 != GATE_NONE:
-			final = _gate_op(inputs[0], inter, g2)
+			final = _gate_op(in_vals[0], inter, g2)
 
 	return {"inter": inter, "final": final}
 
-func _evaluate_with_gates(gates: Array, in_a: bool, in_b: bool, in_c: bool) -> Dictionary:
-	var g1 := str(gates[0]) if gates.size() > 0 else GATE_NONE
-	var g2 := str(gates[1]) if gates.size() > 1 else GATE_NONE
-	var inter := false
-	var final := false
-	if str(current_case.get("layout", LAYOUT_CASCADE_TOP)) == LAYOUT_CASCADE_TOP:
-		if g1 != GATE_NONE:
-			inter = _gate_op(in_a, in_b, g1)
-		if g2 != GATE_NONE:
-			final = _gate_op(inter, in_c, g2)
-	else:
-		if g1 != GATE_NONE:
-			inter = _gate_op(in_b, in_c, g1)
-		if g2 != GATE_NONE:
-			final = _gate_op(in_a, inter, g2)
-	return {"inter": inter, "final": final}
-
-func _build_control_vectors(case_data: Dictionary) -> Array[Dictionary]:
-	var vectors: Array[Dictionary] = []
-	var correct: Array = case_data.get("correct_gates", [])
-	for mask in range(8):
-		var in_a := (mask & 1) != 0
-		var in_b := (mask & 2) != 0
-		var in_c := (mask & 4) != 0
-		var expected := _evaluate_with_gates(correct, in_a, in_b, in_c)
-		vectors.append({
-			"a": in_a,
-			"b": in_b,
-			"c": in_c,
-			"expected_final": bool(expected.get("final", false)),
-			"expected_inter": bool(expected.get("inter", false))
-		})
-	return vectors
-
-func _find_counterexample() -> Dictionary:
-	for vector in vector_cache:
-		var actual := _evaluate_with_gates(placed_gates, bool(vector.get("a", false)), bool(vector.get("b", false)), bool(vector.get("c", false)))
-		var expected_final := bool(vector.get("expected_final", false))
-		var actual_final := bool(actual.get("final", false))
-		if expected_final != actual_final:
-			var mismatch := vector.duplicate()
-			mismatch["actual_final"] = actual_final
-			mismatch["actual_inter"] = bool(actual.get("inter", false))
-			return mismatch
-	return {}
+func _evaluate_control_vectors() -> Dictionary:
+	var correct: Array = current_case.get("correct_gates", [])
+	if correct.size() < 2:
+		return {"ok": false}
+	var expected_gates: Array[String] = [str(correct[0]), str(correct[1])]
+	var vectors: Array = [
+		[false, false, false],
+		[false, false, true],
+		[false, true, false],
+		[false, true, true],
+		[true, false, false],
+		[true, false, true],
+		[true, true, false],
+		[true, true, true]
+	]
+	for vector in vectors:
+		var bool_vector: Array[bool] = [bool(vector[0]), bool(vector[1]), bool(vector[2])]
+		var expected := _calculate_circuit_for(bool_vector, expected_gates)
+		var actual := _calculate_circuit_for(bool_vector, placed_gates)
+		if bool(actual.get("final", false)) != bool(expected.get("final", false)):
+			return {
+				"ok": false,
+				"counterexample": {
+					"a": 1 if bool_vector[0] else 0,
+					"b": 1 if bool_vector[1] else 0,
+					"c": 1 if bool_vector[2] else 0,
+					"expected_f": 1 if bool(expected.get("final", false)) else 0,
+					"actual_f": 1 if bool(actual.get("final", false)) else 0,
+					"expected_i": 1 if bool(expected.get("inter", false)) else 0,
+					"actual_i": 1 if bool(actual.get("inter", false)) else 0
+				}
+			}
+	return {"ok": true}
 
 func _gate_op(a: bool, b: bool, gate_id: String) -> bool:
 	match gate_id:
@@ -439,7 +419,7 @@ func _on_test_pressed() -> void:
 	_mark_first_action()
 
 	if placed_gates[0] == GATE_NONE or placed_gates[1] == GATE_NONE:
-		_show_feedback("Заполните оба слота перед проверкой.", Color(1.0, 0.78, 0.32))
+		_show_feedback("Fill both slots before TEST.", Color(1.0, 0.78, 0.32))
 		return
 
 	test_count += 1
@@ -450,8 +430,9 @@ func _on_test_pressed() -> void:
 		1 if bool(result.get("final", false)) else 0
 	])
 
-	last_counterexample = _find_counterexample()
-	var is_correct := last_counterexample.is_empty()
+	var evaluation := _evaluate_control_vectors()
+	var is_correct := bool(evaluation.get("ok", false))
+	last_counterexample.clear()
 
 	if is_correct:
 		is_complete = true
@@ -459,34 +440,36 @@ func _on_test_pressed() -> void:
 		btn_hint.disabled = true
 		btn_test.disabled = true
 		_disable_controls()
-		_show_feedback("PASS: конфигурация подтверждена.", Color(0.45, 0.92, 0.62))
+		_show_feedback("PASS: control vectors satisfied.", Color(0.45, 0.92, 0.62))
 		_register_trial("SUCCESS", true)
 	else:
 		attempts += 1
 		var penalty := 15.0 + float(attempts * 5)
 		_apply_penalty(penalty)
-		var mismatch := last_counterexample
-		_show_feedback(
-			"FAIL: A=%d B=%d C=%d, ожидалось F=%d, получено F=%d (-%d)." % [
-				1 if bool(mismatch.get("a", false)) else 0,
-				1 if bool(mismatch.get("b", false)) else 0,
-				1 if bool(mismatch.get("c", false)) else 0,
-				1 if bool(mismatch.get("expected_final", false)) else 0,
-				1 if bool(mismatch.get("actual_final", false)) else 0,
+		var counterexample: Dictionary = evaluation.get("counterexample", {})
+		last_counterexample = counterexample.duplicate()
+		if not counterexample.is_empty():
+			var fail_msg := "FAIL: A=%d B=%d C=%d -> expected F=%d, got F=%d (-%d)." % [
+				int(counterexample.get("a", 0)),
+				int(counterexample.get("b", 0)),
+				int(counterexample.get("c", 0)),
+				int(counterexample.get("expected_f", 0)),
+				int(counterexample.get("actual_f", 0)),
 				int(penalty)
-			],
-			Color(1.0, 0.35, 0.32)
-		)
-		_append_trace(
-			"COUNTEREXAMPLE: A=%d B=%d C=%d -> expected %d got %d" % [
-				1 if bool(mismatch.get("a", false)) else 0,
-				1 if bool(mismatch.get("b", false)) else 0,
-				1 if bool(mismatch.get("c", false)) else 0,
-				1 if bool(mismatch.get("expected_final", false)) else 0,
-				1 if bool(mismatch.get("actual_final", false)) else 0
 			]
-		)
-		_register_trial("COUNTEREXAMPLE_FAIL", false)
+			_show_feedback(fail_msg, Color(1.0, 0.35, 0.32))
+			_append_trace("COUNTEREXAMPLE | A=%d B=%d C=%d | I expected=%d got=%d | F expected=%d got=%d" % [
+				int(counterexample.get("a", 0)),
+				int(counterexample.get("b", 0)),
+				int(counterexample.get("c", 0)),
+				int(counterexample.get("expected_i", 0)),
+				int(counterexample.get("actual_i", 0)),
+				int(counterexample.get("expected_f", 0)),
+				int(counterexample.get("actual_f", 0))
+			])
+		else:
+			_show_feedback("FAIL: control vectors mismatch (-%d)." % int(penalty), Color(1.0, 0.35, 0.32))
+		_register_trial("WRONG_GATE", false)
 		if attempts >= MAX_ATTEMPTS:
 			_enter_safe_mode()
 
@@ -496,46 +479,30 @@ func _on_test_pressed() -> void:
 func _on_hint_pressed() -> void:
 	if is_complete or is_safe_mode:
 		return
-	_mark_first_action()
-	if analyze_timer != null and not analyze_timer.is_stopped():
-		_show_feedback("ANALYZE OVERHEAT... %.1fs" % analyze_timer.time_left, Color(1.0, 0.78, 0.32))
+	var now_sec := Time.get_ticks_msec() / 1000.0
+	if now_sec < analyze_cooldown_until:
+		_show_feedback("ANALYZE OVERHEAT: wait %ds." % int(ceil(analyze_cooldown_until - now_sec)), Color(1.0, 0.78, 0.32))
+		_update_ui_state()
 		return
 
+	_mark_first_action()
 	hints_used += 1
-	analyze_count += 1
-	if placed_gates[0] == GATE_NONE or placed_gates[1] == GATE_NONE:
-		_show_feedback("АНАЛИЗ: заполните оба слота для диагностики.", Color(0.56, 0.78, 0.96))
-		_append_trace("ANALYZE: требуется заполнить слоты.")
+	analyze_cooldown_until = now_sec + ANALYZE_COOLDOWN_SECONDS
+
+	if not last_counterexample.is_empty():
+		_show_feedback("ANALYZE: mismatch at A=%d B=%d C=%d (expected F=%d, got F=%d)." % [
+			int(last_counterexample.get("a", 0)),
+			int(last_counterexample.get("b", 0)),
+			int(last_counterexample.get("c", 0)),
+			int(last_counterexample.get("expected_f", 0)),
+			int(last_counterexample.get("actual_f", 0))
+		], Color(0.56, 0.78, 0.96))
 	else:
-		var mismatch := _find_counterexample()
-		if mismatch.is_empty():
-			_show_feedback("АНАЛИЗ: нарушений не найдено, схема проходит векторы.", Color(0.45, 0.92, 0.62))
-			_append_trace("ANALYZE: нарушений нет.")
-		else:
-			_show_feedback(
-				"АНАЛИЗ: контрпример A=%d B=%d C=%d (ожидалось %d, получено %d)." % [
-					1 if bool(mismatch.get("a", false)) else 0,
-					1 if bool(mismatch.get("b", false)) else 0,
-					1 if bool(mismatch.get("c", false)) else 0,
-					1 if bool(mismatch.get("expected_final", false)) else 0,
-					1 if bool(mismatch.get("actual_final", false)) else 0
-				],
-				Color(1.0, 0.78, 0.32)
-			)
-			_append_trace(
-				"ANALYZE COUNTEREXAMPLE: A=%d B=%d C=%d expected=%d actual=%d" % [
-					1 if bool(mismatch.get("a", false)) else 0,
-					1 if bool(mismatch.get("b", false)) else 0,
-					1 if bool(mismatch.get("c", false)) else 0,
-					1 if bool(mismatch.get("expected_final", false)) else 0,
-					1 if bool(mismatch.get("actual_final", false)) else 0
-				]
-			)
-	if analyze_timer != null:
-		btn_hint.disabled = true
-		analyze_timer.start(ANALYZE_COOLDOWN_SEC)
+		_show_feedback("ANALYZE: " + str(current_case.get("hint", "Run TEST for a counterexample.")), Color(0.56, 0.78, 0.96))
+	_append_trace("ANALYZE used.")
 	_update_terminal()
 	_update_ui_state()
+	_update_stats_ui()
 
 func _enter_safe_mode() -> void:
 	is_safe_mode = true
@@ -557,7 +524,7 @@ func _enter_safe_mode() -> void:
 	var safe_msg := "SAFE MODE: SLOT1=%s, SLOT2=%s" % [_gate_symbol(placed_gates[0]), _gate_symbol(placed_gates[1])]
 	_show_feedback(safe_msg, Color(1.0, 0.74, 0.32))
 	_append_trace(safe_msg)
-	_show_diagnostics("SAFE MODE", "Правильная конфигурация подставлена автоматически.\nИзучите сборку и переходите далее.")
+	_show_diagnostics("SAFE MODE", "ﾐ湲ﾐｰﾐｲﾐｸﾐｻﾑ糊ｽﾐｰﾑ・ﾐｺﾐｾﾐｽﾑ・ｸﾐｳﾑτﾐｰﾑ・ｸﾑ・ﾐｿﾐｾﾐｴﾑ・ひｰﾐｲﾐｻﾐｵﾐｽﾐｰ ﾐｰﾐｲﾑひｾﾐｼﾐｰﾑひｸﾑ・ｵﾑ・ｺﾐｸ.\nﾐ侑ｷﾑτ・ｸﾑひｵ ﾑ・ｱﾐｾﾑﾐｺﾑ・ﾐｸ ﾐｿﾐｵﾑﾐｵﾑ・ｾﾐｴﾐｸﾑひｵ ﾐｴﾐｰﾐｻﾐｵﾐｵ.")
 	_update_terminal()
 	_update_ui_state()
 
@@ -580,11 +547,6 @@ func _on_next_button_pressed() -> void:
 
 func _on_diagnostics_close_pressed() -> void:
 	_hide_diagnostics()
-
-func _on_analyze_unlock() -> void:
-	if is_complete or is_safe_mode:
-		return
-	btn_hint.disabled = false
 
 func _show_diagnostics(title: String, message: String) -> void:
 	diagnostics_title.text = title
@@ -614,16 +576,15 @@ func _append_trace(line: String) -> void:
 
 func _update_terminal() -> void:
 	var lines: Array[String] = []
-	lines.append("[b]БРИФИНГ[/b]")
+	lines.append("[b]ﾐ岱ﾐ侑､ﾐ侑斷甜/b]")
 	lines.append(str(current_case.get("story", "")))
-	lines.append("Контрольные векторы: %d" % vector_cache.size())
 	lines.append("")
 	lines.append("[b]TRACE[/b]")
 	if trace_lines.is_empty():
-		lines.append("- ЖУРНАЛ ПУСТ")
+		lines.append("窶｢ ﾐ孟｣ﾐﾐ斷籍・ﾐ渙｣ﾐ｡ﾐ｢")
 	else:
 		for i in range(trace_lines.size()):
-			var row := "- " + trace_lines[i]
+			var row := "窶｢ " + trace_lines[i]
 			if i == trace_lines.size() - 1:
 				row = "[color=#f4f2e6]> %s[/color]" % row
 			lines.append(row)
@@ -643,28 +604,34 @@ func _update_ui_state() -> void:
 
 	var step_text := ""
 	if is_complete:
-		step_text = "ШАГ 3/3: проверка завершена, переходите далее"
+		step_text = "ﾐｨﾐ籍・3/3: ﾐｿﾑﾐｾﾐｲﾐｵﾑﾐｺﾐｰ ﾐｷﾐｰﾐｲﾐｵﾑﾑ威ｵﾐｽﾐｰ, ﾐｿﾐｵﾑﾐｵﾑ・ｾﾐｴﾐｸﾑひｵ ﾐｴﾐｰﾐｻﾐｵﾐｵ"
 	elif filled_slots < 2:
-		step_text = "ШАГ 1/3: выберите слот и установите 2 модуля"
+		step_text = "ﾐｨﾐ籍・1/3: ﾐｲﾑ巾ｱﾐｵﾑﾐｸﾑひｵ ﾑ・ｻﾐｾﾑ・ﾐｸ ﾑτ・ひｰﾐｽﾐｾﾐｲﾐｸﾑひｵ 2 ﾐｼﾐｾﾐｴﾑσｻﾑ・
 	else:
-		step_text = "ШАГ 2/3: нажмите ПРОВЕРИТЬ"
+		step_text = "ﾐｨﾐ籍・2/3: ﾐｽﾐｰﾐｶﾐｼﾐｸﾑひｵ ﾐ渙ﾐ榧漬片ﾐ侑｢ﾐｬ"
 
 	target_label.text = step_text
 	facts_bar.value = 100.0 if is_complete else float(filled_slots) * 50.0
 	energy_bar.value = clampf(GlobalMetrics.stability, 0.0, 100.0)
 	btn_test.disabled = is_complete or is_safe_mode or filled_slots < 2
-	btn_hint.disabled = is_complete or is_safe_mode or (analyze_timer != null and not analyze_timer.is_stopped())
+	var cooldown_left: int = maxi(0, int(ceil(analyze_cooldown_until - (Time.get_ticks_msec() / 1000.0))))
+	if is_complete or is_safe_mode:
+		btn_hint.disabled = true
+	elif cooldown_left > 0:
+		btn_hint.disabled = true
+		btn_hint.text = "OVERHEAT %ds" % cooldown_left
+	else:
+		btn_hint.disabled = false
+		btn_hint.text = "ANALYZE"
 	_update_stats_ui()
 
 func _update_stats_ui() -> void:
 	var case_id := str(current_case.get("id", "B_00"))
-	session_label.text = "СЕССИЯ: %02d/%02d | CASE %s" % [current_case_idx + 1, CASES.size(), case_id]
-	stats_label.text = "ПОП: %d/%d | ТЕСТЫ: %d | VECT: %d | ANALYZE: %d | СТАБ: %d%%" % [
+	session_label.text = "ﾐ｡ﾐ片｡ﾐ｡ﾐ侑ｯ: %02d/%02d 窶｢ CASE %s" % [current_case_idx + 1, CASES.size(), case_id]
+	stats_label.text = "ﾐ渙榧・ %d/%d 窶｢ ﾐ｢ﾐ片｡ﾐ｢ﾐｫ: %d 窶｢ ﾐ｡ﾐ｢ﾐ籍・ %d%%" % [
 		attempts,
 		MAX_ATTEMPTS,
 		test_count,
-		vector_cache.size(),
-		analyze_count,
 		int(GlobalMetrics.stability)
 	]
 
@@ -694,9 +661,8 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	payload["verdict_code"] = verdict_code
 	payload["attempts"] = attempts
 	payload["hints_used"] = hints_used
-	payload["analyze_count"] = analyze_count
+	payload["analyze_count"] = hints_used
 	payload["test_count"] = test_count
-	payload["vector_count"] = vector_cache.size()
 	payload["placed_gates"] = placed_gates.duplicate()
 	payload["correct_gates"] = current_case.get("correct_gates", []).duplicate()
 	payload["inputs"] = [inputs[0], inputs[1], inputs[2]]
@@ -708,19 +674,120 @@ func _play_click() -> void:
 	if click_player.stream:
 		click_player.play()
 
+func _on_viewport_size_changed() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var compact: bool = viewport_size.x < 980.0 or viewport_size.y < 760.0
+
+	_apply_safe_area_padding(compact)
+	main_layout.add_theme_constant_override("separation", 6 if compact else 8)
+	interaction_row.add_theme_constant_override("separation", 8 if compact else 12)
+	actions_row.add_theme_constant_override("separation", 10 if compact else 16)
+	gates_container.add_theme_constant_override("separation", 10 if compact else 14)
+	terminal_text.add_theme_font_size_override("normal_font_size", 18 if compact else 20)
+	stats_label.add_theme_font_size_override("font_size", 16 if compact else 18)
+	feedback_label.add_theme_font_size_override("font_size", 16 if compact else 18)
+
+	_set_interaction_mobile_mode(compact)
+	var frame_width: float = 160.0 if compact else 200.0
+	var slot_width: float = 132.0 if compact else 160.0
+	for frame in [input_a_frame, input_b_frame, input_c_frame, slot1_frame, slot2_frame]:
+		frame.custom_minimum_size.x = frame_width
+	for frame in [inter_slot, output_slot]:
+		frame.custom_minimum_size.x = slot_width
+
+	var ctl_button_height: float = 52.0 if compact else 56.0
+	input_a_btn.custom_minimum_size.y = ctl_button_height
+	input_b_btn.custom_minimum_size.y = ctl_button_height
+	input_c_btn.custom_minimum_size.y = ctl_button_height
+	slot1_btn.custom_minimum_size.y = ctl_button_height
+	slot2_btn.custom_minimum_size.y = ctl_button_height
+	btn_hint.custom_minimum_size.y = ctl_button_height
+	btn_test.custom_minimum_size.y = ctl_button_height
+	btn_next.custom_minimum_size.y = ctl_button_height
+	for gate_button in [gate_and_btn, gate_or_btn, gate_not_btn, gate_xor_btn, gate_nand_btn, gate_nor_btn]:
+		gate_button.custom_minimum_size = Vector2(108.0, 56.0) if compact else Vector2(128.0, 64.0)
+
+	var popup_width: float = clampf(viewport_size.x - (24.0 if compact else 120.0), 300.0, 760.0)
+	var popup_height: float = clampf(viewport_size.y - (24.0 if compact else 120.0), 220.0, 440.0)
+	diagnostics_panel.offset_left = -popup_width * 0.5
+	diagnostics_panel.offset_top = -popup_height * 0.5
+	diagnostics_panel.offset_right = popup_width * 0.5
+	diagnostics_panel.offset_bottom = popup_height * 0.5
+
+func _set_interaction_mobile_mode(use_mobile: bool) -> void:
+	var mobile_layout: VBoxContainer = _ensure_interaction_mobile_layout()
+	if use_mobile:
+		if interaction_row.visible:
+			for panel in _interaction_panels():
+				if panel.get_parent() != mobile_layout:
+					panel.reparent(mobile_layout)
+				panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		interaction_row.visible = false
+		mobile_layout.visible = true
+	else:
+		if not interaction_row.visible:
+			for panel in _interaction_panels():
+				if panel.get_parent() != interaction_row:
+					panel.reparent(interaction_row)
+				panel.size_flags_horizontal = Control.SIZE_FILL
+		mobile_layout.visible = false
+		interaction_row.visible = true
+
+func _ensure_interaction_mobile_layout() -> VBoxContainer:
+	if _interaction_mobile_layout != null and is_instance_valid(_interaction_mobile_layout):
+		return _interaction_mobile_layout
+	_interaction_mobile_layout = VBoxContainer.new()
+	_interaction_mobile_layout.name = "InteractionMobileLayout"
+	_interaction_mobile_layout.visible = false
+	_interaction_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_interaction_mobile_layout.add_theme_constant_override("separation", 8)
+	main_layout.add_child(_interaction_mobile_layout)
+	main_layout.move_child(_interaction_mobile_layout, main_layout.get_children().find(interaction_row) + 1)
+	return _interaction_mobile_layout
+
+func _interaction_panels() -> Array[Control]:
+	return [
+		input_a_frame,
+		input_b_frame,
+		input_c_frame,
+		slot1_frame,
+		slot2_frame,
+		inter_slot,
+		output_slot
+	]
+
+func _apply_safe_area_padding(compact: bool) -> void:
+	var left: float = 8.0 if compact else 16.0
+	var top: float = 8.0 if compact else 12.0
+	var right: float = 8.0 if compact else 16.0
+	var bottom: float = 8.0 if compact else 12.0
+
+	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
+	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
+		var viewport_size: Vector2 = get_viewport_rect().size
+		left = maxf(left, float(safe_rect.position.x))
+		top = maxf(top, float(safe_rect.position.y))
+		right = maxf(right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
+		bottom = maxf(bottom, viewport_size.y - float(safe_rect.position.y + safe_rect.size.y))
+
+	safe_area.add_theme_constant_override("margin_left", int(round(left)))
+	safe_area.add_theme_constant_override("margin_top", int(round(top)))
+	safe_area.add_theme_constant_override("margin_right", int(round(right)))
+	safe_area.add_theme_constant_override("margin_bottom", int(round(bottom)))
+
 func _gate_symbol(gate_id: String) -> String:
 	match gate_id:
 		GATE_AND:
-			return "AND"
+			return "竏ｧ"
 		GATE_OR:
-			return "OR"
+			return "竏ｨ"
 		GATE_NOT:
-			return "NOT"
+			return "ﾂｬ"
 		GATE_XOR:
-			return "XOR"
+			return "竓・
 		GATE_NAND:
-			return "NAND"
+			return "竓ｼ"
 		GATE_NOR:
-			return "NOR"
+			return "竓ｽ"
 		_:
 			return "?"

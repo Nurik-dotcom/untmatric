@@ -1,140 +1,1482 @@
 [
-  {
-    "id": "NT_B_01",
-    "briefing": "Окно уязвимости захлопнется через минуту.",
-    "prompt": "Payload: 525 KB. Window: 64 s. Найдите скорость в бит/с.",
-    "time_limit_sec": 120,
-    "payload_value": 525,
-    "payload_unit": "KB",
-    "time_sec": 64,
-    "ask_unit": "bps",
-    "expected_bps": 67200,
-    "options": [
-      { "id": "67200", "label": "67200 бит/с", "error_code": "" },
-      { "id": "8400", "label": "8400 бит/с", "error_code": "B_MATH_X8" },
-      { "id": "65625", "label": "65625 бит/с", "error_code": "B_MATH_1024" },
-      { "id": "4300800", "label": "4300800 бит/с", "error_code": "B_MATH_DIV" },
-      { "id": "67.2_kbps", "label": "67.2 Кбит/с", "error_code": "B_UNIT_TRAP" },
-      { "id": "525", "label": "525 бит/с", "error_code": "B_GARBAGE" }
-    ],
-    "correct_id": "67200",
-    "explain_short": "525×1024×8 / 64 = 67200 бит/с.",
-    "explain_full": "KB→B (×1024), B→bit (×8), затем делим на время. Ловушки: забыть ×8, взять 1000 вместо 1024, забыть /t, спутать bps и kbps.",
-    "tags": ["net", "math", "bandwidth"]
-  },
-  {
-    "id": "NT_B_02",
-    "briefing": "Линия перегружена. Нужно рассчитать минимальную скорость.",
-    "prompt": "Payload: 640 KB. Window: 80 s. Найдите скорость в бит/с.",
-    "time_limit_sec": 120,
-    "payload_value": 640,
-    "payload_unit": "KB",
-    "time_sec": 80,
-    "ask_unit": "bps",
-    "expected_bps": 65536,
-    "options": [
-      { "id": "65536", "label": "65536 бит/с", "error_code": "" },
-      { "id": "8192", "label": "8192 бит/с", "error_code": "B_MATH_X8" },
-      { "id": "64000", "label": "64000 бит/с", "error_code": "B_MATH_1024" },
-      { "id": "5242880", "label": "5242880 бит/с", "error_code": "B_MATH_DIV" },
-      { "id": "65.536_kbps", "label": "65.536 Кбит/с", "error_code": "B_UNIT_TRAP" },
-      { "id": "65536_bytes", "label": "65536 байт/с", "error_code": "B_UNIT_TRAP" }
-    ],
-    "correct_id": "65536",
-    "explain_short": "640×1024×8 / 80 = 65536 бит/с.",
-    "explain_full": "База: 1024. Биты: ×8. Скорость: bits/t. Если забыть ×8 получится 8192 (байт/с).",
-    "tags": ["net", "math", "kb", "units"]
-  },
-  {
-    "id": "NT_B_03",
-    "briefing": "Перехват на линии. Времени мало.",
-    "prompt": "Payload: 800 KB. Window: 50 s. Найдите скорость в бит/с.",
-    "time_limit_sec": 120,
-    "payload_value": 800,
-    "payload_unit": "KB",
-    "time_sec": 50,
-    "ask_unit": "bps",
-    "expected_bps": 131072,
-    "options": [
-      { "id": "131072", "label": "131072 бит/с", "error_code": "" },
-      { "id": "16384", "label": "16384 бит/с", "error_code": "B_MATH_X8" },
-      { "id": "128000", "label": "128000 бит/с", "error_code": "B_MATH_1024" },
-      { "id": "6553600", "label": "6553600 бит/с", "error_code": "B_MATH_DIV" },
-      { "id": "131.072_kbps", "label": "131.072 Кбит/с", "error_code": "B_UNIT_TRAP" },
-      { "id": "800", "label": "800 бит/с", "error_code": "B_GARBAGE" }
-    ],
-    "correct_id": "131072",
-    "explain_short": "800×1024×8 / 50 = 131072 бит/с.",
-    "explain_full": "Типичные ошибки: 1000 вместо 1024 даёт 128000, забыли ×8 даёт 16384, забыли /50 даёт 6553600.",
-    "tags": ["net", "math", "bandwidth"]
-  },
-  {
-    "id": "NT_B_04",
-    "briefing": "Архив большой. Канал должен выдержать.",
-    "prompt": "Payload: 2 MB. Window: 64 s. Найдите скорость в бит/с.",
-    "time_limit_sec": 120,
-    "payload_value": 2,
-    "payload_unit": "MB",
-    "time_sec": 64,
-    "ask_unit": "bps",
-    "expected_bps": 262144,
-    "options": [
-      { "id": "262144", "label": "262144 бит/с", "error_code": "" },
-      { "id": "32768", "label": "32768 бит/с", "error_code": "B_MATH_X8" },
-      { "id": "250000", "label": "250000 бит/с", "error_code": "B_MATH_1024" },
-      { "id": "16777216", "label": "16777216 бит/с", "error_code": "B_MATH_DIV" },
-      { "id": "262.144_kbps", "label": "262.144 Кбит/с", "error_code": "B_UNIT_TRAP" },
-      { "id": "2", "label": "2 бит/с", "error_code": "B_GARBAGE" }
-    ],
-    "correct_id": "262144",
-    "explain_short": "2×1024×1024×8 / 64 = 262144 бит/с.",
-    "explain_full": "Для MB часто ошибаются, используя 1000×1000 вместо 1024×1024: тогда получается 250000.",
-    "tags": ["net", "math", "mb", "bandwidth"]
-  },
-  {
-    "id": "NT_B_05",
-    "briefing": "Шлюз требует скорость в Кбит/с. Да, люди любят путать единицы.",
-    "prompt": "Payload: 1000 KB. Window: 64 s. Найдите скорость в Кбит/с.",
-    "time_limit_sec": 120,
-    "payload_value": 1000,
-    "payload_unit": "KB",
-    "time_sec": 64,
-    "ask_unit": "kbps",
-    "expected_bps": 128000,
-    "options": [
-      { "id": "128", "label": "128 Кбит/с", "error_code": "" },
-      { "id": "16", "label": "16 Кбит/с", "error_code": "B_MATH_X8" },
-      { "id": "125", "label": "125 Кбит/с", "error_code": "B_MATH_1024" },
-      { "id": "8192", "label": "8192 Кбит/с", "error_code": "B_MATH_DIV" },
-      { "id": "128000_bps", "label": "128000 бит/с", "error_code": "B_UNIT_TRAP" },
-      { "id": "1000", "label": "1000 Кбит/с", "error_code": "B_GARBAGE" }
-    ],
-    "correct_id": "128",
-    "explain_short": "1000×1024×8 / 64 = 128000 бит/с = 128 Кбит/с (делим на 1000).",
-    "explain_full": "Здесь ловушка двойная: KB считаем через 1024, а Kbit/s в выводе считаем как bps/1000. Ошибки: забыть ×8, взять 1000 вместо 1024, забыть /t, спутать bps/kbps.",
-    "tags": ["net", "math", "units", "kbps"]
-  },
-  {
-    "id": "NT_B_06",
-    "briefing": "Пакет тяжёлый, окно маленькое.",
-    "prompt": "Payload: 750 KB. Window: 60 s. Найдите скорость в бит/с.",
-    "time_limit_sec": 120,
-    "payload_value": 750,
-    "payload_unit": "KB",
-    "time_sec": 60,
-    "ask_unit": "bps",
-    "expected_bps": 102400,
-    "options": [
-      { "id": "102400", "label": "102400 бит/с", "error_code": "" },
-      { "id": "12800", "label": "12800 бит/с", "error_code": "B_MATH_X8" },
-      { "id": "100000", "label": "100000 бит/с", "error_code": "B_MATH_1024" },
-      { "id": "6144000", "label": "6144000 бит/с", "error_code": "B_MATH_DIV" },
-      { "id": "102.4_kbps", "label": "102.4 Кбит/с", "error_code": "B_UNIT_TRAP" },
-      { "id": "750", "label": "750 бит/с", "error_code": "B_GARBAGE" }
-    ],
-    "correct_id": "102400",
-    "explain_short": "750×1024×8 / 60 = 102400 бит/с.",
-    "explain_full": "Те же ловушки: ×8, 1024 vs 1000, /t, единицы вывода.",
-    "tags": ["net", "math", "bandwidth"]
-  }
+    {
+        "id":  "NT_B_01",
+        "briefing":  "Gateway console must validate stream throughput for media relay.",
+        "prompt":  "Assemble formula modules and verify final throughput in bps.",
+        "time_limit_sec":  120,
+        "payload_value":  525,
+        "payload_unit":  "KB",
+        "time_sec":  64,
+        "ask_unit":  "bps",
+        "expected_bps":  67200,
+        "options":  [
+                        {
+                            "id":  "67200",
+                            "label":  "67200 bps",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "8400",
+                            "label":  "8400 bps",
+                            "error_code":  "B_MATH_X8"
+                        },
+                        {
+                            "id":  "65625",
+                            "label":  "65625 bps",
+                            "error_code":  "B_MATH_1024"
+                        },
+                        {
+                            "id":  "4300800",
+                            "label":  "4300800 bps",
+                            "error_code":  "B_MATH_DIV"
+                        },
+                        {
+                            "id":  "67.2_kbps",
+                            "label":  "67.2 kbps",
+                            "error_code":  "B_UNIT_TRAP"
+                        },
+                        {
+                            "id":  "_raw",
+                            "label":  "525 raw",
+                            "error_code":  "B_GARBAGE"
+                        }
+                    ],
+        "correct_id":  "67200",
+        "logs":  [
+                     "Pipeline target asks for bps",
+                     "Do not skip x8 byte-to-bit conversion.",
+                     "Use binary base 1024 for KB/MB in this stage."
+                 ],
+        "analyze_lines":  [
+                              "Module x1000 is a trap for this case.",
+                              "Module /1 is a trap because it ignores time window.",
+                              "Output module must match target unit before confirmation."
+                          ],
+        "preview_metrics":  {
+                                "budget_limit":  900,
+                                "budget_used":  760,
+                                "bottleneck":  "CPU",
+                                "fps":  58,
+                                "ram_usage":  62,
+                                "cpu_load":  86,
+                                "total_price":  760
+                            },
+        "benchmark_lines":  [
+                                "Input payload = 525 KB",
+                                "Window = 64 s",
+                                "bits = payload * 1024 * 8",
+                                "speed = bits / time",
+                                "Expected baseline = 67200 bps"
+                            ],
+        "feedback":  {
+                         "headline":  "Benchmark report complete",
+                         "details":  "Compare computed value with target unit before confirming.",
+                         "error_code":  "B_PIPELINE_MISMATCH"
+                     },
+        "modules_pool":  [
+                             {
+                                 "module_id":  "KILO_1024",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1024",
+                                 "k":  1024,
+                                 "is_trap":  false,
+                                 "meaning":  "KB/MB binary conversion base."
+                             },
+                             {
+                                 "module_id":  "KILO_1000",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1000",
+                                 "k":  1000,
+                                 "is_trap":  true,
+                                 "meaning":  "Decimal trap; not used in this exam."
+                             },
+                             {
+                                 "module_id":  "BIT_X8",
+                                 "slot_type":  "bit",
+                                 "display":  "x8",
+                                 "k":  8,
+                                 "is_trap":  false,
+                                 "meaning":  "Convert bytes to bits."
+                             },
+                             {
+                                 "module_id":  "BIT_X1",
+                                 "slot_type":  "bit",
+                                 "display":  "x1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: leaves bytes unchanged."
+                             },
+                             {
+                                 "module_id":  "TIME_DIV",
+                                 "slot_type":  "time",
+                                 "display":  "/t",
+                                 "k":  -1,
+                                 "is_trap":  false,
+                                 "meaning":  "Divide by time window."
+                             },
+                             {
+                                 "module_id":  "TIME_SKIP",
+                                 "slot_type":  "time",
+                                 "display":  "/1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: skips time division."
+                             },
+                             {
+                                 "module_id":  "OUT_BPS",
+                                 "slot_type":  "out",
+                                 "display":  "bps",
+                                 "out_unit":  "bps",
+                                 "is_trap":  false,
+                                 "meaning":  "Output in bps."
+                             },
+                             {
+                                 "module_id":  "OUT_KBPS",
+                                 "slot_type":  "out",
+                                 "display":  "kbps",
+                                 "out_unit":  "kbps",
+                                 "is_trap":  true,
+                                 "meaning":  "Output in kbps."
+                             }
+                         ],
+        "explain_short":  "Computed throughput is 67200 bps with correct conversion chain.",
+        "explain_full":  "Correct chain: payload -\u003e x1024 -\u003e x8 -\u003e /time -\u003e output unit. Wrong modules cause deterministic arithmetic drift.",
+        "tags":  [
+                     "net",
+                     "math",
+                     "bandwidth"
+                 ]
+    },
+    {
+        "id":  "NT_B_02",
+        "briefing":  "Proxy uplink is unstable during backups.",
+        "prompt":  "Run benchmark and choose exact throughput in bps.",
+        "time_limit_sec":  120,
+        "payload_value":  640,
+        "payload_unit":  "KB",
+        "time_sec":  80,
+        "ask_unit":  "bps",
+        "expected_bps":  65536,
+        "options":  [
+                        {
+                            "id":  "65536",
+                            "label":  "65536 bps",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "8192",
+                            "label":  "8192 bps",
+                            "error_code":  "B_MATH_X8"
+                        },
+                        {
+                            "id":  "64000",
+                            "label":  "64000 bps",
+                            "error_code":  "B_MATH_1024"
+                        },
+                        {
+                            "id":  "5242880",
+                            "label":  "5242880 bps",
+                            "error_code":  "B_MATH_DIV"
+                        },
+                        {
+                            "id":  "65.536_kbps",
+                            "label":  "65.536 kbps",
+                            "error_code":  "B_UNIT_TRAP"
+                        },
+                        {
+                            "id":  "_raw",
+                            "label":  "640 raw",
+                            "error_code":  "B_GARBAGE"
+                        }
+                    ],
+        "correct_id":  "65536",
+        "logs":  [
+                     "Pipeline target asks for bps",
+                     "Do not skip x8 byte-to-bit conversion.",
+                     "Use binary base 1024 for KB/MB in this stage."
+                 ],
+        "analyze_lines":  [
+                              "Module x1000 is a trap for this case.",
+                              "Module /1 is a trap because it ignores time window.",
+                              "Output module must match target unit before confirmation."
+                          ],
+        "preview_metrics":  {
+                                "budget_limit":  900,
+                                "budget_used":  710,
+                                "bottleneck":  "RAM",
+                                "fps":  55,
+                                "ram_usage":  84,
+                                "cpu_load":  69,
+                                "total_price":  710
+                            },
+        "benchmark_lines":  [
+                                "Input payload = 640 KB",
+                                "Window = 80 s",
+                                "bits = payload * 1024 * 8",
+                                "speed = bits / time",
+                                "Expected baseline = 65536 bps"
+                            ],
+        "feedback":  {
+                         "headline":  "Benchmark report complete",
+                         "details":  "Compare computed value with target unit before confirming.",
+                         "error_code":  "B_PIPELINE_MISMATCH"
+                     },
+        "modules_pool":  [
+                             {
+                                 "module_id":  "KILO_1024",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1024",
+                                 "k":  1024,
+                                 "is_trap":  false,
+                                 "meaning":  "KB/MB binary conversion base."
+                             },
+                             {
+                                 "module_id":  "KILO_1000",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1000",
+                                 "k":  1000,
+                                 "is_trap":  true,
+                                 "meaning":  "Decimal trap; not used in this exam."
+                             },
+                             {
+                                 "module_id":  "BIT_X8",
+                                 "slot_type":  "bit",
+                                 "display":  "x8",
+                                 "k":  8,
+                                 "is_trap":  false,
+                                 "meaning":  "Convert bytes to bits."
+                             },
+                             {
+                                 "module_id":  "BIT_X1",
+                                 "slot_type":  "bit",
+                                 "display":  "x1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: leaves bytes unchanged."
+                             },
+                             {
+                                 "module_id":  "TIME_DIV",
+                                 "slot_type":  "time",
+                                 "display":  "/t",
+                                 "k":  -1,
+                                 "is_trap":  false,
+                                 "meaning":  "Divide by time window."
+                             },
+                             {
+                                 "module_id":  "TIME_SKIP",
+                                 "slot_type":  "time",
+                                 "display":  "/1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: skips time division."
+                             },
+                             {
+                                 "module_id":  "OUT_BPS",
+                                 "slot_type":  "out",
+                                 "display":  "bps",
+                                 "out_unit":  "bps",
+                                 "is_trap":  false,
+                                 "meaning":  "Output in bps."
+                             },
+                             {
+                                 "module_id":  "OUT_KBPS",
+                                 "slot_type":  "out",
+                                 "display":  "kbps",
+                                 "out_unit":  "kbps",
+                                 "is_trap":  true,
+                                 "meaning":  "Output in kbps."
+                             }
+                         ],
+        "explain_short":  "Computed throughput is 65536 bps with correct conversion chain.",
+        "explain_full":  "Correct chain: payload -\u003e x1024 -\u003e x8 -\u003e /time -\u003e output unit. Wrong modules cause deterministic arithmetic drift.",
+        "tags":  [
+                     "net",
+                     "math",
+                     "units"
+                 ]
+    },
+    {
+        "id":  "NT_B_03",
+        "briefing":  "Video archive ingestion requires deterministic throughput check.",
+        "prompt":  "Build pipeline and confirm target bps value.",
+        "time_limit_sec":  120,
+        "payload_value":  800,
+        "payload_unit":  "KB",
+        "time_sec":  50,
+        "ask_unit":  "bps",
+        "expected_bps":  131072,
+        "options":  [
+                        {
+                            "id":  "131072",
+                            "label":  "131072 bps",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "16384",
+                            "label":  "16384 bps",
+                            "error_code":  "B_MATH_X8"
+                        },
+                        {
+                            "id":  "128000",
+                            "label":  "128000 bps",
+                            "error_code":  "B_MATH_1024"
+                        },
+                        {
+                            "id":  "6553600",
+                            "label":  "6553600 bps",
+                            "error_code":  "B_MATH_DIV"
+                        },
+                        {
+                            "id":  "131.072_kbps",
+                            "label":  "131.072 kbps",
+                            "error_code":  "B_UNIT_TRAP"
+                        },
+                        {
+                            "id":  "_raw",
+                            "label":  "800 raw",
+                            "error_code":  "B_GARBAGE"
+                        }
+                    ],
+        "correct_id":  "131072",
+        "logs":  [
+                     "Pipeline target asks for bps",
+                     "Do not skip x8 byte-to-bit conversion.",
+                     "Use binary base 1024 for KB/MB in this stage."
+                 ],
+        "analyze_lines":  [
+                              "Module x1000 is a trap for this case.",
+                              "Module /1 is a trap because it ignores time window.",
+                              "Output module must match target unit before confirmation."
+                          ],
+        "preview_metrics":  {
+                                "budget_limit":  950,
+                                "budget_used":  840,
+                                "bottleneck":  "GPU",
+                                "fps":  72,
+                                "ram_usage":  58,
+                                "cpu_load":  63,
+                                "total_price":  840
+                            },
+        "benchmark_lines":  [
+                                "Input payload = 800 KB",
+                                "Window = 50 s",
+                                "bits = payload * 1024 * 8",
+                                "speed = bits / time",
+                                "Expected baseline = 131072 bps"
+                            ],
+        "feedback":  {
+                         "headline":  "Benchmark report complete",
+                         "details":  "Compare computed value with target unit before confirming.",
+                         "error_code":  "B_PIPELINE_MISMATCH"
+                     },
+        "modules_pool":  [
+                             {
+                                 "module_id":  "KILO_1024",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1024",
+                                 "k":  1024,
+                                 "is_trap":  false,
+                                 "meaning":  "KB/MB binary conversion base."
+                             },
+                             {
+                                 "module_id":  "KILO_1000",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1000",
+                                 "k":  1000,
+                                 "is_trap":  true,
+                                 "meaning":  "Decimal trap; not used in this exam."
+                             },
+                             {
+                                 "module_id":  "BIT_X8",
+                                 "slot_type":  "bit",
+                                 "display":  "x8",
+                                 "k":  8,
+                                 "is_trap":  false,
+                                 "meaning":  "Convert bytes to bits."
+                             },
+                             {
+                                 "module_id":  "BIT_X1",
+                                 "slot_type":  "bit",
+                                 "display":  "x1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: leaves bytes unchanged."
+                             },
+                             {
+                                 "module_id":  "TIME_DIV",
+                                 "slot_type":  "time",
+                                 "display":  "/t",
+                                 "k":  -1,
+                                 "is_trap":  false,
+                                 "meaning":  "Divide by time window."
+                             },
+                             {
+                                 "module_id":  "TIME_SKIP",
+                                 "slot_type":  "time",
+                                 "display":  "/1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: skips time division."
+                             },
+                             {
+                                 "module_id":  "OUT_BPS",
+                                 "slot_type":  "out",
+                                 "display":  "bps",
+                                 "out_unit":  "bps",
+                                 "is_trap":  false,
+                                 "meaning":  "Output in bps."
+                             },
+                             {
+                                 "module_id":  "OUT_KBPS",
+                                 "slot_type":  "out",
+                                 "display":  "kbps",
+                                 "out_unit":  "kbps",
+                                 "is_trap":  true,
+                                 "meaning":  "Output in kbps."
+                             }
+                         ],
+        "explain_short":  "Computed throughput is 131072 bps with correct conversion chain.",
+        "explain_full":  "Correct chain: payload -\u003e x1024 -\u003e x8 -\u003e /time -\u003e output unit. Wrong modules cause deterministic arithmetic drift.",
+        "tags":  [
+                     "net",
+                     "math",
+                     "pipeline"
+                 ]
+    },
+    {
+        "id":  "NT_B_04",
+        "briefing":  "Night sync test runs in MB payload mode.",
+        "prompt":  "Compute throughput in bps using MB conversion path.",
+        "time_limit_sec":  120,
+        "payload_value":  2,
+        "payload_unit":  "MB",
+        "time_sec":  64,
+        "ask_unit":  "bps",
+        "expected_bps":  262144,
+        "options":  [
+                        {
+                            "id":  "262144",
+                            "label":  "262144 bps",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "32768",
+                            "label":  "32768 bps",
+                            "error_code":  "B_MATH_X8"
+                        },
+                        {
+                            "id":  "250000",
+                            "label":  "250000 bps",
+                            "error_code":  "B_MATH_1024"
+                        },
+                        {
+                            "id":  "16777216",
+                            "label":  "16777216 bps",
+                            "error_code":  "B_MATH_DIV"
+                        },
+                        {
+                            "id":  "262.144_kbps",
+                            "label":  "262.144 kbps",
+                            "error_code":  "B_UNIT_TRAP"
+                        },
+                        {
+                            "id":  "_raw",
+                            "label":  "2 raw",
+                            "error_code":  "B_GARBAGE"
+                        }
+                    ],
+        "correct_id":  "262144",
+        "logs":  [
+                     "Pipeline target asks for bps",
+                     "Do not skip x8 byte-to-bit conversion.",
+                     "Use binary base 1024 for KB/MB in this stage."
+                 ],
+        "analyze_lines":  [
+                              "Module x1000 is a trap for this case.",
+                              "Module /1 is a trap because it ignores time window.",
+                              "Output module must match target unit before confirmation."
+                          ],
+        "preview_metrics":  {
+                                "budget_limit":  930,
+                                "budget_used":  930,
+                                "bottleneck":  "BUDGET",
+                                "fps":  49,
+                                "ram_usage":  76,
+                                "cpu_load":  70,
+                                "total_price":  930
+                            },
+        "benchmark_lines":  [
+                                "Input payload = 2 MB",
+                                "Window = 64 s",
+                                "bits = payload * 1024 * 8",
+                                "speed = bits / time",
+                                "Expected baseline = 262144 bps"
+                            ],
+        "feedback":  {
+                         "headline":  "Benchmark report complete",
+                         "details":  "Compare computed value with target unit before confirming.",
+                         "error_code":  "B_PIPELINE_MISMATCH"
+                     },
+        "modules_pool":  [
+                             {
+                                 "module_id":  "KILO_1024",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1024",
+                                 "k":  1024,
+                                 "is_trap":  false,
+                                 "meaning":  "KB/MB binary conversion base."
+                             },
+                             {
+                                 "module_id":  "KILO_1000",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1000",
+                                 "k":  1000,
+                                 "is_trap":  true,
+                                 "meaning":  "Decimal trap; not used in this exam."
+                             },
+                             {
+                                 "module_id":  "BIT_X8",
+                                 "slot_type":  "bit",
+                                 "display":  "x8",
+                                 "k":  8,
+                                 "is_trap":  false,
+                                 "meaning":  "Convert bytes to bits."
+                             },
+                             {
+                                 "module_id":  "BIT_X1",
+                                 "slot_type":  "bit",
+                                 "display":  "x1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: leaves bytes unchanged."
+                             },
+                             {
+                                 "module_id":  "TIME_DIV",
+                                 "slot_type":  "time",
+                                 "display":  "/t",
+                                 "k":  -1,
+                                 "is_trap":  false,
+                                 "meaning":  "Divide by time window."
+                             },
+                             {
+                                 "module_id":  "TIME_SKIP",
+                                 "slot_type":  "time",
+                                 "display":  "/1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: skips time division."
+                             },
+                             {
+                                 "module_id":  "OUT_BPS",
+                                 "slot_type":  "out",
+                                 "display":  "bps",
+                                 "out_unit":  "bps",
+                                 "is_trap":  false,
+                                 "meaning":  "Output in bps."
+                             },
+                             {
+                                 "module_id":  "OUT_KBPS",
+                                 "slot_type":  "out",
+                                 "display":  "kbps",
+                                 "out_unit":  "kbps",
+                                 "is_trap":  true,
+                                 "meaning":  "Output in kbps."
+                             }
+                         ],
+        "explain_short":  "Computed throughput is 262144 bps with correct conversion chain.",
+        "explain_full":  "Correct chain: payload -\u003e x1024 -\u003e x8 -\u003e /time -\u003e output unit. Wrong modules cause deterministic arithmetic drift.",
+        "tags":  [
+                     "net",
+                     "math",
+                     "mb"
+                 ]
+    },
+    {
+        "id":  "NT_B_05",
+        "briefing":  "Operator requested output in kbps for dashboard compatibility.",
+        "prompt":  "Run benchmark and answer in kbps.",
+        "time_limit_sec":  120,
+        "payload_value":  1000,
+        "payload_unit":  "KB",
+        "time_sec":  64,
+        "ask_unit":  "kbps",
+        "expected_bps":  128000,
+        "options":  [
+                        {
+                            "id":  "128",
+                            "label":  "128 kbps",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "16000",
+                            "label":  "16000 bps",
+                            "error_code":  "B_MATH_X8"
+                        },
+                        {
+                            "id":  "125000",
+                            "label":  "125000 bps",
+                            "error_code":  "B_MATH_1024"
+                        },
+                        {
+                            "id":  "8192000",
+                            "label":  "8192000 bps",
+                            "error_code":  "B_MATH_DIV"
+                        },
+                        {
+                            "id":  "128000_bps",
+                            "label":  "128000 bps",
+                            "error_code":  "B_UNIT_TRAP"
+                        },
+                        {
+                            "id":  "_raw",
+                            "label":  "1000 raw",
+                            "error_code":  "B_GARBAGE"
+                        }
+                    ],
+        "correct_id":  "128",
+        "logs":  [
+                     "Pipeline target asks for kbps",
+                     "Do not skip x8 byte-to-bit conversion.",
+                     "Use binary base 1024 for KB/MB in this stage."
+                 ],
+        "analyze_lines":  [
+                              "Module x1000 is a trap for this case.",
+                              "Module /1 is a trap because it ignores time window.",
+                              "Output module must match target unit before confirmation."
+                          ],
+        "preview_metrics":  {
+                                "budget_limit":  900,
+                                "budget_used":  680,
+                                "bottleneck":  "OK",
+                                "fps":  64,
+                                "ram_usage":  52,
+                                "cpu_load":  57,
+                                "total_price":  680
+                            },
+        "benchmark_lines":  [
+                                "Input payload = 1000 KB",
+                                "Window = 64 s",
+                                "bits = payload * 1024 * 8",
+                                "speed = bits / time",
+                                "Expected baseline = 128000 bps"
+                            ],
+        "feedback":  {
+                         "headline":  "Benchmark report complete",
+                         "details":  "Compare computed value with target unit before confirming.",
+                         "error_code":  "B_PIPELINE_MISMATCH"
+                     },
+        "modules_pool":  [
+                             {
+                                 "module_id":  "KILO_1024",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1024",
+                                 "k":  1024,
+                                 "is_trap":  false,
+                                 "meaning":  "KB/MB binary conversion base."
+                             },
+                             {
+                                 "module_id":  "KILO_1000",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1000",
+                                 "k":  1000,
+                                 "is_trap":  true,
+                                 "meaning":  "Decimal trap; not used in this exam."
+                             },
+                             {
+                                 "module_id":  "BIT_X8",
+                                 "slot_type":  "bit",
+                                 "display":  "x8",
+                                 "k":  8,
+                                 "is_trap":  false,
+                                 "meaning":  "Convert bytes to bits."
+                             },
+                             {
+                                 "module_id":  "BIT_X1",
+                                 "slot_type":  "bit",
+                                 "display":  "x1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: leaves bytes unchanged."
+                             },
+                             {
+                                 "module_id":  "TIME_DIV",
+                                 "slot_type":  "time",
+                                 "display":  "/t",
+                                 "k":  -1,
+                                 "is_trap":  false,
+                                 "meaning":  "Divide by time window."
+                             },
+                             {
+                                 "module_id":  "TIME_SKIP",
+                                 "slot_type":  "time",
+                                 "display":  "/1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: skips time division."
+                             },
+                             {
+                                 "module_id":  "OUT_BPS",
+                                 "slot_type":  "out",
+                                 "display":  "bps",
+                                 "out_unit":  "bps",
+                                 "is_trap":  false,
+                                 "meaning":  "Output in bps."
+                             },
+                             {
+                                 "module_id":  "OUT_KBPS",
+                                 "slot_type":  "out",
+                                 "display":  "kbps",
+                                 "out_unit":  "kbps",
+                                 "is_trap":  true,
+                                 "meaning":  "Output in kbps."
+                             }
+                         ],
+        "explain_short":  "128000 bps equals 128 kbps after conversion.",
+        "explain_full":  "Correct chain: payload -\u003e x1024 -\u003e x8 -\u003e /time -\u003e output unit. Wrong modules cause deterministic arithmetic drift.",
+        "tags":  [
+                     "net",
+                     "math",
+                     "kbps"
+                 ]
+    },
+    {
+        "id":  "NT_B_06",
+        "briefing":  "Batch channel recalibration requires strict bit-rate estimate.",
+        "prompt":  "Assemble core and confirm bps result.",
+        "time_limit_sec":  120,
+        "payload_value":  750,
+        "payload_unit":  "KB",
+        "time_sec":  60,
+        "ask_unit":  "bps",
+        "expected_bps":  102400,
+        "options":  [
+                        {
+                            "id":  "102400",
+                            "label":  "102400 bps",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "12800",
+                            "label":  "12800 bps",
+                            "error_code":  "B_MATH_X8"
+                        },
+                        {
+                            "id":  "100000",
+                            "label":  "100000 bps",
+                            "error_code":  "B_MATH_1024"
+                        },
+                        {
+                            "id":  "6144000",
+                            "label":  "6144000 bps",
+                            "error_code":  "B_MATH_DIV"
+                        },
+                        {
+                            "id":  "102.4_kbps",
+                            "label":  "102.4 kbps",
+                            "error_code":  "B_UNIT_TRAP"
+                        },
+                        {
+                            "id":  "_raw",
+                            "label":  "750 raw",
+                            "error_code":  "B_GARBAGE"
+                        }
+                    ],
+        "correct_id":  "102400",
+        "logs":  [
+                     "Pipeline target asks for bps",
+                     "Do not skip x8 byte-to-bit conversion.",
+                     "Use binary base 1024 for KB/MB in this stage."
+                 ],
+        "analyze_lines":  [
+                              "Module x1000 is a trap for this case.",
+                              "Module /1 is a trap because it ignores time window.",
+                              "Output module must match target unit before confirmation."
+                          ],
+        "preview_metrics":  {
+                                "budget_limit":  930,
+                                "budget_used":  790,
+                                "bottleneck":  "CPU",
+                                "fps":  61,
+                                "ram_usage":  63,
+                                "cpu_load":  81,
+                                "total_price":  790
+                            },
+        "benchmark_lines":  [
+                                "Input payload = 750 KB",
+                                "Window = 60 s",
+                                "bits = payload * 1024 * 8",
+                                "speed = bits / time",
+                                "Expected baseline = 102400 bps"
+                            ],
+        "feedback":  {
+                         "headline":  "Benchmark report complete",
+                         "details":  "Compare computed value with target unit before confirming.",
+                         "error_code":  "B_PIPELINE_MISMATCH"
+                     },
+        "modules_pool":  [
+                             {
+                                 "module_id":  "KILO_1024",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1024",
+                                 "k":  1024,
+                                 "is_trap":  false,
+                                 "meaning":  "KB/MB binary conversion base."
+                             },
+                             {
+                                 "module_id":  "KILO_1000",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1000",
+                                 "k":  1000,
+                                 "is_trap":  true,
+                                 "meaning":  "Decimal trap; not used in this exam."
+                             },
+                             {
+                                 "module_id":  "BIT_X8",
+                                 "slot_type":  "bit",
+                                 "display":  "x8",
+                                 "k":  8,
+                                 "is_trap":  false,
+                                 "meaning":  "Convert bytes to bits."
+                             },
+                             {
+                                 "module_id":  "BIT_X1",
+                                 "slot_type":  "bit",
+                                 "display":  "x1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: leaves bytes unchanged."
+                             },
+                             {
+                                 "module_id":  "TIME_DIV",
+                                 "slot_type":  "time",
+                                 "display":  "/t",
+                                 "k":  -1,
+                                 "is_trap":  false,
+                                 "meaning":  "Divide by time window."
+                             },
+                             {
+                                 "module_id":  "TIME_SKIP",
+                                 "slot_type":  "time",
+                                 "display":  "/1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: skips time division."
+                             },
+                             {
+                                 "module_id":  "OUT_BPS",
+                                 "slot_type":  "out",
+                                 "display":  "bps",
+                                 "out_unit":  "bps",
+                                 "is_trap":  false,
+                                 "meaning":  "Output in bps."
+                             },
+                             {
+                                 "module_id":  "OUT_KBPS",
+                                 "slot_type":  "out",
+                                 "display":  "kbps",
+                                 "out_unit":  "kbps",
+                                 "is_trap":  true,
+                                 "meaning":  "Output in kbps."
+                             }
+                         ],
+        "explain_short":  "Computed throughput is 102400 bps with correct conversion chain.",
+        "explain_full":  "Correct chain: payload -\u003e x1024 -\u003e x8 -\u003e /time -\u003e output unit. Wrong modules cause deterministic arithmetic drift.",
+        "tags":  [
+                     "net",
+                     "math",
+                     "throughput"
+                 ]
+    },
+    {
+        "id":  "NT_B_07",
+        "briefing":  "Server mirror job reports fluctuating transfer estimates.",
+        "prompt":  "Benchmark and provide kbps output.",
+        "time_limit_sec":  120,
+        "payload_value":  3,
+        "payload_unit":  "MB",
+        "time_sec":  48,
+        "ask_unit":  "kbps",
+        "expected_bps":  524288,
+        "options":  [
+                        {
+                            "id":  "524.288",
+                            "label":  "524.288 kbps",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "65536",
+                            "label":  "65536 bps",
+                            "error_code":  "B_MATH_X8"
+                        },
+                        {
+                            "id":  "500000",
+                            "label":  "500000 bps",
+                            "error_code":  "B_MATH_1024"
+                        },
+                        {
+                            "id":  "25165824",
+                            "label":  "25165824 bps",
+                            "error_code":  "B_MATH_DIV"
+                        },
+                        {
+                            "id":  "524288_bps",
+                            "label":  "524288 bps",
+                            "error_code":  "B_UNIT_TRAP"
+                        },
+                        {
+                            "id":  "_raw",
+                            "label":  "3 raw",
+                            "error_code":  "B_GARBAGE"
+                        }
+                    ],
+        "correct_id":  "524.288",
+        "logs":  [
+                     "Pipeline target asks for kbps",
+                     "Do not skip x8 byte-to-bit conversion.",
+                     "Use binary base 1024 for KB/MB in this stage."
+                 ],
+        "analyze_lines":  [
+                              "Module x1000 is a trap for this case.",
+                              "Module /1 is a trap because it ignores time window.",
+                              "Output module must match target unit before confirmation."
+                          ],
+        "preview_metrics":  {
+                                "budget_limit":  980,
+                                "budget_used":  910,
+                                "bottleneck":  "RAM",
+                                "fps":  52,
+                                "ram_usage":  88,
+                                "cpu_load":  72,
+                                "total_price":  910
+                            },
+        "benchmark_lines":  [
+                                "Input payload = 3 MB",
+                                "Window = 48 s",
+                                "bits = payload * 1024 * 8",
+                                "speed = bits / time",
+                                "Expected baseline = 524288 bps"
+                            ],
+        "feedback":  {
+                         "headline":  "Benchmark report complete",
+                         "details":  "Compare computed value with target unit before confirming.",
+                         "error_code":  "B_PIPELINE_MISMATCH"
+                     },
+        "modules_pool":  [
+                             {
+                                 "module_id":  "KILO_1024",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1024",
+                                 "k":  1024,
+                                 "is_trap":  false,
+                                 "meaning":  "KB/MB binary conversion base."
+                             },
+                             {
+                                 "module_id":  "KILO_1000",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1000",
+                                 "k":  1000,
+                                 "is_trap":  true,
+                                 "meaning":  "Decimal trap; not used in this exam."
+                             },
+                             {
+                                 "module_id":  "BIT_X8",
+                                 "slot_type":  "bit",
+                                 "display":  "x8",
+                                 "k":  8,
+                                 "is_trap":  false,
+                                 "meaning":  "Convert bytes to bits."
+                             },
+                             {
+                                 "module_id":  "BIT_X1",
+                                 "slot_type":  "bit",
+                                 "display":  "x1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: leaves bytes unchanged."
+                             },
+                             {
+                                 "module_id":  "TIME_DIV",
+                                 "slot_type":  "time",
+                                 "display":  "/t",
+                                 "k":  -1,
+                                 "is_trap":  false,
+                                 "meaning":  "Divide by time window."
+                             },
+                             {
+                                 "module_id":  "TIME_SKIP",
+                                 "slot_type":  "time",
+                                 "display":  "/1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: skips time division."
+                             },
+                             {
+                                 "module_id":  "OUT_BPS",
+                                 "slot_type":  "out",
+                                 "display":  "bps",
+                                 "out_unit":  "bps",
+                                 "is_trap":  false,
+                                 "meaning":  "Output in bps."
+                             },
+                             {
+                                 "module_id":  "OUT_KBPS",
+                                 "slot_type":  "out",
+                                 "display":  "kbps",
+                                 "out_unit":  "kbps",
+                                 "is_trap":  true,
+                                 "meaning":  "Output in kbps."
+                             }
+                         ],
+        "explain_short":  "524288 bps equals 524.288 kbps after conversion.",
+        "explain_full":  "Correct chain: payload -\u003e x1024 -\u003e x8 -\u003e /time -\u003e output unit. Wrong modules cause deterministic arithmetic drift.",
+        "tags":  [
+                     "net",
+                     "math",
+                     "server"
+                 ]
+    },
+    {
+        "id":  "NT_B_08",
+        "briefing":  "Diagnostic ping burst uses a compact payload.",
+        "prompt":  "Compute and select final bps value.",
+        "time_limit_sec":  120,
+        "payload_value":  256,
+        "payload_unit":  "KB",
+        "time_sec":  32,
+        "ask_unit":  "bps",
+        "expected_bps":  65536,
+        "options":  [
+                        {
+                            "id":  "65536",
+                            "label":  "65536 bps",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "8192",
+                            "label":  "8192 bps",
+                            "error_code":  "B_MATH_X8"
+                        },
+                        {
+                            "id":  "64000",
+                            "label":  "64000 bps",
+                            "error_code":  "B_MATH_1024"
+                        },
+                        {
+                            "id":  "2097152",
+                            "label":  "2097152 bps",
+                            "error_code":  "B_MATH_DIV"
+                        },
+                        {
+                            "id":  "65.536_kbps",
+                            "label":  "65.536 kbps",
+                            "error_code":  "B_UNIT_TRAP"
+                        },
+                        {
+                            "id":  "_raw",
+                            "label":  "256 raw",
+                            "error_code":  "B_GARBAGE"
+                        }
+                    ],
+        "correct_id":  "65536",
+        "logs":  [
+                     "Pipeline target asks for bps",
+                     "Do not skip x8 byte-to-bit conversion.",
+                     "Use binary base 1024 for KB/MB in this stage."
+                 ],
+        "analyze_lines":  [
+                              "Module x1000 is a trap for this case.",
+                              "Module /1 is a trap because it ignores time window.",
+                              "Output module must match target unit before confirmation."
+                          ],
+        "preview_metrics":  {
+                                "budget_limit":  900,
+                                "budget_used":  620,
+                                "bottleneck":  "OK",
+                                "fps":  75,
+                                "ram_usage":  41,
+                                "cpu_load":  48,
+                                "total_price":  620
+                            },
+        "benchmark_lines":  [
+                                "Input payload = 256 KB",
+                                "Window = 32 s",
+                                "bits = payload * 1024 * 8",
+                                "speed = bits / time",
+                                "Expected baseline = 65536 bps"
+                            ],
+        "feedback":  {
+                         "headline":  "Benchmark report complete",
+                         "details":  "Compare computed value with target unit before confirming.",
+                         "error_code":  "B_PIPELINE_MISMATCH"
+                     },
+        "modules_pool":  [
+                             {
+                                 "module_id":  "KILO_1024",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1024",
+                                 "k":  1024,
+                                 "is_trap":  false,
+                                 "meaning":  "KB/MB binary conversion base."
+                             },
+                             {
+                                 "module_id":  "KILO_1000",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1000",
+                                 "k":  1000,
+                                 "is_trap":  true,
+                                 "meaning":  "Decimal trap; not used in this exam."
+                             },
+                             {
+                                 "module_id":  "BIT_X8",
+                                 "slot_type":  "bit",
+                                 "display":  "x8",
+                                 "k":  8,
+                                 "is_trap":  false,
+                                 "meaning":  "Convert bytes to bits."
+                             },
+                             {
+                                 "module_id":  "BIT_X1",
+                                 "slot_type":  "bit",
+                                 "display":  "x1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: leaves bytes unchanged."
+                             },
+                             {
+                                 "module_id":  "TIME_DIV",
+                                 "slot_type":  "time",
+                                 "display":  "/t",
+                                 "k":  -1,
+                                 "is_trap":  false,
+                                 "meaning":  "Divide by time window."
+                             },
+                             {
+                                 "module_id":  "TIME_SKIP",
+                                 "slot_type":  "time",
+                                 "display":  "/1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: skips time division."
+                             },
+                             {
+                                 "module_id":  "OUT_BPS",
+                                 "slot_type":  "out",
+                                 "display":  "bps",
+                                 "out_unit":  "bps",
+                                 "is_trap":  false,
+                                 "meaning":  "Output in bps."
+                             },
+                             {
+                                 "module_id":  "OUT_KBPS",
+                                 "slot_type":  "out",
+                                 "display":  "kbps",
+                                 "out_unit":  "kbps",
+                                 "is_trap":  true,
+                                 "meaning":  "Output in kbps."
+                             }
+                         ],
+        "explain_short":  "Computed throughput is 65536 bps with correct conversion chain.",
+        "explain_full":  "Correct chain: payload -\u003e x1024 -\u003e x8 -\u003e /time -\u003e output unit. Wrong modules cause deterministic arithmetic drift.",
+        "tags":  [
+                     "net",
+                     "math",
+                     "quicktest"
+                 ]
+    },
+    {
+        "id":  "NT_B_09",
+        "briefing":  "Virtualization lane shares bandwidth with backup process.",
+        "prompt":  "Run calc and answer in kbps.",
+        "time_limit_sec":  120,
+        "payload_value":  1536,
+        "payload_unit":  "KB",
+        "time_sec":  96,
+        "ask_unit":  "kbps",
+        "expected_bps":  131072,
+        "options":  [
+                        {
+                            "id":  "131.072",
+                            "label":  "131.072 kbps",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "16384",
+                            "label":  "16384 bps",
+                            "error_code":  "B_MATH_X8"
+                        },
+                        {
+                            "id":  "128000",
+                            "label":  "128000 bps",
+                            "error_code":  "B_MATH_1024"
+                        },
+                        {
+                            "id":  "12582912",
+                            "label":  "12582912 bps",
+                            "error_code":  "B_MATH_DIV"
+                        },
+                        {
+                            "id":  "131072_bps",
+                            "label":  "131072 bps",
+                            "error_code":  "B_UNIT_TRAP"
+                        },
+                        {
+                            "id":  "_raw",
+                            "label":  "1536 raw",
+                            "error_code":  "B_GARBAGE"
+                        }
+                    ],
+        "correct_id":  "131.072",
+        "logs":  [
+                     "Pipeline target asks for kbps",
+                     "Do not skip x8 byte-to-bit conversion.",
+                     "Use binary base 1024 for KB/MB in this stage."
+                 ],
+        "analyze_lines":  [
+                              "Module x1000 is a trap for this case.",
+                              "Module /1 is a trap because it ignores time window.",
+                              "Output module must match target unit before confirmation."
+                          ],
+        "preview_metrics":  {
+                                "budget_limit":  960,
+                                "budget_used":  870,
+                                "bottleneck":  "STORAGE",
+                                "fps":  46,
+                                "ram_usage":  72,
+                                "cpu_load":  67,
+                                "total_price":  870
+                            },
+        "benchmark_lines":  [
+                                "Input payload = 1536 KB",
+                                "Window = 96 s",
+                                "bits = payload * 1024 * 8",
+                                "speed = bits / time",
+                                "Expected baseline = 131072 bps"
+                            ],
+        "feedback":  {
+                         "headline":  "Benchmark report complete",
+                         "details":  "Compare computed value with target unit before confirming.",
+                         "error_code":  "B_PIPELINE_MISMATCH"
+                     },
+        "modules_pool":  [
+                             {
+                                 "module_id":  "KILO_1024",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1024",
+                                 "k":  1024,
+                                 "is_trap":  false,
+                                 "meaning":  "KB/MB binary conversion base."
+                             },
+                             {
+                                 "module_id":  "KILO_1000",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1000",
+                                 "k":  1000,
+                                 "is_trap":  true,
+                                 "meaning":  "Decimal trap; not used in this exam."
+                             },
+                             {
+                                 "module_id":  "BIT_X8",
+                                 "slot_type":  "bit",
+                                 "display":  "x8",
+                                 "k":  8,
+                                 "is_trap":  false,
+                                 "meaning":  "Convert bytes to bits."
+                             },
+                             {
+                                 "module_id":  "BIT_X1",
+                                 "slot_type":  "bit",
+                                 "display":  "x1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: leaves bytes unchanged."
+                             },
+                             {
+                                 "module_id":  "TIME_DIV",
+                                 "slot_type":  "time",
+                                 "display":  "/t",
+                                 "k":  -1,
+                                 "is_trap":  false,
+                                 "meaning":  "Divide by time window."
+                             },
+                             {
+                                 "module_id":  "TIME_SKIP",
+                                 "slot_type":  "time",
+                                 "display":  "/1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: skips time division."
+                             },
+                             {
+                                 "module_id":  "OUT_BPS",
+                                 "slot_type":  "out",
+                                 "display":  "bps",
+                                 "out_unit":  "bps",
+                                 "is_trap":  false,
+                                 "meaning":  "Output in bps."
+                             },
+                             {
+                                 "module_id":  "OUT_KBPS",
+                                 "slot_type":  "out",
+                                 "display":  "kbps",
+                                 "out_unit":  "kbps",
+                                 "is_trap":  true,
+                                 "meaning":  "Output in kbps."
+                             }
+                         ],
+        "explain_short":  "131072 bps equals 131.072 kbps after conversion.",
+        "explain_full":  "Correct chain: payload -\u003e x1024 -\u003e x8 -\u003e /time -\u003e output unit. Wrong modules cause deterministic arithmetic drift.",
+        "tags":  [
+                     "net",
+                     "math",
+                     "virtualization"
+                 ]
+    },
+    {
+        "id":  "NT_B_10",
+        "briefing":  "Final gateway acceptance test checks sustained peak load.",
+        "prompt":  "Assemble full pipeline and choose correct bps.",
+        "time_limit_sec":  120,
+        "payload_value":  5,
+        "payload_unit":  "MB",
+        "time_sec":  80,
+        "ask_unit":  "bps",
+        "expected_bps":  524288,
+        "options":  [
+                        {
+                            "id":  "524288",
+                            "label":  "524288 bps",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "65536",
+                            "label":  "65536 bps",
+                            "error_code":  "B_MATH_X8"
+                        },
+                        {
+                            "id":  "500000",
+                            "label":  "500000 bps",
+                            "error_code":  "B_MATH_1024"
+                        },
+                        {
+                            "id":  "41943040",
+                            "label":  "41943040 bps",
+                            "error_code":  "B_MATH_DIV"
+                        },
+                        {
+                            "id":  "524.288_kbps",
+                            "label":  "524.288 kbps",
+                            "error_code":  "B_UNIT_TRAP"
+                        },
+                        {
+                            "id":  "_raw",
+                            "label":  "5 raw",
+                            "error_code":  "B_GARBAGE"
+                        }
+                    ],
+        "correct_id":  "524288",
+        "logs":  [
+                     "Pipeline target asks for bps",
+                     "Do not skip x8 byte-to-bit conversion.",
+                     "Use binary base 1024 for KB/MB in this stage."
+                 ],
+        "analyze_lines":  [
+                              "Module x1000 is a trap for this case.",
+                              "Module /1 is a trap because it ignores time window.",
+                              "Output module must match target unit before confirmation."
+                          ],
+        "preview_metrics":  {
+                                "budget_limit":  990,
+                                "budget_used":  940,
+                                "bottleneck":  "CPU",
+                                "fps":  57,
+                                "ram_usage":  74,
+                                "cpu_load":  90,
+                                "total_price":  940
+                            },
+        "benchmark_lines":  [
+                                "Input payload = 5 MB",
+                                "Window = 80 s",
+                                "bits = payload * 1024 * 8",
+                                "speed = bits / time",
+                                "Expected baseline = 524288 bps"
+                            ],
+        "feedback":  {
+                         "headline":  "Benchmark report complete",
+                         "details":  "Compare computed value with target unit before confirming.",
+                         "error_code":  "B_PIPELINE_MISMATCH"
+                     },
+        "modules_pool":  [
+                             {
+                                 "module_id":  "KILO_1024",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1024",
+                                 "k":  1024,
+                                 "is_trap":  false,
+                                 "meaning":  "KB/MB binary conversion base."
+                             },
+                             {
+                                 "module_id":  "KILO_1000",
+                                 "slot_type":  "kilo",
+                                 "display":  "x1000",
+                                 "k":  1000,
+                                 "is_trap":  true,
+                                 "meaning":  "Decimal trap; not used in this exam."
+                             },
+                             {
+                                 "module_id":  "BIT_X8",
+                                 "slot_type":  "bit",
+                                 "display":  "x8",
+                                 "k":  8,
+                                 "is_trap":  false,
+                                 "meaning":  "Convert bytes to bits."
+                             },
+                             {
+                                 "module_id":  "BIT_X1",
+                                 "slot_type":  "bit",
+                                 "display":  "x1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: leaves bytes unchanged."
+                             },
+                             {
+                                 "module_id":  "TIME_DIV",
+                                 "slot_type":  "time",
+                                 "display":  "/t",
+                                 "k":  -1,
+                                 "is_trap":  false,
+                                 "meaning":  "Divide by time window."
+                             },
+                             {
+                                 "module_id":  "TIME_SKIP",
+                                 "slot_type":  "time",
+                                 "display":  "/1",
+                                 "k":  1,
+                                 "is_trap":  true,
+                                 "meaning":  "Trap: skips time division."
+                             },
+                             {
+                                 "module_id":  "OUT_BPS",
+                                 "slot_type":  "out",
+                                 "display":  "bps",
+                                 "out_unit":  "bps",
+                                 "is_trap":  false,
+                                 "meaning":  "Output in bps."
+                             },
+                             {
+                                 "module_id":  "OUT_KBPS",
+                                 "slot_type":  "out",
+                                 "display":  "kbps",
+                                 "out_unit":  "kbps",
+                                 "is_trap":  true,
+                                 "meaning":  "Output in kbps."
+                             }
+                         ],
+        "explain_short":  "Computed throughput is 524288 bps with correct conversion chain.",
+        "explain_full":  "Correct chain: payload -\u003e x1024 -\u003e x8 -\u003e /time -\u003e output unit. Wrong modules cause deterministic arithmetic drift.",
+        "tags":  [
+                     "net",
+                     "math",
+                     "final"
+                 ]
+    }
 ]

@@ -3,6 +3,8 @@ extends Control
 const LEVELS_PATH := "res://data/quest_b_levels.json"
 const CODE_BLOCK_SCENE := preload("res://scripts/ui/CodeBlock.gd")
 const MAX_ATTEMPTS := 3
+const PHONE_LANDSCAPE_MAX_HEIGHT := 740.0
+const PHONE_PORTRAIT_MAX_WIDTH := 520.0
 
 const AUDIO_CLICK := preload("res://audio/click.wav")
 const AUDIO_ERROR := preload("res://audio/error.wav")
@@ -19,6 +21,11 @@ enum State {
 	SAFE_MODE
 }
 
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var main_layout: VBoxContainer = $SafeArea/MainLayout
+@onready var header_row: HBoxContainer = $SafeArea/MainLayout/Header
+@onready var slot_row: HBoxContainer = $SafeArea/MainLayout/SlotRow
+@onready var actions_row: HBoxContainer = $SafeArea/MainLayout/Actions
 @onready var lbl_clue_title: Label = $SafeArea/MainLayout/Header/LblClueTitle
 @onready var lbl_session: Label = $SafeArea/MainLayout/Header/LblSessionId
 @onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
@@ -52,6 +59,7 @@ var is_safe_mode := false
 var variant_hash := ""
 var level_result_sent := false
 var task_session: Dictionary = {}
+var _slot_mobile_layout: VBoxContainer = null
 
 func _ready() -> void:
 	_load_levels_from_json()
@@ -67,6 +75,13 @@ func _ready() -> void:
 		current_level_idx = 0
 
 	_start_level(current_level_idx)
+	_on_viewport_size_changed()
+	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+
+func _exit_tree() -> void:
+	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
 func _load_levels_from_json() -> void:
 	levels.clear()
@@ -214,6 +229,7 @@ func _render_inventory() -> void:
 		btn.call("setup", b_data)
 		btn.custom_minimum_size = Vector2(160, 80)
 		blocks_container.add_child(btn)
+	_on_viewport_size_changed()
 
 func _on_block_dropped(data: Dictionary) -> void:
 	_play_sound(AUDIO_CLICK)
@@ -442,3 +458,81 @@ func _play_sound(stream: AudioStream) -> void:
 	add_child(player)
 	player.play()
 	player.finished.connect(player.queue_free)
+
+func _on_viewport_size_changed() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var is_landscape: bool = viewport_size.x >= viewport_size.y
+	var phone_landscape: bool = is_landscape and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
+	var phone_portrait: bool = (not is_landscape) and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
+	var compact: bool = phone_landscape or phone_portrait
+
+	_apply_safe_area_padding(compact)
+	main_layout.add_theme_constant_override("separation", 6 if compact else 8)
+	header_row.add_theme_constant_override("separation", 8 if compact else 10)
+	slot_row.add_theme_constant_override("separation", 8 if compact else 12)
+	actions_row.add_theme_constant_override("separation", 10 if compact else 16)
+	blocks_container.add_theme_constant_override("separation", 8 if compact else 14)
+	code_display.add_theme_font_size_override("normal_font_size", 18 if compact else 20)
+	lbl_slot_hint.add_theme_font_size_override("font_size", 16 if compact else 18)
+
+	btn_back.custom_minimum_size = Vector2(96.0 if compact else 120.0, 52.0 if compact else 56.0)
+	drop_zone.custom_minimum_size = Vector2(180.0 if compact else 240.0, 84.0 if compact else 96.0)
+	btn_analyze.custom_minimum_size.y = 52.0 if compact else 56.0
+	btn_submit.custom_minimum_size.y = 52.0 if compact else 56.0
+	btn_next.custom_minimum_size.y = 52.0 if compact else 56.0
+
+	_set_slot_mobile_mode(phone_portrait)
+	for child in blocks_container.get_children():
+		if child is Button:
+			var item_btn: Button = child
+			item_btn.custom_minimum_size = Vector2(120.0 if compact else 160.0, 64.0 if compact else 80.0)
+
+func _set_slot_mobile_mode(use_mobile: bool) -> void:
+	var mobile_layout: VBoxContainer = _ensure_slot_mobile_layout()
+	if use_mobile:
+		if slot_row.visible:
+			if drop_zone.get_parent() != mobile_layout:
+				drop_zone.reparent(mobile_layout)
+			if lbl_slot_hint.get_parent() != mobile_layout:
+				lbl_slot_hint.reparent(mobile_layout)
+		slot_row.visible = false
+		mobile_layout.visible = true
+	else:
+		if not slot_row.visible:
+			if drop_zone.get_parent() != slot_row:
+				drop_zone.reparent(slot_row)
+			if lbl_slot_hint.get_parent() != slot_row:
+				lbl_slot_hint.reparent(slot_row)
+		mobile_layout.visible = false
+		slot_row.visible = true
+
+func _ensure_slot_mobile_layout() -> VBoxContainer:
+	if _slot_mobile_layout != null and is_instance_valid(_slot_mobile_layout):
+		return _slot_mobile_layout
+	_slot_mobile_layout = VBoxContainer.new()
+	_slot_mobile_layout.name = "SlotMobileLayout"
+	_slot_mobile_layout.visible = false
+	_slot_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_slot_mobile_layout.add_theme_constant_override("separation", 8)
+	main_layout.add_child(_slot_mobile_layout)
+	main_layout.move_child(_slot_mobile_layout, main_layout.get_children().find(slot_row) + 1)
+	return _slot_mobile_layout
+
+func _apply_safe_area_padding(compact: bool) -> void:
+	var left: float = 8.0 if compact else 16.0
+	var top: float = 8.0 if compact else 12.0
+	var right: float = 8.0 if compact else 16.0
+	var bottom: float = 8.0 if compact else 12.0
+
+	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
+	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
+		var viewport_size: Vector2 = get_viewport_rect().size
+		left = maxf(left, float(safe_rect.position.x))
+		top = maxf(top, float(safe_rect.position.y))
+		right = maxf(right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
+		bottom = maxf(bottom, viewport_size.y - float(safe_rect.position.y + safe_rect.size.y))
+
+	safe_area.add_theme_constant_override("margin_left", int(round(left)))
+	safe_area.add_theme_constant_override("margin_top", int(round(top)))
+	safe_area.add_theme_constant_override("margin_right", int(round(right)))
+	safe_area.add_theme_constant_override("margin_bottom", int(round(bottom)))

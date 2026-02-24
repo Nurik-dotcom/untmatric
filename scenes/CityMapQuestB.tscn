@@ -186,6 +186,10 @@ text = "СУММА: 0"
 layout_mode = 2
 text = "ОТКАТЫ: 0"
 
+[node name="CycleLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+layout_mode = 2
+text = "ЦИКЛЫ: 0"
+
 [node name="WarningLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
 text = "ПРЕДУПРЕЖДЕНИЯ: -"

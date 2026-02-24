@@ -31,6 +31,7 @@ const TRAFFIC_BASE_SPEED := 2.4
 @onready var sum_live_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SumLiveLabel
 @onready var constraint_info_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ConstraintInfoLabel
 @onready var backtrack_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/BacktrackLabel
+@onready var cycle_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/CycleLabel
 @onready var warning_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/WarningLabel
 @onready var status_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/StatusLabel
 @onready var label_state: Label = $SafeArea/MainVBox/Header/LabelState
@@ -106,6 +107,8 @@ var time_dossier_open_ms: int = 0
 var wait_count: int = 0
 var wait_total_sim_sec: int = 0
 var think_time_before_move_ms: Array[int] = []
+var warnings_shown_count: int = 0
+var must_visit_warning_time_ms: int = 0
 
 var _last_move_ms: int = 0
 var _dossier_open_started_ms: int = -1
@@ -124,6 +127,8 @@ var _info_scroll: ScrollContainer
 var _numpad_buttons: Array[Button] = []
 var _traffic_shader: Shader
 var _traffic_texture: Texture2D
+var _last_warning_signature: String = ""
+var _must_visit_warning_active: bool = false
 
 func _ready() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -361,9 +366,13 @@ func _load_sublevel(index: int) -> void:
 	time_dossier_open_ms = 0
 	wait_count = 0
 	wait_total_sim_sec = 0
+	warnings_shown_count = 0
+	must_visit_warning_time_ms = 0
 	think_time_before_move_ms.clear()
 	_last_move_ms = Time.get_ticks_msec()
 	_dossier_open_started_ms = -1
+	_last_warning_signature = ""
+	_must_visit_warning_active = false
 	briefing_card.visible = false
 
 	_set_briefing()
@@ -515,6 +524,8 @@ func _on_timer_tick() -> void:
 	if is_game_over or stage_completed or level_data.is_empty():
 		return
 	t_elapsed_seconds += 1
+	if _must_visit_warning_active:
+		must_visit_warning_time_ms += 1000
 	_update_timer_display()
 	if t_elapsed_seconds > int(level_data.get("time_limit_sec", 120)):
 		_recalculate_stability()
@@ -601,9 +612,7 @@ func _add_adjacency(from_id: String, to_id: String, weight: int) -> void:
 func _set_briefing() -> void:
 	briefing_title.text = "ПРОВЕРКА ТРАНЗИТА"
 	briefing_text.text = "Доберитесь до узла E, укажите точную сумму маршрута и докажите его оптимальность в ориентированном графе."
-	var constraint_text := "ОГРАНИЧЕНИЕ: ОБЯЗАТЕЛЬНО ПОСЕТИТЬ %s" % ",".join(must_visit_nodes)
-	briefing_constraint.text = constraint_text
-	constraint_info_label.text = constraint_text
+	update_conditions_panel()
 	footer_label.text = "Двусторонние дороги активны только там, где в данных есть обратное ребро."
 
 func _calculate_min_sum_with_constraints() -> int:
@@ -925,22 +934,21 @@ func _reset_round_state(full_reset: bool) -> void:
 	status_label.text = ""
 	_undo_stack.clear()
 	_last_move_ms = Time.get_ticks_msec()
+	_last_warning_signature = ""
+	_must_visit_warning_active = false
 
 	if full_reset:
 		level_started_ms = Time.get_ticks_msec()
 
+	update_conditions_panel()
 	_update_visuals()
 
 func _update_visuals() -> void:
 	path_display.text = "ПУТЬ: %s" % " -> ".join(path)
 	sum_live_label.text = "СУММА: %d" % path_sum
 	backtrack_label.text = "ОТКАТЫ: %d" % backtrack_count
-	if cycle_detected:
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: ОБНАРУЖЕН ЦИКЛ"
-	elif backtrack_count > 0:
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: ИСПОЛЬЗОВАН ОТКАТ"
-	else:
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ: -"
+	cycle_label.text = "ЦИКЛЫ: %d" % cycle_events
+	update_warnings_panel()
 
 	for node_id in node_buttons.keys():
 		var btn: Button = node_buttons[node_id]
@@ -1017,10 +1025,12 @@ func _on_node_pressed(node_id: String) -> void:
 		first_attempt_edge = _edge_key(current_node, node_id)
 		first_action_ms = now_ms - level_started_ms
 
-	if path.size() >= 2 and path[path.size() - 2] == node_id:
+	var is_backtrack: bool = path.size() >= 2 and path[path.size() - 2] == node_id
+	if is_backtrack:
 		backtrack_count += 1
 
-	if path.has(node_id):
+	var is_cycle_revisit: bool = path.has(node_id) and (not is_backtrack or path.size() > 2)
+	if is_cycle_revisit:
 		cycle_events += 1
 		cycle_detected = true
 
@@ -1243,6 +1253,8 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"undo_count": undo_count,
 		"wait_count": wait_count,
 		"wait_total_sim_sec": wait_total_sim_sec,
+		"warnings_shown_count": warnings_shown_count,
+		"must_visit_warning_time_ms": must_visit_warning_time_ms,
 		"closed_edge_attempts": 0,
 		"dossier_open_count": dossier_open_count,
 		"time_dossier_open_ms": time_dossier_open_ms,
@@ -1260,6 +1272,45 @@ func _log_attempt(verdict: Dictionary) -> void:
 
 	GlobalMetrics.register_trial(log_data)
 	_save_json_log(log_data)
+
+func update_conditions_panel() -> void:
+	var must_visit_text: String = "-" if must_visit_nodes.is_empty() else ",".join(must_visit_nodes)
+	var lines: Array[String] = [
+		"УСЛОВИЯ:",
+		"MUST VISIT: %s" % must_visit_text,
+		"ЦИКЛЫ: запрещены",
+		"ОТКАТЫ: считаются"
+	]
+	var conditions_text: String = "\n".join(lines)
+	constraint_info_label.text = conditions_text
+	briefing_constraint.text = conditions_text
+	constraint_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+func update_warnings_panel() -> void:
+	var warnings: Array[String] = []
+	var missing_must: Array[String] = []
+	for must_node in must_visit_nodes:
+		if not path.has(must_node):
+			missing_must.append(must_node)
+
+	if not missing_must.is_empty():
+		warnings.append("⚠ НЕ ПОСЕЩЁН MUST VISIT: %s" % ",".join(missing_must))
+	if cycle_events > 0:
+		warnings.append("⚠ ОБНАРУЖЕН ЦИКЛ")
+	if backtrack_count > 0:
+		warnings.append("⚠ ОТКАТ ВЫПОЛНЕН")
+
+	_must_visit_warning_active = not missing_must.is_empty()
+	var signature: String = "|".join(warnings)
+	if signature != _last_warning_signature:
+		if not signature.is_empty():
+			warnings_shown_count += 1
+		_last_warning_signature = signature
+
+	if warnings.is_empty():
+		warning_label.text = "WARNINGS:\n-"
+	else:
+		warning_label.text = "WARNINGS:\n%s" % "\n".join(warnings)
 
 func _save_json_log(data: Dictionary, is_summary: bool = false) -> void:
 	var dir := DirAccess.open("user://")

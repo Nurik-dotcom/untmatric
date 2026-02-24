@@ -1,170 +1,562 @@
 [
-  {
-    "id": "NT_C_01",
-    "mode": "EXAM",
-    "briefing": "Сегмент закрыт. Пускают только “своих”.",
-    "prompt": "Цель: 192.168.1.142, /26. Найдите Network ID (последний октет).",
-    "time_limit_sec": 150,
-    "target_ip": "192.168.1.142",
-    "cidr": 26,
-    "ip_last": 142,
-    "mask_last": 192,
-    "step": 64,
-    "expected_network_last": 128,
-    "mask_editable": false,
-    "mask_require_contiguous": true,
-    "reveal_expected_after_errors": 2,
-    "options": [
-      { "id": "0", "label": "0", "error_code": "C_L24_FALLBACK" },
-      { "id": "64", "label": "64", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "128", "label": "128", "error_code": "" },
-      { "id": "192", "label": "192", "error_code": "C_MASK_VAL" },
-      { "id": "224", "label": "224", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "255", "label": "255", "error_code": "C_BROADCAST" }
-    ],
-    "correct_id": "128",
-    "explain_short": "Шаг /26 = 64. 142 ∈ 128..191 → сеть 128.",
-    "explain_full": "IP last=142 (10001110). Mask last=192 (11000000). AND=10000000=128. Границы: 0,64,128,192.",
-    "tags": ["net", "cidr", "subnet", "bitwise"]
-  },
-  {
-    "id": "NT_C_02",
-    "mode": "EXAM",
-    "briefing": "Доступ отклонён: “не тот сегмент”.",
-    "prompt": "Цель: 10.0.5.77, /27. Найдите Network ID (последний октет).",
-    "time_limit_sec": 150,
-    "target_ip": "10.0.5.77",
-    "cidr": 27,
-    "ip_last": 77,
-    "mask_last": 224,
-    "step": 32,
-    "expected_network_last": 64,
-    "mask_editable": false,
-    "mask_require_contiguous": true,
-    "reveal_expected_after_errors": 2,
-    "options": [
-      { "id": "0", "label": "0", "error_code": "C_L24_FALLBACK" },
-      { "id": "32", "label": "32", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "64", "label": "64", "error_code": "" },
-      { "id": "96", "label": "96", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "224", "label": "224", "error_code": "C_MASK_VAL" },
-      { "id": "255", "label": "255", "error_code": "C_BROADCAST" }
-    ],
-    "correct_id": "64",
-    "explain_short": "Шаг /27 = 32. 77 ∈ 64..95 → сеть 64.",
-    "explain_full": "Mask last=224 (11100000). Step=32. Диапазоны: 0..31, 32..63, 64..95, 96..127 ...",
-    "tags": ["net", "cidr", "subnet"]
-  },
-  {
-    "id": "NT_C_03",
-    "mode": "EXAM",
-    "briefing": "Узкий сегмент. Ошибка на один шаг и ты мимо.",
-    "prompt": "Цель: 172.16.9.200, /28. Найдите Network ID (последний октет).",
-    "time_limit_sec": 150,
-    "target_ip": "172.16.9.200",
-    "cidr": 28,
-    "ip_last": 200,
-    "mask_last": 240,
-    "step": 16,
-    "expected_network_last": 192,
-    "mask_editable": false,
-    "mask_require_contiguous": true,
-    "reveal_expected_after_errors": 2,
-    "options": [
-      { "id": "176", "label": "176", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "192", "label": "192", "error_code": "" },
-      { "id": "208", "label": "208", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "240", "label": "240", "error_code": "C_MASK_VAL" },
-      { "id": "0", "label": "0", "error_code": "C_L24_FALLBACK" },
-      { "id": "255", "label": "255", "error_code": "C_BROADCAST" }
-    ],
-    "correct_id": "192",
-    "explain_short": "Шаг /28 = 16. 200 ∈ 192..207 → сеть 192.",
-    "explain_full": "Mask last=240 (11110000). Step=16. Границы: 0,16,32,...,192,208,...",
-    "tags": ["net", "cidr", "subnet", "step16"]
-  },
-  {
-    "id": "NT_C_04",
-    "mode": "TRAIN",
-    "briefing": "Ручная калибровка фильтра. Ошибка в одном бите и замок не откроется.",
-    "prompt": "Цель: 192.168.1.13, /25. Сначала выставьте маску (последний октет), затем найдите Network ID.",
-    "time_limit_sec": 180,
-    "target_ip": "192.168.1.13",
-    "cidr": 25,
-    "ip_last": 13,
-    "mask_last": 128,
-    "step": 128,
-    "expected_network_last": 0,
-    "mask_editable": true,
-    "mask_require_contiguous": true,
-    "reveal_expected_after_errors": 2,
-    "options": [
-      { "id": "0", "label": "0", "error_code": "" },
-      { "id": "128", "label": "128", "error_code": "C_MASK_VAL" },
-      { "id": "64", "label": "64", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "255", "label": "255", "error_code": "C_BROADCAST" },
-      { "id": "13", "label": "13", "error_code": "C_IP_VAL" },
-      { "id": "192", "label": "192", "error_code": "C_BOUNDARY_SHIFT" }
-    ],
-    "correct_id": "0",
-    "explain_short": "/25 делит на 0..127 и 128..255. 13 в первом диапазоне → сеть 0.",
-    "explain_full": "TRAIN: маска последнего октета для /25 = 128 (10000000). После AND: 13 (00001101) & 128 (10000000) = 0.",
-    "tags": ["net", "train", "cidr25", "bitmask"]
-  },
-  {
-    "id": "NT_C_05",
-    "mode": "TRAIN",
-    "briefing": "Фильтр нужно выставить самому. И да, маска должна быть непрерывной.",
-    "prompt": "Цель: 192.168.1.220, /26. Выставьте маску, затем найдите Network ID (последний октет).",
-    "time_limit_sec": 180,
-    "target_ip": "192.168.1.220",
-    "cidr": 26,
-    "ip_last": 220,
-    "mask_last": 192,
-    "step": 64,
-    "expected_network_last": 192,
-    "mask_editable": true,
-    "mask_require_contiguous": true,
-    "reveal_expected_after_errors": 2,
-    "options": [
-      { "id": "128", "label": "128", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "192", "label": "192", "error_code": "" },
-      { "id": "64", "label": "64", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "0", "label": "0", "error_code": "C_L24_FALLBACK" },
-      { "id": "255", "label": "255", "error_code": "C_BROADCAST" },
-      { "id": "224", "label": "224", "error_code": "C_MASK_VAL" }
-    ],
-    "correct_id": "192",
-    "explain_short": "Шаг /26 = 64. 220 ∈ 192..255 → сеть 192.",
-    "explain_full": "TRAIN: /26 mask last=192 (11000000). 220 (11011100) & 192 (11000000) = 192.",
-    "tags": ["net", "train", "cidr26"]
-  },
-  {
-    "id": "NT_C_06",
-    "mode": "EXAM",
-    "briefing": "Пограничное значение. Тут люди чаще всего ошибаются.",
-    "prompt": "Цель: 192.168.1.63, /26. Найдите Network ID (последний октет).",
-    "time_limit_sec": 150,
-    "target_ip": "192.168.1.63",
-    "cidr": 26,
-    "ip_last": 63,
-    "mask_last": 192,
-    "step": 64,
-    "expected_network_last": 0,
-    "mask_editable": false,
-    "mask_require_contiguous": true,
-    "reveal_expected_after_errors": 2,
-    "options": [
-      { "id": "0", "label": "0", "error_code": "" },
-      { "id": "64", "label": "64", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "128", "label": "128", "error_code": "C_BOUNDARY_SHIFT" },
-      { "id": "192", "label": "192", "error_code": "C_MASK_VAL" },
-      { "id": "255", "label": "255", "error_code": "C_BROADCAST" },
-      { "id": "63", "label": "63", "error_code": "C_IP_VAL" }
-    ],
-    "correct_id": "0",
-    "explain_short": "Шаг 64. 63 ∈ 0..63 → сеть 0.",
-    "explain_full": "Граница важна: 0..63 это один сегмент при /26. Следующий начинается с 64.",
-    "tags": ["net", "cidr26", "boundary"]
-  }
+    {
+        "id":  "NT_C_01",
+        "mode":  "EXAM",
+        "briefing":  "Exam mode: compute network ID from IP and CIDR with APPLY AND.",
+        "prompt":  "IP 192.168.1.142, /26. Apply AND and choose Network ID (last octet).",
+        "time_limit_sec":  150,
+        "target_ip":  "192.168.1.142",
+        "cidr":  26,
+        "ip_last":  142,
+        "mask_last":  192,
+        "step":  64,
+        "expected_network_last":  128,
+        "mask_editable":  false,
+        "mask_require_contiguous":  true,
+        "reveal_expected_after_errors":  2,
+        "options":  [
+                        {
+                            "id":  "64",
+                            "label":  "64",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "128",
+                            "label":  "128",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "192",
+                            "label":  "192",
+                            "error_code":  "C_MASK_VAL"
+                        },
+                        {
+                            "id":  "142",
+                            "label":  "142",
+                            "error_code":  "C_IP_VAL"
+                        },
+                        {
+                            "id":  "0",
+                            "label":  "0",
+                            "error_code":  "C_L24_FALLBACK"
+                        },
+                        {
+                            "id":  "255",
+                            "label":  "255",
+                            "error_code":  "C_BROADCAST"
+                        }
+                    ],
+        "correct_id":  "128",
+        "explain_short":  "/26 gives step 64. 142 belongs to 128..191, so NET ID = 128.",
+        "explain_full":  "IP last (142) AND mask last (192) gives 128. Segment boundaries move by step 64.",
+        "tags":  [
+                     "net",
+                     "cidr",
+                     "subnet"
+                 ]
+    },
+    {
+        "id":  "NT_C_02",
+        "mode":  "EXAM",
+        "briefing":  "Exam mode: compute network ID from IP and CIDR with APPLY AND.",
+        "prompt":  "IP 10.0.5.77, /27. Apply AND and choose Network ID (last octet).",
+        "time_limit_sec":  150,
+        "target_ip":  "10.0.5.77",
+        "cidr":  27,
+        "ip_last":  77,
+        "mask_last":  224,
+        "step":  32,
+        "expected_network_last":  64,
+        "mask_editable":  false,
+        "mask_require_contiguous":  true,
+        "reveal_expected_after_errors":  2,
+        "options":  [
+                        {
+                            "id":  "32",
+                            "label":  "32",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "64",
+                            "label":  "64",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "96",
+                            "label":  "96",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "224",
+                            "label":  "224",
+                            "error_code":  "C_MASK_VAL"
+                        },
+                        {
+                            "id":  "77",
+                            "label":  "77",
+                            "error_code":  "C_IP_VAL"
+                        },
+                        {
+                            "id":  "0",
+                            "label":  "0",
+                            "error_code":  "C_L24_FALLBACK"
+                        }
+                    ],
+        "correct_id":  "64",
+        "explain_short":  "/27 gives step 32. 77 belongs to 64..95, so NET ID = 64.",
+        "explain_full":  "IP last (77) AND mask last (224) gives 64. Segment boundaries move by step 32.",
+        "tags":  [
+                     "net",
+                     "cidr",
+                     "boundary"
+                 ]
+    },
+    {
+        "id":  "NT_C_03",
+        "mode":  "EXAM",
+        "briefing":  "Exam mode: compute network ID from IP and CIDR with APPLY AND.",
+        "prompt":  "IP 172.16.9.200, /28. Apply AND and choose Network ID (last octet).",
+        "time_limit_sec":  150,
+        "target_ip":  "172.16.9.200",
+        "cidr":  28,
+        "ip_last":  200,
+        "mask_last":  240,
+        "step":  16,
+        "expected_network_last":  192,
+        "mask_editable":  false,
+        "mask_require_contiguous":  true,
+        "reveal_expected_after_errors":  2,
+        "options":  [
+                        {
+                            "id":  "176",
+                            "label":  "176",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "192",
+                            "label":  "192",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "208",
+                            "label":  "208",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "240",
+                            "label":  "240",
+                            "error_code":  "C_MASK_VAL"
+                        },
+                        {
+                            "id":  "200",
+                            "label":  "200",
+                            "error_code":  "C_IP_VAL"
+                        },
+                        {
+                            "id":  "0",
+                            "label":  "0",
+                            "error_code":  "C_L24_FALLBACK"
+                        }
+                    ],
+        "correct_id":  "192",
+        "explain_short":  "/28 gives step 16. 200 belongs to 192..207, so NET ID = 192.",
+        "explain_full":  "IP last (200) AND mask last (240) gives 192. Segment boundaries move by step 16.",
+        "tags":  [
+                     "net",
+                     "cidr",
+                     "step16"
+                 ]
+    },
+    {
+        "id":  "NT_C_04",
+        "mode":  "TRAIN",
+        "briefing":  "Training mode: place mask, run AND, and verify segment start.",
+        "prompt":  "IP 192.168.1.13, /25. Apply AND and choose Network ID (last octet).",
+        "time_limit_sec":  180,
+        "target_ip":  "192.168.1.13",
+        "cidr":  25,
+        "ip_last":  13,
+        "mask_last":  128,
+        "step":  128,
+        "expected_network_last":  0,
+        "mask_editable":  true,
+        "mask_require_contiguous":  true,
+        "reveal_expected_after_errors":  2,
+        "options":  [
+                        {
+                            "id":  "0",
+                            "label":  "0",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "128",
+                            "label":  "128",
+                            "error_code":  "C_MASK_VAL"
+                        },
+                        {
+                            "id":  "13",
+                            "label":  "13",
+                            "error_code":  "C_IP_VAL"
+                        },
+                        {
+                            "id":  "255",
+                            "label":  "255",
+                            "error_code":  "C_BROADCAST"
+                        },
+                        {
+                            "id":  "1",
+                            "label":  "1",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "129",
+                            "label":  "129",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        }
+                    ],
+        "correct_id":  "0",
+        "explain_short":  "/25 gives step 128. 13 belongs to 0..127, so NET ID = 0.",
+        "explain_full":  "IP last (13) AND mask last (128) gives 0. Segment boundaries move by step 128.",
+        "tags":  [
+                     "net",
+                     "train",
+                     "cidr25"
+                 ]
+    },
+    {
+        "id":  "NT_C_05",
+        "mode":  "TRAIN",
+        "briefing":  "Training mode: place mask, run AND, and verify segment start.",
+        "prompt":  "IP 192.168.1.220, /26. Apply AND and choose Network ID (last octet).",
+        "time_limit_sec":  180,
+        "target_ip":  "192.168.1.220",
+        "cidr":  26,
+        "ip_last":  220,
+        "mask_last":  192,
+        "step":  64,
+        "expected_network_last":  192,
+        "mask_editable":  true,
+        "mask_require_contiguous":  true,
+        "reveal_expected_after_errors":  2,
+        "options":  [
+                        {
+                            "id":  "128",
+                            "label":  "128",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "192",
+                            "label":  "192",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "220",
+                            "label":  "220",
+                            "error_code":  "C_IP_VAL"
+                        },
+                        {
+                            "id":  "0",
+                            "label":  "0",
+                            "error_code":  "C_L24_FALLBACK"
+                        },
+                        {
+                            "id":  "255",
+                            "label":  "255",
+                            "error_code":  "C_BROADCAST"
+                        },
+                        {
+                            "id":  "64",
+                            "label":  "64",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        }
+                    ],
+        "correct_id":  "192",
+        "explain_short":  "/26 gives step 64. 220 belongs to 192..255, so NET ID = 192.",
+        "explain_full":  "IP last (220) AND mask last (192) gives 192. Segment boundaries move by step 64.",
+        "tags":  [
+                     "net",
+                     "train",
+                     "cidr26"
+                 ]
+    },
+    {
+        "id":  "NT_C_06",
+        "mode":  "EXAM",
+        "briefing":  "Exam mode: compute network ID from IP and CIDR with APPLY AND.",
+        "prompt":  "IP 192.168.1.63, /26. Apply AND and choose Network ID (last octet).",
+        "time_limit_sec":  150,
+        "target_ip":  "192.168.1.63",
+        "cidr":  26,
+        "ip_last":  63,
+        "mask_last":  192,
+        "step":  64,
+        "expected_network_last":  0,
+        "mask_editable":  false,
+        "mask_require_contiguous":  true,
+        "reveal_expected_after_errors":  2,
+        "options":  [
+                        {
+                            "id":  "0",
+                            "label":  "0",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "64",
+                            "label":  "64",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "192",
+                            "label":  "192",
+                            "error_code":  "C_MASK_VAL"
+                        },
+                        {
+                            "id":  "63",
+                            "label":  "63",
+                            "error_code":  "C_IP_VAL"
+                        },
+                        {
+                            "id":  "255",
+                            "label":  "255",
+                            "error_code":  "C_BROADCAST"
+                        },
+                        {
+                            "id":  "128",
+                            "label":  "128",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        }
+                    ],
+        "correct_id":  "0",
+        "explain_short":  "/26 gives step 64. 63 belongs to 0..63, so NET ID = 0.",
+        "explain_full":  "IP last (63) AND mask last (192) gives 0. Segment boundaries move by step 64.",
+        "tags":  [
+                     "net",
+                     "cidr26",
+                     "boundary"
+                 ]
+    },
+    {
+        "id":  "NT_C_07",
+        "mode":  "EXAM",
+        "briefing":  "Exam mode: compute network ID from IP and CIDR with APPLY AND.",
+        "prompt":  "IP 10.40.12.158, /27. Apply AND and choose Network ID (last octet).",
+        "time_limit_sec":  150,
+        "target_ip":  "10.40.12.158",
+        "cidr":  27,
+        "ip_last":  158,
+        "mask_last":  224,
+        "step":  32,
+        "expected_network_last":  128,
+        "mask_editable":  false,
+        "mask_require_contiguous":  true,
+        "reveal_expected_after_errors":  2,
+        "options":  [
+                        {
+                            "id":  "96",
+                            "label":  "96",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "128",
+                            "label":  "128",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "160",
+                            "label":  "160",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "224",
+                            "label":  "224",
+                            "error_code":  "C_MASK_VAL"
+                        },
+                        {
+                            "id":  "158",
+                            "label":  "158",
+                            "error_code":  "C_IP_VAL"
+                        },
+                        {
+                            "id":  "0",
+                            "label":  "0",
+                            "error_code":  "C_L24_FALLBACK"
+                        }
+                    ],
+        "correct_id":  "128",
+        "explain_short":  "/27 gives step 32. 158 belongs to 128..159, so NET ID = 128.",
+        "explain_full":  "IP last (158) AND mask last (224) gives 128. Segment boundaries move by step 32.",
+        "tags":  [
+                     "net",
+                     "cidr27",
+                     "and"
+                 ]
+    },
+    {
+        "id":  "NT_C_08",
+        "mode":  "EXAM",
+        "briefing":  "Exam mode: compute network ID from IP and CIDR with APPLY AND.",
+        "prompt":  "IP 172.20.8.19, /28. Apply AND and choose Network ID (last octet).",
+        "time_limit_sec":  150,
+        "target_ip":  "172.20.8.19",
+        "cidr":  28,
+        "ip_last":  19,
+        "mask_last":  240,
+        "step":  16,
+        "expected_network_last":  16,
+        "mask_editable":  false,
+        "mask_require_contiguous":  true,
+        "reveal_expected_after_errors":  2,
+        "options":  [
+                        {
+                            "id":  "0",
+                            "label":  "0",
+                            "error_code":  "C_L24_FALLBACK"
+                        },
+                        {
+                            "id":  "16",
+                            "label":  "16",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "32",
+                            "label":  "32",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "240",
+                            "label":  "240",
+                            "error_code":  "C_MASK_VAL"
+                        },
+                        {
+                            "id":  "19",
+                            "label":  "19",
+                            "error_code":  "C_IP_VAL"
+                        },
+                        {
+                            "id":  "255",
+                            "label":  "255",
+                            "error_code":  "C_BROADCAST"
+                        }
+                    ],
+        "correct_id":  "16",
+        "explain_short":  "/28 gives step 16. 19 belongs to 16..31, so NET ID = 16.",
+        "explain_full":  "IP last (19) AND mask last (240) gives 16. Segment boundaries move by step 16.",
+        "tags":  [
+                     "net",
+                     "cidr28",
+                     "segment"
+                 ]
+    },
+    {
+        "id":  "NT_C_09",
+        "mode":  "TRAIN",
+        "briefing":  "Training mode: place mask, run AND, and verify segment start.",
+        "prompt":  "IP 192.168.50.94, /27. Apply AND and choose Network ID (last octet).",
+        "time_limit_sec":  180,
+        "target_ip":  "192.168.50.94",
+        "cidr":  27,
+        "ip_last":  94,
+        "mask_last":  224,
+        "step":  32,
+        "expected_network_last":  64,
+        "mask_editable":  true,
+        "mask_require_contiguous":  true,
+        "reveal_expected_after_errors":  2,
+        "options":  [
+                        {
+                            "id":  "32",
+                            "label":  "32",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "64",
+                            "label":  "64",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "96",
+                            "label":  "96",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "224",
+                            "label":  "224",
+                            "error_code":  "C_MASK_VAL"
+                        },
+                        {
+                            "id":  "94",
+                            "label":  "94",
+                            "error_code":  "C_IP_VAL"
+                        },
+                        {
+                            "id":  "0",
+                            "label":  "0",
+                            "error_code":  "C_L24_FALLBACK"
+                        }
+                    ],
+        "correct_id":  "64",
+        "explain_short":  "/27 gives step 32. 94 belongs to 64..95, so NET ID = 64.",
+        "explain_full":  "IP last (94) AND mask last (224) gives 64. Segment boundaries move by step 32.",
+        "tags":  [
+                     "net",
+                     "train",
+                     "mask"
+                 ]
+    },
+    {
+        "id":  "NT_C_10",
+        "mode":  "EXAM",
+        "briefing":  "Exam mode: compute network ID from IP and CIDR with APPLY AND.",
+        "prompt":  "IP 10.1.3.245, /28. Apply AND and choose Network ID (last octet).",
+        "time_limit_sec":  150,
+        "target_ip":  "10.1.3.245",
+        "cidr":  28,
+        "ip_last":  245,
+        "mask_last":  240,
+        "step":  16,
+        "expected_network_last":  240,
+        "mask_editable":  false,
+        "mask_require_contiguous":  true,
+        "reveal_expected_after_errors":  2,
+        "options":  [
+                        {
+                            "id":  "224",
+                            "label":  "224",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        },
+                        {
+                            "id":  "240",
+                            "label":  "240",
+                            "error_code":  ""
+                        },
+                        {
+                            "id":  "245",
+                            "label":  "245",
+                            "error_code":  "C_IP_VAL"
+                        },
+                        {
+                            "id":  "0",
+                            "label":  "0",
+                            "error_code":  "C_L24_FALLBACK"
+                        },
+                        {
+                            "id":  "255",
+                            "label":  "255",
+                            "error_code":  "C_BROADCAST"
+                        },
+                        {
+                            "id":  "208",
+                            "label":  "208",
+                            "error_code":  "C_BOUNDARY_SHIFT"
+                        }
+                    ],
+        "correct_id":  "240",
+        "explain_short":  "/28 gives step 16. 245 belongs to 240..255, so NET ID = 240.",
+        "explain_full":  "IP last (245) AND mask last (240) gives 240. Segment boundaries move by step 16.",
+        "tags":  [
+                     "net",
+                     "final",
+                     "subnet"
+                 ]
+    }
 ]

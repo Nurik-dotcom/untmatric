@@ -293,3 +293,9 @@ text = "RESET"
 custom_minimum_size = Vector2(190, 72)
 layout_mode = 2
 text = "LINK START"
+
+[node name="BtnNextLevel" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+visible = false
+custom_minimum_size = Vector2(170, 72)
+layout_mode = 2
+text = "NEXT LEVEL"

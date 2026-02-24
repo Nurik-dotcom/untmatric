@@ -1,18 +1,15 @@
 extends Control
 
-const THEME_GREEN: Theme = preload("res://ui/theme_terminal_green.tres")
-const THEME_AMBER: Theme = preload("res://ui/theme_terminal_amber.tres")
+const NOIR_THEME: Theme = preload("res://ui/theme_noir_detective.tres")
 const ERROR_MAP = preload("res://scripts/ssot/network_trace_errors.gd")
 const DEVICE_CARD_SCENE: PackedScene = preload("res://scenes/ui/network_trace/NetworkTraceDeviceCard.tscn")
 
 const LEVELS_PATH := "res://data/network_trace_a_levels.json"
 const MAX_ATTEMPTS := 3
 const DEFAULT_TIME_LIMIT_SEC := 120
-const RUN_COOLDOWN_MS := 500
+const RUN_COOLDOWN_MS := 450
 const FAIL_STABILITY_DELTA := -10.0
 const HINT_STABILITY_DELTA := -5.0
-const PALETTE_GREEN_ID := 0
-const PALETTE_AMBER_ID := 1
 
 enum QuestState {
 	INIT,
@@ -21,7 +18,8 @@ enum QuestState {
 	FEEDBACK_SUCCESS,
 	FEEDBACK_FAIL,
 	SAFE_MODE,
-	DIAGNOSTIC
+	DIAGNOSTIC,
+	DONE
 }
 
 @onready var btn_back: Button = $SafeArea/Main/V/Header/BtnBack
@@ -32,8 +30,10 @@ enum QuestState {
 @onready var lbl_briefing: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblBriefing
 @onready var lbl_prompt: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblPrompt
 @onready var log_list: VBoxContainer = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LogScroll/LogList
+@onready var lbl_evidence_title: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/EvidenceLabel
 @onready var evidence_row: HBoxContainer = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/EvidenceRow
 @onready var topology_board: NetworkTraceTopologyBoardA = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/TopologyBoard
+@onready var lbl_palette_title: Label = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/PaletteLabel
 @onready var palette_box: HBoxContainer = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/PaletteScroll/Palette
 @onready var btn_analyze: Button = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions/BtnAnalyze
 @onready var btn_run_trace: Button = $SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions/BtnRunTrace
@@ -67,6 +67,7 @@ var required_evidence: int = 2
 var selected_evidence_indices: Array[int] = []
 var log_buttons: Array[Button] = []
 var evidence_slot_labels: Array[Label] = []
+var evidence_data: Array[Dictionary] = []
 
 var selected_device_id: String = ""
 var selected_error_code: String = ""
@@ -80,14 +81,14 @@ var palette_cards: Array[NetworkTraceDeviceCard] = []
 func _ready() -> void:
 	_setup_palette_controls()
 	_connect_signals()
-	_apply_palette(PALETTE_GREEN_ID)
+	_apply_noir_theme()
 	_apply_layout_mode()
 
 	if GlobalMetrics != null and not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 
 	if not _load_levels():
-		_show_boot_error("Данные Network Trace A отсутствуют или повреждены.")
+		_show_boot_error("Network Trace A levels failed to load.")
 		return
 
 	_start_level(0)
@@ -97,9 +98,6 @@ func _exit_tree() -> void:
 		GlobalMetrics.stability_changed.disconnect(_on_stability_changed)
 
 func _process(delta: float) -> void:
-	if state == QuestState.DIAGNOSTIC and not diagnostics_panel.visible and not level_finished:
-		state = QuestState.SAFE_MODE if safe_mode_used else QuestState.SOLVING
-
 	if timer_running and not level_finished:
 		time_left_sec -= delta
 		if time_left_sec <= 0.0:
@@ -110,16 +108,19 @@ func _process(delta: float) -> void:
 			_update_meta_label()
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED:
-		if not is_node_ready():
-			return
+	if what == NOTIFICATION_RESIZED and is_node_ready():
 		_apply_layout_mode()
 
 func _setup_palette_controls() -> void:
-	palette_select.clear()
-	palette_select.add_item("ЗЕЛЁНЫЙ", PALETTE_GREEN_ID)
-	palette_select.add_item("ЯНТАРНЫЙ", PALETTE_AMBER_ID)
-	palette_select.select(PALETTE_GREEN_ID)
+	btn_back.text = "Back"
+	btn_run_trace.text = "RUN TRACE"
+	btn_reset.text = "RESET"
+	btn_next.text = "NEXT"
+	lbl_evidence_title.text = "EVIDENCE"
+	lbl_palette_title.text = "DEVICE PALETTE"
+	palette_select.visible = false
+	palette_select.disabled = true
+	palette_select.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func _connect_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -127,8 +128,7 @@ func _connect_signals() -> void:
 	btn_run_trace.pressed.connect(_on_run_trace_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
-	palette_select.item_selected.connect(_on_palette_selected)
-	
+
 	topology_board.device_installed.connect(_on_device_installed)
 	topology_board.device_removed.connect(_on_device_removed)
 
@@ -143,19 +143,13 @@ func _load_levels() -> bool:
 		push_error("Expected array in %s" % LEVELS_PATH)
 		return false
 
-	var raw_levels: Array = parsed
 	levels.clear()
-	for level_var in raw_levels:
+	for level_var in parsed:
 		if typeof(level_var) != TYPE_DICTIONARY:
 			continue
 		var level: Dictionary = level_var
 		if _validate_level(level):
 			levels.append(level)
-		elif OS.is_debug_build():
-			push_error("Invalid Network Trace A level: %s" % str(level.get("id", "UNKNOWN")))
-			return false
-		else:
-			push_warning("Skipping invalid level: %s" % str(level.get("id", "UNKNOWN")))
 
 	return not levels.is_empty()
 
@@ -172,12 +166,11 @@ func _validate_level(level: Dictionary) -> bool:
 	if typeof(level.get("topology")) != TYPE_DICTIONARY:
 		return false
 
-	var logs: Array[String] = _extract_level_logs(level)
-	if logs.size() < 2:
+	var pois_variant: Variant = level.get("pois", [])
+	if typeof(pois_variant) != TYPE_ARRAY:
 		return false
-
-	var required_count: int = _extract_required_evidence(level, logs.size())
-	if required_count <= 0 or required_count > logs.size():
+	var pois: Array = pois_variant
+	if pois.size() < 3:
 		return false
 
 	var options: Array = level.get("options", [])
@@ -189,32 +182,15 @@ func _validate_level(level: Dictionary) -> bool:
 		if typeof(option_var) != TYPE_DICTIONARY:
 			return false
 		var option: Dictionary = option_var
-		if not option.has("id") or not option.has("label") or not option.has("error_code"):
-			return false
 		var option_id: String = str(option.get("id", ""))
 		if option_id.is_empty() or ids.has(option_id):
 			return false
+		if not option.has("label") or not option.has("error_code"):
+			return false
 		ids[option_id] = true
 
-	var correct_id: String = str(level.get("correct_id", ""))
-	if not ids.has(correct_id):
+	if not ids.has(str(level.get("correct_id", ""))):
 		return false
-
-	var topology: Dictionary = level.get("topology", {})
-	if typeof(topology.get("nodes", [])) != TYPE_ARRAY:
-		return false
-	if typeof(topology.get("edges", [])) != TYPE_ARRAY:
-		return false
-	var nodes_var: Variant = topology.get("nodes", [])
-	if typeof(nodes_var) != TYPE_ARRAY:
-		return false
-	var nodes: Array = nodes_var
-	for node_var in nodes:
-		if typeof(node_var) == TYPE_DICTIONARY:
-			var node_data: Dictionary = node_var
-			var node_id: String = str(node_data.get("id", "")).strip_edges()
-			if node_id.is_empty():
-				return false
 
 	return true
 
@@ -250,6 +226,7 @@ func _start_level(index: int) -> void:
 	selected_error_code = ""
 	selected_evidence_indices.clear()
 	attempts.clear()
+	evidence_data = _extract_evidence_data(current_level)
 
 	level_started_ms = Time.get_ticks_msec()
 	first_action_ms = -1
@@ -257,7 +234,7 @@ func _start_level(index: int) -> void:
 	time_left_sec = float(time_limit_sec)
 	timer_running = true
 
-	required_evidence = _extract_required_evidence(current_level, _extract_level_logs(current_level).size())
+	required_evidence = clampi(int(current_level.get("required_poi", 2)), 1, evidence_data.size())
 
 	task_session = {
 		"task_id": str(current_level.get("id", "NT_A_UNKNOWN")),
@@ -268,10 +245,10 @@ func _start_level(index: int) -> void:
 		"events": []
 	}
 
-	lbl_title.text = "СЕТЕВОЙ СЛЕД | A"
+	lbl_title.text = "Network Trace | A"
 	btn_next.visible = false
 	btn_next.disabled = false
-	btn_analyze.text = "АНАЛИЗ"
+	btn_analyze.text = "Diagnostics"
 	btn_analyze.disabled = true
 	btn_run_trace.disabled = true
 	btn_reset.disabled = true
@@ -284,7 +261,7 @@ func _start_level(index: int) -> void:
 	_build_palette()
 	_set_tools_unlocked(false)
 
-	lbl_status.text = "Соберите улики (%d/%d), чтобы разблокировать инструменты." % [selected_evidence_indices.size(), required_evidence]
+	lbl_status.text = "Inspect at least %d clues to unlock trace." % required_evidence
 	lbl_status.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
 	_update_meta_label()
@@ -292,23 +269,41 @@ func _start_level(index: int) -> void:
 
 func _render_text_blocks() -> void:
 	lbl_briefing.clear()
-	lbl_briefing.append_text("[color=#7a7a7a]ИНСТРУКТАЖ[/color]\n%s" % str(current_level.get("briefing", "")))
+	lbl_briefing.append_text("[color=#7a7a7a]GOAL[/color]\n%s" % str(current_level.get("briefing", "")))
 
 	lbl_prompt.clear()
-	lbl_prompt.append_text("[color=#9de6b3]ЗАДАНИЕ[/color]\n%s" % str(current_level.get("prompt", "")))
+	lbl_prompt.append_text("[color=#9de6b3]TASK[/color]\n%s" % str(current_level.get("prompt", "")))
+
+func _extract_evidence_data(level: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var pois_variant: Variant = level.get("pois", [])
+	if typeof(pois_variant) != TYPE_ARRAY:
+		return out
+	for poi_var in pois_variant:
+		if typeof(poi_var) != TYPE_DICTIONARY:
+			continue
+		var poi: Dictionary = poi_var
+		var row: Dictionary = {
+			"id": str(poi.get("id", "POI")),
+			"log_line": str(poi.get("log_line", "Unknown signal")),
+			"meaning_short": str(poi.get("meaning_short", "No interpretation.")),
+			"hint_layer": str(poi.get("hint_layer", "L2"))
+		}
+		out.append(row)
+	return out
 
 func _build_log_items() -> void:
 	for child in log_list.get_children():
 		child.queue_free()
 	log_buttons.clear()
 
-	var logs: Array[String] = _extract_level_logs(current_level)
-	for idx in range(logs.size()):
-		var log_line: String = str(logs[idx])
+	for idx in range(evidence_data.size()):
+		var e: Dictionary = evidence_data[idx]
 		var btn: Button = Button.new()
-		btn.custom_minimum_size = Vector2(0, 48)
+		btn.custom_minimum_size = Vector2(0, 52)
 		btn.toggle_mode = true
-		btn.text = "[%d] %s" % [idx + 1, log_line]
+		btn.text = "[%d] %s" % [idx + 1, str(e.get("log_line", ""))]
+		btn.tooltip_text = "[%s] %s" % [str(e.get("hint_layer", "L2")), str(e.get("meaning_short", ""))]
 		btn.pressed.connect(_on_log_pressed.bind(idx))
 		log_list.add_child(btn)
 		log_buttons.append(btn)
@@ -320,14 +315,16 @@ func _build_evidence_slots() -> void:
 
 	for idx in range(required_evidence):
 		var slot_panel: PanelContainer = PanelContainer.new()
-		slot_panel.custom_minimum_size = Vector2(0, 54)
+		slot_panel.custom_minimum_size = Vector2(0, 72)
 		slot_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
 		var slot_label: Label = Label.new()
-		slot_label.text = "УЛИКА %d" % (idx + 1)
+		slot_label.text = "Evidence %d" % (idx + 1)
 		slot_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		slot_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		slot_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		slot_panel.add_child(slot_label)
+
 		evidence_row.add_child(slot_panel)
 		evidence_slot_labels.append(slot_label)
 
@@ -354,6 +351,7 @@ func _build_palette() -> void:
 			var card: NetworkTraceDeviceCard = card_node
 			card.setup(str(option.get("id", "")), str(option.get("label", "")), str(option.get("error_code", "")))
 			card.disabled = true
+			card.custom_minimum_size = Vector2(148, 72)
 			palette_box.add_child(card)
 			palette_cards.append(card)
 
@@ -393,33 +391,37 @@ func _on_log_pressed(log_index: int) -> void:
 	if selected_evidence_indices.size() >= required_evidence and state == QuestState.BRIEFING:
 		state = QuestState.SOLVING
 		_set_tools_unlocked(true)
-		lbl_status.text = "Инструменты разблокированы. Перетащите устройство в слот и запустите трассировку."
+		lbl_status.text = "Trace unlocked. Select a device and run trace."
 		lbl_status.add_theme_color_override("font_color", Color(0.6, 0.95, 0.7))
 	elif selected_evidence_indices.size() < required_evidence:
 		state = QuestState.BRIEFING
 		_set_tools_unlocked(false)
-		lbl_status.text = "Соберите улики (%d/%d), чтобы разблокировать инструменты." % [selected_evidence_indices.size(), required_evidence]
+		lbl_status.text = "Inspect clues (%d/%d) to unlock trace." % [selected_evidence_indices.size(), required_evidence]
 		lbl_status.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
 func _update_evidence_visuals() -> void:
-	var logs: Array[String] = _extract_level_logs(current_level)
 	for slot_index in range(evidence_slot_labels.size()):
 		var slot_label: Label = evidence_slot_labels[slot_index]
 		if slot_index < selected_evidence_indices.size():
 			var log_index: int = selected_evidence_indices[slot_index]
-			if log_index >= 0 and log_index < logs.size():
-				slot_label.text = str(logs[log_index])
+			if log_index >= 0 and log_index < evidence_data.size():
+				var e: Dictionary = evidence_data[log_index]
+				slot_label.text = "[%s] %s\n%s" % [
+					str(e.get("hint_layer", "L2")),
+					str(e.get("log_line", "")),
+					str(e.get("meaning_short", ""))
+				]
 			else:
-				slot_label.text = "УЛИКА %d" % (slot_index + 1)
+				slot_label.text = "Evidence %d" % (slot_index + 1)
 		else:
-			slot_label.text = "УЛИКА %d" % (slot_index + 1)
+			slot_label.text = "Evidence %d" % (slot_index + 1)
 
 func _on_device_installed(device_id: String, _label_text: String, error_code: String) -> void:
 	selected_device_id = device_id
 	selected_error_code = error_code
 	btn_run_trace.disabled = selected_device_id.is_empty() or level_finished
 	btn_reset.disabled = selected_device_id.is_empty() or level_finished
-	lbl_status.text = "Устройство установлено. Нажмите ЗАПУСТИТЬ ТРАССИРОВКУ."
+	lbl_status.text = "Device mounted. Run trace to validate route."
 	lbl_status.add_theme_color_override("font_color", Color(0.75, 0.95, 0.8))
 	_log_event("device_installed", {"device_id": device_id})
 
@@ -441,7 +443,7 @@ func _on_run_trace_pressed() -> void:
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
 		return
 	if selected_device_id.is_empty():
-		lbl_status.text = "Сначала установите устройство в слот."
+		lbl_status.text = "Select and drop a device into the slot first."
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
 		return
 
@@ -501,7 +503,7 @@ func _lock_controls_for_trace(locked: bool) -> void:
 
 func _handle_success() -> void:
 	state = QuestState.FEEDBACK_SUCCESS
-	lbl_status.text = "ТРАССИРОВКА OK: путь установлен."
+	lbl_status.text = "TRACE OK. Route is restored."
 	lbl_status.add_theme_color_override("font_color", Color(0.35, 1.0, 0.45))
 	_play_audio("relay")
 	_log_event("trace_success", {"device_id": selected_device_id})
@@ -525,19 +527,20 @@ func _handle_failure(error_code: String) -> void:
 		safe_mode_used = true
 		state = QuestState.SAFE_MODE
 		btn_analyze.disabled = false
-		btn_analyze.text = "ДИАГНОСТИКА"
-		lbl_status.text = "Безопасный режим включён. Откройте диагностику для полного разбора."
+		btn_analyze.text = "Safe diagnostics"
+		lbl_status.text = "Safe mode unlocked. Open diagnostics for guided explanation."
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.75, 0.45))
 
 	if wrong_count >= MAX_ATTEMPTS:
-		_show_safe_mode_diagnostics("Достигнут лимит попыток")
+		_show_safe_mode_diagnostics("attempt_limit")
 		_finish_level(false, "attempt_limit")
 
 func _on_analyze_pressed() -> void:
 	if level_finished:
 		return
+
 	if not safe_mode_used:
-		lbl_status.text = "Анализ открывается после 2 неудачных трассировок."
+		lbl_status.text = "Diagnostics unlock after two failed traces."
 		lbl_status.add_theme_color_override("font_color", Color(0.9, 0.8, 0.45))
 		return
 
@@ -545,15 +548,22 @@ func _on_analyze_pressed() -> void:
 	if not hint_used:
 		hint_used = true
 
-	_show_safe_mode_diagnostics("Ручная диагностика")
+	_show_safe_mode_diagnostics("manual")
 
 func _show_safe_mode_diagnostics(trigger_reason: String) -> void:
 	var lines: Array[String] = []
-	lines.append("Дело: %s" % str(current_level.get("id", "UNKNOWN")))
-	lines.append("Причина: %s" % trigger_reason)
+	lines.append("Level: %s" % str(current_level.get("id", "UNKNOWN")))
+	lines.append("Reason: %s" % trigger_reason)
 	if not selected_error_code.is_empty():
-		lines.append("Ошибка: %s" % selected_error_code)
+		lines.append("Last code: %s" % selected_error_code)
 		lines.append(ERROR_MAP.get_error_tip(selected_error_code))
+
+	for idx in selected_evidence_indices:
+		if idx < 0 or idx >= evidence_data.size():
+			continue
+		var e: Dictionary = evidence_data[idx]
+		lines.append("[%s] %s" % [str(e.get("hint_layer", "L2")), str(e.get("log_line", ""))])
+		lines.append(" -> %s" % str(e.get("meaning_short", "")))
 
 	var explain_full: String = str(current_level.get("explain_full", ""))
 	if not explain_full.is_empty():
@@ -563,7 +573,7 @@ func _show_safe_mode_diagnostics(trigger_reason: String) -> void:
 				lines.append(text_line)
 
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", "ДИАГНОСТИКА", lines)
+		diagnostics_panel.call("setup", "Safe Diagnostics", lines)
 	diagnostics_panel.visible = true
 	state = QuestState.DIAGNOSTIC
 	_log_event("diagnostics_open", {"reason": trigger_reason})
@@ -573,7 +583,7 @@ func _on_reset_pressed() -> void:
 		return
 	_register_first_action()
 	topology_board.clear_installed_device()
-	lbl_status.text = "Слот очищен. Перетащите новое устройство."
+	lbl_status.text = "Mount cleared. Select another device candidate."
 	lbl_status.add_theme_color_override("font_color", Color(0.8, 0.86, 0.95))
 	_log_event("reset_pressed", {})
 
@@ -586,20 +596,12 @@ func _on_next_pressed() -> void:
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
-func _on_palette_selected(index: int) -> void:
-	var palette_id: int = palette_select.get_item_id(index)
-	_apply_palette(palette_id)
-
-func _apply_palette(palette_id: int) -> void:
+func _apply_noir_theme() -> void:
+	theme = NOIR_THEME
 	var shader_material: ShaderMaterial = crt_overlay.material as ShaderMaterial
-	if palette_id == PALETTE_AMBER_ID:
-		theme = THEME_AMBER
-		if shader_material != null:
-			shader_material.set_shader_parameter("tint_color", Color(1.0, 0.7, 0.1, 1.0))
-	else:
-		theme = THEME_GREEN
-		if shader_material != null:
-			shader_material.set_shader_parameter("tint_color", Color(0.0, 1.0, 0.25, 1.0))
+	if shader_material != null:
+		shader_material.set_shader_parameter("tint_color", Color(0.93, 0.93, 0.93, 1.0))
+		shader_material.set_shader_parameter("intensity", 0.18)
 
 func _trigger_glitch() -> void:
 	var shader_material: ShaderMaterial = crt_overlay.material as ShaderMaterial
@@ -617,8 +619,9 @@ func _update_meta_label() -> void:
 	var total_seconds: int = maxi(0, int(ceil(time_left_sec)))
 	var minutes: int = total_seconds / 60
 	var seconds: int = total_seconds % 60
-	lbl_meta.text = "ДЕЛО %s | ОШ %d/%d | %02d:%02d" % [
-		str(current_level.get("id", "--")),
+	lbl_meta.text = "CASE %d/%d | FAIL %d/%d | %02d:%02d" % [
+		current_level_index + 1,
+		levels.size(),
 		wrong_count,
 		MAX_ATTEMPTS,
 		minutes,
@@ -626,7 +629,7 @@ func _update_meta_label() -> void:
 	]
 
 func _on_stability_changed(_new_value: float, _delta: float) -> void:
-	# Meta label is refreshed in timer tick and state transitions.
+	# Meta is refreshed by timer tick.
 	pass
 
 func _register_first_action() -> void:
@@ -647,7 +650,7 @@ func _on_timeout() -> void:
 	var session_attempts: Array = task_session.get("attempts", [])
 	session_attempts.append(timeout_attempt)
 	task_session["attempts"] = session_attempts
-	_show_safe_mode_diagnostics("Тайм-аут")
+	_show_safe_mode_diagnostics("timeout")
 	_finish_level(false, "timeout")
 
 func _finish_level(is_correct: bool, reason: String) -> void:
@@ -656,6 +659,7 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 	result_sent = true
 	level_finished = true
 	timer_running = false
+	state = QuestState.DONE
 	btn_run_trace.disabled = true
 	btn_reset.disabled = true
 	btn_analyze.disabled = true
@@ -669,7 +673,7 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 	_log_event("task_end", {"reason": reason, "is_correct": is_correct})
 
 	if not is_correct and reason != "timeout":
-		lbl_status.text = str(current_level.get("explain_short", "Проверьте диагностику для деталей."))
+		lbl_status.text = str(current_level.get("explain_short", "Review clue meaning and layer mapping."))
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.62, 0.45))
 
 	var elapsed_ms: int = end_tick - level_started_ms
@@ -679,12 +683,12 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 	if hint_used:
 		stability_delta += HINT_STABILITY_DELTA
 
-	var evidence_lines: Array[String] = _collect_selected_evidence_lines()
+	var selected_evidence: Array[Dictionary] = _collect_selected_evidence()
 	var payload: Dictionary = {
 		"quest": "network_trace",
+		"quest_id": "NETWORK_TRACE",
 		"stage": "A",
 		"task_id": str(current_level.get("id", "")),
-		"incident_id": str(current_level.get("incident_id", current_level.get("id", ""))),
 		"match_key": "NETTRACE_A|%s" % str(current_level.get("id", "")),
 		"variant_hash": variant_hash,
 		"is_correct": is_correct,
@@ -692,7 +696,8 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"error_code_last": selected_error_code,
 		"attempts_count": attempts.size(),
 		"attempts": attempts,
-		"evidence_selected": evidence_lines,
+		"evidence_selected": selected_evidence,
+		"required_evidence": required_evidence,
 		"elapsed_ms": elapsed_ms,
 		"duration": float(elapsed_ms) / 1000.0,
 		"safe_mode_used": safe_mode_used,
@@ -703,49 +708,22 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"stability_delta": stability_delta,
 		"task_session": task_session
 	}
-	GlobalMetrics.register_trial(payload)
+	if GlobalMetrics != null:
+		GlobalMetrics.register_trial(payload)
 
-func _collect_selected_evidence_lines() -> Array[String]:
-	var logs: Array[String] = _extract_level_logs(current_level)
-	var out: Array[String] = []
+func _collect_selected_evidence() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
 	for index in selected_evidence_indices:
-		if index >= 0 and index < logs.size():
-			out.append(str(logs[index]))
+		if index < 0 or index >= evidence_data.size():
+			continue
+		var e: Dictionary = evidence_data[index]
+		out.append({
+			"id": str(e.get("id", "")),
+			"log_line": str(e.get("log_line", "")),
+			"meaning_short": str(e.get("meaning_short", "")),
+			"hint_layer": str(e.get("hint_layer", ""))
+		})
 	return out
-
-func _extract_level_logs(level: Dictionary) -> Array[String]:
-	var logs_out: Array[String] = []
-	var logs_variant: Variant = level.get("logs", null)
-	if typeof(logs_variant) == TYPE_ARRAY:
-		var logs: Array = logs_variant
-		for log_var in logs:
-			var line: String = str(log_var).strip_edges()
-			if not line.is_empty():
-				logs_out.append(line)
-	if logs_out.is_empty():
-		var pois_variant: Variant = level.get("pois", null)
-		if typeof(pois_variant) == TYPE_ARRAY:
-			var pois: Array = pois_variant
-			for poi_var in pois:
-				if typeof(poi_var) != TYPE_DICTIONARY:
-					continue
-				var poi: Dictionary = poi_var
-				var poi_line: String = str(poi.get("log_line", "")).strip_edges()
-				if poi_line.is_empty():
-					poi_line = str(poi.get("id", "POI")).strip_edges()
-				if not poi_line.is_empty():
-					logs_out.append(poi_line)
-	return logs_out
-
-func _extract_required_evidence(level: Dictionary, logs_count: int) -> int:
-	if logs_count <= 0:
-		return 0
-	var required_count: int = int(level.get("required_evidence", 0))
-	if required_count <= 0:
-		required_count = int(level.get("required_poi", 0))
-	if required_count <= 0:
-		required_count = mini(2, logs_count)
-	return clampi(required_count, 1, logs_count)
 
 func _normalize_topology(topology: Dictionary) -> Dictionary:
 	var normalized: Dictionary = {
@@ -810,4 +788,16 @@ func _build_variant_key(level: Dictionary) -> String:
 
 func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
-	body.vertical = viewport_size.x < viewport_size.y
+	var portrait: bool = viewport_size.x < viewport_size.y
+	body.vertical = portrait
+
+	var min_button_h: float = 72.0 if portrait else 58.0
+	btn_analyze.custom_minimum_size.y = min_button_h
+	btn_run_trace.custom_minimum_size.y = min_button_h
+	btn_reset.custom_minimum_size.y = min_button_h
+	btn_next.custom_minimum_size.y = min_button_h
+
+	lbl_briefing.custom_minimum_size.y = 56.0 if portrait else 84.0
+	lbl_prompt.custom_minimum_size.y = 52.0 if portrait else 76.0
+	topology_board.custom_minimum_size.y = 210.0 if portrait else 260.0
+	evidence_row.custom_minimum_size.y = 78.0 if portrait else 66.0

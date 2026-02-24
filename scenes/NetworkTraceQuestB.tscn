@@ -94,7 +94,9 @@ show_percentage = false
 
 [node name="PaletteSelect" type="OptionButton" parent="SafeArea/Main/V/Header"]
 custom_minimum_size = Vector2(130, 52)
+visible = false
 layout_mode = 2
+disabled = true
 
 [node name="Body" type="BoxContainer" parent="SafeArea/Main/V"]
 layout_mode = 2

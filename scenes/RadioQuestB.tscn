@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://cb2xapj3l2o0l"]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestB.gd" id="1_script"]
-[ext_resource type="Theme" uid="uid://jxdl2tctb0ca" path="res://ui/theme_untformatic.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
 
 [node name="RadioQuestB" type="Control"]
@@ -11,6 +11,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
@@ -40,6 +42,8 @@ theme_override_constants/margin_bottom = 12
 
 [node name="RootVBox" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 10
 
 [node name="Header" type="PanelContainer" parent="SafeArea/RootVBox"]
@@ -72,7 +76,7 @@ horizontal_alignment = 2
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-split_offset = 720
+split_offset = 520
 
 [node name="LeftPane" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit"]
 layout_mode = 2
@@ -105,34 +109,30 @@ theme_override_constants/v_separation = 10
 columns = 2
 
 [node name="StorageBtn1" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid"]
-custom_minimum_size = Vector2(0, 92)
+custom_minimum_size = Vector2(0, 86)
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 toggle_mode = true
 text = "Option 1"
 
 [node name="StorageBtn2" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid"]
-custom_minimum_size = Vector2(0, 92)
+custom_minimum_size = Vector2(0, 86)
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 toggle_mode = true
 text = "Option 2"
 
 [node name="StorageBtn3" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid"]
-custom_minimum_size = Vector2(0, 92)
+custom_minimum_size = Vector2(0, 86)
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 toggle_mode = true
 text = "Option 3"
 
 [node name="StorageBtn4" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid"]
-custom_minimum_size = Vector2(0, 92)
+custom_minimum_size = Vector2(0, 86)
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 toggle_mode = true
 text = "Option 4"
 
@@ -501,21 +501,6 @@ autowrap_mode = 2
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 text = "DETAILS"
-
-[node name="Footer" type="PanelContainer" parent="SafeArea/RootVBox"]
-custom_minimum_size = Vector2(0, 56)
-layout_mode = 2
-
-[node name="FooterMargin" type="MarginContainer" parent="SafeArea/RootVBox/Footer"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 8
-
-[node name="FooterLabel" type="Label" parent="SafeArea/RootVBox/Footer/FooterMargin"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
 
 [node name="Dimmer" type="ColorRect" parent="."]
 visible = false

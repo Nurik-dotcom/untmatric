@@ -3,7 +3,15 @@ extends Control
 const CLUES_DATA_PATH = "res://data/clues_levels.json"
 const ITEM_SCENE = preload("res://scenes/ui/ClueItem.tscn")
 const BUCKET_SCRIPT = preload("res://scripts/ui/ClueBucketZone.gd")
+const PHONE_LANDSCAPE_MAX_HEIGHT := 740.0
+const PHONE_PORTRAIT_MAX_WIDTH := 520.0
 
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
+@onready var work_area: HBoxContainer = $SafeArea/MainVBox/WorkArea
+@onready var pool_card: PanelContainer = $SafeArea/MainVBox/WorkArea/PoolCard
+@onready var buckets_card: PanelContainer = $SafeArea/MainVBox/WorkArea/BucketsCard
+@onready var bottom_bar: HBoxContainer = $SafeArea/MainVBox/BottomBar
 @onready var title_label = $SafeArea/MainVBox/Header/TitleLabel
 @onready var stage_label = $SafeArea/MainVBox/Header/StageLabel
 @onready var stability_bar = $SafeArea/MainVBox/Header/StabilityBar
@@ -29,10 +37,18 @@ var level_data: Dictionary = {}
 var current_level_idx: int = 0
 var drag_count: int = 0
 var start_time: int = 0
+var _work_mobile_layout: VBoxContainer = null
 
 func _ready():
 	_connect_signals()
 	_load_level_data()
+	_on_viewport_size_changed()
+	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+
+func _exit_tree() -> void:
+	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
 func _connect_signals():
 	btn_back.pressed.connect(_on_back_pressed)
@@ -253,3 +269,81 @@ func _on_back_pressed():
 func _show_error(msg):
 	status_label.text = msg
 	status_label.add_theme_color_override("font_color", Color(1, 0, 0))
+
+func _on_viewport_size_changed() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var is_landscape: bool = viewport_size.x >= viewport_size.y
+	var phone_landscape: bool = is_landscape and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
+	var phone_portrait: bool = (not is_landscape) and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
+	var compact: bool = phone_landscape or phone_portrait
+
+	_apply_safe_area_padding(compact)
+	main_vbox.add_theme_constant_override("separation", 10 if compact else 16)
+	work_area.add_theme_constant_override("separation", 12 if compact else 20)
+	bottom_bar.add_theme_constant_override("separation", 10 if compact else 20)
+	_set_work_mobile_mode(compact)
+
+	pool_grid.columns = 1 if phone_portrait else 2
+	btn_reset.custom_minimum_size = Vector2(96.0 if compact else 120.0, 52.0 if compact else 60.0)
+	btn_confirm.custom_minimum_size = Vector2(120.0 if compact else 160.0, 52.0 if compact else 60.0)
+	status_label.add_theme_font_size_override("font_size", 16 if compact else 18)
+
+	var popup_width: float = clampf(viewport_size.x - (24.0 if compact else 120.0), 280.0, 420.0)
+	var popup_height: float = clampf(viewport_size.y - (24.0 if compact else 120.0), 220.0, 340.0)
+	result_popup.offset_left = -popup_width * 0.5
+	result_popup.offset_top = -popup_height * 0.5
+	result_popup.offset_right = popup_width * 0.5
+	result_popup.offset_bottom = popup_height * 0.5
+
+func _set_work_mobile_mode(use_mobile: bool) -> void:
+	var mobile_layout: VBoxContainer = _ensure_work_mobile_layout()
+	if use_mobile:
+		if work_area.visible:
+			if pool_card.get_parent() != mobile_layout:
+				pool_card.reparent(mobile_layout)
+			if buckets_card.get_parent() != mobile_layout:
+				buckets_card.reparent(mobile_layout)
+			pool_card.size_flags_stretch_ratio = 1.0
+		work_area.visible = false
+		mobile_layout.visible = true
+	else:
+		if not work_area.visible:
+			if pool_card.get_parent() != work_area:
+				pool_card.reparent(work_area)
+			if buckets_card.get_parent() != work_area:
+				buckets_card.reparent(work_area)
+			pool_card.size_flags_stretch_ratio = 0.6
+		mobile_layout.visible = false
+		work_area.visible = true
+
+func _ensure_work_mobile_layout() -> VBoxContainer:
+	if _work_mobile_layout != null and is_instance_valid(_work_mobile_layout):
+		return _work_mobile_layout
+	_work_mobile_layout = VBoxContainer.new()
+	_work_mobile_layout.name = "WorkMobileLayout"
+	_work_mobile_layout.visible = false
+	_work_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_work_mobile_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_work_mobile_layout.add_theme_constant_override("separation", 12)
+	main_vbox.add_child(_work_mobile_layout)
+	main_vbox.move_child(_work_mobile_layout, main_vbox.get_children().find(work_area) + 1)
+	return _work_mobile_layout
+
+func _apply_safe_area_padding(compact: bool) -> void:
+	var left: float = 8.0 if compact else 16.0
+	var top: float = 8.0 if compact else 12.0
+	var right: float = 8.0 if compact else 16.0
+	var bottom: float = 8.0 if compact else 12.0
+
+	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
+	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
+		var viewport_size: Vector2 = get_viewport_rect().size
+		left = maxf(left, float(safe_rect.position.x))
+		top = maxf(top, float(safe_rect.position.y))
+		right = maxf(right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
+		bottom = maxf(bottom, viewport_size.y - float(safe_rect.position.y + safe_rect.size.y))
+
+	safe_area.add_theme_constant_override("margin_left", int(round(left)))
+	safe_area.add_theme_constant_override("margin_top", int(round(top)))
+	safe_area.add_theme_constant_override("margin_right", int(round(right)))
+	safe_area.add_theme_constant_override("margin_bottom", int(round(bottom)))

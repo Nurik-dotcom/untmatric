@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/RadioQuestC.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_untformatic.tres" id="2_theme"]
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="Script" path="res://scenes/TimeKnob.gd" id="3_knob_script"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="4_noir"]
 [ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_w857s"]

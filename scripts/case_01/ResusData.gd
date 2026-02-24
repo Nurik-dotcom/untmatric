@@ -29,46 +29,59 @@ static func load_levels(path: String) -> Array:
 	return levels
 
 static func load_stage_b(path: String) -> Dictionary:
-	return _load_stage(path, "B")
+	var levels: Array = load_stage_levels(path, "B")
+	if levels.is_empty():
+		return {}
+	return (levels[0] as Dictionary).duplicate(true)
 
 static func load_stage_c(path: String) -> Dictionary:
-	return _load_stage(path, "C")
+	var levels: Array = load_stage_levels(path, "C")
+	if levels.is_empty():
+		return {}
+	return (levels[0] as Dictionary).duplicate(true)
 
-static func _load_stage(path: String, stage_id: String) -> Dictionary:
+static func load_stage_levels(path: String, stage_id: String) -> Array:
 	var root: Variant = _parse_root(path)
 	if typeof(root) == TYPE_NIL:
-		return {}
+		return []
 
-	var stage_data: Dictionary = {}
+	var stage_levels: Array = []
 	if typeof(root) == TYPE_DICTIONARY:
 		var root_dict: Dictionary = root as Dictionary
-		stage_data = _extract_stage(root_dict, stage_id)
+		stage_levels.append_array(_extract_stage_levels(root_dict, stage_id))
 	elif typeof(root) == TYPE_ARRAY:
 		var root_array: Array = root as Array
 		for item_v in root_array:
 			if typeof(item_v) != TYPE_DICTIONARY:
 				continue
 			var candidate: Dictionary = item_v as Dictionary
-			stage_data = _extract_stage(candidate, stage_id)
-			if not stage_data.is_empty():
+			var extracted: Array = _extract_stage_levels(candidate, stage_id)
+			if extracted.is_empty():
+				continue
+			stage_levels.append_array(extracted)
+			if not stage_levels.is_empty():
 				break
 
-	if stage_data.is_empty():
-		push_error("ResusData: Stage %s section not found" % stage_id)
-		return {}
+	if stage_levels.is_empty():
+		push_error("ResusData: Stage %s levels not found" % stage_id)
+		return []
 
-	var is_valid: bool = false
-	if stage_id == "B":
-		is_valid = validate_stage_b(stage_data)
-	elif stage_id == "C":
-		is_valid = validate_stage_c(stage_data)
-	else:
-		push_error("ResusData: unsupported stage id '%s'" % stage_id)
-		return {}
-
-	if not is_valid:
-		return {}
-	return stage_data
+	var validated_levels: Array = []
+	for level_v in stage_levels:
+		if typeof(level_v) != TYPE_DICTIONARY:
+			continue
+		var stage_level: Dictionary = (level_v as Dictionary).duplicate(true)
+		var is_valid: bool = false
+		if stage_id == "B":
+			is_valid = validate_stage_b(stage_level)
+		elif stage_id == "C":
+			is_valid = validate_stage_c(stage_level)
+		else:
+			push_error("ResusData: unsupported stage id '%s'" % stage_id)
+			return []
+		if is_valid:
+			validated_levels.append(stage_level)
+	return validated_levels
 
 static func _parse_root(path: String) -> Variant:
 	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
@@ -92,6 +105,20 @@ static func _extract_stage(root_dict: Dictionary, stage_id: String) -> Dictionar
 	if root_dict.has(stage_id) and typeof(root_dict.get(stage_id, null)) == TYPE_DICTIONARY:
 		return root_dict.get(stage_id, {}) as Dictionary
 	return {}
+
+static func _extract_stage_levels(root_dict: Dictionary, stage_id: String) -> Array:
+	var out: Array = []
+	var stage_dict: Dictionary = _extract_stage(root_dict, stage_id)
+	if stage_dict.is_empty():
+		return out
+	if stage_dict.has("levels"):
+		var levels: Array = stage_dict.get("levels", []) as Array
+		for level_v in levels:
+			if typeof(level_v) == TYPE_DICTIONARY:
+				out.append((level_v as Dictionary).duplicate(true))
+	else:
+		out.append(stage_dict.duplicate(true))
+	return out
 
 static func validate_level(level: Dictionary) -> bool:
 	for key in REQUIRED_LEVEL_KEYS:

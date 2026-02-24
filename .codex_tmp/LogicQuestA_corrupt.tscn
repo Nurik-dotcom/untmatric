@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+﻿[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scenes/LogicQuestA.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
@@ -57,17 +57,17 @@ alignment = 1
 [node name="BtnBack" type="Button" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "НАЗАД"
+text = "ﾐ斷籍厘籍・
 
 [node name="LblClueTitle" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ДЕТЕКТОР ЛЖИ A-01"
+text = "ﾐ頒片｢ﾐ片墟｢ﾐ榧 ﾐ嶢孟・A-01"
 
 [node name="LblSessionId" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "СЕССИЯ: 00/00 | CASE A_00"
+text = "ﾐ｡ﾐ片｡ﾐ｡ﾐ侑ｯ: 00/00 窶｢ CASE A_00"
 horizontal_alignment = 2
 
 [node name="BarsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
@@ -92,10 +92,10 @@ layout_mode = 2
 
 [node name="LblTarget" type="Label" parent="SafeArea/MainLayout/TargetDisplay"]
 layout_mode = 2
-text = "ЦЕЛЬ: собрать факты 0/0 и вынести вердикт"
+text = "ﾐｦﾐ片嶢ｬ: ﾑ・ｾﾐｱﾑﾐｰﾑび・ﾑ・ｰﾐｺﾑび・0/0 ﾐｸ ﾐｲﾑ巾ｽﾐｵﾑ・ひｸ ﾐｲﾐｵﾑﾐｴﾐｸﾐｺﾑ・
 horizontal_alignment = 1
 
-[node name="ContentHSplit" type="SplitContainer" parent="SafeArea/MainLayout"]
+[node name="ContentHSplit" type="HSplitContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -121,7 +121,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
-text = "[b]БРИФИНГ[/b]
+text = "[b]ﾐ岱ﾐ侑､ﾐ侑斷甜/b]
 ..."
 fit_content = true
 
@@ -147,7 +147,7 @@ theme_override_constants/separation = 6
 
 [node name="InputATitle" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/InputAFrame/InputAVBox"]
 layout_mode = 2
-text = "КЛЮЧ A"
+text = "ﾐ墟嶢ｮﾐｧ A"
 horizontal_alignment = 1
 
 [node name="InputA_Btn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/InputAFrame/InputAVBox"]
@@ -168,7 +168,7 @@ theme_override_constants/separation = 6
 
 [node name="InputBTitle" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/InputBFrame/InputBVBox"]
 layout_mode = 2
-text = "КЛЮЧ B"
+text = "ﾐ墟嶢ｮﾐｧ B"
 horizontal_alignment = 1
 
 [node name="InputB_Btn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/InputBFrame/InputBVBox"]
@@ -189,7 +189,7 @@ theme_override_constants/separation = 6
 
 [node name="GateTitle" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/GateSlot/GateVBox"]
 layout_mode = 2
-text = "ВЕНТИЛЬ"
+text = "ﾐ漬片斷｢ﾐ侑嶢ｬ"
 horizontal_alignment = 1
 
 [node name="GateLabel" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/GateSlot/GateVBox"]
@@ -207,7 +207,7 @@ theme_override_constants/separation = 6
 
 [node name="OutputTitle" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/OutputSlot/OutputVBox"]
 layout_mode = 2
-text = "ВЫВОД"
+text = "ﾐ漬ｫﾐ漬榧・
 horizontal_alignment = 1
 
 [node name="OutputValueLabel" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/OutputSlot/OutputVBox"]
@@ -251,37 +251,37 @@ alignment = 1
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "AND"
+text = "竏ｧ AND"
 
 [node name="GateOrBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "OR"
+text = "竏ｨ OR"
 
 [node name="GateNotBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "NOT"
+text = "ﾂｬ NOT"
 
 [node name="GateXorBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "XOR"
+text = "竓・XOR"
 
 [node name="GateNandBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "NAND"
+text = "竓ｼ NAND"
 
 [node name="GateNorBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
 layout_mode = 2
 toggle_mode = true
-text = "NOR"
+text = "竓ｽ NOR"
 
 [node name="StatusRow" type="HBoxContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane"]
 layout_mode = 2
@@ -291,7 +291,7 @@ alignment = 1
 [node name="StatsLabel" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/StatusRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ПОП: 0/3 | ФАКТЫ: 0/0 | СТАБ: 100%"
+text = "ﾐ渙榧・ 0/3 窶｢ ﾐ､ﾐ籍墟｢ﾐｫ: 0/0 窶｢ ﾐ｡ﾐ｢ﾐ籍・ 100%"
 
 [node name="FeedbackLabel" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/StatusRow"]
 visible = false
@@ -309,26 +309,26 @@ alignment = 1
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "АНАЛИЗ"
+text = "ﾐ渙榧頒｡ﾐ墟籍厘墟・
 
 [node name="BtnProbe" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ПРОГОН"
+text = "PROBE"
 
 [node name="BtnVerdict" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ВЕРДИКТ"
+text = "ﾐ漬片ﾐ頒侑墟｢"
 
 [node name="BtnNext" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/Actions"]
 visible = false
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ДАЛЕЕ"
+text = "ﾐ頒籍嶢片・
 
 [node name="ClickPlayer" type="AudioStreamPlayer" parent="."]
 
@@ -378,13 +378,13 @@ horizontal_alignment = 1
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "Диагностический отчёт."
+text = "ﾐ頒ｸﾐｰﾐｳﾐｽﾐｾﾑ・ひｸﾑ・ｵﾑ・ｺﾐｸﾐｹ ﾐｾﾑび・帯・"
 fit_content = true
 
 [node name="PopupBtnNext" type="Button" parent="DiagnosticsPanelA/PopupMargin/PopupVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "ДАЛЕЕ"
+text = "ﾐ頒籍嶢片・
 
 [connection signal="pressed" from="SafeArea/MainLayout/Header/BtnBack" to="." method="_on_back_button_pressed"]
 [connection signal="toggled" from="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/InputAFrame/InputAVBox/InputA_Btn" to="." method="_on_input_a_toggled"]

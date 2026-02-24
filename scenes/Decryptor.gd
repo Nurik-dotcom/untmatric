@@ -9,6 +9,13 @@ extends Control
 @onready var shield_lazy = $UI/SafeArea/Main/HeaderBar/HeaderContent/Shields/ShieldLazy
 @onready var btn_details = $UI/SafeArea/Main/HeaderBar/HeaderContent/BtnDetails
 @onready var noir_overlay = $UI/NoirOverlay
+@onready var safe_area: MarginContainer = $UI/SafeArea
+@onready var main_root: VBoxContainer = $UI/SafeArea/Main
+@onready var header_content: HBoxContainer = $UI/SafeArea/Main/HeaderBar/HeaderContent
+@onready var content_split: HBoxContainer = $UI/SafeArea/Main/ContentSplit
+@onready var left_panel: VBoxContainer = $UI/SafeArea/Main/ContentSplit/LeftPanel
+@onready var right_panel: VBoxContainer = $UI/SafeArea/Main/ContentSplit/RightPanel
+@onready var bottom_actions: HBoxContainer = $UI/SafeArea/Main/BottomBar/Actions
 
 @onready var target_panel = $UI/SafeArea/Main/ContentSplit/LeftPanel/TargetPanel
 @onready var target_title = $UI/SafeArea/Main/ContentSplit/LeftPanel/TargetPanel/TargetContent/TargetTitle
@@ -58,6 +65,8 @@ const COLOR_ERR = Color(1.0, 0.3, 0.3, 1)
 const SWIPE_MIN: float = 60.0
 const SWIPE_MAX_Y: float = 40.0
 const DETAILS_SHEET_H: float = 380.0
+const PHONE_LANDSCAPE_MAX_HEIGHT: float = 740.0
+const PHONE_PORTRAIT_MAX_WIDTH: float = 520.0
 
 var current_target: int = 0
 var current_input: int = 0
@@ -78,6 +87,8 @@ var _shift_status_token: int = 0
 var details_open: bool = false
 var _swipe_start_pos: Vector2 = Vector2.ZERO
 var _swipe_tracking: bool = false
+var _content_mobile_layout: VBoxContainer = null
+var _details_sheet_height: float = DETAILS_SHEET_H
 
 func _ready():
 	_build_bit_buttons()
@@ -96,6 +107,13 @@ func _ready():
 	_set_details_open(false, true)
 
 	start_level(GlobalMetrics.current_level_index)
+	_on_viewport_size_changed()
+	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+
+func _exit_tree() -> void:
+	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
 func _wire_signals() -> void:
 	btn_back.pressed.connect(_on_menu_pressed)
@@ -410,8 +428,8 @@ func _set_details_open(open: bool, immediate: bool) -> void:
 	if open:
 		details_sheet.visible = true
 
-	var target_top := -DETAILS_SHEET_H if open else 0.0
-	var target_bottom := 0.0 if open else DETAILS_SHEET_H
+	var target_top := -_details_sheet_height if open else 0.0
+	var target_bottom := 0.0 if open else _details_sheet_height
 	if immediate:
 		details_sheet.offset_top = target_top
 		details_sheet.offset_bottom = target_bottom
@@ -559,6 +577,91 @@ func _apply_shift_left() -> void:
 	_update_input_display()
 	_set_shift_status("СДВИГ: применён", COLOR_OK, true)
 	_log_message("Применён жест сдвига влево.", COLOR_OK)
+
+func _on_viewport_size_changed() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var is_landscape: bool = viewport_size.x >= viewport_size.y
+	var phone_landscape: bool = is_landscape and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
+	var phone_portrait: bool = (not is_landscape) and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
+	var compact: bool = phone_landscape or phone_portrait
+
+	_apply_safe_area_padding(compact)
+	main_root.add_theme_constant_override("separation", 8 if compact else 12)
+	header_content.add_theme_constant_override("separation", 6 if compact else 8)
+	content_split.add_theme_constant_override("separation", 8 if compact else 12)
+	bottom_actions.add_theme_constant_override("separation", 8 if compact else 10)
+	_set_content_mobile_mode(phone_portrait)
+
+	btn_back.custom_minimum_size = Vector2(52.0 if compact else 64.0, 48.0 if compact else 52.0)
+	btn_details.custom_minimum_size = Vector2(64.0 if compact else 72.0, 44.0 if compact else 48.0)
+	btn_hint.custom_minimum_size = Vector2(96.0 if compact else 120.0, 52.0 if compact else 56.0)
+	btn_check.custom_minimum_size = Vector2(132.0 if compact else 180.0, 52.0 if compact else 56.0)
+	btn_reset.custom_minimum_size = Vector2(96.0 if compact else 120.0, 52.0 if compact else 56.0)
+	target_value.add_theme_font_size_override("font_size", 30 if compact else 36)
+
+	var bit_button_height: float = 52.0 if compact else 64.0
+	for button in bit_buttons:
+		if button != null:
+			button.custom_minimum_size.y = bit_button_height
+
+	_details_sheet_height = clampf(viewport_size.y * (0.62 if compact else 0.55), 220.0, DETAILS_SHEET_H)
+	if details_open:
+		_set_details_open(true, true)
+
+	var toast_half_width: float = clampf(viewport_size.x * 0.34, 130.0, 220.0)
+	toast_panel.offset_left = -toast_half_width
+	toast_panel.offset_right = toast_half_width
+
+func _set_content_mobile_mode(use_mobile: bool) -> void:
+	var mobile_layout: VBoxContainer = _ensure_content_mobile_layout()
+	if use_mobile:
+		if content_split.visible:
+			if left_panel.get_parent() != mobile_layout:
+				left_panel.reparent(mobile_layout)
+			if right_panel.get_parent() != mobile_layout:
+				right_panel.reparent(mobile_layout)
+		content_split.visible = false
+		mobile_layout.visible = true
+	else:
+		if not content_split.visible:
+			if left_panel.get_parent() != content_split:
+				left_panel.reparent(content_split)
+			if right_panel.get_parent() != content_split:
+				right_panel.reparent(content_split)
+		mobile_layout.visible = false
+		content_split.visible = true
+
+func _ensure_content_mobile_layout() -> VBoxContainer:
+	if _content_mobile_layout != null and is_instance_valid(_content_mobile_layout):
+		return _content_mobile_layout
+	_content_mobile_layout = VBoxContainer.new()
+	_content_mobile_layout.name = "ContentMobileLayout"
+	_content_mobile_layout.visible = false
+	_content_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content_mobile_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_content_mobile_layout.add_theme_constant_override("separation", 8)
+	main_root.add_child(_content_mobile_layout)
+	main_root.move_child(_content_mobile_layout, main_root.get_children().find(content_split) + 1)
+	return _content_mobile_layout
+
+func _apply_safe_area_padding(compact: bool) -> void:
+	var left: float = 8.0 if compact else 16.0
+	var top: float = 8.0 if compact else 12.0
+	var right: float = 8.0 if compact else 16.0
+	var bottom: float = 8.0 if compact else 12.0
+
+	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
+	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
+		var viewport_size: Vector2 = get_viewport_rect().size
+		left = maxf(left, float(safe_rect.position.x))
+		top = maxf(top, float(safe_rect.position.y))
+		right = maxf(right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
+		bottom = maxf(bottom, viewport_size.y - float(safe_rect.position.y + safe_rect.size.y))
+
+	safe_area.add_theme_constant_override("margin_left", int(round(left)))
+	safe_area.add_theme_constant_override("margin_top", int(round(top)))
+	safe_area.add_theme_constant_override("margin_right", int(round(right)))
+	safe_area.add_theme_constant_override("margin_bottom", int(round(bottom)))
 
 func _mark_first_action() -> void:
 	if first_action_ms < 0:

@@ -4,11 +4,15 @@ const LEVELS_PATH: String = "res://data/clues_levels.json"
 const NET_ITEM_SCENE: PackedScene = preload("res://scenes/ui/NetItem.tscn")
 const ResusData = preload("res://scripts/case_01/ResusData.gd")
 const ResusScoring = preload("res://scripts/case_01/ResusScoring.gd")
+const PHONE_LANDSCAPE_MAX_HEIGHT := 740.0
+const PHONE_PORTRAIT_MAX_WIDTH := 520.0
 
 const COLOR_OK: Color = Color(0.9, 0.93, 0.98, 1.0)
 const COLOR_WARN: Color = Color(0.98, 0.8, 0.52, 1.0)
 const COLOR_ERR: Color = Color(0.95, 0.36, 0.38, 1.0)
 
+var levels: Array = []
+var current_level_index: int = 0
 var stage_c_data: Dictionary = {}
 var option_by_id: Dictionary = {}
 var correct_set: Dictionary = {}
@@ -27,12 +31,23 @@ var unique_used_set: Dictionary = {}
 var time_to_first_action_ms: int = -1
 var input_locked: bool = false
 
+var _content_scroll: ScrollContainer = null
+var _content_vbox: VBoxContainer = null
+var _bottom_mobile_layout: VBoxContainer = null
+var _prompt_collapsed: bool = true
+var _prompt_toggle_button: Button = null
+
 @onready var noir_overlay: Node = $NoirOverlay
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
+@onready var header: HBoxContainer = $SafeArea/MainVBox/Header
+@onready var bottom_bar: HBoxContainer = $SafeArea/MainVBox/BottomBar
 @onready var title_label: Label = $SafeArea/MainVBox/Header/TitleLabel
 @onready var stage_label: Label = $SafeArea/MainVBox/Header/StageLabel
 @onready var stability_bar: ProgressBar = $SafeArea/MainVBox/Header/StabilityBar
 @onready var btn_back: Button = $SafeArea/MainVBox/Header/BtnBack
 
+@onready var prompt_card: PanelContainer = $SafeArea/MainVBox/PromptCard
 @onready var prompt_label: Label = $SafeArea/MainVBox/PromptCard/PromptLabel
 @onready var packets_layer: Node = $SafeArea/MainVBox/DiagramCard/PacketsLayer
 
@@ -55,6 +70,7 @@ var input_locked: bool = false
 @onready var status_label: Label = $SafeArea/MainVBox/BottomBar/StatusLabel
 @onready var btn_reset: Button = $SafeArea/MainVBox/BottomBar/BtnReset
 @onready var btn_analyze: Button = $SafeArea/MainVBox/BottomBar/BtnAnalyze
+@onready var btn_next_level: Button = $SafeArea/MainVBox/BottomBar/BtnNextLevel
 
 var _slot_nodes: Array[Node] = []
 
@@ -65,27 +81,42 @@ func _ready() -> void:
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
 
-	_slot_nodes = [slot_1, slot_2, slot_3]
-
 	btn_back.pressed.connect(_on_back_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_analyze.pressed.connect(_on_analyze_pressed)
+	btn_next_level.pressed.connect(_on_next_level_pressed)
 
-	stage_c_data = ResusData.load_stage_c(LEVELS_PATH)
-	if stage_c_data.is_empty():
+	_slot_nodes = [slot_1, slot_2, slot_3]
+	_ensure_scroll_layout()
+	_setup_collapsible_prompt()
+
+	levels = ResusData.load_stage_levels(LEVELS_PATH, "C")
+	if levels.is_empty():
 		_show_error("Failed to load Case 01 stage C data")
 		return
 
+	_load_current_level(0)
+	_on_viewport_size_changed()
+
+func _exit_tree() -> void:
+	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
+
+func _load_current_level(index: int) -> void:
+	current_level_index = clamp(index, 0, max(0, levels.size() - 1))
+	stage_c_data = (levels[current_level_index] as Dictionary).duplicate(true)
 	_setup_ui()
 	_begin_attempt()
-	_on_viewport_size_changed()
 
 func _setup_ui() -> void:
 	title_label.text = "Case 01: Digital Reanimation"
-	stage_label.text = "STAGE C"
+	stage_label.text = "STAGE C %d/%d" % [current_level_index + 1, levels.size()]
 	prompt_label.text = str(stage_c_data.get("prompt", "Mount modules and secure link"))
 	btn_reset.text = "RESET"
 	btn_analyze.text = "LINK START"
+	btn_next_level.text = "NEXT LEVEL"
+	btn_next_level.visible = false
+	btn_next_level.disabled = true
 
 	_build_option_catalog()
 	_build_palette()
@@ -158,6 +189,8 @@ func _begin_attempt() -> void:
 
 	explanation_card.visible = false
 	btn_analyze.disabled = false
+	btn_next_level.visible = false
+	btn_next_level.disabled = true
 
 	slots = ["", "", ""]
 	slot_item_by_index.clear()
@@ -353,7 +386,7 @@ func _on_analyze_pressed() -> void:
 		"unique_used_count": unique_used_set.size()
 	}
 
-	_log_event("LINK_START", {
+	_log_event("ANALYZE_PRESSED", {
 		"selected_count": selected_ids.size(),
 		"filled_slots": _filled_slots_count()
 	})
@@ -371,6 +404,9 @@ func _on_analyze_pressed() -> void:
 	input_locked = true
 	btn_analyze.disabled = true
 	_set_input_locked(true)
+	var has_next: bool = _has_next_level()
+	btn_next_level.visible = has_next
+	btn_next_level.disabled = not has_next
 
 	if bool(result.get("is_correct", false)):
 		_play_sfx("relay")
@@ -380,11 +416,20 @@ func _on_analyze_pressed() -> void:
 		_play_sfx("error")
 
 func _on_reset_pressed() -> void:
-	_log_event("RESET", {
+	_log_event("RESET_PRESSED", {
 		"prev_filled_slots": _filled_slots_count()
 	})
 	_begin_attempt()
 	_play_sfx("click")
+
+func _on_next_level_pressed() -> void:
+	if not _has_next_level():
+		return
+	_load_current_level(current_level_index + 1)
+	_play_sfx("click")
+
+func _has_next_level() -> bool:
+	return current_level_index < levels.size() - 1
 
 func _set_input_locked(locked: bool) -> void:
 	for slot_node in _slot_nodes:
@@ -487,7 +532,8 @@ func _register_trial(result: Dictionary, risk: Dictionary) -> void:
 		"stage": "C",
 		"format": "MULTI_CHOICE_SLOTS",
 		"level_id": str(stage_c_data.get("id", "CASE01_C_01")),
-		"match_key": "CASE01_C_%d" % attempt_index,
+		"level_index": current_level_index,
+		"match_key": "CASE01_C_%d_%d" % [current_level_index, attempt_index],
 		"prompt": str(stage_c_data.get("prompt", "")),
 		"snapshot": snapshot_c,
 		"slots": slots.duplicate(),
@@ -686,20 +732,161 @@ func _update_stability_ui() -> void:
 	if noir_overlay != null and noir_overlay.has_method("set_danger_level"):
 		noir_overlay.call("set_danger_level", float(GlobalMetrics.stability))
 
+func _ensure_scroll_layout() -> void:
+	if _content_scroll != null and is_instance_valid(_content_scroll):
+		return
+
+	_content_scroll = ScrollContainer.new()
+	_content_scroll.name = "ContentScroll"
+	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+	_content_vbox = VBoxContainer.new()
+	_content_vbox.name = "ContentVBox"
+	_content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_content_vbox.add_theme_constant_override("separation", 10)
+	_content_scroll.add_child(_content_vbox)
+
+	var move_nodes: Array[Node] = []
+	for child in main_vbox.get_children():
+		if child == header or child == bottom_bar:
+			continue
+		move_nodes.append(child)
+
+	for node in move_nodes:
+		node.reparent(_content_vbox)
+
+	main_vbox.add_child(_content_scroll)
+	var bottom_index: int = main_vbox.get_children().find(bottom_bar)
+	if bottom_index >= 0:
+		main_vbox.move_child(_content_scroll, bottom_index)
+
+func _setup_collapsible_prompt() -> void:
+	if prompt_card == null or prompt_label == null:
+		return
+
+	if prompt_label.get_parent() == prompt_card:
+		var wrapper: VBoxContainer = VBoxContainer.new()
+		wrapper.name = "PromptVBox"
+		wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		wrapper.add_theme_constant_override("separation", 6)
+
+		var top_row: HBoxContainer = HBoxContainer.new()
+		top_row.add_theme_constant_override("separation", 8)
+		var title: Label = Label.new()
+		title.text = "BRIEFING"
+		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		top_row.add_child(title)
+
+		_prompt_toggle_button = Button.new()
+		_prompt_toggle_button.name = "PromptToggleButton"
+		_prompt_toggle_button.text = "?"
+		_prompt_toggle_button.custom_minimum_size = Vector2(40.0, 36.0)
+		_prompt_toggle_button.pressed.connect(_on_prompt_toggle_pressed)
+		top_row.add_child(_prompt_toggle_button)
+
+		prompt_card.remove_child(prompt_label)
+		wrapper.add_child(top_row)
+		wrapper.add_child(prompt_label)
+		prompt_card.add_child(wrapper)
+
+	_apply_prompt_collapse_state()
+
+func _on_prompt_toggle_pressed() -> void:
+	_prompt_collapsed = not _prompt_collapsed
+	_apply_prompt_collapse_state()
+
+func _apply_prompt_collapse_state() -> void:
+	if prompt_label == null:
+		return
+	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	prompt_label.max_lines_visible = 2 if _prompt_collapsed else 0
+	if _prompt_toggle_button != null:
+		_prompt_toggle_button.text = "?" if _prompt_collapsed else "x"
+
 func _on_viewport_size_changed() -> void:
-	var size: Vector2 = get_viewport_rect().size
-	var compact: bool = size.x < 960.0 or size.x < size.y
-	palette_flow.columns = 1 if compact else 2
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var is_landscape: bool = viewport_size.x >= viewport_size.y
+	var phone_landscape: bool = is_landscape and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
+	var phone_portrait: bool = (not is_landscape) and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
+	var compact: bool = phone_landscape or phone_portrait
+
+	_apply_safe_area_padding(compact)
+	main_vbox.add_theme_constant_override("separation", 8 if compact else 10)
+	if _content_vbox != null:
+		_content_vbox.add_theme_constant_override("separation", 8 if compact else 10)
+	header.add_theme_constant_override("separation", 8 if compact else 10)
+	bottom_bar.add_theme_constant_override("separation", 8 if compact else 10)
+
+	palette_flow.columns = 1 if phone_portrait else (1 if compact else 2)
 
 	for slot_node in _slot_nodes:
 		if slot_node is Control:
 			(slot_node as Control).custom_minimum_size = Vector2(0, 96 if compact else 110)
 
-	btn_reset.custom_minimum_size = Vector2(150, 72 if compact else 64)
-	btn_analyze.custom_minimum_size = Vector2(190, 72 if compact else 64)
+	btn_back.custom_minimum_size = Vector2(56.0 if compact else 72.0, 56.0 if compact else 72.0)
+	stability_bar.custom_minimum_size.x = 160.0 if compact else 220.0
+	status_label.custom_minimum_size.y = 60.0 if compact else 72.0
+	btn_reset.custom_minimum_size = Vector2(0.0 if compact else 150.0, 60.0 if compact else 72.0)
+	btn_analyze.custom_minimum_size = Vector2(0.0 if compact else 190.0, 60.0 if compact else 72.0)
+	btn_next_level.custom_minimum_size = Vector2(0.0 if compact else 170.0, 60.0 if compact else 72.0)
+	for node in [btn_reset, btn_analyze, btn_next_level]:
+		node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	_set_bottom_mobile_mode(phone_portrait)
+
+func _set_bottom_mobile_mode(use_mobile: bool) -> void:
+	var mobile_layout: VBoxContainer = _ensure_bottom_mobile_layout()
+	if use_mobile:
+		if bottom_bar.visible:
+			for node in [status_label, btn_reset, btn_analyze, btn_next_level]:
+				if node.get_parent() != mobile_layout:
+					node.reparent(mobile_layout)
+		bottom_bar.visible = false
+		mobile_layout.visible = true
+	else:
+		if not bottom_bar.visible:
+			for node in [status_label, btn_reset, btn_analyze, btn_next_level]:
+				if node.get_parent() != bottom_bar:
+					node.reparent(bottom_bar)
+		mobile_layout.visible = false
+		bottom_bar.visible = true
+
+func _ensure_bottom_mobile_layout() -> VBoxContainer:
+	if _bottom_mobile_layout != null and is_instance_valid(_bottom_mobile_layout):
+		return _bottom_mobile_layout
+	_bottom_mobile_layout = VBoxContainer.new()
+	_bottom_mobile_layout.name = "BottomBarMobileLayout"
+	_bottom_mobile_layout.visible = false
+	_bottom_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_bottom_mobile_layout.add_theme_constant_override("separation", 8)
+	main_vbox.add_child(_bottom_mobile_layout)
+	main_vbox.move_child(_bottom_mobile_layout, main_vbox.get_children().find(bottom_bar) + 1)
+	return _bottom_mobile_layout
+
+func _apply_safe_area_padding(compact: bool) -> void:
+	var left: float = 8.0 if compact else 16.0
+	var top: float = 8.0 if compact else 12.0
+	var right: float = 8.0 if compact else 16.0
+	var bottom: float = 8.0 if compact else 12.0
+
+	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
+	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
+		var viewport_size: Vector2 = get_viewport_rect().size
+		left = maxf(left, float(safe_rect.position.x))
+		top = maxf(top, float(safe_rect.position.y))
+		right = maxf(right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
+		bottom = maxf(bottom, viewport_size.y - float(safe_rect.position.y + safe_rect.size.y))
+
+	safe_area.add_theme_constant_override("margin_left", int(round(left)))
+	safe_area.add_theme_constant_override("margin_top", int(round(top)))
+	safe_area.add_theme_constant_override("margin_right", int(round(right)))
+	safe_area.add_theme_constant_override("margin_bottom", int(round(bottom)))
 
 func _show_error(message: String) -> void:
 	status_label.text = message
 	status_label.modulate = COLOR_ERR
 	btn_analyze.disabled = true
 	btn_reset.disabled = true
+	btn_next_level.disabled = true

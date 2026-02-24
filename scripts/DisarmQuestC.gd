@@ -1,6 +1,8 @@
 extends Control
 
 const LEVELS_PATH := "res://data/quest_c_levels.json"
+const PHONE_LANDSCAPE_MAX_HEIGHT := 740.0
+const PHONE_PORTRAIT_MAX_WIDTH := 520.0
 
 enum State {
 	INIT,
@@ -13,13 +15,24 @@ enum State {
 	DIAGNOSTIC
 }
 
+@onready var safe_area: MarginContainer = $SafeArea
+@onready var main_layout: VBoxContainer = $SafeArea/MainLayout
+@onready var header_row: HBoxContainer = $SafeArea/MainLayout/HeaderRow
+@onready var monitors_row: HBoxContainer = $SafeArea/MainLayout/StatusMonitor/MonitorsRow
+@onready var body_row: HBoxContainer = $SafeArea/MainLayout/BodyRow
+@onready var code_frame: PanelContainer = $SafeArea/MainLayout/BodyRow/CodeFrame
+@onready var side_info: VBoxContainer = $SafeArea/MainLayout/BodyRow/SideInfo
+@onready var actions_row: HBoxContainer = $SafeArea/MainLayout/ActionsRow
 @onready var lbl_clue_title: Label = $SafeArea/MainLayout/HeaderRow/LblClueTitle
 @onready var lbl_session: Label = $SafeArea/MainLayout/HeaderRow/LblSession
 @onready var btn_back: Button = $SafeArea/MainLayout/HeaderRow/BtnBack
 @onready var expected_panel: PanelContainer = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel
 @onready var actual_panel: PanelContainer = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ActualPanel
+@onready var lbl_expected_title: Label = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox/LblExpectedTitle
+@onready var lbl_actual_title: Label = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox/LblActualTitle
 @onready var lbl_expected_value: Label = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ExpectedPanel/ExpectedVBox/LblExpectedValue
 @onready var lbl_actual_value: Label = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox/LblActualValue
+@onready var lbl_delta: Label = $SafeArea/MainLayout/StatusMonitor/MonitorsRow/ActualPanel/ActualVBox/LblDelta
 @onready var code_view: CodeEdit = $SafeArea/MainLayout/BodyRow/CodeFrame/CodeRoot/CodeView
 @onready var line_highlight: ColorRect = $SafeArea/MainLayout/BodyRow/CodeFrame/CodeRoot/LineHighlight
 @onready var lbl_hint: Label = $SafeArea/MainLayout/BodyRow/SideInfo/LblHint
@@ -53,19 +66,41 @@ var highlight_tween: Tween
 var task_session: Dictionary = {}
 var cached_line_height := 26
 var last_scroll_vertical := -1
+var _body_mobile_layout: VBoxContainer = null
+var _monitor_mobile_layout: VBoxContainer = null
 
 func _ready() -> void:
 	_configure_code_view()
 	_connect_signals()
+	_apply_static_titles()
 	_load_levels()
 	if levels.is_empty():
-		lbl_hint.text = "Данные уровня C не загружены."
+		lbl_hint.text = "Disarm C levels are missing."
 		return
 
 	var idx: int = int(GlobalMetrics.current_level_index)
 	if idx < 0 or idx >= levels.size():
 		idx = 0
 	_start_level(idx)
+	_on_viewport_size_changed()
+	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+
+func _apply_static_titles() -> void:
+	lbl_expected_title.text = "EXPECTED (target)"
+	lbl_actual_title.text = "ACTUAL (current)"
+	if lbl_delta != null:
+		lbl_delta.text = "DELTA: --"
+
+func _update_result_panels(expected_s: int, actual_s: int) -> void:
+	lbl_expected_value.text = "s = %d" % expected_s
+	lbl_actual_value.text = "s = %d" % actual_s
+	if lbl_delta != null:
+		lbl_delta.text = "DELTA: %d" % (actual_s - expected_s)
+
+func _exit_tree() -> void:
+	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
 func _configure_code_view() -> void:
 	code_view.editable = false
@@ -272,11 +307,10 @@ func _start_level(idx: int) -> void:
 		"paused_total_ms": 0
 	}
 
-	lbl_clue_title.text = "ДЕЛО C: РАЗМИНИРОВАНИЕ"
-	lbl_session.text = "СЕССИЯ: %s" % str(current_task.get("id", "C-00"))
-	lbl_expected_value.text = "s = %s" % str(current_task.get("expected_s", "?"))
-	lbl_actual_value.text = "s = %s" % str(current_task.get("actual_s", "?"))
-	lbl_hint.text = "Нажмите на строку с ошибкой, затем выберите исправление."
+	lbl_clue_title.text = "DISARM C: Script Reanimation"
+	lbl_session.text = "SESSION: %s" % str(current_task.get("id", "C-00"))
+	_update_result_panels(int(current_task.get("expected_s", 0)), int(current_task.get("actual_s", 0)))
+	lbl_hint.text = "Expected is target result. Actual is current code output. Fix code so Actual == Expected."
 	_update_misclick_label()
 
 	btn_verify.disabled = true
@@ -435,7 +469,7 @@ func _on_fix_apply_requested(option_id: String) -> void:
 	selected_option_id = option_id.strip_edges().to_upper()
 	btn_verify.disabled = selected_line_index < 0 or selected_option_id == ""
 	_apply_fix_preview()
-	lbl_hint.text = "Исправление применено. Нажмите ПРОВЕРИТЬ."
+	lbl_hint.text = "Fix preview applied. Press VERIFY."
 	state = State.READY_TO_VERIFY
 	_log_event("fix_applied", {"option_id": selected_option_id, "line": selected_line_index})
 
@@ -491,8 +525,11 @@ func _on_verify_pressed() -> void:
 
 func _handle_success() -> void:
 	state = State.FEEDBACK_SUCCESS
-	lbl_actual_value.text = "s = %s" % str(current_task.get("expected_s", "?"))
-	lbl_hint.text = "ДОСТУП РАЗРЕШЁН"
+	_update_result_panels(
+		int(current_task.get("expected_s", 0)),
+		int(current_task.get("expected_s", 0))
+	)
+	lbl_hint.text = "Correct fix applied. Actual now matches Expected."
 	btn_verify.disabled = true
 	btn_next.visible = true
 	_set_actual_panel_error(false)
@@ -504,10 +541,17 @@ func _handle_fail(correct_line: int) -> void:
 
 	var selected_result: Variant = _get_selected_fix_result()
 	if selected_line_index == correct_line and selected_result != null:
-		lbl_actual_value.text = "s = %s" % str(selected_result)
-		lbl_hint.text = "Неверное исправление: результат не совпадает."
+		_update_result_panels(
+			int(current_task.get("expected_s", 0)),
+			int(selected_result)
+		)
+		lbl_hint.text = "Line is correct, but replacement option is wrong. Check fix logic."
 	else:
-		lbl_hint.text = "Выбрана неверная строка."
+		_update_result_panels(
+			int(current_task.get("expected_s", 0)),
+			int(current_task.get("actual_s", 0))
+		)
+		lbl_hint.text = "Wrong line selected. Find the line that changes final s."
 
 func _set_actual_panel_error(is_error: bool, pulse: bool = true) -> void:
 	if is_error:
@@ -536,23 +580,26 @@ func _on_analyze_pressed() -> void:
 	if diagnostics_panel.visible:
 		return
 	var analysis_lines: Array = []
-	analysis_lines.append("Ожидаемое: s=%s" % str(current_task.get("expected_s", "?")))
-	analysis_lines.append("Фактическое: s=%s" % str(current_task.get("actual_s", "?")))
+	var expected_s := int(current_task.get("expected_s", 0))
+	var actual_s := int(current_task.get("actual_s", 0))
+	analysis_lines.append("Expected target: s=%d" % expected_s)
+	analysis_lines.append("Current actual: s=%d" % actual_s)
+	analysis_lines.append("Delta (actual-expected): %d" % (actual_s - expected_s))
 	if selected_line_index >= 0:
-		analysis_lines.append("Выбранная строка: %d" % (selected_line_index + 1))
+		analysis_lines.append("Selected line: %d" % (selected_line_index + 1))
 	if selected_option_id != "":
 		var fix_result: Variant = _get_selected_fix_result()
 		var fix_line := ""
 		var fix: Dictionary = _get_fix_option(selected_option_id)
 		if not fix.is_empty():
 			fix_line = str(fix.get("replace_line", ""))
-		analysis_lines.append("Ваш вариант: %s -> s=%s" % [selected_option_id, str(fix_result)])
+		analysis_lines.append("Selected fix %s -> s=%s" % [selected_option_id, str(fix_result)])
 		if fix_line != "":
-			analysis_lines.append("Заменить на: %s" % fix_line)
+			analysis_lines.append("Replacement code: %s" % fix_line)
 	analysis_lines.append("")
 	for line_var in current_task.get("explain_short", []):
 		analysis_lines.append(str(line_var))
-	diagnostics_panel.call("setup", "ДИАГНОСТИКА: %s" % str(current_task.get("id", "C-00")), analysis_lines)
+	diagnostics_panel.call("setup", "Disarm C analysis: %s" % str(current_task.get("id", "C-00")), analysis_lines)
 	diagnostics_panel.visible = true
 
 func _on_diagnostics_visibility_changed() -> void:
@@ -667,4 +714,118 @@ func _log_event(name: String, payload: Dictionary) -> void:
 	task_session["events"] = events
 
 func _update_misclick_label() -> void:
-	lbl_misclicks.text = "ПРОМАХИ: %d" % misclicks_before_correct
+	lbl_misclicks.text = "MISCLICKS: %d" % misclicks_before_correct
+
+func _on_viewport_size_changed() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var is_landscape: bool = viewport_size.x >= viewport_size.y
+	var phone_landscape: bool = is_landscape and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
+	var phone_portrait: bool = (not is_landscape) and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
+	var compact: bool = phone_landscape or phone_portrait
+
+	_apply_safe_area_padding(compact)
+	main_layout.add_theme_constant_override("separation", 8 if compact else 10)
+	header_row.add_theme_constant_override("separation", 8 if compact else 10)
+	monitors_row.add_theme_constant_override("separation", 8 if compact else 12)
+	body_row.add_theme_constant_override("separation", 8 if compact else 10)
+	actions_row.add_theme_constant_override("separation", 8 if compact else 12)
+
+	_set_monitor_mobile_mode(compact)
+	_set_body_mobile_mode(compact)
+
+	btn_back.custom_minimum_size = Vector2(96.0 if compact else 120.0, 52.0 if compact else 56.0)
+	btn_analyze.custom_minimum_size.y = 52.0 if compact else 60.0
+	btn_verify.custom_minimum_size.y = 52.0 if compact else 60.0
+	btn_next.custom_minimum_size.y = 52.0 if compact else 60.0
+	side_info.custom_minimum_size.x = 220.0 if compact else 300.0
+	code_view.add_theme_font_size_override("font_size", 20 if compact else 24)
+	lbl_hint.add_theme_font_size_override("font_size", 18 if compact else 22)
+	lbl_misclicks.add_theme_font_size_override("font_size", 16 if compact else 20)
+
+	fix_menu.size = Vector2i(
+		int(clampf(viewport_size.x - (24.0 if compact else 120.0), 320.0, 860.0)),
+		int(clampf(viewport_size.y - (24.0 if compact else 120.0), 240.0, 460.0))
+	)
+
+func _set_monitor_mobile_mode(use_mobile: bool) -> void:
+	var mobile_layout: VBoxContainer = _ensure_monitor_mobile_layout()
+	if use_mobile:
+		if monitors_row.visible:
+			if expected_panel.get_parent() != mobile_layout:
+				expected_panel.reparent(mobile_layout)
+			if actual_panel.get_parent() != mobile_layout:
+				actual_panel.reparent(mobile_layout)
+		monitors_row.visible = false
+		mobile_layout.visible = true
+	else:
+		if not monitors_row.visible:
+			if expected_panel.get_parent() != monitors_row:
+				expected_panel.reparent(monitors_row)
+			if actual_panel.get_parent() != monitors_row:
+				actual_panel.reparent(monitors_row)
+		mobile_layout.visible = false
+		monitors_row.visible = true
+
+func _ensure_monitor_mobile_layout() -> VBoxContainer:
+	if _monitor_mobile_layout != null and is_instance_valid(_monitor_mobile_layout):
+		return _monitor_mobile_layout
+	_monitor_mobile_layout = VBoxContainer.new()
+	_monitor_mobile_layout.name = "MonitorMobileLayout"
+	_monitor_mobile_layout.visible = false
+	_monitor_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_monitor_mobile_layout.add_theme_constant_override("separation", 8)
+	var status_monitor: Node = monitors_row.get_parent()
+	status_monitor.add_child(_monitor_mobile_layout)
+	status_monitor.move_child(_monitor_mobile_layout, status_monitor.get_children().find(monitors_row) + 1)
+	return _monitor_mobile_layout
+
+func _set_body_mobile_mode(use_mobile: bool) -> void:
+	var mobile_layout: VBoxContainer = _ensure_body_mobile_layout()
+	if use_mobile:
+		if body_row.visible:
+			if code_frame.get_parent() != mobile_layout:
+				code_frame.reparent(mobile_layout)
+			if side_info.get_parent() != mobile_layout:
+				side_info.reparent(mobile_layout)
+		body_row.visible = false
+		mobile_layout.visible = true
+	else:
+		if not body_row.visible:
+			if code_frame.get_parent() != body_row:
+				code_frame.reparent(body_row)
+			if side_info.get_parent() != body_row:
+				side_info.reparent(body_row)
+		mobile_layout.visible = false
+		body_row.visible = true
+
+func _ensure_body_mobile_layout() -> VBoxContainer:
+	if _body_mobile_layout != null and is_instance_valid(_body_mobile_layout):
+		return _body_mobile_layout
+	_body_mobile_layout = VBoxContainer.new()
+	_body_mobile_layout.name = "BodyMobileLayout"
+	_body_mobile_layout.visible = false
+	_body_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body_mobile_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_body_mobile_layout.add_theme_constant_override("separation", 8)
+	main_layout.add_child(_body_mobile_layout)
+	main_layout.move_child(_body_mobile_layout, main_layout.get_children().find(body_row) + 1)
+	return _body_mobile_layout
+
+func _apply_safe_area_padding(compact: bool) -> void:
+	var left: float = 8.0 if compact else 16.0
+	var top: float = 8.0 if compact else 12.0
+	var right: float = 8.0 if compact else 16.0
+	var bottom: float = 8.0 if compact else 12.0
+
+	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
+	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
+		var viewport_size: Vector2 = get_viewport_rect().size
+		left = maxf(left, float(safe_rect.position.x))
+		top = maxf(top, float(safe_rect.position.y))
+		right = maxf(right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
+		bottom = maxf(bottom, viewport_size.y - float(safe_rect.position.y + safe_rect.size.y))
+
+	safe_area.add_theme_constant_override("margin_left", int(round(left)))
+	safe_area.add_theme_constant_override("margin_top", int(round(top)))
+	safe_area.add_theme_constant_override("margin_right", int(round(right)))
+	safe_area.add_theme_constant_override("margin_bottom", int(round(bottom)))

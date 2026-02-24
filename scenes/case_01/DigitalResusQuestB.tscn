@@ -98,6 +98,28 @@ text = "BUDGET"
 layout_mode = 2
 text = "0$"
 
+[node name="OptionsCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+
+[node name="OptionsVBox" type="VBoxContainer" parent="SafeArea/MainVBox/OptionsCard"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="OptionsTitle" type="Label" parent="SafeArea/MainVBox/OptionsCard/OptionsVBox"]
+layout_mode = 2
+text = "OPTIONS"
+
+[node name="OptionsScroll" type="ScrollContainer" parent="SafeArea/MainVBox/OptionsCard/OptionsVBox"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="OptionsList" type="VBoxContainer" parent="SafeArea/MainVBox/OptionsCard/OptionsVBox/OptionsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
 [node name="BiosCard" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
 
@@ -167,6 +189,83 @@ layout_mode = 2
 max_value = 100.0
 show_percentage = false
 
+[node name="PreviewCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+
+[node name="PreviewVBox" type="VBoxContainer" parent="SafeArea/MainVBox/PreviewCard"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PreviewTitle" type="Label" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox"]
+layout_mode = 2
+text = "LIVE PREVIEW"
+
+[node name="BottleneckRow" type="HBoxContainer" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox"]
+layout_mode = 2
+
+[node name="BottleneckLabel" type="Label" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox/BottleneckRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "BOTTLENECK"
+
+[node name="BottleneckValue" type="Label" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox/BottleneckRow"]
+layout_mode = 2
+text = "OK"
+
+[node name="FpsRow" type="HBoxContainer" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox"]
+layout_mode = 2
+
+[node name="FpsLabel" type="Label" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox/FpsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "FPS"
+
+[node name="FpsValue" type="Label" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox/FpsRow"]
+layout_mode = 2
+text = "0"
+
+[node name="FpsBar" type="ProgressBar" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox"]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
+[node name="CpuRow" type="HBoxContainer" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox"]
+layout_mode = 2
+
+[node name="CpuLoadLabel" type="Label" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox/CpuRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "CPU LOAD"
+
+[node name="CpuLoadValue" type="Label" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox/CpuRow"]
+layout_mode = 2
+text = "0%"
+
+[node name="CpuBar" type="ProgressBar" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox"]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
+[node name="RamRow" type="HBoxContainer" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox"]
+layout_mode = 2
+
+[node name="RamUsageLabel" type="Label" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox/RamRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "RAM USAGE"
+
+[node name="RamUsageValue" type="Label" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox/RamRow"]
+layout_mode = 2
+text = "0%"
+
+[node name="RamBar" type="ProgressBar" parent="SafeArea/MainVBox/PreviewCard/PreviewVBox"]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
 [node name="TerminalCard" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -183,6 +282,30 @@ text = "BENCHMARK TERMINAL"
 custom_minimum_size = Vector2(0, 130)
 layout_mode = 2
 size_flags_vertical = 3
+fit_content = false
+scroll_active = true
+text = ""
+autowrap_mode = 2
+
+[node name="DiagnosticCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+visible = false
+layout_mode = 2
+
+[node name="DiagnosticVBox" type="VBoxContainer" parent="SafeArea/MainVBox/DiagnosticCard"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="DiagnosticTitle" type="Label" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
+layout_mode = 2
+text = "DIAGNOSTIC"
+
+[node name="DiagnosticHeadline" type="Label" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
+layout_mode = 2
+text = "Awaiting benchmark..."
+
+[node name="DiagnosticDetails" type="RichTextLabel" parent="SafeArea/MainVBox/DiagnosticCard/DiagnosticVBox"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
 fit_content = false
 scroll_active = true
 text = ""
@@ -214,3 +337,9 @@ text = "RESET"
 custom_minimum_size = Vector2(160, 72)
 layout_mode = 2
 text = "CONFIRM"
+
+[node name="BtnNextLevel" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+visible = false
+custom_minimum_size = Vector2(170, 72)
+layout_mode = 2
+text = "NEXT LEVEL"
