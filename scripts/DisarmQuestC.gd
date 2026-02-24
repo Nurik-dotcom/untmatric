@@ -63,6 +63,7 @@ var level_result_sent := false
 var suppress_caret_event := false
 var line_pick_armed := false
 var highlight_tween: Tween
+var actual_panel_error_tween: Tween
 var task_session: Dictionary = {}
 var cached_line_height := 26
 var last_scroll_vertical := -1
@@ -87,16 +88,16 @@ func _ready() -> void:
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
 
 func _apply_static_titles() -> void:
-	lbl_expected_title.text = "EXPECTED (target)"
-	lbl_actual_title.text = "ACTUAL (current)"
+	lbl_expected_title.text = "ОЖИДАЕТСЯ"
+	lbl_actual_title.text = "ПОЛУЧЕНО"
 	if lbl_delta != null:
-		lbl_delta.text = "DELTA: --"
+		lbl_delta.text = "Δ = --"
 
 func _update_result_panels(expected_s: int, actual_s: int) -> void:
 	lbl_expected_value.text = "s = %d" % expected_s
 	lbl_actual_value.text = "s = %d" % actual_s
 	if lbl_delta != null:
-		lbl_delta.text = "DELTA: %d" % (actual_s - expected_s)
+		lbl_delta.text = "Δ = %d (Y−X)" % (actual_s - expected_s)
 
 func _exit_tree() -> void:
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
@@ -310,7 +311,7 @@ func _start_level(idx: int) -> void:
 	lbl_clue_title.text = "DISARM C: Script Reanimation"
 	lbl_session.text = "SESSION: %s" % str(current_task.get("id", "C-00"))
 	_update_result_panels(int(current_task.get("expected_s", 0)), int(current_task.get("actual_s", 0)))
-	lbl_hint.text = "Expected is target result. Actual is current code output. Fix code so Actual == Expected."
+	lbl_hint.text = "ОЖИДАЕТСЯ — цель (X). ПОЛУЧЕНО — текущий результат (Y). Добейтесь Y = X."
 	_update_misclick_label()
 
 	btn_verify.disabled = true
@@ -529,7 +530,7 @@ func _handle_success() -> void:
 		int(current_task.get("expected_s", 0)),
 		int(current_task.get("expected_s", 0))
 	)
-	lbl_hint.text = "Correct fix applied. Actual now matches Expected."
+	lbl_hint.text = "Исправление подтверждено: ПОЛУЧЕНО теперь совпадает с ОЖИДАЕТСЯ."
 	btn_verify.disabled = true
 	btn_next.visible = true
 	_set_actual_panel_error(false)
@@ -545,25 +546,36 @@ func _handle_fail(correct_line: int) -> void:
 			int(current_task.get("expected_s", 0)),
 			int(selected_result)
 		)
-		lbl_hint.text = "Line is correct, but replacement option is wrong. Check fix logic."
+		lbl_hint.text = "Строка выбрана верно, но правка неверная. Проверьте логику замены."
 	else:
 		_update_result_panels(
 			int(current_task.get("expected_s", 0)),
 			int(current_task.get("actual_s", 0))
 		)
-		lbl_hint.text = "Wrong line selected. Find the line that changes final s."
+		lbl_hint.text = "Выбрана не та строка. Нужна строка, которая меняет итоговый s."
 
 func _set_actual_panel_error(is_error: bool, pulse: bool = true) -> void:
+	if actual_panel_error_tween != null and actual_panel_error_tween.is_valid():
+		actual_panel_error_tween.kill()
+		actual_panel_error_tween = null
+
 	if is_error:
 		actual_panel.modulate = Color(0.78, 0.78, 0.76, 1.0)
+		lbl_actual_title.modulate = Color(0.88, 0.88, 0.86, 1.0)
+		actual_panel_error_tween = create_tween().set_loops()
+		actual_panel_error_tween.tween_property(actual_panel, "modulate", Color(0.90, 0.90, 0.88, 1.0), 0.10)
+		actual_panel_error_tween.tween_property(actual_panel, "modulate", Color(0.76, 0.76, 0.74, 1.0), 0.12)
+		actual_panel_error_tween.tween_property(lbl_actual_title, "modulate", Color(0.78, 0.78, 0.76, 0.82), 0.08)
+		actual_panel_error_tween.tween_property(lbl_actual_title, "modulate", Color(0.92, 0.92, 0.90, 1.0), 0.10)
 		if pulse:
 			var tw := create_tween()
-			tw.tween_property(actual_panel, "modulate", Color(0.9, 0.9, 0.88, 1.0), 0.12)
-			tw.tween_property(actual_panel, "modulate", Color(0.78, 0.78, 0.76, 1.0), 0.14)
-			tw.tween_property(actual_panel, "modulate", Color(0.9, 0.9, 0.88, 1.0), 0.14)
-			tw.tween_property(actual_panel, "modulate", Color(0.78, 0.78, 0.76, 1.0), 0.16)
+			tw.tween_property(actual_panel, "scale", Vector2(1.008, 0.996), 0.06)
+			tw.tween_property(actual_panel, "scale", Vector2(0.996, 1.006), 0.06)
+			tw.tween_property(actual_panel, "scale", Vector2.ONE, 0.08)
 	else:
 		actual_panel.modulate = Color(0.92, 0.92, 0.9, 1.0)
+		actual_panel.scale = Vector2.ONE
+		lbl_actual_title.modulate = Color(0.92, 0.92, 0.90, 1.0)
 
 func _get_selected_fix_result() -> Variant:
 	var fix_options: Array = current_task.get("bug", {}).get("fix_options", [])
@@ -582,9 +594,9 @@ func _on_analyze_pressed() -> void:
 	var analysis_lines: Array = []
 	var expected_s := int(current_task.get("expected_s", 0))
 	var actual_s := int(current_task.get("actual_s", 0))
-	analysis_lines.append("Expected target: s=%d" % expected_s)
-	analysis_lines.append("Current actual: s=%d" % actual_s)
-	analysis_lines.append("Delta (actual-expected): %d" % (actual_s - expected_s))
+	analysis_lines.append("ОЖИДАЕТСЯ (X): s=%d" % expected_s)
+	analysis_lines.append("ПОЛУЧЕНО (Y): s=%d" % actual_s)
+	analysis_lines.append("Δ = Y - X: %d" % (actual_s - expected_s))
 	if selected_line_index >= 0:
 		analysis_lines.append("Selected line: %d" % (selected_line_index + 1))
 	if selected_option_id != "":

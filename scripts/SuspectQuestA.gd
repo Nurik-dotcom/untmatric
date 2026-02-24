@@ -41,7 +41,6 @@ enum State {
 @onready var header_row: HBoxContainer = $SafeArea/MainLayout/Header
 @onready var terminal_frame: PanelContainer = $SafeArea/MainLayout/TerminalFrame
 @onready var actions_row: HBoxContainer = $SafeArea/MainLayout/Actions
-@onready var settings_row: HBoxContainer = $SafeArea/MainLayout/SettingsRow
 @onready var noir_overlay: CanvasLayer = $NoirOverlay
 
 @onready var briefing_goal: Label = $SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox/LblGoal
@@ -118,8 +117,6 @@ func _apply_theme() -> void:
 	theme = THEME_NOIR
 
 func _setup_runtime_controls() -> void:
-	settings_row.visible = false
-
 	popup_fx_select.clear()
 	popup_fx_select.add_item("LOW", FX_ID_LOW)
 	popup_fx_select.add_item("HIGH", FX_ID_HIGH)
@@ -231,16 +228,21 @@ func _apply_layout_mode() -> void:
 
 	main_layout.add_theme_constant_override("separation", 6 if compact else 8)
 	header_row.add_theme_constant_override("separation", 6 if compact else 8)
-	terminal_frame.size_flags_stretch_ratio = 1.55 if compact else 1.6
-	numpad.size_flags_stretch_ratio = 0.8
-	actions_row.size_flags_stretch_ratio = 0.4
-	code_label.add_theme_font_size_override("normal_font_size", 18 if compact else 20)
+	terminal_frame.size_flags_stretch_ratio = 2.0 if compact else 2.2
+	terminal_frame.custom_minimum_size = Vector2(0, 180 if compact else 230)
+	numpad.size_flags_stretch_ratio = 0.7 if compact else 0.72
+	actions_row.size_flags_stretch_ratio = 0.34 if compact else 0.36
+	code_label.add_theme_font_size_override("normal_font_size", 24 if compact else 28)
+	code_label.add_theme_font_size_override("mono_font_size", 30 if compact else 34)
 	briefing_goal.add_theme_font_size_override("font_size", 18 if compact else 20)
 	briefing_hint.add_theme_font_size_override("font_size", 15 if compact else 16)
 
 	for btn_var in numpad.get_children():
 		if btn_var is Button:
-			(btn_var as Button).custom_minimum_size = Vector2(64, 64)
+			(btn_var as Button).custom_minimum_size = Vector2(52, 52) if compact else Vector2(64, 64)
+	btn_enter.custom_minimum_size = Vector2(0, 48) if compact else Vector2(0, 56)
+	btn_analyze.custom_minimum_size = Vector2(0, 48) if compact else Vector2(0, 56)
+	btn_next.custom_minimum_size = Vector2(0, 48) if compact else Vector2(0, 56)
 
 func _load_levels_from_json() -> bool:
 	var file: FileAccess = FileAccess.open(LEVELS_PATH, FileAccess.READ)

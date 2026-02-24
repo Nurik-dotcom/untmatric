@@ -6,23 +6,23 @@ const ANALYZE_COOLDOWN_SEC := 4.0
 const CASES := [
 	{
 		"id": "C_01",
-		"story": "Упростите формулу без изменения смысла: A AND (B OR C).",
+		"story": "Упростите формулу без изменения смысла: A И (B ИЛИ C).",
 		"vars": ["A", "B", "C"],
 		"expr_start": ["OR", ["AND", "A", "B"], ["AND", "A", "C"]],
 		"target_gates": 3,
 		"options": [
 			{
-				"label": "A AND (B OR C)",
+				"label": "A И (B ИЛИ C)",
 				"expr": ["AND", "A", ["OR", "B", "C"]],
-				"explain": "Дистрибутивность: A AND B OR A AND C = A AND (B OR C)."
+				"explain": "Дистрибутивность: A И B ИЛИ A И C = A И (B ИЛИ C)."
 			},
 			{
-				"label": "(A OR B) AND C",
+				"label": "(A ИЛИ B) И C",
 				"expr": ["AND", ["OR", "A", "B"], "C"],
 				"explain": "Порядок переменных изменен некорректно."
 			},
 			{
-				"label": "A OR (B AND C)",
+				"label": "A ИЛИ (B И C)",
 				"expr": ["OR", "A", ["AND", "B", "C"]],
 				"explain": "Это другая формула, не эквивалентная исходной."
 			}
@@ -30,7 +30,7 @@ const CASES := [
 	},
 	{
 		"id": "C_02",
-		"story": "Проверьте поглощение: A OR (A AND B).",
+		"story": "Проверьте поглощение: A ИЛИ (A И B).",
 		"vars": ["A", "B"],
 		"expr_start": ["OR", "A", ["AND", "A", "B"]],
 		"target_gates": 1,
@@ -38,15 +38,15 @@ const CASES := [
 			{
 				"label": "A",
 				"expr": "A",
-				"explain": "Закон поглощения: A OR (A AND B) = A."
+				"explain": "Закон поглощения: A ИЛИ (A И B) = A."
 			},
 			{
-				"label": "A AND B",
+				"label": "A И B",
 				"expr": ["AND", "A", "B"],
 				"explain": "Слишком сильное ограничение."
 			},
 			{
-				"label": "A OR B",
+				"label": "A ИЛИ B",
 				"expr": ["OR", "A", "B"],
 				"explain": "Добавляет лишние истинные случаи."
 			}
@@ -54,23 +54,23 @@ const CASES := [
 	},
 	{
 		"id": "C_03",
-		"story": "Примените закон де Моргана к NOT(A AND B).",
+		"story": "Примените закон де Моргана к НЕ(A И B).",
 		"vars": ["A", "B"],
 		"expr_start": ["NOT", ["AND", "A", "B"]],
 		"target_gates": 3,
 		"options": [
 			{
-				"label": "NOT A OR NOT B",
+				"label": "НЕ A ИЛИ НЕ B",
 				"expr": ["OR", ["NOT", "A"], ["NOT", "B"]],
 				"explain": "Корректный закон де Моргана."
 			},
 			{
-				"label": "NOT A AND NOT B",
+				"label": "НЕ A И НЕ B",
 				"expr": ["AND", ["NOT", "A"], ["NOT", "B"]],
-				"explain": "Это форма для NOT(A OR B), а не для AND."
+				"explain": "Это форма для НЕ(A ИЛИ B), а не для И."
 			},
 			{
-				"label": "A OR B",
+				"label": "A ИЛИ B",
 				"expr": ["OR", "A", "B"],
 				"explain": "Инверсия полностью потеряна."
 			}
@@ -78,7 +78,7 @@ const CASES := [
 	},
 	{
 		"id": "C_04",
-		"story": "Сократите двойное отрицание: NOT(NOT(A)).",
+		"story": "Сократите двойное отрицание: НЕ(НЕ(A)).",
 		"vars": ["A"],
 		"expr_start": ["NOT", ["NOT", "A"]],
 		"target_gates": 0,
@@ -86,10 +86,10 @@ const CASES := [
 			{
 				"label": "A",
 				"expr": "A",
-				"explain": "Двойное отрицание убирается: NOT NOT A = A."
+				"explain": "Двойное отрицание убирается: НЕ НЕ A = A."
 			},
 			{
-				"label": "NOT A",
+				"label": "НЕ A",
 				"expr": ["NOT", "A"],
 				"explain": "Инверсия осталась, это другая формула."
 			},
@@ -192,7 +192,7 @@ func _apply_responsive_layout() -> void:
 	is_landscape_layout = landscape
 	terminal_frame.size_flags_vertical = 0 if landscape else Control.SIZE_EXPAND_FILL
 	inventory_frame.size_flags_stretch_ratio = 0.4 if landscape else 0.55
-	interaction_row.theme_override_constants.separation = 10 if landscape else 12
+	interaction_row.add_theme_constant_override("separation", 10 if landscape else 12)
 
 func load_case(idx: int) -> void:
 	if idx >= CASES.size():
@@ -225,11 +225,11 @@ func load_case(idx: int) -> void:
 	_hide_diagnostics()
 
 	expr_value_label.text = "[b]%s[/b]" % _format_expr(current_case.get("expr_start"))
-	patch_value_label.text = "PATCH: EMPTY"
+	patch_value_label.text = "ПАТЧ: ПУСТО"
 	var base_load := count_gates(current_case.get("expr_start"))
 	load_bar.max_value = maxi(base_load, int(current_case.get("target_gates", 0))) + 2
 	load_bar.value = base_load
-	load_label.text = "LOAD: %d / %d" % [base_load, int(current_case.get("target_gates", 0))]
+	load_label.text = "НАГРУЗКА: %d / %d" % [base_load, int(current_case.get("target_gates", 0))]
 	_create_patch_buttons()
 
 	_append_trace("Сценарий загружен. Выберите патч и запустите СКАН.")
@@ -248,7 +248,7 @@ func _create_patch_buttons() -> void:
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(0, 64)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.text = str(option.get("label", "PATCH"))
+		btn.text = str(option.get("label", "ПАТЧ"))
 		btn.pressed.connect(_on_patch_pressed.bind(i))
 		patch_container.add_child(btn)
 		patch_buttons.append(btn)
@@ -264,9 +264,9 @@ func _on_patch_pressed(option_idx: int) -> void:
 		patch_buttons[i].add_theme_color_override("font_color", Color(0.95, 0.95, 0.90, 1.0) if i == option_idx else Color(0.74, 0.74, 0.70, 1.0))
 
 	var option: Dictionary = current_case.get("options", [])[option_idx]
-	patch_value_label.text = "PATCH: %s" % str(option.get("label", ""))
+	patch_value_label.text = "ПАТЧ: %s" % str(option.get("label", ""))
 	last_equivalence_result.clear()
-	_append_trace("PATCH SELECTED: %s" % str(option.get("label", "")))
+	_append_trace("ПАТЧ ВЫБРАН: %s" % str(option.get("label", "")))
 	_show_feedback("Патч выбран. Запустите СКАН.", Color(0.56, 0.78, 0.96))
 	btn_scan.disabled = false
 	_update_terminal()
@@ -290,9 +290,9 @@ func _on_scan_pressed() -> void:
 	var new_load := count_gates(selected_expr)
 	var target_load := int(current_case.get("target_gates", 0))
 
-	_append_trace("SCAN #%d: %s" % [scan_count, str(option.get("label", ""))])
+	_append_trace("СКАН #%d: %s" % [scan_count, str(option.get("label", ""))])
 	load_bar.value = new_load
-	load_label.text = "LOAD: %d / %d" % [new_load, target_load]
+	load_label.text = "НАГРУЗКА: %d / %d" % [new_load, target_load]
 	expr_value_label.text = "[b]%s[/b]" % _format_expr(selected_expr)
 
 	if bool(eq_result.get("ok", false)) and new_load <= target_load:
@@ -303,8 +303,8 @@ func _on_scan_pressed() -> void:
 		for btn in patch_buttons:
 			btn.disabled = true
 
-		_show_feedback("EQUIVALENT: патч принят.", Color(0.45, 0.92, 0.62))
-		_append_trace("RESULT: EQUIVALENT OK")
+		_show_feedback("ЭКВИВАЛЕНТНО: патч принят.", Color(0.45, 0.92, 0.62))
+		_append_trace("РЕЗУЛЬТАТ: ЭКВИВАЛЕНТНО, УСПЕХ")
 		_register_trial("SUCCESS", true, {
 			"selected_label": str(option.get("label", "")),
 			"new_load": new_load,
@@ -321,14 +321,14 @@ func _on_scan_pressed() -> void:
 		var total_vectors := int(eq_result.get("total_vectors", 0))
 		var gate_miss := new_load > target_load
 		if gate_miss and bool(eq_result.get("ok", false)):
-			_show_feedback("ЭКВИВАЛЕНТНО, но LOAD %d > TARGET %d (-%d)." % [new_load, target_load, int(penalty)], Color(1.0, 0.78, 0.32))
-			_append_trace("RESULT: LOAD TOO HIGH FAIL load=%d target=%d" % [new_load, target_load])
+			_show_feedback("ЭКВИВАЛЕНТНО, но НАГРУЗКА %d > ЦЕЛЬ %d (-%d)." % [new_load, target_load, int(penalty)], Color(1.0, 0.78, 0.32))
+			_append_trace("РЕЗУЛЬТАТ: ПРОВАЛ ПО НАГРУЗКЕ (%d > %d)" % [new_load, target_load])
 		else:
 			_show_feedback(
-				"NOT EQUIVALENT: несовпадение %d из %d (-%d)." % [mismatch_count, total_vectors, int(penalty)],
+				"НЕ ЭКВИВАЛЕНТНО: несовпадение %d из %d (-%d)." % [mismatch_count, total_vectors, int(penalty)],
 				Color(1.0, 0.35, 0.32)
 			)
-			_append_trace("RESULT: NOT EQUIVALENT FAIL %s | orig=%d new=%d | mismatch=%d/%d" % [
+			_append_trace("РЕЗУЛЬТАТ: НЕ ЭКВИВАЛЕНТНО | %s | исх=%d нов=%d | несовп=%d/%d" % [
 				_format_counterexample(counterexample),
 				1 if bool(eq_result.get("orig", false)) else 0,
 				1 if bool(eq_result.get("new", false)) else 0,
@@ -360,7 +360,7 @@ func _on_hint_pressed() -> void:
 		return
 	_mark_first_action()
 	if analyze_timer != null and not analyze_timer.is_stopped():
-		_show_feedback("ANALYZE OVERHEAT... %.1fs" % analyze_timer.time_left, Color(1.0, 0.78, 0.32))
+		_show_feedback("ПЕРЕГРЕВ АНАЛИЗА... %.1fс" % analyze_timer.time_left, Color(1.0, 0.78, 0.32))
 		return
 
 	hints_used += 1
@@ -374,16 +374,16 @@ func _on_hint_pressed() -> void:
 		var target_load := int(current_case.get("target_gates", 0))
 		var new_load := count_gates(option.get("expr"))
 		if bool(result.get("ok", false)) and new_load <= target_load:
-			_show_feedback("АНАЛИЗ: патч проходит эквивалентность и целевой LOAD.", Color(0.45, 0.92, 0.62))
+			_show_feedback("АНАЛИЗ: патч проходит эквивалентность и целевую нагрузку.", Color(0.45, 0.92, 0.62))
 		elif bool(result.get("ok", false)):
-			_show_feedback("АНАЛИЗ: эквивалентно, но LOAD %d > TARGET %d." % [new_load, target_load], Color(1.0, 0.78, 0.32))
+			_show_feedback("АНАЛИЗ: эквивалентно, но нагрузка %d > цель %d." % [new_load, target_load], Color(1.0, 0.78, 0.32))
 		else:
 			_show_feedback("АНАЛИЗ: несовпадение %d из %d, контрпример %s." % [
 				mismatch_count,
 				total_vectors,
 				_format_counterexample(result.get("counterexample", {}))
 			], Color(1.0, 0.78, 0.32))
-		_append_trace("ANALYZE: mismatch=%d/%d" % [mismatch_count, total_vectors])
+		_append_trace("АНАЛИЗ: несовпадение=%d/%d" % [mismatch_count, total_vectors])
 	else:
 		var correct_idx := _find_correct_option_idx()
 		if correct_idx >= 0:
@@ -391,7 +391,7 @@ func _on_hint_pressed() -> void:
 			_show_feedback("АНАЛИЗ: ориентируйтесь на закон '%s'." % str(option_hint.get("label", "")), Color(0.56, 0.78, 0.96))
 		else:
 			_show_feedback("АНАЛИЗ: подсказка недоступна.", Color(0.66, 0.66, 0.66))
-		_append_trace("ANALYZE: выберите патч для детальной проверки.")
+		_append_trace("АНАЛИЗ: выберите патч для детальной проверки.")
 
 	if analyze_timer != null:
 		btn_hint.disabled = true
@@ -416,14 +416,14 @@ func _enter_safe_mode() -> void:
 			patch_buttons[i].disabled = true
 			patch_buttons[i].add_theme_color_override("font_color", Color(0.45, 0.92, 0.62, 1.0) if i == correct_idx else Color(0.60, 0.60, 0.58, 1.0))
 		var correct_option: Dictionary = current_case.get("options", [])[correct_idx]
-		patch_value_label.text = "PATCH: %s" % str(correct_option.get("label", ""))
-		_append_trace("SAFE MODE: правильный патч %s" % str(correct_option.get("label", "")))
-		_show_feedback("SAFE MODE: правильный патч подставлен.", Color(1.0, 0.74, 0.32))
-		_show_diagnostics("SAFE MODE", "Обнаружено превышение порога ошибок.\nПравильный патч подсвечен, изучите разбор и переходите далее.")
+		patch_value_label.text = "ПАТЧ: %s" % str(correct_option.get("label", ""))
+		_append_trace("БЕЗОПАСНЫЙ РЕЖИМ: правильный патч %s" % str(correct_option.get("label", "")))
+		_show_feedback("БЕЗОПАСНЫЙ РЕЖИМ: правильный патч подставлен.", Color(1.0, 0.74, 0.32))
+		_show_diagnostics("БЕЗОПАСНЫЙ РЕЖИМ", "Обнаружено превышение порога ошибок.\nПравильный патч подсвечен, изучите разбор и переходите далее.")
 	else:
 		for btn in patch_buttons:
 			btn.disabled = true
-		_show_feedback("SAFE MODE: патч заблокирован.", Color(1.0, 0.74, 0.32))
+		_show_feedback("БЕЗОПАСНЫЙ РЕЖИМ: патч заблокирован.", Color(1.0, 0.74, 0.32))
 
 	_update_terminal()
 	_update_ui_state()
@@ -452,7 +452,7 @@ func _find_correct_option_idx() -> int:
 
 func _format_counterexample(env: Dictionary) -> String:
 	if env.is_empty():
-		return "N/A"
+		return "н/д"
 	var keys := env.keys()
 	keys.sort()
 	var parts: Array[String] = []
@@ -533,19 +533,19 @@ func _format_expr(expr: Variant) -> String:
 		var op := str(arr[0])
 		match op:
 			"NOT":
-				return "NOT %s" % _format_expr_sub(arr[1])
+				return "НЕ %s" % _format_expr_sub(arr[1])
 			"AND":
 				var parts_and: Array[String] = []
 				for i in range(1, arr.size()):
 					parts_and.append(_format_expr_sub(arr[i]))
-				return " AND ".join(parts_and)
+				return " И ".join(parts_and)
 			"OR":
 				var parts_or: Array[String] = []
 				for i in range(1, arr.size()):
 					parts_or.append(_format_expr_sub(arr[i]))
-				return " OR ".join(parts_or)
+				return " ИЛИ ".join(parts_or)
 			"XOR":
-				return "%s XOR %s" % [_format_expr_sub(arr[1]), _format_expr_sub(arr[2])]
+				return "%s ИСКЛ-ИЛИ %s" % [_format_expr_sub(arr[1]), _format_expr_sub(arr[2])]
 	return "?"
 
 func _format_expr_sub(expr: Variant) -> String:
@@ -562,14 +562,14 @@ func _update_terminal() -> void:
 	var lines: Array[String] = []
 	lines.append("[b]БРИФИНГ[/b]")
 	lines.append(str(current_case.get("story", "")))
-	lines.append("TARGET LOAD: %d" % int(current_case.get("target_gates", 0)))
+	lines.append("ЦЕЛЕВАЯ НАГРУЗКА: %d" % int(current_case.get("target_gates", 0)))
 	if not last_equivalence_result.is_empty():
-		lines.append("HAMMING: %d/%d" % [
+		lines.append("РАСХОЖДЕНИЕ: %d/%d" % [
 			int(last_equivalence_result.get("mismatch_count", 0)),
 			int(last_equivalence_result.get("total_vectors", 0))
 		])
 	lines.append("")
-	lines.append("[b]TRACE[/b]")
+	lines.append("[b]ЖУРНАЛ[/b]")
 	if trace_lines.is_empty():
 		lines.append("- ЖУРНАЛ ПУСТ")
 	else:
@@ -601,14 +601,14 @@ func _update_ui_state() -> void:
 
 func _update_stats_ui() -> void:
 	var case_id := str(current_case.get("id", "C_00"))
-	session_label.text = "СЕССИЯ: %02d/%02d | CASE %s" % [current_case_idx + 1, CASES.size(), case_id]
+	session_label.text = "СЕССИЯ: %02d/%02d | КЕЙС %s" % [current_case_idx + 1, CASES.size(), case_id]
 	var mismatch_text := "--"
 	if not last_equivalence_result.is_empty():
 		mismatch_text = "%d/%d" % [
 			int(last_equivalence_result.get("mismatch_count", 0)),
 			int(last_equivalence_result.get("total_vectors", 0))
 		]
-	stats_label.text = "ПОП: %d/%d | СКАНЫ: %d | MISM: %s | ANALYZE: %d | СТАБ: %d%%" % [
+	stats_label.text = "ПОП: %d/%d | СКАНЫ: %d | РАСХ: %s | АНАЛИЗ: %d | СТАБ: %d%%" % [
 		attempts,
 		MAX_ATTEMPTS,
 		scan_count,

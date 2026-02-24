@@ -21,7 +21,7 @@ const CASES := [
 		"story": "Соберите двухэтапную схему: сначала узел A/B, затем результат с C.",
 		"labels": ["ДАТЧИК A", "ДАТЧИК B", "ДАТЧИК C"],
 		"correct_gates": [GATE_OR, GATE_AND],
-		"hint": "Сначала объедините A и B через OR, затем примените AND с C."
+		"hint": "Сначала объедините A и B через ИЛИ, затем примените И с C."
 	},
 	{
 		"id": "B_02",
@@ -29,7 +29,7 @@ const CASES := [
 		"story": "Схема перестроена: сначала обрабатывается пара B/C, затем узел A.",
 		"labels": ["КЛЮЧ A", "КЛЮЧ B", "КЛЮЧ C"],
 		"correct_gates": [GATE_AND, GATE_OR],
-		"hint": "Во внутреннем слоте нужен AND, во внешнем слоте - OR."
+		"hint": "Во внутреннем слоте нужен И, во внешнем слоте - ИЛИ."
 	},
 	{
 		"id": "B_03",
@@ -37,7 +37,7 @@ const CASES := [
 		"story": "Нужен канал, где первый этап ловит различие A/B, а второй фильтрует через C.",
 		"labels": ["КАНАЛ A", "КАНАЛ B", "ФИЛЬТР C"],
 		"correct_gates": [GATE_XOR, GATE_AND],
-		"hint": "Различие на первом этапе даёт XOR."
+		"hint": "Различие на первом этапе даёт ИСКЛ-ИЛИ."
 	},
 	{
 		"id": "B_04",
@@ -45,7 +45,7 @@ const CASES := [
 		"story": "Схема с инверсией: сначала инвертируется B/C, затем объединяется с A.",
 		"labels": ["ОПОРНЫЙ A", "ШУМ B", "ШУМ C"],
 		"correct_gates": [GATE_NOR, GATE_OR],
-		"hint": "Внутренний этап - NOR, внешний - OR."
+		"hint": "Внутренний этап - ИЛИ-НЕ (NOR), внешний - ИЛИ."
 	},
 	{
 		"id": "B_05",
@@ -186,7 +186,7 @@ func _apply_responsive_layout() -> void:
 	is_landscape_layout = landscape
 	terminal_frame.size_flags_vertical = 0 if landscape else Control.SIZE_EXPAND_FILL
 	inventory_frame.size_flags_stretch_ratio = 0.35 if landscape else 0.55
-	interaction_row.theme_override_constants.separation = 10 if landscape else 12
+	interaction_row.add_theme_constant_override("separation", 10 if landscape else 12)
 
 func _setup_gate_buttons() -> void:
 	gate_buttons = {
@@ -285,7 +285,7 @@ func _on_slot1_pressed() -> void:
 	selected_slot_idx = 0
 	_update_slot_selection_visual()
 	_set_gate_buttons_enabled(true)
-	_show_feedback("Выбран SLOT 1. Установите модуль из инвентаря.", Color(0.56, 0.78, 0.96))
+	_show_feedback("Выбран СЛОТ 1. Установите модуль из инвентаря.", Color(0.56, 0.78, 0.96))
 	_play_click()
 
 func _on_slot2_pressed() -> void:
@@ -295,7 +295,7 @@ func _on_slot2_pressed() -> void:
 	selected_slot_idx = 1
 	_update_slot_selection_visual()
 	_set_gate_buttons_enabled(true)
-	_show_feedback("Выбран SLOT 2. Установите модуль из инвентаря.", Color(0.56, 0.78, 0.96))
+	_show_feedback("Выбран СЛОТ 2. Установите модуль из инвентаря.", Color(0.56, 0.78, 0.96))
 	_play_click()
 
 func _on_gate_button_toggled(arg1: Variant, arg2: Variant = null) -> void:
@@ -316,14 +316,14 @@ func _on_gate_button_toggled(arg1: Variant, arg2: Variant = null) -> void:
 		_clear_gate_button_presses()
 		return
 	if selected_slot_idx < 0:
-		_show_feedback("Сначала выберите SLOT 1 или SLOT 2.", Color(1.0, 0.78, 0.32))
+		_show_feedback("Сначала выберите СЛОТ 1 или СЛОТ 2.", Color(1.0, 0.78, 0.32))
 		_clear_gate_button_presses()
 		return
 
 	_mark_first_action()
 	placed_gates[selected_slot_idx] = gate_id
 	_update_slot_visual(selected_slot_idx)
-	_append_trace("SLOT %d <= %s" % [selected_slot_idx + 1, _gate_symbol(gate_id)])
+	_append_trace("СЛОТ %d <= %s" % [selected_slot_idx + 1, _gate_symbol(gate_id)])
 	selected_slot_idx = -1
 	_update_slot_selection_visual()
 	_set_gate_buttons_enabled(false)
@@ -444,7 +444,7 @@ func _on_test_pressed() -> void:
 
 	test_count += 1
 	var result := _calculate_circuit()
-	_append_trace("TEST #%d | A=%d B=%d C=%d | I=%d F=%d" % [
+	_append_trace("ПРОВЕРКА #%d | A=%d B=%d C=%d | I=%d F=%d" % [
 		test_count, 1 if inputs[0] else 0, 1 if inputs[1] else 0, 1 if inputs[2] else 0,
 		1 if bool(result.get("inter", false)) else 0,
 		1 if bool(result.get("final", false)) else 0
@@ -459,7 +459,7 @@ func _on_test_pressed() -> void:
 		btn_hint.disabled = true
 		btn_test.disabled = true
 		_disable_controls()
-		_show_feedback("PASS: конфигурация подтверждена.", Color(0.45, 0.92, 0.62))
+		_show_feedback("УСПЕХ: конфигурация подтверждена.", Color(0.45, 0.92, 0.62))
 		_register_trial("SUCCESS", true)
 	else:
 		attempts += 1
@@ -467,7 +467,7 @@ func _on_test_pressed() -> void:
 		_apply_penalty(penalty)
 		var mismatch := last_counterexample
 		_show_feedback(
-			"FAIL: A=%d B=%d C=%d, ожидалось F=%d, получено F=%d (-%d)." % [
+			"ПРОВАЛ: A=%d B=%d C=%d, ожидалось F=%d, получено F=%d (-%d)." % [
 				1 if bool(mismatch.get("a", false)) else 0,
 				1 if bool(mismatch.get("b", false)) else 0,
 				1 if bool(mismatch.get("c", false)) else 0,
@@ -478,7 +478,7 @@ func _on_test_pressed() -> void:
 			Color(1.0, 0.35, 0.32)
 		)
 		_append_trace(
-			"COUNTEREXAMPLE: A=%d B=%d C=%d -> expected %d got %d" % [
+			"КОНТРПРИМЕР: A=%d B=%d C=%d -> ожидалось %d, получено %d" % [
 				1 if bool(mismatch.get("a", false)) else 0,
 				1 if bool(mismatch.get("b", false)) else 0,
 				1 if bool(mismatch.get("c", false)) else 0,
@@ -498,19 +498,19 @@ func _on_hint_pressed() -> void:
 		return
 	_mark_first_action()
 	if analyze_timer != null and not analyze_timer.is_stopped():
-		_show_feedback("ANALYZE OVERHEAT... %.1fs" % analyze_timer.time_left, Color(1.0, 0.78, 0.32))
+		_show_feedback("ПЕРЕГРЕВ АНАЛИЗА... %.1fс" % analyze_timer.time_left, Color(1.0, 0.78, 0.32))
 		return
 
 	hints_used += 1
 	analyze_count += 1
 	if placed_gates[0] == GATE_NONE or placed_gates[1] == GATE_NONE:
 		_show_feedback("АНАЛИЗ: заполните оба слота для диагностики.", Color(0.56, 0.78, 0.96))
-		_append_trace("ANALYZE: требуется заполнить слоты.")
+		_append_trace("АНАЛИЗ: требуется заполнить слоты.")
 	else:
 		var mismatch := _find_counterexample()
 		if mismatch.is_empty():
 			_show_feedback("АНАЛИЗ: нарушений не найдено, схема проходит векторы.", Color(0.45, 0.92, 0.62))
-			_append_trace("ANALYZE: нарушений нет.")
+			_append_trace("АНАЛИЗ: нарушений нет.")
 		else:
 			_show_feedback(
 				"АНАЛИЗ: контрпример A=%d B=%d C=%d (ожидалось %d, получено %d)." % [
@@ -523,7 +523,7 @@ func _on_hint_pressed() -> void:
 				Color(1.0, 0.78, 0.32)
 			)
 			_append_trace(
-				"ANALYZE COUNTEREXAMPLE: A=%d B=%d C=%d expected=%d actual=%d" % [
+				"АНАЛИЗ КОНТРПРИМЕРА: A=%d B=%d C=%d ожидалось=%d получено=%d" % [
 					1 if bool(mismatch.get("a", false)) else 0,
 					1 if bool(mismatch.get("b", false)) else 0,
 					1 if bool(mismatch.get("c", false)) else 0,
@@ -554,10 +554,10 @@ func _enter_safe_mode() -> void:
 	_set_gate_buttons_enabled(false)
 	_clear_gate_button_presses()
 
-	var safe_msg := "SAFE MODE: SLOT1=%s, SLOT2=%s" % [_gate_symbol(placed_gates[0]), _gate_symbol(placed_gates[1])]
+	var safe_msg := "БЕЗОПАСНЫЙ РЕЖИМ: СЛОТ1=%s, СЛОТ2=%s" % [_gate_symbol(placed_gates[0]), _gate_symbol(placed_gates[1])]
 	_show_feedback(safe_msg, Color(1.0, 0.74, 0.32))
 	_append_trace(safe_msg)
-	_show_diagnostics("SAFE MODE", "Правильная конфигурация подставлена автоматически.\nИзучите сборку и переходите далее.")
+	_show_diagnostics("БЕЗОПАСНЫЙ РЕЖИМ", "Правильная конфигурация подставлена автоматически.\nИзучите сборку и переходите далее.")
 	_update_terminal()
 	_update_ui_state()
 
@@ -618,7 +618,7 @@ func _update_terminal() -> void:
 	lines.append(str(current_case.get("story", "")))
 	lines.append("Контрольные векторы: %d" % vector_cache.size())
 	lines.append("")
-	lines.append("[b]TRACE[/b]")
+	lines.append("[b]ЖУРНАЛ[/b]")
 	if trace_lines.is_empty():
 		lines.append("- ЖУРНАЛ ПУСТ")
 	else:
@@ -658,8 +658,8 @@ func _update_ui_state() -> void:
 
 func _update_stats_ui() -> void:
 	var case_id := str(current_case.get("id", "B_00"))
-	session_label.text = "СЕССИЯ: %02d/%02d | CASE %s" % [current_case_idx + 1, CASES.size(), case_id]
-	stats_label.text = "ПОП: %d/%d | ТЕСТЫ: %d | VECT: %d | ANALYZE: %d | СТАБ: %d%%" % [
+	session_label.text = "СЕССИЯ: %02d/%02d | КЕЙС %s" % [current_case_idx + 1, CASES.size(), case_id]
+	stats_label.text = "ПОП: %d/%d | ТЕСТЫ: %d | ВЕКТ: %d | АНАЛИЗ: %d | СТАБ: %d%%" % [
 		attempts,
 		MAX_ATTEMPTS,
 		test_count,
@@ -711,16 +711,16 @@ func _play_click() -> void:
 func _gate_symbol(gate_id: String) -> String:
 	match gate_id:
 		GATE_AND:
-			return "AND"
+			return "И"
 		GATE_OR:
-			return "OR"
+			return "ИЛИ"
 		GATE_NOT:
-			return "NOT"
+			return "НЕ"
 		GATE_XOR:
-			return "XOR"
+			return "ИСКЛ-ИЛИ"
 		GATE_NAND:
-			return "NAND"
+			return "И-НЕ"
 		GATE_NOR:
-			return "NOR"
+			return "ИЛИ-НЕ"
 		_:
 			return "?"
