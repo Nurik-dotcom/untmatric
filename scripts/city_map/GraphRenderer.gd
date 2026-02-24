@@ -120,7 +120,7 @@ func edge_label_position(edge_points: PackedVector2Array, normal_offset: float =
 	if edge_points.size() == 1:
 		return edge_points[0] - Vector2(10.0, 10.0)
 
-	var mid := int(edge_points.size() / 2)
+	var mid: int = int(edge_points.size() / 2.0)
 	var p := edge_points[mid]
 	var a := edge_points[maxi(0, mid - 1)]
 	var b := edge_points[mini(edge_points.size() - 1, mid + 1)]

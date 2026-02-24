@@ -92,7 +92,7 @@ func _ready() -> void:
 
 	levels = ResusData.load_stage_levels(LEVELS_PATH, "C")
 	if levels.is_empty():
-		_show_error("Failed to load Case 01 stage C data")
+		_show_error("Не удалось загрузить данные случая 01, этап C.")
 		return
 
 	_load_current_level(0)
@@ -109,12 +109,12 @@ func _load_current_level(index: int) -> void:
 	_begin_attempt()
 
 func _setup_ui() -> void:
-	title_label.text = "Case 01: Digital Reanimation"
-	stage_label.text = "STAGE C %d/%d" % [current_level_index + 1, levels.size()]
-	prompt_label.text = str(stage_c_data.get("prompt", "Mount modules and secure link"))
-	btn_reset.text = "RESET"
-	btn_analyze.text = "LINK START"
-	btn_next_level.text = "NEXT LEVEL"
+	title_label.text = "Кейс 01: Цифровая реанимация"
+	stage_label.text = "ЭТАП C %d/%d" % [current_level_index + 1, levels.size()]
+	prompt_label.text = str(stage_c_data.get("prompt", "Монтирование модулей и безопасная связь"))
+	btn_reset.text = "СБРОС"
+	btn_analyze.text = "АНАЛИЗ СЕТИ"
+	btn_next_level.text = "СЛЕД. ЭТАП"
 	btn_next_level.visible = false
 	btn_next_level.disabled = true
 
@@ -225,7 +225,7 @@ func _begin_attempt() -> void:
 	if packets_layer != null and packets_layer.has_method("reset_to_idle"):
 		packets_layer.call("reset_to_idle")
 
-	_update_status_line("Ready to mount modules")
+	_update_status_line("Готовы к установке модулей.")
 	_update_risk_dashboard()
 	_update_stability_ui()
 
@@ -455,7 +455,7 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 	for detail_v in (result.get("feedback_details", []) as Array):
 		detail_lines.append("- %s" % str(detail_v))
 	detail_lines.append("")
-	detail_lines.append("Risk: collisions=%s | eavesdrop=%s | filtering=%s | media=%s" % [
+	detail_lines.append("Риск: столкновения=%s | подслушивать=%s | фильтрация=%s | медиа=%s" % [
 		str(risk.get("collisions", "MID")),
 		str(risk.get("eavesdrop", "MID")),
 		str(risk.get("filtering", "OFF")),
@@ -468,23 +468,23 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 	var missing_required: Array = result.get("missing_required", []) as Array
 	var wrong_selected: int = int(result.get("wrong_selected", 0))
 
-	why_lines.append("Selected modules:")
+	why_lines.append("Выбранные модули:")
 	for selected_id in _collect_selected_ids():
 		why_lines.append("- %s" % selected_id)
 
 	if missing_required.is_empty() and wrong_selected == 0:
-		why_lines.append("All required modules are present.")
+		why_lines.append("Все необходимые модули присутствуют.")
 	elif not missing_required.is_empty():
-		why_lines.append("Missing required: %s" % ", ".join(_to_string_array(missing_required)))
+		why_lines.append("Отсутствует обязательное: %s" % ", ".join(_to_string_array(missing_required)))
 	if wrong_selected > 0:
-		why_lines.append("Harmful modules selected: %d" % wrong_selected)
+		why_lines.append("Выбрано вредоносных модулей: %d" % wrong_selected)
 
 	if strategy_flags.has("TOUCHED_ALL_OPTIONS"):
-		why_lines.append("Strategy flag: TOUCHED_ALL_OPTIONS")
+		why_lines.append("Флаг стратегии: TOUCHED_ALL_OPTIONS.")
 
 	expl_why.text = "\n".join(why_lines)
 
-	status_label.text = "LOCKED | %s | slots %d/3" % [verdict_code, _filled_slots_count()]
+	status_label.text = "ЗАБЛОКИРОВАНО | %s | слоты %d/3" % [verdict_code, _filled_slots_count()]
 	status_label.modulate = expl_headline.modulate
 
 func _apply_result_highlight(result: Dictionary) -> void:
@@ -565,9 +565,9 @@ func _update_status_line(prefix: String) -> void:
 	var filled: int = _filled_slots_count()
 	var used_unique: int = unique_used_set.size()
 	if prefix.strip_edges() == "":
-		status_label.text = "Slots %d/3 | unique modules %d" % [filled, used_unique]
+		status_label.text = "Слоты %d/3 | уникальные модули %d" % [filled, used_unique]
 	else:
-		status_label.text = "%s | slots %d/3 | unique modules %d" % [prefix, filled, used_unique]
+		status_label.text = "%s | слоты %d/3 | уникальные модули %d" % [prefix, filled, used_unique]
 	status_label.modulate = COLOR_WARN
 
 func _update_risk_dashboard() -> void:
@@ -710,10 +710,10 @@ func _to_string_array(values: Array) -> Array[String]:
 		out.append(str(value_v))
 	return out
 
-func _log_event(name: String, data: Dictionary = {}) -> void:
+func _log_event(event_name: String, data: Dictionary = {}) -> void:
 	trace.append({
 		"t_ms": Time.get_ticks_msec() - stage_started_ms,
-		"event": name,
+		"event": event_name,
 		"data": data.duplicate(true)
 	})
 
@@ -737,12 +737,12 @@ func _ensure_scroll_layout() -> void:
 		return
 
 	_content_scroll = ScrollContainer.new()
-	_content_scroll.name = "ContentScroll"
+	_content_scroll.name = "КонтентПрокрутка"
 	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	_content_vbox = VBoxContainer.new()
-	_content_vbox.name = "ContentVBox"
+	_content_vbox.name = "КонтентВБокс"
 	_content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content_vbox.add_theme_constant_override("separation", 10)
@@ -775,7 +775,7 @@ func _setup_collapsible_prompt() -> void:
 		var top_row: HBoxContainer = HBoxContainer.new()
 		top_row.add_theme_constant_override("separation", 8)
 		var title: Label = Label.new()
-		title.text = "BRIEFING"
+		title.text = "БРИФИНГ"
 		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		top_row.add_child(title)
 
@@ -857,7 +857,7 @@ func _ensure_bottom_mobile_layout() -> VBoxContainer:
 	if _bottom_mobile_layout != null and is_instance_valid(_bottom_mobile_layout):
 		return _bottom_mobile_layout
 	_bottom_mobile_layout = VBoxContainer.new()
-	_bottom_mobile_layout.name = "BottomBarMobileLayout"
+	_bottom_mobile_layout.name = "НижнийБарМобильныйМакет"
 	_bottom_mobile_layout.visible = false
 	_bottom_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_bottom_mobile_layout.add_theme_constant_override("separation", 8)

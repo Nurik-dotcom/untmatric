@@ -58,25 +58,25 @@ theme_override_constants/separation = 8
 [node name="BtnQuestBack" type="Button" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "BACK"
+text = "НАЗАД"
 
 [node name="LblClueTitle" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "CLUE #A-01"
+text = "УЛИКА #A-01"
 horizontal_alignment = 1
 
 [node name="LblSessionId" type="Label" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
 size_flags_horizontal = 1
-text = "SESSION 0000"
+text = "СЕССИЯ 0000"
 horizontal_alignment = 2
 
 [node name="BtnSettings" type="Button" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
-text = "SET"
+text = "НАСТР"
 
 [node name="BarsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
@@ -113,13 +113,13 @@ theme_override_constants/separation = 4
 [node name="LblGoal" type="Label" parent="SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Goal: find final s"
+text = "Цель: найти итоговое значение s"
 autowrap_mode = 2
 
 [node name="LblHint" type="Label" parent="SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Hint: range stop is excluded"
+text = "Подсказка: stop в range не включается"
 autowrap_mode = 2
 
 [node name="TerminalFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
@@ -149,11 +149,11 @@ alignment = 1
 [node name="LblStatus" type="Label" parent="SafeArea/MainLayout/StatusRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "STATUS"
+text = "ГОТОВНОСТЬ"
 
 [node name="LblAttempts" type="Label" parent="SafeArea/MainLayout/StatusRow"]
 layout_mode = 2
-text = "ATTEMPTS: 0/3"
+text = "ПОПЫТКИ: 0/3"
 
 [node name="InputFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
@@ -268,14 +268,14 @@ alignment = 1
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ANALYZE"
+text = "АНАЛИЗ"
 
 [node name="BtnEnter" type="Button" parent="SafeArea/MainLayout/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "ENTER"
+text = "ВВОД"
 
 [node name="BtnNext" type="Button" parent="SafeArea/MainLayout/Actions"]
 visible = false
@@ -283,7 +283,7 @@ custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "NEXT"
+text = "ДАЛЕЕ"
 
 [node name="InspectorPopup" type="PopupPanel" parent="."]
 initial_position = 1
@@ -297,7 +297,7 @@ theme_override_constants/separation = 10
 [node name="LblTitle" type="Label" parent="InspectorPopup/Root"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "SETTINGS"
+text = "НАСТРОЙКИ"
 horizontal_alignment = 1
 
 [node name="SettingsGrid" type="GridContainer" parent="InspectorPopup/Root"]
@@ -308,7 +308,7 @@ columns = 2
 
 [node name="LblFx" type="Label" parent="InspectorPopup/Root/SettingsGrid"]
 layout_mode = 2
-text = "FX"
+text = "ЭФФЕКТЫ"
 
 [node name="FxSelect" type="OptionButton" parent="InspectorPopup/Root/SettingsGrid"]
 custom_minimum_size = Vector2(220, 48)
@@ -316,7 +316,7 @@ layout_mode = 2
 
 [node name="LblOverlay" type="Label" parent="InspectorPopup/Root/SettingsGrid"]
 layout_mode = 2
-text = "OVERLAY"
+text = "НАЛОЖЕНИЕ"
 
 [node name="OverlaySelect" type="OptionButton" parent="InspectorPopup/Root/SettingsGrid"]
 custom_minimum_size = Vector2(220, 48)
@@ -325,7 +325,7 @@ layout_mode = 2
 [node name="BtnClose" type="Button" parent="InspectorPopup/Root"]
 custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
-text = "CLOSE"
+text = "ЗАКРЫТЬ"
 
 [node name="DiagnosticsPanel" type="PanelContainer" parent="."]
 visible = false
@@ -342,7 +342,7 @@ theme_override_constants/separation = 16
 
 [node name="Label" type="Label" parent="DiagnosticsPanel/VBoxContainer"]
 layout_mode = 2
-text = "DIAGNOSTIC TRACE"
+text = "ДИАГНОСТИКА"
 horizontal_alignment = 1
 
 [node name="ExplainList" type="RichTextLabel" parent="DiagnosticsPanel/VBoxContainer"]
@@ -352,9 +352,9 @@ layout_mode = 2
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "Trace..."
+text = "Ожидание..."
 
 [node name="BtnCloseDiag" type="Button" parent="DiagnosticsPanel/VBoxContainer"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "CLOSE"
+text = "ЗАКРЫТЬ"

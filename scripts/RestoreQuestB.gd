@@ -409,10 +409,10 @@ func _register_result(is_correct: bool, end_ticks: int, reason: String) -> void:
 	}
 	GlobalMetrics.register_trial(payload)
 
-func _log_event(name: String, payload: Dictionary) -> void:
+func _log_event(event_name: String, payload: Dictionary) -> void:
 	var events: Array = task_session.get("events", [])
 	events.append({
-		"name": name,
+		"name": event_name,
 		"t_ms": _effective_elapsed_ms(Time.get_ticks_msec()),
 		"payload": payload
 	})

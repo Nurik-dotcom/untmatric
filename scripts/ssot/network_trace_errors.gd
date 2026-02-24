@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 class_name NetworkTraceErrors
 
 const A_WRONG_EVIDENCE := "A_WRONG_EVIDENCE"
@@ -33,98 +33,98 @@ const TIMEOUT := "TIMEOUT"
 const UNKNOWN := "UNKNOWN"
 
 const TITLES: Dictionary = {
-	A_WRONG_EVIDENCE: "Insufficient Evidence",
-	A_L1_BROADCAST: "Layer 1 Broadcast Fault",
-	A_L2_SEGMENT_LIMIT: "Layer 2 Limitation",
-	A_L1_PHYSICAL: "Physical Link Fault",
-	A_PASSIVE: "Passive Component",
-	A_L3_OVERKILL: "Overengineered Layer 3",
-	A_L2_BRIDGE_LIMIT: "Bridge Limitation",
-	B_MATH_X8: "Byte-to-Bit Error",
-	B_MATH_1024: "1024 Conversion Error",
-	B_MATH_DIV: "Missing Time Division",
-	B_UNIT_TRAP: "Unit Mismatch",
-	B_PIPELINE_INCOMPLETE: "Pipeline Incomplete",
-	B_PIPELINE_BAD_DROP: "Module in Wrong Slot",
-	B_PIPELINE_MISMATCH: "Pipeline Mismatch",
-	B_SPAM_TRACE: "Command Spam",
-	B_GARBAGE: "Irrelevant Value",
-	C_NOT_APPLIED: "AND Not Applied",
-	C_MASK_VAL: "Mask Value Confusion",
-	C_L24_FALLBACK: "Reflex /24 Guess",
-	C_BOUNDARY_SHIFT: "Boundary Shift",
-	C_BROADCAST: "Broadcast Address",
-	C_MASK_INVALID: "Invalid Mask Pattern",
-	C_BAD_STEP: "Wrong Segment Step",
-	C_BAD_DROP: "Mask Not Placed",
-	C_IP_VAL: "IP Value Instead of Network ID",
-	TIMEOUT: "Timeout",
-	UNKNOWN: "Unknown Error"
+	A_WRONG_EVIDENCE: "Недостаточно доказательств",
+	A_L1_BROADCAST: "Ошибка широковещательной передачи уровня 1",
+	A_L2_SEGMENT_LIMIT: "Ограничение уровня 2",
+	A_L1_PHYSICAL: "Ошибка физического канала",
+	A_PASSIVE: "Пассивный компонент",
+	A_L3_OVERKILL: "Перепроектированный уровень 3",
+	A_L2_BRIDGE_LIMIT: "Ограничение моста",
+	B_MATH_X8: "Ошибка преобразования байта в бит",
+	B_MATH_1024: "1024 Ошибка преобразования",
+	B_MATH_DIV: "Отсутствует разделение времени",
+	B_UNIT_TRAP: "Несоответствие единиц измерения",
+	B_PIPELINE_INCOMPLETE: "Трубопровод не завершен",
+	B_PIPELINE_BAD_DROP: "Модуль в неправильном слоте",
+	B_PIPELINE_MISMATCH: "Несоответствие трубопровода",
+	B_SPAM_TRACE: "Командный спам",
+	B_GARBAGE: "Нерелевантная ценность",
+	C_NOT_APPLIED: "И не применяется",
+	C_MASK_VAL: "Путаница со значением маски",
+	C_L24_FALLBACK: "Рефлекс /24 Угадайка",
+	C_BOUNDARY_SHIFT: "Сдвиг границ",
+	C_BROADCAST: "Широковещательный адрес",
+	C_MASK_INVALID: "Неверный шаблон маски",
+	C_BAD_STEP: "Неправильный шаг сегмента",
+	C_BAD_DROP: "Маска не установлена",
+	C_IP_VAL: "Значение IP вместо идентификатора сети",
+	TIMEOUT: "Тайм-аут",
+	UNKNOWN: "Неизвестная ошибка"
 }
 
 const SHORT_MESSAGES: Dictionary = {
 	"": "",
-	A_WRONG_EVIDENCE: "Collect at least two clues before running trace.",
-	A_L1_BROADCAST: "Hub floods traffic and cannot isolate collisions.",
-	A_L2_SEGMENT_LIMIT: "Layer 2 devices do not route between subnets.",
-	A_L1_PHYSICAL: "This fixes signal only, not packet forwarding logic.",
-	A_PASSIVE: "Passive hardware cannot make forwarding decisions.",
-	A_L3_OVERKILL: "Router works, but the clue set points to a simpler fix.",
-	A_L2_BRIDGE_LIMIT: "Bridge still works inside one broadcast domain.",
-	B_MATH_X8: "Bytes must be converted to bits using x8.",
-	B_MATH_1024: "Use 1024 for KB/MB conversion in this task.",
-	B_MATH_DIV: "Throughput requires division by time.",
-	B_UNIT_TRAP: "Output unit does not match the requested unit.",
-	B_PIPELINE_INCOMPLETE: "Fill all four pipeline slots, then run calculation.",
-	B_PIPELINE_BAD_DROP: "That module type cannot be placed in this slot.",
-	B_PIPELINE_MISMATCH: "Chosen answer does not match assembled pipeline behavior.",
-	B_SPAM_TRACE: "Repeated spam clicks detected.",
-	B_GARBAGE: "Selected value is unrelated to calculated throughput.",
-	C_NOT_APPLIED: "Run APPLY AND before selecting Network ID.",
-	C_MASK_VAL: "Mask value is not the network ID.",
-	C_L24_FALLBACK: "Default /24 guess does not match current CIDR.",
-	C_BOUNDARY_SHIFT: "Choose the segment boundary, not the nearest number.",
-	C_BROADCAST: "Broadcast address is not the network ID.",
-	C_MASK_INVALID: "Mask must be contiguous: 111...000...",
-	C_BAD_STEP: "Segment step is incorrect for this CIDR.",
-	C_BAD_DROP: "Place the mask in the mask target area first.",
-	C_IP_VAL: "That is host IP value, not Network ID.",
-	TIMEOUT: "Time limit expired.",
-	UNKNOWN: "Check conversion steps and unit target."
+	A_WRONG_EVIDENCE: "Прежде чем запускать трассировку, соберите как минимум две улики.",
+	A_L1_BROADCAST: "Хаб перенасыщает трафик и не может изолировать коллизии.",
+	A_L2_SEGMENT_LIMIT: "Устройства уровня 2 не маршрутизируются между подсетями.",
+	A_L1_PHYSICAL: "Это исправляет только сигнал, а не логику пересылки пакетов.",
+	A_PASSIVE: "Пассивное оборудование не может принимать решения о пересылке.",
+	A_L3_OVERKILL: "Маршрутизатор работает, но набор подсказок указывает на более простое решение.",
+	A_L2_BRIDGE_LIMIT: "Мост по-прежнему работает внутри одного широковещательного домена.",
+	B_MATH_X8: "Байты необходимо преобразовать в биты с помощью x8.",
+	B_MATH_1024: "В этой задаче используйте 1024 для преобразования КБ/МБ.",
+	B_MATH_DIV: "Пропускная способность требует деления по времени.",
+	B_UNIT_TRAP: "Выходная единица не соответствует запрошенной единице.",
+	B_PIPELINE_INCOMPLETE: "Заполните все четыре слота конвейера, затем запустите расчет.",
+	B_PIPELINE_BAD_DROP: "Этот тип модуля не может быть установлен в этот слот.",
+	B_PIPELINE_MISMATCH: "Выбранный ответ не соответствует поведению собранного конвейера.",
+	B_SPAM_TRACE: "Обнаружены повторные спам-клики.",
+	B_GARBAGE: "Выбранное значение не связано с расчетной пропускной способностью.",
+	C_NOT_APPLIED: "Выполните «ПРИМЕНИТЬ И» перед выбором идентификатора сети.",
+	C_MASK_VAL: "Значение маски не является идентификатором сети.",
+	C_L24_FALLBACK: "Предположение по умолчанию /24 не соответствует текущему CIDR.",
+	C_BOUNDARY_SHIFT: "Выбирайте границу сегмента, а не ближайшее число.",
+	C_BROADCAST: "Широковещательный адрес не является идентификатором сети.",
+	C_MASK_INVALID: "Маска должна быть непрерывной: 111...000...",
+	C_BAD_STEP: "Шаг сегмента неверен для этого CIDR.",
+	C_BAD_DROP: "Сначала поместите маску в целевую область маски.",
+	C_IP_VAL: "Это значение IP хоста, а не идентификатор сети.",
+	TIMEOUT: "Срок истек.",
+	UNKNOWN: "Проверьте этапы преобразования и целевую единицу измерения."
 }
 
 const DETAIL_MESSAGES: Dictionary = {
 	A_L1_BROADCAST: [
-		"Broadcast storms and collision spikes indicate hub misuse.",
-		"Switching or routing is required to isolate traffic."
+		"Широковещательные штормы и всплески столкновений указывают на неправильное использование хаба.",
+		"Для изоляции трафика требуется коммутация или маршрутизация."
 	],
 	A_L2_SEGMENT_LIMIT: [
-		"Switch and bridge forward frames inside one L2 domain.",
-		"Inter-subnet connectivity requires a router."
+		"Коммутация и пересылка кадров внутри одного домена L2.",
+		"Для подключения между подсетями требуется маршрутизатор."
 	],
 	B_MATH_X8: [
-		"Formula: bits = bytes x 8.",
-		"Skipping x8 returns byte rate, not bit rate."
+		"Формула: биты = байты х 8.",
+		"Пропуск x8 возвращает скорость передачи данных, а не скорость передачи данных."
 	],
 	B_MATH_1024: [
-		"Use binary conversion for KB/MB in this challenge.",
-		"KB = 1024 bytes, MB = 1024 x 1024 bytes."
+		"В этом задании используйте двоичное преобразование КБ/МБ.",
+		"KB = 1024 байт, MB = 1024 x 1024 байт."
 	],
 	B_UNIT_TRAP: [
-		"Check prompt unit before confirming.",
-		"If ask_unit is kbps, convert bps / 1000."
+		"Перед подтверждением проверьте блок подсказки.",
+		"Если целевая единица — кбит/с, переведите бит/с в кбит/с делением на 1000."
 	],
 	C_MASK_VAL: [
-		"Network ID is IP_last AND mask_last.",
-		"Mask itself is only a filter, not a final answer."
+		"Идентификатор сети = IP_last И mask_last.",
+		"Маска сама по себе является лишь фильтром, а не окончательным ответом."
 	],
 	C_BOUNDARY_SHIFT: [
-		"Step = 256 - mask_last.",
-		"Network boundary is the floor multiple of step."
+		"Шаг = 256 - mask_last.",
+		"Граница сети равна этажу, кратному шагу."
 	],
 	UNKNOWN: [
-		"Re-check every conversion stage.",
-		"Verify that selected option matches the computed result."
+		"Перепроверьте каждый этап преобразования.",
+		"Убедитесь, что выбранная опция соответствует вычисленному результату."
 	]
 }
 

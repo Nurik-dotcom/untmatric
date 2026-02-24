@@ -575,7 +575,7 @@ func _set_overlay_tint(color: Color) -> void:
 
 func _update_timer_label() -> void:
 	var total_seconds: int = maxi(0, int(ceil(time_left_sec)))
-	var minutes: int = total_seconds / 60
+	var minutes: int = int(total_seconds / 60.0)
 	var seconds: int = total_seconds % 60
 	lbl_timer.text = "%02d:%02d" % [minutes, seconds]
 

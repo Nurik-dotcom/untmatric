@@ -151,12 +151,12 @@ func _setup_noir_ui() -> void:
 	_btn_help = Button.new()
 	_btn_help.text = "?"
 	_btn_help.custom_minimum_size = Vector2(44, 44)
-	_btn_help.tooltip_text = "DOSSIER"
+	_btn_help.tooltip_text = "ДОСЬЕ"
 	_btn_help.pressed.connect(_on_help_pressed)
 	header.add_child(_btn_help)
 
 	_btn_undo = Button.new()
-	_btn_undo.text = "UNDO"
+	_btn_undo.text = "ОТКАТ"
 	_btn_undo.custom_minimum_size = Vector2(0, 44)
 	_btn_undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_undo.pressed.connect(_on_undo_pressed)
@@ -1193,7 +1193,7 @@ func _recalculate_stability() -> void:
 func _update_timer_display() -> void:
 	var time_limit := int(level_data.get("time_limit_sec", 120))
 	var remaining: int = maxi(0, time_limit - t_elapsed_seconds)
-	var mm: int = remaining / 60
+	var mm: int = int(remaining / 60.0)
 	var ss: int = remaining % 60
 	label_timer.text = "ВРЕМЯ: %02d:%02d" % [mm, ss]
 	if t_elapsed_seconds > time_limit:
@@ -1210,6 +1210,9 @@ func _log_attempt(verdict: Dictionary) -> void:
 	var sublevel_id := str(level_entry.get("id", "6_2_%02d" % (level_index + 1)))
 	var sublevel_path := str(level_entry.get("path", ""))
 	var next_available := result_code == "OK" and level_index + 1 < level_total
+	var first_attempt_edge_value: Variant = null
+	if not first_attempt_edge.is_empty():
+		first_attempt_edge_value = first_attempt_edge
 
 	var attempt_no := GlobalMetrics.session_history.size() + 1
 	var log_data := {
@@ -1234,7 +1237,7 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"calc_ok": sum_input_value != null and int(sum_input_value) == sum_actual,
 		"optimal_ok": sum_actual == min_sum and result_code == "OK" and must_visit_ok,
 		"must_visit_ok": must_visit_ok,
-		"first_attempt_edge": null if first_attempt_edge.is_empty() else first_attempt_edge,
+		"first_attempt_edge": first_attempt_edge_value,
 		"t_elapsed_seconds": t_elapsed_seconds,
 		"path": path.duplicate(),
 		"sum_actual": sum_actual,
@@ -1277,7 +1280,7 @@ func update_conditions_panel() -> void:
 	var must_visit_text: String = "-" if must_visit_nodes.is_empty() else ",".join(must_visit_nodes)
 	var lines: Array[String] = [
 		"УСЛОВИЯ:",
-		"MUST VISIT: %s" % must_visit_text,
+		"ОБЯЗАТЕЛЬНО ПОСЕТИТЬ: %s" % must_visit_text,
 		"ЦИКЛЫ: запрещены",
 		"ОТКАТЫ: считаются"
 	]
@@ -1294,11 +1297,11 @@ func update_warnings_panel() -> void:
 			missing_must.append(must_node)
 
 	if not missing_must.is_empty():
-		warnings.append("⚠ НЕ ПОСЕЩЁН MUST VISIT: %s" % ",".join(missing_must))
+		warnings.append("НЕ ПОСЕЩЕНЫ ОБЯЗАТЕЛЬНЫЕ УЗЛЫ: %s" % ",".join(missing_must))
 	if cycle_events > 0:
-		warnings.append("⚠ ОБНАРУЖЕН ЦИКЛ")
+		warnings.append("ОБНАРУЖЕН ЦИКЛ")
 	if backtrack_count > 0:
-		warnings.append("⚠ ОТКАТ ВЫПОЛНЕН")
+		warnings.append("ВЫПОЛНЕН ОТКАТ")
 
 	_must_visit_warning_active = not missing_must.is_empty()
 	var signature: String = "|".join(warnings)
@@ -1308,9 +1311,9 @@ func update_warnings_panel() -> void:
 		_last_warning_signature = signature
 
 	if warnings.is_empty():
-		warning_label.text = "WARNINGS:\n-"
+		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ:\n-"
 	else:
-		warning_label.text = "WARNINGS:\n%s" % "\n".join(warnings)
+		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ:\n%s" % "\n".join(warnings)
 
 func _save_json_log(data: Dictionary, is_summary: bool = false) -> void:
 	var dir := DirAccess.open("user://")

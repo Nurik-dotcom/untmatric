@@ -21,9 +21,9 @@ const STATUS_HINT := "\u041f\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u04
 const STATUS_INCOMPLETE := "\u041d\u0435 \u0432\u0441\u0435 \u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u044b \u0432\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u044b"
 const STATUS_NEXT_HINT := "\u0413\u043e\u0442\u043e\u0432\u043e. \u0416\u043c\u0438\u0442\u0435 \u0414\u0410\u041b\u0415\u0415."
 const STATUS_SOLVE_FIRST := "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0440\u0435\u0448\u0438\u0442\u0435 \u0443\u0440\u043e\u0432\u0435\u043d\u044c"
-const RENDER_ERROR := "[RENDER ERROR]"
-const RENDER_WARN := "RENDER: UNSTABLE"
-const RENDER_OK := "SECTOR HEALED"
+const RENDER_ERROR := "[ОШИБКА РЕНДЕРА]"
+const RENDER_WARN := "РЕНДЕР: НЕСТАБИЛЬНЫЙ"
+const RENDER_OK := "СЕКТОР ИСЦЕЛЕН"
 
 var levels: Array = []
 var level_data: Dictionary = {}
@@ -74,7 +74,7 @@ func _ready() -> void:
 	_connect_ui_signals()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0443\u0440\u043e\u0432\u043d\u0438 \u0444\u0438\u043d\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043e\u0442\u0447\u0451\u0442\u0430 A.")
+		_show_error("Не удалось загрузить уровни финального отчета A.")
 		return
 
 	title_label.text = "\u0414\u0415\u041b\u041e #8: \u0424\u0418\u041d\u0410\u041b\u042c\u041d\u042b\u0419 \u041e\u0422\u0427\u0415\u0422"
@@ -128,7 +128,7 @@ func _start_level(index: int) -> void:
 	_reset_attempt(true)
 
 func _build_level_label() -> String:
-	return "A | %s (%d/%d)" % [
+	return "А | %s (%d/%d)" % [
 		str(level_data.get("id", "FR8-A")),
 		current_level_index + 1,
 		levels.size()
@@ -174,7 +174,7 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 	drag_count = 0
 	swap_count = 0
 	trace.clear()
-	_log_event("RESET", {"level_start": is_level_start})
+	_log_event("ATTEMPT_START", {"level_start": is_level_start})
 
 	level_solved = false
 	confirm_locked = false
@@ -498,10 +498,10 @@ func _update_code_preview() -> void:
 
 	var profile: String = str(level_data.get("validator_profile", FR8Scoring.PROFILE_LIST_BASIC)).to_upper()
 	code_preview.text = "\n".join([
-		"[b][color=#ffd25f]RAW CODE[/color][/b]",
+		"[b][color=#ffd25f]ИСХОДНЫЙ КОД[/color][/b]",
 		"[code]%s[/code]" % "\n".join(raw_lines),
 		"",
-		"[b][color=#8fffb2]PROFILE: %s[/color][/b]" % _escape_bbcode(profile)
+		"[b][color=#8fffb2]ПРОФИЛЬ: %s[/color][/b]" % _escape_bbcode(profile)
 	])
 	_update_render_preview(sequence)
 
@@ -525,7 +525,7 @@ func _update_render_preview(sequence: Array[String], evaluation_override: Dictio
 	var profile: String = str(level_data.get("validator_profile", FR8Scoring.PROFILE_LIST_BASIC)).to_upper()
 	var mock_lines: Array[String] = _build_profile_render_lines(profile, sequence)
 
-	var header_line: String = "[b][color=#ffd25f]MOCK RENDER | %s[/color][/b]" % _escape_bbcode(profile)
+	var header_line: String = "[b][color=#ffd25f]МОК-РЕНДЕР | %s[/color][/b]" % _escape_bbcode(profile)
 	match render_state:
 		"ok":
 			render_status.text = RENDER_OK
@@ -553,9 +553,9 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 			for token in inner_tokens:
 				if token.to_lower().begins_with("<li"):
 					var item_text: String = _extract_tag_text(token)
-					lines.append("[color=#d8f5d8]• %s[/color]" % _escape_bbcode(item_text if not item_text.is_empty() else "item"))
+					lines.append("[color=#d8f5d8]- %s[/color]" % _escape_bbcode(item_text if not item_text.is_empty() else "элемент"))
 			if lines.is_empty():
-				lines.append("[color=#808080]• ...[/color]")
+				lines.append("[color=#808080]- ...[/color]")
 		"NAV_MENU":
 			var labels: Array[String] = []
 			for token in inner_tokens:
@@ -564,22 +564,22 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 					if not label.is_empty():
 						labels.append(label)
 			if labels.is_empty():
-				labels = ["home", "news", "about"]
+				labels = ["главная", "новости", "о нас"]
 			var menu_line: String = ""
 			for i in range(labels.size()):
 				if i > 0:
 					menu_line += " "
-				menu_line += "[color=#f6e7a2][%s][/color]" % _escape_bbcode(labels[i].to_upper())
-			lines.append("[bgcolor=#1d2430]  %s  [/bgcolor]" % menu_line)
+				menu_line += "[color=#f6e7a2]%s[/color]" % _escape_bbcode(labels[i].to_upper())
+			lines.append("[bgcolor=#1d2430] %s [/bgcolor]" % menu_line)
 		"TABLE_LOG":
 			var row_count: int = 0
 			for token in inner_tokens:
 				if token.to_lower().find("<tr") >= 0:
 					row_count += 1
 			row_count = max(row_count, 2)
-			lines.append("[bgcolor=#25291f][color=#d6ffb0]  time  |  event  [/color][/bgcolor]")
+			lines.append("[bgcolor=#25291f][color=#d6ffb0] время | событие [/color][/bgcolor]")
 			for i in range(row_count):
-				lines.append("[color=#bac6b4]  0%d:%02d  |  entry_%d  [/color]" % [8 + i, 10 + i, i + 1])
+				lines.append("[color=#bac6b4] 0%d:%02d | запись_%d [/color]" % [8 + i, 10 + i, i + 1])
 		"FORM_SIMPLE":
 			var field_count: int = 0
 			var has_button: bool = false
@@ -590,10 +590,10 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 				if lower.find("<button") >= 0:
 					has_button = true
 			field_count = max(field_count, 2)
-			lines.append("[bgcolor=#1f2a1f][color=#d8ffd8]  AUTH FORM  [/color][/bgcolor]")
+			lines.append("[bgcolor=#1f2a1f][color=#d8ffd8] ФОРМА АВТОРИЗАЦИИ [/color][/bgcolor]")
 			for i in range(field_count):
-				lines.append("[color=#c6d7c6][ field_%d ]________________[/color]" % (i + 1))
-			lines.append("[color=#ffd07a]%s[/color]" % ("[ SUBMIT ]" if has_button else "[ ACTION ]"))
+				lines.append("[color=#c6d7c6][ поле_%d ]________________[/color]" % (i + 1))
+			lines.append("[color=#ffd07a]%s[/color]" % ("[ ОТПРАВИТЬ ]" if has_button else "[ ДЕЙСТВИЕ ]"))
 		"ARTICLE_NOTE":
 			var title_text: String = ""
 			var body_text: String = ""
@@ -603,7 +603,7 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 					title_text = _extract_tag_text(token)
 				elif body_text.is_empty() and lower.find("<p") >= 0:
 					body_text = _extract_tag_text(token)
-			title_text = "Case note" if title_text.is_empty() else title_text
+			title_text = "Примечание по делу" if title_text.is_empty() else title_text
 			body_text = "..." if body_text.is_empty() else body_text
 			lines.append("[b][color=#ece7cc]%s[/color][/b]" % _escape_bbcode(title_text))
 			lines.append("[color=#b8b5a3]%s[/color]" % _escape_bbcode(body_text))
@@ -616,14 +616,14 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 					has_image = true
 				if caption.is_empty() and lower.find("<figcaption") >= 0:
 					caption = _extract_tag_text(token)
-			lines.append("[bgcolor=#252a36][color=#b8c8ff]%s[/color][/bgcolor]" % ("  [ media frame ]  " if has_image else "  [ no media ]  "))
-			lines.append("[color=#d4c8a0]%s[/color]" % _escape_bbcode(caption if not caption.is_empty() else "caption pending"))
+			lines.append("[bgcolor=#252a36][color=#b8c8ff]%s[/color][/bgcolor]" % ("[ медиа-кадр ]" if has_image else "[ нет медиа ]"))
+			lines.append("[color=#d4c8a0]%s[/color]" % _escape_bbcode(caption if not caption.is_empty() else "подпись на рассмотрении"))
 		_:
 			for token in inner_tokens:
 				lines.append("[color=#c2c2c2]%s[/color]" % _escape_bbcode(_extract_tag_text(token)))
 
 	if lines.is_empty():
-		lines.append("[color=#7d7d7d][RENDER OFFLINE][/color]")
+		lines.append("[color=#7d7d7d][РЕНДЕР ОТКЛЮЧЕН][/color]")
 	return lines
 
 func _inner_tokens_from_sequence(sequence: Array[String]) -> Array[String]:

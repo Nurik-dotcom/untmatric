@@ -18,13 +18,14 @@ const ERROR_HIERARCHY := "HIERARCHY_VIOLATION"
 const ERROR_REQUIRED := "REQUIRED_TAG_MISSING"
 const ERROR_ORDER := "ORDER_MISMATCH"
 const ERROR_OK := "OK"
+const EMPTY_SLOT_MARKERS: Array[String] = ["(EMPTY)", "(ПУСТОЙ)"]
 
 static func normalize_expected_sequence(level: Dictionary) -> Array[String]:
 	var raw_expected: Array = level.get("expected_sequence", []) as Array
 	var normalized: Array[String] = []
 	for expected_var in raw_expected:
 		var expected_id: String = str(expected_var).strip_edges()
-		normalized.append("" if expected_id == "(EMPTY)" else expected_id)
+		normalized.append("" if expected_id in EMPTY_SLOT_MARKERS else expected_id)
 	return normalized
 
 static func evaluate(level: Dictionary, sequence: Array, fragment_by_id: Dictionary) -> Dictionary:

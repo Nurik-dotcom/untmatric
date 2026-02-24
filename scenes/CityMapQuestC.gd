@@ -171,12 +171,12 @@ func _setup_noir_ui() -> void:
 	_btn_help = Button.new()
 	_btn_help.text = "?"
 	_btn_help.custom_minimum_size = Vector2(44, 44)
-	_btn_help.tooltip_text = "DOSSIER"
+	_btn_help.tooltip_text = "ДОСЬЕ"
 	_btn_help.pressed.connect(_on_help_pressed)
 	header.add_child(_btn_help)
 
 	_btn_undo = Button.new()
-	_btn_undo.text = "UNDO"
+	_btn_undo.text = "ОТКАТ"
 	_btn_undo.custom_minimum_size = Vector2(0, 44)
 	_btn_undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_undo.pressed.connect(_on_undo_pressed)
@@ -184,7 +184,7 @@ func _setup_noir_ui() -> void:
 	buttons_row.move_child(_btn_undo, 0)
 
 	_btn_wait = Button.new()
-	_btn_wait.text = "WAIT +5"
+	_btn_wait.text = "ЖДАТЬ +5"
 	_btn_wait.custom_minimum_size = Vector2(0, 44)
 	_btn_wait.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_wait.pressed.connect(_on_wait_pressed)
@@ -293,7 +293,7 @@ func _on_wait_pressed() -> void:
 	wait_total_sim_sec += 5
 	sim_time_sec += 5
 	_last_move_ms = Time.get_ticks_msec()
-	status_label.text = "WAIT +5: SIM обновлено, стабильность -1"
+	status_label.text = "ЖДАТЬ +5: сим-время обновлено, стабильность -1"
 	status_label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.34))
 	_recalculate_stability()
 	_update_visuals()
@@ -547,7 +547,8 @@ func _apply_content_layout_mode() -> void:
 	else:
 		graph_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		info_panel.size_flags_horizontal = Control.SIZE_FILL
-		graph_panel.size_flags_stretch_ratio = 1.0
+		# Keep the graph dominant in landscape: ~72-75% width.
+		graph_panel.size_flags_stretch_ratio = 2.8 if compact_landscape else 2.6
 		info_panel.size_flags_stretch_ratio = 1.0
 	_apply_compact_phone_layout(compact_landscape or compact_portrait)
 
@@ -575,15 +576,15 @@ func _apply_compact_phone_layout(compact: bool) -> void:
 	if is_landscape:
 		var info_width_max: float = viewport.x * 0.30
 		var info_width_min: float = minf(220.0, info_width_max)
-		var info_width_target: float = viewport.x * (0.26 if compact else 0.28)
+		var info_width_target: float = viewport.x * (0.24 if compact else 0.27)
 		var info_width: float = clampf(info_width_target, info_width_min, info_width_max)
 		info_panel.custom_minimum_size = Vector2(info_width, 0.0)
 	else:
 		info_panel.custom_minimum_size = Vector2(0.0, 0.0)
 	sum_input.custom_minimum_size.y = 36.0 if compact else 44.0
 	status_label.custom_minimum_size.y = 44.0 if compact else 64.0
-	_btn_undo.text = "U" if compact else "UNDO"
-	_btn_wait.text = "W+5" if compact else "WAIT +5"
+	_btn_undo.text = "ОТК" if compact else "ОТКАТ"
+	_btn_wait.text = "Ж+5" if compact else "ЖДАТЬ +5"
 	btn_reset.text = "СБР" if compact else "СБРОС"
 	btn_submit.text = "ОК" if compact else "ОТПРАВИТЬ"
 	if is_instance_valid(_btn_help):
@@ -747,9 +748,9 @@ func update_conditions_panel() -> void:
 
 	var lines: Array[String] = [
 		"УСЛОВИЯ:",
-		"MUST VISIT: %s" % must_visit_text,
+		"ОБЯЗАТЕЛЬНО ПОСЕТИТЬ: %s" % must_visit_text,
 		"XOR: %s" % xor_text,
-		"BLACKLIST: %s" % blacklist_text
+		"ЧЁРНЫЙ СПИСОК: %s" % blacklist_text
 	]
 	var conditions_text: String = "\n".join(lines)
 	constraint_info_label.text = conditions_text
@@ -770,8 +771,8 @@ func refresh_schedule_ui() -> void:
 			var from_t: int = int(slot.get("t_from", 0))
 			var to_t: int = int(slot.get("t_to", 0))
 			var slot_state: String = str(slot.get("state", "open")).to_upper()
-			var slot_w_text: String = "CLOSED" if slot_state == "CLOSED" else str(int(slot.get("w", edge.get("w", 0))))
-			var to_text: String = "∞" if to_t >= 999 else str(to_t)
+			var slot_w_text: String = "ЗАКРЫТО" if slot_state == "CLOSED" else str(int(slot.get("w", edge.get("w", 0))))
+			var to_text: String = "БЕСК" if to_t >= 999 else str(to_t)
 			var slot_text: String = "[%d-%s: %s]" % [from_t, to_text, slot_w_text]
 			var is_active: bool = sim_time_sec >= from_t and sim_time_sec < to_t
 			if is_active:
@@ -782,7 +783,14 @@ func refresh_schedule_ui() -> void:
 		var edge_to: String = str(edge.get("to", ""))
 		var ttc: int = int(runtime.get("time_to_change", -1))
 		var state_text: String = str(runtime.get("state", "OPEN"))
-		row_label.text = "%s→%s: %s | %s" % [edge_from, edge_to, " ".join(parts), state_text]
+		var state_text_ru: String = state_text
+		if state_text == "CLOSED":
+			state_text_ru = "ЗАКРЫТО"
+		elif state_text == "DANGER":
+			state_text_ru = "ОПАСНО"
+		elif state_text == "OPEN":
+			state_text_ru = "ОТКРЫТО"
+		row_label.text = "%s->%s: %s | %s" % [edge_from, edge_to, " ".join(parts), state_text_ru]
 
 		var warning_soon: bool = ttc >= 0 and ttc <= 15
 		if state_text == "CLOSED":
@@ -1187,22 +1195,22 @@ func update_warnings_panel() -> void:
 			missing_must.append(must_node)
 
 	if not missing_must.is_empty():
-		warnings.append("⚠ НЕ ПОСЕЩЁН MUST VISIT: %s" % ",".join(missing_must))
+		warnings.append("НЕ ПОСЕЩЕНЫ ОБЯЗАТЕЛЬНЫЕ УЗЛЫ: %s" % ",".join(missing_must))
 	if xor_violation:
-		warnings.append("⚠ НАРУШЕНИЕ XOR")
+		warnings.append("НАРУШЕНИЕ XOR")
 	if _path_has_blacklist(path):
-		warnings.append("⚠ ВХОД В BLACKLIST")
+		warnings.append("ВХОД В ЧЁРНЫЙ СПИСОК")
 	if closed_edge_attempts > 0:
-		warnings.append("⚠ CLOSED-РЕБРО ЗАБЛОКИРОВАНО")
+		warnings.append("ЗАКРЫТОЕ РЕБРО ЗАБЛОКИРОВАНО")
 	if cycle_events > 0:
-		warnings.append("⚠ ОБНАРУЖЕН ЦИКЛ")
+		warnings.append("ОБНАРУЖЕН ЦИКЛ")
 	if backtrack_count > 0:
-		warnings.append("⚠ ОТКАТ ВЫПОЛНЕН")
+		warnings.append("ВЫПОЛНЕН ОТКАТ")
 
 	if warnings.is_empty():
-		warning_label.text = "WARNINGS:\n-"
+		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ:\n-"
 	else:
-		warning_label.text = "WARNINGS:\n%s" % "\n".join(warnings)
+		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ:\n%s" % "\n".join(warnings)
 
 func _apply_edge_style(key: String, state: String, runtime: Dictionary) -> void:
 	if not edge_visuals.has(key):
@@ -1230,21 +1238,21 @@ func _apply_edge_style(key: String, state: String, runtime: Dictionary) -> void:
 		"closed":
 			start_color = Color(0.58, 0.14, 0.14, 0.55)
 			end_color = Color(1.0, 0.25, 0.25, 1.0)
-			label_text = "CLOSED"
+			label_text = "ЗАКРЫТО"
 			line.texture = _get_closed_texture()
 			line.texture_mode = Line2D.LINE_TEXTURE_TILE
 			line.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 		"danger":
 			start_color = Color(0.62, 0.35, 0.12, 0.60)
 			end_color = Color(1.0, 0.62, 0.18, 1.0)
-			label_text = "%d DANGER" % int(runtime.get("w", runtime.get("weight", 0)))
+			label_text = "%d ОПАСНО" % int(runtime.get("w", runtime.get("weight", 0)))
 			line.texture = null
 		_:
 			line.texture = null
 
 	var time_to_change := int(runtime.get("time_to_change", runtime.get("next_change_sec", -1)))
 	if time_to_change >= 0 and state != "closed":
-		label_text = "%s ⏱%ds" % [label_text, time_to_change]
+		label_text = "%s t-%ds" % [label_text, time_to_change]
 	if state == "danger" and time_to_change >= 0 and time_to_change < 15:
 		var pulse := 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) / 120.0)
 		end_color = end_color.lerp(Color(1.0, 0.24, 0.24, 1.0), pulse * 0.6)
@@ -1567,7 +1575,7 @@ func _recalculate_stability() -> void:
 func _update_timer_display() -> void:
 	var time_limit := int(level_data.get("time_limit_sec", 140))
 	var remaining: int = maxi(0, time_limit - real_time_sec)
-	var mm: int = remaining / 60
+	var mm: int = int(remaining / 60.0)
 	var ss: int = remaining % 60
 	label_timer.text = "ВРЕМЯ: %02d:%02d" % [mm, ss]
 	if real_time_sec > time_limit:
@@ -1584,6 +1592,9 @@ func _log_attempt(verdict: Dictionary) -> void:
 	var sublevel_id := str(level_entry.get("id", "6_3_%02d" % (level_index + 1)))
 	var sublevel_path := str(level_entry.get("path", ""))
 	var next_available := result_code == "OK" and level_index + 1 < level_total
+	var first_attempt_edge_value: Variant = null
+	if not first_attempt_edge.is_empty():
+		first_attempt_edge_value = first_attempt_edge
 
 	var attempt_no := GlobalMetrics.session_history.size() + 1
 	var log_data := {
@@ -1608,7 +1619,7 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"calc_ok": sum_input_value != null and int(sum_input_value) == sum_actual,
 		"optimal_ok": sum_actual == min_sum and result_code == "OK" and must_visit_ok and not xor_violation and not _path_has_blacklist(path),
 		"must_visit_ok": must_visit_ok,
-		"first_attempt_edge": null if first_attempt_edge.is_empty() else first_attempt_edge,
+		"first_attempt_edge": first_attempt_edge_value,
 		"t_elapsed_seconds": real_time_sec,
 		"path": path.duplicate(),
 		"sum_actual": sum_actual,

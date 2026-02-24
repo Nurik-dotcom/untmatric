@@ -73,10 +73,11 @@ var _monitor_mobile_layout: VBoxContainer = null
 func _ready() -> void:
 	_configure_code_view()
 	_connect_signals()
+	_apply_localized_texts()
 	_apply_static_titles()
 	_load_levels()
 	if levels.is_empty():
-		lbl_hint.text = "Disarm C levels are missing."
+		lbl_hint.text = "Уровни обезвреживания C не загружены."
 		return
 
 	var idx: int = int(GlobalMetrics.current_level_index)
@@ -87,9 +88,16 @@ func _ready() -> void:
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
 
+func _apply_localized_texts() -> void:
+	btn_back.text = "НАЗАД"
+	btn_analyze.text = "АНАЛИЗ"
+	btn_verify.text = "ПРОВЕРИТЬ"
+	btn_next.text = "ДАЛЕЕ"
+	lbl_clue_title.text = "ОБЕЗВРЕЖИВАНИЕ C"
+
 func _apply_static_titles() -> void:
-	lbl_expected_title.text = "ОЖИДАЕТСЯ"
-	lbl_actual_title.text = "ПОЛУЧЕНО"
+	lbl_expected_title.text = "ОЖИДАЕТСЯ (X)"
+	lbl_actual_title.text = "ПОЛУЧЕНО (Y)"
 	if lbl_delta != null:
 		lbl_delta.text = "Δ = --"
 
@@ -97,7 +105,7 @@ func _update_result_panels(expected_s: int, actual_s: int) -> void:
 	lbl_expected_value.text = "s = %d" % expected_s
 	lbl_actual_value.text = "s = %d" % actual_s
 	if lbl_delta != null:
-		lbl_delta.text = "Δ = %d (Y−X)" % (actual_s - expected_s)
+		lbl_delta.text = "Δ = %d (Y - X)" % (actual_s - expected_s)
 
 func _exit_tree() -> void:
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
@@ -308,10 +316,10 @@ func _start_level(idx: int) -> void:
 		"paused_total_ms": 0
 	}
 
-	lbl_clue_title.text = "DISARM C: Script Reanimation"
-	lbl_session.text = "SESSION: %s" % str(current_task.get("id", "C-00"))
+	lbl_clue_title.text = "ОБЕЗВРЕЖИВАНИЕ C: ФИКС"
+	lbl_session.text = "СЕССИЯ: %s" % str(current_task.get("id", "C-00"))
 	_update_result_panels(int(current_task.get("expected_s", 0)), int(current_task.get("actual_s", 0)))
-	lbl_hint.text = "ОЖИДАЕТСЯ — цель (X). ПОЛУЧЕНО — текущий результат (Y). Добейтесь Y = X."
+	lbl_hint.text = "Ожидается s в окне (X). Получено в системе неисправности (Y). Исправьте код так, чтобы Y = X."
 	_update_misclick_label()
 
 	btn_verify.disabled = true
@@ -470,7 +478,7 @@ func _on_fix_apply_requested(option_id: String) -> void:
 	selected_option_id = option_id.strip_edges().to_upper()
 	btn_verify.disabled = selected_line_index < 0 or selected_option_id == ""
 	_apply_fix_preview()
-	lbl_hint.text = "Fix preview applied. Press VERIFY."
+	lbl_hint.text = "Исправление выбрано. Нажмите «ПРОВЕРИТЬ»."
 	state = State.READY_TO_VERIFY
 	_log_event("fix_applied", {"option_id": selected_option_id, "line": selected_line_index})
 
@@ -530,7 +538,7 @@ func _handle_success() -> void:
 		int(current_task.get("expected_s", 0)),
 		int(current_task.get("expected_s", 0))
 	)
-	lbl_hint.text = "Исправление подтверждено: ПОЛУЧЕНО теперь совпадает с ОЖИДАЕТСЯ."
+	lbl_hint.text = "Исправление подтверждено: полученное значение совпадает с ожидаемым."
 	btn_verify.disabled = true
 	btn_next.visible = true
 	_set_actual_panel_error(false)
@@ -546,13 +554,13 @@ func _handle_fail(correct_line: int) -> void:
 			int(current_task.get("expected_s", 0)),
 			int(selected_result)
 		)
-		lbl_hint.text = "Строка выбрана верно, но правка неверная. Проверьте логику замены."
+		lbl_hint.text = "Строка выбрана верно, но патч неправильный. Проверьте другой вариант."
 	else:
 		_update_result_panels(
 			int(current_task.get("expected_s", 0)),
 			int(current_task.get("actual_s", 0))
 		)
-		lbl_hint.text = "Выбрана не та строка. Нужна строка, которая меняет итоговый s."
+		lbl_hint.text = "Ошибка не в той строке. Найдите строку, которая меняет итоговое s."
 
 func _set_actual_panel_error(is_error: bool, pulse: bool = true) -> void:
 	if actual_panel_error_tween != null and actual_panel_error_tween.is_valid():
@@ -594,9 +602,9 @@ func _on_analyze_pressed() -> void:
 	var analysis_lines: Array = []
 	var expected_s := int(current_task.get("expected_s", 0))
 	var actual_s := int(current_task.get("actual_s", 0))
-	analysis_lines.append("ОЖИДАЕТСЯ (X): s=%d" % expected_s)
-	analysis_lines.append("ПОЛУЧЕНО (Y): s=%d" % actual_s)
-	analysis_lines.append("Δ = Y - X: %d" % (actual_s - expected_s))
+	analysis_lines.append("EXPECTED (X): s=%d" % expected_s)
+	analysis_lines.append("ACTUAL (Y): s=%d" % actual_s)
+	analysis_lines.append("? = Y - X: %d" % (actual_s - expected_s))
 	if selected_line_index >= 0:
 		analysis_lines.append("Selected line: %d" % (selected_line_index + 1))
 	if selected_option_id != "":
@@ -726,7 +734,7 @@ func _log_event(name: String, payload: Dictionary) -> void:
 	task_session["events"] = events
 
 func _update_misclick_label() -> void:
-	lbl_misclicks.text = "MISCLICKS: %d" % misclicks_before_correct
+	lbl_misclicks.text = "ПРОМАХИ: %d" % misclicks_before_correct
 
 func _on_viewport_size_changed() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size

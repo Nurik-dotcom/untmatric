@@ -13,27 +13,45 @@
     "rules": [
       {
         "source_id": "R1",
-        "selector": ".alert",
-        "kind": "class",
+        "selector": ".тревога",
+        "kind": "сорт",
         "weight": 10,
         "important": false,
         "order": 1,
-        "decl": {"prop": "color", "value": "#ff0000"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#ff0000"
+        }
       },
       {
         "source_id": "R2",
         "selector": "#x",
-        "kind": "id",
+        "kind": "идентификатор",
         "weight": 100,
         "important": false,
         "order": 2,
-        "decl": {"prop": "color", "value": "#00ff00"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#00ff00"
+        }
       }
     ],
     "options": [
-      {"id": "RED", "label": "Красный", "value": "#ff0000"},
-      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"},
-      {"id": "BLUE", "label": "Синий", "value": "#0000ff"}
+      {
+        "id": "RED",
+        "label": "Красный",
+        "value": "#ff0000"
+      },
+      {
+        "id": "GREEN",
+        "label": "Зелёный",
+        "value": "#00ff00"
+      },
+      {
+        "id": "BLUE",
+        "label": "Синий",
+        "value": "#0000ff"
+      }
     ],
     "correct_option_id": "GREEN",
     "feedback_rules": {
@@ -55,27 +73,45 @@
     "rules": [
       {
         "source_id": "R1",
-        "selector": ".alert",
-        "kind": "class",
+        "selector": ".тревога",
+        "kind": "сорт",
         "weight": 10,
         "important": false,
         "order": 1,
-        "decl": {"prop": "color", "value": "#ff0000"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#ff0000"
+        }
       },
       {
         "source_id": "R2",
-        "selector": ".stealth",
-        "kind": "class",
+        "selector": ".стелс",
+        "kind": "сорт",
         "weight": 10,
         "important": false,
         "order": 2,
-        "decl": {"prop": "color", "value": "#0000ff"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#0000ff"
+        }
       }
     ],
     "options": [
-      {"id": "RED", "label": "Красный", "value": "#ff0000"},
-      {"id": "BLUE", "label": "Синий", "value": "#0000ff"},
-      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"}
+      {
+        "id": "RED",
+        "label": "Красный",
+        "value": "#ff0000"
+      },
+      {
+        "id": "BLUE",
+        "label": "Синий",
+        "value": "#0000ff"
+      },
+      {
+        "id": "GREEN",
+        "label": "Зелёный",
+        "value": "#00ff00"
+      }
     ],
     "correct_option_id": "BLUE",
     "feedback_rules": {
@@ -87,7 +123,7 @@
     "schema_version": "1.0.0",
     "quest_id": "CASE_08_FINAL_REPORT",
     "id": "FR8-C-03",
-    "briefing": "Есть !important. Не притворяйтесь, что его нет.",
+    "briefing": "Есть !важно. Не притворяйтесь, что его нет.",
     "format": "CSS_CASCADE",
     "target_text": "Секретный код",
     "html": [
@@ -98,26 +134,44 @@
       {
         "source_id": "R1",
         "selector": "#x",
-        "kind": "id",
+        "kind": "идентификатор",
         "weight": 100,
         "important": false,
         "order": 2,
-        "decl": {"prop": "color", "value": "#00ff00"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#00ff00"
+        }
       },
       {
         "source_id": "R2",
-        "selector": ".alert",
-        "kind": "class",
+        "selector": ".тревога",
+        "kind": "сорт",
         "weight": 10,
         "important": true,
         "order": 3,
-        "decl": {"prop": "color", "value": "#ff0000"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#ff0000"
+        }
       }
     ],
     "options": [
-      {"id": "RED", "label": "Красный", "value": "#ff0000"},
-      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"},
-      {"id": "BLUE", "label": "Синий", "value": "#0000ff"}
+      {
+        "id": "RED",
+        "label": "Красный",
+        "value": "#ff0000"
+      },
+      {
+        "id": "GREEN",
+        "label": "Зелёный",
+        "value": "#00ff00"
+      },
+      {
+        "id": "BLUE",
+        "label": "Синий",
+        "value": "#0000ff"
+      }
     ],
     "correct_option_id": "RED",
     "feedback_rules": {
@@ -137,35 +191,56 @@
     ],
     "inline_decl": {
       "source_id": "INLINE",
-      "kind": "inline",
+      "kind": "в соответствии",
       "weight": 1000,
       "important": false,
-      "decl": {"prop": "color", "value": "#0000ff"}
+      "decl": {
+        "prop": "цвет",
+        "value": "#0000ff"
+      }
     },
     "rules": [
       {
         "source_id": "R1",
         "selector": "#x",
-        "kind": "id",
+        "kind": "идентификатор",
         "weight": 100,
         "important": false,
         "order": 2,
-        "decl": {"prop": "color", "value": "#00ff00"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#00ff00"
+        }
       },
       {
         "source_id": "R2",
-        "selector": ".alert",
-        "kind": "class",
+        "selector": ".тревога",
+        "kind": "сорт",
         "weight": 10,
         "important": false,
         "order": 3,
-        "decl": {"prop": "color", "value": "#ff0000"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#ff0000"
+        }
       }
     ],
     "options": [
-      {"id": "BLUE", "label": "Синий", "value": "#0000ff"},
-      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"},
-      {"id": "RED", "label": "Красный", "value": "#ff0000"}
+      {
+        "id": "BLUE",
+        "label": "Синий",
+        "value": "#0000ff"
+      },
+      {
+        "id": "GREEN",
+        "label": "Зелёный",
+        "value": "#00ff00"
+      },
+      {
+        "id": "RED",
+        "label": "Красный",
+        "value": "#ff0000"
+      }
     ],
     "correct_option_id": "BLUE",
     "feedback_rules": {
@@ -187,27 +262,45 @@
     "rules": [
       {
         "source_id": "R1",
-        "selector": ".alert",
-        "kind": "class",
+        "selector": ".тревога",
+        "kind": "сорт",
         "weight": 10,
         "important": false,
         "order": 1,
-        "decl": {"prop": "color", "value": "#ff0000"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#ff0000"
+        }
       },
       {
         "source_id": "R2",
         "selector": "p#x",
-        "kind": "mixed",
+        "kind": "смешанный",
         "weight": 101,
         "important": false,
         "order": 2,
-        "decl": {"prop": "color", "value": "#0000ff"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#0000ff"
+        }
       }
     ],
     "options": [
-      {"id": "BLUE", "label": "Синий", "value": "#0000ff"},
-      {"id": "RED", "label": "Красный", "value": "#ff0000"},
-      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"}
+      {
+        "id": "BLUE",
+        "label": "Синий",
+        "value": "#0000ff"
+      },
+      {
+        "id": "RED",
+        "label": "Красный",
+        "value": "#ff0000"
+      },
+      {
+        "id": "GREEN",
+        "label": "Зелёный",
+        "value": "#00ff00"
+      }
     ],
     "correct_option_id": "BLUE",
     "feedback_rules": {
@@ -219,7 +312,7 @@
     "schema_version": "1.0.0",
     "quest_id": "CASE_08_FINAL_REPORT",
     "id": "FR8-C-06",
-    "briefing": "Два ID-правила с !important. Побеждает более позднее.",
+    "briefing": "Два ID-правила с !important. Побеждает более поздно.",
     "format": "CSS_CASCADE",
     "target_text": "Секретный код",
     "html": [
@@ -230,26 +323,44 @@
       {
         "source_id": "R1",
         "selector": "#x",
-        "kind": "id",
+        "kind": "идентификатор",
         "weight": 100,
         "important": true,
         "order": 1,
-        "decl": {"prop": "color", "value": "#ff0000"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#ff0000"
+        }
       },
       {
         "source_id": "R2",
         "selector": "#x",
-        "kind": "id",
+        "kind": "идентификатор",
         "weight": 100,
         "important": true,
         "order": 2,
-        "decl": {"prop": "color", "value": "#00ff00"}
+        "decl": {
+          "prop": "цвет",
+          "value": "#00ff00"
+        }
       }
     ],
     "options": [
-      {"id": "GREEN", "label": "Зелёный", "value": "#00ff00"},
-      {"id": "RED", "label": "Красный", "value": "#ff0000"},
-      {"id": "BLUE", "label": "Синий", "value": "#0000ff"}
+      {
+        "id": "GREEN",
+        "label": "Зелёный",
+        "value": "#00ff00"
+      },
+      {
+        "id": "RED",
+        "label": "Красный",
+        "value": "#ff0000"
+      },
+      {
+        "id": "BLUE",
+        "label": "Синий",
+        "value": "#0000ff"
+      }
     ],
     "correct_option_id": "GREEN",
     "feedback_rules": {

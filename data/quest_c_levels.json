@@ -13,14 +13,26 @@
     "bug": {
       "correct_line_index": 1,
       "fix_options": [
-        { "option_id": "A", "replace_line": "for i in range(6):", "result_s": 15 },
-        { "option_id": "B", "replace_line": "for i in range(1, 5):", "result_s": 10 },
-        { "option_id": "C", "replace_line": "for i in range(7):", "result_s": 21 }
+        {
+          "option_id": "A",
+          "replace_line": "for i in range(6):",
+          "result_s": 15
+        },
+        {
+          "option_id": "B",
+          "replace_line": "for i in range(1, 5):",
+          "result_s": 10
+        },
+        {
+          "option_id": "C",
+          "replace_line": "for i in range(7):",
+          "result_s": 21
+        }
       ],
       "correct_option_id": "A"
     },
     "explain_short": [
-      "range(5) даёт 0..4, сумма равна 10.",
+      "range(5) дает 0..4, доля равна 10.",
       "Нужно включить 5, чтобы получить 15."
     ]
   },
@@ -39,21 +51,33 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    if i >= 3:", "result_s": 12 },
-        { "option_id": "B", "replace_line": "    if i > 4:", "result_s": 5 },
-        { "option_id": "C", "replace_line": "    if i >= 4:", "result_s": 9 }
+        {
+          "option_id": "A",
+          "replace_line": "    if i >= 3:",
+          "result_s": 12
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    if i > 4:",
+          "result_s": 5
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    if i >= 4:",
+          "result_s": 9
+        }
       ],
       "correct_option_id": "A"
     },
     "explain_short": [
       "Текущее условие пропускает i = 3.",
-      "С учётом i = 3 получаем 3 + 4 + 5 = 12."
+      "С учётом i = 3 получается 3 + 4 + 5 = 12."
     ]
   },
   {
     "id": "C-03",
     "bucket": "newbie",
-    "briefing": "Значение шага в range слишком велико.",
+    "briefing": "Значение шага в диапазоне слишком велико.",
     "expected_s": 20,
     "actual_s": 18,
     "code_lines": [
@@ -64,9 +88,21 @@
     "bug": {
       "correct_line_index": 1,
       "fix_options": [
-        { "option_id": "A", "replace_line": "for i in range(0, 10, 2):", "result_s": 20 },
-        { "option_id": "B", "replace_line": "for i in range(0, 10, 4):", "result_s": 12 },
-        { "option_id": "C", "replace_line": "for i in range(0, 8, 2):", "result_s": 12 }
+        {
+          "option_id": "A",
+          "replace_line": "for i in range(0, 10, 2):",
+          "result_s": 20
+        },
+        {
+          "option_id": "B",
+          "replace_line": "for i in range(0, 10, 4):",
+          "result_s": 12
+        },
+        {
+          "option_id": "C",
+          "replace_line": "for i in range(0, 8, 2):",
+          "result_s": 12
+        }
       ],
       "correct_option_id": "A"
     },
@@ -89,9 +125,21 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    s += i", "result_s": 6 },
-        { "option_id": "B", "replace_line": "    s += i * 3", "result_s": 18 },
-        { "option_id": "C", "replace_line": "    s += i + 2", "result_s": 14 }
+        {
+          "option_id": "A",
+          "replace_line": "    s += i",
+          "result_s": 6
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    s += i * 3",
+          "result_s": 18
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    s += i + 2",
+          "result_s": 14
+        }
       ],
       "correct_option_id": "A"
     },
@@ -115,9 +163,21 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    if i <= 3:", "result_s": 6 },
-        { "option_id": "B", "replace_line": "    if i < 3:", "result_s": 3 },
-        { "option_id": "C", "replace_line": "    if i >= 3:", "result_s": 12 }
+        {
+          "option_id": "A",
+          "replace_line": "    if i <= 3:",
+          "result_s": 6
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    if i < 3:",
+          "result_s": 3
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    if i >= 3:",
+          "result_s": 12
+        }
       ],
       "correct_option_id": "A"
     },
@@ -141,14 +201,26 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    if i % 2 == 0 and i > 2:", "result_s": 1 },
-        { "option_id": "B", "replace_line": "    if i % 2 == 0:", "result_s": 3 },
-        { "option_id": "C", "replace_line": "    if i > 2:", "result_s": 3 }
+        {
+          "option_id": "A",
+          "replace_line": "    if i % 2 == 0 and i > 2:",
+          "result_s": 1
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    if i % 2 == 0:",
+          "result_s": 3
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    if i > 2:",
+          "result_s": 3
+        }
       ],
       "correct_option_id": "A"
     },
     "explain_short": [
-      "OR слишком широк для этого фильтра.",
+      "ИЛИ слишком широк для этого фильтра.",
       "Только i = 4 удовлетворяет обоим условиям."
     ]
   },
@@ -166,9 +238,21 @@
     "bug": {
       "correct_line_index": 1,
       "fix_options": [
-        { "option_id": "A", "replace_line": "for i in range(2, 7):", "result_s": 20 },
-        { "option_id": "B", "replace_line": "for i in range(1, 7):", "result_s": 21 },
-        { "option_id": "C", "replace_line": "for i in range(3, 8):", "result_s": 25 }
+        {
+          "option_id": "A",
+          "replace_line": "for i in range(2, 7):",
+          "result_s": 20
+        },
+        {
+          "option_id": "B",
+          "replace_line": "for i in range(1, 7):",
+          "result_s": 21
+        },
+        {
+          "option_id": "C",
+          "replace_line": "for i in range(3, 8):",
+          "result_s": 25
+        }
       ],
       "correct_option_id": "A"
     },
@@ -191,14 +275,26 @@
     "bug": {
       "correct_line_index": 1,
       "fix_options": [
-        { "option_id": "A", "replace_line": "for i in range(5, 0, -1):", "result_s": 5 },
-        { "option_id": "B", "replace_line": "for i in range(5, 1, -1):", "result_s": 4 },
-        { "option_id": "C", "replace_line": "for i in range(6, 0, -1):", "result_s": 6 }
+        {
+          "option_id": "A",
+          "replace_line": "for i in range(5, 0, -1):",
+          "result_s": 5
+        },
+        {
+          "option_id": "B",
+          "replace_line": "for i in range(5, 1, -1):",
+          "result_s": 4
+        },
+        {
+          "option_id": "C",
+          "replace_line": "for i in range(6, 0, -1):",
+          "result_s": 6
+        }
       ],
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Положительный шаг при start > stop не выполняется.",
+      "Положительный шаг при старте > стоп не показатель.",
       "Для обратного отсчёта нужен отрицательный шаг."
     ]
   },
@@ -217,9 +313,21 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    if i % 3 == 0:", "result_s": 4 },
-        { "option_id": "B", "replace_line": "    if i % 3 == 2:", "result_s": 3 },
-        { "option_id": "C", "replace_line": "    if i % 3 != 0:", "result_s": 6 }
+        {
+          "option_id": "A",
+          "replace_line": "    if i % 3 == 0:",
+          "result_s": 4
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    if i % 3 == 2:",
+          "result_s": 3
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    if i % 3 != 0:",
+          "result_s": 6
+        }
       ],
       "correct_option_id": "A"
     },
@@ -242,9 +350,21 @@
     "bug": {
       "correct_line_index": 0,
       "fix_options": [
-        { "option_id": "A", "replace_line": "s = 0", "result_s": 15 },
-        { "option_id": "B", "replace_line": "s = 2", "result_s": 17 },
-        { "option_id": "C", "replace_line": "s = 5", "result_s": 20 }
+        {
+          "option_id": "A",
+          "replace_line": "s = 0",
+          "result_s": 15
+        },
+        {
+          "option_id": "B",
+          "replace_line": "s = 2",
+          "result_s": 17
+        },
+        {
+          "option_id": "C",
+          "replace_line": "s = 5",
+          "result_s": 20
+        }
       ],
       "correct_option_id": "A"
     },
@@ -267,9 +387,21 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    s += i", "result_s": 10 },
-        { "option_id": "B", "replace_line": "    s *= i", "result_s": 0 },
-        { "option_id": "C", "replace_line": "    s = i", "result_s": 4 }
+        {
+          "option_id": "A",
+          "replace_line": "    s += i",
+          "result_s": 10
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    s *= i",
+          "result_s": 0
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    s = i",
+          "result_s": 4
+        }
       ],
       "correct_option_id": "A"
     },
@@ -293,9 +425,21 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    if i % 2 == 0:", "result_s": 6 },
-        { "option_id": "B", "replace_line": "    if i % 2 != 0:", "result_s": 9 },
-        { "option_id": "C", "replace_line": "    if i > 2:", "result_s": 12 }
+        {
+          "option_id": "A",
+          "replace_line": "    if i % 2 == 0:",
+          "result_s": 6
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    if i % 2 != 0:",
+          "result_s": 9
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    if i > 2:",
+          "result_s": 12
+        }
       ],
       "correct_option_id": "A"
     },
@@ -319,14 +463,26 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    if i > 2 and i <= 6:", "result_s": 18 },
-        { "option_id": "B", "replace_line": "    if i >= 2 and i <= 6:", "result_s": 20 },
-        { "option_id": "C", "replace_line": "    if i > 3 and i <= 6:", "result_s": 15 }
+        {
+          "option_id": "A",
+          "replace_line": "    if i > 2 and i <= 6:",
+          "result_s": 18
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    if i >= 2 and i <= 6:",
+          "result_s": 20
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    if i > 3 and i <= 6:",
+          "result_s": 15
+        }
       ],
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Текущее условие отсекает i = 6.",
+      "Текущее состояние отсека i = 6.",
       "Нужна включающая верхняя граница."
     ]
   },
@@ -344,9 +500,21 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    s += i", "result_s": 12 },
-        { "option_id": "B", "replace_line": "    s += i * 2", "result_s": 24 },
-        { "option_id": "C", "replace_line": "    s += i / 4", "result_s": 3 }
+        {
+          "option_id": "A",
+          "replace_line": "    s += i",
+          "result_s": 12
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    s += i * 2",
+          "result_s": 24
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    s += i / 4",
+          "result_s": 3
+        }
       ],
       "correct_option_id": "A"
     },
@@ -369,15 +537,27 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    s += i", "result_s": 15 },
-        { "option_id": "B", "replace_line": "    s += i + 1", "result_s": 20 },
-        { "option_id": "C", "replace_line": "    s += i - 2", "result_s": 5 }
+        {
+          "option_id": "A",
+          "replace_line": "    s += i",
+          "result_s": 15
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    s += i + 1",
+          "result_s": 20
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    s += i - 2",
+          "result_s": 5
+        }
       ],
       "correct_option_id": "A"
     },
     "explain_short": [
       "Вычитание 1 из каждого члена занижает сумму.",
-      "Используйте исходное i для ожидаемой суммы."
+      "Используйте исходное и ожидаемое количество."
     ]
   },
   {
@@ -396,9 +576,21 @@
     "bug": {
       "correct_line_index": 3,
       "fix_options": [
-        { "option_id": "A", "replace_line": "        pass", "result_s": 45 },
-        { "option_id": "B", "replace_line": "        break", "result_s": 15 },
-        { "option_id": "C", "replace_line": "        s += 0", "result_s": 39 }
+        {
+          "option_id": "A",
+          "replace_line": "проходить",
+          "result_s": 45
+        },
+        {
+          "option_id": "B",
+          "replace_line": "        break",
+          "result_s": 15
+        },
+        {
+          "option_id": "C",
+          "replace_line": "        s += 0",
+          "result_s": 39
+        }
       ],
       "correct_option_id": "A"
     },
@@ -421,14 +613,26 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    s += i", "result_s": 15 },
-        { "option_id": "B", "replace_line": "    s *= i", "result_s": 0 },
-        { "option_id": "C", "replace_line": "    s = s + 1", "result_s": 5 }
+        {
+          "option_id": "A",
+          "replace_line": "    s += i",
+          "result_s": 15
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    s *= i",
+          "result_s": 0
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    s = s + 1",
+          "result_s": 5
+        }
       ],
       "correct_option_id": "A"
     },
     "explain_short": [
-      "Текущий код перезаписывает s на каждой итерации.",
+      "Текущий кодирующий перезаписывает данные на каждой итерации.",
       "Нужно аддитивное обновление."
     ]
   },
@@ -447,15 +651,27 @@
     "bug": {
       "correct_line_index": 2,
       "fix_options": [
-        { "option_id": "A", "replace_line": "    if i % 2 == 0 and i % 3 == 0:", "result_s": 6 },
-        { "option_id": "B", "replace_line": "    if i % 2 == 0:", "result_s": 12 },
-        { "option_id": "C", "replace_line": "    if i % 3 == 0:", "result_s": 9 }
+        {
+          "option_id": "A",
+          "replace_line": "    if i % 2 == 0 and i % 3 == 0:",
+          "result_s": 6
+        },
+        {
+          "option_id": "B",
+          "replace_line": "    if i % 2 == 0:",
+          "result_s": 12
+        },
+        {
+          "option_id": "C",
+          "replace_line": "    if i % 3 == 0:",
+          "result_s": 9
+        }
       ],
       "correct_option_id": "A"
     },
     "explain_short": [
-      "OR захватывает слишком много лишних значений.",
-      "AND оставляет только числа, делящиеся и на 2, и на 3."
+      "ИЛИ захватывает слишком много лишних результатов.",
+      "И оставляет только числа, делящиеся и на 2, и на 3."
     ]
   }
 ]

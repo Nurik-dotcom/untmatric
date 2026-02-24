@@ -354,7 +354,9 @@ func _evaluate_sequence(selected_ids: Array[String], force_timeout: bool = false
 
 func _build_eval(reason: String, selected_roles: Array[String], missing_roles: Array[String], diff: Dictionary) -> Dictionary:
 	var is_correct: bool = reason == "SUCCESS"
-	var final_reason: Variant = null if is_correct else reason
+	var final_reason: Variant = null
+	if not is_correct:
+		final_reason = reason
 	return {
 		"is_correct": is_correct,
 		"f_reason": final_reason,
@@ -584,7 +586,7 @@ func _update_submit_state() -> void:
 
 func _update_timer_ui() -> void:
 	timer_bar.value = time_left_sec
-	var minutes: int = int(time_left_sec) / 60
+	var minutes: int = int(float(int(time_left_sec)) / 60.0)
 	var seconds: int = int(time_left_sec) % 60
 	timer_label.text = "%02d:%02d" % [minutes, seconds]
 	if time_left_sec <= 20.0:
@@ -627,4 +629,3 @@ func _on_viewport_size_changed() -> void:
 	else:
 		current_layout = LAYOUT_DESKTOP
 		block_repository.columns = 4
-

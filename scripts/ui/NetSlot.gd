@@ -37,7 +37,7 @@ func _ready() -> void:
 func set_slot_title(index: int) -> void:
 	slot_index = index
 	if is_instance_valid(_title_label):
-		_title_label.text = "SLOT %d" % slot_index
+		_title_label.text = "СЛОТ %d" % slot_index
 
 func set_locked(locked: bool) -> void:
 	_locked = locked
@@ -52,7 +52,7 @@ func set_current_option(module_id: String, module_label: String = "") -> void:
 	current_module_id = module_id
 	if is_instance_valid(_item_label):
 		if current_module_id == "":
-			_item_label.text = "<empty>"
+			_item_label.text = "<пусто>"
 		elif module_label != "":
 			_item_label.text = module_label
 		else:

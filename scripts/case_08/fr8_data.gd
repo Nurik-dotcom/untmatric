@@ -18,6 +18,7 @@ const REQUIRED_RULE_KEYS: Array[String] = ["code", "min_state", "points", "stabi
 const REQUIRED_DEFAULT_RULE_KEYS: Array[String] = ["code", "points", "stability_delta", "verdict_code"]
 const REQUIRED_FEEDBACK_KEYS: Array[String] = ["UNBALANCED_TAG", "HIERARCHY_VIOLATION", "ORDER_MISMATCH", "OK"]
 const SUPPORTED_PROFILES: Array[String] = ["LIST_BASIC", "NAV_MENU", "TABLE_LOG", "FORM_SIMPLE", "ARTICLE_NOTE", "FIGURE_MEDIA"]
+const EMPTY_SLOT_MARKERS: Array[String] = ["(EMPTY)", "(ПУСТОЙ)"]
 
 static func load_levels(path: String) -> Array:
 	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
@@ -127,10 +128,10 @@ static func validate_level(level: Dictionary) -> bool:
 
 	for expected_var in expected_sequence:
 		var expected_id: String = str(expected_var).strip_edges()
-		if expected_id == "(EMPTY)":
+		if expected_id in EMPTY_SLOT_MARKERS:
 			continue
 		if expected_id.is_empty():
-			push_error("FR8Data: expected_sequence cannot contain empty ids (use '(EMPTY)') in level %s" % str(level.get("id", "UNKNOWN")))
+			push_error("FR8Data: expected_sequence cannot contain empty ids (use '(EMPTY)' or '(ПУСТОЙ)') in level %s" % str(level.get("id", "UNKNOWN")))
 			return false
 		if not fragment_ids.has(expected_id):
 			push_error("FR8Data: expected fragment '%s' missing in level %s" % [expected_id, str(level.get("id", "UNKNOWN"))])

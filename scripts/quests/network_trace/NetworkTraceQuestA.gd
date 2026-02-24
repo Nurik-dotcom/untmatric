@@ -88,7 +88,7 @@ func _ready() -> void:
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 
 	if not _load_levels():
-		_show_boot_error("Network Trace A levels failed to load.")
+		_show_boot_error("Не удалось загрузить уровни сетевой трассировки A.")
 		return
 
 	_start_level(0)
@@ -112,12 +112,12 @@ func _notification(what: int) -> void:
 		_apply_layout_mode()
 
 func _setup_palette_controls() -> void:
-	btn_back.text = "Back"
-	btn_run_trace.text = "RUN TRACE"
-	btn_reset.text = "RESET"
-	btn_next.text = "NEXT"
-	lbl_evidence_title.text = "EVIDENCE"
-	lbl_palette_title.text = "DEVICE PALETTE"
+	btn_back.text = "НАЗАД"
+	btn_run_trace.text = "ЗАПУСТИТЬ ТРАССИРОВКУ"
+	btn_reset.text = "СБРОС"
+	btn_next.text = "ДАЛЕЕ"
+	lbl_evidence_title.text = "УЛИКИ"
+	lbl_palette_title.text = "ПАЛИТРА УСТРОЙСТВ"
 	palette_select.visible = false
 	palette_select.disabled = true
 	palette_select.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -135,12 +135,12 @@ func _connect_signals() -> void:
 func _load_levels() -> bool:
 	var file: FileAccess = FileAccess.open(LEVELS_PATH, FileAccess.READ)
 	if file == null:
-		push_error("Cannot open %s" % LEVELS_PATH)
+		push_error("Невозможно открыть %s" % LEVELS_PATH)
 		return false
 
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_ARRAY:
-		push_error("Expected array in %s" % LEVELS_PATH)
+		push_error("Ожидаемый массив в %s" % LEVELS_PATH)
 		return false
 
 	levels.clear()
@@ -245,10 +245,10 @@ func _start_level(index: int) -> void:
 		"events": []
 	}
 
-	lbl_title.text = "Network Trace | A"
+	lbl_title.text = "Трассировка сети | А"
 	btn_next.visible = false
 	btn_next.disabled = false
-	btn_analyze.text = "Diagnostics"
+	btn_analyze.text = "Диагностика"
 	btn_analyze.disabled = true
 	btn_run_trace.disabled = true
 	btn_reset.disabled = true
@@ -261,7 +261,7 @@ func _start_level(index: int) -> void:
 	_build_palette()
 	_set_tools_unlocked(false)
 
-	lbl_status.text = "Inspect at least %d clues to unlock trace." % required_evidence
+	lbl_status.text = "Проверьте как минимум %d улик, чтобы разблокировать след." % required_evidence
 	lbl_status.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
 	_update_meta_label()
@@ -269,10 +269,10 @@ func _start_level(index: int) -> void:
 
 func _render_text_blocks() -> void:
 	lbl_briefing.clear()
-	lbl_briefing.append_text("[color=#7a7a7a]GOAL[/color]\n%s" % str(current_level.get("briefing", "")))
+	lbl_briefing.append_text("[color=#7a7a7a]ЦЕЛЬ[/color]\n%s" % str(current_level.get("briefing", "")))
 
 	lbl_prompt.clear()
-	lbl_prompt.append_text("[color=#9de6b3]TASK[/color]\n%s" % str(current_level.get("prompt", "")))
+	lbl_prompt.append_text("[color=#9de6b3]ЗАДАЧА[/color]\n%s" % str(current_level.get("prompt", "")))
 
 func _extract_evidence_data(level: Dictionary) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
@@ -285,8 +285,8 @@ func _extract_evidence_data(level: Dictionary) -> Array[Dictionary]:
 		var poi: Dictionary = poi_var
 		var row: Dictionary = {
 			"id": str(poi.get("id", "POI")),
-			"log_line": str(poi.get("log_line", "Unknown signal")),
-			"meaning_short": str(poi.get("meaning_short", "No interpretation.")),
+			"log_line": str(poi.get("log_line", "Неизвестный сигнал")),
+			"meaning_short": str(poi.get("meaning_short", "Никакой интерпретации.")),
 			"hint_layer": str(poi.get("hint_layer", "L2"))
 		}
 		out.append(row)
@@ -319,7 +319,7 @@ func _build_evidence_slots() -> void:
 		slot_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 		var slot_label: Label = Label.new()
-		slot_label.text = "Evidence %d" % (idx + 1)
+		slot_label.text = "Доказательства %d" % (idx + 1)
 		slot_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		slot_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		slot_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -391,12 +391,12 @@ func _on_log_pressed(log_index: int) -> void:
 	if selected_evidence_indices.size() >= required_evidence and state == QuestState.BRIEFING:
 		state = QuestState.SOLVING
 		_set_tools_unlocked(true)
-		lbl_status.text = "Trace unlocked. Select a device and run trace."
+		lbl_status.text = "Трейс разблокирован. Выберите устройство и запустите трассировку."
 		lbl_status.add_theme_color_override("font_color", Color(0.6, 0.95, 0.7))
 	elif selected_evidence_indices.size() < required_evidence:
 		state = QuestState.BRIEFING
 		_set_tools_unlocked(false)
-		lbl_status.text = "Inspect clues (%d/%d) to unlock trace." % [selected_evidence_indices.size(), required_evidence]
+		lbl_status.text = "Осмотрите подсказки (%d/%d), чтобы разблокировать след." % [selected_evidence_indices.size(), required_evidence]
 		lbl_status.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
 func _update_evidence_visuals() -> void:
@@ -412,16 +412,16 @@ func _update_evidence_visuals() -> void:
 					str(e.get("meaning_short", ""))
 				]
 			else:
-				slot_label.text = "Evidence %d" % (slot_index + 1)
+				slot_label.text = "Доказательства %d" % (slot_index + 1)
 		else:
-			slot_label.text = "Evidence %d" % (slot_index + 1)
+			slot_label.text = "Доказательства %d" % (slot_index + 1)
 
 func _on_device_installed(device_id: String, _label_text: String, error_code: String) -> void:
 	selected_device_id = device_id
 	selected_error_code = error_code
 	btn_run_trace.disabled = selected_device_id.is_empty() or level_finished
 	btn_reset.disabled = selected_device_id.is_empty() or level_finished
-	lbl_status.text = "Device mounted. Run trace to validate route."
+	lbl_status.text = "Устройство установлено. Запустите трассировку для проверки маршрута."
 	lbl_status.add_theme_color_override("font_color", Color(0.75, 0.95, 0.8))
 	_log_event("device_installed", {"device_id": device_id})
 
@@ -443,7 +443,7 @@ func _on_run_trace_pressed() -> void:
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
 		return
 	if selected_device_id.is_empty():
-		lbl_status.text = "Select and drop a device into the slot first."
+		lbl_status.text = "Сначала выберите и вставьте устройство в слот."
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
 		return
 
@@ -503,7 +503,7 @@ func _lock_controls_for_trace(locked: bool) -> void:
 
 func _handle_success() -> void:
 	state = QuestState.FEEDBACK_SUCCESS
-	lbl_status.text = "TRACE OK. Route is restored."
+	lbl_status.text = "СЛЕД ОК. Маршрут восстановлен."
 	lbl_status.add_theme_color_override("font_color", Color(0.35, 1.0, 0.45))
 	_play_audio("relay")
 	_log_event("trace_success", {"device_id": selected_device_id})
@@ -527,8 +527,8 @@ func _handle_failure(error_code: String) -> void:
 		safe_mode_used = true
 		state = QuestState.SAFE_MODE
 		btn_analyze.disabled = false
-		btn_analyze.text = "Safe diagnostics"
-		lbl_status.text = "Safe mode unlocked. Open diagnostics for guided explanation."
+		btn_analyze.text = "Безопасная диагностика"
+		lbl_status.text = "Безопасный режим разблокирован. Откройте диагностику для подробного объяснения."
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.75, 0.45))
 
 	if wrong_count >= MAX_ATTEMPTS:
@@ -540,7 +540,7 @@ func _on_analyze_pressed() -> void:
 		return
 
 	if not safe_mode_used:
-		lbl_status.text = "Diagnostics unlock after two failed traces."
+		lbl_status.text = "Диагностика разблокируется после двух неудачных трассировок."
 		lbl_status.add_theme_color_override("font_color", Color(0.9, 0.8, 0.45))
 		return
 
@@ -552,10 +552,10 @@ func _on_analyze_pressed() -> void:
 
 func _show_safe_mode_diagnostics(trigger_reason: String) -> void:
 	var lines: Array[String] = []
-	lines.append("Level: %s" % str(current_level.get("id", "UNKNOWN")))
-	lines.append("Reason: %s" % trigger_reason)
+	lines.append("Уровень: %s" % str(current_level.get("id", "UNKNOWN")))
+	lines.append("Причина: %s" % trigger_reason)
 	if not selected_error_code.is_empty():
-		lines.append("Last code: %s" % selected_error_code)
+		lines.append("Последний код: %s" % selected_error_code)
 		lines.append(ERROR_MAP.get_error_tip(selected_error_code))
 
 	for idx in selected_evidence_indices:
@@ -563,7 +563,7 @@ func _show_safe_mode_diagnostics(trigger_reason: String) -> void:
 			continue
 		var e: Dictionary = evidence_data[idx]
 		lines.append("[%s] %s" % [str(e.get("hint_layer", "L2")), str(e.get("log_line", ""))])
-		lines.append(" -> %s" % str(e.get("meaning_short", "")))
+		lines.append("-> %s" % str(e.get("meaning_short", "")))
 
 	var explain_full: String = str(current_level.get("explain_full", ""))
 	if not explain_full.is_empty():
@@ -573,7 +573,7 @@ func _show_safe_mode_diagnostics(trigger_reason: String) -> void:
 				lines.append(text_line)
 
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", "Safe Diagnostics", lines)
+		diagnostics_panel.call("setup", "Безопасная диагностика", lines)
 	diagnostics_panel.visible = true
 	state = QuestState.DIAGNOSTIC
 	_log_event("diagnostics_open", {"reason": trigger_reason})
@@ -583,7 +583,7 @@ func _on_reset_pressed() -> void:
 		return
 	_register_first_action()
 	topology_board.clear_installed_device()
-	lbl_status.text = "Mount cleared. Select another device candidate."
+	lbl_status.text = "Крепление очищено. Выберите другое устройство-кандидат."
 	lbl_status.add_theme_color_override("font_color", Color(0.8, 0.86, 0.95))
 	_log_event("reset_pressed", {})
 
@@ -617,9 +617,9 @@ func _play_audio(sound_name: String) -> void:
 
 func _update_meta_label() -> void:
 	var total_seconds: int = maxi(0, int(ceil(time_left_sec)))
-	var minutes: int = total_seconds / 60
+	var minutes: int = int(total_seconds / 60.0)
 	var seconds: int = total_seconds % 60
-	lbl_meta.text = "CASE %d/%d | FAIL %d/%d | %02d:%02d" % [
+	lbl_meta.text = "ДЕЛО %d/%d | СБОЙ %d/%d | %02d:%02d" % [
 		current_level_index + 1,
 		levels.size(),
 		wrong_count,
@@ -673,7 +673,7 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 	_log_event("task_end", {"reason": reason, "is_correct": is_correct})
 
 	if not is_correct and reason != "timeout":
-		lbl_status.text = str(current_level.get("explain_short", "Review clue meaning and layer mapping."))
+		lbl_status.text = str(current_level.get("explain_short", "Просмотрите значение подсказки и сопоставление слоев."))
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.62, 0.45))
 
 	var elapsed_ms: int = end_tick - level_started_ms
@@ -763,10 +763,10 @@ func _normalize_topology(topology: Dictionary) -> Dictionary:
 		normalized["edges"] = edges.duplicate(true)
 	return normalized
 
-func _log_event(name: String, payload: Dictionary) -> void:
+func _log_event(event_name: String, payload: Dictionary) -> void:
 	var events: Array = task_session.get("events", [])
 	events.append({
-		"name": name,
+		"name": event_name,
 		"t_ms": Time.get_ticks_msec() - level_started_ms,
 		"payload": payload
 	})

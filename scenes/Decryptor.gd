@@ -358,10 +358,10 @@ func _on_stability_changed(new_val: float, _change: float) -> void:
 	if new_val <= 0:
 		_show_safe_mode()
 
-func _on_shield_triggered(name: String, duration: float) -> void:
-	if name == "FREQUENCY":
+func _on_shield_triggered(shield_name: String, duration: float) -> void:
+	if shield_name == "FREQUENCY":
 		_flash_shield(shield_freq)
-	elif name == "LAZY":
+	elif shield_name == "LAZY":
 		_flash_shield(shield_lazy)
 
 	btn_check.disabled = true

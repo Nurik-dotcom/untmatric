@@ -131,12 +131,12 @@ func _setup_noir_ui() -> void:
 	_btn_help = Button.new()
 	_btn_help.text = "?"
 	_btn_help.custom_minimum_size = Vector2(44, 44)
-	_btn_help.tooltip_text = "DOSSIER"
+	_btn_help.tooltip_text = "ДОСЬЕ"
 	_btn_help.pressed.connect(_on_help_pressed)
 	header.add_child(_btn_help)
 
 	_btn_undo = Button.new()
-	_btn_undo.text = "UNDO"
+	_btn_undo.text = "ОТКАТ"
 	_btn_undo.custom_minimum_size = Vector2(0, 44)
 	_btn_undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_undo.pressed.connect(_on_undo_pressed)
@@ -1056,7 +1056,7 @@ func _recalculate_stability() -> void:
 func _update_timer_display() -> void:
 	var time_limit := int(level_data.get("time_limit_sec", 120))
 	var remaining: int = maxi(0, time_limit - t_elapsed_seconds)
-	var mm: int = remaining / 60
+	var mm: int = int(remaining / 60.0)
 	var ss: int = remaining % 60
 	label_timer.text = "ВРЕМЯ: %02d:%02d" % [mm, ss]
 	if t_elapsed_seconds > time_limit:
@@ -1072,6 +1072,9 @@ func _log_attempt(verdict: Dictionary) -> void:
 	var sublevel_id := str(level_entry.get("id", "6_1_%02d" % (level_index + 1)))
 	var sublevel_path := str(level_entry.get("path", ""))
 	var next_available := result_code == "OK" and level_index + 1 < level_total
+	var first_attempt_edge_value: Variant = null
+	if not first_attempt_edge.is_empty():
+		first_attempt_edge_value = first_attempt_edge
 
 	var attempt_no := GlobalMetrics.session_history.size() + 1
 	var log_data := {
@@ -1095,7 +1098,7 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"result_code": result_code,
 		"calc_ok": sum_input_value != null and int(sum_input_value) == sum_actual,
 		"optimal_ok": sum_actual == min_sum and result_code == "OK",
-		"first_attempt_edge": null if first_attempt_edge.is_empty() else first_attempt_edge,
+		"first_attempt_edge": first_attempt_edge_value,
 		"t_elapsed_seconds": t_elapsed_seconds,
 		"path": path.duplicate(),
 		"sum_actual": sum_actual,

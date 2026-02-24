@@ -375,7 +375,9 @@ func _on_submit_pressed() -> void:
 	analysis["kept_ids"] = kept_ids
 	var reason := str(analysis.get("reason", "MIXED_ERROR"))
 	var is_correct := reason == "NONE"
-	var reason_value: Variant = null if is_correct else reason
+	var reason_value: Variant = null
+	if not is_correct:
+		reason_value = reason
 	_handle_result(is_correct, reason_value, analysis)
 
 func _calculate_f_reason_filter(kept_set: Array) -> Dictionary:

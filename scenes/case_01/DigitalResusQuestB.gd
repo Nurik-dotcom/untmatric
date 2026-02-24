@@ -102,7 +102,7 @@ func _ready() -> void:
 	_populate_levels()
 	levels = ResusData.load_stage_levels(LEVELS_PATH, "B")
 	if levels.is_empty():
-		_show_error("Failed to load Case 01 stage B data")
+		_show_error("Не удалось загрузить данные случая 01, этап B.")
 		return
 
 	_load_current_level(0)
@@ -131,17 +131,17 @@ func _load_current_level(index: int) -> void:
 	_begin_attempt()
 
 func _setup_level_ui() -> void:
-	title_label.text = "Case 01: Digital Reanimation"
-	stage_label.text = "STAGE B %d/%d" % [current_level_index + 1, levels.size()]
-	context_label.text = str(stage_b_data.get("context", "Tune profile and run benchmark"))
+	title_label.text = "Кейс 01: Цифровая реанимация"
+	stage_label.text = "ЭТАП Б %d/%d" % [current_level_index + 1, levels.size()]
+	context_label.text = str(stage_b_data.get("context", "Настройте профиль и запустите тест"))
 	budget_value.text = "%d$" % int(stage_b_data.get("budget", 0))
-	btn_reset.text = "RESET"
-	btn_confirm.text = "CONFIRM"
-	btn_benchmark.text = "RUN BENCHMARK"
-	btn_next_level.text = "NEXT LEVEL"
+	btn_reset.text = "СБРОС"
+	btn_confirm.text = "ПОДТВЕРДИТЬ"
+	btn_benchmark.text = "ЗАПУСТИТЬ ЭТАЛОН"
+	btn_next_level.text = "СЛЕД. ЭТАП"
 	btn_next_level.visible = false
 	btn_next_level.disabled = true
-	diagnostic_headline.text = "Awaiting benchmark..."
+	diagnostic_headline.text = "Жду эталона..."
 	diagnostic_details.text = ""
 	diagnostic_card.visible = false
 	_populate_option_cards()
@@ -168,8 +168,8 @@ func _begin_attempt() -> void:
 	snapshot_b["classified_as"] = "UNKNOWN"
 	snapshot_b["benchmark_ran"] = false
 	snapshot_b["preview_metrics"] = {}
-	terminal_output.text = "[READY] Select BIOS profile and run benchmark."
-	status_label.text = "READY"
+	terminal_output.text = "[ГОТОВО] Выберите профиль BIOS и запустите тест."
+	status_label.text = "ГОТОВО"
 	status_label.modulate = COLOR_WARN
 
 func _on_cpu_changed(_index: int) -> void:
@@ -223,7 +223,7 @@ func _on_benchmark_pressed() -> void:
 		terminal_output.text += line + "\n"
 	terminal_output.scroll_to_line(max(0, terminal_output.get_line_count() - 1))
 
-	status_label.text = "BENCHMARK: %s" % class_code
+	status_label.text = "ЭТАЛОН: %s" % class_code
 	status_label.modulate = COLOR_OK if class_code == str(stage_b_data.get("correct_option_id", "OPTIMAL")) else COLOR_WARN
 	_log_event("BENCHMARK_RUN", {
 		"selected_option_id": class_code,
@@ -235,7 +235,7 @@ func _on_confirm_pressed() -> void:
 	if input_locked:
 		return
 	if not bool(snapshot_b.get("benchmark_ran", false)):
-		status_label.text = "RUN BENCHMARK BEFORE CONFIRM"
+		status_label.text = "ЗАПУСТИТЕ ЭТАЛОННЫЙ ПРОВЕРКА ПЕРЕД ПОДТВЕРЖДЕНИЕМ"
 		status_label.modulate = COLOR_ERR
 		return
 
@@ -271,7 +271,7 @@ func _on_confirm_pressed() -> void:
 		_play_sfx("error")
 
 func _show_result(result: Dictionary) -> void:
-	var headline: String = str(result.get("diagnostic_headline", "Classification complete"))
+	var headline: String = str(result.get("diagnostic_headline", "Классификация завершена"))
 	var details: Array = result.get("diagnostic_details", []) as Array
 	var detail_lines: Array[String] = []
 	for detail_v in details:
@@ -280,7 +280,7 @@ func _show_result(result: Dictionary) -> void:
 	diagnostic_details.text = "\n".join(detail_lines)
 	diagnostic_card.visible = true
 
-	status_label.text = "LOCKED | %s" % str(result.get("verdict_code", "WRONG"))
+	status_label.text = "ЗАБЛОКИРОВАНО | %s" % str(result.get("verdict_code", "WRONG"))
 	status_label.modulate = COLOR_OK if bool(result.get("is_correct", false)) else COLOR_ERR
 
 func _on_reset_pressed() -> void:
@@ -356,7 +356,7 @@ func _recompute_preview() -> void:
 	preview_ram_bar.value = float(int(metrics.get("ram_usage", 0)))
 
 	if not bool(snapshot_b.get("benchmark_ran", false)):
-		status_label.text = "PROFILE READY | used %d$ / %d$" % [total_price, budget]
+		status_label.text = "ПРОФИЛЬ ГОТОВ | использовано %d$ / %d$" % [total_price, budget]
 		status_label.modulate = COLOR_WARN
 
 func _calculate_metrics(tuning: Dictionary) -> Dictionary:
@@ -385,7 +385,7 @@ func _calculate_metrics(tuning: Dictionary) -> Dictionary:
 	elif perf_score <= int((stage_b_data.get("classifier_thresholds", {}) as Dictionary).get("lowpower_perf_max", 4)):
 		risk_score = 68
 
-	var fps: int = clampi(18 + cpu_perf * 12 + ram_perf * 9 + gpu_perf * 12 - max(0, total_price - budget) / 20, 8, 100)
+	var fps: int = clampi(18 + cpu_perf * 12 + ram_perf * 9 + gpu_perf * 12 - int(float(max(0, total_price - budget)) / 20.0), 8, 100)
 	var cpu_load: int = clampi(96 - cpu_perf * 14 + (12 if ram_perf <= 1 else 0), 20, 99)
 	var ram_usage: int = clampi(88 - ram_perf * 15 + (8 if gpu_perf >= 2 else 0), 16, 99)
 	var bottleneck: String = "OK"
@@ -523,10 +523,10 @@ func _mark_first_action() -> void:
 	if time_to_first_action_ms < 0:
 		time_to_first_action_ms = Time.get_ticks_msec() - stage_started_ms
 
-func _log_event(name: String, data: Dictionary = {}) -> void:
+func _log_event(event_name: String, data: Dictionary = {}) -> void:
 	trace.append({
 		"t_ms": Time.get_ticks_msec() - stage_started_ms,
-		"event": name,
+		"event": event_name,
 		"data": data.duplicate(true)
 	})
 
@@ -643,12 +643,12 @@ func _ensure_scroll_layout() -> void:
 		return
 
 	_content_scroll = ScrollContainer.new()
-	_content_scroll.name = "ContentScroll"
+	_content_scroll.name = "КонтентПрокрутка"
 	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	_content_vbox = VBoxContainer.new()
-	_content_vbox.name = "ContentVBox"
+	_content_vbox.name = "КонтентВБокс"
 	_content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content_vbox.add_theme_constant_override("separation", 10)
@@ -678,7 +678,7 @@ func _setup_collapsible_context() -> void:
 	budget_row.add_child(spacer)
 
 	_context_toggle_button = Button.new()
-	_context_toggle_button.name = "ContextToggleButton"
+	_context_toggle_button.name = "КонтекстToggleButton"
 	_context_toggle_button.text = "?"
 	_context_toggle_button.custom_minimum_size = Vector2(40.0, 34.0)
 	_context_toggle_button.pressed.connect(_on_context_toggle_pressed)
@@ -745,7 +745,7 @@ func _ensure_bottom_mobile_layout() -> VBoxContainer:
 	if _bottom_mobile_layout != null and is_instance_valid(_bottom_mobile_layout):
 		return _bottom_mobile_layout
 	_bottom_mobile_layout = VBoxContainer.new()
-	_bottom_mobile_layout.name = "BottomBarMobileLayout"
+	_bottom_mobile_layout.name = "НижнийБарМобильныйМакет"
 	_bottom_mobile_layout.visible = false
 	_bottom_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_bottom_mobile_layout.add_theme_constant_override("separation", 8)

@@ -12,7 +12,26 @@ const FX_ID_LOW := 0
 const FX_ID_HIGH := 1
 const OVERLAY_ID_PENCIL := 0
 const OVERLAY_ID_CRT := 1
-
+const BRIEFING_RU_MAP := {
+	"Sum a simple range window.": "Просуммируйте простое окно range.",
+	"Filter inside range by modulo.": "Отфильтруйте значения в range по модулю.",
+	"Iterate over explicit list values.": "Пройдите цикл по явному списку значений.",
+	"while loop with inclusive growth.": "Цикл while с возрастающей границей.",
+	"while loop with decrement step.": "Цикл while с шагом убывания.",
+	"range with explicit step.": "range с явным шагом.",
+	"while boundary with non-unit increment.": "Граница while с шагом больше единицы.",
+	"while loop as repeated transform.": "while как повторяющееся преобразование.",
+	"Count range width correctly.": "Правильно посчитайте ширину range.",
+	"Descending range with step trap.": "Убывающий range с ловушкой шага.",
+	"continue skips current iteration.": "continue пропускает текущую итерацию.",
+	"break exits loop immediately.": "break немедленно завершает цикл.",
+	"while with inner condition window.": "while с внутренним окном условия.",
+	"while with branch inside loop.": "while с ветвлением внутри цикла.",
+	"Descending range stop trap.": "Ловушка границы stop в убывающем range.",
+	"Range step and multiplication trap.": "Ловушка шага range и умножения.",
+	"Compound OR branch on explicit list.": "Составное OR-условие по явному списку.",
+	"Compound AND boundary over list.": "Составная AND-граница по списку."
+}
 const PHONE_PORTRAIT_MAX_WIDTH := 560.0
 const PHONE_LANDSCAPE_MAX_HEIGHT := 760.0
 
@@ -96,11 +115,12 @@ func _ready() -> void:
 	_configure_overlay_shader()
 	_init_audio_player()
 	_connect_signals()
+	_apply_localized_texts()
 	_apply_mobile_min_sizes()
 	_apply_layout_mode()
 
 	if not _load_levels_from_json():
-		_show_boot_error("Failed to load suspect levels.")
+		_show_boot_error("Не удалось загрузить уровни квеста подозреваемого.")
 		return
 
 	if levels.size() != 18:
@@ -118,14 +138,37 @@ func _apply_theme() -> void:
 
 func _setup_runtime_controls() -> void:
 	popup_fx_select.clear()
-	popup_fx_select.add_item("LOW", FX_ID_LOW)
-	popup_fx_select.add_item("HIGH", FX_ID_HIGH)
+	popup_fx_select.add_item("Низко", FX_ID_LOW)
+	popup_fx_select.add_item("Высоко", FX_ID_HIGH)
 	popup_fx_select.select(FX_ID_HIGH if fx_quality == "high" else FX_ID_LOW)
 
 	popup_overlay_select.clear()
-	popup_overlay_select.add_item("PENCIL", OVERLAY_ID_PENCIL)
+	popup_overlay_select.add_item("Карандаш", OVERLAY_ID_PENCIL)
 	popup_overlay_select.add_item("CRT", OVERLAY_ID_CRT)
 	popup_overlay_select.select(OVERLAY_ID_PENCIL if overlay_mode == "pencil" else OVERLAY_ID_CRT)
+
+func _apply_localized_texts() -> void:
+	btn_quest_back.text = "НАЗАД"
+	btn_settings.text = "НАСТР"
+	btn_analyze.text = "АНАЛИЗ"
+	btn_enter.text = "ВВОД"
+	btn_next.text = "ДАЛЕЕ"
+	btn_close_diag.text = "ЗАКРЫТЬ"
+	popup_close.text = "ЗАКРЫТЬ"
+
+	var popup_title: Label = inspector_popup.get_node_or_null("Root/LblTitle") as Label
+	if popup_title != null:
+		popup_title.text = "НАСТРОЙКИ"
+	var popup_fx_title: Label = inspector_popup.get_node_or_null("Root/SettingsGrid/LblFx") as Label
+	if popup_fx_title != null:
+		popup_fx_title.text = "ЭФФЕКТЫ"
+	var popup_overlay_title: Label = inspector_popup.get_node_or_null("Root/SettingsGrid/LblOverlay") as Label
+	if popup_overlay_title != null:
+		popup_overlay_title.text = "НАЛОЖЕНИЕ"
+
+	var diag_title: Label = diag_panel.get_node_or_null("VBoxContainer/Label") as Label
+	if diag_title != null:
+		diag_title.text = "ДИАГНОСТИКА"
 
 func _configure_overlay_shader() -> void:
 	if noir_overlay != null and noir_overlay.has_method("set_overlay_mode"):
@@ -306,6 +349,12 @@ func _show_boot_error(text: String) -> void:
 	btn_analyze.disabled = true
 	btn_next.disabled = true
 
+func _localized_briefing_text(task: Dictionary) -> String:
+	var source: String = str(task.get("briefing", "")).strip_edges()
+	if BRIEFING_RU_MAP.has(source):
+		return str(BRIEFING_RU_MAP[source])
+	return source
+
 func _load_level(idx: int) -> void:
 	if levels.is_empty():
 		return
@@ -336,11 +385,11 @@ func _load_level(idx: int) -> void:
 	task_finished = false
 	task_result_sent = false
 
-	lbl_clue_title.text = "CLUE #%s" % str(current_task.get("id", "A-00"))
-	lbl_session.text = "SESSION %04d" % (randi() % 10000)
-	lbl_status.text = "Reading suspect script..."
+	lbl_clue_title.text = "УЛИКА #%s" % str(current_task.get("id", "A-00"))
+	lbl_session.text = "СЕССИЯ %04d" % (randi() % 10000)
+	lbl_status.text = "Загрузка кода подозреваемого..."
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_NEUTRAL)
-	lbl_attempts.text = "ATTEMPTS: 0/%d" % MAX_ATTEMPTS
+	lbl_attempts.text = "ПОПЫТКИ: 0/%d" % MAX_ATTEMPTS
 	decrypt_bar.value = float(current_level_idx) / maxf(1.0, float(levels.size() - 1)) * 100.0
 	energy_bar.value = energy
 
@@ -353,7 +402,7 @@ func _load_level(idx: int) -> void:
 	_update_briefing_card()
 	_log_event("task_start", {"bucket": str(current_task.get("bucket", "unknown"))})
 
-	var briefing: String = str(current_task.get("briefing", ""))
+	var briefing: String = _localized_briefing_text(current_task)
 	code_label.text = "[color=#8A8A8A]%s[/color]\n\n" % briefing
 	await _typewrite_code(current_task.get("code", []))
 
@@ -361,36 +410,34 @@ func _load_level(idx: int) -> void:
 	state = State.SOLVING
 	btn_enter.disabled = false
 	btn_analyze.disabled = false
-	lbl_status.text = "Compute final s and submit it."
+	lbl_status.text = "Вычислите итоговое s и введите ответ."
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_READY)
 
 func _update_briefing_card() -> void:
-	briefing_goal.text = "Goal: find the final value of s"
+	briefing_goal.text = "Цель: найти итоговое значение s"
 
 	var hints: Array[String] = []
 	for tag_var in current_task.get("topic_tags", []):
 		var tag: String = str(tag_var)
 		match tag:
 			"range_stop_exclusive":
-				hints.append("range stop is not included")
+				hints.append("stop в range не включается")
 			"while_boundary":
-				hints.append("watch while boundary")
+				hints.append("проверьте границу while")
 			"break_flow":
-				hints.append("break stops the loop")
+				hints.append("break завершает цикл")
 			"continue_flow":
-				hints.append("continue skips current step")
+				hints.append("continue пропускает шаг")
 			"list_iteration":
-				hints.append("loop over explicit list values")
+				hints.append("список задает явный порядок")
 			"step_trap":
-				hints.append("check range step carefully")
+				hints.append("проверьте шаг range")
 			_:
 				hints.append(tag.replace("_", " "))
 	if hints.is_empty():
-		var explain_short: Array = current_task.get("explain_short", [])
-		if not explain_short.is_empty():
-			hints.append(str(explain_short[0]))
+		hints.append("проверьте границы цикла и условие")
 
-	briefing_hint.text = "Hint: %s" % ", ".join(hints.slice(0, min(2, hints.size())))
+	briefing_hint.text = "Подсказка: %s" % ", ".join(hints.slice(0, min(2, hints.size())))
 
 func _typewrite_code(lines: Array) -> void:
 	for line_var in lines:
@@ -444,7 +491,7 @@ func _on_enter_pressed() -> void:
 		_play_sfx(AUDIO_ERROR)
 		_trigger_glitch()
 		_shake_screen()
-		lbl_status.text = "Invalid input format."
+		lbl_status.text = "Некорректный формат ввода."
 		lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
 		(task_session["attempts"] as Array).append({
 			"kind": "numpad",
@@ -497,7 +544,7 @@ func _on_enter_pressed() -> void:
 
 func _handle_success_feedback() -> void:
 	state = State.FEEDBACK_SUCCESS
-	lbl_status.text = "Correct. Optimal result confirmed."
+	lbl_status.text = "Верно. Значение подтверждено."
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_SUCCESS)
 	btn_enter.disabled = true
 	btn_analyze.disabled = true
@@ -508,8 +555,8 @@ func _handle_success_feedback() -> void:
 
 func _handle_fail_feedback() -> void:
 	wrong_count += 1
-	lbl_attempts.text = "ATTEMPTS: %d/%d" % [wrong_count, MAX_ATTEMPTS]
-	lbl_status.text = "Mismatch. Re-check loop flow."
+	lbl_attempts.text = "ПОПЫТКИ: %d/%d" % [wrong_count, MAX_ATTEMPTS]
+	lbl_status.text = "Неверно. Попробуйте еще раз."
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
 
 	var wrong_penalty: int = int(current_task.get("economy", {}).get("wrong", 10))
@@ -530,7 +577,7 @@ func _trigger_safe_mode() -> void:
 	is_safe_mode = true
 	btn_enter.disabled = true
 	btn_next.visible = true
-	lbl_status.text = "Safe mode activated. Use analysis trace."
+	lbl_status.text = "Превышен лимит ошибок. Включен безопасный режим."
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_WARN)
 
 	btn_analyze.disabled = false
@@ -547,7 +594,7 @@ func _on_analyze_pressed(free: bool = false) -> void:
 	if not free:
 		var analyze_cost: int = int(current_task.get("economy", {}).get("analyze", 20))
 		if energy < float(analyze_cost):
-			lbl_status.text = "Not enough energy for analysis."
+			lbl_status.text = "Недостаточно энергии для анализа."
 			lbl_status.add_theme_color_override("font_color", STATUS_COLOR_WARN)
 			_play_sfx(AUDIO_ERROR)
 			return

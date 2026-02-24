@@ -14,7 +14,7 @@ func setup(option_data: Dictionary) -> void:
 	module_id = str(option_data.get("module_id", option_data.get("option_id", ""))).strip_edges()
 	module_label = str(option_data.get("label", module_id))
 	text = module_label
-	tooltip_text = "MODULE %s\n%s" % [module_label, str(option_data.get("why", ""))]
+	tooltip_text = "МОДУЛЬ %s\n%s" % [module_label, str(option_data.get("why", ""))]
 	custom_minimum_size = Vector2(0, 88)
 	set_source("PALETTE", -1)
 	set_feedback_state("neutral")

@@ -84,7 +84,7 @@ func _ready() -> void:
 	_connect_zone_signals()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("Failed to load Case 01 stage A data")
+		_show_error("Не удалось загрузить данные этапа A случая 01.")
 		return
 	_start_level(current_level_index)
 	_on_viewport_size_changed()
@@ -119,13 +119,13 @@ func _load_levels() -> void:
 func _start_level(index: int) -> void:
 	current_level_index = clamp(index, 0, max(0, levels.size() - 1))
 	level_data = (levels[current_level_index] as Dictionary).duplicate(true)
-	title_label.text = "Case 01: Digital Reanimation"
-	stage_label.text = "STAGE A"
+	title_label.text = "Кейс 01: Цифровая реанимация"
+	stage_label.text = "ЭТАП А"
 	briefing_label.text = str(level_data.get("briefing", ""))
-	btn_reset.text = "RESET"
-	btn_confirm.text = "CONFIRM"
-	result_retry_button.text = "RETRY"
-	result_back_button.text = "BACK"
+	btn_reset.text = "СБРОС"
+	btn_confirm.text = "ПОДТВЕРДИТЬ"
+	result_retry_button.text = "ПОВТОР"
+	result_back_button.text = "НАЗАД"
 
 	_configure_zones()
 	_reset_attempt()
@@ -135,7 +135,7 @@ func _configure_zones() -> void:
 	var socket_map: Dictionary = level_data.get("socket_map", {}) as Dictionary
 
 	if pile_zone.has_method("setup"):
-		pile_zone.call("setup", "PILE", "PARTS PILE")
+		pile_zone.call("setup", "PILE", "КУЧА ЧАСТЕЙ")
 
 	if zone_input.has_method("setup"):
 		zone_input.call("setup", "INPUT", str(bucket_labels.get("INPUT", "INPUT")), _string_array(socket_map.get("INPUT", [])))
@@ -348,7 +348,7 @@ func _refresh_system_state(placements: Dictionary) -> void:
 	var console_text: String = "\n".join(console_lines)
 	_set_console_target(console_text)
 
-	status_label.text = "VIDEO %s | MEMORY %s | BUFFER %s" % [
+	status_label.text = "ВИДЕО %s | ПАМЯТЬ %s | БУФЕР %s" % [
 		"OK" if gpu_ok else "FAIL",
 		"OK" if ram_ok else "FAIL",
 		"FAST" if cache_ok else "SLOW"
@@ -364,11 +364,11 @@ func _refresh_system_state(placements: Dictionary) -> void:
 func _update_monitor(monitor_on: bool) -> void:
 	if monitor_on:
 		monitor_screen.color = Color(0.08, 0.2, 0.12, 1.0)
-		monitor_label.text = "SIGNAL OK"
+		monitor_label.text = "СИГНАЛ ЕСТЬ"
 		monitor_label.modulate = COLOR_OK
 	else:
 		monitor_screen.color = Color(0.03, 0.03, 0.03, 1.0)
-		monitor_label.text = "NO SIGNAL"
+		monitor_label.text = "НЕТ СИГНАЛА"
 		monitor_label.modulate = COLOR_ERR
 
 func _update_diag_panel(gpu_ok: bool, ram_ok: bool, cache_ok: bool) -> void:
@@ -377,9 +377,9 @@ func _update_diag_panel(gpu_ok: bool, ram_ok: bool, cache_ok: bool) -> void:
 	var ram_diag: Dictionary = diag.get("RAM", {}) as Dictionary
 	var cache_diag: Dictionary = diag.get("CACHE", {}) as Dictionary
 
-	diag_video_value.text = str(gpu_diag.get("ok", "VIDEO: OK")) if gpu_ok else str(gpu_diag.get("bad", "VIDEO: NO SIGNAL"))
-	diag_memory_value.text = str(ram_diag.get("ok", "MEMORY: OK")) if ram_ok else str(ram_diag.get("bad", "MEMORY: READ ERROR"))
-	diag_buffer_value.text = str(cache_diag.get("ok", "BUFFER: FAST")) if cache_ok else str(cache_diag.get("bad", "BUFFER: SLOW"))
+	diag_video_value.text = str(gpu_diag.get("ok", "ВИДЕО: ОК")) if gpu_ok else str(gpu_diag.get("bad", "ВИДЕО: НЕТ СИГНАЛА"))
+	diag_memory_value.text = str(ram_diag.get("ok", "ПАМЯТЬ: ОК")) if ram_ok else str(ram_diag.get("bad", "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"))
+	diag_buffer_value.text = str(cache_diag.get("ok", "БУФЕР: БЫСТРЫЙ")) if cache_ok else str(cache_diag.get("bad", "БУФЕР: МЕДЛЕННЫЙ"))
 
 	diag_video_value.modulate = COLOR_OK if gpu_ok else COLOR_ERR
 	diag_memory_value.modulate = COLOR_OK if ram_ok else COLOR_ERR
@@ -400,7 +400,7 @@ func _build_console_lines(gpu_ok: bool, ram_ok: bool, placements: Dictionary) ->
 			lines.append(line)
 
 	if not gpu_ok:
-		lines.append("[WARN] display output unavailable")
+		lines.append("[WARN] вывод на дисплей недоступен")
 
 	if lines.is_empty():
 		lines.append("[BOOT] ...")
@@ -501,7 +501,7 @@ func _show_result(result: Dictionary) -> void:
 		int(result.get("points", 0)),
 		int(result.get("max_points", 2))
 	]
-	result_stability_label.text = "STABILITY %d" % int(result.get("stability_delta", 0))
+	result_stability_label.text = "СТАБИЛЬНОСТЬ %d" % int(result.get("stability_delta", 0))
 
 	if verdict_code == "PERFECT":
 		result_verdict_label.modulate = COLOR_OK
@@ -585,10 +585,10 @@ func _string_array(values: Variant) -> Array[String]:
 		out.append(str(value_v))
 	return out
 
-func _log_event(name: String, data: Dictionary = {}) -> void:
+func _log_event(event_name: String, data: Dictionary = {}) -> void:
 	trace.append({
 		"t_ms": Time.get_ticks_msec() - start_time_ms,
-		"event": name,
+		"event": event_name,
 		"data": data.duplicate(true)
 	})
 
@@ -618,12 +618,12 @@ func _ensure_scroll_layout() -> void:
 		return
 
 	_content_scroll = ScrollContainer.new()
-	_content_scroll.name = "ContentScroll"
+	_content_scroll.name = "КонтентПрокрутка"
 	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	_content_vbox = VBoxContainer.new()
-	_content_vbox.name = "ContentVBox"
+	_content_vbox.name = "КонтентВБокс"
 	_content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content_vbox.add_theme_constant_override("separation", 10)
@@ -650,21 +650,21 @@ func _setup_collapsible_briefing() -> void:
 	var briefing_parent: Node = briefing_label.get_parent()
 	if briefing_parent == briefing_card:
 		var wrapper: VBoxContainer = VBoxContainer.new()
-		wrapper.name = "BriefingVBox"
+		wrapper.name = "БрифингVBox"
 		wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		wrapper.add_theme_constant_override("separation", 6)
 
 		var top_row: HBoxContainer = HBoxContainer.new()
-		top_row.name = "BriefingTopRow"
+		top_row.name = "БрифингTopRow"
 		top_row.add_theme_constant_override("separation", 8)
 
 		var title: Label = Label.new()
-		title.text = "BRIEFING"
+		title.text = "БРИФИНГ"
 		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		top_row.add_child(title)
 
 		_briefing_toggle_button = Button.new()
-		_briefing_toggle_button.name = "BriefingToggleButton"
+		_briefing_toggle_button.name = "БрифингToggleButton"
 		_briefing_toggle_button.text = "?"
 		_briefing_toggle_button.custom_minimum_size = Vector2(40.0, 36.0)
 		_briefing_toggle_button.pressed.connect(_on_briefing_toggle_pressed)
@@ -675,7 +675,7 @@ func _setup_collapsible_briefing() -> void:
 		wrapper.add_child(briefing_label)
 		briefing_card.add_child(wrapper)
 	elif _briefing_toggle_button == null:
-		var existing_btn: Button = briefing_card.find_child("BriefingToggleButton", true, false) as Button
+		var existing_btn: Button = briefing_card.find_child("БрифингToggleButton", true, false) as Button
 		if existing_btn != null:
 			_briefing_toggle_button = existing_btn
 

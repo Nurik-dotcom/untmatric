@@ -414,7 +414,7 @@ func _to_base(value: int, num_base: int) -> String:
 	while v > 0:
 		var digit: int = v % num_base
 		out = digits.substr(digit, 1) + out
-		v = int(v / num_base)
+		v = int(float(v) / float(num_base))
 	return out
 
 func _format_value(value: int) -> String:

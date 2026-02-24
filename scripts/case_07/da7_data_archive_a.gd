@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 
 const CasesHub = preload("res://scripts/case_07/da7_cases.gd")
 const CasesA = preload("res://scripts/case_07/da7_cases_a.gd")
@@ -88,7 +88,7 @@ func _init_session() -> void:
 		if CasesA.validate_case_a(case_data):
 			valid_cases.append(case_data)
 	if valid_cases.is_empty():
-		_show_fatal("No valid DA7 A cases found in scripts/case_07/da7_cases_a.gd")
+		_show_fatal("В файле scripts/case_07/da7_cases_a.gd не обнаружено действительных случаев DA7 A.")
 		return
 
 	valid_cases.shuffle()
@@ -129,11 +129,11 @@ func _load_next_case() -> void:
 	_render_case()
 
 func _render_case() -> void:
-	title_label.text = "Case #7: Secret Archive [A %d/%d]" % [current_case_index + 1, session_cases.size()]
-	case_title_label.text = "CASE %s" % str(current_case.get("case_title", current_case.get("id", "UNKNOWN")))
+	title_label.text = "Дело №7: Секретный архив [A %d/%d]" % [current_case_index + 1, session_cases.size()]
+	case_title_label.text = "ДЕЛО %s" % str(current_case.get("case_title", current_case.get("id", "UNKNOWN")))
 	briefing_label.bbcode_enabled = false
 	briefing_label.text = str(current_case.get("briefing", ""))
-	objective_label.text = "Objective: %s" % str(current_case.get("objective", ""))
+	objective_label.text = "Цель: %s" % str(current_case.get("objective", ""))
 
 	prompt_label.bbcode_enabled = false
 	prompt_label.text = str(current_case.get("prompt", ""))
@@ -141,8 +141,8 @@ func _render_case() -> void:
 	explain_line.text = ""
 
 	inspect_label.bbcode_enabled = false
-	inspect_label.text = "Inspect clues by long-pressing a row/cell."
-	scan_label.text = "SCAN: 0"
+	inspect_label.text = "Проверьте подсказки, нажав и удерживая строку/ячейку."
+	scan_label.text = "СКАН: 0"
 	options_grid.visible = false
 	for child in options_grid.get_children():
 		child.queue_free()
@@ -380,7 +380,9 @@ func _submit_target(target: Dictionary, clicked_kind: String, row_id: String, co
 	_set_tree_locked(true)
 
 	var is_correct := bool(target.get("is_correct", false))
-	var f_reason: Variant = null if is_correct else target.get("f_reason", "WRONG_OPTION_GENERIC")
+	var f_reason: Variant = null
+	if not is_correct:
+		f_reason = target.get("f_reason", "WRONG_OPTION_GENERIC")
 	if is_correct:
 		_play_sound("relay", sfx_relay)
 	else:
@@ -405,10 +407,10 @@ func _submit_target(target: Dictionary, clicked_kind: String, row_id: String, co
 func _show_explain_line(is_correct: bool, f_reason: Variant) -> void:
 	var reveal: Dictionary = current_case.get("reveal", {}) as Dictionary
 	if is_correct:
-		explain_line.text = str(reveal.get("on_correct", "Correct."))
+		explain_line.text = str(reveal.get("on_correct", "Правильный."))
 		return
 	var reason_map: Dictionary = reveal.get("on_wrong_by_reason", {}) as Dictionary
-	explain_line.text = str(reason_map.get(str(f_reason), "Incorrect target."))
+	explain_line.text = str(reason_map.get(str(f_reason), "Неправильная цель."))
 
 func _apply_highlight(highlight: Dictionary) -> void:
 	if highlight.is_empty():
@@ -468,11 +470,11 @@ func _register_inspection(row_id: String) -> void:
 	if not row_id.is_empty():
 		unique_rows_inspected[row_id] = true
 		last_inspected_row_id = row_id
-	scan_label.text = "SCAN: %d" % inspect_count
+	scan_label.text = "СКАН: %d" % inspect_count
 
 func _build_inspect_line(row_id: String, col_id: String) -> String:
 	if not row_data_by_id.has(row_id):
-		return "Inspect: row=%s col=%s" % [row_id, col_id]
+		return "Проверьте: row=%s col=%s" % [row_id, col_id]
 	var row_data: Dictionary = row_data_by_id[row_id] as Dictionary
 	var table_def: Dictionary = current_case.get("table", {}) as Dictionary
 	var cols: Array = table_def.get("columns", []) as Array
@@ -484,7 +486,7 @@ func _build_inspect_line(row_id: String, col_id: String) -> String:
 		var col_def: Dictionary = col_v as Dictionary
 		var id := str(col_def.get("col_id", ""))
 		parts.append("%s=%s" % [str(col_def.get("title", id)), str(cells.get(id, ""))])
-	return "Inspect %s [%s]: %s" % [row_id, col_id, " | ".join(parts)]
+	return "Осмотрите %s [%s]: %s" % [row_id, col_id, " | ".join(parts)]
 
 func _log_trial(is_correct: bool, f_reason: Variant, target: Dictionary, clicked_kind: String, row_id: String, col_id: String) -> void:
 	var now_ms := Time.get_ticks_msec()
@@ -581,17 +583,17 @@ func _on_scroll_input(event: InputEvent) -> void:
 
 func _finish_session() -> void:
 	trial_locked = true
-	title_label.text = "DATA ARCHIVE // SESSION COMPLETE [A]"
+	title_label.text = "АРХИВ ДАННЫХ // СЕССИЯ ЗАВЕРШЕНА [A]"
 	prompt_label.bbcode_enabled = true
-	prompt_label.text = "[b]Investigation complete.[/b]"
+	prompt_label.text = "[b]Расследование завершено.[/b]"
 	explain_line.text = ""
 	_ensure_exit_button()
 
 func _game_over() -> void:
 	trial_locked = true
-	title_label.text = "DATA ARCHIVE // SYSTEM LOCK [A]"
+	title_label.text = "АРХИВ ДАННЫХ // БЛОКИРОВКА СИСТЕМЫ [A]"
 	prompt_label.bbcode_enabled = true
-	prompt_label.text = "[b]Stability dropped to zero.[/b]"
+	prompt_label.text = "[b]Стабильность упала до нуля.[/b]"
 	explain_line.text = ""
 	_ensure_exit_button()
 
@@ -629,7 +631,7 @@ func _update_stability_ui() -> void:
 	if is_instance_valid(stability_bar):
 		stability_bar.value = GlobalMetrics.stability
 	if is_instance_valid(stability_label):
-		stability_label.text = "Stability: %d%%" % int(GlobalMetrics.stability)
+		stability_label.text = "Стабильность: %d%%" % int(GlobalMetrics.stability)
 
 func _on_viewport_size_changed() -> void:
 	var viewport_size := get_viewport_rect().size
