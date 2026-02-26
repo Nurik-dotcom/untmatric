@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scenes/MainMenu.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="2_theme"]
-[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
+[ext_resource type="PackedScene" uid="uid://cnoir_overlay" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -21,7 +21,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.03, 0.03, 0.04, 1)
+color = Color(0.025, 0.025, 0.03, 1)
 
 [node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
 
@@ -34,36 +34,62 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Menu" type="VBoxContainer" parent="Center"]
-custom_minimum_size = Vector2(520, 0)
+custom_minimum_size = Vector2(560, 0)
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 20
 alignment = 1
+
+[node name="SpacerTop" type="Control" parent="Center/Menu"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
 
 [node name="Title" type="Label" parent="Center/Menu"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
-theme_override_font_sizes/font_size = 56
-text = "UNTformatic: Noir Protocol"
+theme_override_font_sizes/font_size = 52
 horizontal_alignment = 1
+text = "UNTformatic"
+
+[node name="Subtitle" type="Label" parent="Center/Menu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.2, 0.24, 0.9)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+text = "NOIR PROTOCOL"
+
+[node name="SpacerTitle" type="Control" parent="Center/Menu"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
 
 [node name="NotebookArea" type="Button" parent="Center/Menu"]
-custom_minimum_size = Vector2(520, 64)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 24
-text = "КВЕСТЫ"
-
-[node name="PapersArea" type="Button" parent="Center/Menu"]
-custom_minimum_size = Vector2(520, 64)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 24
-text = "ОБУЧЕНИЕ"
-
-[node name="LaptopArea" type="Button" parent="Center/Menu"]
-custom_minimum_size = Vector2(520, 64)
+custom_minimum_size = Vector2(560, 72)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
+text = "КВЕСТЫ"
+
+[node name="PapersArea" type="Button" parent="Center/Menu"]
+custom_minimum_size = Vector2(560, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "ОБУЧЕНИЕ"
+
+[node name="LaptopArea" type="Button" parent="Center/Menu"]
+custom_minimum_size = Vector2(560, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
 disabled = true
 text = "ЛАБОРАТОРИЯ (СКОРО)"
+
+[node name="SpacerBottom" type="Control" parent="Center/Menu"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="Version" type="Label" parent="Center/Menu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 0.52, 0.7)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+text = "v1.0.0 • Godot 4.5"

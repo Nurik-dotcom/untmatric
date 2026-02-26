@@ -3,7 +3,7 @@ extends CanvasLayer
 @export_range(0.0, 1.0, 0.01) var intensity: float = 0.18
 @export var fx_quality: int = 1
 @export var tint_color: Color = Color(0.93, 0.93, 0.93, 1.0)
-@export_enum("CRT", "PENCIL") var overlay_mode: String = "CRT"
+@export_enum("CRT", "PENCIL", "ENHANCED") var overlay_mode: String = "ENHANCED"
 
 @onready var crt_overlay: ColorRect = $CRT_Overlay
 
@@ -13,6 +13,7 @@ var _base_glitch_strength: float = 0.0
 
 const CRT_SHADER: Shader = preload("res://ui/shaders/crt_overlay.gdshader")
 const PENCIL_SHADER: Shader = preload("res://ui/shaders/noir_pencil_overlay.gdshader")
+const ENHANCED_SHADER: Shader = preload("res://ui/shaders/noir_enhanced.gdshader")
 
 func _ready() -> void:
 	add_to_group("noir_overlay")
@@ -22,8 +23,8 @@ func _ready() -> void:
 
 func set_overlay_mode(mode: String) -> void:
 	var normalized: String = mode.strip_edges().to_upper()
-	if normalized != "PENCIL":
-		normalized = "CRT"
+	if normalized not in ["CRT", "PENCIL", "ENHANCED"]:
+		normalized = "ENHANCED"
 	if overlay_mode == normalized and _shader_material != null:
 		return
 	overlay_mode = normalized
@@ -85,7 +86,15 @@ func set_danger_level(stability_percent: float) -> void:
 	)
 
 func _ensure_material_for_mode() -> void:
-	var target_shader: Shader = PENCIL_SHADER if overlay_mode == "PENCIL" else CRT_SHADER
+	var target_shader: Shader
+	match overlay_mode:
+		"PENCIL":
+			target_shader = PENCIL_SHADER
+		"ENHANCED":
+			target_shader = ENHANCED_SHADER
+		_:
+			target_shader = CRT_SHADER
+	
 	var current_material: ShaderMaterial = crt_overlay.material as ShaderMaterial
 	if current_material == null:
 		current_material = ShaderMaterial.new()
@@ -105,10 +114,18 @@ func _apply_base_profile() -> void:
 	_set_shader_param("pulse", 0.0)
 	_set_shader_param("glitch_strength", 0.0)
 	_set_shader_param("tint_color", tint_color)
-	if overlay_mode == "PENCIL":
-		_set_shader_param("grain_strength", 0.30)
-		_set_shader_param("hatch_strength", 0.24)
-		_set_shader_param("vignette_strength", 0.40)
+	
+	match overlay_mode:
+		"PENCIL":
+			_set_shader_param("grain_strength", 0.30)
+			_set_shader_param("hatch_strength", 0.24)
+			_set_shader_param("vignette_strength", 0.40)
+		"ENHANCED":
+			_set_shader_param("vignette_strength", 0.40)
+			_set_shader_param("scanline_strength", 0.35)
+			_set_shader_param("noise_strength", 0.05)
+		_:
+			pass
 
 func _set_shader_param(param_name: String, value: Variant) -> void:
 	if _shader_material == null:

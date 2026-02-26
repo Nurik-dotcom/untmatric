@@ -27,10 +27,10 @@ const TITLE_TEXT := "ОБУЧЕНИЕ"
 const STATUS_READY := "Выберите учебный модуль"
 const STATUS_LOCKED := "Этот модуль пока не готов"
 
-const BTN_CLUES_TEXT := "Цифровая реанимация (скоро)"
-const BTN_RADIO_TEXT := "Радиоперехват A"
-const BTN_DECRYPTOR_TEXT := "Дешифрование A"
-const BTN_LIE_TEXT := "Детектор лжи A"
+const BTN_CLUES_TEXT := "Обучение: Двоичная система"
+const BTN_RADIO_TEXT := "Обучение: Шестнадцатеричная система"
+const BTN_DECRYPTOR_TEXT := "Обучение: Логические ворота"
+const BTN_LIE_TEXT := "Обучение: Матричные головоломки"
 const BTN_SCRIPT_TEXT := "Скрипт подозреваемого (скоро)"
 const BTN_CITY_TEXT := "Карта города (скоро)"
 const BTN_ARCHIVE_TEXT := "Архив данных (скоро)"
@@ -62,10 +62,10 @@ func _set_button_labels() -> void:
 	btn_network_trace.text = BTN_NETWORK_TRACE_TEXT
 
 func _connect_buttons() -> void:
-	btn_decryptor.pressed.connect(_on_decryptor_pressed)
-	btn_lie.pressed.connect(_on_lie_detector_pressed)
-	btn_radio.pressed.connect(_on_radio_pressed)
-	btn_clues.pressed.connect(_on_locked_pressed)
+	btn_clues.pressed.connect(_on_binary_tutorial_pressed)
+	btn_radio.pressed.connect(_on_hex_tutorial_pressed)
+	btn_decryptor.pressed.connect(_on_logic_gates_tutorial_pressed)
+	btn_lie.pressed.connect(_on_matrix_tutorial_pressed)
 	btn_script.pressed.connect(_on_locked_pressed)
 	btn_city.pressed.connect(_on_locked_pressed)
 	btn_archive.pressed.connect(_on_locked_pressed)
@@ -73,23 +73,27 @@ func _connect_buttons() -> void:
 	btn_network_trace.pressed.connect(_on_locked_pressed)
 
 func _disable_unready() -> void:
-	btn_clues.disabled = true
+	btn_clues.disabled = false
 	btn_radio.disabled = false
+	btn_decryptor.disabled = false
+	btn_lie.disabled = false
 	btn_script.disabled = true
 	btn_city.disabled = true
 	btn_archive.disabled = true
 	btn_report.disabled = true
 	btn_network_trace.disabled = true
 
-func _on_decryptor_pressed() -> void:
-	GlobalMetrics.current_level_index = 0
-	get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
+func _on_binary_tutorial_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/Tutorial/TutorialBinary.tscn")
 
-func _on_lie_detector_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/LogicQuestA.tscn")
+func _on_hex_tutorial_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/Tutorial/TutorialHexadecimal.tscn")
 
-func _on_radio_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/RadioQuestA.tscn")
+func _on_logic_gates_tutorial_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/Tutorial/TutorialLogicGates.tscn")
+
+func _on_matrix_tutorial_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/Tutorial/TutorialMatrix.tscn")
 
 func _on_locked_pressed() -> void:
 	status_label.text = STATUS_LOCKED

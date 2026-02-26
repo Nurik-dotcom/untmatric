@@ -6,7 +6,7 @@
 [ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_0vmkb"]
 [ext_resource type="Script" path="res://scripts/ui/DropZone.gd" id="4_dropzone"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="5_noir"]
-[ext_resource type="Theme" path="res://ui/theme_noir_pencil.tres" id="7_mudek"]
+[ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="7_mudek"]
 [ext_resource type="Script" path="res://scripts/ui/DiagnosticsPanelB.gd" id="8_6p63x"]
 
 [node name="RestoreQuestB" type="Control"]

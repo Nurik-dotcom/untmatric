@@ -1,0 +1,50 @@
+name: Run Unit Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        godot-version: ['4.5']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ matrix.godot-version }}
+          include-mono: false
+      
+      - name: Run Tests
+        run: |
+          cd $GITHUB_WORKSPACE
+          godot --headless --scene res://tests/TestRunner.tscn 2>&1 | tee test-output.log
+      
+      - name: Check Test Results
+        run: |
+          if grep -q "🎉 ALL TESTS PASSED" test-output.log; then
+            echo "✅ All tests passed!"
+            exit 0
+          else
+            echo "❌ Some tests failed!"
+            cat test-output.log
+            exit 1
+          fi
+      
+      - name: Upload Test Artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-${{ matrix.godot-version }}
+          path: test-output.log
+          retention-days: 30

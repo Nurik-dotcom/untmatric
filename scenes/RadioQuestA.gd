@@ -123,12 +123,14 @@ var _target_wave_line: Line2D
 var osc_phase: float = 0.0
 var _ui_ready: bool = false
 var _current_stability: float = 100.0
+var _body_scroll_installed: bool = false
 
 func _ready() -> void:
 	randomize()
 	_load_level_config()
 	_apply_static_texts()
 	_connect_signals()
+	_install_body_scroll()
 	_collect_sample_refs()
 	_ensure_target_wave_line()
 	_reset_sample_strip()
@@ -494,6 +496,27 @@ func _on_stability_changed(new_value: float, _delta: float) -> void:
 	if noir_overlay != null and noir_overlay.has_method("set_danger_level"):
 		noir_overlay.call("set_danger_level", new_value)
 	_update_header_meta()
+
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	if root_vbox == null or body_split == null:
+		return
+
+	var body_scroll := ScrollContainer.new()
+	body_scroll.name = "BodyScroll"
+	body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	body_scroll.follow_focus = true
+
+	root_vbox.remove_child(body_split)
+	root_vbox.add_child(body_scroll)
+	body_scroll.add_child(body_split)
+	body_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_split.size_flags_vertical = Control.SIZE_FILL
+	_body_scroll_installed = true
 
 func _apply_safe_area_padding() -> void:
 	var left: float = 16.0

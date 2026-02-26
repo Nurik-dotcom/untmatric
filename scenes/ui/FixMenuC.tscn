@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://fix_menu_c_new"]
 
 [ext_resource type="Script" path="res://scripts/ui/FixMenuC.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_noir_pencil.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 
 [node name="FixMenuC" type="PopupPanel"]
 initial_position = 1

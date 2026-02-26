@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://hex1"]
+
+[ext_resource type="Script" path="res://scenes/Tutorial/TutorialHexadecimal.gd" id="Script_1"]
+
+[node name="TutorialHexadecimal" type="Control"]
+anchors_left = 0.0
+anchors_top = 0.0
+anchors_right = 1.0
+anchors_bottom = 1.0
+script = ExtResource("Script_1")

@@ -70,8 +70,10 @@ const TXT_UNITS_HINT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041c\u0411 -> \
 
 const TXT_OUT_SUCCESS := "\u0421\u0422\u0410\u0422\u0423\u0421: \u0423\u0421\u041f\u0415\u0425. \u041f\u0430\u043a\u0435\u0442 \u0443\u0448\u0451\u043b \u0434\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438."
 const TXT_OUT_INTERCEPT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0420\u041e\u0412\u0410\u041b. \u0412\u0430\u0441 \u0437\u0430\u0441\u0435\u043a\u043b\u0438."
-const TXT_OUT_SAFE_ABORT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0420\u0410\u0412\u0418\u041b\u042c\u041d\u041e. \u041e\u0442\u043a\u0430\u0437 \u0441\u043f\u0430\u0441 \u043c\u0438\u0441\u0441\u0438\u044e."
+const TXT_OUT_SAFE_ABORT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u0423\u0421\u041f\u0415\u0425. \u041e\u0442\u043b\u0438\u0447\u043d\u0430\u044f \u043e\u0446\u0435\u043d\u043a\u0430 \u0440\u0438\u0441\u043a\u043e\u0432, \u0430\u0433\u0435\u043d\u0442. \u041f\u0435\u0440\u0435\u0434\u0430\u0447\u0430 \u0431\u044b\u043b\u0430 \u043d\u0435\u0432\u043e\u0437\u043c\u043e\u0436\u043d\u0430."
 const TXT_OUT_MISSED := "\u0421\u0422\u0410\u0422\u0423\u0421: \u0423\u041f\u0423\u0429\u0415\u041d\u041e. \u0412\u044b \u043c\u043e\u0433\u043b\u0438 \u0443\u0441\u043f\u0435\u0442\u044c."
+const TXT_RISK_FAIL_NO_TIME := "\u041e\u0428\u0418\u0411\u041a\u0410 \u0420\u0415\u0428\u0415\u041d\u0418\u042f!\n\u0420\u0430\u0441\u0447\u0451\u0442 \u0432\u0440\u0435\u043c\u0435\u043d\u0438: %.1f \u0441\u0435\u043a.\n\u0414\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438: %.1f \u0441\u0435\u043a.\n\u0412\u0440\u0435\u043c\u0435\u043d\u0438 \u043d\u0435 \u0445\u0432\u0430\u0442\u0430\u043b\u043e! \u0412 \u0442\u0430\u043a\u0438\u0445 \u0441\u043b\u0443\u0447\u0430\u044f\u0445 \u043d\u0430\u0436\u0438\u043c\u0430\u0439\u0442\u0435 \u00ab\u0421\u0411\u0420\u041e\u0421\u00bb."
+const TXT_RISK_FAIL_ARITH := "\u0410\u0420\u0418\u0424\u041c\u0415\u0422\u0418\u0427\u0415\u0421\u041a\u0410\u042f \u041e\u0428\u0418\u0411\u041a\u0410!\n\u0412\u044b \u0437\u0430\u0431\u044b\u043b\u0438 \u043f\u0435\u0440\u0435\u0432\u0435\u0441\u0442\u0438 \u041c\u0411 \u0432 \u041c\u0431\u0438\u0442\u044b \u0438\u043b\u0438 \u043e\u0448\u0438\u0431\u043b\u0438\u0441\u044c \u0432 \u0434\u0435\u043b\u0435\u043d\u0438\u0438."
 
 const FALLBACK_POOL_MB_NORMAL: Array[float] = [1.0, 2.0, 4.0, 5.0, 8.0, 10.0, 12.0, 16.0, 20.0, 25.0]
 const FALLBACK_POOL_GB_NORMAL: Array[float] = [0.5, 1.0, 1.5, 2.0]
@@ -181,12 +183,14 @@ var _anchor_every_max: int = 10
 var sample_cursor: int = 0
 var sample_refs: Array = []
 var _ui_ready: bool = false
+var _body_scroll_installed: bool = false
 
 func _ready() -> void:
 	randomize()
 	_load_level_config()
 	_apply_static_texts()
 	_connect_signals()
+	_install_body_scroll()
 	_collect_sample_refs()
 	_reset_sample_strip()
 	_apply_safe_area_padding()
@@ -282,6 +286,30 @@ func _connect_signals() -> void:
 	var knob_callback: Callable = Callable(self, "_on_knob_value_changed")
 	if not time_knob.is_connected("value_changed", knob_callback):
 		time_knob.connect("value_changed", knob_callback)
+
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	if body_split == null:
+		return
+	var root_vbox: VBoxContainer = body_split.get_parent() as VBoxContainer
+	if root_vbox == null:
+		return
+
+	var body_scroll: ScrollContainer = ScrollContainer.new()
+	body_scroll.name = "BodyScroll"
+	body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	body_scroll.follow_focus = true
+
+	root_vbox.remove_child(body_split)
+	root_vbox.add_child(body_scroll)
+	body_scroll.add_child(body_split)
+	body_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_split.size_flags_vertical = Control.SIZE_FILL
+	_body_scroll_installed = true
 
 func _apply_safe_area_padding() -> void:
 	if safe_area == null:
@@ -796,22 +824,35 @@ func _finalize_trial(result: Outcome, decision_label: String) -> void:
 
 	var is_success: bool = (outcome == Outcome.SUCCESS_SEND or outcome == Outcome.SAFE_ABORT)
 	var sample_color: Color = COLOR_SAMPLE_FAIL
+	var status_color: Color = COLOR_SAMPLE_FAIL
 	match outcome:
 		Outcome.SUCCESS_SEND:
 			status_label.text = TXT_OUT_SUCCESS
 			sample_color = COLOR_SAMPLE_SUCCESS
+			status_color = COLOR_SAMPLE_SUCCESS
 		Outcome.INTERCEPTED:
-			status_label.text = TXT_OUT_INTERCEPT
+			if decision == Decision.RISK:
+				if t_true > t_detect + EPS:
+					status_label.text = TXT_RISK_FAIL_NO_TIME % [t_true, t_detect]
+				else:
+					status_label.text = TXT_RISK_FAIL_ARITH
+			else:
+				status_label.text = TXT_OUT_INTERCEPT
 			sample_color = COLOR_SAMPLE_FAIL
+			status_color = COLOR_SAMPLE_FAIL
 		Outcome.SAFE_ABORT:
 			status_label.text = TXT_OUT_SAFE_ABORT
 			sample_color = COLOR_SAMPLE_SUCCESS
+			status_color = COLOR_SAMPLE_SUCCESS
 		Outcome.MISSED_WINDOW:
 			status_label.text = TXT_OUT_MISSED
 			sample_color = COLOR_SAMPLE_WARN
+			status_color = COLOR_SAMPLE_WARN
 		_:
 			status_label.text = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u043e"
 			sample_color = COLOR_SAMPLE_FAIL
+			status_color = COLOR_SAMPLE_FAIL
+	status_label.add_theme_color_override("font_color", status_color)
 
 	_update_sample_slot(sample_color)
 	_send_trial_payload(is_success, decision_label)

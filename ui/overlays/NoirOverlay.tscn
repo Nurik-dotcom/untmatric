@@ -1,20 +1,44 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3 uid="uid://cnoir_overlay"]
 
 [ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="1_script"]
-[ext_resource type="Shader" path="res://ui/shaders/crt_overlay.gdshader" id="2_shader"]
+[ext_resource type="Shader" path="res://ui/shaders/noir_enhanced.gdshader" id="2_shader"]
 
 [sub_resource type="ShaderMaterial" id="1_overlay_material"]
 shader = ExtResource("2_shader")
 shader_parameter/tint_color = Color(0.93, 0.93, 0.93, 1)
-shader_parameter/intensity = 0.18
-shader_parameter/fx_quality = 1
+shader_parameter/intensity = 0.12
+shader_parameter/fx_quality = 2
 shader_parameter/jitter_strength = 0.0
 shader_parameter/glitch_strength = 0.0
 shader_parameter/pulse = 0.0
+shader_parameter/vignette_strength = 0.4
+shader_parameter/scanline_strength = 0.35
+shader_parameter/noise_strength = 0.05
+
+[sub_resource type="Animation" id="2_pulse_anim"]
+resource_name = "ambient_pulse"
+length = 4.0
+loop_mode = 1
+step = 0.1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("CRT_Overlay:material:shader_parameter/pulse")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 2, 4),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [0.0, 0.15, 0.0]
+}
 
 [node name="NoirOverlay" type="CanvasLayer"]
 layer = 100
 script = ExtResource("1_script")
+intensity = 0.12
+fx_quality = 2
+overlay_mode = "ENHANCED"
 
 [node name="CRT_Overlay" type="ColorRect" parent="."]
 layout_mode = 1
@@ -26,3 +50,17 @@ grow_vertical = 2
 mouse_filter = 2
 material = SubResource("1_overlay_material")
 color = Color(1, 1, 1, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+autoplay = "ambient_pulse"
+anims/ambient_pulse = SubResource("2_pulse_anim")
+
+[node name="VignetteDarken" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.15)

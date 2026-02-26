@@ -1,10 +1,55 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scenes/case_01/DigitalResusQuestA.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="Script" path="res://scripts/ui/SocketZone.gd" id="3_socket"]
 [ext_resource type="Script" path="res://scripts/ui/ResusPileZone.gd" id="4_pile"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="5_noir"]
+[ext_resource type="Shader" path="res://ui/shaders/zone_glow.gdshader" id="6_zone_glow"]
+[ext_resource type="Shader" path="res://ui/shaders/monitor_crt.gdshader" id="7_monitor_crt"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_input"]
+shader = ExtResource("6_zone_glow")
+shader_parameter/glow_color = Color(0.13, 0.59, 0.95, 1)
+shader_parameter/glow_intensity = 1.5
+shader_parameter/glow_radius = 0.5
+shader_parameter/pulse_speed = 2.0
+shader_parameter/pulse_intensity = 0.3
+shader_parameter/active = false
+shader_parameter/valid_placement = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_output"]
+shader = ExtResource("6_zone_glow")
+shader_parameter/glow_color = Color(0.3, 0.69, 0.31, 1)
+shader_parameter/glow_intensity = 1.5
+shader_parameter/glow_radius = 0.5
+shader_parameter/pulse_speed = 2.0
+shader_parameter/pulse_intensity = 0.3
+shader_parameter/active = false
+shader_parameter/valid_placement = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_memory"]
+shader = ExtResource("6_zone_glow")
+shader_parameter/glow_color = Color(0.61, 0.15, 0.69, 1)
+shader_parameter/glow_intensity = 1.5
+shader_parameter/glow_radius = 0.5
+shader_parameter/pulse_speed = 2.0
+shader_parameter/pulse_intensity = 0.3
+shader_parameter/active = false
+shader_parameter/valid_placement = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_monitor"]
+shader = ExtResource("7_monitor_crt")
+shader_parameter/tint_color = Color(0.05, 0.08, 0.12, 1)
+shader_parameter/scanline_intensity = 0.4
+shader_parameter/scanline_count = 300.0
+shader_parameter/curvature = 0.02
+shader_parameter/vignette_strength = 0.5
+shader_parameter/noise_intensity = 0.03
+shader_parameter/flicker_speed = 5.0
+shader_parameter/flicker_intensity = 0.02
+shader_parameter/powered_on = true
+shader_parameter/power_on_progress = 1.0
 
 [node name="DigitalResusQuestA" type="Control"]
 layout_mode = 3
@@ -98,6 +143,7 @@ custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
 
 [node name="MonitorScreen" type="ColorRect" parent="SafeArea/MainVBox/SystemCard/SystemVBox/MonitorFrame"]
+material = SubResource("ShaderMaterial_monitor")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -188,6 +234,11 @@ custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
 script = ExtResource("3_socket")
 
+[node name="GlowRect" type="ColorRect" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput"]
+material = SubResource("ShaderMaterial_input")
+layout_mode = 2
+color = Color(0.13, 0.59, 0.95, 0.15)
+
 [node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput"]
 layout_mode = 2
 
@@ -204,6 +255,11 @@ custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
 script = ExtResource("3_socket")
 
+[node name="GlowRect" type="ColorRect" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput"]
+material = SubResource("ShaderMaterial_output")
+layout_mode = 2
+color = Color(0.3, 0.69, 0.31, 0.15)
+
 [node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput"]
 layout_mode = 2
 
@@ -219,6 +275,11 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
 script = ExtResource("3_socket")
+
+[node name="GlowRect" type="ColorRect" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory"]
+material = SubResource("ShaderMaterial_memory")
+layout_mode = 2
+color = Color(0.61, 0.15, 0.69, 0.15)
 
 [node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory"]
 layout_mode = 2

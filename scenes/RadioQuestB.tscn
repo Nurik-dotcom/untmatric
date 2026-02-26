@@ -189,6 +189,12 @@ theme_override_font_sizes/font_size = 18
 text = "Compute I = K*i and choose best storage option"
 autowrap_mode = 2
 
+[node name="BtnToggleCalc" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "OPEN CALC TERMINAL"
+
 [node name="CalcCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2

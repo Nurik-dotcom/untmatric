@@ -6,7 +6,7 @@
 [ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_2wosd"]
 [ext_resource type="PackedScene" path="res://scenes/ui/DiagnosticsPanelC.tscn" id="4_diag_panel"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="5_noir"]
-[ext_resource type="Theme" path="res://ui/theme_noir_pencil.tres" id="6_1park"]
+[ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="6_1park"]
 [ext_resource type="Script" path="res://scripts/ui/FixMenuC.gd" id="7_qsefb"]
 [ext_resource type="Script" path="res://scripts/ui/DiagnosticsPanelC.gd" id="9_mc3vw"]
 

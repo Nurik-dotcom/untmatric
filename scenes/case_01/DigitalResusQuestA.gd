@@ -58,6 +58,11 @@ var _briefing_toggle_button: Button = null
 @onready var zone_output: Node = $SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput
 @onready var zone_memory: Node = $SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory
 
+# Glow overlays for zones
+@onready var zone_input_glow: ColorRect = $SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput/GlowRect
+@onready var zone_output_glow: ColorRect = $SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput/GlowRect
+@onready var zone_memory_glow: ColorRect = $SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory/GlowRect
+
 @onready var status_label: Label = $SafeArea/MainVBox/BottomBar/StatusLabel
 @onready var btn_reset: Button = $SafeArea/MainVBox/BottomBar/BtnReset
 @onready var btn_confirm: Button = $SafeArea/MainVBox/BottomBar/BtnConfirm
@@ -212,6 +217,7 @@ func _on_drag_started(item_id: String, from_zone: String) -> void:
 		"from_zone": from_zone
 	})
 	_highlight_hint_socket(item_id)
+	_set_all_zones_glow(true)
 
 func _on_drag_cancelled(item_id: String, from_zone: String) -> void:
 	if input_locked:
@@ -233,6 +239,21 @@ func _on_drag_cancelled(item_id: String, from_zone: String) -> void:
 	_play_sfx("error")
 	_show_socket_error("Неверный сокет")
 	_highlight_hint_socket(item_id)
+	_set_all_zones_glow(false)
+
+func _set_all_zones_glow(active: bool) -> void:
+	_set_zone_glow(zone_input_glow, active)
+	_set_zone_glow(zone_output_glow, active)
+	_set_zone_glow(zone_memory_glow, active)
+
+func _set_zone_glow(glow_rect: ColorRect, active: bool) -> void:
+	if glow_rect == null:
+		return
+	var material: ShaderMaterial = glow_rect.material as ShaderMaterial
+	if material == null:
+		return
+	material.set_shader_parameter("active", active)
+	glow_rect.visible = active
 
 func _on_socket_hint_requested(item_id: String, socket_id: String) -> void:
 	if input_locked:
@@ -249,6 +270,7 @@ func _on_socket_drop_accepted(item_id: String, socket_id: String) -> void:
 		"item_id": item_id,
 		"socket": socket_id
 	})
+	_set_all_zones_glow(false)
 
 func _on_socket_drop_rejected(item_id: String, socket_id: String) -> void:
 	if input_locked:
@@ -258,6 +280,7 @@ func _on_socket_drop_rejected(item_id: String, socket_id: String) -> void:
 		"attempted_socket": socket_id
 	})
 	_show_socket_error("Неверный сокет")
+	_set_all_zones_glow(false)
 
 func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> void:
 	if input_locked:
@@ -281,6 +304,7 @@ func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> v
 		})
 		_refresh_system_state(_build_placements_snapshot())
 		_play_sfx("click")
+		_set_all_zones_glow(false)
 		return
 
 	if pile_zone.has_method("add_item_control"):
@@ -289,6 +313,7 @@ func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> v
 	_bounce_node(source_node as Control)
 	_play_sfx("error")
 	_show_socket_error("Неверный сокет")
+	_set_all_zones_glow(false)
 	if item_id != "":
 		_highlight_hint_socket(item_id)
 

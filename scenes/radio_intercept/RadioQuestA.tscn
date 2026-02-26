@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/radio_intercept/RadioQuestA.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 
 [node name="RadioQuestA" type="Control"]
 layout_mode = 3
@@ -9,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
 [node name="SafeArea" type="MarginContainer" parent="."]
@@ -28,90 +30,103 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="VBox" type="VBoxContainer" parent="RootPanel"]
+[node name="VBox" type="VBoxContainer" parent="SafeArea/RootPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 20
 
-[node name="HeaderBar" type="HBoxContainer" parent="RootPanel/VBox"]
+[node name="HeaderBar" type="HBoxContainer" parent="SafeArea/RootPanel/VBox"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 alignment = 1
 
-[node name="BackBtn" type="Button" parent="RootPanel/VBox/HeaderBar"]
+[node name="BackBtn" type="Button" parent="SafeArea/RootPanel/VBox/HeaderBar"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-text = "НАЗАД"
+text = "\u041d\u0410\u0417\u0410\u0414"
 
-[node name="Spacer" type="Control" parent="RootPanel/VBox/HeaderBar"]
-custom_minimum_size = Vector2(50, 0)
+[node name="Spacer" type="Control" parent="SafeArea/RootPanel/VBox/HeaderBar"]
+custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 
-[node name="TaskLabel" type="Label" parent="RootPanel/VBox/HeaderBar"]
+[node name="TaskLabel" type="Label" parent="SafeArea/RootPanel/VBox/HeaderBar"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
-text = "Перехват... Мощность алфавита: 128"
+text = "\u041f\u0435\u0440\u0435\u0445\u0432\u0430\u0442..."
+autowrap_mode = 2
 
-[node name="OscilloBox" type="PanelContainer" parent="RootPanel/VBox"]
-custom_minimum_size = Vector2(0, 280)
+[node name="OscilloBox" type="PanelContainer" parent="SafeArea/RootPanel/VBox"]
+custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
+size_flags_vertical = 3
 
-[node name="OscilloArea" type="Control" parent="RootPanel/VBox/OscilloBox"]
+[node name="OscilloArea" type="Control" parent="SafeArea/RootPanel/VBox/OscilloBox"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 clip_contents = true
 
-[node name="OscilloNode" type="Node2D" parent="RootPanel/VBox/OscilloBox/OscilloArea"]
+[node name="OscilloNode" type="Node2D" parent="SafeArea/RootPanel/VBox/OscilloBox/OscilloArea"]
 
-[node name="OscLine" type="Line2D" parent="RootPanel/VBox/OscilloBox/OscilloArea/OscilloNode"]
+[node name="OscLine" type="Line2D" parent="SafeArea/RootPanel/VBox/OscilloBox/OscilloArea/OscilloNode"]
 width = 3.0
 default_color = Color(0, 0.8, 0.4, 1)
 antialiased = true
 
-[node name="TunerRow" type="HBoxContainer" parent="RootPanel/VBox"]
-custom_minimum_size = Vector2(0, 80)
+[node name="TunerRow" type="HBoxContainer" parent="SafeArea/RootPanel/VBox"]
 layout_mode = 2
-alignment = 1
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
 
-[node name="BitsLabel" type="Label" parent="RootPanel/VBox/TunerRow"]
-custom_minimum_size = Vector2(150, 0)
+[node name="BitsLabel" type="Label" parent="SafeArea/RootPanel/VBox/TunerRow"]
+custom_minimum_size = Vector2(130, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "Биты: 1"
+theme_override_font_sizes/font_size = 30
+text = "\u0411\u0438\u0442\u044b: 1"
 
-[node name="BitsSlider" type="HSlider" parent="RootPanel/VBox/TunerRow"]
-custom_minimum_size = Vector2(400, 0)
+[node name="BitsSlider" type="HSlider" parent="SafeArea/RootPanel/VBox/TunerRow"]
 layout_mode = 2
-size_flags_vertical = 4
+size_flags_horizontal = 3
 min_value = 1.0
 max_value = 10.0
 value = 1.0
 
-[node name="ButtonsRow" type="HBoxContainer" parent="RootPanel/VBox"]
+[node name="AnalyzeButton" type="Button" parent="SafeArea/RootPanel/VBox/TunerRow"]
+custom_minimum_size = Vector2(150, 56)
 layout_mode = 2
-theme_override_constants/separation = 40
+text = "\u0410\u041d\u0410\u041b\u0418\u0417"
+
+[node name="ButtonsRow" type="HBoxContainer" parent="SafeArea/RootPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 24
 alignment = 1
 
-[node name="HintButton" type="Button" parent="RootPanel/VBox/ButtonsRow"]
-custom_minimum_size = Vector2(200, 60)
+[node name="HintButton" type="Button" parent="SafeArea/RootPanel/VBox/ButtonsRow"]
+custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
-text = "Ассистент"
+text = "\u041f\u041e\u0414\u0421\u041a\u0410\u0417\u041a\u0410"
 
-[node name="ConfirmButton" type="Button" parent="RootPanel/VBox/ButtonsRow"]
-custom_minimum_size = Vector2(200, 60)
+[node name="ConfirmButton" type="Button" parent="SafeArea/RootPanel/VBox/ButtonsRow"]
+custom_minimum_size = Vector2(180, 56)
 layout_mode = 2
-text = "Подтвердить"
+text = "\u041f\u041e\u0414\u0422\u0412\u0415\u0420\u0414\u0418\u0422\u042c"
 
-[node name="HintLabel" type="Label" parent="RootPanel/VBox"]
+[node name="HintLabel" type="Label" parent="SafeArea/RootPanel/VBox"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.8, 0.2, 1)
 horizontal_alignment = 1
+autowrap_mode = 2
 
 [connection signal="pressed" from="SafeArea/RootPanel/VBox/HeaderBar/BackBtn" to="." method="_on_back_pressed"]
 [connection signal="value_changed" from="SafeArea/RootPanel/VBox/TunerRow/BitsSlider" to="." method="_on_slider_value_changed"]
+[connection signal="pressed" from="SafeArea/RootPanel/VBox/TunerRow/AnalyzeButton" to="." method="_on_analyze_pressed"]
 [connection signal="pressed" from="SafeArea/RootPanel/VBox/ButtonsRow/HintButton" to="." method="_on_hint_pressed"]
 [connection signal="pressed" from="SafeArea/RootPanel/VBox/ButtonsRow/ConfirmButton" to="." method="_on_confirm_pressed"]

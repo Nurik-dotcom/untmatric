@@ -1,7 +1,6 @@
 extends Control
 
-const THEME_GREEN: Theme = preload("res://ui/theme_terminal_green.tres")
-const THEME_AMBER: Theme = preload("res://ui/theme_terminal_amber.tres")
+const THEME_NOIR: Theme = preload("res://ui/theme_noir_detective.tres")
 const ERROR_MAP = preload("res://scripts/ssot/network_trace_errors.gd")
 
 const DATA_PATHS: Dictionary = {

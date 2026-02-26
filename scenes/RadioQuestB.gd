@@ -29,10 +29,12 @@ const TXT_TITLE: String = "\u0420\u0410\u0414\u0418\u041e\u041f\u0415\u0420\u041
 const TXT_BACK: String = "\u041d\u0410\u0417\u0410\u0414"
 const TXT_STORAGE_TITLE: String = "\u0421\u041a\u041b\u0410\u0414 \u041d\u041e\u0421\u0418\u0422\u0415\u041b\u0415\u0419"
 const TXT_CONTEXT_TITLE: String = "\u0422\u0415\u0420\u041c\u0418\u041d\u0410\u041b"
-const TXT_TASK: String = "\u0412\u044b\u0447\u0438\u0441\u043b\u0438\u0442\u0435 I = K*i \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u043f\u0442\u0438\u043c\u0430\u043b\u044c\u043d\u044b\u0439 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c."
+const TXT_TASK: String = "\u0414\u043b\u0438\u043d\u0430 \u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0447\u0435\u043d\u043d\u043e\u0433\u043e \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f: %d \u0441\u0438\u043c\u0432\u043e\u043b\u043e\u0432. \u0420\u0430\u0441\u0441\u0447\u0438\u0442\u0430\u0439\u0442\u0435 \u043e\u0431\u0449\u0438\u0439 \u043e\u0431\u044a\u0435\u043c \u0434\u0430\u043d\u043d\u044b\u0445 (I = K * i) \u0432 \u0431\u0438\u0442\u0430\u0445 \u0438 \u043f\u0435\u0440\u0435\u0432\u0435\u0434\u0438\u0442\u0435 \u0432 \u043d\u0443\u0436\u043d\u0443\u044e \u0432\u0435\u043b\u0438\u0447\u0438\u043d\u0443 \u0434\u043b\u044f \u0432\u044b\u0431\u043e\u0440\u0430 \u0434\u0438\u0441\u043a\u0430."
 const TXT_TASK_BITS_SUFFIX: String = "\u041e\u0442\u0432\u0435\u0442 \u0432 \u0411\u0418\u0422\u0410\u0425."
 const TXT_TASK_BYTES_SUFFIX: String = "\u041e\u0442\u0432\u0435\u0442 \u0432 \u0411\u0410\u0419\u0422\u0410\u0425."
 const TXT_TOGGLE_BYTES: String = "\u041e\u0442\u0432\u0435\u0442 \u0432 \u0411\u0410\u0419\u0422\u0410\u0425 (/8)"
+const TXT_BTN_CALC_OPEN: String = "\u041e\u0422\u041a\u0420\u042b\u0422\u042c \u0422\u0415\u0420\u041c\u0418\u041d\u0410\u041b \u0420\u0410\u0421\u0427\u0401\u0422\u041e\u0412"
+const TXT_BTN_CALC_CLOSE: String = "\u0421\u041a\u0420\u042b\u0422\u042c \u0422\u0415\u0420\u041c\u0418\u041d\u0410\u041b \u0420\u0410\u0421\u0427\u0401\u0422\u041e\u0412"
 const TXT_CALC_TITLE: String = "\u0420\u0410\u0421\u0427\u0401\u0422 I"
 const TXT_BTN_CHECK: String = "\u0412\u0412\u041e\u0414"
 const TXT_PREVIEW_TITLE: String = "\u0414\u0418\u0410\u0413\u041d\u041e\u0421\u0422\u0418\u041a\u0410"
@@ -89,6 +91,7 @@ const TXT_RESULT_OVER: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0412\u0
 @onready var btn_plus: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox/IBitsRow/BtnPlus
 @onready var btn_check_calc: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox/BtnCheckCalc
 @onready var calc_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard
+@onready var btn_toggle_calc: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/BtnToggleCalc
 
 @onready var preview_title: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox/PreviewTitle
 @onready var preview_calc_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox/PreviewCalcLabel
@@ -149,15 +152,19 @@ var _anchor_every_max: int = 10
 var _current_stability: float = 100.0
 var _ui_ready: bool = false
 var _right_scroll_installed: bool = false
+var _body_scroll_installed: bool = false
+var _calc_panel_expanded: bool = false
 
 func _ready() -> void:
 	randomize()
 	_ensure_fullscreen_layout()
+	_install_body_scroll()
 	_install_right_scroll()
 	_load_level_config()
 	_apply_static_texts()
 	_connect_signals()
 	_install_numpad()
+	_set_calc_panel_visible(false)
 	_collect_sample_refs()
 	_reset_sample_strip()
 	_set_details_visible(false)
@@ -202,7 +209,7 @@ func _apply_static_texts() -> void:
 	btn_back.text = TXT_BACK
 	storage_title.text = TXT_STORAGE_TITLE
 	context_title.text = TXT_CONTEXT_TITLE
-	task_label.text = TXT_TASK
+	task_label.text = TXT_TASK % 0
 	calc_title.text = TXT_CALC_TITLE
 	btn_minus.text = "-8"
 	btn_plus.text = "+8"
@@ -214,6 +221,7 @@ func _apply_static_texts() -> void:
 	btn_details.text = TXT_BTN_DETAILS_CLOSED
 	details_title.text = TXT_DETAILS_TITLE
 	btn_close_details.text = TXT_DETAILS_CLOSE
+	btn_toggle_calc.text = TXT_BTN_CALC_OPEN
 	if answer_unit_toggle != null:
 		answer_unit_toggle.text = TXT_TOGGLE_BYTES
 
@@ -227,6 +235,7 @@ func _connect_signals() -> void:
 	btn_next.pressed.connect(_on_next_pressed)
 	btn_details.pressed.connect(_on_details_pressed)
 	btn_close_details.pressed.connect(_on_details_close_pressed)
+	btn_toggle_calc.pressed.connect(_on_toggle_calc_pressed)
 	dimmer.gui_input.connect(_on_dimmer_gui_input)
 
 	for idx in range(storage_btns.size()):
@@ -267,6 +276,14 @@ func _install_numpad() -> void:
 
 	calc_vbox.add_child(numpad_grid)
 	calc_vbox.move_child(numpad_grid, calc_vbox.get_child_count() - 1)
+
+func _on_toggle_calc_pressed() -> void:
+	_set_calc_panel_visible(not _calc_panel_expanded)
+
+func _set_calc_panel_visible(is_visible: bool) -> void:
+	_calc_panel_expanded = is_visible
+	calc_card.visible = is_visible
+	btn_toggle_calc.text = TXT_BTN_CALC_CLOSE if is_visible else TXT_BTN_CALC_OPEN
 
 func _on_answer_unit_toggled(pressed: bool) -> void:
 	if phase != Phase.CALC or converter_lock_active:
@@ -325,6 +342,7 @@ func _start_trial() -> void:
 	phase = Phase.CALC
 	calc_checked = false
 	selected_storage_idx = -1
+	_set_calc_panel_visible(false)
 	used_converter = false
 	converter_use_count = 0
 	input_buffer = ""
@@ -791,7 +809,7 @@ func _build_task_text() -> String:
 	var suffix: String = TXT_TASK_BITS_SUFFIX
 	if answer_unit_mode == "bytes":
 		suffix = TXT_TASK_BYTES_SUFFIX
-	return "%s %s" % [TXT_TASK, suffix]
+	return "%s %s" % [TXT_TASK % k_symbols, suffix]
 
 func _get_user_answer_bits() -> int:
 	var raw_value: int = maxi(i_bits_user, 0)
@@ -898,6 +916,27 @@ func _ensure_fullscreen_layout() -> void:
 	root_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	if root_vbox == null or body_split == null:
+		return
+
+	var body_scroll: ScrollContainer = ScrollContainer.new()
+	body_scroll.name = "BodyScroll"
+	body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	body_scroll.follow_focus = true
+
+	root_vbox.remove_child(body_split)
+	root_vbox.add_child(body_scroll)
+	body_scroll.add_child(body_split)
+	body_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_split.size_flags_vertical = Control.SIZE_FILL
+	_body_scroll_installed = true
+
 func _install_right_scroll() -> void:
 	if _right_scroll_installed:
 		return
@@ -978,7 +1017,7 @@ func _configure_layout() -> void:
 		preview_card.custom_minimum_size.y = 90 if landscape_stack else 102
 		for btn in storage_btns:
 			btn.custom_minimum_size.y = 58 if landscape_stack else 68
-		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details]:
+		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details, btn_toggle_calc]:
 			btn.custom_minimum_size.y = 58 if landscape_stack else 64
 		if numpad_grid != null:
 			numpad_grid.custom_minimum_size.y = 146 if landscape_stack else 188
@@ -1003,7 +1042,7 @@ func _configure_layout() -> void:
 		preview_card.custom_minimum_size.y = 108
 		for btn in storage_btns:
 			btn.custom_minimum_size.y = 72
-		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details]:
+		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details, btn_toggle_calc]:
 			btn.custom_minimum_size.y = 56
 		if numpad_grid != null:
 			numpad_grid.custom_minimum_size.y = 210
@@ -1028,7 +1067,7 @@ func _configure_layout() -> void:
 		preview_card.custom_minimum_size.y = 120
 		for btn in storage_btns:
 			btn.custom_minimum_size.y = 82
-		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details]:
+		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details, btn_toggle_calc]:
 			btn.custom_minimum_size.y = 58
 		meta_label.add_theme_font_size_override("font_size", 17)
 		status_label.add_theme_font_size_override("font_size", 18)
@@ -1054,7 +1093,7 @@ func _configure_layout() -> void:
 		preview_card.custom_minimum_size.y = 120
 		for btn in storage_btns:
 			btn.custom_minimum_size.y = 86
-		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details]:
+		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details, btn_toggle_calc]:
 			btn.custom_minimum_size.y = 58
 		meta_label.add_theme_font_size_override("font_size", 18)
 		status_label.add_theme_font_size_override("font_size", 18)
