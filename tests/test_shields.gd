@@ -9,6 +9,9 @@ var test_results: Dictionary = {
 	"passed": 0,
 	"failed": 0
 }
+var shield_fired := false
+var shield_name := ""
+var shield_penalty_time := 0.0
 
 func _ready():
 	metrics = preload("res://scripts/GlobalMetrics.gd").new()
@@ -178,17 +181,15 @@ func test_shield_signals():
 	
 	metrics.reset_engine()
 	metrics.stability = 100.0
-	
-	# Connect to shield_triggered signal
-	var shield_fired = false
-	var shield_name = ""
-	var penalty_time = 0.0
-	
-	metrics.shield_triggered.connect(func(name, time):
-		shield_fired = true
-		shield_name = name
-		penalty_time = time
-	)
+
+	shield_fired = false
+	shield_name = ""
+	shield_penalty_time = 0.0
+
+	var signal_handler := Callable(self, "_on_shield_triggered")
+	if metrics.shield_triggered.is_connected(signal_handler):
+		metrics.shield_triggered.disconnect(signal_handler)
+	metrics.shield_triggered.connect(signal_handler)
 	
 	# Trigger frequency shield
 	for i in range(5):
@@ -196,7 +197,8 @@ func test_shield_signals():
 	
 	assert_true(shield_fired, "shield_triggered signal should emit")
 	assert_equal(shield_name, "FREQUENCY", "Signal should indicate FREQUENCY shield")
-	assert_true(penalty_time > 0.0, "Signal should include penalty time")
+	assert_true(shield_penalty_time > 0.0, "Signal should include penalty time")
+	metrics.shield_triggered.disconnect(signal_handler)
 
 # ============= SHIELD RECOVERY TESTS =============
 
@@ -221,6 +223,11 @@ func test_shield_recovery():
 	result = metrics.check_solution(42, 42)
 	assert_equal(result.get("error"), "SHIELD_ACTIVE",
 		"Should block when blocked_until is in the future")
+
+func _on_shield_triggered(name: String, time: float) -> void:
+	shield_fired = true
+	shield_name = name
+	shield_penalty_time = time
 
 # ============= CONCURRENT SHIELDS TESTS =============
 
@@ -310,3 +317,6 @@ func print_results():
 	print("❌ Failed: %d" % test_results["failed"])
 	print("📈 Pass Rate: %.1f%%" % pass_rate)
 	print("=".repeat(60) + "\n")
+
+func get_test_results() -> Dictionary:
+	return test_results.duplicate(true)

@@ -20,6 +20,9 @@ enum QuestState { INIT, BOARD_LOCKED, MASK_PLACED, AND_APPLIED, ANSWERED, SAFE_M
 @onready var lbl_meta: Label = $SafeArea/Main/V/Header/LblMeta
 @onready var palette_select: OptionButton = $SafeArea/Main/V/Header/PaletteSelect
 @onready var body: BoxContainer = $SafeArea/Main/V/Body
+@onready var terminal_pane: PanelContainer = $SafeArea/Main/V/Body/TerminalPane
+@onready var board_pane: PanelContainer = $SafeArea/Main/V/Body/BoardPane
+@onready var answers_pane: PanelContainer = $SafeArea/Main/V/Body/AnswersPane
 @onready var lbl_briefing: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblBriefing
 @onready var lbl_prompt: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblPrompt
 @onready var lbl_target_ip: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/TargetBox/LblTargetIp
@@ -382,8 +385,9 @@ func _render_terminal() -> void:
 
 	var text_value: String = ""
 	for line in lines:
-		text_value += "- %s" % line
-	log_text.text = text_value
+		text_value += "- %s\n" % line
+	log_text.text = text_value.strip_edges()
+	_sync_terminal_text_heights(_current_layout_mode())
 
 func _render_options() -> void:
 	var options_var: Variant = current_level.get("options", [])
@@ -925,17 +929,65 @@ func _byte_to_binary(value: int) -> String:
 		parts.append(str(bit))
 	return "".join(parts)
 
-func _apply_layout_mode() -> void:
+func _current_layout_mode() -> String:
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var portrait: bool = viewport_size.x < viewport_size.y
+	if viewport_size.x < viewport_size.y:
+		return "portrait"
+	if viewport_size.y <= 900.0 or viewport_size.x <= 1440.0:
+		return "landscape_dense"
+	return "landscape_standard"
+
+func _sync_terminal_text_heights(mode: String) -> void:
+	lbl_briefing.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var briefing_height: float = clampf(float(lbl_briefing.get_content_height()) + 12.0, 96.0, viewport_size.y * 0.28)
+	var prompt_height: float = clampf(float(lbl_prompt.get_content_height()) + 12.0, 108.0, viewport_size.y * 0.34)
+	if mode == "portrait":
+		briefing_height = maxf(briefing_height, 96.0)
+		prompt_height = maxf(prompt_height, 108.0)
+	lbl_briefing.custom_minimum_size.y = briefing_height
+	lbl_prompt.custom_minimum_size.y = prompt_height
+
+func _apply_layout_mode() -> void:
+	var mode: String = _current_layout_mode()
+	var portrait: bool = mode == "portrait"
+	var dense_landscape: bool = mode == "landscape_dense"
 	body.vertical = portrait
 	options_grid.columns = 1 if portrait else 2
-	lbl_briefing.custom_minimum_size.y = 56.0 if portrait else 78.0
-	lbl_prompt.custom_minimum_size.y = 52.0 if portrait else 72.0
-	log_text.custom_minimum_size.y = 140.0 if portrait else 180.0
-	btn_analyze.custom_minimum_size.y = 72.0 if portrait else 58.0
-	btn_apply_and.custom_minimum_size.y = 72.0 if portrait else 58.0
-	btn_reset.custom_minimum_size.y = 72.0 if portrait else 58.0
-	btn_next.custom_minimum_size.y = 72.0 if portrait else 58.0
+	if portrait:
+		terminal_pane.size_flags_stretch_ratio = 1.4
+		board_pane.size_flags_stretch_ratio = 1.25
+		answers_pane.size_flags_stretch_ratio = 1.0
+		lbl_meta.custom_minimum_size.x = 330.0
+		log_text.custom_minimum_size.y = 140.0
+		btn_analyze.custom_minimum_size.y = 72.0
+		btn_apply_and.custom_minimum_size.y = 72.0
+		btn_reset.custom_minimum_size.y = 72.0
+		btn_next.custom_minimum_size.y = 72.0
+		lbl_status.custom_minimum_size.y = 78.0
+	elif dense_landscape:
+		terminal_pane.size_flags_stretch_ratio = 1.68
+		board_pane.size_flags_stretch_ratio = 1.22
+		answers_pane.size_flags_stretch_ratio = 0.90
+		lbl_meta.custom_minimum_size.x = 220.0
+		log_text.custom_minimum_size.y = 112.0
+		btn_analyze.custom_minimum_size.y = 48.0
+		btn_apply_and.custom_minimum_size.y = 48.0
+		btn_reset.custom_minimum_size.y = 48.0
+		btn_next.custom_minimum_size.y = 48.0
+		lbl_status.custom_minimum_size.y = 60.0
+	else:
+		terminal_pane.size_flags_stretch_ratio = 1.56
+		board_pane.size_flags_stretch_ratio = 1.24
+		answers_pane.size_flags_stretch_ratio = 0.96
+		lbl_meta.custom_minimum_size.x = 300.0
+		log_text.custom_minimum_size.y = 172.0
+		btn_analyze.custom_minimum_size.y = 58.0
+		btn_apply_and.custom_minimum_size.y = 58.0
+		btn_reset.custom_minimum_size.y = 58.0
+		btn_next.custom_minimum_size.y = 58.0
+		lbl_status.custom_minimum_size.y = 72.0
 	for btn in action_buttons:
-		btn.custom_minimum_size.y = 72.0 if portrait else 78.0
+		btn.custom_minimum_size.y = 72.0 if portrait else (60.0 if dense_landscape else 72.0)
+	_sync_terminal_text_heights(mode)

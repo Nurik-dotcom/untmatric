@@ -109,9 +109,20 @@ var _info_scroll: ScrollContainer
 var _numpad_buttons: Array[Button] = []
 var _traffic_shader: Shader
 var _traffic_texture: Texture2D
+var _is_leaving_scene := false
 
 func _ready() -> void:
-	btn_back.pressed.connect(_on_back_pressed)
+	if not btn_back.pressed.is_connected(_on_back_pressed):
+		btn_back.pressed.connect(_on_back_pressed)
+	if not btn_back.button_down.is_connected(_on_back_button_down):
+		btn_back.button_down.connect(_on_back_button_down)
+	if not btn_back.gui_input.is_connected(_on_back_gui_input):
+		btn_back.gui_input.connect(_on_back_gui_input)
+	btn_back.disabled = false
+	btn_back.mouse_filter = Control.MOUSE_FILTER_STOP
+	btn_back.focus_mode = Control.FOCUS_ALL
+	btn_back.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+	set_process_input(true)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_submit.pressed.connect(_on_submit_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
@@ -170,6 +181,7 @@ func _setup_noir_ui() -> void:
 	graph_container.add_child(_traffic_layer)
 	graph_container.move_child(_traffic_layer, nodes_layer.get_index())
 
+	briefing_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	briefing_card.visible = false
 
 func _ensure_info_scroll_container() -> void:
@@ -385,7 +397,7 @@ func _on_next_pressed() -> void:
 		return
 	if level_index + 1 >= level_total:
 		_finalize_pack_run()
-		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+		_request_back_navigation("pack_complete")
 		return
 	_load_sublevel(level_index + 1)
 
@@ -407,6 +419,20 @@ func _finalize_pack_run() -> void:
 		"finished_at_unix": int(Time.get_unix_time_from_system())
 	}
 	_save_json_log(summary, true)
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		_request_back_navigation("ui_cancel")
+		get_viewport().set_input_as_handled()
+		return
+	var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+	if mouse_event == null:
+		return
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
+		return
+	if btn_back.get_global_rect().has_point(mouse_event.global_position):
+		_request_back_navigation("mouse_rect_hit")
+		get_viewport().set_input_as_handled()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
@@ -929,7 +955,27 @@ func _on_reset_pressed() -> void:
 	_recalculate_stability()
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+	_request_back_navigation("pressed")
+
+func _on_back_button_down() -> void:
+	_request_back_navigation("button_down")
+
+func _on_back_gui_input(event: InputEvent) -> void:
+	var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+	if mouse_event != null and mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+		_request_back_navigation("gui_input")
+
+func _request_back_navigation(_source: String) -> void:
+	if _is_leaving_scene:
+		return
+	_is_leaving_scene = true
+	call_deferred("_commit_back_navigation")
+
+func _commit_back_navigation() -> void:
+	var err: Error = get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+	if err != OK:
+		_is_leaving_scene = false
+		push_error("CityMapQuestA: failed to navigate to QuestSelect, err=%d" % int(err))
 
 func _on_sum_input_changed(new_text: String) -> void:
 	var digits := ""

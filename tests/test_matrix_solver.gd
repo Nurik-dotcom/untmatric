@@ -161,18 +161,23 @@ func test_matrix_solution_validation():
 	metrics.reset_engine()
 	metrics.start_matrix_quest()
 	
-	# Fill with random values
+	# Fill with deterministic incorrect values (invert target bits)
 	metrics.matrix_current = []
 	for r in range(6):
 		var row = []
 		for c in range(6):
-			row.append(randi() % 2)
+			row.append(1 - metrics.matrix_target[r][c])
 		metrics.matrix_current.append(row)
+	metrics.matrix_changed_cells = {
+		"0,0": true,
+		"0,1": true,
+		"0,2": true
+	}
 	
 	result = metrics.check_matrix_solution()
-	# Should either succeed (unlikely) or fail with hamming distance
-	if not result.get("success"):
-		assert_true(result.has("hamming"), "Failed solution should have hamming distance")
+	assert_equal(result.get("success"), false, "Incorrect solution should fail")
+	assert_true(result.has("hamming"), "Failed solution should have hamming distance")
+	assert_true(int(result.get("hamming", 0)) > 0, "Failed solution should have non-zero hamming distance")
 
 # ============= MATRIX UNIQUENESS TESTS =============
 
@@ -279,3 +284,6 @@ func print_results():
 	print("❌ Failed: %d" % test_results["failed"])
 	print("📈 Pass Rate: %.1f%%" % pass_rate)
 	print("=".repeat(60) + "\n")
+
+func get_test_results() -> Dictionary:
+	return test_results.duplicate(true)

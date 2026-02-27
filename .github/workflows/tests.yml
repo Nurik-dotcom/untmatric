@@ -8,43 +8,41 @@ on:
 
 jobs:
   test:
-    name: Unit Tests
+    name: Unit Tests (Godot 4.3)
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        godot-version: ['4.5']
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: ${{ matrix.godot-version }}
+          version: "4.3"
           include-mono: false
-      
+
       - name: Run Tests
+        shell: bash
         run: |
+          set -uo pipefail
           cd $GITHUB_WORKSPACE
-          godot --headless --scene res://tests/TestRunner.tscn 2>&1 | tee test-output.log
-      
-      - name: Check Test Results
-        run: |
-          if grep -q "🎉 ALL TESTS PASSED" test-output.log; then
-            echo "✅ All tests passed!"
-            exit 0
-          else
-            echo "❌ Some tests failed!"
-            cat test-output.log
+
+          set +e
+          godot --headless --path "$GITHUB_WORKSPACE" --scene res://tests/TestRunner.tscn 2>&1 | tee test-output.log
+          RUN_EXIT=${PIPESTATUS[0]}
+          set -e
+
+          if grep -E -q "SCRIPT ERROR:|Parse Error:" test-output.log; then
+            echo "[ERROR] Script or parse errors were found in test output."
             exit 1
           fi
-      
+
+          exit "${RUN_EXIT}"
+
       - name: Upload Test Artifacts
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: test-results-${{ matrix.godot-version }}
+          name: test-results-godot-4.3
           path: test-output.log
           retention-days: 30

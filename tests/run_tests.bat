@@ -1,42 +1,41 @@
 @echo off
-REM run_tests.bat - запускает тесты UNTformatic на Windows
-REM Использует Godot headless режим
+REM run_tests.bat - runs UNTformatic tests on Windows.
 
-setlocal enabledelayedexpansion
+setlocal
 
-echo 🧪 Running UNTformatic Tests
-echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+set "SCRIPT_DIR=%~dp0"
+for %%I in ("%SCRIPT_DIR%..") do set "PROJECT_DIR=%%~fI"
+set "TEST_SCENE=res://tests/TestRunner.tscn"
 
-REM Попробуйте найти Godot в PATH
-where godot >nul 2>nul
-if %errorlevel% equ 0 (
-    set GODOT_PATH=godot
-) else (
-    REM Альтернативные пути
-    if exist "C:\Program Files\Godot\godot.exe" (
-        set GODOT_PATH=C:\Program Files\Godot\godot.exe
-    ) else if exist "C:\Program Files (x86)\Godot\godot.exe" (
-        set GODOT_PATH=C:\Program Files (x86)\Godot\godot.exe
+if "%GODOT_PATH%"=="" (
+    where godot >nul 2>nul
+    if %ERRORLEVEL% EQU 0 (
+        set "GODOT_PATH=godot"
     ) else (
-        echo ✗ Godot не найден в PATH. Установите Godot или установите GODOT_PATH переменную.
-        exit /b 1
+        if exist "C:\Program Files\Godot\godot.exe" (
+            set "GODOT_PATH=C:\Program Files\Godot\godot.exe"
+        ) else if exist "C:\Program Files (x86)\Godot\godot.exe" (
+            set "GODOT_PATH=C:\Program Files (x86)\Godot\godot.exe"
+        )
     )
 )
 
-echo Project: %cd%
-echo Godot: !GODOT_PATH!
-echo Test Scene: res://tests/TestRunner.tscn
-echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+if "%GODOT_PATH%"=="" (
+    echo [ERROR] Godot executable not found. Set GODOT_PATH or add godot to PATH.
+    exit /b 1
+)
+
+echo [INFO] Running UNTformatic tests
+echo [INFO] Project: %PROJECT_DIR%
+echo [INFO] Godot: %GODOT_PATH%
+echo [INFO] Test scene: %TEST_SCENE%
 echo.
 
-REM Запустить тесты в headless режиме
-"!GODOT_PATH!" --headless --scene res://tests/TestRunner.tscn
+pushd "%PROJECT_DIR%" >nul
+"%GODOT_PATH%" --headless --path "%PROJECT_DIR%" --scene "%TEST_SCENE%"
+set "EXIT_CODE=%ERRORLEVEL%"
+popd >nul
 
-set EXIT_CODE=%errorlevel%
+echo [INFO] Test execution completed with exit code: %EXIT_CODE%
 
-echo.
-echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-echo Test execution completed with exit code: !EXIT_CODE!
-echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-exit /b !EXIT_CODE!
+exit /b %EXIT_CODE%

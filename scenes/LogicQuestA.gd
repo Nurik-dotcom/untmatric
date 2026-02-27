@@ -207,6 +207,14 @@ func _ready() -> void:
 	_apply_responsive_layout()
 	load_case(0)
 
+func _exit_tree() -> void:
+	if GlobalMetrics.stability_changed.is_connected(_update_stability_ui):
+		GlobalMetrics.stability_changed.disconnect(_update_stability_ui)
+	if GlobalMetrics.game_over.is_connected(_on_game_over):
+		GlobalMetrics.game_over.disconnect(_on_game_over)
+	if get_viewport() and get_viewport().size_changed.is_connected(_on_viewport_resized):
+		get_viewport().size_changed.disconnect(_on_viewport_resized)
+
 func _setup_gate_buttons() -> void:
 	gate_buttons = {
 		GATE_AND: gate_and_btn,

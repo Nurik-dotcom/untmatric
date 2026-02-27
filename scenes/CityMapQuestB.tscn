@@ -85,6 +85,8 @@ text = "ВРЕМЯ: 02:00"
 [node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
 
+mouse_filter = 2
+
 [node name="BriefingMargin" type="MarginContainer" parent="SafeArea/MainVBox/BriefingCard"]
 layout_mode = 2
 theme_override_constants/margin_left = 12

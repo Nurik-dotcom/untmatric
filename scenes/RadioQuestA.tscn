@@ -25,7 +25,6 @@ grow_vertical = 2
 color = Color(0.06, 0.07, 0.08, 1)
 
 [node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
-intensity = 0.12
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1

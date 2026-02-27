@@ -143,14 +143,20 @@ var _closed_texture: Texture2D
 var _schedule_rows: Array[Dictionary] = []
 var _danger_edges_seen: Dictionary = {}
 var _closed_edges_seen: Dictionary = {}
+var _is_leaving_scene := false
 
 func _ready() -> void:
 	if not btn_back.pressed.is_connected(_on_back_pressed):
 		btn_back.pressed.connect(_on_back_pressed)
+	if not btn_back.button_down.is_connected(_on_back_button_down):
+		btn_back.button_down.connect(_on_back_button_down)
+	if not btn_back.gui_input.is_connected(_on_back_gui_input):
+		btn_back.gui_input.connect(_on_back_gui_input)
 	btn_back.disabled = false
 	btn_back.mouse_filter = Control.MOUSE_FILTER_STOP
 	btn_back.focus_mode = Control.FOCUS_ALL
 	btn_back.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+	set_process_input(true)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_submit.pressed.connect(_on_submit_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
@@ -218,6 +224,7 @@ func _setup_noir_ui() -> void:
 	graph_container.add_child(_traffic_layer)
 	graph_container.move_child(_traffic_layer, nodes_layer.get_index())
 
+	briefing_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	briefing_card.visible = false
 
 func _configure_info_text_wrapping() -> void:
@@ -492,7 +499,7 @@ func _on_next_pressed() -> void:
 		return
 	if level_index + 1 >= level_total:
 		_finalize_pack_run()
-		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+		_request_back_navigation("pack_complete")
 		return
 	_load_sublevel(level_index + 1)
 
@@ -518,6 +525,20 @@ func _finalize_pack_run() -> void:
 		"finished_at_unix": int(Time.get_unix_time_from_system())
 	}
 	_save_json_log(summary, true)
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		_request_back_navigation("ui_cancel")
+		get_viewport().set_input_as_handled()
+		return
+	var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+	if mouse_event == null:
+		return
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
+		return
+	if btn_back.get_global_rect().has_point(mouse_event.global_position):
+		_request_back_navigation("mouse_rect_hit")
+		get_viewport().set_input_as_handled()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
@@ -601,11 +622,12 @@ func _apply_compact_phone_layout(compact: bool) -> void:
 	if is_instance_valid(_numpad_grid):
 		_numpad_grid.columns = 6 if compact else 3
 	if is_instance_valid(schedule_panel):
-		schedule_panel.custom_minimum_size.y = 108.0 if compact else 0.0
-		schedule_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if compact else Control.SIZE_EXPAND_FILL
+		schedule_panel.custom_minimum_size.y = 160.0 if compact else 0.0
+		schedule_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if is_instance_valid(_info_scroll):
 		_info_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		_info_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_apply_schedule_typography(compact)
 
 func _setup_timer() -> void:
 	var timer := Timer.new()
@@ -727,7 +749,25 @@ func _build_schedule_ui() -> void:
 			"label": row,
 			"edge": edge.duplicate(true)
 		})
+	_apply_schedule_typography(_is_compact_schedule_mode())
 	refresh_schedule_ui()
+
+func _is_compact_schedule_mode() -> bool:
+	var viewport: Vector2 = get_viewport_rect().size
+	var is_landscape: bool = viewport.x >= viewport.y
+	return (is_landscape and viewport.y <= 760.0) or ((not is_landscape) and viewport.x <= 480.0)
+
+func _apply_schedule_typography(compact: bool) -> void:
+	var font_size: int = 13 if compact else 16
+	for row_var in _schedule_rows:
+		var row: Dictionary = row_var
+		var row_label: Label = row.get("label", null) as Label
+		if row_label == null:
+			continue
+		row_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row_label.clip_text = false
+		row_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row_label.add_theme_font_size_override("font_size", font_size)
 
 func update_conditions_panel() -> void:
 	var must_visit_text: String = "-" if must_visit_nodes.is_empty() else ",".join(must_visit_nodes)
@@ -1391,7 +1431,27 @@ func _on_reset_pressed() -> void:
 	_recalculate_stability()
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+	_request_back_navigation("pressed")
+
+func _on_back_button_down() -> void:
+	_request_back_navigation("button_down")
+
+func _on_back_gui_input(event: InputEvent) -> void:
+	var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+	if mouse_event != null and mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+		_request_back_navigation("gui_input")
+
+func _request_back_navigation(_source: String) -> void:
+	if _is_leaving_scene:
+		return
+	_is_leaving_scene = true
+	call_deferred("_commit_back_navigation")
+
+func _commit_back_navigation() -> void:
+	var err: Error = get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+	if err != OK:
+		_is_leaving_scene = false
+		push_error("CityMapQuestC: failed to navigate to QuestSelect, err=%d" % int(err))
 
 func _on_sum_input_changed(new_text: String) -> void:
 	var digits := ""

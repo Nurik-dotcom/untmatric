@@ -1,31 +1,24 @@
 #!/usr/bin/env bash
-# run_tests.sh - запускает тесты UNTformatic
-# Использует Godot headless режим
+# run_tests.sh - runs UNTformatic tests in headless mode.
 
-set -e
+set -u
 
 GODOT_PATH="${GODOT_PATH:-godot}"
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TEST_SCENE="res://tests/TestRunner.tscn"
 
-echo "🧪 Running UNTformatic Tests"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Project: $PROJECT_DIR"
-echo "Godot: $GODOT_PATH"
-echo "Test Scene: $TEST_SCENE"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "[INFO] Running UNTformatic tests"
+echo "[INFO] Project: $PROJECT_DIR"
+echo "[INFO] Godot: $GODOT_PATH"
+echo "[INFO] Test scene: $TEST_SCENE"
 echo
 
-cd "$PROJECT_DIR"
-
-# Запустить тесты в headless режиме
-$GODOT_PATH --headless --scene "$TEST_SCENE" 2>&1
-
+set +e
+"$GODOT_PATH" --headless --path "$PROJECT_DIR" --scene "$TEST_SCENE" 2>&1
 EXIT_CODE=$?
+set -e
 
-echo
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Test execution completed with exit code: $EXIT_CODE"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "[INFO] Test execution completed with exit code: $EXIT_CODE"
 
 exit $EXIT_CODE

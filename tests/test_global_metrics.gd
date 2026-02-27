@@ -10,6 +10,7 @@ var test_results: Dictionary = {
 	"failed": 0,
 	"skipped": 0
 }
+var game_over_emitted := false
 
 func _ready():
 	metrics = preload("res://scripts/GlobalMetrics.gd").new()
@@ -50,10 +51,14 @@ func test_stability_clamping():
 	assert_equal(metrics.stability, 75.5, "Stability should accept normal values")
 	
 	# Test: Game over signal when stability = 0
-	var game_over_emitted = false
-	metrics.game_over.connect(func(): game_over_emitted = true)
+	game_over_emitted = false
+	var game_over_handler := Callable(self, "_on_game_over")
+	if metrics.game_over.is_connected(game_over_handler):
+		metrics.game_over.disconnect(game_over_handler)
+	metrics.game_over.connect(game_over_handler)
 	metrics.stability = 0.0
 	assert_true(game_over_emitted, "game_over signal should emit when stability reaches 0")
+	metrics.game_over.disconnect(game_over_handler)
 
 # ============= HAMMING DISTANCE TESTS =============
 
@@ -78,7 +83,7 @@ func test_hamming_distance():
 	
 	# Test: Common values
 	hd = metrics._calculate_hamming_distance(42, 50)  # 0b00101010 vs 0b00110010
-	assert_equal(hd, 1, "42 vs 50 should have HD=1")
+	assert_equal(hd, 2, "42 vs 50 should have HD=2")
 
 # ============= FREQUENCY SHIELD TESTS =============
 
@@ -104,7 +109,9 @@ func test_frequency_shield():
 	assert_true(count_before_5sec > 0, "Should remove old timestamps")
 	
 	# Test: Frequency limit check (more than 4 = shield active)
-	metrics.check_timestamps = [0.0, 1.0, 2.0, 3.0, 4.0]  # 5 checks
+	metrics.check_timestamps.clear()
+	for timestamp in [0.0, 1.0, 2.0, 3.0, 4.0]:
+		metrics.check_timestamps.append(float(timestamp))
 	
 	var result = metrics.check_solution(42, 42)
 	assert_equal(result.get("error"), "SHIELD_FREQ", "5+ checks should trigger frequency shield")
@@ -200,18 +207,19 @@ func test_arithmetic_generation():
 	metrics.reset_engine()
 	metrics.start_level(15)
 	
-	# Should generate arithmetic example
-	assert_not_equal(metrics.current_reg_a, 0, "reg_a should be generated")
-	var target = metrics.current_target_value
-	assert_not_equal(target, 0, "target should be generated")
+	# Initial generated values should stay within byte range.
+	assert_true(metrics.current_reg_a >= 0 and metrics.current_reg_a <= 255, "reg_a should be in byte range")
+	assert_true(metrics.current_target_value >= 0 and metrics.current_target_value <= 255, "target should be in byte range")
 	
-	# Test multiple generations
-	for i in range(10):
-		metrics._generate_arithmetic_example()
+	# Test initial state and multiple next generations.
+	for i in range(11):
+		if i > 0:
+			metrics._generate_arithmetic_example()
+		var expected := 0
 		
 		match metrics.current_operator:
 			metrics.Operator.ADD:
-				var expected = metrics.current_reg_a + metrics.current_reg_b
+				expected = metrics.current_reg_a + metrics.current_reg_b
 				assert_equal(metrics.current_target_value, expected, 
 					"ADD: target should equal reg_a + reg_b")
 				assert_true(expected <= 255, "ADD result should fit in byte")
@@ -256,6 +264,9 @@ func test_matrix_quest_generation():
 	for constraint in metrics.matrix_col_constraints:
 		assert_true(constraint.has("ones_count"), "Col constraint should have ones_count")
 		assert_true(constraint.has("parity"), "Col constraint should have parity")
+
+func _on_game_over() -> void:
+	game_over_emitted = true
 
 # ============= HELPER ASSERTIONS =============
 
@@ -313,3 +324,6 @@ func print_results():
 	print("❌ Failed: %d" % test_results["failed"])
 	print("📈 Pass Rate: %.1f%%" % pass_rate)
 	print("=".repeat(60) + "\n")
+
+func get_test_results() -> Dictionary:
+	return test_results.duplicate(true)

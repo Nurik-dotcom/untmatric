@@ -111,7 +111,6 @@ func _disable_unready() -> void:
 	btn_archive.disabled = false
 	btn_report.disabled = false
 	btn_network_trace.disabled = false
-	btn_complexity_c.disabled = true
 
 func _on_decryptor_pressed() -> void:
 	selected_quest_type = QuestType.DECRYPTOR

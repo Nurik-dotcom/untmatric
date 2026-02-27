@@ -1,519 +1,519 @@
-﻿[
+[
   {
-    "id": "A-01",
-    "bucket": "newbie",
-    "briefing": "Sum a simple range window.",
-    "code": [
-      "s = 0",
-      "for i in range(1, 5):",
-      "    s = s + i"
-    ],
-    "expected": 10,
-    "topic_tags": ["range_stop_exclusive", "accumulator"],
-    "trace": [
-      {"i": 1, "cond": "loop", "s_before": 0, "s_after": 1},
-      {"i": 2, "cond": "loop", "s_before": 1, "s_after": 3},
-      {"i": 3, "cond": "loop", "s_before": 3, "s_after": 6},
-      {"i": 4, "cond": "loop", "s_before": 6, "s_after": 10}
-    ],
-    "explain_short": [
-      "range(1,5) iterates 1,2,3,4.",
-      "Stop value 5 is excluded."
-    ],
-    "explain": [
-      "range(1,5) iterates 1,2,3,4.",
-      "Stop value 5 is excluded."
-    ],
-    "economy": {"analyze": 20, "wrong": 10, "reward": 15}
+	"id": "A-01",
+	"bucket": "newbie",
+	"briefing": "Sum a simple range window.",
+	"code": [
+	  "s = 0",
+	  "for i in range(1, 5):",
+	  "    s = s + i"
+	],
+	"expected": 10,
+	"topic_tags": ["range_stop_exclusive", "accumulator"],
+	"trace": [
+	  {"i": 1, "cond": "loop", "s_before": 0, "s_after": 1},
+	  {"i": 2, "cond": "loop", "s_before": 1, "s_after": 3},
+	  {"i": 3, "cond": "loop", "s_before": 3, "s_after": 6},
+	  {"i": 4, "cond": "loop", "s_before": 6, "s_after": 10}
+	],
+	"explain_short": [
+	  "range(1,5) iterates 1,2,3,4.",
+	  "Stop value 5 is excluded."
+	],
+	"explain": [
+	  "range(1,5) iterates 1,2,3,4.",
+	  "Stop value 5 is excluded."
+	],
+	"economy": {"analyze": 20, "wrong": 10, "reward": 15}
   },
   {
-    "id": "A-02",
-    "bucket": "newbie",
-    "briefing": "Filter inside range by modulo.",
-    "code": [
-      "s = 0",
-      "for i in range(0, 7):",
-      "    if i % 3 == 0:",
-      "        s = s + i"
-    ],
-    "expected": 9,
-    "topic_tags": ["range_stop_exclusive", "condition_filter"],
-    "trace": [
-      {"i": 0, "cond": "true", "s_before": 0, "s_after": 0},
-      {"i": 1, "cond": "false", "s_before": 0, "s_after": 0},
-      {"i": 2, "cond": "false", "s_before": 0, "s_after": 0},
-      {"i": 3, "cond": "true", "s_before": 0, "s_after": 3},
-      {"i": 4, "cond": "false", "s_before": 3, "s_after": 3},
-      {"i": 5, "cond": "false", "s_before": 3, "s_after": 3},
-      {"i": 6, "cond": "true", "s_before": 3, "s_after": 9}
-    ],
-    "explain_short": [
-      "Only values divisible by 3 are added.",
-      "In this window they are 0,3,6."
-    ],
-    "explain": [
-      "Only values divisible by 3 are added.",
-      "In this window they are 0,3,6."
-    ],
-    "economy": {"analyze": 20, "wrong": 10, "reward": 15}
+	"id": "A-02",
+	"bucket": "newbie",
+	"briefing": "Filter inside range by modulo.",
+	"code": [
+	  "s = 0",
+	  "for i in range(0, 7):",
+	  "    if i % 3 == 0:",
+	  "        s = s + i"
+	],
+	"expected": 9,
+	"topic_tags": ["range_stop_exclusive", "condition_filter"],
+	"trace": [
+	  {"i": 0, "cond": "true", "s_before": 0, "s_after": 0},
+	  {"i": 1, "cond": "false", "s_before": 0, "s_after": 0},
+	  {"i": 2, "cond": "false", "s_before": 0, "s_after": 0},
+	  {"i": 3, "cond": "true", "s_before": 0, "s_after": 3},
+	  {"i": 4, "cond": "false", "s_before": 3, "s_after": 3},
+	  {"i": 5, "cond": "false", "s_before": 3, "s_after": 3},
+	  {"i": 6, "cond": "true", "s_before": 3, "s_after": 9}
+	],
+	"explain_short": [
+	  "Only values divisible by 3 are added.",
+	  "In this window they are 0,3,6."
+	],
+	"explain": [
+	  "Only values divisible by 3 are added.",
+	  "In this window they are 0,3,6."
+	],
+	"economy": {"analyze": 20, "wrong": 10, "reward": 15}
   },
   {
-    "id": "A-03",
-    "bucket": "newbie",
-    "briefing": "Iterate over explicit list values.",
-    "code": [
-      "s = 0",
-      "for i in [2, 5, 1, 4]:",
-      "    s = s + i"
-    ],
-    "expected": 12,
-    "topic_tags": ["list_iteration", "accumulator"],
-    "trace": [
-      {"i": 2, "cond": "loop", "s_before": 0, "s_after": 2},
-      {"i": 5, "cond": "loop", "s_before": 2, "s_after": 7},
-      {"i": 1, "cond": "loop", "s_before": 7, "s_after": 8},
-      {"i": 4, "cond": "loop", "s_before": 8, "s_after": 12}
-    ],
-    "explain_short": [
-      "List order is fixed and explicit.",
-      "No hidden range boundary here."
-    ],
-    "explain": [
-      "List order is fixed and explicit.",
-      "No hidden range boundary here."
-    ],
-    "economy": {"analyze": 20, "wrong": 10, "reward": 15}
+	"id": "A-03",
+	"bucket": "newbie",
+	"briefing": "Iterate over explicit list values.",
+	"code": [
+	  "s = 0",
+	  "for i in [2, 5, 1, 4]:",
+	  "    s = s + i"
+	],
+	"expected": 12,
+	"topic_tags": ["list_iteration", "accumulator"],
+	"trace": [
+	  {"i": 2, "cond": "loop", "s_before": 0, "s_after": 2},
+	  {"i": 5, "cond": "loop", "s_before": 2, "s_after": 7},
+	  {"i": 1, "cond": "loop", "s_before": 7, "s_after": 8},
+	  {"i": 4, "cond": "loop", "s_before": 8, "s_after": 12}
+	],
+	"explain_short": [
+	  "List order is fixed and explicit.",
+	  "No hidden range boundary here."
+	],
+	"explain": [
+	  "List order is fixed and explicit.",
+	  "No hidden range boundary here."
+	],
+	"economy": {"analyze": 20, "wrong": 10, "reward": 15}
   },
   {
-    "id": "A-04",
-    "bucket": "newbie",
-    "briefing": "while loop with inclusive growth.",
-    "code": [
-      "s = 0",
-      "i = 1",
-      "while i < 5:",
-      "    s = s + i",
-      "    i = i + 1"
-    ],
-    "expected": 10,
-    "topic_tags": ["while_boundary", "accumulator"],
-    "trace": [
-      {"i": 1, "cond": "i < 5", "s_before": 0, "s_after": 1},
-      {"i": 2, "cond": "i < 5", "s_before": 1, "s_after": 3},
-      {"i": 3, "cond": "i < 5", "s_before": 3, "s_after": 6},
-      {"i": 4, "cond": "i < 5", "s_before": 6, "s_after": 10}
-    ],
-    "explain_short": [
-      "while checks boundary before every step.",
-      "i runs 1,2,3,4."
-    ],
-    "explain": [
-      "while checks boundary before every step.",
-      "i runs 1,2,3,4."
-    ],
-    "economy": {"analyze": 20, "wrong": 10, "reward": 15}
+	"id": "A-04",
+	"bucket": "newbie",
+	"briefing": "while loop with inclusive growth.",
+	"code": [
+	  "s = 0",
+	  "i = 1",
+	  "while i < 5:",
+	  "    s = s + i",
+	  "    i = i + 1"
+	],
+	"expected": 10,
+	"topic_tags": ["while_boundary", "accumulator"],
+	"trace": [
+	  {"i": 1, "cond": "i < 5", "s_before": 0, "s_after": 1},
+	  {"i": 2, "cond": "i < 5", "s_before": 1, "s_after": 3},
+	  {"i": 3, "cond": "i < 5", "s_before": 3, "s_after": 6},
+	  {"i": 4, "cond": "i < 5", "s_before": 6, "s_after": 10}
+	],
+	"explain_short": [
+	  "while checks boundary before every step.",
+	  "i runs 1,2,3,4."
+	],
+	"explain": [
+	  "while checks boundary before every step.",
+	  "i runs 1,2,3,4."
+	],
+	"economy": {"analyze": 20, "wrong": 10, "reward": 15}
   },
   {
-    "id": "A-05",
-    "bucket": "newbie",
-    "briefing": "while loop with decrement step.",
-    "code": [
-      "s = 0",
-      "i = 6",
-      "while i > 0:",
-      "    s = s + 2",
-      "    i = i - 2"
-    ],
-    "expected": 6,
-    "topic_tags": ["while_boundary", "step_trap"],
-    "trace": [
-      {"i": 6, "cond": "i > 0", "s_before": 0, "s_after": 2},
-      {"i": 4, "cond": "i > 0", "s_before": 2, "s_after": 4},
-      {"i": 2, "cond": "i > 0", "s_before": 4, "s_after": 6}
-    ],
-    "explain_short": [
-      "i decreases by 2 each iteration.",
-      "Count loop passes before summing."
-    ],
-    "explain": [
-      "i decreases by 2 each iteration.",
-      "Count loop passes before summing."
-    ],
-    "economy": {"analyze": 20, "wrong": 10, "reward": 15}
+	"id": "A-05",
+	"bucket": "newbie",
+	"briefing": "while loop with decrement step.",
+	"code": [
+	  "s = 0",
+	  "i = 6",
+	  "while i > 0:",
+	  "    s = s + 2",
+	  "    i = i - 2"
+	],
+	"expected": 6,
+	"topic_tags": ["while_boundary", "step_trap"],
+	"trace": [
+	  {"i": 6, "cond": "i > 0", "s_before": 0, "s_after": 2},
+	  {"i": 4, "cond": "i > 0", "s_before": 2, "s_after": 4},
+	  {"i": 2, "cond": "i > 0", "s_before": 4, "s_after": 6}
+	],
+	"explain_short": [
+	  "i decreases by 2 each iteration.",
+	  "Count loop passes before summing."
+	],
+	"explain": [
+	  "i decreases by 2 each iteration.",
+	  "Count loop passes before summing."
+	],
+	"economy": {"analyze": 20, "wrong": 10, "reward": 15}
   },
   {
-    "id": "A-06",
-    "bucket": "newbie",
-    "briefing": "range with explicit step.",
-    "code": [
-      "s = 0",
-      "for i in range(2, 11, 3):",
-      "    s = s + i"
-    ],
-    "expected": 15,
-    "topic_tags": ["step_trap", "range_stop_exclusive"],
-    "trace": [
-      {"i": 2, "cond": "loop", "s_before": 0, "s_after": 2},
-      {"i": 5, "cond": "loop", "s_before": 2, "s_after": 7},
-      {"i": 8, "cond": "loop", "s_before": 7, "s_after": 15}
-    ],
-    "explain_short": [
-      "Step 3 produces 2,5,8.",
-      "Stop 11 is not included."
-    ],
-    "explain": [
-      "Step 3 produces 2,5,8.",
-      "Stop 11 is not included."
-    ],
-    "economy": {"analyze": 20, "wrong": 10, "reward": 15}
+	"id": "A-06",
+	"bucket": "newbie",
+	"briefing": "range with explicit step.",
+	"code": [
+	  "s = 0",
+	  "for i in range(2, 11, 3):",
+	  "    s = s + i"
+	],
+	"expected": 15,
+	"topic_tags": ["step_trap", "range_stop_exclusive"],
+	"trace": [
+	  {"i": 2, "cond": "loop", "s_before": 0, "s_after": 2},
+	  {"i": 5, "cond": "loop", "s_before": 2, "s_after": 7},
+	  {"i": 8, "cond": "loop", "s_before": 7, "s_after": 15}
+	],
+	"explain_short": [
+	  "Step 3 produces 2,5,8.",
+	  "Stop 11 is not included."
+	],
+	"explain": [
+	  "Step 3 produces 2,5,8.",
+	  "Stop 11 is not included."
+	],
+	"economy": {"analyze": 20, "wrong": 10, "reward": 15}
   },
   {
-    "id": "A-07",
-    "bucket": "stalker",
-    "briefing": "while boundary with non-unit increment.",
-    "code": [
-      "s = 0",
-      "i = 0",
-      "while i <= 4:",
-      "    s = s + i",
-      "    i = i + 2"
-    ],
-    "expected": 6,
-    "topic_tags": ["while_boundary", "step_trap"],
-    "trace": [
-      {"i": 0, "cond": "i <= 4", "s_before": 0, "s_after": 0},
-      {"i": 2, "cond": "i <= 4", "s_before": 0, "s_after": 2},
-      {"i": 4, "cond": "i <= 4", "s_before": 2, "s_after": 6}
-    ],
-    "explain_short": [
-      "Increment is +2, not +1.",
-      "Visited values are 0,2,4."
-    ],
-    "explain": [
-      "Increment is +2, not +1.",
-      "Visited values are 0,2,4."
-    ],
-    "economy": {"analyze": 28, "wrong": 14, "reward": 20}
+	"id": "A-07",
+	"bucket": "stalker",
+	"briefing": "while boundary with non-unit increment.",
+	"code": [
+	  "s = 0",
+	  "i = 0",
+	  "while i <= 4:",
+	  "    s = s + i",
+	  "    i = i + 2"
+	],
+	"expected": 6,
+	"topic_tags": ["while_boundary", "step_trap"],
+	"trace": [
+	  {"i": 0, "cond": "i <= 4", "s_before": 0, "s_after": 0},
+	  {"i": 2, "cond": "i <= 4", "s_before": 0, "s_after": 2},
+	  {"i": 4, "cond": "i <= 4", "s_before": 2, "s_after": 6}
+	],
+	"explain_short": [
+	  "Increment is +2, not +1.",
+	  "Visited values are 0,2,4."
+	],
+	"explain": [
+	  "Increment is +2, not +1.",
+	  "Visited values are 0,2,4."
+	],
+	"economy": {"analyze": 28, "wrong": 14, "reward": 20}
   },
   {
-    "id": "A-08",
-    "bucket": "stalker",
-    "briefing": "while loop as repeated transform.",
-    "code": [
-      "s = 1",
-      "i = 1",
-      "while i < 5:",
-      "    s = s * 2",
-      "    i = i + 1"
-    ],
-    "expected": 16,
-    "topic_tags": ["while_boundary", "arithmetic"],
-    "trace": [
-      {"i": 1, "cond": "i < 5", "s_before": 1, "s_after": 2},
-      {"i": 2, "cond": "i < 5", "s_before": 2, "s_after": 4},
-      {"i": 3, "cond": "i < 5", "s_before": 4, "s_after": 8},
-      {"i": 4, "cond": "i < 5", "s_before": 8, "s_after": 16}
-    ],
-    "explain_short": [
-      "Loop runs for i=1..4.",
-      "s doubles on each iteration."
-    ],
-    "explain": [
-      "Loop runs for i=1..4.",
-      "s doubles on each iteration."
-    ],
-    "economy": {"analyze": 28, "wrong": 14, "reward": 20}
+	"id": "A-08",
+	"bucket": "stalker",
+	"briefing": "while loop as repeated transform.",
+	"code": [
+	  "s = 1",
+	  "i = 1",
+	  "while i < 5:",
+	  "    s = s * 2",
+	  "    i = i + 1"
+	],
+	"expected": 16,
+	"topic_tags": ["while_boundary", "arithmetic"],
+	"trace": [
+	  {"i": 1, "cond": "i < 5", "s_before": 1, "s_after": 2},
+	  {"i": 2, "cond": "i < 5", "s_before": 2, "s_after": 4},
+	  {"i": 3, "cond": "i < 5", "s_before": 4, "s_after": 8},
+	  {"i": 4, "cond": "i < 5", "s_before": 8, "s_after": 16}
+	],
+	"explain_short": [
+	  "Loop runs for i=1..4.",
+	  "s doubles on each iteration."
+	],
+	"explain": [
+	  "Loop runs for i=1..4.",
+	  "s doubles on each iteration."
+	],
+	"economy": {"analyze": 28, "wrong": 14, "reward": 20}
   },
   {
-    "id": "A-09",
-    "bucket": "stalker",
-    "briefing": "Count range width correctly.",
-    "code": [
-      "s = 0",
-      "for i in range(3, 9):",
-      "    s = s + 1"
-    ],
-    "expected": 6,
-    "topic_tags": ["range_stop_exclusive", "boundary_count"],
-    "trace": [
-      {"i": 3, "cond": "loop", "s_before": 0, "s_after": 1},
-      {"i": 4, "cond": "loop", "s_before": 1, "s_after": 2},
-      {"i": 5, "cond": "loop", "s_before": 2, "s_after": 3},
-      {"i": 6, "cond": "loop", "s_before": 3, "s_after": 4},
-      {"i": 7, "cond": "loop", "s_before": 4, "s_after": 5},
-      {"i": 8, "cond": "loop", "s_before": 5, "s_after": 6}
-    ],
-    "explain_short": [
-      "range(3,9) includes 3..8.",
-      "That is six iterations."
-    ],
-    "explain": [
-      "range(3,9) includes 3..8.",
-      "That is six iterations."
-    ],
-    "economy": {"analyze": 28, "wrong": 14, "reward": 20}
+	"id": "A-09",
+	"bucket": "stalker",
+	"briefing": "Count range width correctly.",
+	"code": [
+	  "s = 0",
+	  "for i in range(3, 9):",
+	  "    s = s + 1"
+	],
+	"expected": 6,
+	"topic_tags": ["range_stop_exclusive", "boundary_count"],
+	"trace": [
+	  {"i": 3, "cond": "loop", "s_before": 0, "s_after": 1},
+	  {"i": 4, "cond": "loop", "s_before": 1, "s_after": 2},
+	  {"i": 5, "cond": "loop", "s_before": 2, "s_after": 3},
+	  {"i": 6, "cond": "loop", "s_before": 3, "s_after": 4},
+	  {"i": 7, "cond": "loop", "s_before": 4, "s_after": 5},
+	  {"i": 8, "cond": "loop", "s_before": 5, "s_after": 6}
+	],
+	"explain_short": [
+	  "range(3,9) includes 3..8.",
+	  "That is six iterations."
+	],
+	"explain": [
+	  "range(3,9) includes 3..8.",
+	  "That is six iterations."
+	],
+	"economy": {"analyze": 28, "wrong": 14, "reward": 20}
   },
   {
-    "id": "A-10",
-    "bucket": "stalker",
-    "briefing": "Descending range with step trap.",
-    "code": [
-      "s = 0",
-      "for i in range(10, 1, -3):",
-      "    s = s + i"
-    ],
-    "expected": 21,
-    "topic_tags": ["step_trap", "range_stop_exclusive"],
-    "trace": [
-      {"i": 10, "cond": "loop", "s_before": 0, "s_after": 10},
-      {"i": 7, "cond": "loop", "s_before": 10, "s_after": 17},
-      {"i": 4, "cond": "loop", "s_before": 17, "s_after": 21}
-    ],
-    "explain_short": [
-      "Descending range values are 10,7,4.",
-      "Stop 1 is excluded."
-    ],
-    "explain": [
-      "Descending range values are 10,7,4.",
-      "Stop 1 is excluded."
-    ],
-    "economy": {"analyze": 28, "wrong": 14, "reward": 20}
+	"id": "A-10",
+	"bucket": "stalker",
+	"briefing": "Descending range with step trap.",
+	"code": [
+	  "s = 0",
+	  "for i in range(10, 1, -3):",
+	  "    s = s + i"
+	],
+	"expected": 21,
+	"topic_tags": ["step_trap", "range_stop_exclusive"],
+	"trace": [
+	  {"i": 10, "cond": "loop", "s_before": 0, "s_after": 10},
+	  {"i": 7, "cond": "loop", "s_before": 10, "s_after": 17},
+	  {"i": 4, "cond": "loop", "s_before": 17, "s_after": 21}
+	],
+	"explain_short": [
+	  "Descending range values are 10,7,4.",
+	  "Stop 1 is excluded."
+	],
+	"explain": [
+	  "Descending range values are 10,7,4.",
+	  "Stop 1 is excluded."
+	],
+	"economy": {"analyze": 28, "wrong": 14, "reward": 20}
   },
   {
-    "id": "A-11",
-    "bucket": "stalker",
-    "briefing": "break exits loop immediately.",
-    "code": [
-      "s = 0",
-      "for i in range(1, 8):",
-      "    if i == 5:",
-      "        break",
-      "    s = s + i"
-    ],
-    "expected": 10,
-    "topic_tags": ["break_flow", "loop_exit"],
-    "trace": [
-      {"i": 1, "cond": "add", "s_before": 0, "s_after": 1},
-      {"i": 2, "cond": "add", "s_before": 1, "s_after": 3},
-      {"i": 3, "cond": "add", "s_before": 3, "s_after": 6},
-      {"i": 4, "cond": "add", "s_before": 6, "s_after": 10},
-      {"i": 5, "cond": "break", "s_before": 10, "s_after": 10}
-    ],
-    "explain_short": [
-      "break stops execution of remaining iterations.",
-      "Values after 5 are never processed."
-    ],
-    "explain": [
-      "break stops execution of remaining iterations.",
-      "Values after 5 are never processed."
-    ],
-    "economy": {"analyze": 28, "wrong": 14, "reward": 20}
+	"id": "A-11",
+	"bucket": "stalker",
+	"briefing": "break exits loop immediately.",
+	"code": [
+	  "s = 0",
+	  "for i in range(1, 8):",
+	  "    if i == 5:",
+	  "        break",
+	  "    s = s + i"
+	],
+	"expected": 10,
+	"topic_tags": ["break_flow", "loop_exit"],
+	"trace": [
+	  {"i": 1, "cond": "add", "s_before": 0, "s_after": 1},
+	  {"i": 2, "cond": "add", "s_before": 1, "s_after": 3},
+	  {"i": 3, "cond": "add", "s_before": 3, "s_after": 6},
+	  {"i": 4, "cond": "add", "s_before": 6, "s_after": 10},
+	  {"i": 5, "cond": "break", "s_before": 10, "s_after": 10}
+	],
+	"explain_short": [
+	  "break stops execution of remaining iterations.",
+	  "Values after 5 are never processed."
+	],
+	"explain": [
+	  "break stops execution of remaining iterations.",
+	  "Values after 5 are never processed."
+	],
+	"economy": {"analyze": 28, "wrong": 14, "reward": 20}
   },
   {
-    "id": "A-12",
-    "bucket": "stalker",
-    "briefing": "continue skips current iteration.",
-    "code": [
-      "s = 0",
-      "for i in range(1, 8):",
-      "    if i % 2 == 0:",
-      "        continue",
-      "    s = s + i"
-    ],
-    "expected": 16,
-    "topic_tags": ["continue_flow", "condition_filter"],
-    "trace": [
-      {"i": 1, "cond": "add", "s_before": 0, "s_after": 1},
-      {"i": 2, "cond": "continue", "s_before": 1, "s_after": 1},
-      {"i": 3, "cond": "add", "s_before": 1, "s_after": 4},
-      {"i": 4, "cond": "continue", "s_before": 4, "s_after": 4},
-      {"i": 5, "cond": "add", "s_before": 4, "s_after": 9},
-      {"i": 6, "cond": "continue", "s_before": 9, "s_after": 9},
-      {"i": 7, "cond": "add", "s_before": 9, "s_after": 16}
-    ],
-    "explain_short": [
-      "continue skips the rest of current loop body.",
-      "Only odd numbers are added."
-    ],
-    "explain": [
-      "continue skips the rest of current loop body.",
-      "Only odd numbers are added."
-    ],
-    "economy": {"analyze": 28, "wrong": 14, "reward": 20}
+	"id": "A-12",
+	"bucket": "stalker",
+	"briefing": "continue skips current iteration.",
+	"code": [
+	  "s = 0",
+	  "for i in range(1, 8):",
+	  "    if i % 2 == 0:",
+	  "        continue",
+	  "    s = s + i"
+	],
+	"expected": 16,
+	"topic_tags": ["continue_flow", "condition_filter"],
+	"trace": [
+	  {"i": 1, "cond": "add", "s_before": 0, "s_after": 1},
+	  {"i": 2, "cond": "continue", "s_before": 1, "s_after": 1},
+	  {"i": 3, "cond": "add", "s_before": 1, "s_after": 4},
+	  {"i": 4, "cond": "continue", "s_before": 4, "s_after": 4},
+	  {"i": 5, "cond": "add", "s_before": 4, "s_after": 9},
+	  {"i": 6, "cond": "continue", "s_before": 9, "s_after": 9},
+	  {"i": 7, "cond": "add", "s_before": 9, "s_after": 16}
+	],
+	"explain_short": [
+	  "continue skips the rest of current loop body.",
+	  "Only odd numbers are added."
+	],
+	"explain": [
+	  "continue skips the rest of current loop body.",
+	  "Only odd numbers are added."
+	],
+	"economy": {"analyze": 28, "wrong": 14, "reward": 20}
   },
   {
-    "id": "A-13",
-    "bucket": "master",
-    "briefing": "while with inner condition window.",
-    "code": [
-      "s = 0",
-      "i = 0",
-      "while i < 8:",
-      "    if i > 1:",
-      "        s = s + i",
-      "    i = i + 2"
-    ],
-    "expected": 12,
-    "topic_tags": ["while_boundary", "condition_filter"],
-    "trace": [
-      {"i": 0, "cond": "false", "s_before": 0, "s_after": 0},
-      {"i": 2, "cond": "true", "s_before": 0, "s_after": 2},
-      {"i": 4, "cond": "true", "s_before": 2, "s_after": 6},
-      {"i": 6, "cond": "true", "s_before": 6, "s_after": 12}
-    ],
-    "explain_short": [
-      "Inner condition opens after i>1.",
-      "With step +2, loop visits 0,2,4,6."
-    ],
-    "explain": [
-      "Inner condition opens after i>1.",
-      "With step +2, loop visits 0,2,4,6."
-    ],
-    "economy": {"analyze": 36, "wrong": 18, "reward": 25}
+	"id": "A-13",
+	"bucket": "master",
+	"briefing": "while with inner condition window.",
+	"code": [
+	  "s = 0",
+	  "i = 0",
+	  "while i < 8:",
+	  "    if i > 1:",
+	  "        s = s + i",
+	  "    i = i + 2"
+	],
+	"expected": 12,
+	"topic_tags": ["while_boundary", "condition_filter"],
+	"trace": [
+	  {"i": 0, "cond": "false", "s_before": 0, "s_after": 0},
+	  {"i": 2, "cond": "true", "s_before": 0, "s_after": 2},
+	  {"i": 4, "cond": "true", "s_before": 2, "s_after": 6},
+	  {"i": 6, "cond": "true", "s_before": 6, "s_after": 12}
+	],
+	"explain_short": [
+	  "Inner condition opens after i>1.",
+	  "With step +2, loop visits 0,2,4,6."
+	],
+	"explain": [
+	  "Inner condition opens after i>1.",
+	  "With step +2, loop visits 0,2,4,6."
+	],
+	"economy": {"analyze": 36, "wrong": 18, "reward": 25}
   },
   {
-    "id": "A-14",
-    "bucket": "master",
-    "briefing": "while with branch inside loop.",
-    "code": [
-      "s = 0",
-      "i = 1",
-      "while i <= 7:",
-      "    if i <= 3:",
-      "        s = s + i",
-      "    else:",
-      "        s = s + 1",
-      "    i = i + 2"
-    ],
-    "expected": 6,
-    "topic_tags": ["while_boundary", "condition_filter"],
-    "trace": [
-      {"i": 1, "cond": "true", "s_before": 0, "s_after": 1},
-      {"i": 3, "cond": "true", "s_before": 1, "s_after": 4},
-      {"i": 5, "cond": "false", "s_before": 4, "s_after": 5},
-      {"i": 7, "cond": "false", "s_before": 5, "s_after": 6}
-    ],
-    "explain_short": [
-      "Loop jumps by +2: 1,3,5,7.",
-      "Branch changes addend after i>3."
-    ],
-    "explain": [
-      "Loop jumps by +2: 1,3,5,7.",
-      "Branch changes addend after i>3."
-    ],
-    "economy": {"analyze": 36, "wrong": 18, "reward": 25}
+	"id": "A-14",
+	"bucket": "master",
+	"briefing": "while with branch inside loop.",
+	"code": [
+	  "s = 0",
+	  "i = 1",
+	  "while i <= 7:",
+	  "    if i <= 3:",
+	  "        s = s + i",
+	  "    else:",
+	  "        s = s + 1",
+	  "    i = i + 2"
+	],
+	"expected": 6,
+	"topic_tags": ["while_boundary", "condition_filter"],
+	"trace": [
+	  {"i": 1, "cond": "true", "s_before": 0, "s_after": 1},
+	  {"i": 3, "cond": "true", "s_before": 1, "s_after": 4},
+	  {"i": 5, "cond": "false", "s_before": 4, "s_after": 5},
+	  {"i": 7, "cond": "false", "s_before": 5, "s_after": 6}
+	],
+	"explain_short": [
+	  "Loop jumps by +2: 1,3,5,7.",
+	  "Branch changes addend after i>3."
+	],
+	"explain": [
+	  "Loop jumps by +2: 1,3,5,7.",
+	  "Branch changes addend after i>3."
+	],
+	"economy": {"analyze": 36, "wrong": 18, "reward": 25}
   },
   {
-    "id": "A-15",
-    "bucket": "master",
-    "briefing": "Descending range stop trap.",
-    "code": [
-      "s = 0",
-      "for i in range(5, -1, -2):",
-      "    s = s + i"
-    ],
-    "expected": 9,
-    "topic_tags": ["step_trap", "range_stop_exclusive"],
-    "trace": [
-      {"i": 5, "cond": "loop", "s_before": 0, "s_after": 5},
-      {"i": 3, "cond": "loop", "s_before": 5, "s_after": 8},
-      {"i": 1, "cond": "loop", "s_before": 8, "s_after": 9}
-    ],
-    "explain_short": [
-      "Descending range excludes stop value -1.",
-      "Values are 5,3,1."
-    ],
-    "explain": [
-      "Descending range excludes stop value -1.",
-      "Values are 5,3,1."
-    ],
-    "economy": {"analyze": 36, "wrong": 18, "reward": 25}
+	"id": "A-15",
+	"bucket": "master",
+	"briefing": "Descending range stop trap.",
+	"code": [
+	  "s = 0",
+	  "for i in range(5, -1, -2):",
+	  "    s = s + i"
+	],
+	"expected": 9,
+	"topic_tags": ["step_trap", "range_stop_exclusive"],
+	"trace": [
+	  {"i": 5, "cond": "loop", "s_before": 0, "s_after": 5},
+	  {"i": 3, "cond": "loop", "s_before": 5, "s_after": 8},
+	  {"i": 1, "cond": "loop", "s_before": 8, "s_after": 9}
+	],
+	"explain_short": [
+	  "Descending range excludes stop value -1.",
+	  "Values are 5,3,1."
+	],
+	"explain": [
+	  "Descending range excludes stop value -1.",
+	  "Values are 5,3,1."
+	],
+	"economy": {"analyze": 36, "wrong": 18, "reward": 25}
   },
   {
-    "id": "A-16",
-    "bucket": "master",
-    "briefing": "Range step and multiplication trap.",
-    "code": [
-      "s = 0",
-      "for i in range(2, 12, 4):",
-      "    s = s + i * 2"
-    ],
-    "expected": 36,
-    "topic_tags": ["step_trap", "range_stop_exclusive"],
-    "trace": [
-      {"i": 2, "cond": "loop", "s_before": 0, "s_after": 4},
-      {"i": 6, "cond": "loop", "s_before": 4, "s_after": 16},
-      {"i": 10, "cond": "loop", "s_before": 16, "s_after": 36}
-    ],
-    "explain_short": [
-      "range(2,12,4) gives 2,6,10.",
-      "Multiply each value by 2 before summing."
-    ],
-    "explain": [
-      "range(2,12,4) gives 2,6,10.",
-      "Multiply each value by 2 before summing."
-    ],
-    "economy": {"analyze": 36, "wrong": 18, "reward": 25}
+	"id": "A-16",
+	"bucket": "master",
+	"briefing": "Range step and multiplication trap.",
+	"code": [
+	  "s = 0",
+	  "for i in range(2, 12, 4):",
+	  "    s = s + i * 2"
+	],
+	"expected": 36,
+	"topic_tags": ["step_trap", "range_stop_exclusive"],
+	"trace": [
+	  {"i": 2, "cond": "loop", "s_before": 0, "s_after": 4},
+	  {"i": 6, "cond": "loop", "s_before": 4, "s_after": 16},
+	  {"i": 10, "cond": "loop", "s_before": 16, "s_after": 36}
+	],
+	"explain_short": [
+	  "range(2,12,4) gives 2,6,10.",
+	  "Multiply each value by 2 before summing."
+	],
+	"explain": [
+	  "range(2,12,4) gives 2,6,10.",
+	  "Multiply each value by 2 before summing."
+	],
+	"economy": {"analyze": 36, "wrong": 18, "reward": 25}
   },
   {
-    "id": "A-17",
-    "bucket": "master",
-    "briefing": "Compound AND boundary over list.",
-    "code": [
-      "s = 0",
-      "for i in [1, 2, 3, 4, 5]:",
-      "    if i >= 2 and i <= 4:",
-      "        s = s + i"
-    ],
-    "expected": 9,
-    "topic_tags": ["list_iteration", "compound_condition"],
-    "trace": [
-      {"i": 1, "cond": "false", "s_before": 0, "s_after": 0},
-      {"i": 2, "cond": "true", "s_before": 0, "s_after": 2},
-      {"i": 3, "cond": "true", "s_before": 2, "s_after": 5},
-      {"i": 4, "cond": "true", "s_before": 5, "s_after": 9},
-      {"i": 5, "cond": "false", "s_before": 9, "s_after": 9}
-    ],
-    "explain_short": [
-      "Both sides of the AND must be true.",
-      "Only 2,3,4 are added."
-    ],
-    "explain": [
-      "Both sides of the AND must be true.",
-      "Only 2,3,4 are added."
-    ],
-    "economy": {"analyze": 36, "wrong": 18, "reward": 25}
+	"id": "A-17",
+	"bucket": "master",
+	"briefing": "Compound AND boundary over list.",
+	"code": [
+	  "s = 0",
+	  "for i in [1, 2, 3, 4, 5]:",
+	  "    if i >= 2 and i <= 4:",
+	  "        s = s + i"
+	],
+	"expected": 9,
+	"topic_tags": ["list_iteration", "compound_condition"],
+	"trace": [
+	  {"i": 1, "cond": "false", "s_before": 0, "s_after": 0},
+	  {"i": 2, "cond": "true", "s_before": 0, "s_after": 2},
+	  {"i": 3, "cond": "true", "s_before": 2, "s_after": 5},
+	  {"i": 4, "cond": "true", "s_before": 5, "s_after": 9},
+	  {"i": 5, "cond": "false", "s_before": 9, "s_after": 9}
+	],
+	"explain_short": [
+	  "Both sides of the AND must be true.",
+	  "Only 2,3,4 are added."
+	],
+	"explain": [
+	  "Both sides of the AND must be true.",
+	  "Only 2,3,4 are added."
+	],
+	"economy": {"analyze": 36, "wrong": 18, "reward": 25}
   },
   {
-    "id": "A-18",
-    "bucket": "master",
-    "briefing": "Compound OR branch on explicit list.",
-    "code": [
-      "s = 0",
-      "for i in [0, 1, 2, 3, 4, 5]:",
-      "    if i == 1 or i == 4:",
-      "        s = s + 5",
-      "    else:",
-      "        s = s + 1"
-    ],
-    "expected": 14,
-    "topic_tags": ["list_iteration", "compound_condition"],
-    "trace": [
-      {"i": 0, "cond": "false", "s_before": 0, "s_after": 1},
-      {"i": 1, "cond": "true", "s_before": 1, "s_after": 6},
-      {"i": 2, "cond": "false", "s_before": 6, "s_after": 7},
-      {"i": 3, "cond": "false", "s_before": 7, "s_after": 8},
-      {"i": 4, "cond": "true", "s_before": 8, "s_after": 13},
-      {"i": 5, "cond": "false", "s_before": 13, "s_after": 14}
-    ],
-    "explain_short": [
-      "OR is true for i=1 and i=4 only.",
-      "All other iterations use the else branch."
-    ],
-    "explain": [
-      "OR is true for i=1 and i=4 only.",
-      "All other iterations use the else branch."
-    ],
-    "economy": {"analyze": 36, "wrong": 18, "reward": 25}
+	"id": "A-18",
+	"bucket": "master",
+	"briefing": "Compound OR branch on explicit list.",
+	"code": [
+	  "s = 0",
+	  "for i in [0, 1, 2, 3, 4, 5]:",
+	  "    if i == 1 or i == 4:",
+	  "        s = s + 5",
+	  "    else:",
+	  "        s = s + 1"
+	],
+	"expected": 14,
+	"topic_tags": ["list_iteration", "compound_condition"],
+	"trace": [
+	  {"i": 0, "cond": "false", "s_before": 0, "s_after": 1},
+	  {"i": 1, "cond": "true", "s_before": 1, "s_after": 6},
+	  {"i": 2, "cond": "false", "s_before": 6, "s_after": 7},
+	  {"i": 3, "cond": "false", "s_before": 7, "s_after": 8},
+	  {"i": 4, "cond": "true", "s_before": 8, "s_after": 13},
+	  {"i": 5, "cond": "false", "s_before": 13, "s_after": 14}
+	],
+	"explain_short": [
+	  "OR is true for i=1 and i=4 only.",
+	  "All other iterations use the else branch."
+	],
+	"explain": [
+	  "OR is true for i=1 and i=4 only.",
+	  "All other iterations use the else branch."
+	],
+	"economy": {"analyze": 36, "wrong": 18, "reward": 25}
   }
 ]

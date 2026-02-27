@@ -32,6 +32,9 @@ enum QuestState { INIT, PIPELINE_BUILD, PIPELINE_READY, CALC_DONE, ANSWERING, FE
 @onready var stability_bar: ProgressBar = $SafeArea/Main/V/Header/StabilityBar
 @onready var palette_select: OptionButton = $SafeArea/Main/V/Header/PaletteSelect
 @onready var body: BoxContainer = $SafeArea/Main/V/Body
+@onready var terminal_pane: PanelContainer = $SafeArea/Main/V/Body/TerminalPane
+@onready var console_pane: PanelContainer = $SafeArea/Main/V/Body/ConsolePane
+@onready var answers_pane: PanelContainer = $SafeArea/Main/V/Body/AnswersPane
 @onready var lbl_briefing: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblBriefing
 @onready var lbl_prompt: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblPrompt
 @onready var lbl_payload: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox/LblPayload
@@ -46,6 +49,7 @@ enum QuestState { INIT, PIPELINE_BUILD, PIPELINE_READY, CALC_DONE, ANSWERING, FE
 @onready var slot_out: PipelineSlotControl = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/PipelineBoard/SlotOut
 @onready var lbl_console_title: Label = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/LblConsoleTitle
 @onready var lbl_module_tray: Label = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/LblModuleTray
+@onready var module_tray_scroll: ScrollContainer = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/ModuleTrayScroll
 @onready var module_tray: GridContainer = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/ModuleTrayScroll/ModuleTray
 @onready var btn_run_calc: Button = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/BtnRunCalc
 @onready var lbl_preview: Label = $SafeArea/Main/V/Body/ConsolePane/ConsoleMargin/ConsoleV/LblPreview
@@ -325,6 +329,7 @@ func _render_terminal_panel() -> void:
 	lbl_window.text = "Окно: %s с." % str(current_level.get("time_sec", 0))
 	lbl_target_unit.text = "Целевой отряд: %s" % str(current_level.get("ask_unit", "bps"))
 	_render_log_text()
+	_sync_terminal_text_heights(_current_layout_mode())
 
 func _render_log_text(benchmark_lines_count: int = -1) -> void:
 	var lines: Array[String] = []
@@ -346,10 +351,10 @@ func _render_log_text(benchmark_lines_count: int = -1) -> void:
 		for idx in range(mini(benchmark_lines_count, benchmark_lines.size())):
 			lines.append("[BENCH] %s" % benchmark_lines[idx])
 	var text: String = ""
-	text += "- скорость = бит/время"
-	text += "- биты = полезная нагрузка * 1024 * 8"
+	text += "- скорость = бит/время\n"
+	text += "- биты = полезная нагрузка * 1024 * 8\n"
 	for line in lines:
-		text += "- %s" % line
+		text += "- %s\n" % line
 	log_text.text = text
 
 func _get_preview_metrics() -> Dictionary:
@@ -393,8 +398,8 @@ func _update_preview_card() -> void:
 	var ram_usage: int = int(preview_metrics.get("ram_usage", 45))
 	var cpu_load: int = int(preview_metrics.get("cpu_load", 40))
 	var preview_text: String = ""
-	preview_text += "Бюджет: %d / %d | Узкое место: %s" % [budget_used, budget_limit, bottleneck]
-	preview_text += "Частота кадров: %d | ОЗУ: %d%% | ЦП: %d%%" % [fps_value, ram_usage, cpu_load]
+	preview_text += "Бюджет: %d / %d | Узкое место: %s\n" % [budget_used, budget_limit, bottleneck]
+	preview_text += "Частота кадров: %d | ОЗУ: %d%% | ЦП: %d%%\n" % [fps_value, ram_usage, cpu_load]
 	if benchmark_done and calc_bps >= 0:
 		preview_text += "Вывод: %s" % _format_rate(calc_bps, calc_display_unit)
 	else:
@@ -827,7 +832,6 @@ func _on_reset_pressed() -> void:
 	_reset_pipeline_state()
 	lbl_status.text = "Сброс конвейера. Соберите его снова и запустите расчет."
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.86, 0.96))
-	_log_event("RESET_PRESSED", {})
 	_log_event("reset_pressed", {})
 
 func _on_next_pressed() -> void:
@@ -988,18 +992,70 @@ func _format_rate(value_bps: int, ask_unit: String) -> String:
 		return "%.3f кбит/с" % (float(value_bps) / 1000.0)
 	return "%d бит/с" % value_bps
 
-func _apply_layout_mode() -> void:
+func _current_layout_mode() -> String:
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var portrait: bool = viewport_size.x < viewport_size.y
+	if viewport_size.x < viewport_size.y:
+		return "portrait"
+	if viewport_size.y <= 900.0 or viewport_size.x <= 1440.0:
+		return "landscape_dense"
+	return "landscape_standard"
+
+func _sync_terminal_text_heights(mode: String) -> void:
+	lbl_briefing.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var briefing_height: float = clampf(float(lbl_briefing.get_content_height()) + 12.0, 96.0, viewport_size.y * 0.28)
+	var prompt_height: float = clampf(float(lbl_prompt.get_content_height()) + 12.0, 108.0, viewport_size.y * 0.34)
+	if mode == "portrait":
+		briefing_height = maxf(briefing_height, 96.0)
+		prompt_height = maxf(prompt_height, 108.0)
+	lbl_briefing.custom_minimum_size.y = briefing_height
+	lbl_prompt.custom_minimum_size.y = prompt_height
+
+func _apply_layout_mode() -> void:
+	var mode: String = _current_layout_mode()
+	var portrait: bool = mode == "portrait"
+	var dense_landscape: bool = mode == "landscape_dense"
 	body.vertical = portrait
 	module_tray.columns = 4
 	options_grid.columns = 1 if portrait else 2
 	pipeline_board.columns = 1 if portrait else 2
-	lbl_briefing.custom_minimum_size.y = 56.0 if portrait else 76.0
-	lbl_prompt.custom_minimum_size.y = 52.0 if portrait else 70.0
-	log_text.custom_minimum_size.y = 150.0 if portrait else 190.0
-	btn_run_calc.custom_minimum_size.y = 72.0 if portrait else 58.0
-	btn_reset.custom_minimum_size.y = 72.0 if portrait else 58.0
-	btn_next.custom_minimum_size.y = 72.0 if portrait else 58.0
+	if portrait:
+		terminal_pane.size_flags_stretch_ratio = 1.4
+		console_pane.size_flags_stretch_ratio = 1.35
+		answers_pane.size_flags_stretch_ratio = 1.0
+		lbl_meta.custom_minimum_size.x = 330.0
+		log_text.custom_minimum_size.y = 150.0
+		btn_run_calc.custom_minimum_size.y = 72.0
+		btn_reset.custom_minimum_size.y = 72.0
+		btn_next.custom_minimum_size.y = 72.0
+		lbl_status.custom_minimum_size.y = 78.0
+		module_tray_scroll.custom_minimum_size.y = 166.0
+	elif dense_landscape:
+		terminal_pane.size_flags_stretch_ratio = 1.72
+		console_pane.size_flags_stretch_ratio = 1.26
+		answers_pane.size_flags_stretch_ratio = 0.84
+		lbl_meta.custom_minimum_size.x = 220.0
+		log_text.custom_minimum_size.y = 112.0
+		btn_run_calc.custom_minimum_size.y = 48.0
+		btn_reset.custom_minimum_size.y = 48.0
+		btn_next.custom_minimum_size.y = 48.0
+		lbl_status.custom_minimum_size.y = 60.0
+		module_tray_scroll.custom_minimum_size.y = 128.0
+	else:
+		terminal_pane.size_flags_stretch_ratio = 1.58
+		console_pane.size_flags_stretch_ratio = 1.27
+		answers_pane.size_flags_stretch_ratio = 0.95
+		lbl_meta.custom_minimum_size.x = 300.0
+		log_text.custom_minimum_size.y = 176.0
+		btn_run_calc.custom_minimum_size.y = 58.0
+		btn_reset.custom_minimum_size.y = 58.0
+		btn_next.custom_minimum_size.y = 58.0
+		lbl_status.custom_minimum_size.y = 72.0
+		module_tray_scroll.custom_minimum_size.y = 166.0
 	for btn in action_buttons:
-		btn.custom_minimum_size.y = 72.0 if portrait else 78.0
+		btn.custom_minimum_size.y = 72.0 if portrait else (60.0 if dense_landscape else 72.0)
+	var slot_min_height: float = 104.0 if portrait else (92.0 if dense_landscape else 114.0)
+	for slot in [slot_kilo, slot_bit, slot_time, slot_out]:
+		slot.custom_minimum_size.y = slot_min_height
+	_sync_terminal_text_heights(mode)

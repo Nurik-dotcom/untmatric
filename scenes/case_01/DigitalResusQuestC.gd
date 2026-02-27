@@ -49,6 +49,7 @@ var _prompt_toggle_button: Button = null
 
 @onready var prompt_card: PanelContainer = $SafeArea/MainVBox/PromptCard
 @onready var prompt_label: Label = $SafeArea/MainVBox/PromptCard/PromptLabel
+@onready var diagram_card: PanelContainer = $SafeArea/MainVBox/DiagramCard
 @onready var packets_layer: Node = $SafeArea/MainVBox/DiagramCard/PacketsLayer
 
 @onready var slot_1: Node = $SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow/Slot1
@@ -60,6 +61,8 @@ var _prompt_toggle_button: Button = null
 @onready var filtering_value: Label = $SafeArea/MainVBox/RiskCard/RiskVBox/FilteringRow/FilteringValue
 @onready var media_value: Label = $SafeArea/MainVBox/RiskCard/RiskVBox/MediaRow/MediaValue
 
+@onready var palette_card: PanelContainer = $SafeArea/MainVBox/PaletteCard
+@onready var palette_scroll: ScrollContainer = $SafeArea/MainVBox/PaletteCard/PaletteVBox/Scroll
 @onready var palette_flow: GridContainer = $SafeArea/MainVBox/PaletteCard/PaletteVBox/Scroll/PaletteFlow
 
 @onready var explanation_card: PanelContainer = $SafeArea/MainVBox/ExplanationCard
@@ -740,11 +743,13 @@ func _ensure_scroll_layout() -> void:
 	_content_scroll.name = "КонтентПрокрутка"
 	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_content_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 
 	_content_vbox = VBoxContainer.new()
 	_content_vbox.name = "КонтентВБокс"
 	_content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_content_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_content_vbox.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_content_vbox.add_theme_constant_override("separation", 10)
 	_content_scroll.add_child(_content_vbox)
 
@@ -819,11 +824,27 @@ func _on_viewport_size_changed() -> void:
 	header.add_theme_constant_override("separation", 8 if compact else 10)
 	bottom_bar.add_theme_constant_override("separation", 8 if compact else 10)
 
-	palette_flow.columns = 1 if phone_portrait else (1 if compact else 2)
+	palette_flow.columns = 1 if phone_portrait else 2
+	palette_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	palette_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+
+	if compact and not phone_portrait:
+		diagram_card.custom_minimum_size.y = 136.0
+		palette_card.custom_minimum_size.y = 228.0
+		palette_scroll.custom_minimum_size.y = 152.0
+	else:
+		diagram_card.custom_minimum_size.y = 170.0
+		palette_card.custom_minimum_size.y = 0.0
+		palette_scroll.custom_minimum_size.y = 180.0
 
 	for slot_node in _slot_nodes:
 		if slot_node is Control:
-			(slot_node as Control).custom_minimum_size = Vector2(0, 96 if compact else 110)
+			(slot_node as Control).custom_minimum_size = Vector2(0, 86 if compact else 110)
+
+	var module_card_height: float = 72.0 if compact else 88.0
+	for child in palette_flow.get_children():
+		if child is Control:
+			(child as Control).custom_minimum_size.y = module_card_height
 
 	btn_back.custom_minimum_size = Vector2(56.0 if compact else 72.0, 56.0 if compact else 72.0)
 	stability_bar.custom_minimum_size.x = 160.0 if compact else 220.0

@@ -8,8 +8,8 @@
     "format": "TAG_ORDERING",
     "validator_profile": "LIST_BASIC",
     "allowed_containers": [
-      "ул",
-      "ол"
+      "ul",
+      "ol"
     ],
     "allowed_inner_kinds": [
       "LI_ITEM"
@@ -25,7 +25,7 @@
     "fragments": [
       {
         "fragment_id": "open_ul",
-        "label": "<ул>",
+        "label": "<ul>",
         "kind": "CONTAINER_OPEN",
         "token": "<ul>"
       },
@@ -116,8 +116,8 @@
     "format": "TAG_ORDERING",
     "validator_profile": "LIST_BASIC",
     "allowed_containers": [
-      "ул",
-      "ол"
+      "ul",
+      "ol"
     ],
     "allowed_inner_kinds": [
       "LI_ITEM"
@@ -133,7 +133,7 @@
     "fragments": [
       {
         "fragment_id": "open_ol",
-        "label": "<ол>",
+        "label": "<ol>",
         "kind": "CONTAINER_OPEN",
         "token": "<ol>"
       },
@@ -157,7 +157,7 @@
       },
       {
         "fragment_id": "close_ol",
-        "label": "</ол>",
+        "label": "</ol>",
         "kind": "CONTAINER_CLOSE",
         "token": "</ol>"
       },
@@ -224,7 +224,7 @@
     "format": "TAG_ORDERING",
     "validator_profile": "NAV_MENU",
     "allowed_containers": [
-      "навигация"
+      "nav"
     ],
     "allowed_inner_kinds": [
       "LINK",
@@ -244,7 +244,7 @@
     "fragments": [
       {
         "fragment_id": "open_nav",
-        "label": "<навигация>",
+        "label": "<nav>",
         "kind": "CONTAINER_OPEN",
         "token": "<nav>"
       },
@@ -268,7 +268,7 @@
       },
       {
         "fragment_id": "close_nav",
-        "label": "</нав>",
+        "label": "</nav>",
         "kind": "CONTAINER_CLOSE",
         "token": "</nav>"
       },
@@ -335,7 +335,7 @@
     "format": "TAG_ORDERING",
     "validator_profile": "NAV_MENU",
     "allowed_containers": [
-      "навигация"
+      "nav"
     ],
     "allowed_inner_kinds": [
       "LINK",
@@ -355,7 +355,7 @@
     "fragments": [
       {
         "fragment_id": "open_nav",
-        "label": "<навигация>",
+        "label": "<nav>",
         "kind": "CONTAINER_OPEN",
         "token": "<nav>"
       },
@@ -373,7 +373,7 @@
       },
       {
         "fragment_id": "close_nav",
-        "label": "</нав>",
+        "label": "</nav>",
         "kind": "CONTAINER_CLOSE",
         "token": "</nav>"
       },
@@ -440,7 +440,7 @@
     "format": "TAG_ORDERING",
     "validator_profile": "TABLE_LOG",
     "allowed_containers": [
-      "стол"
+      "table"
     ],
     "allowed_inner_kinds": [
       "TR_ROW"
@@ -456,7 +456,7 @@
     "fragments": [
       {
         "fragment_id": "open_table",
-        "label": "<таблица>",
+        "label": "<table>",
         "kind": "CONTAINER_OPEN",
         "token": "<table>"
       },
@@ -480,7 +480,7 @@
       },
       {
         "fragment_id": "close_table",
-        "label": "</таблица>",
+        "label": "</table>",
         "kind": "CONTAINER_CLOSE",
         "token": "</table>"
       },
@@ -547,7 +547,7 @@
     "format": "TAG_ORDERING",
     "validator_profile": "TABLE_LOG",
     "allowed_containers": [
-      "стол"
+      "table"
     ],
     "allowed_inner_kinds": [
       "TR_ROW"
@@ -563,7 +563,7 @@
     "fragments": [
       {
         "fragment_id": "open_table",
-        "label": "<таблица>",
+        "label": "<table>",
         "kind": "CONTAINER_OPEN",
         "token": "<table>"
       },
@@ -587,7 +587,7 @@
       },
       {
         "fragment_id": "close_table",
-        "label": "</таблица>",
+        "label": "</table>",
         "kind": "CONTAINER_CLOSE",
         "token": "</table>"
       },
@@ -654,7 +654,7 @@
     "format": "TAG_ORDERING",
     "validator_profile": "FORM_SIMPLE",
     "allowed_containers": [
-      "форма"
+      "form"
     ],
     "allowed_inner_kinds": [
       "FORM_FIELD",
@@ -671,49 +671,49 @@
     ],
     "fragments": [
       {
-        "fragment_id": "открытая_форма",
-        "label": "<форма>",
+        "fragment_id": "open_form",
+        "label": "<form>",
         "kind": "CONTAINER_OPEN",
         "token": "<form>"
       },
       {
-        "fragment_id": "имя_лейбла",
-        "label": "<label for=\"n\">Имя</label>",
+        "fragment_id": "name_label",
+        "label": "<label for=\"n\">Name</label>",
         "kind": "FORM_FIELD",
-        "token": "<label for=\"n\">Имя</label>"
+        "token": "<label for=\"n\">Name</label>"
       },
       {
-        "fragment_id": "имя_входа",
-        "label": "<входной идентификатор=\"n\" />",
+        "fragment_id": "name_input",
+        "label": "<input id=\"n\" />",
         "kind": "FORM_FIELD",
         "token": "<input id=\"n\" />"
       },
       {
         "fragment_id": "button_submit",
-        "label": "<button>Подтвердить</button>",
+        "label": "<button>Submit</button>",
         "kind": "BUTTON",
-        "token": "<button>Подтвердить</button>"
+        "token": "<button>Submit</button>"
       },
       {
         "fragment_id": "close_form",
-        "label": "</форма>",
+        "label": "</form>",
         "kind": "CONTAINER_CLOSE",
         "token": "</form>"
       },
       {
-        "fragment_id": "шум_п",
-        "label": "<p>заметка</p>",
+        "fragment_id": "noise_p",
+        "label": "<p>note</p>",
         "kind": "FOREIGN",
-        "token": "<p>заметка</p>"
+        "token": "<p>note</p>"
       }
     ],
     "expected_sequence": [
-      "открытая_форма",
-      "имя_лейбла",
-      "имя_входа",
+      "open_form",
+      "name_label",
+      "name_input",
       "button_submit",
       "close_form",
-      "(ПУСТОЙ)"
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -747,11 +747,11 @@
       }
     },
     "feedback_rules": {
-      "UNBALANCED_TAG": "Контейнер разорван: начало и конец структуры не совпадают.",
-      "HIERARCHY_VIOLATION": "Чужеродный элемент внутри контейнера.",
-      "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
-      "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
-      "OK": "Улики восстановлены. Файл читаем."
+      "UNBALANCED_TAG": "Container is broken: start and end of structure do not match.",
+      "HIERARCHY_VIOLATION": "Foreign element inside container.",
+      "REQUIRED_TAG_MISSING": "Required element is missing inside container.",
+      "ORDER_MISMATCH": "Syntax is alive, but order of evidence is broken.",
+      "OK": "Evidence restored. File is readable."
     }
   },
   {
@@ -759,11 +759,11 @@
     "schema_version": "1.2.0",
     "id": "FR8-A-F02",
     "bucket": "newbie",
-    "briefing": "Форма с двумя полями, но без усложнения механики.",
+    "briefing": "Form with two fields, but without complicating the mechanics.",
     "format": "TAG_ORDERING",
     "validator_profile": "FORM_SIMPLE",
     "allowed_containers": [
-      "форма"
+      "form"
     ],
     "allowed_inner_kinds": [
       "FORM_FIELD",
@@ -781,8 +781,8 @@
     ],
     "fragments": [
       {
-        "fragment_id": "открытая_форма",
-        "label": "<форма>",
+        "fragment_id": "open_form",
+        "label": "<form>",
         "kind": "CONTAINER_OPEN",
         "token": "<form>"
       },
@@ -794,7 +794,7 @@
       },
       {
         "fragment_id": "имя_входа",
-        "label": "<входной идентификатор=\"n\" />",
+        "label": "<input id=\"n\" />",
         "kind": "FORM_FIELD",
         "token": "<input id=\"n\" />"
       },
@@ -806,7 +806,7 @@
       },
       {
         "fragment_id": "входной_код",
-        "label": "<входной идентификатор=\"c\" />",
+        "label": "<input id=\"c\" />",
         "kind": "FORM_FIELD",
         "token": "<input id=\"c\" />"
       },
@@ -818,7 +818,7 @@
       },
       {
         "fragment_id": "close_form",
-        "label": "</форма>",
+        "label": "</form>",
         "kind": "CONTAINER_CLOSE",
         "token": "</form>"
       },
@@ -830,7 +830,7 @@
       }
     ],
     "expected_sequence": [
-      "открытая_форма",
+      "open_form",
       "имя_лейбла",
       "имя_входа",
       "код_метки",
@@ -886,7 +886,7 @@
     "format": "TAG_ORDERING",
     "validator_profile": "ARTICLE_NOTE",
     "allowed_containers": [
-      "статья"
+      "article"
     ],
     "allowed_inner_kinds": [
       "TEXT_BLOCK"
@@ -902,7 +902,7 @@
     "fragments": [
       {
         "fragment_id": "open_article",
-        "label": "<статья>",
+        "label": "<article>",
         "kind": "CONTAINER_OPEN",
         "token": "<article>"
       },
@@ -926,13 +926,13 @@
       },
       {
         "fragment_id": "close_article",
-        "label": "</статья>",
+        "label": "</article>",
         "kind": "CONTAINER_CLOSE",
         "token": "</article>"
       },
       {
         "fragment_id": "close_nav",
-        "label": "</нав>",
+        "label": "</nav>",
         "kind": "CONTAINER_CLOSE",
         "token": "</nav>"
       }
@@ -997,7 +997,7 @@
     "format": "TAG_ORDERING",
     "validator_profile": "ARTICLE_NOTE",
     "allowed_containers": [
-      "статья"
+      "article"
     ],
     "allowed_inner_kinds": [
       "TEXT_BLOCK"
@@ -1013,7 +1013,7 @@
     "fragments": [
       {
         "fragment_id": "open_article",
-        "label": "<статья>",
+        "label": "<article>",
         "kind": "CONTAINER_OPEN",
         "token": "<article>"
       },
@@ -1037,7 +1037,7 @@
       },
       {
         "fragment_id": "close_article",
-        "label": "</статья>",
+        "label": "</article>",
         "kind": "CONTAINER_CLOSE",
         "token": "</article>"
       },
@@ -1095,7 +1095,6 @@
       "OK": "Улики восстановлены. Файл читаем."
     },
     "required_tags_all": [
-      "h1",
       "p"
     ]
   },
@@ -1108,7 +1107,7 @@
     "format": "TAG_ORDERING",
     "validator_profile": "FIGURE_MEDIA",
     "allowed_containers": [
-      "фигура"
+      "figure"
     ],
     "allowed_inner_kinds": [
       "MEDIA",
@@ -1125,7 +1124,7 @@
     "fragments": [
       {
         "fragment_id": "open_figure",
-        "label": "<цифра>",
+        "label": "<figure>",
         "kind": "CONTAINER_OPEN",
         "token": "<figure>"
       },
@@ -1143,7 +1142,7 @@
       },
       {
         "fragment_id": "close_figure",
-        "label": "</фигура>",
+        "label": "</figure>",
         "kind": "CONTAINER_CLOSE",
         "token": "</figure>"
       },
@@ -1210,7 +1209,7 @@
     "format": "TAG_ORDERING",
     "validator_profile": "FIGURE_MEDIA",
     "allowed_containers": [
-      "фигура"
+      "figure"
     ],
     "allowed_inner_kinds": [
       "MEDIA",
@@ -1227,7 +1226,7 @@
     "fragments": [
       {
         "fragment_id": "open_figure",
-        "label": "<цифра>",
+        "label": "<figure>",
         "kind": "CONTAINER_OPEN",
         "token": "<figure>"
       },
@@ -1245,7 +1244,7 @@
       },
       {
         "fragment_id": "close_figure",
-        "label": "</фигура>",
+        "label": "</figure>",
         "kind": "CONTAINER_CLOSE",
         "token": "</figure>"
       },

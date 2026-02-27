@@ -69,7 +69,8 @@ func _ready() -> void:
 	add_to_group("fr8_drop_controller")
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
-	get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
+		get_tree().root.size_changed.connect(_on_viewport_size_changed)
 
 	_connect_ui_signals()
 	_load_levels()
@@ -86,6 +87,12 @@ func _ready() -> void:
 	var initial_index: int = clamp(GlobalMetrics.current_level_index, 0, max(0, levels.size() - 1))
 	_start_level(initial_index)
 	_on_viewport_size_changed()
+
+func _exit_tree() -> void:
+	if GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
+		GlobalMetrics.stability_changed.disconnect(_on_stability_changed)
+	if get_viewport() and get_viewport().size_changed.is_connected(_on_viewport_size_changed):
+		get_viewport().size_changed.disconnect(_on_viewport_size_changed)
 
 func _connect_ui_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)

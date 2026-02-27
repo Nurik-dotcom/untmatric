@@ -26,7 +26,6 @@ grow_vertical = 2
 color = Color(0.06, 0.07, 0.08, 1)
 
 [node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
-intensity = 0.12
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -189,12 +188,6 @@ theme_override_font_sizes/font_size = 18
 text = "Compute I = K*i and choose best storage option"
 autowrap_mode = 2
 
-[node name="BtnToggleCalc" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
-custom_minimum_size = Vector2(0, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "OPEN CALC TERMINAL"
-
 [node name="CalcCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
@@ -241,6 +234,11 @@ text = "+8"
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 text = "CHECK"
+
+[node name="BtnToggleCalc" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "CALC"
 
 [node name="PreviewCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 120)

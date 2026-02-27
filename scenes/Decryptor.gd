@@ -297,7 +297,7 @@ func _on_check_pressed() -> void:
 		hint_text.text = shield_message
 		if error_code == "SHIELD_ACTIVE":
 			var now_sec := Time.get_ticks_msec() / 1000.0
-			var cooldown_left := maxi(0.0, float(GlobalMetrics.blocked_until) - now_sec)
+			var cooldown_left := maxf(0.0, float(GlobalMetrics.blocked_until) - now_sec)
 			_show_toast("SHIELD: COOLDOWN %.1fs" % cooldown_left, COLOR_WARN)
 			_log_message("Shield cooldown %.1fs." % cooldown_left, COLOR_WARN)
 		return

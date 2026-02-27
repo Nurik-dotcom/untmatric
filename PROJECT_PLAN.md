@@ -15,8 +15,8 @@ This document contains everything needed to build a **Godot MCP Server** that in
 ├── projects/RAGy/                    # RAGy app (MCP client) - REFERENCE
 ├── godot-ai-assistant/               # Old Godot app - REFERENCE (do not modify)
 └── godot-mcp/                        # NEW PROJECT (build here)
-    ├── mcp-server/                   # Node.js MCP server
-    └── godot-plugin/                 # Minimal GDScript plugin
+	├── mcp-server/                   # Node.js MCP server
+	└── godot-plugin/                 # Minimal GDScript plugin
 ```
 
 ---
@@ -46,50 +46,50 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
 class MCPClientManager {
   constructor() {
-    this.clients = new Map(); // serverName -> { client, transport }
-    this.initialized = false;
+	this.clients = new Map(); // serverName -> { client, transport }
+	this.initialized = false;
   }
 
   async initialize() {
-    // Connect to each MCP server as a child process
-    await this.connectToServer('memory', {
-      command: 'node',
-      args: [path.join(__dirname, '../mcp-servers/memory-server.js')],
-    });
+	// Connect to each MCP server as a child process
+	await this.connectToServer('memory', {
+	  command: 'node',
+	  args: [path.join(__dirname, '../mcp-servers/memory-server.js')],
+	});
 
-    await this.connectToServer('rag', {
-      command: 'node',
-      args: [path.join(__dirname, '../mcp-servers/rag-server.js')],
-    });
+	await this.connectToServer('rag', {
+	  command: 'node',
+	  args: [path.join(__dirname, '../mcp-servers/rag-server.js')],
+	});
 
-    // TODO: Add godot server here
-    // await this.connectToServer('godot', {
-    //   command: 'node',
-    //   args: ['/Users/tomeryud/godot-mcp/mcp-server/src/index.js'],
-    // });
+	// TODO: Add godot server here
+	// await this.connectToServer('godot', {
+	//   command: 'node',
+	//   args: ['/Users/tomeryud/godot-mcp/mcp-server/src/index.js'],
+	// });
   }
 
   async connectToServer(serverName, config) {
-    const client = new Client({ name: 'ragy-chat-client', version: '1.0.0' }, { capabilities: {} });
-    const transport = new StdioClientTransport({ command: config.command, args: config.args });
-    await client.connect(transport);
-    this.clients.set(serverName, { client, transport, config });
+	const client = new Client({ name: 'ragy-chat-client', version: '1.0.0' }, { capabilities: {} });
+	const transport = new StdioClientTransport({ command: config.command, args: config.args });
+	await client.connect(transport);
+	this.clients.set(serverName, { client, transport, config });
   }
 
   async getAllTools() {
-    // Collects tools from all connected servers
-    const allTools = [];
-    for (const [serverName, { client }] of this.clients) {
-      const response = await client.listTools();
-      const toolsWithServer = response.tools.map(tool => ({ ...tool, _mcpServer: serverName }));
-      allTools.push(...toolsWithServer);
-    }
-    return allTools;
+	// Collects tools from all connected servers
+	const allTools = [];
+	for (const [serverName, { client }] of this.clients) {
+	  const response = await client.listTools();
+	  const toolsWithServer = response.tools.map(tool => ({ ...tool, _mcpServer: serverName }));
+	  allTools.push(...toolsWithServer);
+	}
+	return allTools;
   }
 
   async callTool(toolName, args, serverName) {
-    const serverInfo = this.clients.get(serverName);
-    return await serverInfo.client.callTool({ name: toolName, arguments: args });
+	const serverInfo = this.clients.get(serverName);
+	return await serverInfo.client.callTool({ name: toolName, arguments: args });
   }
 }
 ```
@@ -112,20 +112,20 @@ const server = new Server(
 // Define available tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
-    tools: [
-      {
-        name: 'search_documents',
-        description: 'Semantic search across the knowledge base',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            query: { type: 'string', description: 'Search query' },
-            top_k: { type: 'number', description: 'Number of results' }
-          },
-          required: ['query']
-        }
-      }
-    ]
+	tools: [
+	  {
+		name: 'search_documents',
+		description: 'Semantic search across the knowledge base',
+		inputSchema: {
+		  type: 'object',
+		  properties: {
+			query: { type: 'string', description: 'Search query' },
+			top_k: { type: 'number', description: 'Number of results' }
+		  },
+		  required: ['query']
+		}
+	  }
+	]
   };
 });
 
@@ -134,11 +134,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   if (name === 'search_documents') {
-    // Execute the tool and return result
-    const results = await doSearch(args.query, args.top_k);
-    return {
-      content: [{ type: 'text', text: JSON.stringify(results) }]
-    };
+	// Execute the tool and return result
+	const results = await doSearch(args.query, args.top_k);
+	return {
+	  content: [{ type: 'text', text: JSON.stringify(results) }]
+	};
   }
 });
 
@@ -302,7 +302,7 @@ Messages between MCP server and Godot plugin:
   "id": "unique-request-id",
   "tool": "read_scene",
   "args": {
-    "scene_path": "res://scenes/player.tscn"
+	"scene_path": "res://scenes/player.tscn"
   }
 }
 ```
@@ -359,20 +359,20 @@ Messages between MCP server and Godot plugin:
 │   └── README.md
 │
 └── godot-plugin/                     # Godot 4.x plugin
-    ├── addons/
-    │   └── godot_mcp/
-    │       ├── plugin.cfg            # Plugin configuration
-    │       ├── plugin.gd             # Main plugin script
-    │       ├── mcp_client.gd         # WebSocket client
-    │       ├── tool_executor.gd      # Routes and executes tools
-    │       ├── tools/
-    │       │   ├── file_tools.gd
-    │       │   ├── scene_tools.gd
-    │       │   ├── script_tools.gd
-    │       │   └── project_tools.gd
-    │       └── ui/
-    │           └── status_indicator.gd  # Minimal connection status
-    └── project.godot                 # Test project for development
+	├── addons/
+	│   └── godot_mcp/
+	│       ├── plugin.cfg            # Plugin configuration
+	│       ├── plugin.gd             # Main plugin script
+	│       ├── mcp_client.gd         # WebSocket client
+	│       ├── tool_executor.gd      # Routes and executes tools
+	│       ├── tools/
+	│       │   ├── file_tools.gd
+	│       │   ├── scene_tools.gd
+	│       │   ├── script_tools.gd
+	│       │   └── project_tools.gd
+	│       └── ui/
+	│           └── status_indicator.gd  # Minimal connection status
+	└── project.godot                 # Test project for development
 ```
 
 ---
@@ -393,11 +393,11 @@ Messages between MCP server and Godot plugin:
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js"
+	"start": "node src/index.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "ws": "^8.18.0"
+	"@modelcontextprotocol/sdk": "^1.0.0",
+	"ws": "^8.18.0"
   }
 }
 ```
@@ -428,63 +428,63 @@ import { WebSocketServer } from 'ws';
 
 class GodotBridge {
   constructor(port = 6505) {
-    this.port = port;
-    this.godotConnection = null;
-    this.pendingRequests = new Map(); // id -> { resolve, reject, timeout }
+	this.port = port;
+	this.godotConnection = null;
+	this.pendingRequests = new Map(); // id -> { resolve, reject, timeout }
   }
 
   start() {
-    this.wss = new WebSocketServer({ port: this.port });
-    this.wss.on('connection', (ws) => this.handleConnection(ws));
+	this.wss = new WebSocketServer({ port: this.port });
+	this.wss.on('connection', (ws) => this.handleConnection(ws));
   }
 
   handleConnection(ws) {
-    this.godotConnection = ws;
-    ws.on('message', (data) => this.handleMessage(JSON.parse(data)));
-    ws.on('close', () => { this.godotConnection = null; });
+	this.godotConnection = ws;
+	ws.on('message', (data) => this.handleMessage(JSON.parse(data)));
+	ws.on('close', () => { this.godotConnection = null; });
   }
 
   async invokeTool(toolName, args) {
-    if (!this.godotConnection) {
-      throw new Error('Godot not connected');
-    }
+	if (!this.godotConnection) {
+	  throw new Error('Godot not connected');
+	}
 
-    const id = crypto.randomUUID();
+	const id = crypto.randomUUID();
 
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        this.pendingRequests.delete(id);
-        reject(new Error('Tool execution timeout'));
-      }, 30000);
+	return new Promise((resolve, reject) => {
+	  const timeout = setTimeout(() => {
+		this.pendingRequests.delete(id);
+		reject(new Error('Tool execution timeout'));
+	  }, 30000);
 
-      this.pendingRequests.set(id, { resolve, reject, timeout });
+	  this.pendingRequests.set(id, { resolve, reject, timeout });
 
-      this.godotConnection.send(JSON.stringify({
-        type: 'tool_invoke',
-        id,
-        tool: toolName,
-        args
-      }));
-    });
+	  this.godotConnection.send(JSON.stringify({
+		type: 'tool_invoke',
+		id,
+		tool: toolName,
+		args
+	  }));
+	});
   }
 
   handleMessage(message) {
-    if (message.type === 'tool_result') {
-      const pending = this.pendingRequests.get(message.id);
-      if (pending) {
-        clearTimeout(pending.timeout);
-        this.pendingRequests.delete(message.id);
-        if (message.success) {
-          pending.resolve(message.result);
-        } else {
-          pending.reject(new Error(message.error));
-        }
-      }
-    }
+	if (message.type === 'tool_result') {
+	  const pending = this.pendingRequests.get(message.id);
+	  if (pending) {
+		clearTimeout(pending.timeout);
+		this.pendingRequests.delete(message.id);
+		if (message.success) {
+		  pending.resolve(message.result);
+		} else {
+		  pending.reject(new Error(message.error));
+		}
+	  }
+	}
   }
 
   isConnected() {
-    return this.godotConnection !== null;
+	return this.godotConnection !== null;
   }
 }
 ```
@@ -526,14 +526,14 @@ extends EditorPlugin
 var mcp_client: MCPClient
 
 func _enter_tree():
-    mcp_client = MCPClient.new()
-    add_child(mcp_client)
-    mcp_client.connect_to_server()
+	mcp_client = MCPClient.new()
+	add_child(mcp_client)
+	mcp_client.connect_to_server()
 
 func _exit_tree():
-    if mcp_client:
-        mcp_client.disconnect_from_server()
-        mcp_client.queue_free()
+	if mcp_client:
+		mcp_client.disconnect_from_server()
+		mcp_client.queue_free()
 ```
 
 3. `godot-plugin/addons/godot_mcp/mcp_client.gd`:
@@ -550,36 +550,36 @@ var server_url := "ws://localhost:6505"
 var is_connected := false
 
 func _ready():
-    socket = WebSocketPeer.new()
+	socket = WebSocketPeer.new()
 
 func _process(_delta):
-    if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
-        socket.poll()
-        while socket.get_available_packet_count() > 0:
-            var packet = socket.get_packet()
-            _handle_message(packet.get_string_from_utf8())
+	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		socket.poll()
+		while socket.get_available_packet_count() > 0:
+			var packet = socket.get_packet()
+			_handle_message(packet.get_string_from_utf8())
 
 func connect_to_server():
-    var err = socket.connect_to_url(server_url)
-    if err != OK:
-        push_error("Failed to connect to MCP server")
+	var err = socket.connect_to_url(server_url)
+	if err != OK:
+		push_error("Failed to connect to MCP server")
 
 func _handle_message(json_string: String):
-    var message = JSON.parse_string(json_string)
-    if message.type == "tool_invoke":
-        tool_invoked.emit(message.id, message.tool, message.args)
+	var message = JSON.parse_string(json_string)
+	if message.type == "tool_invoke":
+		tool_invoked.emit(message.id, message.tool, message.args)
 
 func send_result(id: String, success: bool, result = null, error: String = ""):
-    var response = {
-        "type": "tool_result",
-        "id": id,
-        "success": success
-    }
-    if success:
-        response["result"] = result
-    else:
-        response["error"] = error
-    socket.send_text(JSON.stringify(response))
+	var response = {
+		"type": "tool_result",
+		"id": id,
+		"success": success
+	}
+	if success:
+		response["result"] = result
+	else:
+		response["error"] = error
+	socket.send_text(JSON.stringify(response))
 ```
 
 **Test:**
@@ -602,40 +602,40 @@ func send_result(id: String, success: bool, result = null, error: String = ""):
 ```javascript
 export const fileTools = [
   {
-    name: 'list_dir',
-    description: 'List files and folders in a Godot project directory',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        path: {
-          type: 'string',
-          description: 'Directory path (e.g., "res://", "res://scenes/")'
-        }
-      },
-      required: ['path']
-    }
+	name: 'list_dir',
+	description: 'List files and folders in a Godot project directory',
+	inputSchema: {
+	  type: 'object',
+	  properties: {
+		path: {
+		  type: 'string',
+		  description: 'Directory path (e.g., "res://", "res://scenes/")'
+		}
+	  },
+	  required: ['path']
+	}
   },
   {
-    name: 'read_file',
-    description: 'Read contents of a file in the Godot project',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        path: {
-          type: 'string',
-          description: 'File path (e.g., "res://scripts/player.gd")'
-        },
-        start_line: {
-          type: 'number',
-          description: 'Optional start line (1-indexed)'
-        },
-        end_line: {
-          type: 'number',
-          description: 'Optional end line (1-indexed)'
-        }
-      },
-      required: ['path']
-    }
+	name: 'read_file',
+	description: 'Read contents of a file in the Godot project',
+	inputSchema: {
+	  type: 'object',
+	  properties: {
+		path: {
+		  type: 'string',
+		  description: 'File path (e.g., "res://scripts/player.gd")'
+		},
+		start_line: {
+		  type: 'number',
+		  description: 'Optional start line (1-indexed)'
+		},
+		end_line: {
+		  type: 'number',
+		  description: 'Optional end line (1-indexed)'
+		}
+	  },
+	  required: ['path']
+	}
   }
 ];
 ```
@@ -646,36 +646,36 @@ extends Node
 class_name FileTools
 
 func list_dir(args: Dictionary) -> Dictionary:
-    var path = args.get("path", "res://")
-    var dir = DirAccess.open(path)
-    if dir == null:
-        return {"error": "Cannot open directory: " + path}
+	var path = args.get("path", "res://")
+	var dir = DirAccess.open(path)
+	if dir == null:
+		return {"error": "Cannot open directory: " + path}
 
-    var files = []
-    var folders = []
+	var files = []
+	var folders = []
 
-    dir.list_dir_begin()
-    var file_name = dir.get_next()
-    while file_name != "":
-        if dir.current_is_dir():
-            folders.append(file_name)
-        else:
-            files.append(file_name)
-        file_name = dir.get_next()
-    dir.list_dir_end()
+	dir.list_dir_begin()
+	var file_name = dir.get_next()
+	while file_name != "":
+		if dir.current_is_dir():
+			folders.append(file_name)
+		else:
+			files.append(file_name)
+		file_name = dir.get_next()
+	dir.list_dir_end()
 
-    return {"files": files, "folders": folders}
+	return {"files": files, "folders": folders}
 
 func read_file(args: Dictionary) -> Dictionary:
-    var path = args.get("path", "")
-    if not FileAccess.file_exists(path):
-        return {"error": "File not found: " + path}
+	var path = args.get("path", "")
+	if not FileAccess.file_exists(path):
+		return {"error": "File not found: " + path}
 
-    var file = FileAccess.open(path, FileAccess.READ)
-    var content = file.get_as_text()
-    file.close()
+	var file = FileAccess.open(path, FileAccess.READ)
+	var content = file.get_as_text()
+	file.close()
 
-    return {"content": content, "path": path}
+	return {"content": content, "path": path}
 ```
 
 **Test:**
@@ -731,8 +731,8 @@ Port remaining tools from old project:
 // Add in initialize():
 if (settings.godotEnabled) {
   await this.connectToServer('godot', {
-    command: 'node',
-    args: ['/Users/tomeryud/godot-mcp/mcp-server/src/index.js'],
+	command: 'node',
+	args: ['/Users/tomeryud/godot-mcp/mcp-server/src/index.js'],
   });
 }
 ```
@@ -792,12 +792,12 @@ MCP uses JSON-RPC over stdio (stdin/stdout). The SDK handles this.
   name: 'tool_name',
   description: 'What the tool does',
   inputSchema: {
-    type: 'object',
-    properties: {
-      param1: { type: 'string', description: '...' },
-      param2: { type: 'number', description: '...' }
-    },
-    required: ['param1']
+	type: 'object',
+	properties: {
+	  param1: { type: 'string', description: '...' },
+	  param2: { type: 'number', description: '...' }
+	},
+	required: ['param1']
   }
 }
 ```
@@ -806,7 +806,7 @@ MCP uses JSON-RPC over stdio (stdin/stdout). The SDK handles this.
 ```javascript
 {
   content: [
-    { type: 'text', text: 'Result as string or JSON' }
+	{ type: 'text', text: 'Result as string or JSON' }
   ]
 }
 ```
@@ -820,8 +820,8 @@ socket.connect_to_url("ws://localhost:6505")
 # In _process:
 socket.poll()
 while socket.get_available_packet_count() > 0:
-    var data = socket.get_packet().get_string_from_utf8()
-    # Handle data
+	var data = socket.get_packet().get_string_from_utf8()
+	# Handle data
 
 # Send:
 socket.send_text(JSON.stringify(message))
