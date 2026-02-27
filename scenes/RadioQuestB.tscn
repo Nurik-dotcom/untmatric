@@ -56,19 +56,19 @@ theme_override_constants/separation = 10
 [node name="BtnBack" type="Button" parent="SafeArea/RootVBox/Header/HeaderHBox"]
 custom_minimum_size = Vector2(120, 58)
 layout_mode = 2
-text = "BACK"
+text = "\u041d\u0410\u0417\u0410\u0414"
 
 [node name="TitleLabel" type="Label" parent="SafeArea/RootVBox/Header/HeaderHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
-text = "RADIO INTERCEPT | B"
+text = "\u0420\u0410\u0414\u0418\u041e\u041f\u0415\u0420\u0415\u0425\u0412\u0410\u0422 | B"
 
 [node name="MetaLabel" type="Label" parent="SafeArea/RootVBox/Header/HeaderHBox"]
 custom_minimum_size = Vector2(360, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "MODE | STABILITY"
+text = "\u0420\u0415\u0416\u0418\u041c | \u0421\u0422\u0410\u0411\u0418\u041b\u042c\u041d\u041e\u0421\u0422\u042c"
 horizontal_alignment = 2
 
 [node name="BodyHSplit" type="HSplitContainer" parent="SafeArea/RootVBox"]
@@ -97,7 +97,7 @@ theme_override_constants/separation = 10
 [node name="StorageTitle" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "STORAGE BAY"
+text = "\u0421\u041a\u041b\u0410\u0414 \u041d\u041e\u0421\u0418\u0422\u0415\u041b\u0415\u0419"
 
 [node name="StorageGrid" type="GridContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
 layout_mode = 2
@@ -111,29 +111,49 @@ columns = 2
 custom_minimum_size = Vector2(0, 86)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_disabled_color = Color(0.66, 0.66, 0.68, 0.92)
 toggle_mode = true
-text = "Option 1"
+text = "\u0412\u0430\u0440\u0438\u0430\u043d\u0442 1"
 
 [node name="StorageBtn2" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid"]
 custom_minimum_size = Vector2(0, 86)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_disabled_color = Color(0.66, 0.66, 0.68, 0.92)
 toggle_mode = true
-text = "Option 2"
+text = "\u0412\u0430\u0440\u0438\u0430\u043d\u0442 2"
 
 [node name="StorageBtn3" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid"]
 custom_minimum_size = Vector2(0, 86)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_disabled_color = Color(0.66, 0.66, 0.68, 0.92)
 toggle_mode = true
-text = "Option 3"
+text = "\u0412\u0430\u0440\u0438\u0430\u043d\u0442 3"
 
 [node name="StorageBtn4" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid"]
 custom_minimum_size = Vector2(0, 86)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_disabled_color = Color(0.66, 0.66, 0.68, 0.92)
 toggle_mode = true
-text = "Option 4"
+text = "\u0412\u0430\u0440\u0438\u0430\u043d\u0442 4"
+
+[node name="StorageBtn5" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid"]
+custom_minimum_size = Vector2(0, 86)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_disabled_color = Color(0.66, 0.66, 0.68, 0.92)
+toggle_mode = true
+text = "\u0412\u0430\u0440\u0438\u0430\u043d\u0442 5"
+
+[node name="StorageBtn6" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid"]
+custom_minimum_size = Vector2(0, 86)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_disabled_color = Color(0.66, 0.66, 0.68, 0.92)
+toggle_mode = true
+text = "\u0412\u0430\u0440\u0438\u0430\u043d\u0442 6"
 
 [node name="RightPane" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit"]
 layout_mode = 2
@@ -170,22 +190,22 @@ theme_override_constants/separation = 4
 [node name="ContextTitle" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "TERMINAL"
+text = "\u0422\u0415\u0420\u041c\u0418\u041d\u0410\u041b"
 
 [node name="IInfoLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "i = 7 bits"
+text = "i = 7 \u0431\u0438\u0442"
 
 [node name="KInfoLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "K = 128 symbols"
+text = "K = 128 \u0441\u0438\u043c\u0432\u043e\u043b\u043e\u0432"
 
 [node name="TaskLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Compute I = K*i and choose best storage option"
+text = "\u0420\u0430\u0441\u0441\u0447\u0438\u0442\u0430\u0439\u0442\u0435 I = K*i \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c"
 autowrap_mode = 2
 
 [node name="CalcCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
@@ -206,7 +226,7 @@ theme_override_constants/separation = 8
 [node name="CalcTitle" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "CALC I"
+text = "\u0420\u0410\u0421\u0427\u0401\u0422 I"
 
 [node name="IBitsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox"]
 layout_mode = 2
@@ -233,12 +253,13 @@ text = "+8"
 [node name="BtnCheckCalc" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "CHECK"
+text = "\u0412\u0412\u041e\u0414"
 
 [node name="BtnToggleCalc" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+visible = false
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-text = "CALC"
+text = "\u0422\u0415\u0420\u041c\u0418\u041d\u0410\u041b"
 
 [node name="PreviewCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 120)
@@ -258,22 +279,22 @@ theme_override_constants/separation = 4
 [node name="PreviewTitle" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "DIAGNOSTICS"
+text = "\u0414\u0418\u0410\u0413\u041d\u041e\u0421\u0422\u0418\u041a\u0410"
 
 [node name="PreviewCalcLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Calc:"
+text = "\u0412\u0432\u0435\u0434\u0435\u043d\u043e I:"
 
 [node name="PreviewFitLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Fit:"
+text = "\u041d\u043e\u0441\u0438\u0442\u0435\u043b\u044c:"
 
 [node name="PreviewClassLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Class:"
+text = "\u041a\u043b\u0430\u0441\u0441:"
 
 [node name="ActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 layout_mode = 2
@@ -283,21 +304,21 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "CONVERTER"
+text = "\u041a\u041e\u041d\u0412\u0415\u0420\u0422\u0415\u0420"
 
 [node name="BtnCapture" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
-text = "CONFIRM"
+text = "\u0417\u0410\u0424\u0418\u041a\u0421\u0418\u0420\u041e\u0412\u0410\u0422\u042c"
 
 [node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
 visible = false
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "NEXT"
+text = "\u0414\u0410\u041b\u0415\u0415"
 
 [node name="SampleStrip" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 32)
@@ -498,13 +519,13 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Status"
+text = "\u0421\u0422\u0410\u0422\u0423\u0421"
 autowrap_mode = 2
 
 [node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "DETAILS"
+text = "\u041f\u041e\u0414\u0420\u041e\u0411\u041d\u0415\u0415 \u25be"
 
 [node name="Dimmer" type="ColorRect" parent="."]
 visible = false
@@ -514,7 +535,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 1
+mouse_filter = 0
 color = Color(0, 0, 0, 0.6)
 
 [node name="DetailsSheet" type="PanelContainer" parent="."]
@@ -542,7 +563,7 @@ theme_override_constants/separation = 10
 [node name="DetailsTitle" type="Label" parent="DetailsSheet/DetailsMargin/DetailsVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "DETAILS"
+text = "\u041f\u041e\u042f\u0421\u041d\u0415\u041d\u0418\u0415"
 
 [node name="DetailsText" type="RichTextLabel" parent="DetailsSheet/DetailsMargin/DetailsVBox"]
 custom_minimum_size = Vector2(0, 170)
@@ -552,4 +573,4 @@ size_flags_vertical = 3
 [node name="BtnCloseDetails" type="Button" parent="DetailsSheet/DetailsMargin/DetailsVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "CLOSE"
+text = "\u0417\u0410\u041a\u0420\u042b\u0422\u042c"

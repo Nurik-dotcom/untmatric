@@ -19,13 +19,14 @@ const ERROR_REQUIRED := "REQUIRED_TAG_MISSING"
 const ERROR_ORDER := "ORDER_MISMATCH"
 const ERROR_OK := "OK"
 const EMPTY_SLOT_MARKERS: Array[String] = ["(EMPTY)", "(ПУСТОЙ)"]
+const EMPTY_SLOT_MARKER_LEGACY := "(\u0420\u045f\u0420\u0408\u0420\u040e\u0420\u045e\u0420\u045b\u0420\u2122)"
 
 static func normalize_expected_sequence(level: Dictionary) -> Array[String]:
 	var raw_expected: Array = level.get("expected_sequence", []) as Array
 	var normalized: Array[String] = []
 	for expected_var in raw_expected:
 		var expected_id: String = str(expected_var).strip_edges()
-		normalized.append("" if expected_id in EMPTY_SLOT_MARKERS else expected_id)
+		normalized.append("" if _is_empty_slot_marker(expected_id) else expected_id)
 	return normalized
 
 static func evaluate(level: Dictionary, sequence: Array, fragment_by_id: Dictionary) -> Dictionary:
@@ -225,15 +226,47 @@ static func resolve_score(level: Dictionary, evaluation: Dictionary) -> Dictiona
 
 static func feedback_text(level: Dictionary, evaluation: Dictionary) -> String:
 	if bool(evaluation.get("incomplete", false)):
-		return "Не все фрагменты вставлены"
+		return _tr("case08.scoring.incomplete", "Не все фрагменты вставлены")
 
 	var error_code: String = str(evaluation.get("error_code", ERROR_ORDER))
+	var feedback_rules_keys: Dictionary = level.get("feedback_rules_keys", {}) as Dictionary
 	var feedback_rules: Dictionary = level.get("feedback_rules", {}) as Dictionary
+	var keyed_text: String = _feedback_from_keys(feedback_rules_keys, error_code)
+	if not keyed_text.is_empty():
+		return keyed_text
 	if feedback_rules.has(error_code):
 		return str(feedback_rules.get(error_code, ""))
+	keyed_text = _feedback_from_keys(feedback_rules_keys, "OK")
+	if not keyed_text.is_empty():
+		return keyed_text
 	if feedback_rules.has("OK"):
 		return str(feedback_rules.get("OK", ""))
-	return "Проверка завершена."
+	return _tr("case08.scoring.default_check_done", "Проверка завершена.")
+
+static func _feedback_from_keys(feedback_rules_keys: Dictionary, code: String) -> String:
+	if not feedback_rules_keys.has(code):
+		return ""
+	var key: String = str(feedback_rules_keys.get(code, "")).strip_edges()
+	if key.is_empty():
+		return ""
+	var translated: String = _tr(key, key)
+	if translated == key:
+		return ""
+	return translated
+
+static func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	if not merged.has("default"):
+		merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+static func _is_empty_slot_marker(value: String) -> bool:
+	var marker: String = value.strip_edges()
+	if marker.is_empty():
+		return false
+	if marker in EMPTY_SLOT_MARKERS:
+		return true
+	return marker == EMPTY_SLOT_MARKER_LEGACY
 
 static func _is_incomplete(sequence: Array, expected_sequence: Array[String]) -> bool:
 	if sequence.size() != expected_sequence.size():

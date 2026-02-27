@@ -7,7 +7,6 @@ const FALLBACK_NORMAL_POOL: Array[int] = [16, 32, 64, 128, 256, 512, 1024]
 const FALLBACK_TRAP_POOL: Array[int] = [10, 50, 100, 500, 1000, 2000]
 const SAMPLE_SLOTS: int = 7
 const ANALYZE_REVEAL_SECONDS: float = 3.0
-const ANALYZE_COOLDOWN_SECONDS: float = 6.0
 const PHONE_LANDSCAPE_MAX_HEIGHT: float = 520.0
 
 const COLOR_IDLE: Color = Color(0.18, 0.18, 0.18, 1.0)
@@ -39,6 +38,9 @@ const TXT_ANALYZE_DONE: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0410\u
 const TXT_RESULT_BAD: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u041d\u0435\u0432\u0435\u0440\u043d\u043e. \u041f\u0430\u043a\u0435\u0442 \u043d\u0435 \u043f\u043e\u043c\u0435\u0441\u0442\u0438\u043b\u0441\u044f."
 const TXT_RESULT_GOOD: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u041e\u0442\u043b\u0438\u0447\u043d\u043e. \u041c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0435 \u043a\u043e\u0434\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435."
 const TXT_RESULT_WARN: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0412\u0435\u0440\u043d\u043e, \u043d\u043e \u0441 \u043f\u0435\u0440\u0435\u0440\u0430\u0441\u0445\u043e\u0434\u043e\u043c."
+const TXT_FIT_UNKNOWN: String = "\u0421\u0418\u0413\u041d\u0410\u041b: \u041d\u0415 \u041f\u0420\u041e\u0412\u0415\u0420\u0415\u041d"
+const TXT_FIT_YES: String = "\u041f\u041e\u041c\u0415\u0429\u0410\u0415\u0422\u0421\u042f: \u0414\u0410"
+const TXT_FIT_NO: String = "\u041f\u041e\u041c\u0415\u0429\u0410\u0415\u0422\u0421\u042f: \u041d\u0415\u0422"
 
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var root_vbox: VBoxContainer = $SafeArea/RootVBox
@@ -106,10 +108,10 @@ var sample_refs: Array[Dictionary] = []
 var analysis_committed: bool = false
 var analysis_revealing: bool = false
 var analyze_reveal_until: float = 0.0
-var analyze_cooldown_until: float = 0.0
 var last_analysis_fit: bool = false
 var last_analysis_minimal: bool = false
 var last_analysis_overkill: bool = false
+var last_analyzed_bits: int = -1
 
 var _normal_pool: Array[int] = []
 var _trap_pool: Array[int] = []
@@ -121,6 +123,7 @@ var _anchor_every_max: int = 10
 var _target_wave_line: Line2D
 
 var osc_phase: float = 0.0
+var noise_seed: int = 1
 var _ui_ready: bool = false
 var _current_stability: float = 100.0
 var _body_scroll_installed: bool = false
@@ -160,17 +163,20 @@ func _process(delta: float) -> void:
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if trial_active and analysis_revealing:
 		var remaining: float = maxf(0.0, analyze_reveal_until - now_sec)
-		status_label.text = "STATUS: analyzing channel... %.1fs" % remaining
+		status_label.text = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0430\u043d\u0430\u043b\u0438\u0437 \u043a\u0430\u043d\u0430\u043b\u0430... %.1f\u0441" % remaining
 		status_label.add_theme_color_override("font_color", COLOR_WARN)
 		if now_sec >= analyze_reveal_until:
 			analysis_revealing = false
+			analysis_committed = true
+			last_analyzed_bits = current_bits
 			bit_knob.mouse_filter = Control.MOUSE_FILTER_STOP
 			btn_hint.disabled = false
 			btn_capture.disabled = false
+			btn_analyze.disabled = false
+			_set_fit_label_from_analysis()
+			_update_details_text()
 			status_label.text = TXT_ANALYZE_DONE
 			status_label.add_theme_color_override("font_color", COLOR_GOOD)
-	if trial_active and not analysis_revealing:
-		btn_analyze.disabled = now_sec < analyze_cooldown_until
 	_update_header_meta()
 	_update_waveform()
 func _apply_static_texts() -> void:
@@ -235,13 +241,14 @@ func _start_trial() -> void:
 	analysis_committed = false
 	analysis_revealing = false
 	analyze_reveal_until = 0.0
-	analyze_cooldown_until = 0.0
 	last_analysis_fit = false
 	last_analysis_minimal = false
 	last_analysis_overkill = false
+	last_analyzed_bits = -1
+	noise_seed = randi()
 
 	btn_capture.visible = true
-	btn_capture.disabled = false
+	btn_capture.disabled = true
 	btn_analyze.disabled = false
 	btn_next.visible = false
 	btn_hint.disabled = false
@@ -272,6 +279,7 @@ func _start_trial() -> void:
 	current_bits = _i_min
 	bit_knob.set("value", _i_min)
 	_apply_user_bits(_i_min, false)
+	_set_fit_label_unknown()
 	if _target_wave_line != null:
 		_target_wave_line.visible = false
 		_target_wave_line.points = PackedVector2Array()
@@ -295,8 +303,6 @@ func _apply_user_bits(i_value: int, from_user: bool) -> void:
 		_mark_first_action()
 
 	current_bits = clampi(i_value, _i_min, _i_max)
-	var pow_val: int = int(pow(2.0, current_bits))
-	var is_fit: bool = pow_val >= target_n
 
 	if from_user:
 		knob_change_count += 1
@@ -305,10 +311,19 @@ func _apply_user_bits(i_value: int, from_user: bool) -> void:
 			direction_change_count += 1
 			cross_target_count += 1
 		last_diff_sign = diff_sign
+		noise_seed = int((noise_seed * 1103515245 + 12345 + current_bits * 17) & 0x7fffffff)
+		if analysis_committed:
+			analysis_committed = false
+			last_analyzed_bits = -1
+			btn_capture.disabled = true
+			status_label.text = TXT_STATUS_PLAN
+			status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
 
 	bits_value_label.text = "i = %d \u0431\u0438\u0442" % current_bits
-	fit_value_label.text = "\u041f\u041e\u041c\u0415\u0429\u0410\u0415\u0422\u0421\u042f: %s" % ("\u0414\u0410" if is_fit else "\u041d\u0415\u0422")
-	fit_value_label.add_theme_color_override("font_color", COLOR_GOOD if is_fit else COLOR_BAD)
+	if analysis_committed and current_bits == last_analyzed_bits:
+		_set_fit_label_from_analysis()
+	else:
+		_set_fit_label_unknown()
 	_update_details_text()
 
 func _on_hint_pressed() -> void:
@@ -324,14 +339,10 @@ func _on_analyze_pressed() -> void:
 	if not trial_active or analysis_revealing:
 		return
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
-	if now_sec < analyze_cooldown_until:
-		var cooldown_left: float = analyze_cooldown_until - now_sec
-		status_label.text = "STATUS: analyze cooldown %.1fs" % cooldown_left
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
-		return
 	_mark_first_action()
 	analyze_count += 1
-	analysis_committed = true
+	analysis_committed = false
+	last_analyzed_bits = -1
 	analysis_revealing = true
 	btn_analyze.disabled = true
 	btn_capture.disabled = true
@@ -350,8 +361,8 @@ func _on_analyze_pressed() -> void:
 	else:
 		status_label.text = TXT_ANALYZE_OK
 		status_label.add_theme_color_override("font_color", COLOR_GOOD)
+	_set_fit_label_from_analysis()
 	analyze_reveal_until = now_sec + ANALYZE_REVEAL_SECONDS
-	analyze_cooldown_until = now_sec + ANALYZE_COOLDOWN_SECONDS
 	_update_details_text()
 func _on_capture_pressed() -> void:
 	if not trial_active or btn_capture.disabled:
@@ -363,7 +374,10 @@ func _finish_trial(is_timeout: bool) -> void:
 	if not trial_active:
 		return
 
+	var used_analyze: bool = analysis_committed or analyze_count > 0
 	trial_active = false
+	analysis_revealing = false
+	analysis_committed = false
 	btn_capture.visible = false
 	btn_analyze.disabled = true
 	btn_next.visible = true
@@ -400,6 +414,9 @@ func _finish_trial(is_timeout: bool) -> void:
 	else:
 		prev_time_to_first_action = duration
 
+	var scrubbed_guessing: bool = direction_change_count >= 2 or cross_target_count >= 2
+	var valid_for_mastery: bool = is_fit and is_minimal and (not hint_used) and analyze_count <= 1 and (not scrubbed_guessing)
+
 	var payload: Dictionary = {
 		"quest_id": "radio_intercept",
 		"stage_id": "A",
@@ -413,9 +430,10 @@ func _finish_trial(is_timeout: bool) -> void:
 		"is_correct": is_fit,
 		"is_minimal": is_minimal,
 		"is_overkill": is_overkill,
-		"used_analyze": analysis_committed,
+		"used_analyze": used_analyze,
 		"used_hint": hint_used,
-		"valid_for_mastery": is_fit and is_minimal and (not hint_used) and (analyze_count == 0),
+		"valid_for_mastery": valid_for_mastery,
+		"valid_for_diagnostics": true,
 		"forced_sampling": forced_sampling,
 		"analyze_count": analyze_count,
 		"knob_change_count": knob_change_count,
@@ -468,20 +486,42 @@ func _set_details_visible(visible: bool) -> void:
 	dimmer.visible = visible
 	btn_details.text = TXT_BTN_DETAILS_OPEN if visible else TXT_BTN_DETAILS_CLOSED
 
+func _set_fit_label_unknown() -> void:
+	fit_value_label.text = TXT_FIT_UNKNOWN
+	fit_value_label.add_theme_color_override("font_color", Color(0.80, 0.80, 0.80, 1.0))
+
+func _set_fit_label_from_analysis() -> void:
+	fit_value_label.text = TXT_FIT_YES if last_analysis_fit else TXT_FIT_NO
+	fit_value_label.add_theme_color_override("font_color", COLOR_GOOD if last_analysis_fit else COLOR_BAD)
+
 func _update_details_text() -> void:
-	var capacity: int = int(pow(2.0, current_bits))
 	var lines: Array[String] = []
-	lines.append("N: %d" % target_n)
-	lines.append("i_min: %d" % target_bits)
-	lines.append("i_selected: %d" % current_bits)
-	lines.append("2^i: %d" % capacity)
-	lines.append("mode: %s" % ("TIMED" if is_timed_mode else "UNTIMED"))
-	lines.append("pool: %s" % pool_type)
-	if hint_used:
-		lines.append("hint: used")
-	lines.append("analyze_count: %d" % analyze_count)
-	if analysis_revealing:
-		lines.append("analysis: reveal")
+	if trial_active:
+		lines.append("\u041f\u0440\u0430\u0432\u0438\u043b\u043e: \u043d\u0430\u0439\u0434\u0438\u0442\u0435 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0435 i, \u0433\u0434\u0435 2^i >= N.")
+		lines.append("\u0428\u0430\u0433\u0438:")
+		lines.append("1) \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 i \u0440\u0443\u0447\u043a\u043e\u0439.")
+		lines.append("2) \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0410\u041d\u0410\u041b\u0418\u0417\u00bb \u0438 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u0435 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0443 \u043d\u0430 3 \u0441\u0435\u043a\u0443\u043d\u0434\u044b.")
+		lines.append("3) \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0417\u0410\u0425\u0412\u0410\u0422\u00bb, \u0447\u0442\u043e\u0431\u044b \u0437\u0430\u0444\u0438\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043e\u0442\u0432\u0435\u0442.")
+		if analysis_revealing:
+			lines.append("\u0418\u0434\u0451\u0442 \u0430\u043d\u0430\u043b\u0438\u0437 \u043a\u0430\u043d\u0430\u043b\u0430. \u0414\u043e\u0436\u0434\u0438\u0442\u0435\u0441\u044c \u043e\u043a\u043e\u043d\u0447\u0430\u043d\u0438\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438.")
+		elif analysis_committed:
+			lines.append("\u0410\u043d\u0430\u043b\u0438\u0437 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d. \u0415\u0441\u043b\u0438 \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c i, \u043f\u043e\u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u043d\u043e\u0432\u044b\u0439 \u0430\u043d\u0430\u043b\u0438\u0437.")
+	else:
+		var lower_i: int = maxi(0, target_bits - 1)
+		var lower_capacity: int = int(pow(2.0, lower_i))
+		var minimal_capacity: int = int(pow(2.0, target_bits))
+		var chosen_capacity: int = int(pow(2.0, current_bits))
+		lines.append("\u0414\u0430\u043d\u043e: N = %d" % target_n)
+		lines.append("\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c \u0441\u0442\u0435\u043f\u0435\u043d\u0438 \u0434\u0432\u043e\u0439\u043a\u0438:")
+		lines.append("2^%d = %d < %d (\u043c\u0430\u043b\u043e)" % [lower_i, lower_capacity, target_n])
+		lines.append("2^%d = %d >= %d (\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e)" % [target_bits, minimal_capacity, target_n])
+		lines.append("\u041e\u0442\u0432\u0435\u0442: i = %d (\u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e)" % target_bits)
+		if current_bits > target_bits:
+			lines.append("\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = %d -> 2^%d = %d (\u043f\u0435\u0440\u0435\u0440\u0430\u0441\u0445\u043e\u0434)" % [current_bits, current_bits, chosen_capacity])
+		elif current_bits < target_bits:
+			lines.append("\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = %d -> 2^%d = %d (\u043d\u0435 \u043f\u043e\u043c\u0435\u0449\u0430\u0435\u0442\u0441\u044f)" % [current_bits, current_bits, chosen_capacity])
+		else:
+			lines.append("\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = %d -> 2^%d = %d (\u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e)" % [current_bits, current_bits, chosen_capacity])
 	details_text.text = "\n".join(lines)
 
 func _update_header_meta() -> void:
@@ -591,14 +631,15 @@ func _update_waveform() -> void:
 func _draw_idle_wave(draw_size: Vector2) -> void:
 	var points: PackedVector2Array = PackedVector2Array()
 	var center_y: float = draw_size.y * 0.5
-	var diff_ratio: float = clampf(absf(float(current_bits - target_bits)) / maxf(1.0, float(_i_max - _i_min + 1)), 0.0, 1.0)
-	var main_amp: float = draw_size.y * (0.10 + diff_ratio * 0.16)
-	var noise_amp: float = draw_size.y * 0.05
+	var main_amp: float = draw_size.y * 0.12
+	var noise_amp: float = draw_size.y * 0.08
+	var seed_phase: float = float(noise_seed % 100000) * 0.001
 	for x in range(0, int(draw_size.x) + 1, 6):
 		var t: float = float(x) / maxf(1.0, draw_size.x)
-		var y: float = center_y + sin((t * TAU * 2.0) + osc_phase * 0.9) * main_amp
-		y += sin((t * TAU * 11.0) + osc_phase * 1.4) * noise_amp * 0.45
-		y += cos((t * TAU * 23.0) + osc_phase * 0.7) * noise_amp * 0.30
+		var y: float = center_y + sin((t * TAU * 2.2) + osc_phase * 0.8 + seed_phase) * main_amp
+		y += sin((t * TAU * 9.0) + osc_phase * 1.2 + seed_phase * 1.7) * noise_amp * 0.60
+		y += cos((t * TAU * 17.0) + osc_phase * 0.7 - seed_phase * 0.9) * noise_amp * 0.50
+		y += sin((t * TAU * 31.0) + seed_phase * 0.37) * noise_amp * 0.35
 		points.append(Vector2(x, y))
 	wave_line.default_color = Color(0.20, 1.0, 0.20, 1.0)
 	wave_line.points = points

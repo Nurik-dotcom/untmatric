@@ -23,7 +23,21 @@ func _ready() -> void:
 		_drag_hovered = false
 		_apply_visual_state()
 	)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+	_apply_i18n()
 	_apply_visual_state()
+
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	if _empty_label != null:
+		_empty_label.text = I18n.tr_key("ui.tag_slot.bad_sector", {"default": "BAD SECTOR"})
 
 func setup(p_zone_id: String, p_label_text: String) -> void:
 	zone_id = p_zone_id

@@ -1,4 +1,4 @@
-extends Control
+﻿extends Control
 
 @onready var btn_back = $UI/SafeArea/Main/HeaderBar/HeaderContent/BtnBack
 @onready var mode_label = $UI/SafeArea/Main/HeaderBar/HeaderContent/ModeChip/ModeLabel
@@ -34,16 +34,22 @@ extends Control
 
 @onready var rank_label = $UI/SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent/RankLabel
 @onready var progress_label = $UI/SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent/ProgressLabel
+@onready var rank_title = $UI/SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent/RankTitle
 @onready var reg_a_value = $UI/SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/RegsRow/RegAValue
 @onready var reg_b_value = $UI/SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/RegsRow/RegBValue
 @onready var op_value = $UI/SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/RegsRow/OpValue
 @onready var shift_status = $UI/SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/ShiftStatus
+@onready var protocol_title = $UI/SafeArea/Main/ContentSplit/RightPanel/ProtocolPanel/ProtocolContent/ProtocolTitle
+@onready var live_log_title = $UI/SafeArea/Main/ContentSplit/RightPanel/LiveLogPanel/LiveLogContent/LiveLogTitle
+@onready var hint_title = $UI/SafeArea/Main/ContentSplit/RightPanel/HintPanel/HintContent/HintTitle
 @onready var live_log_text = $UI/SafeArea/Main/ContentSplit/RightPanel/LiveLogPanel/LiveLogContent/LiveLogText
 @onready var hint_text = $UI/SafeArea/Main/ContentSplit/RightPanel/HintPanel/HintContent/HintText
 
 @onready var btn_hint = $UI/SafeArea/Main/BottomBar/Actions/BtnHint
 @onready var btn_check = $UI/SafeArea/Main/BottomBar/Actions/BtnCheck
 @onready var btn_reset = $UI/SafeArea/Main/BottomBar/Actions/BtnReset
+@onready var upper_title = $UI/SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/UpperNibble/UpperTitle
+@onready var lower_title = $UI/SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/LowerNibble/LowerTitle
 
 @onready var toast_panel = $UI/ToastLayer/Toast
 @onready var toast_label = $UI/ToastLayer/Toast/ToastLabel
@@ -51,10 +57,12 @@ extends Control
 @onready var details_sheet = $UI/DetailsSheet
 @onready var btn_close_details = $UI/DetailsSheet/DetailsContent/DetailsHeader/BtnCloseDetails
 @onready var details_text = $UI/DetailsSheet/DetailsContent/DetailsScroll/DetailsText
+@onready var details_title = $UI/DetailsSheet/DetailsContent/DetailsHeader/DetailsTitle
 
 @onready var safe_overlay = $UI/SafeModeOverlay
 @onready var safe_summary = $UI/SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeSummary
 @onready var safe_bits_row = $UI/SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeBitsRow
+@onready var safe_title = $UI/SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeTitle
 @onready var btn_retry = $UI/SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeActions/BtnRetry
 @onready var btn_continue = $UI/SafeModeOverlay/CenterContainer/SafePanel/SafeContent/SafeActions/BtnContinue
 
@@ -81,8 +89,19 @@ var weight_labels: Array[Label] = []
 var safe_bit_labels: Array[Label] = []
 
 var log_lines: Array[String] = []
-var last_hint_text: String = ""
+var _hint_state_kind: String = "none"
+var _hint_state_key: String = ""
+var _hint_state_default: String = ""
+var _hint_state_params: Dictionary = {}
+var _hint_diag_code: String = ""
+var _hint_zone_code: String = ""
+var _hint_hd: int = 0
+var _has_last_hint: bool = false
 var _shift_status_token: int = 0
+var _shift_state_key: String = ""
+var _shift_state_default: String = ""
+var _shift_state_params: Dictionary = {}
+var _shift_state_color: Color = Color(1, 1, 1, 1)
 
 var details_open: bool = false
 var _swipe_start_pos: Vector2 = Vector2.ZERO
@@ -102,6 +121,10 @@ func _ready():
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	if not GlobalMetrics.shield_triggered.is_connected(_on_shield_triggered):
 		GlobalMetrics.shield_triggered.connect(_on_shield_triggered)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+
+	_apply_i18n()
 
 	await get_tree().process_frame
 	_set_details_open(false, true)
@@ -114,6 +137,106 @@ func _ready():
 func _exit_tree() -> void:
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _apply_i18n() -> void:
+	btn_details.text = _tr("decryptor.ab.ui.btn_details", "LOG")
+	upper_title.text = _tr("decryptor.ab.ui.upper_nibble", "UPPER")
+	lower_title.text = _tr("decryptor.ab.ui.lower_nibble", "LOWER")
+	rank_title.text = _tr("decryptor.ab.ui.rank_title", "RANK")
+	protocol_title.text = _tr("decryptor.ab.ui.protocol_title", "PROTOCOL DIAGNOSTICS")
+	live_log_title.text = _tr("decryptor.ab.ui.live_log_title", "LIVE TERMINAL")
+	hint_title.text = _tr("decryptor.ab.ui.hint_title", "LAST DIAGNOSTIC")
+	btn_hint.text = _tr("decryptor.ab.ui.btn_hint", "HINT")
+	btn_check.text = _tr("decryptor.ab.ui.btn_check", "CHECK")
+	btn_reset.text = _tr("decryptor.ab.ui.btn_reset", "RESET")
+	details_title.text = _tr("decryptor.ab.ui.details_title", "DETAILS")
+	btn_close_details.text = _tr("decryptor.ab.ui.btn_close_details", "CLOSE")
+	safe_title.text = _tr("decryptor.ab.ui.safe_title", "SAFE MODE: ERROR ANALYSIS")
+	btn_retry.text = _tr("decryptor.ab.ui.btn_retry", "RETRY")
+	btn_continue.text = _tr("decryptor.ab.ui.btn_continue", "CONTINUE")
+
+	if GlobalMetrics != null:
+		var level_idx: int = GlobalMetrics.current_level_index
+		_update_level_label(level_idx)
+		_update_rank_info()
+		_update_target_display(level_idx, GlobalMetrics.current_mode)
+		_update_protocol_diagnostics()
+		_on_stability_changed(GlobalMetrics.stability, 0.0)
+
+	_apply_hint_state()
+	_apply_shift_state()
+	if safe_overlay.visible:
+		_update_safe_summary()
+
+func _set_hint_key(key: String, default_text: String, params: Dictionary = {}) -> void:
+	_hint_state_kind = "key"
+	_hint_state_key = key
+	_hint_state_default = default_text
+	_hint_state_params = params.duplicate(true)
+	_apply_hint_state()
+
+func _set_hint_diagnosis(diagnosis_code: String, zone_code: String, hd: int) -> void:
+	_hint_state_kind = "diagnosis"
+	_hint_diag_code = diagnosis_code
+	_hint_zone_code = zone_code
+	_hint_hd = hd
+	_apply_hint_state()
+
+func _build_diagnosis_line() -> String:
+	return _tr("decryptor.ab.hint.diagnosis_zone", "Diagnosis: {diagnosis} | Zone: {zone}", {
+		"diagnosis": _translate_hint(_hint_diag_code),
+		"zone": _translate_hint(_hint_zone_code)
+	})
+
+func _apply_hint_state() -> void:
+	match _hint_state_kind:
+		"key":
+			hint_text.text = _tr(_hint_state_key, _hint_state_default, _hint_state_params)
+		"diagnosis":
+			var line := _build_diagnosis_line()
+			hint_text.text = _tr("decryptor.ab.hint.diagnosis_with_hd", "{line}\nHD: {hd}", {
+				"line": line,
+				"hd": _hint_hd
+			})
+		_:
+			hint_text.text = ""
+
+func _set_shift_status_i18n(key: String, default_text: String, color: Color, auto_reset: bool, params: Dictionary = {}) -> void:
+	_shift_state_key = key
+	_shift_state_default = default_text
+	_shift_state_params = params.duplicate(true)
+	_shift_state_color = color
+	_set_shift_status(_tr(key, default_text, params), color, auto_reset)
+
+func _apply_shift_state() -> void:
+	if _shift_state_key.is_empty():
+		return
+	_set_shift_status(_tr(_shift_state_key, _shift_state_default, _shift_state_params), _shift_state_color, false)
+
+func _update_safe_summary() -> void:
+	var xor_val = current_input ^ current_target
+	var wrong_bits = 0
+	for bit in range(8):
+		if (xor_val & (1 << bit)) != 0:
+			wrong_bits += 1
+	safe_summary.text = _tr("decryptor.ab.safe.summary", "Target: {target}\nInput: {input}\nWrong bits: {count}", {
+		"target": _format_value(current_target, GlobalMetrics.current_mode),
+		"input": _format_value(current_input, GlobalMetrics.current_mode),
+		"count": wrong_bits
+	})
+
+func _show_toast_key(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
+	_show_toast(_tr(key, default_text, params), color)
 
 func _wire_signals() -> void:
 	btn_back.pressed.connect(_on_menu_pressed)
@@ -179,7 +302,10 @@ func start_level(level_idx: int) -> void:
 	is_level_active = true
 	current_target = GlobalMetrics.current_target_value
 	current_input = 0
-	last_hint_text = ""
+	_has_last_hint = false
+	_hint_diag_code = ""
+	_hint_zone_code = ""
+	_hint_hd = 0
 	level_started_ms = Time.get_ticks_msec()
 	first_action_ms = -1
 	check_attempt_count = 0
@@ -192,30 +318,45 @@ func start_level(level_idx: int) -> void:
 	_update_weights_for_mode(mode)
 	_update_target_display(level_idx, mode)
 	_update_protocol_diagnostics()
-	hint_text.text = "Диагностики пока нет."
+	_set_hint_key("decryptor.ab.hint.none", "No diagnostics yet.")
 	_reset_bit_buttons()
 	_update_input_display()
-	_log_message("Система инициализирована. Цель зафиксирована.", COLOR_OK)
+	_log_message(_tr("decryptor.ab.log.system_ready", "System initialized. Target locked."), COLOR_OK)
 	_on_stability_changed(100.0, 0.0)
 
 func _update_level_label(level_idx: int) -> void:
 	var protocol = "A" if level_idx < 15 else "B"
-	level_label.text = "ПРОТОКОЛ %s-%d" % [protocol, level_idx + 1]
+	level_label.text = _tr("decryptor.ab.level_label", "PROTOCOL {protocol}-{index}", {
+		"protocol": protocol,
+		"index": level_idx + 1
+	})
 
 func _update_rank_info() -> void:
 	var rank_info: Dictionary = GlobalMetrics.get_rank_info()
-	rank_label.text = str(rank_info.get("name", "НОВИЧОК"))
-	progress_label.text = "УРОВЕНЬ %d / %d" % [GlobalMetrics.current_level_index + 1, GlobalMetrics.MAX_LEVELS]
+	var rank_key := "decryptor.ab.rank.master"
+	if GlobalMetrics.current_level_index < 5:
+		rank_key = "decryptor.ab.rank.intern"
+	elif GlobalMetrics.current_level_index < 10:
+		rank_key = "decryptor.ab.rank.signalist"
+	elif GlobalMetrics.current_level_index < 15:
+		rank_key = "decryptor.ab.rank.analyst"
+	elif GlobalMetrics.current_level_index < 30:
+		rank_key = "decryptor.ab.rank.engineer"
+	rank_label.text = _tr(rank_key, "NOVICE")
+	progress_label.text = _tr("decryptor.ab.progress_label", "LEVEL {current} / {total}", {
+		"current": GlobalMetrics.current_level_index + 1,
+		"total": GlobalMetrics.MAX_LEVELS
+	})
 	if rank_info.has("color"):
 		rank_label.add_theme_color_override("font_color", rank_info["color"])
 
 func _update_target_display(level_idx: int, mode: String) -> void:
 	if level_idx >= 15:
-		target_title.text = "ПРИМЕР"
+		target_title.text = _tr("decryptor.ab.target.example", "EXAMPLE")
 		target_value.text = _format_example(mode)
-		target_sub.text = "РЕЖИМ: %s" % mode
+		target_sub.text = _tr("decryptor.ab.target.mode", "MODE: {mode}", {"mode": mode})
 	else:
-		target_title.text = "ЦЕЛЬ"
+		target_title.text = _tr("decryptor.ab.target.title", "TARGET")
 		target_value.text = _format_value(current_target, mode)
 		if mode == "DEC":
 			target_sub.text = ""
@@ -229,12 +370,12 @@ func _update_protocol_diagnostics() -> void:
 		reg_a_value.text = "A: %s" % _format_value(GlobalMetrics.current_reg_a, GlobalMetrics.current_mode)
 		reg_b_value.text = "B: %s" % _format_value(GlobalMetrics.current_reg_b, GlobalMetrics.current_mode)
 		op_value.text = "OP: %s" % _operator_to_text(GlobalMetrics.current_operator)
-		_set_shift_status("СДВИГ: свайп влево для применения", Color(0.7, 0.9, 0.7, 1.0), false)
+		_set_shift_status_i18n("decryptor.ab.shift.swipe", "SHIFT: swipe left to apply", Color(0.7, 0.9, 0.7, 1.0), false)
 	else:
 		reg_a_value.text = "A: --"
 		reg_b_value.text = "B: --"
 		op_value.text = "OP: --"
-		_set_shift_status("СДВИГ: ожидание", Color(0.65, 0.65, 0.65, 1.0), false)
+		_set_shift_status_i18n("decryptor.ab.shift.waiting", "SHIFT: waiting", Color(0.65, 0.65, 0.65, 1.0), false)
 
 func _operator_to_text(op: int) -> String:
 	if op == GlobalMetrics.Operator.ADD:
@@ -242,6 +383,7 @@ func _operator_to_text(op: int) -> String:
 	if op == GlobalMetrics.Operator.SUB:
 		return "-"
 	return "<<"
+
 func _update_weights_for_mode(mode: String) -> void:
 	var weights: Array[int] = []
 	if mode == "DEC":
@@ -293,18 +435,29 @@ func _on_check_pressed() -> void:
 	var error_code := str(result.get("error", ""))
 
 	if error_code.begins_with("SHIELD"):
-		var shield_message := str(result.get("message", "Shield active."))
-		hint_text.text = shield_message
 		if error_code == "SHIELD_ACTIVE":
 			var now_sec := Time.get_ticks_msec() / 1000.0
 			var cooldown_left := maxf(0.0, float(GlobalMetrics.blocked_until) - now_sec)
-			_show_toast("SHIELD: COOLDOWN %.1fs" % cooldown_left, COLOR_WARN)
-			_log_message("Shield cooldown %.1fs." % cooldown_left, COLOR_WARN)
+			_set_hint_key("decryptor.ab.hint.shield_cooldown", "Shield cooldown: {seconds}s.", {
+				"seconds": "%.1f" % cooldown_left
+			})
+			_show_toast_key("decryptor.ab.toast.shield_cooldown", "SHIELD: COOLDOWN {seconds}s", COLOR_WARN, {
+				"seconds": "%.1f" % cooldown_left
+			})
+			_log_message(_tr("decryptor.ab.log.shield_cooldown", "Shield cooldown {seconds}s.", {
+				"seconds": "%.1f" % cooldown_left
+			}), COLOR_WARN)
+		elif error_code == "SHIELD_FREQ":
+			_set_hint_key("decryptor.ab.hint.shield_freq", "Frequency shield triggered: too many checks.")
+		elif error_code == "SHIELD_LAZY":
+			_set_hint_key("decryptor.ab.hint.shield_lazy", "Lazy search detected. Change input in larger steps.")
+		else:
+			_set_hint_key("decryptor.ab.hint.shield_active", "Shield is active. Wait for recharge.")
 		return
 
 	if result.success:
 		AudioManager.play("relay")
-		_show_toast("УСПЕХ", COLOR_OK)
+		_show_toast_key("decryptor.ab.toast.success", "SUCCESS", COLOR_OK)
 		_pulse_panel(input_panel, COLOR_OK)
 		_overlay_glitch(0.15, 0.12)
 		is_level_active = false
@@ -312,33 +465,40 @@ func _on_check_pressed() -> void:
 		if GlobalMetrics.current_level_index < GlobalMetrics.MAX_LEVELS - 1:
 			start_level(GlobalMetrics.current_level_index + 1)
 		else:
-			_log_message("ВСЕ УРОВНИ ЗАВЕРШЕНЫ.", COLOR_OK)
+			_log_message(_tr("decryptor.ab.log.all_levels_done", "ALL LEVELS COMPLETED."), COLOR_OK)
 	else:
 		AudioManager.play("error")
 		_pulse_panel(input_panel, COLOR_ERR)
 		_overlay_glitch(0.6, 0.2)
 		if result.has("hints"):
-			var h = result.hints
-			last_hint_text = "Диагноз: %s | Зона: %s" % [_translate_hint(h.diagnosis), _translate_hint(h.zone)]
-			hint_text.text = "%s\nHD: %d" % [last_hint_text, int(result.get("hamming", 0))]
-			_log_message(last_hint_text, COLOR_WARN)
-		_show_toast("НЕВЕРНО", COLOR_ERR)
+			var h: Dictionary = result.hints
+			_has_last_hint = true
+			_hint_diag_code = str(h.get("diagnosis", ""))
+			_hint_zone_code = str(h.get("zone", ""))
+			_hint_hd = int(result.get("hamming", 0))
+			_set_hint_diagnosis(_hint_diag_code, _hint_zone_code, _hint_hd)
+			_log_message(_build_diagnosis_line(), COLOR_WARN)
+		else:
+			_set_hint_key("decryptor.ab.hint.incorrect_generic", "Incorrect input.")
+		_show_toast_key("decryptor.ab.toast.incorrect", "INCORRECT", COLOR_ERR)
 		_apply_error_highlight(current_input ^ current_target)
+
 func _on_hint_pressed() -> void:
 	hint_used = true
-	if last_hint_text == "":
-		hint_text.text = "Диагностика недоступна. Сначала запустите проверку."
-		_show_toast("ПОДСКАЗКА НЕДОСТУПНА", COLOR_WARN)
+	if not _has_last_hint:
+		_set_hint_key("decryptor.ab.hint.unavailable", "Diagnostics unavailable. Run a check first.")
+		_show_toast_key("decryptor.ab.toast.hint_unavailable", "HINT UNAVAILABLE", COLOR_WARN)
 		return
-	hint_text.text = last_hint_text
-	_log_message(last_hint_text, COLOR_WARN)
-	_show_toast("ПОДСКАЗКА ПОКАЗАНА", COLOR_WARN)
+	_set_hint_diagnosis(_hint_diag_code, _hint_zone_code, _hint_hd)
+	_log_message(_build_diagnosis_line(), COLOR_WARN)
+	_show_toast_key("decryptor.ab.toast.hint_shown", "HINT SHOWN", COLOR_WARN)
+
 func _on_reset_pressed() -> void:
 	current_input = 0
 	_reset_bit_buttons()
 	_update_input_display()
 	_clear_error_highlights()
-	_set_shift_status("СДВИГ: ожидание", Color(0.65, 0.65, 0.65, 1.0), false)
+	_set_shift_status_i18n("decryptor.ab.shift.waiting", "SHIFT: waiting", Color(0.65, 0.65, 0.65, 1.0), false)
 
 func _apply_error_highlight(xor_val: int) -> void:
 	for bit in range(8):
@@ -354,7 +514,7 @@ func _clear_error_highlights() -> void:
 
 func _on_stability_changed(new_val: float, _change: float) -> void:
 	stability_bar.value = new_val
-	stability_text.text = "СТАБИЛЬНОСТЬ: %d%%" % int(new_val)
+	stability_text.text = _tr("decryptor.ab.stability", "STABILITY: {value}%", {"value": int(new_val)})
 	if new_val <= 0:
 		_show_safe_mode()
 
@@ -366,9 +526,10 @@ func _on_shield_triggered(shield_name: String, duration: float) -> void:
 
 	btn_check.disabled = true
 	_overlay_glitch(0.6, 0.2)
-	_show_toast("ЩИТ АКТИВЕН", COLOR_WARN)
+	_show_toast_key("decryptor.ab.toast.shield_active", "SHIELD ACTIVE", COLOR_WARN)
 	await get_tree().create_timer(duration).timeout
 	btn_check.disabled = false
+
 func _flash_shield(label: Label) -> void:
 	label.modulate = Color(1, 1, 1, 1)
 	var tween = create_tween()
@@ -382,19 +543,9 @@ func _show_safe_mode() -> void:
 	safe_overlay.visible = true
 	btn_check.disabled = true
 	btn_hint.disabled = true
+	_update_safe_summary()
 
 	var xor_val = current_input ^ current_target
-	var wrong_bits = 0
-	for bit in range(8):
-		if (xor_val & (1 << bit)) != 0:
-			wrong_bits += 1
-
-	safe_summary.text = "Цель: %s\nВвод: %s\nОшибочных битов: %d" % [
-		_format_value(current_target, GlobalMetrics.current_mode),
-		_format_value(current_input, GlobalMetrics.current_mode),
-		wrong_bits
-	]
-
 	for i in range(8):
 		var bit_index = 7 - i
 		var lbl = safe_bit_labels[i]
@@ -402,6 +553,7 @@ func _show_safe_mode() -> void:
 			lbl.modulate = Color(1, 0.3, 0.3, 1)
 		else:
 			lbl.modulate = Color(0.7, 0.7, 0.7, 1)
+
 func _on_retry_pressed() -> void:
 	GlobalMetrics.stability = 100.0
 	GlobalMetrics.stability_changed.emit(100.0, 0.0)
@@ -470,13 +622,20 @@ func _pulse_panel(panel: Control, color: Color) -> void:
 
 func _translate_hint(code: String) -> String:
 	match code:
-		"VALUE_LOW": return "Значение ниже цели"
-		"VALUE_HIGH": return "Значение выше цели"
-		"BIT_ERROR": return "Несовпадение битов"
-		"BOTH_NIBBLES": return "Ошибки в обеих тетрадах"
-		"LOWER_NIBBLE": return "Ошибки в младшей тетраде (биты 0-3)"
-		"UPPER_NIBBLE": return "Ошибки в старшей тетраде (биты 4-7)"
-		"NONE": return "Несовпадений нет"
+		"VALUE_LOW":
+			return _tr("decryptor.ab.hint_code.value_low", "Value is below target")
+		"VALUE_HIGH":
+			return _tr("decryptor.ab.hint_code.value_high", "Value is above target")
+		"BIT_ERROR":
+			return _tr("decryptor.ab.hint_code.bit_error", "Bit mismatch")
+		"BOTH_NIBBLES":
+			return _tr("decryptor.ab.hint_code.both_nibbles", "Errors in both nibbles")
+		"LOWER_NIBBLE":
+			return _tr("decryptor.ab.hint_code.lower_nibble", "Errors in lower nibble (bits 0-3)")
+		"UPPER_NIBBLE":
+			return _tr("decryptor.ab.hint_code.upper_nibble", "Errors in upper nibble (bits 4-7)")
+		"NONE":
+			return _tr("decryptor.ab.hint_code.none", "No mismatches")
 	return code
 
 func _set_shift_status(text: String, color: Color, auto_reset: bool) -> void:
@@ -493,9 +652,9 @@ func _reset_shift_status_later(token: int) -> void:
 	if token != _shift_status_token:
 		return
 	if GlobalMetrics.current_level_index >= 15:
-		_set_shift_status("СДВИГ: свайп влево для применения", Color(0.7, 0.9, 0.7, 1.0), false)
+		_set_shift_status_i18n("decryptor.ab.shift.swipe", "SHIFT: swipe left to apply", Color(0.7, 0.9, 0.7, 1.0), false)
 	else:
-		_set_shift_status("СДВИГ: ожидание", Color(0.65, 0.65, 0.65, 1.0), false)
+		_set_shift_status_i18n("decryptor.ab.shift.waiting", "SHIFT: waiting", Color(0.65, 0.65, 0.65, 1.0), false)
 
 func _overlay_glitch(strength: float, duration: float) -> void:
 	if noir_overlay != null and noir_overlay.has_method("glitch_burst"):
@@ -575,8 +734,8 @@ func _apply_shift_left() -> void:
 	current_input = (current_input << 1) & 0xFF
 	_sync_switches_to_input()
 	_update_input_display()
-	_set_shift_status("СДВИГ: применён", COLOR_OK, true)
-	_log_message("Применён жест сдвига влево.", COLOR_OK)
+	_set_shift_status_i18n("decryptor.ab.shift.applied", "SHIFT: applied", COLOR_OK, true)
+	_log_message(_tr("decryptor.ab.log.shift_applied", "Left shift gesture applied."), COLOR_OK)
 
 func _on_viewport_size_changed() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
@@ -672,7 +831,13 @@ func _register_trial(result: Dictionary, submitted_input: int) -> void:
 	var stage_id := "A" if GlobalMetrics.current_level_index < 15 else "B"
 	var task_id := "%s_%02d" % [stage_id, level_number]
 	var variant_source := "%s|%s|%d" % [GlobalMetrics.current_mode, stage_id, current_target]
-	var payload := TrialV2.build("DECRYPTOR", stage_id, task_id, "NUMERIC_ENTRY", str(hash(variant_source)))
+	var trial_v2: Node = get_node_or_null("/root/TrialV2")
+	if trial_v2 == null:
+		return
+	var payload_variant: Variant = trial_v2.call("build", "DECRYPTOR", stage_id, task_id, "NUMERIC_ENTRY", str(hash(variant_source)))
+	if typeof(payload_variant) != TYPE_DICTIONARY:
+		return
+	var payload: Dictionary = payload_variant as Dictionary
 	var elapsed_ms: int = maxi(0, Time.get_ticks_msec() - level_started_ms)
 	var is_success := bool(result.get("success", false))
 	var error_code := str(result.get("error", "NONE"))
@@ -700,3 +865,11 @@ func _sync_switches_to_input() -> void:
 		var btn: Button = bit_buttons[bit]
 		btn.set_pressed_no_signal(pressed)
 		btn.text = "1" if pressed else "0"
+
+
+
+
+
+
+
+

@@ -13,25 +13,25 @@
     "rules": [
       {
         "source_id": "R1",
-        "selector": ".тревога",
-        "kind": "сорт",
+        "selector": ".С‚СЂРµРІРѕРіР°",
+        "kind": "СЃРѕСЂС‚",
         "weight": 10,
         "important": false,
         "order": 1,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#ff0000"
         }
       },
       {
         "source_id": "R2",
         "selector": "#x",
-        "kind": "идентификатор",
+        "kind": "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
         "weight": 100,
         "important": false,
         "order": 2,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#00ff00"
         }
       }
@@ -40,23 +40,35 @@
       {
         "id": "RED",
         "label": "Красный",
-        "value": "#ff0000"
+        "value": "#ff0000",
+        "label_key": "case08.fr8c.FR8-C-01.option.RED.label"
       },
       {
         "id": "GREEN",
         "label": "Зелёный",
-        "value": "#00ff00"
+        "value": "#00ff00",
+        "label_key": "case08.fr8c.FR8-C-01.option.GREEN.label"
       },
       {
         "id": "BLUE",
         "label": "Синий",
-        "value": "#0000ff"
+        "value": "#0000ff",
+        "label_key": "case08.fr8c.FR8-C-01.option.BLUE.label"
       }
     ],
     "correct_option_id": "GREEN",
     "feedback_rules": {
       "SPECIFICITY_ERROR": "ID-защита сильнее класса: #x (100) > .alert (10).",
       "OK": "Взлом успешен: победил #x."
+    },
+    "briefing_key": "case08.fr8c.FR8-C-01.briefing",
+    "target_text_key": "case08.fr8c.FR8-C-01.target_text",
+    "html_keys": [
+      "case08.fr8c.FR8-C-01.html.01"
+    ],
+    "feedback_rules_keys": {
+      "SPECIFICITY_ERROR": "case08.fr8c.FR8-C-01.feedback.SPECIFICITY_ERROR",
+      "OK": "case08.fr8c.FR8-C-01.feedback.OK"
     }
   },
   {
@@ -73,25 +85,25 @@
     "rules": [
       {
         "source_id": "R1",
-        "selector": ".тревога",
-        "kind": "сорт",
+        "selector": ".С‚СЂРµРІРѕРіР°",
+        "kind": "СЃРѕСЂС‚",
         "weight": 10,
         "important": false,
         "order": 1,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#ff0000"
         }
       },
       {
         "source_id": "R2",
-        "selector": ".стелс",
-        "kind": "сорт",
+        "selector": ".СЃС‚РµР»СЃ",
+        "kind": "СЃРѕСЂС‚",
         "weight": 10,
         "important": false,
         "order": 2,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#0000ff"
         }
       }
@@ -100,23 +112,35 @@
       {
         "id": "RED",
         "label": "Красный",
-        "value": "#ff0000"
+        "value": "#ff0000",
+        "label_key": "case08.fr8c.FR8-C-02.option.RED.label"
       },
       {
         "id": "BLUE",
         "label": "Синий",
-        "value": "#0000ff"
+        "value": "#0000ff",
+        "label_key": "case08.fr8c.FR8-C-02.option.BLUE.label"
       },
       {
         "id": "GREEN",
         "label": "Зелёный",
-        "value": "#00ff00"
+        "value": "#00ff00",
+        "label_key": "case08.fr8c.FR8-C-02.option.GREEN.label"
       }
     ],
     "correct_option_id": "BLUE",
     "feedback_rules": {
       "ORDER_TIE": "Вес равный (10 и 10), побеждает правило ниже по файлу (order=2).",
       "OK": "Верно: одинаковый вес решает порядок."
+    },
+    "briefing_key": "case08.fr8c.FR8-C-02.briefing",
+    "target_text_key": "case08.fr8c.FR8-C-02.target_text",
+    "html_keys": [
+      "case08.fr8c.FR8-C-02.html.01"
+    ],
+    "feedback_rules_keys": {
+      "ORDER_TIE": "case08.fr8c.FR8-C-02.feedback.ORDER_TIE",
+      "OK": "case08.fr8c.FR8-C-02.feedback.OK"
     }
   },
   {
@@ -134,24 +158,24 @@
       {
         "source_id": "R1",
         "selector": "#x",
-        "kind": "идентификатор",
+        "kind": "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
         "weight": 100,
         "important": false,
         "order": 2,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#00ff00"
         }
       },
       {
         "source_id": "R2",
-        "selector": ".тревога",
-        "kind": "сорт",
+        "selector": ".С‚СЂРµРІРѕРіР°",
+        "kind": "СЃРѕСЂС‚",
         "weight": 10,
         "important": true,
         "order": 3,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#ff0000"
         }
       }
@@ -160,23 +184,35 @@
       {
         "id": "RED",
         "label": "Красный",
-        "value": "#ff0000"
+        "value": "#ff0000",
+        "label_key": "case08.fr8c.FR8-C-03.option.RED.label"
       },
       {
         "id": "GREEN",
         "label": "Зелёный",
-        "value": "#00ff00"
+        "value": "#00ff00",
+        "label_key": "case08.fr8c.FR8-C-03.option.GREEN.label"
       },
       {
         "id": "BLUE",
         "label": "Синий",
-        "value": "#0000ff"
+        "value": "#0000ff",
+        "label_key": "case08.fr8c.FR8-C-03.option.BLUE.label"
       }
     ],
     "correct_option_id": "RED",
     "feedback_rules": {
       "IMPORTANT_MISSED": "!important перебивает обычное правило, даже если селектор слабее.",
       "OK": "Верно: важность сильнее веса."
+    },
+    "briefing_key": "case08.fr8c.FR8-C-03.briefing",
+    "target_text_key": "case08.fr8c.FR8-C-03.target_text",
+    "html_keys": [
+      "case08.fr8c.FR8-C-03.html.01"
+    ],
+    "feedback_rules_keys": {
+      "IMPORTANT_MISSED": "case08.fr8c.FR8-C-03.feedback.IMPORTANT_MISSED",
+      "OK": "case08.fr8c.FR8-C-03.feedback.OK"
     }
   },
   {
@@ -191,11 +227,11 @@
     ],
     "inline_decl": {
       "source_id": "INLINE",
-      "kind": "в соответствии",
+      "kind": "РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё",
       "weight": 1000,
       "important": false,
       "decl": {
-        "prop": "цвет",
+        "prop": "С†РІРµС‚",
         "value": "#0000ff"
       }
     },
@@ -203,24 +239,24 @@
       {
         "source_id": "R1",
         "selector": "#x",
-        "kind": "идентификатор",
+        "kind": "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
         "weight": 100,
         "important": false,
         "order": 2,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#00ff00"
         }
       },
       {
         "source_id": "R2",
-        "selector": ".тревога",
-        "kind": "сорт",
+        "selector": ".С‚СЂРµРІРѕРіР°",
+        "kind": "СЃРѕСЂС‚",
         "weight": 10,
         "important": false,
         "order": 3,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#ff0000"
         }
       }
@@ -229,23 +265,35 @@
       {
         "id": "BLUE",
         "label": "Синий",
-        "value": "#0000ff"
+        "value": "#0000ff",
+        "label_key": "case08.fr8c.FR8-C-04.option.BLUE.label"
       },
       {
         "id": "GREEN",
         "label": "Зелёный",
-        "value": "#00ff00"
+        "value": "#00ff00",
+        "label_key": "case08.fr8c.FR8-C-04.option.GREEN.label"
       },
       {
         "id": "RED",
         "label": "Красный",
-        "value": "#ff0000"
+        "value": "#ff0000",
+        "label_key": "case08.fr8c.FR8-C-04.option.RED.label"
       }
     ],
     "correct_option_id": "BLUE",
     "feedback_rules": {
       "INLINE_OVERRIDE": "Встроенный стиль (1000) перекрывает #id (100) и .class (10).",
       "OK": "Верно: встроенный стиль сильнее."
+    },
+    "briefing_key": "case08.fr8c.FR8-C-04.briefing",
+    "target_text_key": "case08.fr8c.FR8-C-04.target_text",
+    "html_keys": [
+      "case08.fr8c.FR8-C-04.html.01"
+    ],
+    "feedback_rules_keys": {
+      "INLINE_OVERRIDE": "case08.fr8c.FR8-C-04.feedback.INLINE_OVERRIDE",
+      "OK": "case08.fr8c.FR8-C-04.feedback.OK"
     }
   },
   {
@@ -262,25 +310,25 @@
     "rules": [
       {
         "source_id": "R1",
-        "selector": ".тревога",
-        "kind": "сорт",
+        "selector": ".С‚СЂРµРІРѕРіР°",
+        "kind": "СЃРѕСЂС‚",
         "weight": 10,
         "important": false,
         "order": 1,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#ff0000"
         }
       },
       {
         "source_id": "R2",
         "selector": "p#x",
-        "kind": "смешанный",
+        "kind": "СЃРјРµС€Р°РЅРЅС‹Р№",
         "weight": 101,
         "important": false,
         "order": 2,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#0000ff"
         }
       }
@@ -289,23 +337,35 @@
       {
         "id": "BLUE",
         "label": "Синий",
-        "value": "#0000ff"
+        "value": "#0000ff",
+        "label_key": "case08.fr8c.FR8-C-05.option.BLUE.label"
       },
       {
         "id": "RED",
         "label": "Красный",
-        "value": "#ff0000"
+        "value": "#ff0000",
+        "label_key": "case08.fr8c.FR8-C-05.option.RED.label"
       },
       {
         "id": "GREEN",
         "label": "Зелёный",
-        "value": "#00ff00"
+        "value": "#00ff00",
+        "label_key": "case08.fr8c.FR8-C-05.option.GREEN.label"
       }
     ],
     "correct_option_id": "BLUE",
     "feedback_rules": {
       "SPECIFICITY_ERROR": "p#x (101) сильнее .alert (10).",
       "OK": "Верно: суммарный вес решает."
+    },
+    "briefing_key": "case08.fr8c.FR8-C-05.briefing",
+    "target_text_key": "case08.fr8c.FR8-C-05.target_text",
+    "html_keys": [
+      "case08.fr8c.FR8-C-05.html.01"
+    ],
+    "feedback_rules_keys": {
+      "SPECIFICITY_ERROR": "case08.fr8c.FR8-C-05.feedback.SPECIFICITY_ERROR",
+      "OK": "case08.fr8c.FR8-C-05.feedback.OK"
     }
   },
   {
@@ -323,24 +383,24 @@
       {
         "source_id": "R1",
         "selector": "#x",
-        "kind": "идентификатор",
+        "kind": "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
         "weight": 100,
         "important": true,
         "order": 1,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#ff0000"
         }
       },
       {
         "source_id": "R2",
         "selector": "#x",
-        "kind": "идентификатор",
+        "kind": "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
         "weight": 100,
         "important": true,
         "order": 2,
         "decl": {
-          "prop": "цвет",
+          "prop": "С†РІРµС‚",
           "value": "#00ff00"
         }
       }
@@ -349,23 +409,35 @@
       {
         "id": "GREEN",
         "label": "Зелёный",
-        "value": "#00ff00"
+        "value": "#00ff00",
+        "label_key": "case08.fr8c.FR8-C-06.option.GREEN.label"
       },
       {
         "id": "RED",
         "label": "Красный",
-        "value": "#ff0000"
+        "value": "#ff0000",
+        "label_key": "case08.fr8c.FR8-C-06.option.RED.label"
       },
       {
         "id": "BLUE",
         "label": "Синий",
-        "value": "#0000ff"
+        "value": "#0000ff",
+        "label_key": "case08.fr8c.FR8-C-06.option.BLUE.label"
       }
     ],
     "correct_option_id": "GREEN",
     "feedback_rules": {
       "ORDER_TIE": "Важность и вес равны, решает порядок (позже = сильнее).",
       "OK": "Верно: последняя директива выигрывает."
+    },
+    "briefing_key": "case08.fr8c.FR8-C-06.briefing",
+    "target_text_key": "case08.fr8c.FR8-C-06.target_text",
+    "html_keys": [
+      "case08.fr8c.FR8-C-06.html.01"
+    ],
+    "feedback_rules_keys": {
+      "ORDER_TIE": "case08.fr8c.FR8-C-06.feedback.ORDER_TIE",
+      "OK": "case08.fr8c.FR8-C-06.feedback.OK"
     }
   }
 ]

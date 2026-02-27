@@ -54,8 +54,11 @@ var trace: Array = []
 @onready var stability_bar: ProgressBar = $SafeArea/MainLayout/Header/StabilityBar
 
 @onready var briefing_label: Label = $SafeArea/MainLayout/BriefingCard/BriefingLabel
+@onready var code_title_label: Label = $SafeArea/MainLayout/Body/CodeCard/CodeVBox/CodeTitle
 @onready var html_label: RichTextLabel = $SafeArea/MainLayout/Body/CodeCard/CodeVBox/HtmlLabel
 @onready var css_label: RichTextLabel = $SafeArea/MainLayout/Body/CodeCard/CodeVBox/CssLabel
+@onready var hint_line_label: Label = $SafeArea/MainLayout/Body/CodeCard/CodeVBox/HintRow/HintLine
+@onready var decrypt_title_label: Label = $SafeArea/MainLayout/Body/DecryptCard/DecVBox/DecTitle
 @onready var target_preview: Label = $SafeArea/MainLayout/Body/DecryptCard/DecVBox/TargetPreview
 @onready var attack_bar: ProgressBar = $SafeArea/MainLayout/Body/DecryptCard/DecVBox/StrengthRow/AttackBar
 @onready var defense_bar: ProgressBar = $SafeArea/MainLayout/Body/DecryptCard/DecVBox/StrengthRow/DefenseBar
@@ -73,18 +76,16 @@ func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 
 	_connect_ui_signals()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0443\u0440\u043e\u0432\u043d\u0438 \u0444\u0438\u043d\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043e\u0442\u0447\u0451\u0442\u0430 C.")
+		_show_error(_tr("case08.fr8c.load_error", "Не удалось загрузить уровни финального отчёта C."))
 		return
 
-	title_label.text = TEXT_TITLE
-	btn_back.text = TEXT_BACK
-	btn_reset.text = TEXT_RESET
-	btn_confirm.text = TEXT_CONFIRM
-	btn_next.text = TEXT_NEXT
+	_apply_i18n()
 
 	var initial_index: int = clamp(GlobalMetrics.current_level_index, 0, max(0, levels.size() - 1))
 	_start_level(initial_index)
@@ -93,6 +94,8 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.disconnect(_on_stability_changed)
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
 
 func _connect_ui_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -101,6 +104,60 @@ func _connect_ui_signals() -> void:
 	btn_next.pressed.connect(_on_next_pressed)
 	html_label.meta_clicked.connect(_on_meta_clicked)
 	css_label.meta_clicked.connect(_on_meta_clicked)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+	_apply_runtime_i18n()
+
+func _apply_i18n() -> void:
+	title_label.text = _tr("case08.fr8c.title", TEXT_TITLE)
+	btn_back.text = _tr("case08.common.back", TEXT_BACK)
+	btn_reset.text = _tr("case08.common.reset", TEXT_RESET)
+	btn_confirm.text = _tr("case08.common.confirm", TEXT_CONFIRM)
+	btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if (not levels.is_empty() and _is_last_level()) else _tr("case08.common.next", TEXT_NEXT)
+	code_title_label.text = _tr("case08.fr8c.code_title", "КОД")
+	decrypt_title_label.text = _tr("case08.fr8c.decrypt_title", "ДЕШИФРАТОР")
+	hint_line_label.text = _tr("case08.fr8c.hint_line", "Нажмите по селектору для ПРОСМОТРА.")
+
+func _apply_runtime_i18n() -> void:
+	if levels.is_empty():
+		return
+	briefing_label.text = I18n.resolve_field(level_data, "briefing")
+	target_preview.text = I18n.resolve_field(level_data, "target_text", {"default": _tr("case08.fr8c.target_default", "Секретный код")})
+	_build_option_buttons()
+	_render_code_window()
+
+	if attempts > 0 and not selected_option_id.is_empty():
+		var evaluation: Dictionary = FR8CScoring.evaluate(level_data, selected_option_id)
+		var feedback_text: String = FR8CScoring.feedback_text(level_data, evaluation)
+		var cascade_explanation: String = str(evaluation.get("cascade_explanation", "")).strip_edges()
+		explain_label.text = cascade_explanation if not cascade_explanation.is_empty() else feedback_text
+		if bool(evaluation.get("is_correct", false)):
+			_set_status("%s %s" % [feedback_text, _tr("case08.fr8c.status.next_hint", STATUS_NEXT_HINT)], COLOR_OK)
+		else:
+			_set_status(
+				_tr(
+					"case08.fr8c.status.attack_vs_defense",
+					"Ваш удар: {attack}, Щит: {defense}.",
+					{
+						"attack": int(evaluation.get("attack_strength", 0)),
+						"defense": int(evaluation.get("defense_strength", 0))
+					}
+				),
+				COLOR_ERR
+			)
+	elif not selected_option_id.is_empty():
+		explain_label.text = _tr("case08.fr8c.explain_hint", EXPLAIN_HINT)
+		_set_status(_tr("case08.fr8c.status.option_selected", STATUS_OPTION_SELECTED), COLOR_INFO)
+	else:
+		explain_label.text = _tr("case08.fr8c.explain_hint", EXPLAIN_HINT)
+		_set_status(_tr("case08.fr8c.status.hint", STATUS_HINT), COLOR_INFO)
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	if not merged.has("default"):
+		merged["default"] = default_text
+	return I18n.tr_key(key, merged)
 
 func _load_levels() -> void:
 	levels = FR8CData.load_levels(LEVELS_PATH)
@@ -128,8 +185,8 @@ func _start_level(index: int) -> void:
 	start_time_ms = Time.get_ticks_msec()
 
 	level_label.text = _build_level_label()
-	briefing_label.text = str(level_data.get("briefing", ""))
-	target_preview.text = str(level_data.get("target_text", "\u0421\u0435\u043a\u0440\u0435\u0442\u043d\u044b\u0439 \u043a\u043e\u0434"))
+	briefing_label.text = I18n.resolve_field(level_data, "briefing")
+	target_preview.text = I18n.resolve_field(level_data, "target_text", {"default": _tr("case08.fr8c.target_default", "Секретный код")})
 	target_preview.modulate = COLOR_INFO
 
 	_build_option_buttons()
@@ -171,8 +228,9 @@ func _build_option_buttons() -> void:
 		var btn: Button = Button.new()
 		btn.custom_minimum_size = Vector2(0, 52)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var option_label: String = I18n.resolve_field(option_data, "label", {"default": str(option_data.get("label", option_id))})
 		btn.text = "%s  [%s]" % [
-			str(option_data.get("label", option_id)),
+			option_label,
 			str(option_data.get("value", ""))
 		]
 		btn.pressed.connect(_on_option_pressed.bind(option_id))
@@ -183,12 +241,23 @@ func _build_option_buttons() -> void:
 
 func _render_code_window() -> void:
 	var html_lines: Array[String] = []
-	for line_var in level_data.get("html", []) as Array:
-		html_lines.append("[color=#d2d2d2]%s[/color]" % _escape_bbcode(str(line_var)))
+	var html_raw: Array = level_data.get("html", []) as Array
+	var html_keys: Array = level_data.get("html_keys", []) as Array
+	var html_count: int = max(html_raw.size(), html_keys.size())
+	for i in range(html_count):
+		var fallback_line: String = str(html_raw[i]) if i < html_raw.size() else ""
+		var line_text: String = fallback_line
+		if i < html_keys.size():
+			var key: String = str(html_keys[i]).strip_edges()
+			if not key.is_empty():
+				line_text = I18n.tr_key(key, {"default": fallback_line})
+		if line_text.is_empty():
+			continue
+		html_lines.append("[color=#d2d2d2]%s[/color]" % _escape_bbcode(line_text))
 
 	var inline_var: Variant = level_data.get("inline_decl", null)
 	if inline_var != null and typeof(inline_var) == TYPE_DICTIONARY:
-		html_lines.append("[url=inspect:inline][color=#ffca5f]style=\"color:...\" (проверить)[/color][/url]")
+		html_lines.append("[url=inspect:inline][color=#ffca5f]%s[/color][/url]" % _escape_bbcode(_tr("case08.fr8c.inspect_inline", "style=\"color:...\" (проверить)")))
 
 	if html_lines.is_empty():
 		html_lines.append("-")
@@ -239,12 +308,12 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 	defense_bar.value = 0
 	btn_confirm.disabled = true
 	btn_next.disabled = true
-	btn_next.text = TEXT_FINISH if _is_last_level() else TEXT_NEXT
+	btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
 	target_preview.modulate = COLOR_INFO
-	explain_label.text = EXPLAIN_HINT
+	explain_label.text = _tr("case08.fr8c.explain_hint", EXPLAIN_HINT)
 
 	_refresh_option_state()
-	_set_status(STATUS_HINT, COLOR_INFO)
+	_set_status(_tr("case08.fr8c.status.hint", STATUS_HINT), COLOR_INFO)
 
 func _on_option_pressed(option_id: String) -> void:
 	if trial_locked:
@@ -265,7 +334,7 @@ func _on_option_pressed(option_id: String) -> void:
 		button_tween.tween_property(selected_button, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 	_refresh_option_state()
-	_set_status(STATUS_OPTION_SELECTED, COLOR_INFO)
+	_set_status(_tr("case08.fr8c.status.option_selected", STATUS_OPTION_SELECTED), COLOR_INFO)
 	_log_event("OPTION_SELECTED", {"option_id": option_id})
 	if AudioManager != null:
 		AudioManager.play("click")
@@ -297,14 +366,14 @@ func _on_meta_clicked(meta: Variant) -> void:
 
 	var source_data: Dictionary = FR8CScoring.inspect_source(level_data, source_id)
 	if source_data.is_empty():
-		_set_status(STATUS_INSPECT_UNAVAILABLE, COLOR_WARN)
+		_set_status(_tr("case08.fr8c.status.inspect_unavailable", STATUS_INSPECT_UNAVAILABLE), COLOR_WARN)
 		return
 
 	inspect_count += 1
 	_log_event("INSPECT", {"source_id": source_id})
 	if inspector_popup != null and inspector_popup.has_method("show_inspection"):
 		inspector_popup.call("show_inspection", source_data)
-	_set_status(STATUS_INSPECTED, COLOR_INFO)
+	_set_status(_tr("case08.fr8c.status.inspected", STATUS_INSPECTED), COLOR_INFO)
 	if AudioManager != null:
 		AudioManager.play("click")
 
@@ -378,8 +447,8 @@ func _on_confirm_pressed() -> void:
 		trial_locked = true
 		btn_confirm.disabled = true
 		btn_next.disabled = false
-		btn_next.text = TEXT_FINISH if _is_last_level() else TEXT_NEXT
-		_set_status("%s %s" % [feedback_text, STATUS_NEXT_HINT], COLOR_OK)
+		btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
+		_set_status("%s %s" % [feedback_text, _tr("case08.fr8c.status.next_hint", STATUS_NEXT_HINT)], COLOR_OK)
 
 		var winner_data: Dictionary = evaluation.get("winner", {}) as Dictionary
 		var winner_color: Color = _color_from_hex(str(winner_data.get("color", "")), COLOR_OK)
@@ -391,7 +460,20 @@ func _on_confirm_pressed() -> void:
 		trial_locked = false
 		btn_next.disabled = true
 		btn_confirm.disabled = false
-		_set_status("%s \u0412\u0430\u0448 \u0443\u0434\u0430\u0440: %d, \u0429\u0438\u0442: %d." % [feedback_text, actual_attack, actual_defense], COLOR_ERR)
+		_set_status(
+			"%s %s" % [
+				feedback_text,
+				_tr(
+					"case08.fr8c.status.attack_vs_defense",
+					"Ваш удар: {attack}, Щит: {defense}.",
+					{
+						"attack": actual_attack,
+						"defense": actual_defense
+					}
+				)
+			],
+			COLOR_ERR
+		)
 		var defense_flash: Tween = create_tween()
 		defense_flash.tween_property(defense_bar, "modulate", Color(2.0, 0.25, 0.25, 1.0), 0.12)
 		defense_flash.tween_property(defense_bar, "modulate", Color.WHITE, 0.16)
@@ -404,7 +486,7 @@ func _on_confirm_pressed() -> void:
 
 func _on_next_pressed() -> void:
 	if not level_solved:
-		_set_status(STATUS_SOLVE_FIRST, COLOR_WARN)
+		_set_status(_tr("case08.fr8c.status.solve_first", STATUS_SOLVE_FIRST), COLOR_WARN)
 		return
 
 	var from_level_id: String = str(level_data.get("id", "FR8-C-00"))
@@ -518,4 +600,3 @@ func _bbcode_color(color_value: String) -> String:
 	if value.begins_with("#") and (value.length() == 4 or value.length() == 7 or value.length() == 9):
 		return value
 	return "#ffffff"
-

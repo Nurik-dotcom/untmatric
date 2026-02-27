@@ -10,6 +10,7 @@ signal value_changed(value: float, delta: float)
 @export var value: float = 0.0
 
 var _dragging: bool = false
+var _active_touch_index: int = -1
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -20,18 +21,24 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		var touch_event: InputEventScreenTouch = event
 		if touch_event.pressed:
-			_dragging = true
-			_set_value_from_pos(touch_event.position)
+			if _active_touch_index == -1 or _active_touch_index == touch_event.index:
+				_active_touch_index = touch_event.index
+				_dragging = true
+				_set_value_from_pos(touch_event.position)
 		else:
-			_dragging = false
+			if touch_event.index == _active_touch_index:
+				_dragging = false
+				_active_touch_index = -1
 	elif event is InputEventScreenDrag:
-		if _dragging:
-			var drag_event: InputEventScreenDrag = event
+		var drag_event: InputEventScreenDrag = event
+		if _dragging and drag_event.index == _active_touch_index:
 			_set_value_from_pos(drag_event.position)
 	elif event is InputEventMouseButton:
 		var mouse_event: InputEventMouseButton = event
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT:
 			_dragging = mouse_event.pressed
+			if mouse_event.pressed:
+				_active_touch_index = -1
 			if mouse_event.pressed:
 				_set_value_from_pos(mouse_event.position)
 	elif event is InputEventMouseMotion and _dragging:
@@ -76,7 +83,7 @@ func set_knob_value(new_value: float, emit_change: bool = false) -> void:
 
 func _set_value_from_pos(pos: Vector2) -> void:
 	var center: Vector2 = size * 0.5
-	var local: Vector2 = pos - center
+	var local: Vector2 = pos - center	
 	if local.length() < 4.0:
 		return
 

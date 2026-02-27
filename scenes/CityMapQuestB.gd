@@ -1,4 +1,4 @@
-extends Control
+﻿extends Control
 
 const PACK_PATH := "res://data/city_map/pack_6_2_B.json"
 const LOG_PREFIX := "case_6_2"
@@ -33,11 +33,13 @@ const TRAFFIC_BASE_SPEED := 2.4
 @onready var backtrack_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/BacktrackLabel
 @onready var cycle_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/CycleLabel
 @onready var warning_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/WarningLabel
+@onready var input_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/InputLabel
 @onready var status_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/StatusLabel
 @onready var label_state: Label = $SafeArea/MainVBox/Header/LabelState
 @onready var label_timer: Label = $SafeArea/MainVBox/Header/LabelTimer
 @onready var footer_row: HBoxContainer = $SafeArea/MainVBox/Footer
 @onready var footer_label: Label = $SafeArea/MainVBox/Footer/FooterLabel
+@onready var footer_meta: Label = $SafeArea/MainVBox/Footer/FooterMeta
 @onready var briefing_card: PanelContainer = $SafeArea/MainVBox/BriefingCard
 @onready var briefing_title: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/BriefingTitle
 @onready var briefing_text: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/BriefingText
@@ -116,7 +118,7 @@ var _jitter_map: Dictionary = {}
 var _node_positions: Dictionary = {}
 var _traffic_visuals: Dictionary = {}
 var _undo_stack: Array[Dictionary] = []
-var _renderer: GraphRenderer = GraphRenderer.new()
+var _renderer = preload("res://scripts/city_map/GraphRenderer.gd").new()
 
 var _traffic_layer: Control
 var _btn_help: Button
@@ -129,6 +131,10 @@ var _traffic_shader: Shader
 var _traffic_texture: Texture2D
 var _last_warning_signature: String = ""
 var _must_visit_warning_active: bool = false
+var _status_i18n_key: String = ""
+var _status_i18n_default: String = ""
+var _status_i18n_params: Dictionary = {}
+var _status_i18n_color: Color = Color(1, 1, 1, 1)
 
 func _ready() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -138,6 +144,9 @@ func _ready() -> void:
 	sum_input.text_changed.connect(_on_sum_input_changed)
 	graph_container.resized.connect(_on_graph_resized)
 	_setup_noir_ui()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+	_apply_i18n()
 	_configure_sum_input_display()
 
 	_load_pack(PACK_PATH)
@@ -145,18 +154,62 @@ func _ready() -> void:
 	_setup_timer()
 	call_deferred("_start_pack_run")
 
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var opts: Dictionary = params.duplicate(true)
+	opts["default"] = default_text
+	return I18n.tr_key(key, opts)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	label_case.text = _tr("city_map.common.header.case", "CASE 6: CITY MAP")
+	label_mode.text = _tr("city_map.b.header.mode", "MODE: B")
+	if is_instance_valid(_btn_help):
+		_btn_help.tooltip_text = _tr("city_map.common.tooltip.dossier", "DOSSIER")
+	if is_instance_valid(_btn_undo):
+		_btn_undo.text = _tr("city_map.common.btn.undo", "UNDO")
+	btn_reset.text = _tr("city_map.common.btn.reset", "RESET")
+	btn_submit.text = _tr("city_map.common.btn.submit", "SUBMIT")
+	input_label.text = _tr("city_map.common.input.enter_sum", "ENTER FINAL SUM")
+	footer_meta.text = _tr("city_map.b.footer.meta", "CITY MAP / B")
+	_set_progress_ui()
+	_set_briefing()
+	_update_visuals()
+	_update_timer_display()
+	if not _status_i18n_key.is_empty():
+		_set_status_i18n(_status_i18n_key, _status_i18n_default, _status_i18n_color, _status_i18n_params)
+
+func _set_status_i18n(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
+	_status_i18n_key = key
+	_status_i18n_default = default_text
+	_status_i18n_params = params.duplicate(true)
+	_status_i18n_color = color
+	status_label.text = _tr(key, default_text, _status_i18n_params)
+	status_label.add_theme_color_override("font_color", color)
+
+func _clear_status_i18n() -> void:
+	_status_i18n_key = ""
+	_status_i18n_default = ""
+	_status_i18n_params = {}
+	_clear_status_i18n()
+
 func _setup_noir_ui() -> void:
 	_ensure_info_scroll_container()
 
 	_btn_help = Button.new()
 	_btn_help.text = "?"
 	_btn_help.custom_minimum_size = Vector2(44, 44)
-	_btn_help.tooltip_text = "ДОСЬЕ"
+	_btn_help.tooltip_text = "Р”РћРЎР¬Р•"
 	_btn_help.pressed.connect(_on_help_pressed)
 	header.add_child(_btn_help)
 
 	_btn_undo = Button.new()
-	_btn_undo.text = "ОТКАТ"
+	_btn_undo.text = "РћРўРљРђРў"
 	_btn_undo.custom_minimum_size = Vector2(0, 44)
 	_btn_undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_undo.pressed.connect(_on_undo_pressed)
@@ -400,11 +453,19 @@ func _set_progress_ui() -> void:
 	var total := maxi(1, level_total)
 	var level_entry := _current_level_entry()
 	var sub_id := str(level_entry.get("id", ""))
-	label_progress.text = "ЗАДАНИЕ: %d/%d%s" % [shown_index, total, ("" if sub_id.is_empty() else " • " + sub_id)]
+	label_progress.text = _tr(
+		"city_map.common.header.progress",
+		"TASK: {current}/{total}{suffix}",
+		{
+			"current": shown_index,
+			"total": total,
+			"suffix": ("" if sub_id.is_empty() else " вЂў " + sub_id)
+		}
+	)
 	if level_index >= total - 1:
-		btn_next.text = "ЗАВЕРШИТЬ"
+		btn_next.text = _tr("city_map.common.btn.finish", "FINISH")
 	else:
-		btn_next.text = "ДАЛЕЕ"
+		btn_next.text = _tr("city_map.common.btn.next", "NEXT")
 
 func _is_round_locked() -> bool:
 	return is_game_over or stage_completed or input_locked
@@ -610,10 +671,16 @@ func _add_adjacency(from_id: String, to_id: String, weight: int) -> void:
 	adjacency[from_id][to_id] = weight
 
 func _set_briefing() -> void:
-	briefing_title.text = "ПРОВЕРКА ТРАНЗИТА"
-	briefing_text.text = "Доберитесь до узла E, укажите точную сумму маршрута и докажите его оптимальность в ориентированном графе."
+	briefing_title.text = _tr("city_map.b.briefing.title", "TRANSIT CHECK")
+	briefing_text.text = _tr(
+		"city_map.b.briefing.text",
+		"Reach node E, enter the exact route sum, and prove optimality in a directed graph."
+	)
 	update_conditions_panel()
-	footer_label.text = "Двусторонние дороги активны только там, где в данных есть обратное ребро."
+	footer_label.text = _tr(
+		"city_map.b.briefing.footer",
+		"Two-way roads are active only where reverse edge exists in data."
+	)
 
 func _calculate_min_sum_with_constraints() -> int:
 	var start_node := str(level_data.get("start_node", ""))
@@ -944,10 +1011,10 @@ func _reset_round_state(full_reset: bool) -> void:
 	_update_visuals()
 
 func _update_visuals() -> void:
-	path_display.text = "ПУТЬ: %s" % " -> ".join(path)
-	sum_live_label.text = "СУММА: %d" % path_sum
-	backtrack_label.text = "ОТКАТЫ: %d" % backtrack_count
-	cycle_label.text = "ЦИКЛЫ: %d" % cycle_events
+	path_display.text = _tr("city_map.common.input.path", "PATH: {path}", {"path": " -> ".join(path)})
+	sum_live_label.text = _tr("city_map.common.input.sum", "SUM: {value}", {"value": path_sum})
+	backtrack_label.text = _tr("city_map.b.constraints.backtrack", "UNDO: {count}", {"count": backtrack_count})
+	cycle_label.text = _tr("city_map.b.constraints.cycles", "CYCLES: {count}", {"count": cycle_events})
 	update_warnings_panel()
 
 	for node_id in node_buttons.keys():
@@ -1071,8 +1138,11 @@ func _on_submit_pressed() -> void:
 	_log_attempt(verdict)
 
 	if verdict.result_code == "OK":
-		status_label.text = "Маршрут принят. Ограничение и оптимальность подтверждены."
-		status_label.add_theme_color_override("font_color", Color(0.38, 1.0, 0.62))
+		_set_status_i18n(
+			"city_map.b.status.success",
+			"Route accepted. Constraint and optimality are confirmed.",
+			Color(0.38, 1.0, 0.62)
+		)
 		stage_completed = true
 		levels_completed += 1
 		run_total_time_seconds += t_elapsed_seconds
@@ -1090,28 +1160,49 @@ func _on_submit_pressed() -> void:
 		_set_progress_ui()
 		return
 
-	status_label.text = _result_message(str(verdict.result_code))
-	status_label.add_theme_color_override("font_color", Color(1.0, 0.62, 0.28))
+	var result_code: String = str(verdict.result_code)
+	var result_meta: Dictionary = _result_message_meta(result_code)
+	_set_status_i18n(
+		str(result_meta.get("key", "city_map.common.result.unhandled")),
+		str(result_meta.get("default", "Unhandled result code: {code}")),
+		Color(1.0, 0.62, 0.28),
+		result_meta.get("params", {})
+	)
 	_recalculate_stability()
 
 func _result_message(result_code: String) -> String:
+	var meta: Dictionary = _result_message_meta(result_code)
+	return _tr(
+		str(meta.get("key", "city_map.common.result.unhandled")),
+		str(meta.get("default", "Unhandled result code: {code}")),
+		meta.get("params", {})
+	)
+
+func _result_message_meta(result_code: String) -> Dictionary:
 	match result_code:
 		"ERR_INCOMPLETE":
-			return "Дойдите до узла E перед отправкой."
+			return {"key": "city_map.common.result.err_incomplete", "default": "Reach node E before submit."}
 		"ERR_MISSING_TRANSIT":
-			return "Ограничение не выполнено: посетите обязательные транзитные узлы."
+			return {
+				"key": "city_map.b.result.err_missing_transit",
+				"default": "Constraint not met: visit required transit nodes."
+			}
 		"ERR_CYCLE":
-			return "В маршруте обнаружен цикл."
+			return {"key": "city_map.b.result.err_cycle", "default": "A cycle has been detected in the route."}
 		"ERR_PARSE":
-			return "Вводите только цифры."
+			return {"key": "city_map.common.result.err_parse", "default": "Use digits only."}
 		"ERR_CALC":
-			return "Введённая сумма не совпадает с выбранным маршрутом."
+			return {"key": "city_map.common.result.err_calc", "default": "Entered sum does not match selected route."}
 		"ERR_NOT_OPT":
-			return "Маршрут корректный, но не оптимальный."
+			return {"key": "city_map.common.result.err_not_opt", "default": "Route is valid but not optimal."}
 		"ERR_PATH_INVALID":
-			return "Маршрут недопустим для ориентированных рёбер."
+			return {"key": "city_map.common.result.err_path_invalid", "default": "Route is invalid for directed edges."}
 		_:
-			return "Необработанный результат: %s" % result_code
+			return {
+				"key": "city_map.common.result.unhandled",
+				"default": "Unhandled result code: {code}",
+				"params": {"code": result_code}
+			}
 
 func _judge_solution(input_text: String) -> Dictionary:
 	var sum_actual := _compute_path_sum()
@@ -1179,13 +1270,16 @@ func _recalculate_stability() -> void:
 	)
 
 	stability = clampf(float(trust_cfg.get("initial", 100)) - float(penalties), 0.0, 100.0)
-	label_state.text = "СТАБИЛЬНОСТЬ: %d%%" % int(stability)
+	label_state.text = _tr("city_map.common.status.stability", "STABILITY: {value}%", {"value": int(stability)})
 
 	if stability <= 10.0 and not is_game_over:
 		is_game_over = true
 		stage_completed = false
-		status_label.text = "МИССИЯ ПРОВАЛЕНА: КРИТИЧЕСКАЯ СТАБИЛЬНОСТЬ."
-		status_label.add_theme_color_override("font_color", Color(1.0, 0.30, 0.30))
+		_set_status_i18n(
+			"city_map.common.status.mission_failed",
+			"MISSION FAILED: CRITICAL STABILITY.",
+			Color(1.0, 0.30, 0.30)
+		)
 		btn_next.visible = false
 		btn_next.disabled = true
 		_lock_input(true)
@@ -1195,7 +1289,7 @@ func _update_timer_display() -> void:
 	var remaining: int = maxi(0, time_limit - t_elapsed_seconds)
 	var mm: int = int(remaining / 60.0)
 	var ss: int = remaining % 60
-	label_timer.text = "ВРЕМЯ: %02d:%02d" % [mm, ss]
+	label_timer.text = _tr("city_map.common.status.time", "TIME: {mm}:{ss}", {"mm": "%02d" % mm, "ss": "%02d" % ss})
 	if t_elapsed_seconds > time_limit:
 		label_timer.add_theme_color_override("font_color", Color(1.0, 0.36, 0.36))
 	else:
@@ -1279,10 +1373,10 @@ func _log_attempt(verdict: Dictionary) -> void:
 func update_conditions_panel() -> void:
 	var must_visit_text: String = "-" if must_visit_nodes.is_empty() else ",".join(must_visit_nodes)
 	var lines: Array[String] = [
-		"УСЛОВИЯ:",
-		"ОБЯЗАТЕЛЬНО ПОСЕТИТЬ: %s" % must_visit_text,
-		"ЦИКЛЫ: запрещены",
-		"ОТКАТЫ: считаются"
+		_tr("city_map.b.constraints.header", "CONSTRAINTS:"),
+		_tr("city_map.b.constraints.must_visit", "MUST VISIT: {nodes}", {"nodes": must_visit_text}),
+		_tr("city_map.b.constraints.cycles_rule", "CYCLES: forbidden"),
+		_tr("city_map.b.constraints.undo_rule", "UNDO: counted")
 	]
 	var conditions_text: String = "\n".join(lines)
 	constraint_info_label.text = conditions_text
@@ -1297,11 +1391,17 @@ func update_warnings_panel() -> void:
 			missing_must.append(must_node)
 
 	if not missing_must.is_empty():
-		warnings.append("НЕ ПОСЕЩЕНЫ ОБЯЗАТЕЛЬНЫЕ УЗЛЫ: %s" % ",".join(missing_must))
+		warnings.append(
+			_tr(
+				"city_map.b.warning.missing_must",
+				"Required nodes not visited: {nodes}",
+				{"nodes": ",".join(missing_must)}
+			)
+		)
 	if cycle_events > 0:
-		warnings.append("ОБНАРУЖЕН ЦИКЛ")
+		warnings.append(_tr("city_map.b.warning.cycle", "Cycle detected"))
 	if backtrack_count > 0:
-		warnings.append("ВЫПОЛНЕН ОТКАТ")
+		warnings.append(_tr("city_map.b.warning.undo", "Undo used"))
 
 	_must_visit_warning_active = not missing_must.is_empty()
 	var signature: String = "|".join(warnings)
@@ -1311,9 +1411,13 @@ func update_warnings_panel() -> void:
 		_last_warning_signature = signature
 
 	if warnings.is_empty():
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ:\n-"
+		warning_label.text = _tr("city_map.common.warning.none", "WARNINGS:\n-")
 	else:
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ:\n%s" % "\n".join(warnings)
+		warning_label.text = _tr(
+			"city_map.common.warning.list",
+			"WARNINGS:\n{items}",
+			{"items": "\n".join(warnings)}
+		)
 
 func _save_json_log(data: Dictionary, is_summary: bool = false) -> void:
 	var dir := DirAccess.open("user://")

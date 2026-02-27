@@ -1,0 +1,443 @@
+[
+    {
+        "schema_version":  "1.0.0",
+        "quest_id":  "CASE_08_FINAL_REPORT",
+        "id":  "FR8-C-01",
+        "briefing":  "РўРµРєСЃС‚ СЃРєСЂС‹С‚ РєРѕРЅС„Р»РёРєС‚РѕРј СЃС‚РёР»РµР№. РћРїСЂРµРґРµР»РёС‚Рµ РёС‚РѕРіРѕРІС‹Р№ С†РІРµС‚.",
+        "format":  "CSS_CASCADE",
+        "target_text":  "РЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ",
+        "html":  [
+                     "\u003cp id=\"x\" class=\"alert\"\u003eРЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ\u003c/p\u003e"
+                 ],
+        "inline_decl":  null,
+        "rules":  [
+                      {
+                          "source_id":  "R1",
+                          "selector":  ".С‚СЂРµРІРѕРіР°",
+                          "kind":  "СЃРѕСЂС‚",
+                          "weight":  10,
+                          "important":  false,
+                          "order":  1,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#ff0000"
+                                   }
+                      },
+                      {
+                          "source_id":  "R2",
+                          "selector":  "#x",
+                          "kind":  "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
+                          "weight":  100,
+                          "important":  false,
+                          "order":  2,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#00ff00"
+                                   }
+                      }
+                  ],
+        "options":  [
+                        {
+                            "id":  "RED",
+                            "label":  "РљСЂР°СЃРЅС‹Р№",
+                            "value":  "#ff0000",
+                            "label_key":  "case08.fr8c.FR8-C-01.option.RED.label"
+                        },
+                        {
+                            "id":  "GREEN",
+                            "label":  "Р—РµР»С‘РЅС‹Р№",
+                            "value":  "#00ff00",
+                            "label_key":  "case08.fr8c.FR8-C-01.option.GREEN.label"
+                        },
+                        {
+                            "id":  "BLUE",
+                            "label":  "РЎРёРЅРёР№",
+                            "value":  "#0000ff",
+                            "label_key":  "case08.fr8c.FR8-C-01.option.BLUE.label"
+                        }
+                    ],
+        "correct_option_id":  "GREEN",
+        "feedback_rules":  {
+                               "SPECIFICITY_ERROR":  "ID-Р·Р°С‰РёС‚Р° СЃРёР»СЊРЅРµРµ РєР»Р°СЃСЃР°: #x (100) \u003e .alert (10).",
+                               "OK":  "Р’Р·Р»РѕРј СѓСЃРїРµС€РµРЅ: РїРѕР±РµРґРёР» #x."
+                           },
+        "briefing_key":  "case08.fr8c.FR8-C-01.briefing",
+        "target_text_key":  "case08.fr8c.FR8-C-01.target_text",
+        "html_keys":  [
+                          "case08.fr8c.FR8-C-01.html.01"
+                      ],
+        "feedback_rules_keys":  {
+                                    "SPECIFICITY_ERROR":  "case08.fr8c.FR8-C-01.feedback.SPECIFICITY_ERROR",
+                                    "OK":  "case08.fr8c.FR8-C-01.feedback.OK"
+                                }
+    },
+    {
+        "schema_version":  "1.0.0",
+        "quest_id":  "CASE_08_FINAL_REPORT",
+        "id":  "FR8-C-02",
+        "briefing":  "Р”РІР° РєР»Р°СЃСЃР° СЃРїРѕСЂСЏС‚. РљС‚Рѕ СЃРёР»СЊРЅРµРµ СЂРµС€Р°РµС‚ РїРѕСЂСЏРґРѕРє.",
+        "format":  "CSS_CASCADE",
+        "target_text":  "РЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ",
+        "html":  [
+                     "\u003cp class=\"alert stealth\"\u003eРЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ\u003c/p\u003e"
+                 ],
+        "inline_decl":  null,
+        "rules":  [
+                      {
+                          "source_id":  "R1",
+                          "selector":  ".С‚СЂРµРІРѕРіР°",
+                          "kind":  "СЃРѕСЂС‚",
+                          "weight":  10,
+                          "important":  false,
+                          "order":  1,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#ff0000"
+                                   }
+                      },
+                      {
+                          "source_id":  "R2",
+                          "selector":  ".СЃС‚РµР»СЃ",
+                          "kind":  "СЃРѕСЂС‚",
+                          "weight":  10,
+                          "important":  false,
+                          "order":  2,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#0000ff"
+                                   }
+                      }
+                  ],
+        "options":  [
+                        {
+                            "id":  "RED",
+                            "label":  "РљСЂР°СЃРЅС‹Р№",
+                            "value":  "#ff0000",
+                            "label_key":  "case08.fr8c.FR8-C-02.option.RED.label"
+                        },
+                        {
+                            "id":  "BLUE",
+                            "label":  "РЎРёРЅРёР№",
+                            "value":  "#0000ff",
+                            "label_key":  "case08.fr8c.FR8-C-02.option.BLUE.label"
+                        },
+                        {
+                            "id":  "GREEN",
+                            "label":  "Р—РµР»С‘РЅС‹Р№",
+                            "value":  "#00ff00",
+                            "label_key":  "case08.fr8c.FR8-C-02.option.GREEN.label"
+                        }
+                    ],
+        "correct_option_id":  "BLUE",
+        "feedback_rules":  {
+                               "ORDER_TIE":  "Р’РµСЃ СЂР°РІРЅС‹Р№ (10 Рё 10), РїРѕР±РµР¶РґР°РµС‚ РїСЂР°РІРёР»Рѕ РЅРёР¶Рµ РїРѕ С„Р°Р№Р»Сѓ (order=2).",
+                               "OK":  "Р’РµСЂРЅРѕ: РѕРґРёРЅР°РєРѕРІС‹Р№ РІРµСЃ СЂРµС€Р°РµС‚ РїРѕСЂСЏРґРѕРє."
+                           },
+        "briefing_key":  "case08.fr8c.FR8-C-02.briefing",
+        "target_text_key":  "case08.fr8c.FR8-C-02.target_text",
+        "html_keys":  [
+                          "case08.fr8c.FR8-C-02.html.01"
+                      ],
+        "feedback_rules_keys":  {
+                                    "ORDER_TIE":  "case08.fr8c.FR8-C-02.feedback.ORDER_TIE",
+                                    "OK":  "case08.fr8c.FR8-C-02.feedback.OK"
+                                }
+    },
+    {
+        "schema_version":  "1.0.0",
+        "quest_id":  "CASE_08_FINAL_REPORT",
+        "id":  "FR8-C-03",
+        "briefing":  "Р•СЃС‚СЊ !РІР°Р¶РЅРѕ. РќРµ РїСЂРёС‚РІРѕСЂСЏР№С‚РµСЃСЊ, С‡С‚Рѕ РµРіРѕ РЅРµС‚.",
+        "format":  "CSS_CASCADE",
+        "target_text":  "РЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ",
+        "html":  [
+                     "\u003cp id=\"x\" class=\"alert\"\u003eРЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ\u003c/p\u003e"
+                 ],
+        "inline_decl":  null,
+        "rules":  [
+                      {
+                          "source_id":  "R1",
+                          "selector":  "#x",
+                          "kind":  "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
+                          "weight":  100,
+                          "important":  false,
+                          "order":  2,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#00ff00"
+                                   }
+                      },
+                      {
+                          "source_id":  "R2",
+                          "selector":  ".С‚СЂРµРІРѕРіР°",
+                          "kind":  "СЃРѕСЂС‚",
+                          "weight":  10,
+                          "important":  true,
+                          "order":  3,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#ff0000"
+                                   }
+                      }
+                  ],
+        "options":  [
+                        {
+                            "id":  "RED",
+                            "label":  "РљСЂР°СЃРЅС‹Р№",
+                            "value":  "#ff0000",
+                            "label_key":  "case08.fr8c.FR8-C-03.option.RED.label"
+                        },
+                        {
+                            "id":  "GREEN",
+                            "label":  "Р—РµР»С‘РЅС‹Р№",
+                            "value":  "#00ff00",
+                            "label_key":  "case08.fr8c.FR8-C-03.option.GREEN.label"
+                        },
+                        {
+                            "id":  "BLUE",
+                            "label":  "РЎРёРЅРёР№",
+                            "value":  "#0000ff",
+                            "label_key":  "case08.fr8c.FR8-C-03.option.BLUE.label"
+                        }
+                    ],
+        "correct_option_id":  "RED",
+        "feedback_rules":  {
+                               "IMPORTANT_MISSED":  "!important РїРµСЂРµР±РёРІР°РµС‚ РѕР±С‹С‡РЅРѕРµ РїСЂР°РІРёР»Рѕ, РґР°Р¶Рµ РµСЃР»Рё СЃРµР»РµРєС‚РѕСЂ СЃР»Р°Р±РµРµ.",
+                               "OK":  "Р’РµСЂРЅРѕ: РІР°Р¶РЅРѕСЃС‚СЊ СЃРёР»СЊРЅРµРµ РІРµСЃР°."
+                           },
+        "briefing_key":  "case08.fr8c.FR8-C-03.briefing",
+        "target_text_key":  "case08.fr8c.FR8-C-03.target_text",
+        "html_keys":  [
+                          "case08.fr8c.FR8-C-03.html.01"
+                      ],
+        "feedback_rules_keys":  {
+                                    "IMPORTANT_MISSED":  "case08.fr8c.FR8-C-03.feedback.IMPORTANT_MISSED",
+                                    "OK":  "case08.fr8c.FR8-C-03.feedback.OK"
+                                }
+    },
+    {
+        "schema_version":  "1.0.0",
+        "quest_id":  "CASE_08_FINAL_REPORT",
+        "id":  "FR8-C-04",
+        "briefing":  "Р’СЃС‚СЂРѕРµРЅРЅС‹Р№ СЃС‚РёР»СЊ РЅР° СЌР»РµРјРµРЅС‚Рµ. РћРЅ РЅРµ РґР»СЏ РєСЂР°СЃРѕС‚С‹.",
+        "format":  "CSS_CASCADE",
+        "target_text":  "РЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ",
+        "html":  [
+                     "\u003cp id=\"x\" class=\"alert\" style=\"color:#0000ff;\"\u003eРЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ\u003c/p\u003e"
+                 ],
+        "inline_decl":  {
+                            "source_id":  "INLINE",
+                            "kind":  "РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё",
+                            "weight":  1000,
+                            "important":  false,
+                            "decl":  {
+                                         "prop":  "С†РІРµС‚",
+                                         "value":  "#0000ff"
+                                     }
+                        },
+        "rules":  [
+                      {
+                          "source_id":  "R1",
+                          "selector":  "#x",
+                          "kind":  "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
+                          "weight":  100,
+                          "important":  false,
+                          "order":  2,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#00ff00"
+                                   }
+                      },
+                      {
+                          "source_id":  "R2",
+                          "selector":  ".С‚СЂРµРІРѕРіР°",
+                          "kind":  "СЃРѕСЂС‚",
+                          "weight":  10,
+                          "important":  false,
+                          "order":  3,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#ff0000"
+                                   }
+                      }
+                  ],
+        "options":  [
+                        {
+                            "id":  "BLUE",
+                            "label":  "РЎРёРЅРёР№",
+                            "value":  "#0000ff",
+                            "label_key":  "case08.fr8c.FR8-C-04.option.BLUE.label"
+                        },
+                        {
+                            "id":  "GREEN",
+                            "label":  "Р—РµР»С‘РЅС‹Р№",
+                            "value":  "#00ff00",
+                            "label_key":  "case08.fr8c.FR8-C-04.option.GREEN.label"
+                        },
+                        {
+                            "id":  "RED",
+                            "label":  "РљСЂР°СЃРЅС‹Р№",
+                            "value":  "#ff0000",
+                            "label_key":  "case08.fr8c.FR8-C-04.option.RED.label"
+                        }
+                    ],
+        "correct_option_id":  "BLUE",
+        "feedback_rules":  {
+                               "INLINE_OVERRIDE":  "Р’СЃС‚СЂРѕРµРЅРЅС‹Р№ СЃС‚РёР»СЊ (1000) РїРµСЂРµРєСЂС‹РІР°РµС‚ #id (100) Рё .class (10).",
+                               "OK":  "Р’РµСЂРЅРѕ: РІСЃС‚СЂРѕРµРЅРЅС‹Р№ СЃС‚РёР»СЊ СЃРёР»СЊРЅРµРµ."
+                           },
+        "briefing_key":  "case08.fr8c.FR8-C-04.briefing",
+        "target_text_key":  "case08.fr8c.FR8-C-04.target_text",
+        "html_keys":  [
+                          "case08.fr8c.FR8-C-04.html.01"
+                      ],
+        "feedback_rules_keys":  {
+                                    "INLINE_OVERRIDE":  "case08.fr8c.FR8-C-04.feedback.INLINE_OVERRIDE",
+                                    "OK":  "case08.fr8c.FR8-C-04.feedback.OK"
+                                }
+    },
+    {
+        "schema_version":  "1.0.0",
+        "quest_id":  "CASE_08_FINAL_REPORT",
+        "id":  "FR8-C-05",
+        "briefing":  "РљРѕРјР±РёРЅРёСЂРѕРІР°РЅРЅС‹Р№ СЃРµР»РµРєС‚РѕСЂ СЃРёР»СЊРЅРµРµ РѕРґРёРЅРѕС‡РЅРѕРіРѕ РєР»Р°СЃСЃР°.",
+        "format":  "CSS_CASCADE",
+        "target_text":  "РЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ",
+        "html":  [
+                     "\u003cp id=\"x\" class=\"alert\"\u003eРЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ\u003c/p\u003e"
+                 ],
+        "inline_decl":  null,
+        "rules":  [
+                      {
+                          "source_id":  "R1",
+                          "selector":  ".С‚СЂРµРІРѕРіР°",
+                          "kind":  "СЃРѕСЂС‚",
+                          "weight":  10,
+                          "important":  false,
+                          "order":  1,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#ff0000"
+                                   }
+                      },
+                      {
+                          "source_id":  "R2",
+                          "selector":  "p#x",
+                          "kind":  "СЃРјРµС€Р°РЅРЅС‹Р№",
+                          "weight":  101,
+                          "important":  false,
+                          "order":  2,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#0000ff"
+                                   }
+                      }
+                  ],
+        "options":  [
+                        {
+                            "id":  "BLUE",
+                            "label":  "РЎРёРЅРёР№",
+                            "value":  "#0000ff",
+                            "label_key":  "case08.fr8c.FR8-C-05.option.BLUE.label"
+                        },
+                        {
+                            "id":  "RED",
+                            "label":  "РљСЂР°СЃРЅС‹Р№",
+                            "value":  "#ff0000",
+                            "label_key":  "case08.fr8c.FR8-C-05.option.RED.label"
+                        },
+                        {
+                            "id":  "GREEN",
+                            "label":  "Р—РµР»С‘РЅС‹Р№",
+                            "value":  "#00ff00",
+                            "label_key":  "case08.fr8c.FR8-C-05.option.GREEN.label"
+                        }
+                    ],
+        "correct_option_id":  "BLUE",
+        "feedback_rules":  {
+                               "SPECIFICITY_ERROR":  "p#x (101) СЃРёР»СЊРЅРµРµ .alert (10).",
+                               "OK":  "Р’РµСЂРЅРѕ: СЃСѓРјРјР°СЂРЅС‹Р№ РІРµСЃ СЂРµС€Р°РµС‚."
+                           },
+        "briefing_key":  "case08.fr8c.FR8-C-05.briefing",
+        "target_text_key":  "case08.fr8c.FR8-C-05.target_text",
+        "html_keys":  [
+                          "case08.fr8c.FR8-C-05.html.01"
+                      ],
+        "feedback_rules_keys":  {
+                                    "SPECIFICITY_ERROR":  "case08.fr8c.FR8-C-05.feedback.SPECIFICITY_ERROR",
+                                    "OK":  "case08.fr8c.FR8-C-05.feedback.OK"
+                                }
+    },
+    {
+        "schema_version":  "1.0.0",
+        "quest_id":  "CASE_08_FINAL_REPORT",
+        "id":  "FR8-C-06",
+        "briefing":  "Р”РІР° ID-РїСЂР°РІРёР»Р° СЃ !important. РџРѕР±РµР¶РґР°РµС‚ Р±РѕР»РµРµ РїРѕР·РґРЅРѕ.",
+        "format":  "CSS_CASCADE",
+        "target_text":  "РЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ",
+        "html":  [
+                     "\u003cp id=\"x\"\u003eРЎРµРєСЂРµС‚РЅС‹Р№ РєРѕРґ\u003c/p\u003e"
+                 ],
+        "inline_decl":  null,
+        "rules":  [
+                      {
+                          "source_id":  "R1",
+                          "selector":  "#x",
+                          "kind":  "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
+                          "weight":  100,
+                          "important":  true,
+                          "order":  1,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#ff0000"
+                                   }
+                      },
+                      {
+                          "source_id":  "R2",
+                          "selector":  "#x",
+                          "kind":  "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
+                          "weight":  100,
+                          "important":  true,
+                          "order":  2,
+                          "decl":  {
+                                       "prop":  "С†РІРµС‚",
+                                       "value":  "#00ff00"
+                                   }
+                      }
+                  ],
+        "options":  [
+                        {
+                            "id":  "GREEN",
+                            "label":  "Р—РµР»С‘РЅС‹Р№",
+                            "value":  "#00ff00",
+                            "label_key":  "case08.fr8c.FR8-C-06.option.GREEN.label"
+                        },
+                        {
+                            "id":  "RED",
+                            "label":  "РљСЂР°СЃРЅС‹Р№",
+                            "value":  "#ff0000",
+                            "label_key":  "case08.fr8c.FR8-C-06.option.RED.label"
+                        },
+                        {
+                            "id":  "BLUE",
+                            "label":  "РЎРёРЅРёР№",
+                            "value":  "#0000ff",
+                            "label_key":  "case08.fr8c.FR8-C-06.option.BLUE.label"
+                        }
+                    ],
+        "correct_option_id":  "GREEN",
+        "feedback_rules":  {
+                               "ORDER_TIE":  "Р’Р°Р¶РЅРѕСЃС‚СЊ Рё РІРµСЃ СЂР°РІРЅС‹, СЂРµС€Р°РµС‚ РїРѕСЂСЏРґРѕРє (РїРѕР·Р¶Рµ = СЃРёР»СЊРЅРµРµ).",
+                               "OK":  "Р’РµСЂРЅРѕ: РїРѕСЃР»РµРґРЅСЏСЏ РґРёСЂРµРєС‚РёРІР° РІС‹РёРіСЂС‹РІР°РµС‚."
+                           },
+        "briefing_key":  "case08.fr8c.FR8-C-06.briefing",
+        "target_text_key":  "case08.fr8c.FR8-C-06.target_text",
+        "html_keys":  [
+                          "case08.fr8c.FR8-C-06.html.01"
+                      ],
+        "feedback_rules_keys":  {
+                                    "ORDER_TIE":  "case08.fr8c.FR8-C-06.feedback.ORDER_TIE",
+                                    "OK":  "case08.fr8c.FR8-C-06.feedback.OK"
+                                }
+    }
+]

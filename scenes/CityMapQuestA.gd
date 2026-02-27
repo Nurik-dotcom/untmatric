@@ -1,4 +1,4 @@
-extends Control
+﻿extends Control
 
 const PACK_PATH := "res://data/city_map/pack_6_1_A.json"
 const LOG_PREFIX := "case_6_1"
@@ -29,11 +29,13 @@ const TRAFFIC_BASE_SPEED := 2.4
 @onready var sum_input: LineEdit = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SumInput
 @onready var path_display: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/PathDisplay
 @onready var sum_live_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SumLiveLabel
+@onready var input_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/InputLabel
 @onready var status_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/StatusLabel
 @onready var label_state: Label = $SafeArea/MainVBox/Header/LabelState
 @onready var label_timer: Label = $SafeArea/MainVBox/Header/LabelTimer
 @onready var footer_row: HBoxContainer = $SafeArea/MainVBox/Footer
 @onready var footer_label: Label = $SafeArea/MainVBox/Footer/FooterLabel
+@onready var footer_meta: Label = $SafeArea/MainVBox/Footer/FooterMeta
 @onready var briefing_card: PanelContainer = $SafeArea/MainVBox/BriefingCard
 @onready var briefing_title: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/BriefingTitle
 @onready var briefing_text: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/BriefingText
@@ -98,7 +100,7 @@ var _jitter_map: Dictionary = {}
 var _node_positions: Dictionary = {}
 var _traffic_visuals: Dictionary = {}
 var _undo_stack: Array[Dictionary] = []
-var _renderer: GraphRenderer = GraphRenderer.new()
+var _renderer = preload("res://scripts/city_map/GraphRenderer.gd").new()
 
 var _traffic_layer: Control
 var _btn_help: Button
@@ -110,6 +112,10 @@ var _numpad_buttons: Array[Button] = []
 var _traffic_shader: Shader
 var _traffic_texture: Texture2D
 var _is_leaving_scene := false
+var _status_i18n_key: String = ""
+var _status_i18n_default: String = ""
+var _status_i18n_params: Dictionary = {}
+var _status_i18n_color: Color = Color(1, 1, 1, 1)
 
 func _ready() -> void:
 	if not btn_back.pressed.is_connected(_on_back_pressed):
@@ -129,6 +135,9 @@ func _ready() -> void:
 	sum_input.text_changed.connect(_on_sum_input_changed)
 	graph_container.resized.connect(_on_graph_resized)
 	_setup_noir_ui()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+	_apply_i18n()
 	_configure_sum_input_display()
 
 	_load_pack(PACK_PATH)
@@ -136,18 +145,62 @@ func _ready() -> void:
 	_setup_timer()
 	call_deferred("_start_pack_run")
 
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var opts: Dictionary = params.duplicate(true)
+	opts["default"] = default_text
+	return I18n.tr_key(key, opts)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	label_case.text = _tr("city_map.common.header.case", "Р”Р•Р›Рћ 6: РљРђР РўРђ Р“РћР РћР”Рђ")
+	label_mode.text = _tr("city_map.a.header.mode", "Р Р•Р–РРњ: A")
+	if is_instance_valid(_btn_help):
+		_btn_help.tooltip_text = _tr("city_map.common.tooltip.dossier", "Р”РћРЎР¬Р•")
+	if is_instance_valid(_btn_undo):
+		_btn_undo.text = _tr("city_map.common.btn.undo", "РћРўРљРђРў")
+	btn_reset.text = _tr("city_map.common.btn.reset", "РЎР‘Р РћРЎ")
+	btn_submit.text = _tr("city_map.common.btn.submit", "РћРўРџР РђР’РРўР¬")
+	input_label.text = _tr("city_map.common.input.enter_sum", "ENTER FINAL SUM")
+	footer_meta.text = _tr("city_map.a.footer.meta", "CITY MAP / A")
+	_set_progress_ui()
+	_set_briefing()
+	_update_visuals()
+	_update_timer_display()
+	if not _status_i18n_key.is_empty():
+		_set_status_i18n(_status_i18n_key, _status_i18n_default, _status_i18n_color, _status_i18n_params)
+
+func _set_status_i18n(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
+	_status_i18n_key = key
+	_status_i18n_default = default_text
+	_status_i18n_params = params.duplicate(true)
+	_status_i18n_color = color
+	status_label.text = _tr(key, default_text, _status_i18n_params)
+	status_label.add_theme_color_override("font_color", color)
+
+func _clear_status_i18n() -> void:
+	_status_i18n_key = ""
+	_status_i18n_default = ""
+	_status_i18n_params = {}
+	status_label.text = ""
+
 func _setup_noir_ui() -> void:
 	_ensure_info_scroll_container()
 
 	_btn_help = Button.new()
 	_btn_help.text = "?"
 	_btn_help.custom_minimum_size = Vector2(44, 44)
-	_btn_help.tooltip_text = "ДОСЬЕ"
+	_btn_help.tooltip_text = "Р”РћРЎР¬Р•"
 	_btn_help.pressed.connect(_on_help_pressed)
 	header.add_child(_btn_help)
 
 	_btn_undo = Button.new()
-	_btn_undo.text = "ОТКАТ"
+	_btn_undo.text = "РћРўРљРђРў"
 	_btn_undo.custom_minimum_size = Vector2(0, 44)
 	_btn_undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_undo.pressed.connect(_on_undo_pressed)
@@ -374,11 +427,19 @@ func _set_progress_ui() -> void:
 	var total := maxi(1, level_total)
 	var level_entry := _current_level_entry()
 	var sub_id := str(level_entry.get("id", ""))
-	label_progress.text = "ЗАДАНИЕ: %d/%d%s" % [shown_index, total, ("" if sub_id.is_empty() else " • " + sub_id)]
+	label_progress.text = _tr(
+		"city_map.common.header.progress",
+		"TASK: {current}/{total}{suffix}",
+		{
+			"current": shown_index,
+			"total": total,
+			"suffix": "" if sub_id.is_empty() else " вЂў " + sub_id
+		}
+	)
 	if level_index >= total - 1:
-		btn_next.text = "ЗАВЕРШИТЬ"
+		btn_next.text = _tr("city_map.common.btn.finish", "FINISH")
 	else:
-		btn_next.text = "ДАЛЕЕ"
+		btn_next.text = _tr("city_map.common.btn.next", "NEXT")
 
 func _is_round_locked() -> bool:
 	return is_game_over or stage_completed or input_locked
@@ -583,9 +644,15 @@ func _load_level_data(path_to_file: String) -> void:
 	_jitter_map = _renderer.build_deterministic_jitter(node_defs, config_hash, 8.0)
 
 func _set_briefing() -> void:
-	briefing_title.text = "АУДИТ МАРШРУТА"
-	briefing_text.text = "Доберитесь до узла E по направленным дорогам. Введите итоговую сумму пути и отправьте. Проходит только минимальный маршрут."
-	footer_label.text = "Ориентированный граф: нажимать можно только исходящие дороги из текущего узла."
+	briefing_title.text = _tr("city_map.a.briefing.title", "ROUTE AUDIT")
+	briefing_text.text = _tr(
+		"city_map.a.briefing.text",
+		"Reach node E on directed roads. Enter final route sum and submit. Only minimum route passes."
+	)
+	footer_label.text = _tr(
+		"city_map.a.briefing.footer",
+		"Directed graph: only outgoing roads from current node are allowed."
+	)
 
 func _calculate_min_sum() -> int:
 	var start_node := str(level_data.get("start_node", ""))
@@ -855,7 +922,7 @@ func _reset_round_state(full_reset: bool) -> void:
 	path = [current_node]
 	path_sum = 0
 	sum_input.clear()
-	status_label.text = ""
+	_clear_status_i18n()
 	first_action_ms = -1
 	first_attempt_edge = ""
 	_undo_stack.clear()
@@ -867,8 +934,8 @@ func _reset_round_state(full_reset: bool) -> void:
 	_update_visuals()
 
 func _update_visuals() -> void:
-	path_display.text = "ПУТЬ: %s" % " -> ".join(path)
-	sum_live_label.text = "СУММА: %d" % path_sum
+	path_display.text = _tr("city_map.common.input.path", "PATH: {path}", {"path": " -> ".join(path)})
+	sum_live_label.text = _tr("city_map.common.input.sum", "SUM: {value}", {"value": path_sum})
 
 	for node_id in node_buttons.keys():
 		var btn: Button = node_buttons[node_id]
@@ -997,8 +1064,11 @@ func _on_submit_pressed() -> void:
 	_log_attempt(verdict)
 
 	if verdict.result_code == "OK":
-		status_label.text = "Маршрут принят. Оптимальная сумма подтверждена."
-		status_label.add_theme_color_override("font_color", Color(0.38, 1.0, 0.62))
+		_set_status_i18n(
+			"city_map.a.status.success",
+			"Route accepted. Optimal sum confirmed.",
+			Color(0.38, 1.0, 0.62)
+		)
 		stage_completed = true
 		levels_completed += 1
 		run_total_time_seconds += t_elapsed_seconds
@@ -1014,24 +1084,42 @@ func _on_submit_pressed() -> void:
 		_set_progress_ui()
 		return
 
-	status_label.text = _result_message(str(verdict.result_code))
-	status_label.add_theme_color_override("font_color", Color(1.0, 0.62, 0.28))
+	var result_code: String = str(verdict.result_code)
+	var result_meta: Dictionary = _result_message_meta(result_code)
+	_set_status_i18n(
+		str(result_meta.get("key", "city_map.common.result.unhandled")),
+		str(result_meta.get("default", "Unhandled result: {code}")),
+		Color(1.0, 0.62, 0.28),
+		result_meta.get("params", {})
+	)
 	_recalculate_stability()
 
 func _result_message(result_code: String) -> String:
+	var meta: Dictionary = _result_message_meta(result_code)
+	return _tr(
+		str(meta.get("key", "city_map.common.result.unhandled")),
+		str(meta.get("default", "Unhandled result: {code}")),
+		meta.get("params", {})
+	)
+
+func _result_message_meta(result_code: String) -> Dictionary:
 	match result_code:
 		"ERR_INCOMPLETE":
-			return "Дойдите до узла E перед отправкой."
+			return {"key": "city_map.common.result.err_incomplete", "default": "Reach node E before submit."}
 		"ERR_PARSE":
-			return "Вводите только цифры."
+			return {"key": "city_map.common.result.err_parse", "default": "Use digits only."}
 		"ERR_CALC":
-			return "Введённая сумма не совпадает с выбранным маршрутом."
+			return {"key": "city_map.common.result.err_calc", "default": "Entered sum does not match selected route."}
 		"ERR_NOT_OPT":
-			return "Маршрут корректный, но не оптимальный."
+			return {"key": "city_map.common.result.err_not_opt", "default": "Route is valid but not optimal."}
 		"ERR_PATH_INVALID":
-			return "Маршрут недопустим для ориентированных рёбер."
+			return {"key": "city_map.common.result.err_path_invalid", "default": "Route is invalid for directed edges."}
 		_:
-			return "Необработанный результат: %s" % result_code
+			return {
+				"key": "city_map.common.result.unhandled",
+				"default": "Unhandled result: {code}",
+				"params": {"code": result_code}
+			}
 
 func _judge_solution(input_text: String) -> Dictionary:
 	var sum_actual := _compute_path_sum()
@@ -1088,13 +1176,16 @@ func _recalculate_stability() -> void:
 	)
 
 	stability = clampf(float(trust_cfg.get("initial", 100)) - float(penalties), 0.0, 100.0)
-	label_state.text = "СТАБИЛЬНОСТЬ: %d%%" % int(stability)
+	label_state.text = _tr("city_map.common.status.stability", "STABILITY: {value}%", {"value": int(stability)})
 
 	if stability <= 10.0 and not is_game_over:
 		is_game_over = true
 		stage_completed = false
-		status_label.text = "МИССИЯ ПРОВАЛЕНА: КРИТИЧЕСКАЯ СТАБИЛЬНОСТЬ."
-		status_label.add_theme_color_override("font_color", Color(1.0, 0.30, 0.30))
+		_set_status_i18n(
+			"city_map.common.status.mission_failed",
+			"MISSION FAILED: CRITICAL STABILITY.",
+			Color(1.0, 0.30, 0.30)
+		)
 		btn_next.visible = false
 		btn_next.disabled = true
 		_lock_input(true)
@@ -1104,7 +1195,7 @@ func _update_timer_display() -> void:
 	var remaining: int = maxi(0, time_limit - t_elapsed_seconds)
 	var mm: int = int(remaining / 60.0)
 	var ss: int = remaining % 60
-	label_timer.text = "ВРЕМЯ: %02d:%02d" % [mm, ss]
+	label_timer.text = _tr("city_map.common.status.time", "TIME: {mm}:{ss}", {"mm": "%02d" % mm, "ss": "%02d" % ss})
 	if t_elapsed_seconds > time_limit:
 		label_timer.add_theme_color_override("font_color", Color(1.0, 0.36, 0.36))
 	else:

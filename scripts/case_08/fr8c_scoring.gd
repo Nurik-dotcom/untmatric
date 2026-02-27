@@ -66,23 +66,30 @@ static func evaluate(level: Dictionary, selected_option_id: String) -> Dictionar
 
 static func feedback_text(level: Dictionary, evaluation: Dictionary) -> String:
 	var error_code: String = str(evaluation.get("error_code", ERROR_SPECIFICITY))
+	var feedback_rules_keys: Dictionary = level.get("feedback_rules_keys", {}) as Dictionary
 	var feedback_rules: Dictionary = level.get("feedback_rules", {}) as Dictionary
 
 	if error_code == ERROR_EMPTY_CHOICE:
-		return "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0430\u0440\u0438\u0430\u043d\u0442 \u0446\u0432\u0435\u0442\u0430."
+		return _tr("case08.scoring.c.empty_choice", "Сначала выберите вариант цвета.")
+	var keyed_text: String = _feedback_from_keys(feedback_rules_keys, error_code)
+	if not keyed_text.is_empty():
+		return keyed_text
 	if feedback_rules.has(error_code):
 		return str(feedback_rules.get(error_code, ""))
 	if error_code == ERROR_IMPORTANT:
-		return "!important \u043f\u0435\u0440\u0435\u0431\u0438\u0432\u0430\u0435\u0442 \u043e\u0431\u044b\u0447\u043d\u044b\u0435 \u043f\u0440\u0430\u0432\u0438\u043b\u0430."
+		return _tr("case08.scoring.c.important", "!important перебивает обычные правила.")
 	if error_code == ERROR_INLINE:
-		return "\u0412\u0441\u0442\u0440\u043e\u0435\u043d\u043d\u044b\u0439 style \u0441\u0438\u043b\u044c\u043d\u0435\u0435 \u0447\u0435\u043c #id \u0438 .class."
+		return _tr("case08.scoring.c.inline", "Встроенный style сильнее чем #id и .class.")
 	if error_code == ERROR_ORDER_TIE:
-		return "\u041f\u0440\u0438 \u0440\u0430\u0432\u043d\u043e\u0439 \u0441\u0438\u043b\u0435 \u043f\u043e\u0431\u0435\u0436\u0434\u0430\u0435\u0442 \u043f\u0440\u0430\u0432\u0438\u043b\u043e, \u043a\u043e\u0442\u043e\u0440\u043e\u0435 \u0438\u0434\u0435\u0442 \u043f\u043e\u0437\u0436\u0435."
+		return _tr("case08.scoring.c.order_tie", "При равной силе побеждает правило, которое идет позже.")
 	if error_code == ERROR_SPECIFICITY:
-		return "\u041f\u043e\u0431\u0435\u0434\u0438\u043b \u0431\u043e\u043b\u0435\u0435 \u0441\u043f\u0435\u0446\u0438\u0444\u0438\u0447\u043d\u044b\u0439 \u0441\u0435\u043b\u0435\u043a\u0442\u043e\u0440."
+		return _tr("case08.scoring.c.specificity", "Победил более специфичный селектор.")
+	keyed_text = _feedback_from_keys(feedback_rules_keys, ERROR_OK)
+	if not keyed_text.is_empty():
+		return keyed_text
 	if feedback_rules.has(ERROR_OK):
 		return str(feedback_rules.get(ERROR_OK, ""))
-	return "\u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u043a\u0430\u0441\u043a\u0430\u0434 \u0438 \u043f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0441\u043d\u043e\u0432\u0430."
+	return _tr("case08.scoring.c.try_again", "Проверьте каскад и попробуйте снова.")
 
 static func inspect_source(level: Dictionary, source_id: String) -> Dictionary:
 	var sid: String = source_id.strip_edges()
@@ -94,7 +101,7 @@ static func inspect_source(level: Dictionary, source_id: String) -> Dictionary:
 		var decl: Dictionary = inline_decl.get("decl", {}) as Dictionary
 		return {
 			"source_id": str(inline_decl.get("source_id", "INLINE")),
-			"selector": INLINE_SELECTOR,
+			"selector": _tr("case08.scoring.c.inline_selector", INLINE_SELECTOR),
 			"kind": str(inline_decl.get("kind", "inline")),
 			"weight": int(inline_decl.get("weight", 1000)),
 			"important": bool(inline_decl.get("important", false)),
@@ -154,7 +161,7 @@ static func _build_candidates(level: Dictionary) -> Array:
 		var inline_decl_data: Dictionary = inline_decl.get("decl", {}) as Dictionary
 		out.append({
 			"source_id": str(inline_decl.get("source_id", "INLINE")).strip_edges(),
-			"selector": INLINE_SELECTOR,
+			"selector": _tr("case08.scoring.c.inline_selector", INLINE_SELECTOR),
 			"kind": str(inline_decl.get("kind", "inline")),
 			"weight": int(inline_decl.get("weight", 1000)),
 			"important": bool(inline_decl.get("important", false)),
@@ -296,3 +303,20 @@ static func _strength_of(candidate: Dictionary) -> int:
 		return 0
 	var important_bonus: int = 10000 if bool(candidate.get("important", false)) else 0
 	return important_bonus + int(candidate.get("weight", 0))
+
+static func _feedback_from_keys(feedback_rules_keys: Dictionary, code: String) -> String:
+	if not feedback_rules_keys.has(code):
+		return ""
+	var key: String = str(feedback_rules_keys.get(code, "")).strip_edges()
+	if key.is_empty():
+		return ""
+	var translated: String = _tr(key, key)
+	if translated == key:
+		return ""
+	return translated
+
+static func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	if not merged.has("default"):
+		merged["default"] = default_text
+	return I18n.tr_key(key, merged)

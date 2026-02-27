@@ -125,6 +125,17 @@ text = "Выберите квест"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="Footer" type="HBoxContainer" parent="SafeArea/MainLayout"]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+
+[node name="BtnBackToMenu" type="Button" parent="SafeArea/MainLayout/Footer"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "BACK TO MENU"
+
 [node name="ModalLayer" type="CanvasLayer" parent="."]
 
 [node name="ModeSelectionModal" type="Panel" parent="ModalLayer"]

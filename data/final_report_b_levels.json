@@ -9,27 +9,37 @@
       {
         "stage_id": "IDEA",
         "title": "Идея",
-        "hint": "Формулировка проблемы и решения."
+        "hint": "Формулировка проблемы и решения.",
+        "title_key": "case08.fr8b.FR8-B-01.card.IDEA.title",
+        "hint_key": "case08.fr8b.FR8-B-01.card.IDEA.hint"
       },
       {
         "stage_id": "MVP",
         "title": "MVP",
-        "hint": "Минимально рабочая версия продукта."
+        "hint": "Минимально рабочая версия продукта.",
+        "title_key": "case08.fr8b.FR8-B-01.card.MVP.title",
+        "hint_key": "case08.fr8b.FR8-B-01.card.MVP.hint"
       },
       {
         "stage_id": "ALPHA",
         "title": "Альфа",
-        "hint": "Внутреннее тестирование."
+        "hint": "Внутреннее тестирование.",
+        "title_key": "case08.fr8b.FR8-B-01.card.ALPHA.title",
+        "hint_key": "case08.fr8b.FR8-B-01.card.ALPHA.hint"
       },
       {
         "stage_id": "BETA",
         "title": "Бета",
-        "hint": "Публичное тестирование."
+        "hint": "Публичное тестирование.",
+        "title_key": "case08.fr8b.FR8-B-01.card.BETA.title",
+        "hint_key": "case08.fr8b.FR8-B-01.card.BETA.hint"
       },
       {
         "stage_id": "RELEASE",
         "title": "Релиз",
-        "hint": "Релиз для всех."
+        "hint": "Релиз для всех.",
+        "title_key": "case08.fr8b.FR8-B-01.card.RELEASE.title",
+        "hint_key": "case08.fr8b.FR8-B-01.card.RELEASE.hint"
       }
     ],
     "dependencies": [
@@ -37,25 +47,29 @@
         "a": "IDEA",
         "b": "MVP",
         "code": "LOGIC_GAP",
-        "message": "Нельзя делать MVP раньше идей."
+        "message": "Нельзя делать MVP раньше идей.",
+        "message_key": "case08.fr8b.FR8-B-01.dep.01.message"
       },
       {
         "a": "MVP",
         "b": "ALPHA",
         "code": "LOGIC_GAP",
-        "message": "Нельзя тестировать Альфу раньше MVP."
+        "message": "Нельзя тестировать Альфу раньше MVP.",
+        "message_key": "case08.fr8b.FR8-B-01.dep.02.message"
       },
       {
         "a": "ALPHA",
         "b": "BETA",
         "code": "CAUSALITY_LOOP",
-        "message": "Нельзя показывать Бету до Альфы."
+        "message": "Нельзя показывать Бету до Альфы.",
+        "message_key": "case08.fr8b.FR8-B-01.dep.03.message"
       },
       {
         "a": "BETA",
         "b": "RELEASE",
         "code": "LOGIC_GAP",
-        "message": "Нельзя выпускать релиз до Беты."
+        "message": "Нельзя выпускать релиз до Беты.",
+        "message_key": "case08.fr8b.FR8-B-01.dep.04.message"
       }
     ],
     "expected_order": [
@@ -85,6 +99,13 @@
     },
     "anti_cheat": {
       "shuffle_cards": true
+    },
+    "briefing_key": "case08.fr8b.FR8-B-01.briefing",
+    "feedback_rules_keys": {
+      "LOGIC_GAP": "case08.fr8b.FR8-B-01.feedback.LOGIC_GAP",
+      "CAUSALITY_LOOP": "case08.fr8b.FR8-B-01.feedback.CAUSALITY_LOOP",
+      "ORDER_MISMATCH": "case08.fr8b.FR8-B-01.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8b.FR8-B-01.feedback.OK"
     }
   },
   {
@@ -97,27 +118,37 @@
       {
         "stage_id": "PROBLEM",
         "title": "Проблема",
-        "hint": "Сначала понять, что решаем."
+        "hint": "Сначала понять, что решаем.",
+        "title_key": "case08.fr8b.FR8-B-02.card.PROBLEM.title",
+        "hint_key": "case08.fr8b.FR8-B-02.card.PROBLEM.hint"
       },
       {
         "stage_id": "PROTOTYPE",
         "title": "Прототип",
-        "hint": "Быстрая проверка идеи."
+        "hint": "Быстрая проверка идеи.",
+        "title_key": "case08.fr8b.FR8-B-02.card.PROTOTYPE.title",
+        "hint_key": "case08.fr8b.FR8-B-02.card.PROTOTYPE.hint"
       },
       {
         "stage_id": "MVP",
         "title": "MVP",
-        "hint": "Минимальная рабочая версия."
+        "hint": "Минимальная рабочая версия.",
+        "title_key": "case08.fr8b.FR8-B-02.card.MVP.title",
+        "hint_key": "case08.fr8b.FR8-B-02.card.MVP.hint"
       },
       {
         "stage_id": "BETA",
         "title": "Бета",
-        "hint": "Публичный тест."
+        "hint": "Публичный тест.",
+        "title_key": "case08.fr8b.FR8-B-02.card.BETA.title",
+        "hint_key": "case08.fr8b.FR8-B-02.card.BETA.hint"
       },
       {
         "stage_id": "RELEASE",
         "title": "Релиз",
-        "hint": "Релиз."
+        "hint": "Релиз.",
+        "title_key": "case08.fr8b.FR8-B-02.card.RELEASE.title",
+        "hint_key": "case08.fr8b.FR8-B-02.card.RELEASE.hint"
       }
     ],
     "dependencies": [
@@ -125,25 +156,29 @@
         "a": "PROBLEM",
         "b": "PROTOTYPE",
         "code": "LOGIC_GAP",
-        "message": "Нельзя строить прототип без проблемы."
+        "message": "Нельзя строить прототип без проблемы.",
+        "message_key": "case08.fr8b.FR8-B-02.dep.01.message"
       },
       {
         "a": "PROTOTYPE",
         "b": "MVP",
         "code": "LOGIC_GAP",
-        "message": "MVP не рождается из воздуха."
+        "message": "MVP не рождается из воздуха.",
+        "message_key": "case08.fr8b.FR8-B-02.dep.02.message"
       },
       {
         "a": "MVP",
         "b": "BETA",
         "code": "CAUSALITY_LOOP",
-        "message": "Бета только после MVP."
+        "message": "Бета только после MVP.",
+        "message_key": "case08.fr8b.FR8-B-02.dep.03.message"
       },
       {
         "a": "BETA",
         "b": "RELEASE",
         "code": "LOGIC_GAP",
-        "message": "Релиз после Беты."
+        "message": "Релиз после Беты.",
+        "message_key": "case08.fr8b.FR8-B-02.dep.04.message"
       }
     ],
     "expected_order": [
@@ -173,6 +208,13 @@
     },
     "anti_cheat": {
       "shuffle_cards": true
+    },
+    "briefing_key": "case08.fr8b.FR8-B-02.briefing",
+    "feedback_rules_keys": {
+      "LOGIC_GAP": "case08.fr8b.FR8-B-02.feedback.LOGIC_GAP",
+      "CAUSALITY_LOOP": "case08.fr8b.FR8-B-02.feedback.CAUSALITY_LOOP",
+      "ORDER_MISMATCH": "case08.fr8b.FR8-B-02.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8b.FR8-B-02.feedback.OK"
     }
   },
   {
@@ -185,27 +227,37 @@
       {
         "stage_id": "THREAT",
         "title": "Модель угроз",
-        "hint": "Определить, от чего защищаемся."
+        "hint": "Определить, от чего защищаемся.",
+        "title_key": "case08.fr8b.FR8-B-03.card.THREAT.title",
+        "hint_key": "case08.fr8b.FR8-B-03.card.THREAT.hint"
       },
       {
         "stage_id": "LOGGING",
         "title": "Логирование",
-        "hint": "Сначала фиксируем события."
+        "hint": "Сначала фиксируем события.",
+        "title_key": "case08.fr8b.FR8-B-03.card.LOGGING.title",
+        "hint_key": "case08.fr8b.FR8-B-03.card.LOGGING.hint"
       },
       {
         "stage_id": "PENTEST",
         "title": "Пентест",
-        "hint": "Проверка уязвимостей."
+        "hint": "Проверка уязвимостей.",
+        "title_key": "case08.fr8b.FR8-B-03.card.PENTEST.title",
+        "hint_key": "case08.fr8b.FR8-B-03.card.PENTEST.hint"
       },
       {
         "stage_id": "BETA",
         "title": "Бета",
-        "hint": "Публичный тест."
+        "hint": "Публичный тест.",
+        "title_key": "case08.fr8b.FR8-B-03.card.BETA.title",
+        "hint_key": "case08.fr8b.FR8-B-03.card.BETA.hint"
       },
       {
         "stage_id": "RELEASE",
         "title": "Релиз",
-        "hint": "Релиз."
+        "hint": "Релиз.",
+        "title_key": "case08.fr8b.FR8-B-03.card.RELEASE.title",
+        "hint_key": "case08.fr8b.FR8-B-03.card.RELEASE.hint"
       }
     ],
     "dependencies": [
@@ -213,25 +265,29 @@
         "a": "THREAT",
         "b": "LOGGING",
         "code": "LOGIC_GAP",
-        "message": "Логи без понимания угроз бесполезны."
+        "message": "Логи без понимания угроз бесполезны.",
+        "message_key": "case08.fr8b.FR8-B-03.dep.01.message"
       },
       {
         "a": "LOGGING",
         "b": "PENTEST",
         "code": "LOGIC_GAP",
-        "message": "Пентест без логов хуже диагностики."
+        "message": "Пентест без логов хуже диагностики.",
+        "message_key": "case08.fr8b.FR8-B-03.dep.02.message"
       },
       {
         "a": "PENTEST",
         "b": "BETA",
         "code": "CAUSALITY_LOOP",
-        "message": "Нельзя выпускать Бету до проверки безопасности."
+        "message": "Нельзя выпускать Бету до проверки безопасности.",
+        "message_key": "case08.fr8b.FR8-B-03.dep.03.message"
       },
       {
         "a": "BETA",
         "b": "RELEASE",
         "code": "LOGIC_GAP",
-        "message": "Релиз после Беты."
+        "message": "Релиз после Беты.",
+        "message_key": "case08.fr8b.FR8-B-03.dep.04.message"
       }
     ],
     "expected_order": [
@@ -261,6 +317,13 @@
     },
     "anti_cheat": {
       "shuffle_cards": true
+    },
+    "briefing_key": "case08.fr8b.FR8-B-03.briefing",
+    "feedback_rules_keys": {
+      "LOGIC_GAP": "case08.fr8b.FR8-B-03.feedback.LOGIC_GAP",
+      "CAUSALITY_LOOP": "case08.fr8b.FR8-B-03.feedback.CAUSALITY_LOOP",
+      "ORDER_MISMATCH": "case08.fr8b.FR8-B-03.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8b.FR8-B-03.feedback.OK"
     }
   },
   {
@@ -273,27 +336,37 @@
       {
         "stage_id": "PITCH",
         "title": "Питч",
-        "hint": "Презентация идеи."
+        "hint": "Презентация идеи.",
+        "title_key": "case08.fr8b.FR8-B-04.card.PITCH.title",
+        "hint_key": "case08.fr8b.FR8-B-04.card.PITCH.hint"
       },
       {
         "stage_id": "MEETING",
         "title": "Встреча",
-        "hint": "Обсуждение деталей."
+        "hint": "Обсуждение деталей.",
+        "title_key": "case08.fr8b.FR8-B-04.card.MEETING.title",
+        "hint_key": "case08.fr8b.FR8-B-04.card.MEETING.hint"
       },
       {
         "stage_id": "FUNDING",
         "title": "Финансирование",
-        "hint": "Деньги пришли."
+        "hint": "Деньги пришли.",
+        "title_key": "case08.fr8b.FR8-B-04.card.FUNDING.title",
+        "hint_key": "case08.fr8b.FR8-B-04.card.FUNDING.hint"
       },
       {
         "stage_id": "HIRE",
         "title": "Найм",
-        "hint": "Собрать команду."
+        "hint": "Собрать команду.",
+        "title_key": "case08.fr8b.FR8-B-04.card.HIRE.title",
+        "hint_key": "case08.fr8b.FR8-B-04.card.HIRE.hint"
       },
       {
         "stage_id": "MVP",
         "title": "MVP",
-        "hint": "Сделать продукт."
+        "hint": "Сделать продукт.",
+        "title_key": "case08.fr8b.FR8-B-04.card.MVP.title",
+        "hint_key": "case08.fr8b.FR8-B-04.card.MVP.hint"
       }
     ],
     "dependencies": [
@@ -301,25 +374,29 @@
         "a": "PITCH",
         "b": "MEETING",
         "code": "LOGIC_GAP",
-        "message": "Сначала питч, потом встреча."
+        "message": "Сначала питч, потом встреча.",
+        "message_key": "case08.fr8b.FR8-B-04.dep.01.message"
       },
       {
         "a": "MEETING",
         "b": "FUNDING",
         "code": "LOGIC_GAP",
-        "message": "Финансирование после обсуждения."
+        "message": "Финансирование после обсуждения.",
+        "message_key": "case08.fr8b.FR8-B-04.dep.02.message"
       },
       {
         "a": "FUNDING",
         "b": "HIRE",
         "code": "LOGIC_GAP",
-        "message": "Найм обычно после денег."
+        "message": "Найм обычно после денег.",
+        "message_key": "case08.fr8b.FR8-B-04.dep.03.message"
       },
       {
         "a": "HIRE",
         "b": "MVP",
         "code": "LOGIC_GAP",
-        "message": "MVP делают люди, а не воздух."
+        "message": "MVP делают люди, а не воздух.",
+        "message_key": "case08.fr8b.FR8-B-04.dep.04.message"
       }
     ],
     "expected_order": [
@@ -349,6 +426,13 @@
     },
     "anti_cheat": {
       "shuffle_cards": true
+    },
+    "briefing_key": "case08.fr8b.FR8-B-04.briefing",
+    "feedback_rules_keys": {
+      "LOGIC_GAP": "case08.fr8b.FR8-B-04.feedback.LOGIC_GAP",
+      "CAUSALITY_LOOP": "case08.fr8b.FR8-B-04.feedback.CAUSALITY_LOOP",
+      "ORDER_MISMATCH": "case08.fr8b.FR8-B-04.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8b.FR8-B-04.feedback.OK"
     }
   },
   {
@@ -361,27 +445,37 @@
       {
         "stage_id": "MVP",
         "title": "MVP",
-        "hint": "Есть продукт."
+        "hint": "Есть продукт.",
+        "title_key": "case08.fr8b.FR8-B-05.card.MVP.title",
+        "hint_key": "case08.fr8b.FR8-B-05.card.MVP.hint"
       },
       {
         "stage_id": "PRIVACY",
         "title": "Конфиденциальность",
-        "hint": "Политика конфиденциальности."
+        "hint": "Политика конфиденциальности.",
+        "title_key": "case08.fr8b.FR8-B-05.card.PRIVACY.title",
+        "hint_key": "case08.fr8b.FR8-B-05.card.PRIVACY.hint"
       },
       {
         "stage_id": "TERMS",
         "title": "Условия",
-        "hint": "Пользовательское соглашение."
+        "hint": "Пользовательское соглашение.",
+        "title_key": "case08.fr8b.FR8-B-05.card.TERMS.title",
+        "hint_key": "case08.fr8b.FR8-B-05.card.TERMS.hint"
       },
       {
         "stage_id": "BETA",
         "title": "Бета",
-        "hint": "Публичный тест."
+        "hint": "Публичный тест.",
+        "title_key": "case08.fr8b.FR8-B-05.card.BETA.title",
+        "hint_key": "case08.fr8b.FR8-B-05.card.BETA.hint"
       },
       {
         "stage_id": "RELEASE",
         "title": "Релиз",
-        "hint": "Релиз."
+        "hint": "Релиз.",
+        "title_key": "case08.fr8b.FR8-B-05.card.RELEASE.title",
+        "hint_key": "case08.fr8b.FR8-B-05.card.RELEASE.hint"
       }
     ],
     "dependencies": [
@@ -389,25 +483,29 @@
         "a": "MVP",
         "b": "PRIVACY",
         "code": "LOGIC_GAP",
-        "message": "Сначала продукт, потом документы."
+        "message": "Сначала продукт, потом документы.",
+        "message_key": "case08.fr8b.FR8-B-05.dep.01.message"
       },
       {
         "a": "PRIVACY",
         "b": "TERMS",
         "code": "LOGIC_GAP",
-        "message": "Документы должны быть согласованы."
+        "message": "Документы должны быть согласованы.",
+        "message_key": "case08.fr8b.FR8-B-05.dep.02.message"
       },
       {
         "a": "TERMS",
         "b": "BETA",
         "code": "CAUSALITY_LOOP",
-        "message": "Публичность после документов."
+        "message": "Публичность после документов.",
+        "message_key": "case08.fr8b.FR8-B-05.dep.03.message"
       },
       {
         "a": "BETA",
         "b": "RELEASE",
         "code": "LOGIC_GAP",
-        "message": "Релиз после Беты."
+        "message": "Релиз после Беты.",
+        "message_key": "case08.fr8b.FR8-B-05.dep.04.message"
       }
     ],
     "expected_order": [
@@ -437,6 +535,13 @@
     },
     "anti_cheat": {
       "shuffle_cards": true
+    },
+    "briefing_key": "case08.fr8b.FR8-B-05.briefing",
+    "feedback_rules_keys": {
+      "LOGIC_GAP": "case08.fr8b.FR8-B-05.feedback.LOGIC_GAP",
+      "CAUSALITY_LOOP": "case08.fr8b.FR8-B-05.feedback.CAUSALITY_LOOP",
+      "ORDER_MISMATCH": "case08.fr8b.FR8-B-05.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8b.FR8-B-05.feedback.OK"
     }
   },
   {
@@ -449,27 +554,37 @@
       {
         "stage_id": "MVP",
         "title": "MVP",
-        "hint": "Рабочая основа."
+        "hint": "Рабочая основа.",
+        "title_key": "case08.fr8b.FR8-B-06.card.MVP.title",
+        "hint_key": "case08.fr8b.FR8-B-06.card.MVP.hint"
       },
       {
         "stage_id": "ALPHA",
         "title": "Альфа",
-        "hint": "Внутренний тест."
+        "hint": "Внутренний тест.",
+        "title_key": "case08.fr8b.FR8-B-06.card.ALPHA.title",
+        "hint_key": "case08.fr8b.FR8-B-06.card.ALPHA.hint"
       },
       {
         "stage_id": "QA",
         "title": "QA",
-        "hint": "Проверка качества."
+        "hint": "Проверка качества.",
+        "title_key": "case08.fr8b.FR8-B-06.card.QA.title",
+        "hint_key": "case08.fr8b.FR8-B-06.card.QA.hint"
       },
       {
         "stage_id": "BETA",
         "title": "Бета",
-        "hint": "Публичный тест."
+        "hint": "Публичный тест.",
+        "title_key": "case08.fr8b.FR8-B-06.card.BETA.title",
+        "hint_key": "case08.fr8b.FR8-B-06.card.BETA.hint"
       },
       {
         "stage_id": "RELEASE",
         "title": "Релиз",
-        "hint": "Релиз."
+        "hint": "Релиз.",
+        "title_key": "case08.fr8b.FR8-B-06.card.RELEASE.title",
+        "hint_key": "case08.fr8b.FR8-B-06.card.RELEASE.hint"
       }
     ],
     "dependencies": [
@@ -477,25 +592,29 @@
         "a": "MVP",
         "b": "ALPHA",
         "code": "LOGIC_GAP",
-        "message": "Альфа после MVP."
+        "message": "Альфа после MVP.",
+        "message_key": "case08.fr8b.FR8-B-06.dep.01.message"
       },
       {
         "a": "ALPHA",
         "b": "QA",
         "code": "LOGIC_GAP",
-        "message": "Контроль качества после внутреннего теста."
+        "message": "Контроль качества после внутреннего теста.",
+        "message_key": "case08.fr8b.FR8-B-06.dep.02.message"
       },
       {
         "a": "QA",
         "b": "BETA",
         "code": "CAUSALITY_LOOP",
-        "message": "Бета после QA."
+        "message": "Бета после QA.",
+        "message_key": "case08.fr8b.FR8-B-06.dep.03.message"
       },
       {
         "a": "BETA",
         "b": "RELEASE",
         "code": "LOGIC_GAP",
-        "message": "Релиз после Беты."
+        "message": "Релиз после Беты.",
+        "message_key": "case08.fr8b.FR8-B-06.dep.04.message"
       }
     ],
     "expected_order": [
@@ -525,6 +644,13 @@
     },
     "anti_cheat": {
       "shuffle_cards": true
+    },
+    "briefing_key": "case08.fr8b.FR8-B-06.briefing",
+    "feedback_rules_keys": {
+      "LOGIC_GAP": "case08.fr8b.FR8-B-06.feedback.LOGIC_GAP",
+      "CAUSALITY_LOOP": "case08.fr8b.FR8-B-06.feedback.CAUSALITY_LOOP",
+      "ORDER_MISMATCH": "case08.fr8b.FR8-B-06.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8b.FR8-B-06.feedback.OK"
     }
   },
   {
@@ -537,22 +663,30 @@
       {
         "stage_id": "IDENT",
         "title": "Ввод логина",
-        "hint": "Идентификация: заявляю, кто я."
+        "hint": "Идентификация: заявляю, кто я.",
+        "title_key": "case08.fr8b.FR8-B-SEC-01.card.IDENT.title",
+        "hint_key": "case08.fr8b.FR8-B-SEC-01.card.IDENT.hint"
       },
       {
         "stage_id": "AUTHN",
         "title": "Сканирование пальца",
-        "hint": "Аутентификация: доказываю, что я это я."
+        "hint": "Аутентификация: доказываю, что я это я.",
+        "title_key": "case08.fr8b.FR8-B-SEC-01.card.AUTHN.title",
+        "hint_key": "case08.fr8b.FR8-B-SEC-01.card.AUTHN.hint"
       },
       {
         "stage_id": "AUTHZ",
         "title": "Проверка прав",
-        "hint": "Авторизация: система решает, можно ли мне сюда."
+        "hint": "Авторизация: система решает, можно ли мне сюда.",
+        "title_key": "case08.fr8b.FR8-B-SEC-01.card.AUTHZ.title",
+        "hint_key": "case08.fr8b.FR8-B-SEC-01.card.AUTHZ.hint"
       },
       {
         "stage_id": "LOG",
         "title": "Создание сессии и запись в лог",
-        "hint": "Фиксация успешного входа. Следы остаются всегда."
+        "hint": "Фиксация успешного входа. Следы остаются всегда.",
+        "title_key": "case08.fr8b.FR8-B-SEC-01.card.LOG.title",
+        "hint_key": "case08.fr8b.FR8-B-SEC-01.card.LOG.hint"
       }
     ],
     "dependencies": [
@@ -560,19 +694,22 @@
         "a": "IDENT",
         "b": "AUTHN",
         "code": "LOGIC_GAP",
-        "message": "Нельзя аутентифицировать неизвестного пользователя: сначала идентификация (логин)."
+        "message": "Нельзя аутентифицировать неизвестного пользователя: сначала идентификация (логин).",
+        "message_key": "case08.fr8b.FR8-B-SEC-01.dep.01.message"
       },
       {
         "a": "AUTHN",
         "b": "AUTHZ",
         "code": "CAUSALITY_LOOP",
-        "message": "Нельзя проверять права до доказательства личности: сначала аутентификация."
+        "message": "Нельзя проверять права до доказательства личности: сначала аутентификация.",
+        "message_key": "case08.fr8b.FR8-B-SEC-01.dep.02.message"
       },
       {
         "a": "AUTHZ",
         "b": "LOG",
         "code": "LOGIC_GAP",
-        "message": "Лог успешного входа возможен только после проверки прав (авторизации)."
+        "message": "Лог успешного входа возможен только после проверки прав (авторизации).",
+        "message_key": "case08.fr8b.FR8-B-SEC-01.dep.03.message"
       }
     ],
     "expected_order": [
@@ -601,6 +738,13 @@
     },
     "anti_cheat": {
       "shuffle_cards": true
+    },
+    "briefing_key": "case08.fr8b.FR8-B-SEC-01.briefing",
+    "feedback_rules_keys": {
+      "LOGIC_GAP": "case08.fr8b.FR8-B-SEC-01.feedback.LOGIC_GAP",
+      "CAUSALITY_LOOP": "case08.fr8b.FR8-B-SEC-01.feedback.CAUSALITY_LOOP",
+      "ORDER_MISMATCH": "case08.fr8b.FR8-B-SEC-01.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8b.FR8-B-SEC-01.feedback.OK"
     }
   },
   {
@@ -613,22 +757,30 @@
       {
         "stage_id": "IDENT",
         "title": "Ввод логина",
-        "hint": "Идентификация: заявляю, кто я."
+        "hint": "Идентификация: заявляю, кто я.",
+        "title_key": "case08.fr8b.FR8-B-SEC-02.card.IDENT.title",
+        "hint_key": "case08.fr8b.FR8-B-SEC-02.card.IDENT.hint"
       },
       {
         "stage_id": "AUTHN",
         "title": "Пароль + 2FA",
-        "hint": "Аутентификация: пароль и второй фактор."
+        "hint": "Аутентификация: пароль и второй фактор.",
+        "title_key": "case08.fr8b.FR8-B-SEC-02.card.AUTHN.title",
+        "hint_key": "case08.fr8b.FR8-B-SEC-02.card.AUTHN.hint"
       },
       {
         "stage_id": "AUTHZ",
         "title": "Проверка прав",
-        "hint": "Авторизация: система решает, можно ли мне сюда."
+        "hint": "Авторизация: система решает, можно ли мне сюда.",
+        "title_key": "case08.fr8b.FR8-B-SEC-02.card.AUTHZ.title",
+        "hint_key": "case08.fr8b.FR8-B-SEC-02.card.AUTHZ.hint"
       },
       {
         "stage_id": "LOG",
         "title": "Создание сессии и запись в лог",
-        "hint": "Фиксация успешного входа. Следы остаются всегда."
+        "hint": "Фиксация успешного входа. Следы остаются всегда.",
+        "title_key": "case08.fr8b.FR8-B-SEC-02.card.LOG.title",
+        "hint_key": "case08.fr8b.FR8-B-SEC-02.card.LOG.hint"
       }
     ],
     "dependencies": [
@@ -636,19 +788,22 @@
         "a": "IDENT",
         "b": "AUTHN",
         "code": "LOGIC_GAP",
-        "message": "Нельзя аутентифицировать неизвестного пользователя: сначала идентификация (логин)."
+        "message": "Нельзя аутентифицировать неизвестного пользователя: сначала идентификация (логин).",
+        "message_key": "case08.fr8b.FR8-B-SEC-02.dep.01.message"
       },
       {
         "a": "AUTHN",
         "b": "AUTHZ",
         "code": "CAUSALITY_LOOP",
-        "message": "Нельзя проверять права до доказательства личности: сначала аутентификация."
+        "message": "Нельзя проверять права до доказательства личности: сначала аутентификация.",
+        "message_key": "case08.fr8b.FR8-B-SEC-02.dep.02.message"
       },
       {
         "a": "AUTHZ",
         "b": "LOG",
         "code": "LOGIC_GAP",
-        "message": "Лог успешного входа возможен только после проверки прав (авторизации)."
+        "message": "Лог успешного входа возможен только после проверки прав (авторизации).",
+        "message_key": "case08.fr8b.FR8-B-SEC-02.dep.03.message"
       }
     ],
     "expected_order": [
@@ -677,6 +832,13 @@
     },
     "anti_cheat": {
       "shuffle_cards": true
+    },
+    "briefing_key": "case08.fr8b.FR8-B-SEC-02.briefing",
+    "feedback_rules_keys": {
+      "LOGIC_GAP": "case08.fr8b.FR8-B-SEC-02.feedback.LOGIC_GAP",
+      "CAUSALITY_LOOP": "case08.fr8b.FR8-B-SEC-02.feedback.CAUSALITY_LOOP",
+      "ORDER_MISMATCH": "case08.fr8b.FR8-B-SEC-02.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8b.FR8-B-SEC-02.feedback.OK"
     }
   }
 ]

@@ -21,9 +21,9 @@ const STATUS_HINT := "\u041f\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u04
 const STATUS_INCOMPLETE := "\u041d\u0435 \u0432\u0441\u0435 \u0444\u0440\u0430\u0433\u043c\u0435\u043d\u0442\u044b \u0432\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u044b"
 const STATUS_NEXT_HINT := "\u0413\u043e\u0442\u043e\u0432\u043e. \u0416\u043c\u0438\u0442\u0435 \u0414\u0410\u041b\u0415\u0415."
 const STATUS_SOLVE_FIRST := "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0440\u0435\u0448\u0438\u0442\u0435 \u0443\u0440\u043e\u0432\u0435\u043d\u044c"
-const RENDER_ERROR := "[ОШИБКА РЕНДЕРА]"
+const RENDER_ERROR := "[РЕНДЕР ОШИБКА]"
 const RENDER_WARN := "РЕНДЕР: НЕСТАБИЛЬНЫЙ"
-const RENDER_OK := "СЕКТОР ИСЦЕЛЕН"
+const RENDER_OK := "РЕНДЕР ГОТОВ"
 
 var levels: Array = []
 var level_data: Dictionary = {}
@@ -43,12 +43,17 @@ var trace: Array = []
 
 var level_solved: bool = false
 var confirm_locked: bool = false
+var has_confirmed_once: bool = false
 var last_render_state: String = ""
 
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
 @onready var body: BoxContainer = $SafeArea/MainLayout/Body
 @onready var fragments_card: PanelContainer = $SafeArea/MainLayout/Body/FragmentsCard
 @onready var editor_card: PanelContainer = $SafeArea/MainLayout/Body/EditorCard
+@onready var fragments_title_label: Label = $SafeArea/MainLayout/Body/FragmentsCard/CardVBox/FragmentsTitle
+@onready var editor_title_label: Label = $SafeArea/MainLayout/Body/EditorCard/CardVBox/EditorTitle
+@onready var render_header_label: Label = $SafeArea/MainLayout/Body/EditorCard/CardVBox/RenderPreviewCard/RenderVBox/RenderHeader
+@onready var slots_title_label: Label = $SafeArea/MainLayout/Body/EditorCard/CardVBox/SlotsTitle
 @onready var pile_zone: Node = $SafeArea/MainLayout/Body/FragmentsCard/CardVBox/PileZone
 @onready var slots_grid: GridContainer = $SafeArea/MainLayout/Body/EditorCard/CardVBox/SlotsGrid
 @onready var code_preview: RichTextLabel = $SafeArea/MainLayout/Body/EditorCard/CardVBox/CodePreviewCard/CodePreview
@@ -71,11 +76,13 @@ func _ready() -> void:
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 
 	_connect_ui_signals()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("Не удалось загрузить уровни финального отчета A.")
+		_show_error(_tr("case08.fr8a.load_error", "Не удалось загрузить уровни финального отчёта A."))
 		return
 
 	title_label.text = "\u0414\u0415\u041b\u041e #8: \u0424\u0418\u041d\u0410\u041b\u042c\u041d\u042b\u0419 \u041e\u0422\u0427\u0415\u0422"
@@ -83,6 +90,7 @@ func _ready() -> void:
 	btn_reset.text = TEXT_RESET
 	btn_confirm.text = TEXT_CONFIRM
 	btn_next.text = TEXT_NEXT
+	_apply_i18n()
 
 	var initial_index: int = clamp(GlobalMetrics.current_level_index, 0, max(0, levels.size() - 1))
 	_start_level(initial_index)
@@ -93,12 +101,75 @@ func _exit_tree() -> void:
 		GlobalMetrics.stability_changed.disconnect(_on_stability_changed)
 	if get_viewport() and get_viewport().size_changed.is_connected(_on_viewport_size_changed):
 		get_viewport().size_changed.disconnect(_on_viewport_size_changed)
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
 
 func _connect_ui_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_confirm.pressed.connect(_on_confirm_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+	if levels.is_empty():
+		return
+	briefing_label.text = I18n.resolve_field(level_data, "briefing")
+	if pile_zone.has_method("setup"):
+		pile_zone.call("setup", "PILE", _tr("case08.fr8a.pile_title", "СКЛАД ФРАГМЕНТОВ"))
+	_refresh_fragment_node_labels()
+	_update_code_preview()
+	_update_render_preview(_collect_sequence())
+	if has_confirmed_once:
+		var sequence: Array[String] = _collect_sequence()
+		var evaluation: Dictionary = FR8Scoring.evaluate(level_data, sequence, fragment_by_id)
+		var score: Dictionary = FR8Scoring.resolve_score(level_data, evaluation)
+		var verdict_code: String = str(score.get("verdict_code", "FAIL"))
+		var error_code: String = str(evaluation.get("error_code", "FAIL"))
+		var feedback_text: String = FR8Scoring.feedback_text(level_data, evaluation)
+		if verdict_code == "PERFECT":
+			_set_status("%s %s" % [feedback_text, _tr("case08.fr8a.status.next_hint", STATUS_NEXT_HINT)], COLOR_OK)
+		elif verdict_code == "PARTIAL":
+			_set_status(feedback_text, COLOR_WARN)
+		elif error_code == "INCOMPLETE":
+			_set_status(_tr("case08.fr8a.status.incomplete", STATUS_INCOMPLETE), COLOR_ERR)
+		else:
+			_set_status(feedback_text, COLOR_ERR)
+	else:
+		_set_status(_tr("case08.fr8a.status.hint", STATUS_HINT), COLOR_INFO)
+
+func _apply_i18n() -> void:
+	title_label.text = _tr("case08.fr8a.title", "ДЕЛО #8: ФИНАЛЬНЫЙ ОТЧЕТ")
+	btn_back.text = _tr("case08.common.back", TEXT_BACK)
+	btn_reset.text = _tr("case08.common.reset", TEXT_RESET)
+	btn_confirm.text = _tr("case08.common.confirm", TEXT_CONFIRM)
+	btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if (not levels.is_empty() and _is_last_level()) else _tr("case08.common.next", TEXT_NEXT)
+	fragments_title_label.text = _tr("case08.fr8a.fragments_title", "СКЛАД ФРАГМЕНТОВ")
+	editor_title_label.text = _tr("case08.fr8a.editor_title", "РЕДАКТОР")
+	render_header_label.text = _tr("case08.fr8a.render_header", "LIVE PREVIEW")
+	slots_title_label.text = _tr("case08.fr8a.slots_title", "СЛОТЫ")
+
+func _refresh_fragment_node_labels() -> void:
+	for fragment_id_var in fragment_nodes.keys():
+		var fragment_id: String = str(fragment_id_var)
+		var fragment_node: Node = fragment_nodes.get(fragment_id, null) as Node
+		if fragment_node == null or not (fragment_node is Button):
+			continue
+		var fragment_data: Dictionary = fragment_by_id.get(fragment_id, {}) as Dictionary
+		var label_text: String = I18n.resolve_field(fragment_data, "label", {"default": str(fragment_data.get("label", fragment_id))})
+		(fragment_node as Button).text = label_text
+
+func _localized_fragment_data(raw_fragment: Dictionary) -> Dictionary:
+	var localized: Dictionary = raw_fragment.duplicate(true)
+	localized["label"] = I18n.resolve_field(raw_fragment, "label", {"default": str(raw_fragment.get("label", ""))})
+	localized["token"] = I18n.resolve_field(raw_fragment, "token", {"default": str(raw_fragment.get("token", localized.get("label", "")))})
+	return localized
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	if not merged.has("default"):
+		merged["default"] = default_text
+	return I18n.tr_key(key, merged)
 
 func _load_levels() -> void:
 	levels = FR8Data.load_levels(LEVELS_PATH)
@@ -125,17 +196,17 @@ func _start_level(index: int) -> void:
 		fragment_by_id[str(fragment_data.get("fragment_id", ""))] = fragment_data
 
 	level_label.text = _build_level_label()
-	briefing_label.text = str(level_data.get("briefing", ""))
+	briefing_label.text = I18n.resolve_field(level_data, "briefing")
 
 	if pile_zone.has_method("setup"):
-		pile_zone.call("setup", "PILE", "\u0421\u041a\u041b\u0410\u0414 \u0424\u0420\u0410\u0413\u041c\u0415\u041d\u0422\u041e\u0412")
+		pile_zone.call("setup", "PILE", _tr("case08.fr8a.pile_title", "СКЛАД ФРАГМЕНТОВ"))
 	_connect_zone_signal(pile_zone)
 
 	_build_slot_nodes()
 	_reset_attempt(true)
 
 func _build_level_label() -> String:
-	return "А | %s (%d/%d)" % [
+	return "A | %s (%d/%d)" % [
 		str(level_data.get("id", "FR8-A")),
 		current_level_index + 1,
 		levels.size()
@@ -185,12 +256,13 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 
 	level_solved = false
 	confirm_locked = false
+	has_confirmed_once = false
 	last_render_state = ""
 	btn_confirm.disabled = false
 	btn_next.disabled = true
-	btn_next.text = TEXT_FINISH if _is_last_level() else TEXT_NEXT
+	btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
 
-	_set_status(STATUS_HINT, COLOR_INFO)
+	_set_status(_tr("case08.fr8a.status.hint", STATUS_HINT), COLOR_INFO)
 	_update_code_preview()
 	_update_slot_feedback()
 	_update_stability_ui()
@@ -209,7 +281,7 @@ func _spawn_fragments_into_pile() -> void:
 			continue
 
 		if item_node.has_method("setup"):
-			item_node.call("setup", fragment_data)
+			item_node.call("setup", _localized_fragment_data(fragment_data))
 		item_node.set_meta("fragment_id", str(fragment_data.get("fragment_id", "")))
 		if item_node.has_signal("drag_started"):
 			item_node.connect("drag_started", Callable(self, "_on_drag_started"))
@@ -236,7 +308,7 @@ func _on_item_placed(fragment_id: String, to_zone: String, from_zone: String) ->
 	})
 	_update_code_preview()
 	_update_slot_feedback()
-	_set_status(STATUS_HINT, COLOR_INFO)
+	_set_status(_tr("case08.fr8a.status.hint", STATUS_HINT), COLOR_INFO)
 
 func handle_drop_to_slot(target_zone_id: String, payload: Dictionary) -> Dictionary:
 	if confirm_locked:
@@ -367,6 +439,7 @@ func _on_confirm_pressed() -> void:
 	if confirm_locked:
 		return
 
+	has_confirmed_once = true
 	var sequence: Array[String] = _collect_sequence()
 	var snapshot_zones: Dictionary = _build_snapshot_zones()
 	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
@@ -428,8 +501,8 @@ func _on_confirm_pressed() -> void:
 		confirm_locked = true
 		btn_confirm.disabled = true
 		btn_next.disabled = false
-		btn_next.text = TEXT_FINISH if _is_last_level() else TEXT_NEXT
-		_set_status("%s %s" % [feedback_text, STATUS_NEXT_HINT], COLOR_OK)
+		btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
+		_set_status("%s %s" % [feedback_text, _tr("case08.fr8a.status.next_hint", STATUS_NEXT_HINT)], COLOR_OK)
 	elif verdict_code == "PARTIAL":
 		level_solved = false
 		confirm_locked = false
@@ -440,7 +513,7 @@ func _on_confirm_pressed() -> void:
 		confirm_locked = false
 		btn_next.disabled = true
 		if error_code == "INCOMPLETE":
-			_set_status(STATUS_INCOMPLETE, COLOR_ERR)
+			_set_status(_tr("case08.fr8a.status.incomplete", STATUS_INCOMPLETE), COLOR_ERR)
 		else:
 			_set_status(feedback_text, COLOR_ERR)
 		_flash_wrong_slots()
@@ -452,7 +525,7 @@ func _on_confirm_pressed() -> void:
 
 func _on_next_pressed() -> void:
 	if not level_solved:
-		_set_status(STATUS_SOLVE_FIRST, COLOR_WARN)
+		_set_status(_tr("case08.fr8a.status.solve_first", STATUS_SOLVE_FIRST), COLOR_WARN)
 		return
 
 	var from_level_id: String = str(level_data.get("id", "FR8-A-00"))
@@ -505,10 +578,10 @@ func _update_code_preview() -> void:
 
 	var profile: String = str(level_data.get("validator_profile", FR8Scoring.PROFILE_LIST_BASIC)).to_upper()
 	code_preview.text = "\n".join([
-		"[b][color=#ffd25f]ИСХОДНЫЙ КОД[/color][/b]",
+		"[b][color=#ffd25f]%s[/color][/b]" % _escape_bbcode(_tr("case08.fr8a.code_header", "ИСХОДНЫЙ КОД")),
 		"[code]%s[/code]" % "\n".join(raw_lines),
 		"",
-		"[b][color=#8fffb2]ПРОФИЛЬ: %s[/color][/b]" % _escape_bbcode(profile)
+		"[b][color=#8fffb2]%s %s[/color][/b]" % [_escape_bbcode(_tr("case08.fr8a.profile_label", "ПРОФИЛЬ:")), _escape_bbcode(profile)]
 	])
 	_update_render_preview(sequence)
 
@@ -532,18 +605,18 @@ func _update_render_preview(sequence: Array[String], evaluation_override: Dictio
 	var profile: String = str(level_data.get("validator_profile", FR8Scoring.PROFILE_LIST_BASIC)).to_upper()
 	var mock_lines: Array[String] = _build_profile_render_lines(profile, sequence)
 
-	var header_line: String = "[b][color=#ffd25f]МОК-РЕНДЕР | %s[/color][/b]" % _escape_bbcode(profile)
+	var header_line: String = "[b][color=#ffd25f]%s | %s[/color][/b]" % [_escape_bbcode(_tr("case08.fr8a.render_header", "МОК-РЕНДЕР")), _escape_bbcode(profile)]
 	match render_state:
 		"ok":
-			render_status.text = RENDER_OK
+			render_status.text = _tr("case08.fr8a.render.ok", RENDER_OK)
 			render_status.modulate = COLOR_OK
 		"warn":
-			render_status.text = RENDER_WARN
+			render_status.text = _tr("case08.fr8a.render.warn", RENDER_WARN)
 			render_status.modulate = COLOR_WARN
 		_:
-			render_status.text = RENDER_ERROR
+			render_status.text = _tr("case08.fr8a.render.error", RENDER_ERROR)
 			render_status.modulate = COLOR_ERR
-			header_line = "[shake rate=15.0 level=5 connected=1][b][color=#ff6363]%s[/color][/b][/shake]" % RENDER_ERROR
+			header_line = "[shake rate=15.0 level=5 connected=1][b][color=#ff6363]%s[/color][/b][/shake]" % _tr("case08.fr8a.render.error", RENDER_ERROR)
 
 	render_preview.text = "\n".join([
 		header_line,
@@ -560,7 +633,8 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 			for token in inner_tokens:
 				if token.to_lower().begins_with("<li"):
 					var item_text: String = _extract_tag_text(token)
-					lines.append("[color=#d8f5d8]- %s[/color]" % _escape_bbcode(item_text if not item_text.is_empty() else "элемент"))
+					var fallback_item: String = _tr("case08.fr8a.preview.list_item_default", "элемент")
+					lines.append("[color=#d8f5d8]- %s[/color]" % _escape_bbcode(item_text if not item_text.is_empty() else fallback_item))
 			if lines.is_empty():
 				lines.append("[color=#808080]- ...[/color]")
 		"NAV_MENU":
@@ -571,7 +645,11 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 					if not label.is_empty():
 						labels.append(label)
 			if labels.is_empty():
-				labels = ["главная", "новости", "о нас"]
+				labels = [
+					_tr("case08.fr8a.preview.nav_home", "главная"),
+					_tr("case08.fr8a.preview.nav_news", "новости"),
+					_tr("case08.fr8a.preview.nav_about", "о нас")
+				]
 			var menu_line: String = ""
 			for i in range(labels.size()):
 				if i > 0:
@@ -584,9 +662,9 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 				if token.to_lower().find("<tr") >= 0:
 					row_count += 1
 			row_count = max(row_count, 2)
-			lines.append("[bgcolor=#25291f][color=#d6ffb0] время | событие [/color][/bgcolor]")
+			lines.append("[bgcolor=#25291f][color=#d6ffb0] %s [/color][/bgcolor]" % _escape_bbcode(_tr("case08.fr8a.preview.table_header", "время | событие")))
 			for i in range(row_count):
-				lines.append("[color=#bac6b4] 0%d:%02d | запись_%d [/color]" % [8 + i, 10 + i, i + 1])
+				lines.append("[color=#bac6b4] 0%d:%02d | %s_%d [/color]" % [8 + i, 10 + i, _escape_bbcode(_tr("case08.fr8a.preview.table_row_prefix", "запись")), i + 1])
 		"FORM_SIMPLE":
 			var field_count: int = 0
 			var has_button: bool = false
@@ -597,10 +675,11 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 				if lower.find("<button") >= 0:
 					has_button = true
 			field_count = max(field_count, 2)
-			lines.append("[bgcolor=#1f2a1f][color=#d8ffd8] ФОРМА АВТОРИЗАЦИИ [/color][/bgcolor]")
+			lines.append("[bgcolor=#1f2a1f][color=#d8ffd8] %s [/color][/bgcolor]" % _escape_bbcode(_tr("case08.fr8a.preview.form_title", "ФОРМА АВТОРИЗАЦИИ")))
 			for i in range(field_count):
-				lines.append("[color=#c6d7c6][ поле_%d ]________________[/color]" % (i + 1))
-			lines.append("[color=#ffd07a]%s[/color]" % ("[ ОТПРАВИТЬ ]" if has_button else "[ ДЕЙСТВИЕ ]"))
+				lines.append("[color=#c6d7c6][ %s_%d ]________________[/color]" % [_escape_bbcode(_tr("case08.fr8a.preview.form_field_prefix", "поле")), i + 1])
+			var action_label: String = _tr("case08.fr8a.preview.form_btn_send", "ОТПРАВИТЬ") if has_button else _tr("case08.fr8a.preview.form_btn_action", "ДЕЙСТВИЕ")
+			lines.append("[color=#ffd07a][ %s ][/color]" % _escape_bbcode(action_label))
 		"ARTICLE_NOTE":
 			var title_text: String = ""
 			var body_text: String = ""
@@ -610,7 +689,7 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 					title_text = _extract_tag_text(token)
 				elif body_text.is_empty() and lower.find("<p") >= 0:
 					body_text = _extract_tag_text(token)
-			title_text = "Примечание по делу" if title_text.is_empty() else title_text
+			title_text = _tr("case08.fr8a.preview.article_title", "Примечание по делу") if title_text.is_empty() else title_text
 			body_text = "..." if body_text.is_empty() else body_text
 			lines.append("[b][color=#ece7cc]%s[/color][/b]" % _escape_bbcode(title_text))
 			lines.append("[color=#b8b5a3]%s[/color]" % _escape_bbcode(body_text))
@@ -623,14 +702,15 @@ func _build_profile_render_lines(profile: String, sequence: Array[String]) -> Ar
 					has_image = true
 				if caption.is_empty() and lower.find("<figcaption") >= 0:
 					caption = _extract_tag_text(token)
-			lines.append("[bgcolor=#252a36][color=#b8c8ff]%s[/color][/bgcolor]" % ("[ медиа-кадр ]" if has_image else "[ нет медиа ]"))
-			lines.append("[color=#d4c8a0]%s[/color]" % _escape_bbcode(caption if not caption.is_empty() else "подпись на рассмотрении"))
+			var media_label: String = _tr("case08.fr8a.preview.figure_media", "[ медиа-кадр ]") if has_image else _tr("case08.fr8a.preview.figure_no_media", "[ нет медиа ]")
+			lines.append("[bgcolor=#252a36][color=#b8c8ff]%s[/color][/bgcolor]" % _escape_bbcode(media_label))
+			lines.append("[color=#d4c8a0]%s[/color]" % _escape_bbcode(caption if not caption.is_empty() else _tr("case08.fr8a.preview.figure_caption", "подпись на рассмотрении")))
 		_:
 			for token in inner_tokens:
 				lines.append("[color=#c2c2c2]%s[/color]" % _escape_bbcode(_extract_tag_text(token)))
 
 	if lines.is_empty():
-		lines.append("[color=#7d7d7d][РЕНДЕР ОТКЛЮЧЕН][/color]")
+		lines.append("[color=#7d7d7d]%s[/color]" % _escape_bbcode(_tr("case08.fr8a.preview.render_off", "[РЕНДЕР ОТКЛЮЧЕН]")))
 	return lines
 
 func _inner_tokens_from_sequence(sequence: Array[String]) -> Array[String]:
@@ -642,14 +722,23 @@ func _inner_tokens_from_sequence(sequence: Array[String]) -> Array[String]:
 		var kind: String = str(fragment_data.get("kind", "")).to_upper()
 		if kind == "CONTAINER_OPEN" or kind == "CONTAINER_CLOSE":
 			continue
-		out.append(str(fragment_data.get("token", fragment_data.get("label", fragment_id))))
+		var token_text: String = I18n.resolve_field(
+			fragment_data,
+			"token",
+			{"default": I18n.resolve_field(fragment_data, "label", {"default": fragment_id})}
+		)
+		out.append(token_text)
 	return out
 
 func _token_for_fragment(fragment_id: String) -> String:
 	if fragment_id.is_empty() or not fragment_by_id.has(fragment_id):
 		return ""
 	var fragment_data: Dictionary = fragment_by_id.get(fragment_id, {}) as Dictionary
-	return str(fragment_data.get("token", fragment_data.get("label", fragment_id)))
+	return I18n.resolve_field(
+		fragment_data,
+		"token",
+		{"default": I18n.resolve_field(fragment_data, "label", {"default": fragment_id})}
+	)
 
 func _extract_tag_text(token: String) -> String:
 	var text_value: String = token
@@ -768,5 +857,3 @@ func _update_stability_ui() -> void:
 	var shared_overlay: Node = get_tree().get_first_node_in_group("noir_overlay")
 	if shared_overlay != null and shared_overlay.has_method("set_danger_level"):
 		shared_overlay.call("set_danger_level", GlobalMetrics.stability)
-
-

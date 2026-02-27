@@ -42,7 +42,8 @@ static func evaluate(level: Dictionary, current_order: Array[String]) -> Diction
 				"a": a,
 				"b": b,
 				"code": str(dep.get("code", ERROR_LOGIC_GAP)).to_upper(),
-				"message": str(dep.get("message", ""))
+				"message": str(dep.get("message", "")),
+				"message_key": str(dep.get("message_key", ""))
 			})
 
 	if not violations.is_empty():
@@ -101,20 +102,56 @@ static func resolve_score(level: Dictionary, evaluation: Dictionary) -> Dictiona
 	}
 
 static func feedback_text(level: Dictionary, evaluation: Dictionary) -> String:
+	var feedback_rules_keys: Dictionary = level.get("feedback_rules_keys", {}) as Dictionary
 	var feedback_rules: Dictionary = level.get("feedback_rules", {}) as Dictionary
 	var error_code: String = str(evaluation.get("error_code", ERROR_ORDER_MISMATCH))
 	var top_violation: Dictionary = evaluation.get("top_violation", {}) as Dictionary
 
 	if not top_violation.is_empty() and (error_code == ERROR_CAUSALITY_LOOP or error_code == ERROR_LOGIC_GAP):
+		var msg_from_key: String = _message_from_key(str(top_violation.get("message_key", "")))
+		if not msg_from_key.is_empty():
+			return msg_from_key
 		var msg: String = str(top_violation.get("message", "")).strip_edges()
 		if not msg.is_empty():
 			return msg
 
+	var keyed_text: String = _feedback_from_keys(feedback_rules_keys, error_code)
+	if not keyed_text.is_empty():
+		return keyed_text
 	if feedback_rules.has(error_code):
 		return str(feedback_rules.get(error_code, ""))
+	keyed_text = _feedback_from_keys(feedback_rules_keys, ERROR_OK)
+	if not keyed_text.is_empty():
+		return keyed_text
 	if feedback_rules.has(ERROR_OK):
 		return str(feedback_rules.get(ERROR_OK, ""))
-	return "Проверка завершена."
+	return _tr("case08.scoring.default_check_done", "Проверка завершена.")
+
+static func _message_from_key(message_key: String) -> String:
+	var key: String = message_key.strip_edges()
+	if key.is_empty():
+		return ""
+	var translated: String = _tr(key, key)
+	if translated == key:
+		return ""
+	return translated
+
+static func _feedback_from_keys(feedback_rules_keys: Dictionary, code: String) -> String:
+	if not feedback_rules_keys.has(code):
+		return ""
+	var key: String = str(feedback_rules_keys.get(code, "")).strip_edges()
+	if key.is_empty():
+		return ""
+	var translated: String = _tr(key, key)
+	if translated == key:
+		return ""
+	return translated
+
+static func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	if not merged.has("default"):
+		merged["default"] = default_text
+	return I18n.tr_key(key, merged)
 
 static func _pick_top_error(violations: Array) -> String:
 	for violation_var in violations:

@@ -2,19 +2,15 @@ extends RefCounted
 
 const REQUIRED_LEVEL_KEYS: Array[String] = [
 	"id",
-	"briefing",
 	"format",
-	"target_text",
-	"html",
 	"rules",
 	"options",
-	"correct_option_id",
-	"feedback_rules"
+	"correct_option_id"
 ]
 
 const REQUIRED_RULE_KEYS: Array[String] = ["source_id", "kind", "weight", "important", "decl"]
 const REQUIRED_DECL_KEYS: Array[String] = ["prop", "value"]
-const REQUIRED_OPTION_KEYS: Array[String] = ["id", "label", "value"]
+const REQUIRED_OPTION_KEYS: Array[String] = ["id", "value"]
 
 static func load_levels(path: String) -> Array:
 	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
@@ -49,14 +45,28 @@ static func validate_level(level: Dictionary) -> bool:
 			push_error("FR8CData: missing key '%s' in level %s" % [key, str(level.get("id", "UNKNOWN"))])
 			return false
 
+	if not _has_text_or_key(level, "briefing"):
+		push_error("FR8CData: briefing/briefing_key is missing in level %s" % str(level.get("id", "UNKNOWN")))
+		return false
+
+	if not _has_text_or_key(level, "target_text"):
+		push_error("FR8CData: target_text/target_text_key is missing in level %s" % str(level.get("id", "UNKNOWN")))
+		return false
+
 	if str(level.get("format", "")) != "CSS_CASCADE":
 		push_error("FR8CData: unsupported format in level %s" % str(level.get("id", "UNKNOWN")))
 		return false
 
 	var html_var: Variant = level.get("html", [])
-	if typeof(html_var) != TYPE_ARRAY or (html_var as Array).is_empty():
-		push_error("FR8CData: html must be non-empty array in level %s" % str(level.get("id", "UNKNOWN")))
+	if not _has_array_or_keys(level, "html", "html_keys"):
+		push_error("FR8CData: html/html_keys are missing or invalid in level %s" % str(level.get("id", "UNKNOWN")))
 		return false
+	if typeof(html_var) == TYPE_ARRAY and typeof(level.get("html_keys", null)) == TYPE_ARRAY:
+		var html_arr: Array = html_var as Array
+		var html_keys: Array = level.get("html_keys", []) as Array
+		if not html_arr.is_empty() and html_arr.size() != html_keys.size():
+			push_error("FR8CData: html_keys size must match html size in level %s" % str(level.get("id", "UNKNOWN")))
+			return false
 
 	var rules_var: Variant = level.get("rules", [])
 	if typeof(rules_var) != TYPE_ARRAY or (rules_var as Array).is_empty():
@@ -138,6 +148,9 @@ static func validate_level(level: Dictionary) -> bool:
 		if option_id.is_empty() or option_ids.has(option_id):
 			push_error("FR8CData: duplicate/empty option id in level %s" % str(level.get("id", "UNKNOWN")))
 			return false
+		if not _has_text_or_key(option, "label"):
+			push_error("FR8CData: option label/label_key is missing in level %s" % str(level.get("id", "UNKNOWN")))
+			return false
 		option_ids[option_id] = true
 
 	var correct_option_id: String = str(level.get("correct_option_id", "")).strip_edges()
@@ -146,12 +159,19 @@ static func validate_level(level: Dictionary) -> bool:
 		return false
 
 	var feedback_var: Variant = level.get("feedback_rules", {})
-	if typeof(feedback_var) != TYPE_DICTIONARY:
+	if typeof(feedback_var) != TYPE_DICTIONARY and level.get("feedback_rules", null) != null:
 		push_error("FR8CData: feedback_rules must be dictionary in level %s" % str(level.get("id", "UNKNOWN")))
 		return false
 	var feedback_rules: Dictionary = feedback_var as Dictionary
-	if not feedback_rules.has("OK"):
-		push_error("FR8CData: feedback_rules missing 'OK' in level %s" % str(level.get("id", "UNKNOWN")))
+	var feedback_keys_var: Variant = level.get("feedback_rules_keys", {})
+	if typeof(feedback_keys_var) != TYPE_DICTIONARY and level.get("feedback_rules_keys", null) != null:
+		push_error("FR8CData: feedback_rules_keys must be dictionary in level %s" % str(level.get("id", "UNKNOWN")))
+		return false
+	var feedback_keys: Dictionary = feedback_keys_var as Dictionary
+	var has_ok_legacy: bool = feedback_rules.has("OK") and not str(feedback_rules.get("OK", "")).strip_edges().is_empty()
+	var has_ok_key: bool = feedback_keys.has("OK") and not str(feedback_keys.get("OK", "")).strip_edges().is_empty()
+	if not has_ok_legacy and not has_ok_key:
+		push_error("FR8CData: feedback_rules/feedback_rules_keys missing 'OK' in level %s" % str(level.get("id", "UNKNOWN")))
 		return false
 
 	return true
@@ -166,3 +186,32 @@ static func _selector_of(rule: Dictionary) -> String:
 static func _is_number(value: Variant) -> bool:
 	var value_type: int = typeof(value)
 	return value_type == TYPE_INT or value_type == TYPE_FLOAT
+
+static func _has_text_or_key(entry: Dictionary, field: String) -> bool:
+	var legacy: String = str(entry.get(field, "")).strip_edges()
+	if not legacy.is_empty():
+		return true
+	var key_name: String = "%s_key" % field
+	var key_value: String = str(entry.get(key_name, "")).strip_edges()
+	return not key_value.is_empty()
+
+static func _has_array_or_keys(level: Dictionary, array_field: String, keys_field: String) -> bool:
+	var has_array: bool = false
+	var has_keys: bool = false
+
+	var array_var: Variant = level.get(array_field, null)
+	if typeof(array_var) == TYPE_ARRAY and not (array_var as Array).is_empty():
+		has_array = true
+
+	var keys_var: Variant = level.get(keys_field, null)
+	if typeof(keys_var) == TYPE_ARRAY:
+		var keys_arr: Array = keys_var as Array
+		if not keys_arr.is_empty():
+			var all_keys_ok: bool = true
+			for key_var in keys_arr:
+				if str(key_var).strip_edges().is_empty():
+					all_keys_ok = false
+					break
+			has_keys = all_keys_ok
+
+	return has_array or has_keys

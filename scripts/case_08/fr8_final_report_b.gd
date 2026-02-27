@@ -37,6 +37,7 @@ var time_to_first_action_ms: int = -1
 
 var trial_locked: bool = false
 var level_solved: bool = false
+var has_confirmed_once: bool = false
 var trace: Array = []
 var dependency_lines: Array = []
 
@@ -46,6 +47,8 @@ var dependency_lines: Array = []
 @onready var level_label: Label = $SafeArea/MainLayout/Header/LevelLabel
 @onready var stability_bar: ProgressBar = $SafeArea/MainLayout/Header/StabilityBar
 @onready var briefing_label: RichTextLabel = $SafeArea/MainLayout/BriefingCard/BriefingLabel
+@onready var axis_left_label: Label = $SafeArea/MainLayout/TimelineCard/CardVBox/AxisRow/AxisLeft
+@onready var axis_right_label: Label = $SafeArea/MainLayout/TimelineCard/CardVBox/AxisRow/AxisRight
 @onready var cards_row: HBoxContainer = $SafeArea/MainLayout/TimelineCard/CardVBox/CardsRow
 @onready var dependency_overlay: Control = $SafeArea/MainLayout/TimelineCard/DependencyOverlay
 @onready var status_label: Label = $SafeArea/MainLayout/StatusLabel
@@ -58,20 +61,18 @@ func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 	if dependency_overlay != null and not dependency_overlay.draw.is_connected(_on_dependency_overlay_draw):
 		dependency_overlay.draw.connect(_on_dependency_overlay_draw)
 
 	_connect_ui_signals()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0443\u0440\u043e\u0432\u043d\u0438 \u0444\u0438\u043d\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043e\u0442\u0447\u0451\u0442\u0430 B.")
+		_show_error(_tr("case08.fr8b.load_error", "Не удалось загрузить уровни финального отчёта B."))
 		return
 
-	title_label.text = TEXT_TITLE
-	btn_back.text = TEXT_BACK
-	btn_reset.text = TEXT_RESET
-	btn_confirm.text = TEXT_CONFIRM
-	btn_next.text = TEXT_NEXT
+	_apply_i18n()
 
 	var initial_index: int = clamp(GlobalMetrics.current_level_index, 0, max(0, levels.size() - 1))
 	_start_level(initial_index)
@@ -80,12 +81,57 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.disconnect(_on_stability_changed)
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
 
 func _connect_ui_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
 	btn_confirm.pressed.connect(_on_confirm_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+	_apply_runtime_i18n()
+
+func _apply_i18n() -> void:
+	title_label.text = _tr("case08.fr8b.title", TEXT_TITLE)
+	btn_back.text = _tr("case08.common.back", TEXT_BACK)
+	btn_reset.text = _tr("case08.common.reset", TEXT_RESET)
+	btn_confirm.text = _tr("case08.common.confirm", TEXT_CONFIRM)
+	axis_left_label.text = _tr("case08.fr8b.axis.past", "ПРОШЛОЕ")
+	axis_right_label.text = _tr("case08.fr8b.axis.future", "БУДУЩЕЕ")
+	if levels.is_empty():
+		btn_next.text = _tr("case08.common.next", TEXT_NEXT)
+	else:
+		btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
+
+func _apply_runtime_i18n() -> void:
+	if levels.is_empty():
+		return
+	briefing_label.text = I18n.resolve_field(level_data, "briefing")
+	_rebuild_cards()
+	if has_confirmed_once:
+		var evaluation: Dictionary = FR8BScoring.evaluate(level_data, current_order)
+		var feedback_text: String = FR8BScoring.feedback_text(level_data, evaluation)
+		if level_solved:
+			_set_status("%s %s" % [feedback_text, _tr("case08.fr8b.status.next_hint", STATUS_NEXT_HINT)], COLOR_OK)
+		else:
+			_set_status(feedback_text, COLOR_ERR)
+	else:
+		_set_status(_tr("case08.fr8b.status.hint", STATUS_HINT), COLOR_INFO)
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	if not merged.has("default"):
+		merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _localized_card_data(card_data: Dictionary) -> Dictionary:
+	var localized: Dictionary = card_data.duplicate(true)
+	localized["title"] = I18n.resolve_field(card_data, "title", {"default": str(card_data.get("title", str(card_data.get("stage_id", ""))))})
+	localized["hint"] = I18n.resolve_field(card_data, "hint", {"default": str(card_data.get("hint", ""))})
+	return localized
 
 func _load_levels() -> void:
 	levels = FR8BData.load_levels(LEVELS_PATH)
@@ -129,10 +175,11 @@ func _start_level(index: int) -> void:
 	reset_count = 0
 	start_time_ms = Time.get_ticks_msec()
 	time_to_first_action_ms = -1
+	has_confirmed_once = false
 	trace.clear()
 
 	level_label.text = _build_level_label()
-	briefing_label.text = str(level_data.get("briefing", ""))
+	briefing_label.text = I18n.resolve_field(level_data, "briefing")
 
 	_log_event("LEVEL_START", {
 		"level_id": str(level_data.get("id", "FR8-B")),
@@ -168,13 +215,14 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 
 	trial_locked = false
 	level_solved = false
+	has_confirmed_once = false
 	btn_confirm.disabled = false
 	btn_next.disabled = true
-	btn_next.text = TEXT_FINISH if _is_last_level() else TEXT_NEXT
+	btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
 	_clear_dependency_overlay()
 
 	_rebuild_cards()
-	_set_status(STATUS_HINT, COLOR_INFO)
+	_set_status(_tr("case08.fr8b.status.hint", STATUS_HINT), COLOR_INFO)
 
 func _rebuild_cards() -> void:
 	for child in cards_row.get_children():
@@ -188,7 +236,8 @@ func _rebuild_cards() -> void:
 		var card_node: Node = TIMELINE_CARD_SCENE.instantiate()
 		cards_row.add_child(card_node)
 		if card_node.has_method("setup"):
-			card_node.call("setup", cards_by_stage_id[stage_id])
+			var card_data: Dictionary = cards_by_stage_id.get(stage_id, {}) as Dictionary
+			card_node.call("setup", _localized_card_data(card_data))
 		card_node.set_meta("stage_id", stage_id)
 		if card_node is CanvasItem:
 			(card_node as CanvasItem).modulate = Color.WHITE
@@ -229,7 +278,7 @@ func _on_card_move_requested(stage_id: String, dir: int) -> void:
 	})
 
 	_rebuild_cards()
-	_set_status(STATUS_HINT, COLOR_INFO)
+	_set_status(_tr("case08.fr8b.status.hint", STATUS_HINT), COLOR_INFO)
 	if AudioManager != null:
 		AudioManager.play("click")
 
@@ -240,10 +289,10 @@ func _on_card_hint_requested(stage_id: String) -> void:
 	var hint_text: String = ""
 	if cards_by_stage_id.has(stage_id):
 		var card_data: Dictionary = cards_by_stage_id.get(stage_id, {}) as Dictionary
-		hint_text = str(card_data.get("hint", "")).strip_edges()
+		hint_text = I18n.resolve_field(card_data, "hint", {"default": str(card_data.get("hint", ""))}).strip_edges()
 
 	if hint_text.is_empty():
-		_set_status(STATUS_HINT, COLOR_INFO)
+		_set_status(_tr("case08.fr8b.status.hint", STATUS_HINT), COLOR_INFO)
 	else:
 		_set_status(hint_text, COLOR_INFO)
 
@@ -258,9 +307,10 @@ func _on_confirm_pressed() -> void:
 	_log_event("CONFIRM_PRESSED", {
 		"final_order": current_order.duplicate()
 	})
+	has_confirmed_once = true
 	trial_locked = true
 	btn_confirm.disabled = true
-	_set_status("ИНИЦИАЛИЗАЦИЯ ЛОГИЧЕСКОГО СКАНИРОВАНИЯ...", COLOR_WARN)
+	_set_status(_tr("case08.fr8b.status.scanning", "ИНИЦИАЛИЗАЦИЯ ЛОГИЧЕСКОГО СКАНИРОВАНИЯ..."), COLOR_WARN)
 
 	var evaluation: Dictionary = FR8BScoring.evaluate(level_data, current_order)
 	var score: Dictionary = FR8BScoring.resolve_score(level_data, evaluation)
@@ -306,8 +356,8 @@ func _on_confirm_pressed() -> void:
 		trial_locked = true
 		btn_confirm.disabled = true
 		btn_next.disabled = false
-		btn_next.text = TEXT_FINISH if _is_last_level() else TEXT_NEXT
-		_set_status("%s %s" % [feedback_text, STATUS_NEXT_HINT], COLOR_OK)
+		btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
+		_set_status("%s %s" % [feedback_text, _tr("case08.fr8b.status.next_hint", STATUS_NEXT_HINT)], COLOR_OK)
 		_rebuild_cards()
 		if AudioManager != null:
 			AudioManager.play("relay")
@@ -325,7 +375,7 @@ func _on_confirm_pressed() -> void:
 
 func _on_next_pressed() -> void:
 	if not level_solved:
-		_set_status(STATUS_SOLVE_FIRST, COLOR_WARN)
+		_set_status(_tr("case08.fr8b.status.solve_first", STATUS_SOLVE_FIRST), COLOR_WARN)
 		return
 
 	var from_level_id: String = str(level_data.get("id", "FR8-B-00"))

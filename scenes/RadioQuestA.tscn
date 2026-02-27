@@ -55,19 +55,19 @@ theme_override_constants/separation = 10
 [node name="BtnBack" type="Button" parent="SafeArea/RootVBox/Header/HeaderHBox"]
 custom_minimum_size = Vector2(120, 58)
 layout_mode = 2
-text = "BACK"
+text = "\u041d\u0410\u0417\u0410\u0414"
 
 [node name="TitleLabel" type="Label" parent="SafeArea/RootVBox/Header/HeaderHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
-text = "RADIO INTERCEPT | A"
+text = "\u0420\u0410\u0414\u0418\u041e\u041f\u0415\u0420\u0415\u0425\u0412\u0410\u0422 | A"
 
 [node name="MetaLabel" type="Label" parent="SafeArea/RootVBox/Header/HeaderHBox"]
 custom_minimum_size = Vector2(360, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "MODE | STABILITY"
+text = "\u0420\u0415\u0416\u0418\u041c | \u0421\u0422\u0410\u0411\u0418\u041b\u042c\u041d\u041e\u0421\u0422\u042c"
 horizontal_alignment = 2
 
 [node name="BodyHSplit" type="HSplitContainer" parent="SafeArea/RootVBox"]
@@ -111,7 +111,7 @@ theme_override_constants/separation = 4
 [node name="MissionTitle" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "MISSION"
+text = "\u0417\u0410\u0414\u0410\u041d\u0418\u0415"
 
 [node name="TargetLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
@@ -121,7 +121,7 @@ text = "N = 128"
 [node name="RuleLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Find minimal i where 2^i >= N"
+text = "\u041d\u0430\u0439\u0434\u0438\u0442\u0435 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0435 i, \u0433\u0434\u0435 2^i >= N"
 autowrap_mode = 2
 
 [node name="ScopeCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
@@ -158,7 +158,7 @@ text = "i = 1"
 [node name="FitValueLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutRow"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "FIT: NO"
+text = "\u0421\u0418\u0413\u041d\u0410\u041b: \u041d\u0415 \u041f\u0420\u041e\u0412\u0415\u0420\u0415\u041d"
 
 [node name="RightPane" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit"]
 layout_mode = 2
@@ -180,7 +180,7 @@ theme_override_constants/separation = 10
 [node name="DecoderTitle" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "DECODER"
+text = "\u0414\u0415\u041a\u041e\u0414\u0415\u0420"
 
 [node name="BitKnob" type="Control" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(220, 220)
@@ -191,7 +191,7 @@ script = ExtResource("4_knob_script")
 [node name="KnobHint" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Turn knob, then ANALYZE"
+text = "\u041f\u043e\u0432\u0435\u0440\u043d\u0438\u0442\u0435 \u0440\u0443\u0447\u043a\u0443, \u0437\u0430\u0442\u0435\u043c \u043d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0410\u041d\u0410\u041b\u0418\u0417\u00bb"
 autowrap_mode = 2
 
 [node name="ActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
@@ -203,26 +203,26 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "HINT"
+text = "\u041f\u041e\u0414\u0421\u041a\u0410\u0417\u041a\u0410"
 
 [node name="BtnAnalyze" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ANALYZE"
+text = "\u0410\u041d\u0410\u041b\u0418\u0417"
 
 [node name="BtnCapture" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "CAPTURE"
+text = "\u0417\u0410\u0425\u0412\u0410\u0422"
 
 [node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
 visible = false
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "NEXT"
+text = "\u0414\u0410\u041b\u0415\u0415"
 
 [node name="SampleStrip" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 32)
@@ -251,9 +251,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
 theme_override_font_sizes/font_size = 20
-text = "A"
+text = "\u042f"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -278,9 +278,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
 theme_override_font_sizes/font_size = 20
-text = "A"
+text = "\u042f"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -305,9 +305,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
 theme_override_font_sizes/font_size = 20
-text = "A"
+text = "\u042f"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -332,9 +332,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
 theme_override_font_sizes/font_size = 20
-text = "A"
+text = "\u042f"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -359,9 +359,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
 theme_override_font_sizes/font_size = 20
-text = "A"
+text = "\u042f"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -386,9 +386,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
 theme_override_font_sizes/font_size = 20
-text = "A"
+text = "\u042f"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -413,9 +413,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
 theme_override_font_sizes/font_size = 20
-text = "A"
+text = "\u042f"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -423,13 +423,13 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Status"
+text = "\u0421\u0422\u0410\u0422\u0423\u0421"
 autowrap_mode = 2
 
 [node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "DETAILS"
+text = "\u041f\u041e\u0414\u0420\u041e\u0411\u041d\u0415\u0415 \u25be"
 
 [node name="Dimmer" type="ColorRect" parent="."]
 visible = false
@@ -439,7 +439,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 1
+mouse_filter = 0
 color = Color(0, 0, 0, 0.6)
 
 [node name="DetailsSheet" type="PanelContainer" parent="."]
@@ -467,7 +467,7 @@ theme_override_constants/separation = 10
 [node name="DetailsTitle" type="Label" parent="DetailsSheet/DetailsMargin/DetailsVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "DETAILS"
+text = "\u041f\u041e\u042f\u0421\u041d\u0415\u041d\u0418\u0415"
 
 [node name="DetailsText" type="RichTextLabel" parent="DetailsSheet/DetailsMargin/DetailsVBox"]
 custom_minimum_size = Vector2(0, 170)
@@ -477,4 +477,4 @@ size_flags_vertical = 3
 [node name="BtnCloseDetails" type="Button" parent="DetailsSheet/DetailsMargin/DetailsVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "CLOSE"
+text = "\u0417\u0410\u041a\u0420\u042b\u0422\u042c"

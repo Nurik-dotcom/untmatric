@@ -2,7 +2,8 @@
 
 enum State {
 	TUNE,
-	ANALYZED,
+	ANALYZE_LOCK,
+	DECIDE,
 	EXEC,
 	DONE
 }
@@ -27,7 +28,7 @@ const EPS: float = 0.05
 const MIN_ESTIMATE: float = 0.0
 const MAX_ESTIMATE: float = 30.0
 const SAMPLE_SLOTS: int = 7
-const PHONE_LANDSCAPE_MAX_HEIGHT: float = 520.0
+const TIGHT_LANDSCAPE_MAX_HEIGHT: float = 760.0
 const ANALYZE_LOCK_SECONDS: float = 3.0
 const ANALYZE_COOLDOWN_SECONDS: float = 6.0
 const ARCADE_MODE_ENABLED: bool = false
@@ -57,16 +58,12 @@ const TXT_DETAILS_TITLE := "\u041f\u041e\u042f\u0421\u041d\u0415\u041d\u0418\u04
 const TXT_DETAILS_CLOSE := "\u0417\u0410\u041a\u0420\u042b\u0422\u042c"
 
 const TXT_RISK_UNKNOWN := "\u0420\u0438\u0441\u043a: \u041d\u0415\u0418\u0417\u0412\u0415\u0421\u0422\u0415\u041d"
-const TXT_RISK_LOW := "\u041d\u0418\u0417\u041a\u0418\u0419"
-const TXT_RISK_MID := "\u0421\u0420\u0415\u0414\u041d\u0418\u0419"
-const TXT_RISK_HIGH := "\u0412\u042b\u0421\u041e\u041a\u0418\u0419"
-
 const TXT_PLAN_STATUS := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041d\u0430\u0441\u0442\u0440\u043e\u0439\u0442\u0435 \u043f\u0440\u043e\u0433\u043d\u043e\u0437 \u0438 \u043d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0410\u041d\u0410\u041b\u0418\u0417\u00bb."
-const TXT_ANALYZED_OK := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0440\u043e\u0433\u043d\u043e\u0437 \u0442\u043e\u0447\u043d\u044b\u0439. \u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u043e \u0440\u0435\u0448\u0435\u043d\u0438\u0435."
-const TXT_ANALYZED_MID := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0440\u043e\u0433\u043d\u043e\u0437 \u0431\u043b\u0438\u0437\u043a\u0438\u0439. \u0420\u0435\u0448\u0435\u043d\u0438\u0435 \u0440\u0438\u0441\u043a\u043e\u0432\u0430\u043d\u043d\u043e."
-const TXT_ANALYZED_BAD := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0440\u043e\u0433\u043d\u043e\u0437 \u043d\u0435\u0442\u043e\u0447\u043d\u044b\u0439. \u0420\u0435\u0448\u0435\u043d\u0438\u0435 \u0440\u0438\u0441\u043a\u043e\u0432\u0430\u043d\u043d\u043e."
+const TXT_ANALYZE_LOCK := "\u0421\u0422\u0410\u0422\u0423\u0421: \u0418\u0434\u0451\u0442 \u0441\u043a\u0430\u043d \u043a\u0430\u043d\u0430\u043b\u0430..."
+const TXT_DECIDE_NEUTRAL := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0440\u043e\u0433\u043d\u043e\u0437 \u0437\u0430\u0444\u0438\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u043d. \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435."
 const TXT_EXEC_STARTED := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0435\u0440\u0435\u0434\u0430\u0447\u0430 \u0437\u0430\u043f\u0443\u0449\u0435\u043d\u0430."
 const TXT_UNITS_HINT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041c\u0411 -> \u041c\u0431\u0438\u0442: x8, \u0413\u0411 -> \u041c\u0411: x1024, t = I / v."
+const TXT_DETECT_WINDOW := "\u041e\u043a\u043d\u043e \u0434\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438: %s \u0441"
 
 const TXT_OUT_SUCCESS := "\u0421\u0422\u0410\u0422\u0423\u0421: \u0423\u0421\u041f\u0415\u0425. \u041f\u0430\u043a\u0435\u0442 \u0443\u0448\u0451\u043b \u0434\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438."
 const TXT_OUT_INTERCEPT := "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u0420\u041e\u0412\u0410\u041b. \u0412\u0430\u0441 \u0437\u0430\u0441\u0435\u043a\u043b\u0438."
@@ -89,6 +86,8 @@ const COLOR_SAMPLE_WARN: Color = Color(0.95, 0.75, 0.20, 1.0)
 @onready var body_split: HSplitContainer = $SafeArea/RootVBox/BodyHSplit
 @onready var top_bar: PanelContainer = $SafeArea/RootVBox/TopBar
 @onready var mission_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard
+@onready var status_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftCol/StatusCard
+@onready var risk_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard
 @onready var actions_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard
 
 @onready var title_label: Label = $SafeArea/RootVBox/TopBar/TopBarHBox/TitleLabel
@@ -132,6 +131,7 @@ const COLOR_SAMPLE_WARN: Color = Color(0.95, 0.75, 0.20, 1.0)
 @onready var sample_strip: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip
 
 @onready var details_overlay: Control = $DetailsOverlay
+@onready var details_dimmer: ColorRect = $DetailsOverlay/Dim
 @onready var details_sheet_title: Label = $DetailsOverlay/BottomSheet/SheetMargin/SheetVBox/SheetTitle
 @onready var details_sheet_text: RichTextLabel = $DetailsOverlay/BottomSheet/SheetMargin/SheetVBox/SheetText
 @onready var btn_close_details: Button = $DetailsOverlay/BottomSheet/SheetMargin/SheetVBox/BtnCloseDetails
@@ -183,14 +183,12 @@ var _anchor_every_max: int = 10
 var sample_cursor: int = 0
 var sample_refs: Array = []
 var _ui_ready: bool = false
-var _body_scroll_installed: bool = false
 
 func _ready() -> void:
 	randomize()
 	_load_level_config()
 	_apply_static_texts()
 	_connect_signals()
-	_install_body_scroll()
 	_collect_sample_refs()
 	_reset_sample_strip()
 	_apply_safe_area_padding()
@@ -211,30 +209,34 @@ func _notification(what: int) -> void:
 		_configure_layout()
 
 func _process(delta: float) -> void:
-	if state == State.TUNE and analyze_lock_active:
-		var now_sec: float = Time.get_ticks_msec() / 1000.0
-		var left: float = maxf(0.0, analyze_lock_until - now_sec)
-		status_label.text = "STATUS: channel scan %.1fs" % left
-		if now_sec < analyze_lock_until:
-			return
-		analyze_lock_active = false
-		btn_details.disabled = false
-		btn_units.disabled = false
-		detection_elapsed = 0.0
-		transfer_elapsed = 0.0
-		_set_analyzed_state_ui()
-		_update_details_text()
-
-	if state != State.ANALYZED and state != State.EXEC:
+	if state == State.DONE:
 		return
 
 	detection_elapsed += delta
-	if decision == Decision.RISK and transfer_started:
+	if state == State.EXEC and decision == Decision.RISK and transfer_started:
 		transfer_elapsed += delta
 
 	_update_runtime_ui()
 
-	if decision == Decision.RISK:
+	if decision == Decision.NONE and detection_elapsed >= t_detect:
+		if decision_ms < 0:
+			decision_ms = Time.get_ticks_msec()
+		_play_alarm_flash()
+		_finalize_trial(Outcome.INTERCEPTED, "NONE")
+		return
+
+	if state == State.ANALYZE_LOCK:
+		var now_sec: float = Time.get_ticks_msec() / 1000.0
+		var left: float = maxf(0.0, analyze_lock_until - now_sec)
+		status_label.text = "%s %.1f %s" % [TXT_ANALYZE_LOCK, left, SYMBOL_SEC]
+		if now_sec < analyze_lock_until:
+			return
+		analyze_lock_active = false
+		_set_decide_state_ui()
+		_update_details_text()
+		return
+
+	if state == State.EXEC and decision == Decision.RISK:
 		if transfer_elapsed >= t_true and detection_elapsed <= t_detect + EPS:
 			_finalize_trial(Outcome.SUCCESS_SEND, "RISK")
 			return
@@ -242,12 +244,6 @@ func _process(delta: float) -> void:
 			_play_alarm_flash()
 			_finalize_trial(Outcome.INTERCEPTED, "RISK")
 			return
-	else:
-		if detection_elapsed >= t_detect:
-			if decision_ms < 0:
-				decision_ms = Time.get_ticks_msec()
-			_play_alarm_flash()
-			_finalize_trial(Outcome.INTERCEPTED, "NONE")
 
 func _apply_static_texts() -> void:
 	title_label.text = TXT_TITLE
@@ -278,6 +274,7 @@ func _connect_signals() -> void:
 	btn_units.pressed.connect(_on_units_pressed)
 	btn_details.pressed.connect(_on_details_pressed)
 	btn_close_details.pressed.connect(_on_details_close_pressed)
+	details_dimmer.gui_input.connect(_on_dimmer_gui_input)
 	btn_analyze.pressed.connect(_on_analyze_pressed)
 	btn_risk.pressed.connect(_on_risk_pressed)
 	btn_abort.pressed.connect(_on_abort_pressed)
@@ -286,30 +283,6 @@ func _connect_signals() -> void:
 	var knob_callback: Callable = Callable(self, "_on_knob_value_changed")
 	if not time_knob.is_connected("value_changed", knob_callback):
 		time_knob.connect("value_changed", knob_callback)
-
-func _install_body_scroll() -> void:
-	if _body_scroll_installed:
-		return
-	if body_split == null:
-		return
-	var root_vbox: VBoxContainer = body_split.get_parent() as VBoxContainer
-	if root_vbox == null:
-		return
-
-	var body_scroll: ScrollContainer = ScrollContainer.new()
-	body_scroll.name = "BodyScroll"
-	body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	body_scroll.follow_focus = true
-
-	root_vbox.remove_child(body_split)
-	root_vbox.add_child(body_scroll)
-	body_scroll.add_child(body_split)
-	body_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body_split.size_flags_vertical = Control.SIZE_FILL
-	_body_scroll_installed = true
 
 func _apply_safe_area_padding() -> void:
 	if safe_area == null:
@@ -337,44 +310,93 @@ func _configure_layout() -> void:
 	if body_split == null or time_knob == null:
 		return
 
+	body_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_split.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
 	var size: Vector2 = get_viewport_rect().size
-	var is_phone_landscape: bool = size.x > size.y and size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
-	if is_phone_landscape:
+	var is_landscape: bool = size.x > size.y
+	var is_tight_landscape: bool = is_landscape and size.y <= TIGHT_LANDSCAPE_MAX_HEIGHT
+
+	if is_tight_landscape:
 		body_split.split_offset = int(size.x * 0.54)
-		top_bar.custom_minimum_size.y = 58.0
-		mission_card.custom_minimum_size.y = 140.0
-		actions_card.custom_minimum_size.y = 200.0
+		top_bar.custom_minimum_size.y = 52.0
+		mission_card.custom_minimum_size.y = 116.0
+		status_card.custom_minimum_size.y = 72.0
+		actions_card.custom_minimum_size.y = 176.0
+		time_knob.custom_minimum_size = Vector2(180, 180)
+		title_label.add_theme_font_size_override("font_size", 22)
+		mode_chip.add_theme_font_size_override("font_size", 13)
+		stability_label.add_theme_font_size_override("font_size", 13)
+		estimate_value_label.add_theme_font_size_override("font_size", 26)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
+			btn.custom_minimum_size.y = 56.0
+		for btn in [btn_analyze, btn_risk, btn_abort]:
+			btn.custom_minimum_size.y = 64.0
+		sample_strip.visible = false
+		risk_card.size_flags_vertical = Control.SIZE_FILL
+		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		risk_card.size_flags_stretch_ratio = 0.8
+		actions_card.size_flags_stretch_ratio = 1.2
+	elif is_landscape and size.x < 1500.0:
+		body_split.split_offset = int(size.x * 0.58)
+		top_bar.custom_minimum_size.y = 56.0
+		mission_card.custom_minimum_size.y = 128.0
+		status_card.custom_minimum_size.y = 84.0
+		actions_card.custom_minimum_size.y = 188.0
 		time_knob.custom_minimum_size = Vector2(220, 220)
 		title_label.add_theme_font_size_override("font_size", 24)
-		mode_chip.add_theme_font_size_override("font_size", 15)
-		stability_label.add_theme_font_size_override("font_size", 15)
-		estimate_value_label.add_theme_font_size_override("font_size", 30)
-		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_analyze, btn_risk, btn_abort, btn_units, btn_details, btn_next, btn_close_details]:
+		mode_chip.add_theme_font_size_override("font_size", 14)
+		stability_label.add_theme_font_size_override("font_size", 14)
+		estimate_value_label.add_theme_font_size_override("font_size", 28)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
 			btn.custom_minimum_size.y = 56.0
-	elif size.x < 1500.0:
-		body_split.split_offset = int(size.x * 0.55)
+		for btn in [btn_analyze, btn_risk, btn_abort]:
+			btn.custom_minimum_size.y = 72.0
+		sample_strip.visible = true
+		risk_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		risk_card.size_flags_stretch_ratio = 1.0
+		actions_card.size_flags_stretch_ratio = 1.0
+	elif is_landscape:
+		body_split.split_offset = int(size.x * 0.57)
 		top_bar.custom_minimum_size.y = 62.0
-		mission_card.custom_minimum_size.y = 150.0
-		actions_card.custom_minimum_size.y = 210.0
-		time_knob.custom_minimum_size = Vector2(270, 270)
+		mission_card.custom_minimum_size.y = 144.0
+		status_card.custom_minimum_size.y = 92.0
+		actions_card.custom_minimum_size.y = 206.0
+		time_knob.custom_minimum_size = Vector2(260, 260)
 		title_label.add_theme_font_size_override("font_size", 28)
 		mode_chip.add_theme_font_size_override("font_size", 17)
 		stability_label.add_theme_font_size_override("font_size", 17)
-		estimate_value_label.add_theme_font_size_override("font_size", 34)
-		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_analyze, btn_risk, btn_abort, btn_units, btn_details, btn_next, btn_close_details]:
+		estimate_value_label.add_theme_font_size_override("font_size", 32)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
 			btn.custom_minimum_size.y = 58.0
+		for btn in [btn_analyze, btn_risk, btn_abort]:
+			btn.custom_minimum_size.y = 74.0
+		sample_strip.visible = true
+		risk_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		risk_card.size_flags_stretch_ratio = 1.0
+		actions_card.size_flags_stretch_ratio = 1.0
 	else:
 		body_split.split_offset = int(size.x * 0.56)
 		top_bar.custom_minimum_size.y = 62.0
-		mission_card.custom_minimum_size.y = 160.0
+		mission_card.custom_minimum_size.y = 154.0
+		status_card.custom_minimum_size.y = 96.0
 		actions_card.custom_minimum_size.y = 220.0
-		time_knob.custom_minimum_size = Vector2(320, 320)
+		time_knob.custom_minimum_size = Vector2(300, 300)
 		title_label.add_theme_font_size_override("font_size", 30)
 		mode_chip.add_theme_font_size_override("font_size", 18)
 		stability_label.add_theme_font_size_override("font_size", 18)
-		estimate_value_label.add_theme_font_size_override("font_size", 38)
-		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_analyze, btn_risk, btn_abort, btn_units, btn_details, btn_next, btn_close_details]:
+		estimate_value_label.add_theme_font_size_override("font_size", 36)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
 			btn.custom_minimum_size.y = 58.0
+		for btn in [btn_analyze, btn_risk, btn_abort]:
+			btn.custom_minimum_size.y = 76.0
+		sample_strip.visible = true
+		risk_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		risk_card.size_flags_stretch_ratio = 1.0
+		actions_card.size_flags_stretch_ratio = 1.0
 
 func _collect_sample_refs() -> void:
 	sample_refs.clear()
@@ -420,6 +442,7 @@ func _start_trial() -> void:
 	_generate_trial()
 	_refresh_task_labels()
 	_reset_runtime_ui()
+	_set_details_visible(false)
 	_set_tune_state_ui()
 
 	time_knob.call("set_knob_value", 0.0, false)
@@ -597,33 +620,42 @@ func _reset_runtime_ui() -> void:
 func _set_tune_state_ui() -> void:
 	state = State.TUNE
 	_set_knob_interactive(true)
+	status_label.remove_theme_color_override("font_color")
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	btn_analyze.disabled = analyze_lock_active or (now_sec < analyze_cooldown_until)
 	btn_risk.disabled = true
 	btn_abort.disabled = true
 	btn_units.disabled = false
+	btn_details.disabled = false
 	btn_next.visible = false
 	status_label.text = TXT_PLAN_STATUS
+	risk_label.text = TXT_DETECT_WINDOW % _format_num(maxf(0.0, t_detect - detection_elapsed))
 	_apply_phantom_preview()
 
-func _set_analyzed_state_ui() -> void:
-	state = State.ANALYZED
+func _set_analyze_lock_state_ui() -> void:
+	state = State.ANALYZE_LOCK
+	_set_knob_interactive(false)
+	btn_analyze.disabled = true
+	btn_risk.disabled = true
+	btn_abort.disabled = true
+	btn_units.disabled = true
+	btn_details.disabled = true
+	btn_next.visible = false
+	status_label.text = TXT_ANALYZE_LOCK
+	risk_label.text = TXT_DETECT_WINDOW % _format_num(maxf(0.0, t_detect - detection_elapsed))
+	_apply_phantom_preview()
+
+func _set_decide_state_ui() -> void:
+	state = State.DECIDE
 	_set_knob_interactive(false)
 	btn_analyze.disabled = true
 	btn_risk.disabled = false
 	btn_abort.disabled = false
 	btn_units.disabled = false
+	btn_details.disabled = false
 	btn_next.visible = false
-
-	var abs_error: float = absf(t_est - t_true)
-	if abs_error <= 0.3:
-		status_label.text = TXT_ANALYZED_OK
-	elif abs_error <= 1.0:
-		status_label.text = TXT_ANALYZED_MID
-	else:
-		status_label.text = TXT_ANALYZED_BAD
-
-	risk_label.text = "\u0420\u0438\u0441\u043a: %s" % _estimate_risk_text()
+	status_label.text = TXT_DECIDE_NEUTRAL
+	risk_label.text = TXT_DETECT_WINDOW % _format_num(maxf(0.0, t_detect - detection_elapsed))
 	_apply_phantom_preview()
 
 func _set_exec_state_ui() -> void:
@@ -633,6 +665,7 @@ func _set_exec_state_ui() -> void:
 	btn_risk.disabled = true
 	btn_abort.disabled = true
 	btn_units.disabled = true
+	btn_details.disabled = false
 	btn_next.visible = false
 
 func _set_done_state_ui() -> void:
@@ -642,6 +675,7 @@ func _set_done_state_ui() -> void:
 	btn_risk.disabled = true
 	btn_abort.disabled = true
 	btn_units.disabled = true
+	btn_details.disabled = false
 	btn_next.visible = true
 
 func _set_knob_interactive(is_enabled: bool) -> void:
@@ -716,7 +750,7 @@ func _on_analyze_pressed() -> void:
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec < analyze_cooldown_until:
 		var left: float = analyze_cooldown_until - now_sec
-		status_label.text = "STATUS: analyze cooldown %.1fs" % left
+		status_label.text = "СТАТУС: Анализ будет доступен через %.1f %s." % [left, SYMBOL_SEC]
 		return
 	analyze_count += 1
 	if check_ms < 0:
@@ -724,17 +758,11 @@ func _on_analyze_pressed() -> void:
 	analyze_lock_active = true
 	analyze_lock_until = now_sec + ANALYZE_LOCK_SECONDS
 	analyze_cooldown_until = now_sec + ANALYZE_COOLDOWN_SECONDS
-	_set_knob_interactive(false)
-	btn_analyze.disabled = true
-	btn_risk.disabled = true
-	btn_abort.disabled = true
-	btn_units.disabled = true
-	btn_details.disabled = true
-	status_label.text = "STATUS: channel scan active..."
+	_set_analyze_lock_state_ui()
 	_update_details_text()
 
 func _on_risk_pressed() -> void:
-	if (state != State.ANALYZED and state != State.EXEC) or analyze_lock_active:
+	if state != State.DECIDE or analyze_lock_active:
 		return
 	_register_first_action()
 	if decision == Decision.RISK:
@@ -750,20 +778,21 @@ func _on_risk_pressed() -> void:
 	_update_details_text()
 
 func _on_abort_pressed() -> void:
-	if (state != State.ANALYZED and state != State.EXEC) or analyze_lock_active:
+	if state != State.DECIDE or analyze_lock_active:
 		return
 	_register_first_action()
 	if decision_ms < 0:
 		decision_ms = Time.get_ticks_msec()
 	decision = Decision.ABORT
 
-	if t_true > t_detect + EPS:
+	var remaining_detect: float = maxf(0.0, t_detect - detection_elapsed)
+	if t_true > remaining_detect + EPS:
 		_finalize_trial(Outcome.SAFE_ABORT, "ABORT")
 	else:
 		_finalize_trial(Outcome.MISSED_WINDOW, "ABORT")
 
 func _on_units_pressed() -> void:
-	if state == State.DONE or analyze_lock_active:
+	if state == State.DONE or state == State.EXEC or analyze_lock_active:
 		return
 	_register_first_action()
 	used_units = true
@@ -775,6 +804,20 @@ func _on_details_pressed() -> void:
 
 func _on_details_close_pressed() -> void:
 	_set_details_visible(false)
+
+func _on_dimmer_gui_input(event: InputEvent) -> void:
+	if not details_overlay.visible:
+		return
+	if event is InputEventMouseButton:
+		var mouse_event: InputEventMouseButton = event
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			details_dimmer.accept_event()
+			_set_details_visible(false)
+	elif event is InputEventScreenTouch:
+		var touch_event: InputEventScreenTouch = event
+		if touch_event.pressed:
+			details_dimmer.accept_event()
+			_set_details_visible(false)
 
 func _set_details_visible(is_visible: bool) -> void:
 	details_overlay.visible = is_visible
@@ -791,13 +834,15 @@ func _update_runtime_ui() -> void:
 		detect_ratio = clampf(detection_elapsed / t_detect, 0.0, 1.0)
 	detection_bar.value = detect_ratio * 100.0
 	detect_countdown.text = "%s %s" % [_format_num(maxf(0.0, t_detect - detection_elapsed)), SYMBOL_SEC]
+	if state != State.DONE:
+		risk_label.text = TXT_DETECT_WINDOW % _format_num(maxf(0.0, t_detect - detection_elapsed))
 
 	if decision == Decision.RISK and transfer_started and t_true > 0.0:
 		var transfer_ratio: float = clampf(transfer_elapsed / t_true, 0.0, 1.0)
 		transfer_bar.value = transfer_ratio * 100.0
 		transfer_countdown.text = "%s %s" % [_format_num(maxf(0.0, t_true - transfer_elapsed)), SYMBOL_SEC]
 	else:
-		if state == State.ANALYZED:
+		if state == State.TUNE or state == State.ANALYZE_LOCK or state == State.DECIDE:
 			_apply_phantom_preview()
 		else:
 			transfer_bar.value = 0.0
@@ -806,14 +851,7 @@ func _update_runtime_ui() -> void:
 func _apply_phantom_preview() -> void:
 	var phantom_ratio: float = clampf(t_est / maxf(_t_true_max, 0.1), 0.0, 1.0)
 	transfer_bar.value = phantom_ratio * 100.0
-	transfer_countdown.text = "est: %s %s" % [_format_num(t_est), SYMBOL_SEC]
-
-func _estimate_risk_text() -> String:
-	if t_est <= t_detect - 0.5:
-		return TXT_RISK_LOW
-	if t_est <= t_detect + 0.5:
-		return TXT_RISK_MID
-	return TXT_RISK_HIGH
+	transfer_countdown.text = "\u043e\u0446\u0435\u043d\u043a\u0430: %s %s" % [_format_num(t_est), SYMBOL_SEC]
 
 func _finalize_trial(result: Outcome, decision_label: String) -> void:
 	if state == State.DONE:
@@ -924,6 +962,7 @@ func _send_trial_payload(is_success: bool, decision_label: String) -> void:
 		"elapsed_ms": elapsed_ms,
 		"time_to_first_action_ms": time_to_first_action_ms,
 		"time_to_check_ms": time_to_check_ms,
+		"time_to_analyze_ms": time_to_check_ms,
 		"time_to_decision_ms": time_to_decision_ms
 	}
 	GlobalMetrics.register_trial(payload)
@@ -977,21 +1016,57 @@ func _outcome_to_text(current_outcome: Outcome) -> String:
 
 func _update_details_text() -> void:
 	var lines: Array[String] = []
-	lines.append("mode: %s" % ("ARCADE" if ARCADE_MODE_ENABLED else "DIAGNOSTIC"))
-	lines.append("\u0424\u043e\u0440\u043c\u0443\u043b\u0430: t = I / v")
-	lines.append("I (%s): %s" % [file_size_unit, _format_num(file_size_value)])
-	lines.append("v (%s): %s" % [UNIT_MBIT_SEC, _format_num(speed_mbit)])
-	lines.append("T_detect: %s %s" % [_format_num(t_detect), SYMBOL_SEC])
-	lines.append("t_est: %s %s" % [_format_num(t_est), SYMBOL_SEC])
+	lines.append("Формула: t = I / v")
+	lines.append("Дано: объём %s %s, скорость %s %s" % [
+		_format_num(file_size_value),
+		file_size_unit,
+		_format_num(speed_mbit),
+		UNIT_MBIT_SEC
+	])
+	lines.append("До пеленгации: %s %s" % [_format_num(t_detect), SYMBOL_SEC])
+	lines.append("Ваша оценка: t_est = %s %s" % [_format_num(t_est), SYMBOL_SEC])
 	if used_units:
-		lines.append("\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0430 \u0435\u0434\u0438\u043d\u0438\u0446 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0430.")
+		lines.append("Подсказка единиц использована.")
 	if state == State.DONE:
-		lines.append("t_true: %s %s" % [_format_num(t_true), SYMBOL_SEC])
-		lines.append("outcome: %s" % _outcome_to_text(outcome))
+		var size_mb: float = file_size_value if file_size_unit == UNIT_MB else file_size_value * 1024.0
+		var i_mbit: float = size_mb * 8.0
+		if file_size_unit == UNIT_GB:
+			lines.append("Конвертация: %s ГБ × 1024 = %s МБ" % [_format_num(file_size_value), _format_num(size_mb)])
+		lines.append("Конвертация: %s МБ × 8 = %s Мбит" % [_format_num(size_mb), _format_num(i_mbit)])
+		lines.append("t_true = %s / %s = %s %s" % [
+			_format_num(i_mbit),
+			_format_num(speed_mbit),
+			_format_num(t_true),
+			SYMBOL_SEC
+		])
+		var decision_text: String = "НЕ ПРИНЯТО"
+		if decision == Decision.RISK:
+			decision_text = "РИСК"
+		elif decision == Decision.ABORT:
+			decision_text = "СБРОС"
+		lines.append("Решение: %s" % decision_text)
+		lines.append("Исход: %s" % _outcome_to_text(outcome))
+		var decision_elapsed_ms: int = (Time.get_ticks_msec() - start_ms) if decision_ms < 0 else (decision_ms - start_ms)
+		lines.append("Разбор: %s" % _describe_error_type(_classify_error_type(decision_elapsed_ms)))
 	else:
-		lines.append("t_true: \u0441\u043a\u0440\u044b\u0442\u043e \u0434\u043e \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0438\u044f")
-	lines.append("\u0420\u0435\u0436\u0438\u043c \u043f\u0443\u043b\u0430: %s (%s)" % ["\u044f\u043a\u043e\u0440\u043d\u044b\u0439" if pool_type == "ANCHOR" else "\u043e\u0431\u044b\u0447\u043d\u044b\u0439", anchor_type])
+		lines.append("t_true скрыто до завершения.")
+		lines.append("После результата здесь появится разбор ошибки.")
 	details_sheet_text.text = "\n".join(lines)
+
+func _describe_error_type(error_type: String) -> String:
+	match error_type:
+		"forgot_x8":
+			return "Забыто умножение на 8 при переводе МБ в Мбит."
+		"forgot_x1024":
+			return "Забыто умножение на 1024 при переводе ГБ в МБ."
+		"arithmetic_error":
+			return "Ошибка вычисления времени передачи."
+		"hesitation":
+			return "Промедление: решение принято слишком поздно."
+		"assisted":
+			return "Использована подсказка по единицам."
+		_:
+			return "Критичных ошибок расчёта не выявлено."
 
 func _format_num(value: float) -> String:
 	return "%.1f" % value

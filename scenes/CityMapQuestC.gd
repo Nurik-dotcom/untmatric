@@ -1,4 +1,4 @@
-extends Control
+﻿extends Control
 
 const PACK_PATH := "res://data/city_map/pack_6_3_C.json"
 const LOG_PREFIX := "case_6_3"
@@ -32,13 +32,16 @@ const TRAFFIC_BASE_SPEED := 2.4
 @onready var sum_live_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SumLiveLabel
 @onready var constraint_info_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ConstraintInfoLabel
 @onready var warning_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/WarningLabel
+@onready var input_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/InputLabel
 @onready var status_label: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/StatusLabel
 @onready var schedule_list: VBoxContainer = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel/ScheduleMargin/ScheduleVBox/ScheduleScroll/ScheduleList
 @onready var schedule_panel: PanelContainer = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel
+@onready var schedule_title: Label = $SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel/ScheduleMargin/ScheduleVBox/ScheduleTitle
 @onready var label_state: Label = $SafeArea/MainVBox/Header/LabelState
 @onready var label_timer: Label = $SafeArea/MainVBox/Header/LabelTimer
 @onready var footer_row: HBoxContainer = $SafeArea/MainVBox/Footer
 @onready var footer_label: Label = $SafeArea/MainVBox/Footer/FooterLabel
+@onready var footer_meta: Label = $SafeArea/MainVBox/Footer/FooterMeta
 @onready var briefing_card: PanelContainer = $SafeArea/MainVBox/BriefingCard
 @onready var briefing_title: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/BriefingTitle
 @onready var briefing_text: Label = $SafeArea/MainVBox/BriefingCard/BriefingMargin/BriefingVBox/BriefingText
@@ -127,7 +130,7 @@ var _jitter_map: Dictionary = {}
 var _node_positions: Dictionary = {}
 var _traffic_visuals: Dictionary = {}
 var _undo_stack: Array[Dictionary] = []
-var _renderer: GraphRenderer = GraphRenderer.new()
+var _renderer = preload("res://scripts/city_map/GraphRenderer.gd").new()
 
 var _traffic_layer: Control
 var _btn_help: Button
@@ -144,6 +147,10 @@ var _schedule_rows: Array[Dictionary] = []
 var _danger_edges_seen: Dictionary = {}
 var _closed_edges_seen: Dictionary = {}
 var _is_leaving_scene := false
+var _status_i18n_key: String = ""
+var _status_i18n_default: String = ""
+var _status_i18n_params: Dictionary = {}
+var _status_i18n_color: Color = Color(1, 1, 1, 1)
 
 func _ready() -> void:
 	if not btn_back.pressed.is_connected(_on_back_pressed):
@@ -163,12 +170,57 @@ func _ready() -> void:
 	sum_input.text_changed.connect(_on_sum_input_changed)
 	graph_container.resized.connect(_on_graph_resized)
 	_setup_noir_ui()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+	_apply_i18n()
 	_configure_sum_input_display()
 
 	_load_pack(PACK_PATH)
 	_apply_content_layout_mode()
 	_setup_timer()
 	call_deferred("_start_pack_run")
+
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var opts: Dictionary = params.duplicate(true)
+	opts["default"] = default_text
+	return I18n.tr_key(key, opts)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	label_case.text = _tr("city_map.common.header.case", "CASE 6: CITY MAP")
+	label_mode.text = _tr("city_map.c.header.mode", "MODE: C")
+	if is_instance_valid(_btn_help):
+		_btn_help.tooltip_text = _tr("city_map.common.tooltip.dossier", "DOSSIER")
+	input_label.text = _tr("city_map.common.input.enter_sum", "ENTER FINAL SUM")
+	schedule_title.text = _tr("city_map.c.schedule.title", "SCHEDULE")
+	footer_meta.text = _tr("city_map.c.footer.meta", "CITY MAP / C")
+	_set_progress_ui()
+	_set_briefing()
+	_update_visuals()
+	_update_timer_display()
+	if not _status_i18n_key.is_empty():
+		_set_status_i18n(_status_i18n_key, _status_i18n_default, _status_i18n_color, _status_i18n_params)
+	_apply_content_layout_mode()
+
+func _set_status_i18n(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
+	_status_i18n_key = key
+	_status_i18n_default = default_text
+	_status_i18n_params = params.duplicate(true)
+	_status_i18n_color = color
+	status_label.text = _tr(key, default_text, _status_i18n_params)
+	status_label.add_theme_color_override("font_color", color)
+
+func _clear_status_i18n() -> void:
+	_status_i18n_key = ""
+	_status_i18n_default = ""
+	_status_i18n_params = {}
+	status_label.text = ""
 
 func _setup_noir_ui() -> void:
 	_ensure_info_scroll_container()
@@ -177,12 +229,12 @@ func _setup_noir_ui() -> void:
 	_btn_help = Button.new()
 	_btn_help.text = "?"
 	_btn_help.custom_minimum_size = Vector2(44, 44)
-	_btn_help.tooltip_text = "ДОСЬЕ"
+	_btn_help.tooltip_text = "Р”РћРЎР¬Р•"
 	_btn_help.pressed.connect(_on_help_pressed)
 	header.add_child(_btn_help)
 
 	_btn_undo = Button.new()
-	_btn_undo.text = "ОТКАТ"
+	_btn_undo.text = "РћРўРљРђРў"
 	_btn_undo.custom_minimum_size = Vector2(0, 44)
 	_btn_undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_undo.pressed.connect(_on_undo_pressed)
@@ -190,7 +242,7 @@ func _setup_noir_ui() -> void:
 	buttons_row.move_child(_btn_undo, 0)
 
 	_btn_wait = Button.new()
-	_btn_wait.text = "ЖДАТЬ +5"
+	_btn_wait.text = "Р–Р”РђРўР¬ +5"
 	_btn_wait.custom_minimum_size = Vector2(0, 44)
 	_btn_wait.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_wait.pressed.connect(_on_wait_pressed)
@@ -300,8 +352,11 @@ func _on_wait_pressed() -> void:
 	wait_total_sim_sec += 5
 	sim_time_sec += 5
 	_last_move_ms = Time.get_ticks_msec()
-	status_label.text = "ЖДАТЬ +5: сим-время обновлено, стабильность -1"
-	status_label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.34))
+	_set_status_i18n(
+		"city_map.c.status.wait",
+		"WAIT +5: sim-time updated, stability -1",
+		Color(1.0, 0.78, 0.34)
+	)
 	_recalculate_stability()
 	_update_visuals()
 
@@ -474,11 +529,19 @@ func _set_progress_ui() -> void:
 	var total := maxi(1, level_total)
 	var level_entry := _current_level_entry()
 	var sub_id := str(level_entry.get("id", ""))
-	label_progress.text = "ЗАДАНИЕ: %d/%d%s" % [shown_index, total, ("" if sub_id.is_empty() else " • " + sub_id)]
+	label_progress.text = _tr(
+		"city_map.common.header.progress",
+		"TASK: {current}/{total}{suffix}",
+		{
+			"current": shown_index,
+			"total": total,
+			"suffix": ("" if sub_id.is_empty() else " вЂў " + sub_id)
+		}
+	)
 	if level_index >= total - 1:
-		btn_next.text = "ЗАВЕРШИТЬ"
+		btn_next.text = _tr("city_map.common.btn.finish", "FINISH")
 	else:
-		btn_next.text = "ДАЛЕЕ"
+		btn_next.text = _tr("city_map.common.btn.next", "NEXT")
 
 func _is_round_locked() -> bool:
 	return is_game_over or stage_completed or input_locked
@@ -604,10 +667,10 @@ func _apply_compact_phone_layout(compact: bool) -> void:
 		info_panel.custom_minimum_size = Vector2(0.0, 0.0)
 	sum_input.custom_minimum_size.y = 36.0 if compact else 44.0
 	status_label.custom_minimum_size.y = 44.0 if compact else 64.0
-	_btn_undo.text = "ОТК" if compact else "ОТКАТ"
-	_btn_wait.text = "Ж+5" if compact else "ЖДАТЬ +5"
-	btn_reset.text = "СБР" if compact else "СБРОС"
-	btn_submit.text = "ОК" if compact else "ОТПРАВИТЬ"
+	_btn_undo.text = _tr("city_map.c.btn.undo.compact", "UN") if compact else _tr("city_map.common.btn.undo", "UNDO")
+	_btn_wait.text = _tr("city_map.c.btn.wait.compact", "W+5") if compact else _tr("city_map.c.btn.wait", "WAIT +5")
+	btn_reset.text = _tr("city_map.c.btn.reset.compact", "RST") if compact else _tr("city_map.common.btn.reset", "RESET")
+	btn_submit.text = _tr("city_map.c.btn.submit.compact", "OK") if compact else _tr("city_map.common.btn.submit", "SUBMIT")
 	if is_instance_valid(_btn_help):
 		_btn_help.custom_minimum_size = Vector2(36.0, 36.0) if compact else Vector2(44.0, 44.0)
 	if is_instance_valid(_btn_undo):
@@ -726,10 +789,16 @@ func _load_level_data(path_to_file: String) -> void:
 	_jitter_map = _renderer.build_deterministic_jitter(node_defs, config_hash, 8.0)
 
 func _set_briefing() -> void:
-	briefing_title.text = "ОКНО КОМЕНДАНТСКОГО ЧАСА"
-	briefing_text.text = "Доберитесь до узла L в условиях динамических окон патруля. Рёбра ЗАКРЫТО заблокированы, рёбра ОПАСНО имеют повышенную стоимость."
+	briefing_title.text = _tr("city_map.c.briefing.title", "CURFEW WINDOW")
+	briefing_text.text = _tr(
+		"city_map.c.briefing.text",
+		"Reach node L under dynamic patrol windows. CLOSED edges are blocked; DANGER edges have increased cost."
+	)
 	update_conditions_panel()
-	footer_label.text = "РЕАЛЬНЫЙ таймер в заголовке. СИМ-время меняется только при успешном перемещении."
+	footer_label.text = _tr(
+		"city_map.c.briefing.footer",
+		"Real timer is in the header. Sim-time changes only after successful movement."
+	)
 
 func _build_schedule_ui() -> void:
 	for child in schedule_list.get_children():
@@ -782,15 +851,17 @@ func update_conditions_panel() -> void:
 				for node_var in group.get("nodes", []):
 					nodes_list.append(str(node_var))
 				var nodes_joined := ",".join(nodes_list)
-				xor_parts.append("%s (не более одного)" % nodes_joined)
+				xor_parts.append(
+					_tr("city_map.c.constraints.xor_limit", "{nodes} (at most one)", {"nodes": nodes_joined})
+				)
 		if not xor_parts.is_empty():
 			xor_text = " | ".join(xor_parts)
 
 	var lines: Array[String] = [
-		"УСЛОВИЯ:",
-		"ОБЯЗАТЕЛЬНО ПОСЕТИТЬ: %s" % must_visit_text,
-		"XOR: %s" % xor_text,
-		"ЧЁРНЫЙ СПИСОК: %s" % blacklist_text
+		_tr("city_map.c.constraints.header", "CONSTRAINTS:"),
+		_tr("city_map.c.constraints.must_visit", "MUST VISIT: {nodes}", {"nodes": must_visit_text}),
+		_tr("city_map.c.constraints.xor", "XOR: {value}", {"value": xor_text}),
+		_tr("city_map.c.constraints.blacklist", "BLACKLIST: {nodes}", {"nodes": blacklist_text})
 	]
 	var conditions_text: String = "\n".join(lines)
 	constraint_info_label.text = conditions_text
@@ -811,12 +882,12 @@ func refresh_schedule_ui() -> void:
 			var from_t: int = int(slot.get("t_from", 0))
 			var to_t: int = int(slot.get("t_to", 0))
 			var slot_state: String = str(slot.get("state", "open")).to_upper()
-			var slot_w_text: String = "ЗАКРЫТО" if slot_state == "CLOSED" else str(int(slot.get("w", edge.get("w", 0))))
-			var to_text: String = "БЕСК" if to_t >= 999 else str(to_t)
+			var slot_w_text: String = _tr("city_map.common.state.closed", "CLOSED") if slot_state == "CLOSED" else str(int(slot.get("w", edge.get("w", 0))))
+			var to_text: String = _tr("city_map.c.schedule.infinite", "INF") if to_t >= 999 else str(to_t)
 			var slot_text: String = "[%d-%s: %s]" % [from_t, to_text, slot_w_text]
 			var is_active: bool = sim_time_sec >= from_t and sim_time_sec < to_t
 			if is_active:
-				slot_text = ">>%s<<" % slot_text
+				slot_text = _tr("city_map.c.schedule.active_slot", ">>{slot}<<", {"slot": slot_text})
 			parts.append(slot_text)
 
 		var edge_from: String = str(edge.get("from", ""))
@@ -825,12 +896,20 @@ func refresh_schedule_ui() -> void:
 		var state_text: String = str(runtime.get("state", "OPEN"))
 		var state_text_ru: String = state_text
 		if state_text == "CLOSED":
-			state_text_ru = "ЗАКРЫТО"
+			state_text_ru = _tr("city_map.common.state.closed", "CLOSED")
 		elif state_text == "DANGER":
-			state_text_ru = "ОПАСНО"
+			state_text_ru = _tr("city_map.common.state.danger", "DANGER")
 		elif state_text == "OPEN":
-			state_text_ru = "ОТКРЫТО"
-		row_label.text = "%s->%s: %s | %s" % [edge_from, edge_to, " ".join(parts), state_text_ru]
+			state_text_ru = _tr("city_map.common.state.open", "OPEN")
+		var base_text: String = _tr(
+			"city_map.c.schedule.row",
+			"{from}->{to}: {slots} | {state}",
+			{"from": edge_from, "to": edge_to, "slots": " ".join(parts), "state": state_text_ru}
+		)
+		if ttc >= 0:
+			row_label.text = _tr("city_map.c.schedule.row_ttc", "{row} (t-{seconds}s)", {"row": base_text, "seconds": ttc})
+		else:
+			row_label.text = base_text
 
 		var warning_soon: bool = ttc >= 0 and ttc <= 15
 		if state_text == "CLOSED":
@@ -1158,7 +1237,7 @@ func _reset_round_state(full_reset: bool) -> void:
 	first_action_ms = -1
 	planning_time_ms = 0
 	sum_input.clear()
-	status_label.text = ""
+	_clear_status_i18n()
 	_undo_stack.clear()
 	_last_move_ms = Time.get_ticks_msec()
 
@@ -1170,9 +1249,9 @@ func _reset_round_state(full_reset: bool) -> void:
 	_update_visuals()
 
 func _update_visuals() -> void:
-	path_display.text = "ПУТЬ: %s" % " -> ".join(path)
-	sim_time_label.text = "СИМ: %d" % sim_time_sec
-	sum_live_label.text = "СУММА: %d" % path_sum
+	path_display.text = _tr("city_map.common.input.path", "PATH: {path}", {"path": " -> ".join(path)})
+	sim_time_label.text = _tr("city_map.c.input.sim_time", "SIM: {value}", {"value": sim_time_sec})
+	sum_live_label.text = _tr("city_map.common.input.sum", "SUM: {value}", {"value": path_sum})
 	update_warnings_panel()
 
 	for node_id in node_buttons.keys():
@@ -1235,22 +1314,32 @@ func update_warnings_panel() -> void:
 			missing_must.append(must_node)
 
 	if not missing_must.is_empty():
-		warnings.append("НЕ ПОСЕЩЕНЫ ОБЯЗАТЕЛЬНЫЕ УЗЛЫ: %s" % ",".join(missing_must))
+		warnings.append(
+			_tr(
+				"city_map.c.warning.missing_must",
+				"Required nodes not visited: {nodes}",
+				{"nodes": ",".join(missing_must)}
+			)
+		)
 	if xor_violation:
-		warnings.append("НАРУШЕНИЕ XOR")
+		warnings.append(_tr("city_map.c.warning.xor", "XOR violation"))
 	if _path_has_blacklist(path):
-		warnings.append("ВХОД В ЧЁРНЫЙ СПИСОК")
+		warnings.append(_tr("city_map.c.warning.blacklist", "Entered blacklist node"))
 	if closed_edge_attempts > 0:
-		warnings.append("ЗАКРЫТОЕ РЕБРО ЗАБЛОКИРОВАНО")
+		warnings.append(_tr("city_map.c.warning.closed_edge", "Closed edge is blocked"))
 	if cycle_events > 0:
-		warnings.append("ОБНАРУЖЕН ЦИКЛ")
+		warnings.append(_tr("city_map.c.warning.cycle", "Cycle detected"))
 	if backtrack_count > 0:
-		warnings.append("ВЫПОЛНЕН ОТКАТ")
+		warnings.append(_tr("city_map.c.warning.undo", "Undo used"))
 
 	if warnings.is_empty():
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ:\n-"
+		warning_label.text = _tr("city_map.common.warning.none", "WARNINGS:\n-")
 	else:
-		warning_label.text = "ПРЕДУПРЕЖДЕНИЯ:\n%s" % "\n".join(warnings)
+		warning_label.text = _tr(
+			"city_map.common.warning.list",
+			"WARNINGS:\n{items}",
+			{"items": "\n".join(warnings)}
+		)
 
 func _apply_edge_style(key: String, state: String, runtime: Dictionary) -> void:
 	if not edge_visuals.has(key):
@@ -1278,21 +1367,25 @@ func _apply_edge_style(key: String, state: String, runtime: Dictionary) -> void:
 		"closed":
 			start_color = Color(0.58, 0.14, 0.14, 0.55)
 			end_color = Color(1.0, 0.25, 0.25, 1.0)
-			label_text = "ЗАКРЫТО"
+			label_text = _tr("city_map.common.state.closed", "CLOSED")
 			line.texture = _get_closed_texture()
 			line.texture_mode = Line2D.LINE_TEXTURE_TILE
 			line.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 		"danger":
 			start_color = Color(0.62, 0.35, 0.12, 0.60)
 			end_color = Color(1.0, 0.62, 0.18, 1.0)
-			label_text = "%d ОПАСНО" % int(runtime.get("w", runtime.get("weight", 0)))
+			label_text = _tr(
+				"city_map.c.schedule.danger_weight",
+				"{weight} DANGER",
+				{"weight": int(runtime.get("w", runtime.get("weight", 0)))}
+			)
 			line.texture = null
 		_:
 			line.texture = null
 
 	var time_to_change := int(runtime.get("time_to_change", runtime.get("next_change_sec", -1)))
 	if time_to_change >= 0 and state != "closed":
-		label_text = "%s t-%ds" % [label_text, time_to_change]
+		label_text = _tr("city_map.c.schedule.time_to_change", "{label} t-{seconds}s", {"label": label_text, "seconds": time_to_change})
 	if state == "danger" and time_to_change >= 0 and time_to_change < 15:
 		var pulse := 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) / 120.0)
 		end_color = end_color.lerp(Color(1.0, 0.24, 0.24, 1.0), pulse * 0.6)
@@ -1389,8 +1482,11 @@ func _on_node_pressed(node_id: String) -> void:
 		closed_edge_attempts += 1
 		n_closed += 1
 		dynamic_weight_awareness = false
-		status_label.text = "ЗАКРЫТОЕ РЕБРО: перемещение заблокировано"
-		status_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35))
+		_set_status_i18n(
+			"city_map.c.status.closed_edge",
+			"CLOSED EDGE: movement blocked",
+			Color(1.0, 0.35, 0.35)
+		)
 		_recalculate_stability()
 		_update_visuals()
 		return
@@ -1410,15 +1506,21 @@ func _on_node_pressed(node_id: String) -> void:
 	if blacklist_nodes.has(node_id):
 		ambush_hits += 1
 		constraint_violations += 1
-		status_label.text = "ЗАСАДА: вход в узел чёрного списка"
-		status_label.add_theme_color_override("font_color", Color(1.0, 0.42, 0.30))
+		_set_status_i18n(
+			"city_map.c.status.ambush",
+			"AMBUSH: entered a blacklist node",
+			Color(1.0, 0.42, 0.30)
+		)
 
 	if _is_xor_violation(path) and not xor_violation:
 		xor_violation = true
 		n_logic += 1
 		constraint_violations += 1
-		status_label.text = "НАРУШЕНИЕ XOR: в группе допускается не более одного узла"
-		status_label.add_theme_color_override("font_color", Color(1.0, 0.62, 0.18))
+		_set_status_i18n(
+			"city_map.c.status.xor_violation",
+			"XOR VIOLATION: at most one node allowed in the group",
+			Color(1.0, 0.62, 0.18)
+		)
 
 	_recalculate_stability()
 	_update_visuals()
@@ -1473,8 +1575,11 @@ func _on_submit_pressed() -> void:
 	_log_attempt(verdict)
 
 	if verdict.result_code == "OK":
-		status_label.text = "Маршрут принят. Динамические ограничения соблюдены."
-		status_label.add_theme_color_override("font_color", Color(0.38, 1.0, 0.62))
+		_set_status_i18n(
+			"city_map.c.status.success",
+			"Route accepted. Dynamic constraints are respected.",
+			Color(0.38, 1.0, 0.62)
+		)
 		stage_completed = true
 		levels_completed += 1
 		run_total_time_seconds += real_time_sec
@@ -1494,30 +1599,48 @@ func _on_submit_pressed() -> void:
 		_set_progress_ui()
 		return
 
-	status_label.text = _result_message(str(verdict.result_code))
-	status_label.add_theme_color_override("font_color", Color(1.0, 0.62, 0.28))
+	var result_code: String = str(verdict.result_code)
+	var result_meta: Dictionary = _result_message_meta(result_code)
+	_set_status_i18n(
+		str(result_meta.get("key", "city_map.common.result.unhandled")),
+		str(result_meta.get("default", "Unhandled result code: {code}")),
+		Color(1.0, 0.62, 0.28),
+		result_meta.get("params", {})
+	)
 	_recalculate_stability()
 
 func _result_message(result_code: String) -> String:
+	var meta: Dictionary = _result_message_meta(result_code)
+	return _tr(
+		str(meta.get("key", "city_map.common.result.unhandled")),
+		str(meta.get("default", "Unhandled result code: {code}")),
+		meta.get("params", {})
+	)
+
+func _result_message_meta(result_code: String) -> Dictionary:
 	match result_code:
 		"ERR_INCOMPLETE":
-			return "Дойдите до узла L перед отправкой."
+			return {"key": "city_map.c.result.err_incomplete", "default": "Reach node L before submit."}
 		"ERR_MISSING_TRANSIT":
-			return "Ограничение не выполнено: посетите обязательные транзитные узлы."
+			return {"key": "city_map.c.result.err_missing_transit", "default": "Constraint not met: visit required transit nodes."}
 		"ERR_LOGIC_VIOLATION":
-			return "Нарушено ограничение XOR."
+			return {"key": "city_map.c.result.err_logic_violation", "default": "XOR constraint violated."}
 		"ERR_AMBUSH":
-			return "Посещён узел из чёрного списка."
+			return {"key": "city_map.c.result.err_ambush", "default": "A blacklist node has been visited."}
 		"ERR_PARSE":
-			return "Вводите только цифры."
+			return {"key": "city_map.common.result.err_parse", "default": "Use digits only."}
 		"ERR_CALC":
-			return "Введённая сумма не совпадает со смоделированной стоимостью пути."
+			return {"key": "city_map.c.result.err_calc", "default": "Entered sum does not match simulated path cost."}
 		"ERR_NOT_OPT":
-			return "Маршрут корректный, но не оптимальный."
+			return {"key": "city_map.common.result.err_not_opt", "default": "Route is valid but not optimal."}
 		"ERR_PATH_INVALID":
-			return "Маршрут недопустим для ориентированных рёбер."
+			return {"key": "city_map.common.result.err_path_invalid", "default": "Route is invalid for directed edges."}
 		_:
-			return "Необработанный результат: %s" % result_code
+			return {
+				"key": "city_map.common.result.unhandled",
+				"default": "Unhandled result code: {code}",
+				"params": {"code": result_code}
+			}
 
 func _judge_solution(input_text: String) -> Dictionary:
 	var sum_actual := _compute_path_sum()
@@ -1620,14 +1743,17 @@ func _recalculate_stability() -> void:
 	effective -= float(wait_count)
 
 	stability = clampf(effective, 0.0, 100.0)
-	label_state.text = "СТАБИЛЬНОСТЬ: %d%%" % int(stability)
+	label_state.text = _tr("city_map.common.status.stability", "STABILITY: {value}%", {"value": int(stability)})
 
 	var fail_threshold := float(trust_cfg.get("fail_threshold", 10))
 	if stability <= fail_threshold and not is_game_over:
 		is_game_over = true
 		stage_completed = false
-		status_label.text = "МИССИЯ ПРОВАЛЕНА: КРИТИЧЕСКАЯ СТАБИЛЬНОСТЬ."
-		status_label.add_theme_color_override("font_color", Color(1.0, 0.30, 0.30))
+		_set_status_i18n(
+			"city_map.common.status.mission_failed",
+			"MISSION FAILED: CRITICAL STABILITY.",
+			Color(1.0, 0.30, 0.30)
+		)
 		btn_next.visible = false
 		btn_next.disabled = true
 		_lock_input(true)
@@ -1637,7 +1763,7 @@ func _update_timer_display() -> void:
 	var remaining: int = maxi(0, time_limit - real_time_sec)
 	var mm: int = int(remaining / 60.0)
 	var ss: int = remaining % 60
-	label_timer.text = "ВРЕМЯ: %02d:%02d" % [mm, ss]
+	label_timer.text = _tr("city_map.common.status.time", "TIME: {mm}:{ss}", {"mm": "%02d" % mm, "ss": "%02d" % ss})
 	if real_time_sec > time_limit:
 		label_timer.add_theme_color_override("font_color", Color(1.0, 0.36, 0.36))
 	else:

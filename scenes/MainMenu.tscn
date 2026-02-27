@@ -83,6 +83,20 @@ theme_override_font_sizes/font_size = 20
 disabled = true
 text = "ЛАБОРАТОРИЯ (СКОРО)"
 
+[node name="LangRow" type="HBoxContainer" parent="Center/Menu"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="LangLabel" type="Label" parent="Center/Menu/LangRow"]
+layout_mode = 2
+text = "Язык"
+vertical_alignment = 1
+
+[node name="LangSelect" type="OptionButton" parent="Center/Menu/LangRow"]
+custom_minimum_size = Vector2(220, 42)
+layout_mode = 2
+
 [node name="SpacerBottom" type="Control" parent="Center/Menu"]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 2

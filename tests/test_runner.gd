@@ -7,7 +7,9 @@ class_name TestRunner
 const SUITES: Array[Dictionary] = [
 	{"name": "GlobalMetrics", "path": "res://tests/test_global_metrics.gd"},
 	{"name": "MatrixSolver", "path": "res://tests/test_matrix_solver.gd"},
-	{"name": "Shields", "path": "res://tests/test_shields.gd"}
+	{"name": "Shields", "path": "res://tests/test_shields.gd"},
+	{"name": "Case08DataContract", "path": "res://tests/test_case08_data_contract.gd"},
+	{"name": "I18n", "path": "res://tests/test_i18n.gd"}
 ]
 
 var all_results: Dictionary = {

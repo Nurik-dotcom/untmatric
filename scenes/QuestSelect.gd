@@ -10,6 +10,7 @@ const TABLET_BREAKPOINT := 1300.0
 @onready var quest_grid: GridContainer = $SafeArea/MainLayout/QuestGrid
 @onready var modal: Panel = $ModalLayer/ModeSelectionModal
 @onready var status_label: Label = $SafeArea/MainLayout/StatusLabel
+@onready var btn_back_to_menu: Button = $SafeArea/MainLayout/Footer/BtnBackToMenu
 
 @onready var btn_clues: Button = $SafeArea/MainLayout/QuestGrid/CluesButton
 @onready var btn_radio: Button = $SafeArea/MainLayout/QuestGrid/RadioButton
@@ -47,6 +48,7 @@ const BTN_CITY_TEXT := "Карта города"
 const BTN_ARCHIVE_TEXT := "Архив данных"
 const BTN_REPORT_TEXT := "Финальный отчет"
 const BTN_NETWORK_TRACE_TEXT := "Сетевой след"
+const BTN_BACK_TO_MENU_TEXT := "BACK TO MENU"
 
 const MODAL_TITLE_TEXT := "ВЫБОР СЛОЖНОСТИ"
 const COMPLEXITY_A_TEXT := "СЛОЖНОСТЬ A"
@@ -56,36 +58,48 @@ const BTN_CLOSE_TEXT := "НАЗАД"
 
 func _ready() -> void:
 	modal.visible = false
-	title_label.text = TITLE_TEXT
-	status_label.text = STATUS_READY
-	status_label.modulate = COLOR_READY
-
-	_set_button_labels()
-	_set_modal_labels()
+	_apply_i18n()
 	_connect_buttons()
 	_disable_unready()
 	_on_viewport_size_changed()
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 	call_deferred("_animate_intro")
 
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	title_label.text = I18n.tr_key("ui.quest_select.title", {"default": TITLE_TEXT})
+	status_label.text = I18n.tr_key("ui.quest_select.status_ready", {"default": STATUS_READY})
+	btn_back_to_menu.text = I18n.tr_key("ui.quest_select.back_to_menu", {"default": BTN_BACK_TO_MENU_TEXT})
+	status_label.modulate = COLOR_READY
+	_set_button_labels()
+	_set_modal_labels()
+
 func _set_button_labels() -> void:
-	btn_clues.text = BTN_CLUES_TEXT
-	btn_radio.text = BTN_RADIO_TEXT
-	btn_decryptor.text = BTN_DECRYPTOR_TEXT
-	btn_lie.text = BTN_LIE_TEXT
-	btn_script.text = BTN_SCRIPT_TEXT
-	btn_city.text = BTN_CITY_TEXT
-	btn_archive.text = BTN_ARCHIVE_TEXT
-	btn_report.text = BTN_REPORT_TEXT
-	btn_network_trace.text = BTN_NETWORK_TRACE_TEXT
+	btn_clues.text = I18n.tr_key("ui.quest_select.btn_clues", {"default": BTN_CLUES_TEXT})
+	btn_radio.text = I18n.tr_key("ui.quest_select.btn_radio", {"default": BTN_RADIO_TEXT})
+	btn_decryptor.text = I18n.tr_key("ui.quest_select.btn_decryptor", {"default": BTN_DECRYPTOR_TEXT})
+	btn_lie.text = I18n.tr_key("ui.quest_select.btn_lie", {"default": BTN_LIE_TEXT})
+	btn_script.text = I18n.tr_key("ui.quest_select.btn_script", {"default": BTN_SCRIPT_TEXT})
+	btn_city.text = I18n.tr_key("ui.quest_select.btn_city", {"default": BTN_CITY_TEXT})
+	btn_archive.text = I18n.tr_key("ui.quest_select.btn_archive", {"default": BTN_ARCHIVE_TEXT})
+	btn_report.text = I18n.tr_key("ui.quest_select.btn_report", {"default": BTN_REPORT_TEXT})
+	btn_network_trace.text = I18n.tr_key("ui.quest_select.btn_network_trace", {"default": BTN_NETWORK_TRACE_TEXT})
 
 func _set_modal_labels() -> void:
-	modal_title.text = MODAL_TITLE_TEXT
-	btn_complexity_a.text = COMPLEXITY_A_TEXT
-	btn_complexity_b.text = COMPLEXITY_B_TEXT
-	btn_complexity_c.text = COMPLEXITY_C_TEXT
-	btn_close.text = BTN_CLOSE_TEXT
+	modal_title.text = I18n.tr_key("ui.quest_select.modal_title", {"default": MODAL_TITLE_TEXT})
+	btn_complexity_a.text = I18n.tr_key("ui.quest_select.complexity_a", {"default": COMPLEXITY_A_TEXT})
+	btn_complexity_b.text = I18n.tr_key("ui.quest_select.complexity_b", {"default": COMPLEXITY_B_TEXT})
+	btn_complexity_c.text = I18n.tr_key("ui.quest_select.complexity_c", {"default": COMPLEXITY_C_TEXT})
+	btn_close.text = I18n.tr_key("ui.quest_select.modal_back", {"default": BTN_CLOSE_TEXT})
 
 func _connect_buttons() -> void:
 	btn_decryptor.pressed.connect(_on_decryptor_pressed)
@@ -102,6 +116,7 @@ func _connect_buttons() -> void:
 	btn_complexity_b.pressed.connect(_on_complexity_b_pressed)
 	btn_complexity_c.pressed.connect(_on_complexity_c_pressed)
 	btn_close.pressed.connect(_on_close_modal_pressed)
+	btn_back_to_menu.pressed.connect(_on_back_to_menu_pressed)
 
 func _disable_unready() -> void:
 	btn_clues.disabled = false
@@ -227,6 +242,9 @@ func _on_complexity_c_pressed() -> void:
 func _on_close_modal_pressed() -> void:
 	modal.visible = false
 
+func _on_back_to_menu_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
+
 func _set_complexity_enabled(enable_b: bool, enable_c: bool) -> void:
 	btn_complexity_b.disabled = not enable_b
 	btn_complexity_c.disabled = not enable_c
@@ -268,6 +286,8 @@ func _apply_layout_profile(title_size: int, info_size: int, button_height: float
 	for btn in _all_quest_buttons():
 		btn.custom_minimum_size = Vector2(0.0, button_height)
 		btn.add_theme_font_size_override("font_size", clamp(info_size + 1, 16, 20))
+	btn_back_to_menu.custom_minimum_size = Vector2(0.0, max(48.0, button_height * 0.68))
+	btn_back_to_menu.add_theme_font_size_override("font_size", clamp(info_size + 1, 16, 20))
 
 func _apply_modal_profile(modal_title_size: int, button_font_size: int, min_width: float, min_height: float) -> void:
 	modal_box.custom_minimum_size = Vector2(min_width, min_height)

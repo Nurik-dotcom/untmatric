@@ -2,23 +2,22 @@ extends RefCounted
 
 const REQUIRED_LEVEL_KEYS: Array[String] = [
 	"id",
-	"briefing",
 	"format",
 	"validator_profile",
 	"allowed_containers",
 	"slots",
 	"fragments",
 	"expected_sequence",
-	"scoring_model",
-	"feedback_rules"
+	"scoring_model"
 ]
 
-const REQUIRED_FRAGMENT_KEYS: Array[String] = ["fragment_id", "label", "kind", "token"]
+const REQUIRED_FRAGMENT_KEYS: Array[String] = ["fragment_id", "kind"]
 const REQUIRED_RULE_KEYS: Array[String] = ["code", "min_state", "points", "stability_delta", "verdict_code"]
 const REQUIRED_DEFAULT_RULE_KEYS: Array[String] = ["code", "points", "stability_delta", "verdict_code"]
 const REQUIRED_FEEDBACK_KEYS: Array[String] = ["UNBALANCED_TAG", "HIERARCHY_VIOLATION", "ORDER_MISMATCH", "OK"]
 const SUPPORTED_PROFILES: Array[String] = ["LIST_BASIC", "NAV_MENU", "TABLE_LOG", "FORM_SIMPLE", "ARTICLE_NOTE", "FIGURE_MEDIA"]
 const EMPTY_SLOT_MARKERS: Array[String] = ["(EMPTY)", "(ПУСТОЙ)"]
+const EMPTY_SLOT_MARKER_LEGACY := "(\u0420\u045f\u0420\u0408\u0420\u040e\u0420\u045e\u0420\u045b\u0420\u2122)"
 
 static func load_levels(path: String) -> Array:
 	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
@@ -53,6 +52,10 @@ static func validate_level(level: Dictionary) -> bool:
 		if not level.has(key):
 			push_error("FR8Data: missing key '%s' in level %s" % [key, str(level.get("id", "UNKNOWN"))])
 			return false
+
+	if not _has_text_or_key(level, "briefing"):
+		push_error("FR8Data: briefing/briefing_key is missing in level %s" % str(level.get("id", "UNKNOWN")))
+		return false
 
 	if str(level.get("format", "")) != "TAG_ORDERING":
 		push_error("FR8Data: unsupported format in level %s" % str(level.get("id", "UNKNOWN")))
@@ -119,6 +122,12 @@ static func validate_level(level: Dictionary) -> bool:
 		if fragment_id.is_empty() or fragment_ids.has(fragment_id):
 			push_error("FR8Data: duplicate/empty fragment_id in level %s" % str(level.get("id", "UNKNOWN")))
 			return false
+		if not _has_text_or_key(fragment, "label"):
+			push_error("FR8Data: fragment label/label_key is missing in level %s" % str(level.get("id", "UNKNOWN")))
+			return false
+		if not _has_text_or_key(fragment, "token"):
+			push_error("FR8Data: fragment token/token_key is missing in level %s" % str(level.get("id", "UNKNOWN")))
+			return false
 		fragment_ids[fragment_id] = true
 
 	var expected_sequence: Array = level.get("expected_sequence", []) as Array
@@ -128,7 +137,7 @@ static func validate_level(level: Dictionary) -> bool:
 
 	for expected_var in expected_sequence:
 		var expected_id: String = str(expected_var).strip_edges()
-		if expected_id in EMPTY_SLOT_MARKERS:
+		if _is_empty_slot_marker(expected_id):
 			continue
 		if expected_id.is_empty():
 			push_error("FR8Data: expected_sequence cannot contain empty ids (use '(EMPTY)' or '(ПУСТОЙ)') in level %s" % str(level.get("id", "UNKNOWN")))
@@ -164,9 +173,31 @@ static func validate_level(level: Dictionary) -> bool:
 			return false
 
 	var feedback_rules: Dictionary = level.get("feedback_rules", {}) as Dictionary
+	var feedback_rule_keys: Dictionary = level.get("feedback_rules_keys", {}) as Dictionary
+	if feedback_rules.is_empty() and feedback_rule_keys.is_empty():
+		push_error("FR8Data: feedback_rules/feedback_rules_keys are missing in level %s" % str(level.get("id", "UNKNOWN")))
+		return false
 	for feedback_key in REQUIRED_FEEDBACK_KEYS:
-		if not feedback_rules.has(feedback_key):
-			push_error("FR8Data: feedback rule '%s' missing in level %s" % [feedback_key, str(level.get("id", "UNKNOWN"))])
+		var has_legacy: bool = feedback_rules.has(feedback_key) and not str(feedback_rules.get(feedback_key, "")).strip_edges().is_empty()
+		var has_key: bool = feedback_rule_keys.has(feedback_key) and not str(feedback_rule_keys.get(feedback_key, "")).strip_edges().is_empty()
+		if not has_legacy and not has_key:
+			push_error("FR8Data: feedback rule '%s' missing in level %s (feedback_rules/feedback_rules_keys)" % [feedback_key, str(level.get("id", "UNKNOWN"))])
 			return false
 
 	return true
+
+static func _has_text_or_key(entry: Dictionary, field: String) -> bool:
+	var legacy: String = str(entry.get(field, "")).strip_edges()
+	if not legacy.is_empty():
+		return true
+	var key_name: String = "%s_key" % field
+	var key_value: String = str(entry.get(key_name, "")).strip_edges()
+	return not key_value.is_empty()
+
+static func _is_empty_slot_marker(value: String) -> bool:
+	var marker: String = value.strip_edges()
+	if marker.is_empty():
+		return false
+	if marker in EMPTY_SLOT_MARKERS:
+		return true
+	return marker == EMPTY_SLOT_MARKER_LEGACY

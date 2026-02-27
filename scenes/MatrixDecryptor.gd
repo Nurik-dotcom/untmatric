@@ -51,14 +51,18 @@ const DEFAULT_CHECK_COOLDOWN := 0.35
 @onready var btn_check: Button = $UI/SafeArea/Main/BottomBar/Actions/BtnCheck
 @onready var btn_reset: Button = $UI/SafeArea/Main/BottomBar/Actions/BtnReset
 
+@onready var status_title: Label = $UI/SafeArea/Main/ContentSplit/RightPanel/StatusPanel/StatusContent/StatusTitle
 @onready var progress_label: Label = $UI/SafeArea/Main/ContentSplit/RightPanel/StatusPanel/StatusContent/ProgressLabel
 @onready var mode_state_label: Label = $UI/SafeArea/Main/ContentSplit/RightPanel/StatusPanel/StatusContent/ModeLabel
+@onready var live_log_title: Label = $UI/SafeArea/Main/ContentSplit/RightPanel/LiveLogPanel/LiveLogContent/LiveLogTitle
+@onready var hint_title: Label = $UI/SafeArea/Main/ContentSplit/RightPanel/HintPanel/HintContent/HintTitle
 @onready var hint_text: Label = $UI/SafeArea/Main/ContentSplit/RightPanel/HintPanel/HintContent/HintText
 @onready var live_log_text: RichTextLabel = $UI/SafeArea/Main/ContentSplit/RightPanel/LiveLogPanel/LiveLogContent/LiveLogText
 
 @onready var toast_panel: PanelContainer = $UI/ToastLayer/Toast
 @onready var toast_label: Label = $UI/ToastLayer/Toast/ToastLabel
 @onready var details_sheet: PanelContainer = $UI/DetailsSheet
+@onready var details_title: Label = $UI/DetailsSheet/DetailsContent/DetailsHeader/DetailsTitle
 @onready var details_text: RichTextLabel = $UI/DetailsSheet/DetailsContent/DetailsScroll/DetailsText
 @onready var noir_overlay = $UI/NoirOverlay
 
@@ -95,10 +99,15 @@ var _changed: Dictionary = {}
 var _logs: Array[String] = []
 var _content_mobile_layout: VBoxContainer = null
 var _details_sheet_height: float = DETAILS_SHEET_H
+var _hint_state_key: String = ""
+var _hint_state_default: String = ""
+var _hint_state_params: Dictionary = {}
 
 func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 
 	btn_back.pressed.connect(_on_menu_pressed)
 	btn_details.pressed.connect(_on_details_pressed)
@@ -111,6 +120,7 @@ func _ready() -> void:
 	_prepare_layout()
 	toast_panel.visible = false
 	details_sheet.visible = false
+	_apply_i18n()
 
 	await get_tree().process_frame
 	_set_details_open(false, true)
@@ -122,6 +132,46 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _set_hint_key(key: String, default_text: String, params: Dictionary = {}) -> void:
+	_hint_state_key = key
+	_hint_state_default = default_text
+	_hint_state_params = params.duplicate(true)
+	_apply_hint_state()
+
+func _apply_hint_state() -> void:
+	if _hint_state_key.is_empty():
+		hint_text.text = ""
+		return
+	hint_text.text = _tr(_hint_state_key, _hint_state_default, _hint_state_params)
+
+func _show_toast_key(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
+	_show_toast(_tr(key, default_text, params), color)
+
+func _apply_i18n() -> void:
+	btn_details.text = _tr("decryptor.c.ui.btn_details", "LOG")
+	status_title.text = _tr("decryptor.c.ui.status_title", "STAGE STATUS")
+	live_log_title.text = _tr("decryptor.c.ui.live_log_title", "TERMINAL LOG")
+	hint_title.text = _tr("decryptor.c.ui.hint_title", "HINT")
+	btn_hint.text = _tr("decryptor.c.ui.btn_hint", "HINT")
+	btn_check.text = _tr("decryptor.c.ui.btn_check", "CHECK")
+	btn_reset.text = _tr("decryptor.c.ui.btn_reset", "RESET")
+	details_title.text = _tr("decryptor.c.ui.details_title", "DETAIL LOG")
+	btn_close_details.text = _tr("decryptor.c.ui.btn_close_details", "CLOSE")
+	_update_headers()
+	_update_status()
+	_refresh_stability(GlobalMetrics.stability)
+	_apply_hint_state()
 
 func _prepare_layout() -> void:
 	shield_lazy.visible = false
@@ -155,8 +205,8 @@ func _start_run() -> void:
 	_apply_stage(stage_index)
 	_set_input_enabled(true)
 	_refresh_stability(GlobalMetrics.stability)
-	hint_text.text = "Match targets on the left and top."
-	_log("Run started: %s." % _mode_name(), COLOR_OK)
+	_set_hint_key("decryptor.c.hint.match_targets", "Match targets on the left and top.")
+	_log(_tr("decryptor.c.log.run_started", "Run started: {mode}.", {"mode": _mode_name()}), COLOR_OK)
 
 func _load_level_package(path: String, selected_id: String) -> Dictionary:
 	var package: Dictionary = {}
@@ -208,7 +258,11 @@ func _normalize_stage_entry(stage_data: Dictionary) -> Dictionary:
 	var rows_num: PackedInt32Array = _parse_targets(raw_solution, base_name, size_value)
 	var cols_num: PackedInt32Array = _compute_col_targets(rows_num, size_value)
 	if not _validate_stage_solution(rows_num, cols_num, size_value):
-		_log("Invalid stage %dx%d %s. Using fallback." % [size_value, size_value, base_name], COLOR_WARN)
+		_log(_tr("decryptor.c.log.invalid_stage", "Invalid stage {rows}x{cols} {base}. Using fallback.", {
+			"rows": size_value,
+			"cols": size_value,
+			"base": base_name
+		}), COLOR_WARN)
 		return _default_stage(size_value, base_name)
 
 	return {
@@ -301,8 +355,14 @@ func _apply_stage(index: int) -> void:
 	_reset_grid_state(true)
 	_update_headers()
 	_update_status()
-	hint_text.text = "Match targets on the left and top."
-	_log("Stage %d/%d start (%dx%d %s)." % [stage_index + 1, stages.size(), stage_size, stage_size, display_base], COLOR_OK)
+	_set_hint_key("decryptor.c.hint.match_targets", "Match targets on the left and top.")
+	_log(_tr("decryptor.c.log.stage_start", "Stage {current}/{total} start ({rows}x{cols} {base}).", {
+		"current": stage_index + 1,
+		"total": stages.size(),
+		"rows": stage_size,
+		"cols": stage_size,
+		"base": display_base
+	}), COLOR_OK)
 
 func _parse_targets(raw_values: Variant, base_name: String, expected_size: int) -> PackedInt32Array:
 	var out: PackedInt32Array = PackedInt32Array()
@@ -646,27 +706,27 @@ func _mismatch_summary(wrong_rows: Array, wrong_cols: Array) -> String:
 	for col_index_variant in wrong_cols:
 		parts.append("C%d" % (int(col_index_variant) + 1))
 	if parts.is_empty():
-		return "Mismatch: none"
-	return "Mismatch: %s" % ", ".join(parts)
+		return _tr("decryptor.c.mismatch.none", "Mismatch: none")
+	return _tr("decryptor.c.mismatch.some", "Mismatch: {items}", {"items": ", ".join(parts)})
 func _on_hint_pressed() -> void:
 	if _input_locked or _is_transition:
-		hint_text.text = "Input is locked."
+		_set_hint_key("decryptor.c.hint.input_locked", "Input is locked.")
 		return
 	if hint_used_count >= hint_limit_per_stage:
-		hint_text.text = "Hint limit reached for this stage."
-		_show_toast("HINT LIMIT", COLOR_WARN)
+		_set_hint_key("decryptor.c.hint.limit_reached", "Hint limit reached for this stage.")
+		_show_toast_key("decryptor.c.toast.hint_limit", "HINT LIMIT", COLOR_WARN)
 		return
 
 	var eval: Dictionary = _evaluate_stage()
 	if bool(eval.get("success", false)):
-		hint_text.text = "Targets already match. Press CHECK."
-		_show_toast("READY", COLOR_OK)
+		_set_hint_key("decryptor.c.hint.targets_match", "Targets already match. Press CHECK.")
+		_show_toast_key("decryptor.c.toast.ready", "READY", COLOR_OK)
 		return
 
 	var wrong_rows: Array = eval.get("wrong_rows", []) as Array
 	var wrong_cols: Array = eval.get("wrong_cols", []) as Array
 	if wrong_rows.is_empty() and wrong_cols.is_empty():
-		hint_text.text = "No hint available."
+		_set_hint_key("decryptor.c.hint.no_hint", "No hint available.")
 		return
 
 	hint_used_count += 1
@@ -674,15 +734,23 @@ func _on_hint_pressed() -> void:
 	if choose_row:
 		var row_index: int = int(wrong_rows[0])
 		_pulse_target_label(true, row_index)
-		hint_text.text = "Hint %d/%d: inspect row target R%d." % [hint_used_count, hint_limit_per_stage, row_index + 1]
-		_log("Hint used: focus row R%d." % (row_index + 1), COLOR_WARN)
+		_set_hint_key("decryptor.c.hint.row_focus", "Hint {used}/{limit}: inspect row target R{row}.", {
+			"used": hint_used_count,
+			"limit": hint_limit_per_stage,
+			"row": row_index + 1
+		})
+		_log(_tr("decryptor.c.log.hint_row", "Hint used: focus row R{row}.", {"row": row_index + 1}), COLOR_WARN)
 	else:
 		var col_index: int = int(wrong_cols[0])
 		_pulse_target_label(false, col_index)
-		hint_text.text = "Hint %d/%d: inspect column target C%d." % [hint_used_count, hint_limit_per_stage, col_index + 1]
-		_log("Hint used: focus column C%d." % (col_index + 1), COLOR_WARN)
+		_set_hint_key("decryptor.c.hint.col_focus", "Hint {used}/{limit}: inspect column target C{col}.", {
+			"used": hint_used_count,
+			"limit": hint_limit_per_stage,
+			"col": col_index + 1
+		})
+		_log(_tr("decryptor.c.log.hint_col", "Hint used: focus column C{col}.", {"col": col_index + 1}), COLOR_WARN)
 
-	_show_toast("HINT", COLOR_WARN)
+	_show_toast_key("decryptor.c.toast.hint", "HINT", COLOR_WARN)
 	_update_status()
 
 func _pulse_target_label(is_row: bool, index: int) -> void:
@@ -705,9 +773,9 @@ func _on_check_pressed() -> void:
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec < check_blocked_until:
 		var cooldown: float = maxf(0.0, check_blocked_until - now_sec)
-		hint_text.text = "CHECK COOLDOWN: %.2fs" % cooldown
-		_show_toast("SHIELD: COOLDOWN", COLOR_WARN)
-		_log("Check blocked by cooldown %.2fs." % cooldown, COLOR_WARN)
+		_set_hint_key("decryptor.c.hint.check_cooldown", "CHECK COOLDOWN: {seconds}s", {"seconds": "%.2f" % cooldown})
+		_show_toast_key("decryptor.c.toast.check_cooldown", "SHIELD: COOLDOWN", COLOR_WARN)
+		_log(_tr("decryptor.c.log.check_cooldown", "Check blocked by cooldown {seconds}s.", {"seconds": "%.2f" % cooldown}), COLOR_WARN)
 		_register_result(false, "CHECK_COOLDOWN", 0.0, 0, [], [])
 		_update_status()
 		return
@@ -735,9 +803,12 @@ func _on_check_pressed() -> void:
 	var penalty: float = float(wrong_rows.size() * 5 + wrong_cols.size() * 5 + clampi(int(round(float(delta_sum) / 4.0)), 0, 15))
 	AudioManager.play("error")
 	_overlay_glitch(0.22, 0.18)
-	hint_text.text = "Wrong rows: %d | Wrong cols: %d" % [last_wrong_rows, last_wrong_cols]
+	_set_hint_key("decryptor.c.hint.wrong_rows_cols", "Wrong rows: {rows} | Wrong cols: {cols}", {
+		"rows": last_wrong_rows,
+		"cols": last_wrong_cols
+	})
 	_log(_mismatch_summary(wrong_rows, wrong_cols), COLOR_BAD)
-	_show_toast("INCORRECT", COLOR_BAD)
+	_show_toast_key("decryptor.c.toast.incorrect", "INCORRECT", COLOR_BAD)
 	_register_result(false, "INCORRECT", penalty, delta_sum, wrong_rows, wrong_cols)
 	_update_status()
 
@@ -747,9 +818,12 @@ func _stage_success() -> void:
 	AudioManager.play("relay")
 	_overlay_glitch(0.12, 0.10)
 	_pulse_matrix_frame()
-	_show_toast("STAGE COMPLETE", COLOR_OK)
-	hint_text.text = "Stage %d/%d complete." % [stage_index + 1, stages.size()]
-	_log("Stage %d complete." % (stage_index + 1), COLOR_OK)
+	_show_toast_key("decryptor.c.toast.stage_complete", "STAGE COMPLETE", COLOR_OK)
+	_set_hint_key("decryptor.c.hint.stage_complete", "Stage {current}/{total} complete.", {
+		"current": stage_index + 1,
+		"total": stages.size()
+	})
+	_log(_tr("decryptor.c.log.stage_complete", "Stage {current} complete.", {"current": stage_index + 1}), COLOR_OK)
 	await get_tree().create_timer(0.55).timeout
 
 	var next_stage: int = stage_index + 1
@@ -767,9 +841,9 @@ func _pulse_matrix_frame() -> void:
 	tw.tween_property(matrix_frame, "modulate", Color(1, 1, 1, 1), 0.20)
 
 func _complete_run() -> void:
-	_show_toast("LEVEL COMPLETE", COLOR_OK)
-	hint_text.text = "All stages complete."
-	_log("Stage ladder complete.", COLOR_OK)
+	_show_toast_key("decryptor.c.toast.level_complete", "LEVEL COMPLETE", COLOR_OK)
+	_set_hint_key("decryptor.c.hint.all_stages_complete", "All stages complete.")
+	_log(_tr("decryptor.c.log.run_complete", "Stage ladder complete."), COLOR_OK)
 	await get_tree().create_timer(1.1).timeout
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
@@ -778,25 +852,40 @@ func _on_reset_pressed() -> void:
 		return
 	AudioManager.play("click")
 	_reset_grid_state(false)
-	hint_text.text = "Stage reset."
-	_log("Stage reset.", COLOR_WARN)
-	_show_toast("RESET", COLOR_WARN)
+	_set_hint_key("decryptor.c.hint.stage_reset", "Stage reset.")
+	_log(_tr("decryptor.c.log.stage_reset", "Stage reset."), COLOR_WARN)
+	_show_toast_key("decryptor.c.toast.reset", "RESET", COLOR_WARN)
 	_update_status()
 
 func _update_headers() -> void:
 	mode_chip_label.text = _mode_name()
-	level_label.text = "PROTOCOL C | MATRIX CLASSIC" if mode == Mode.CLASSIC else "PROTOCOL C | MATRIX STAGES RC"
-	matrix_title.text = "Stage %d/%d | %dx%d | %s" % [stage_index + 1, stages.size(), stage_size, stage_size, display_base]
+	level_label.text = _tr("decryptor.c.header.level_label", "PROTOCOL C | {mode}", {"mode": _mode_name()})
+	matrix_title.text = _tr("decryptor.c.header.matrix_title", "Stage {current}/{total} | {rows}x{cols} | {base}", {
+		"current": stage_index + 1,
+		"total": stages.size(),
+		"rows": stage_size,
+		"cols": stage_size,
+		"base": display_base
+	})
 
 func _update_status() -> void:
 	var cooldown: float = maxf(0.0, check_blocked_until - (Time.get_ticks_msec() / 1000.0))
 	var wrong_rows_text: String = "-" if last_wrong_rows < 0 else str(last_wrong_rows)
 	var wrong_cols_text: String = "-" if last_wrong_cols < 0 else str(last_wrong_cols)
 
-	progress_label.text = "STAGE %d/%d | BASE %s | HINT %d/%d" % [stage_index + 1, stages.size(), display_base, hint_used_count, hint_limit_per_stage]
-	mode_state_label.text = "WRONG ROWS: %s | WRONG COLS: %s" % [wrong_rows_text, wrong_cols_text]
+	progress_label.text = _tr("decryptor.c.status.progress", "STAGE {current}/{total} | BASE {base} | HINT {used}/{limit}", {
+		"current": stage_index + 1,
+		"total": stages.size(),
+		"base": display_base,
+		"used": hint_used_count,
+		"limit": hint_limit_per_stage
+	})
+	mode_state_label.text = _tr("decryptor.c.status.wrong_rows_cols", "WRONG ROWS: {rows} | WRONG COLS: {cols}", {
+		"rows": wrong_rows_text,
+		"cols": wrong_cols_text
+	})
 	if cooldown > 0.0:
-		mode_state_label.text += " | CD %.2fs" % cooldown
+		mode_state_label.text += _tr("decryptor.c.status.cooldown_suffix", " | CD {seconds}s", {"seconds": "%.2f" % cooldown})
 
 	shield_freq.modulate = Color(1, 1, 1, 1.0 if cooldown > 0.0 else 0.25)
 
@@ -805,7 +894,7 @@ func _on_stability_changed(new_val: float, _change: float) -> void:
 
 func _refresh_stability(value: float) -> void:
 	progress_stability.value = value
-	stability_text.text = "Stability: %d%%" % int(value)
+	stability_text.text = _tr("decryptor.c.stability", "Stability: {value}%", {"value": int(value)})
 
 func _set_input_enabled(enabled: bool) -> void:
 	_input_locked = not enabled
@@ -823,7 +912,10 @@ func _register_result(success: bool, error_type: String, penalty: float, delta_s
 	var run_id: String = classic_level_id if mode == Mode.CLASSIC else level_id
 	var hash_key: String = str(hash("%s|%d|%s" % [run_id, stage_index, display_base]))
 	var mode_key: String = "MATRIX_CLASSIC" if mode == Mode.CLASSIC else "MATRIX_STAGES_RC"
-	var payload_variant: Variant = TrialV2.build("MATRIX_DECRYPTOR", "C", mode_key, "GRID_CHECK", hash_key)
+	var trial_v2: Node = get_node_or_null("/root/TrialV2")
+	if trial_v2 == null:
+		return
+	var payload_variant: Variant = trial_v2.call("build", "MATRIX_DECRYPTOR", "C", mode_key, "GRID_CHECK", hash_key)
 	if typeof(payload_variant) != TYPE_DICTIONARY:
 		return
 
@@ -983,7 +1075,7 @@ func _overlay_glitch(strength: float, duration: float) -> void:
 		noir_overlay.call("glitch_burst", strength, duration)
 
 func _mode_name() -> String:
-	return "CLASSIC" if mode == Mode.CLASSIC else "STAGES_RC"
+	return _tr("decryptor.c.mode.classic", "MATRIX CLASSIC") if mode == Mode.CLASSIC else _tr("decryptor.c.mode.stages_rc", "MATRIX STAGES RC")
 
 func _on_menu_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")

@@ -27,46 +27,58 @@
         "fragment_id": "open_ul",
         "label": "<ul>",
         "kind": "CONTAINER_OPEN",
-        "token": "<ul>"
+        "token": "<ul>",
+        "label_key": "case08.fr8a.FR8-A-L01.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-L01.fragment.01.token"
       },
       {
-        "fragment_id": "ли_а",
+        "fragment_id": "Р»Рё_Р°",
         "label": "<li>Журнал A</li>",
         "kind": "LI_ITEM",
-        "token": "<li>Лог A</li>"
+        "token": "<li>Лог A</li>",
+        "label_key": "case08.fr8a.FR8-A-L01.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-L01.fragment.02.token"
       },
       {
-        "fragment_id": "ли_б",
+        "fragment_id": "Р»Рё_Р±",
         "label": "<li>Журнал Б</li>",
         "kind": "LI_ITEM",
-        "token": "<li>Лог B</li>"
+        "token": "<li>Лог B</li>",
+        "label_key": "case08.fr8a.FR8-A-L01.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-L01.fragment.03.token"
       },
       {
         "fragment_id": "li_c",
         "label": "<li>Журнал C</li>",
         "kind": "LI_ITEM",
-        "token": "<li>Лог C</li>"
+        "token": "<li>Лог C</li>",
+        "label_key": "case08.fr8a.FR8-A-L01.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-L01.fragment.04.token"
       },
       {
         "fragment_id": "close_ul",
         "label": "</ul>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</ul>"
+        "token": "</ul>",
+        "label_key": "case08.fr8a.FR8-A-L01.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-L01.fragment.05.token"
       },
       {
-        "fragment_id": "шум_див",
+        "fragment_id": "С€СѓРј_РґРёРІ",
         "label": "<div>шум</div>",
         "kind": "FOREIGN",
-        "token": "<div>шум</div>"
+        "token": "<div>шум</div>",
+        "label_key": "case08.fr8a.FR8-A-L01.fragment.06.label",
+        "token_key": "case08.fr8a.FR8-A-L01.fragment.06.token"
       }
     ],
     "expected_sequence": [
       "open_ul",
-      "ли_а",
-      "ли_б",
+      "Р»Рё_Р°",
+      "Р»Рё_Р±",
       "li_c",
       "close_ul",
-      "(ПУСТОЙ)"
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -105,6 +117,14 @@
       "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
       "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
       "OK": "Улики восстановлены. Файл читаем."
+    },
+    "briefing_key": "case08.fr8a.FR8-A-L01.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-L01.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-L01.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-L01.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-L01.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-L01.feedback.OK"
     }
   },
   {
@@ -135,37 +155,49 @@
         "fragment_id": "open_ol",
         "label": "<ol>",
         "kind": "CONTAINER_OPEN",
-        "token": "<ol>"
+        "token": "<ol>",
+        "label_key": "case08.fr8a.FR8-A-L02.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-L02.fragment.01.token"
       },
       {
         "fragment_id": "li_1",
         "label": "<li>Шаг 1</li>",
         "kind": "LI_ITEM",
-        "token": "<li>Шаг 1</li>"
+        "token": "<li>Шаг 1</li>",
+        "label_key": "case08.fr8a.FR8-A-L02.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-L02.fragment.02.token"
       },
       {
         "fragment_id": "li_2",
         "label": "<li>Шаг 2</li>",
         "kind": "LI_ITEM",
-        "token": "<li>Шаг 2</li>"
+        "token": "<li>Шаг 2</li>",
+        "label_key": "case08.fr8a.FR8-A-L02.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-L02.fragment.03.token"
       },
       {
         "fragment_id": "li_3",
         "label": "<li>Шаг 3</li>",
         "kind": "LI_ITEM",
-        "token": "<li>Шаг 3</li>"
+        "token": "<li>Шаг 3</li>",
+        "label_key": "case08.fr8a.FR8-A-L02.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-L02.fragment.04.token"
       },
       {
         "fragment_id": "close_ol",
         "label": "</ol>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</ol>"
+        "token": "</ol>",
+        "label_key": "case08.fr8a.FR8-A-L02.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-L02.fragment.05.token"
       },
       {
-        "fragment_id": "шум_п",
+        "fragment_id": "С€СѓРј_Рї",
         "label": "<p>шум</p>",
         "kind": "FOREIGN",
-        "token": "<p>шум</p>"
+        "token": "<p>шум</p>",
+        "label_key": "case08.fr8a.FR8-A-L02.fragment.06.label",
+        "token_key": "case08.fr8a.FR8-A-L02.fragment.06.token"
       }
     ],
     "expected_sequence": [
@@ -174,7 +206,7 @@
       "li_2",
       "li_3",
       "close_ol",
-      "(ПУСТОЙ)"
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -213,6 +245,14 @@
       "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
       "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
       "OK": "Улики восстановлены. Файл читаем."
+    },
+    "briefing_key": "case08.fr8a.FR8-A-L02.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-L02.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-L02.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-L02.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-L02.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-L02.feedback.OK"
     }
   },
   {
@@ -246,46 +286,58 @@
         "fragment_id": "open_nav",
         "label": "<nav>",
         "kind": "CONTAINER_OPEN",
-        "token": "<nav>"
+        "token": "<nav>",
+        "label_key": "case08.fr8a.FR8-A-N01.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-N01.fragment.01.token"
       },
       {
         "fragment_id": "a_home",
         "label": "<a href=\"#home\">Главная</a>",
         "kind": "LINK",
-        "token": "<a href=\"#home\">Главная</a>"
+        "token": "<a href=\"#home\">Главная</a>",
+        "label_key": "case08.fr8a.FR8-A-N01.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-N01.fragment.02.token"
       },
       {
-        "fragment_id": "а_МВП",
+        "fragment_id": "Р°_РњР’Рџ",
         "label": "<a href=\"#mvp\">MVP</a>",
         "kind": "LINK",
-        "token": "<a href=\"#mvp\">MVP</a>"
+        "token": "<a href=\"#mvp\">MVP</a>",
+        "label_key": "case08.fr8a.FR8-A-N01.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-N01.fragment.03.token"
       },
       {
         "fragment_id": "a_team",
         "label": "<a href=\"#team\">Команда</a>",
         "kind": "LINK",
-        "token": "<a href=\"#team\">Команда</a>"
+        "token": "<a href=\"#team\">Команда</a>",
+        "label_key": "case08.fr8a.FR8-A-N01.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-N01.fragment.04.token"
       },
       {
         "fragment_id": "close_nav",
         "label": "</nav>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</nav>"
+        "token": "</nav>",
+        "label_key": "case08.fr8a.FR8-A-N01.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-N01.fragment.05.token"
       },
       {
-        "fragment_id": "шум_диапазон",
+        "fragment_id": "С€СѓРј_РґРёР°РїР°Р·РѕРЅ",
         "label": "<span>реклама</span>",
         "kind": "FOREIGN",
-        "token": "<span>реклама</span>"
+        "token": "<span>реклама</span>",
+        "label_key": "case08.fr8a.FR8-A-N01.fragment.06.label",
+        "token_key": "case08.fr8a.FR8-A-N01.fragment.06.token"
       }
     ],
     "expected_sequence": [
       "open_nav",
       "a_home",
-      "а_МВП",
+      "Р°_РњР’Рџ",
       "a_team",
       "close_nav",
-      "(ПУСТОЙ)"
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -324,6 +376,14 @@
       "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
       "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
       "OK": "Улики восстановлены. Файл читаем."
+    },
+    "briefing_key": "case08.fr8a.FR8-A-N01.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-N01.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-N01.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-N01.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-N01.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-N01.feedback.OK"
     }
   },
   {
@@ -357,31 +417,41 @@
         "fragment_id": "open_nav",
         "label": "<nav>",
         "kind": "CONTAINER_OPEN",
-        "token": "<nav>"
+        "token": "<nav>",
+        "label_key": "case08.fr8a.FR8-A-N02.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-N02.fragment.01.token"
       },
       {
         "fragment_id": "a_home",
         "label": "<a href=\"#home\">Главная</a>",
         "kind": "LINK",
-        "token": "<a href=\"#home\">Главная</a>"
+        "token": "<a href=\"#home\">Главная</a>",
+        "label_key": "case08.fr8a.FR8-A-N02.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-N02.fragment.02.token"
       },
       {
         "fragment_id": "a_invest",
         "label": "<a href=\"#invest\">Инвестировать</a>",
         "kind": "LINK",
-        "token": "<a href=\"#invest\">Инвестировать</a>"
+        "token": "<a href=\"#invest\">Инвестировать</a>",
+        "label_key": "case08.fr8a.FR8-A-N02.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-N02.fragment.03.token"
       },
       {
         "fragment_id": "close_nav",
         "label": "</nav>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</nav>"
+        "token": "</nav>",
+        "label_key": "case08.fr8a.FR8-A-N02.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-N02.fragment.04.token"
       },
       {
-        "fragment_id": "шум_див",
+        "fragment_id": "С€СѓРј_РґРёРІ",
         "label": "<div>баннер</div>",
         "kind": "FOREIGN",
-        "token": "<div>баннер</div>"
+        "token": "<div>баннер</div>",
+        "label_key": "case08.fr8a.FR8-A-N02.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-N02.fragment.05.token"
       }
     ],
     "expected_sequence": [
@@ -389,8 +459,8 @@
       "a_home",
       "a_invest",
       "close_nav",
-      "(ПУСТОЙ)",
-      "(ПУСТОЙ)"
+      "(EMPTY)",
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -429,6 +499,14 @@
       "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
       "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
       "OK": "Улики восстановлены. Файл читаем."
+    },
+    "briefing_key": "case08.fr8a.FR8-A-N02.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-N02.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-N02.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-N02.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-N02.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-N02.feedback.OK"
     }
   },
   {
@@ -458,37 +536,49 @@
         "fragment_id": "open_table",
         "label": "<table>",
         "kind": "CONTAINER_OPEN",
-        "token": "<table>"
+        "token": "<table>",
+        "label_key": "case08.fr8a.FR8-A-T01.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-T01.fragment.01.token"
       },
       {
         "fragment_id": "row_ok_1201",
         "label": "<tr><td>12:01</td><td>ОК</td></tr>",
         "kind": "TR_ROW",
-        "token": "<tr><td>12:01</td><td>ОК</td></tr>"
+        "token": "<tr><td>12:01</td><td>ОК</td></tr>",
+        "label_key": "case08.fr8a.FR8-A-T01.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-T01.fragment.02.token"
       },
       {
         "fragment_id": "row_deny_1203",
         "label": "<tr><td>12:03</td><td>ОТКАЗ</td></tr>",
         "kind": "TR_ROW",
-        "token": "<tr><td>12:03</td><td>ОТКАЗ</td></tr>"
+        "token": "<tr><td>12:03</td><td>ОТКАЗ</td></tr>",
+        "label_key": "case08.fr8a.FR8-A-T01.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-T01.fragment.03.token"
       },
       {
         "fragment_id": "row_ok_1210",
         "label": "<tr><td>12:10</td><td>ОК</td></tr>",
         "kind": "TR_ROW",
-        "token": "<tr><td>12:10</td><td>ОК</td></tr>"
+        "token": "<tr><td>12:10</td><td>ОК</td></tr>",
+        "label_key": "case08.fr8a.FR8-A-T01.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-T01.fragment.04.token"
       },
       {
         "fragment_id": "close_table",
         "label": "</table>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</table>"
+        "token": "</table>",
+        "label_key": "case08.fr8a.FR8-A-T01.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-T01.fragment.05.token"
       },
       {
-        "fragment_id": "шум_див",
+        "fragment_id": "С€СѓРј_РґРёРІ",
         "label": "<div>строка</div>",
         "kind": "FOREIGN",
-        "token": "<div>строка</div>"
+        "token": "<div>строка</div>",
+        "label_key": "case08.fr8a.FR8-A-T01.fragment.06.label",
+        "token_key": "case08.fr8a.FR8-A-T01.fragment.06.token"
       }
     ],
     "expected_sequence": [
@@ -497,7 +587,7 @@
       "row_deny_1203",
       "row_ok_1210",
       "close_table",
-      "(ПУСТОЙ)"
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -536,6 +626,14 @@
       "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
       "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
       "OK": "Улики восстановлены. Файл читаем."
+    },
+    "briefing_key": "case08.fr8a.FR8-A-T01.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-T01.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-T01.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-T01.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-T01.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-T01.feedback.OK"
     }
   },
   {
@@ -565,46 +663,58 @@
         "fragment_id": "open_table",
         "label": "<table>",
         "kind": "CONTAINER_OPEN",
-        "token": "<table>"
+        "token": "<table>",
+        "label_key": "case08.fr8a.FR8-A-T02.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-T02.fragment.01.token"
       },
       {
-        "fragment_id": "строка_1",
+        "fragment_id": "СЃС‚СЂРѕРєР°_1",
         "label": "<tr><td>Хост-1</td><td>ОК</td></tr>",
         "kind": "TR_ROW",
-        "token": "<tr><td>Хост-1</td><td>ОК</td></tr>"
+        "token": "<tr><td>Хост-1</td><td>ОК</td></tr>",
+        "label_key": "case08.fr8a.FR8-A-T02.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-T02.fragment.02.token"
       },
       {
-        "fragment_id": "строка_2",
+        "fragment_id": "СЃС‚СЂРѕРєР°_2",
         "label": "<tr><td>Хост-2</td><td>ПРЕДУПРЕЖДЕНИЕ</td></tr>",
         "kind": "TR_ROW",
-        "token": "<tr><td>Хост-2</td><td>ПРЕДУПРЕЖДЕНИЕ</td></tr>"
+        "token": "<tr><td>Хост-2</td><td>ПРЕДУПРЕЖДЕНИЕ</td></tr>",
+        "label_key": "case08.fr8a.FR8-A-T02.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-T02.fragment.03.token"
       },
       {
-        "fragment_id": "строка_3",
+        "fragment_id": "СЃС‚СЂРѕРєР°_3",
         "label": "<tr><td>Хост-3</td><td>ОК</td></tr>",
         "kind": "TR_ROW",
-        "token": "<tr><td>Хост-3</td><td>ОК</td></tr>"
+        "token": "<tr><td>Хост-3</td><td>ОК</td></tr>",
+        "label_key": "case08.fr8a.FR8-A-T02.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-T02.fragment.04.token"
       },
       {
         "fragment_id": "close_table",
         "label": "</table>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</table>"
+        "token": "</table>",
+        "label_key": "case08.fr8a.FR8-A-T02.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-T02.fragment.05.token"
       },
       {
         "fragment_id": "close_ul",
         "label": "</ul>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</ul>"
+        "token": "</ul>",
+        "label_key": "case08.fr8a.FR8-A-T02.fragment.06.label",
+        "token_key": "case08.fr8a.FR8-A-T02.fragment.06.token"
       }
     ],
     "expected_sequence": [
       "open_table",
-      "строка_1",
-      "строка_2",
-      "строка_3",
+      "СЃС‚СЂРѕРєР°_1",
+      "СЃС‚СЂРѕРєР°_2",
+      "СЃС‚СЂРѕРєР°_3",
       "close_table",
-      "(ПУСТОЙ)"
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -643,6 +753,14 @@
       "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
       "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
       "OK": "Улики восстановлены. Файл читаем."
+    },
+    "briefing_key": "case08.fr8a.FR8-A-T02.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-T02.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-T02.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-T02.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-T02.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-T02.feedback.OK"
     }
   },
   {
@@ -674,37 +792,49 @@
         "fragment_id": "open_form",
         "label": "<form>",
         "kind": "CONTAINER_OPEN",
-        "token": "<form>"
+        "token": "<form>",
+        "label_key": "case08.fr8a.FR8-A-F01.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-F01.fragment.01.token"
       },
       {
         "fragment_id": "name_label",
         "label": "<label for=\"n\">Name</label>",
         "kind": "FORM_FIELD",
-        "token": "<label for=\"n\">Name</label>"
+        "token": "<label for=\"n\">Name</label>",
+        "label_key": "case08.fr8a.FR8-A-F01.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-F01.fragment.02.token"
       },
       {
         "fragment_id": "name_input",
         "label": "<input id=\"n\" />",
         "kind": "FORM_FIELD",
-        "token": "<input id=\"n\" />"
+        "token": "<input id=\"n\" />",
+        "label_key": "case08.fr8a.FR8-A-F01.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-F01.fragment.03.token"
       },
       {
         "fragment_id": "button_submit",
         "label": "<button>Submit</button>",
         "kind": "BUTTON",
-        "token": "<button>Submit</button>"
+        "token": "<button>Submit</button>",
+        "label_key": "case08.fr8a.FR8-A-F01.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-F01.fragment.04.token"
       },
       {
         "fragment_id": "close_form",
         "label": "</form>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</form>"
+        "token": "</form>",
+        "label_key": "case08.fr8a.FR8-A-F01.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-F01.fragment.05.token"
       },
       {
         "fragment_id": "noise_p",
         "label": "<p>note</p>",
         "kind": "FOREIGN",
-        "token": "<p>note</p>"
+        "token": "<p>note</p>",
+        "label_key": "case08.fr8a.FR8-A-F01.fragment.06.label",
+        "token_key": "case08.fr8a.FR8-A-F01.fragment.06.token"
       }
     ],
     "expected_sequence": [
@@ -752,6 +882,14 @@
       "REQUIRED_TAG_MISSING": "Required element is missing inside container.",
       "ORDER_MISMATCH": "Syntax is alive, but order of evidence is broken.",
       "OK": "Evidence restored. File is readable."
+    },
+    "briefing_key": "case08.fr8a.FR8-A-F01.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-F01.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-F01.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-F01.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-F01.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-F01.feedback.OK"
     }
   },
   {
@@ -784,57 +922,73 @@
         "fragment_id": "open_form",
         "label": "<form>",
         "kind": "CONTAINER_OPEN",
-        "token": "<form>"
+        "token": "<form>",
+        "label_key": "case08.fr8a.FR8-A-F02.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-F02.fragment.01.token"
       },
       {
-        "fragment_id": "имя_лейбла",
+        "fragment_id": "РёРјСЏ_Р»РµР№Р±Р»Р°",
         "label": "<label for=\"n\">Имя</label>",
         "kind": "FORM_FIELD",
-        "token": "<label for=\"n\">Имя</label>"
+        "token": "<label for=\"n\">Имя</label>",
+        "label_key": "case08.fr8a.FR8-A-F02.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-F02.fragment.02.token"
       },
       {
-        "fragment_id": "имя_входа",
+        "fragment_id": "РёРјСЏ_РІС…РѕРґР°",
         "label": "<input id=\"n\" />",
         "kind": "FORM_FIELD",
-        "token": "<input id=\"n\" />"
+        "token": "<input id=\"n\" />",
+        "label_key": "case08.fr8a.FR8-A-F02.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-F02.fragment.03.token"
       },
       {
-        "fragment_id": "код_метки",
+        "fragment_id": "РєРѕРґ_РјРµС‚РєРё",
         "label": "<label for=\"c\">Код</label>",
         "kind": "FORM_FIELD",
-        "token": "<label for=\"c\">Код</label>"
+        "token": "<label for=\"c\">Код</label>",
+        "label_key": "case08.fr8a.FR8-A-F02.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-F02.fragment.04.token"
       },
       {
-        "fragment_id": "входной_код",
+        "fragment_id": "РІС…РѕРґРЅРѕР№_РєРѕРґ",
         "label": "<input id=\"c\" />",
         "kind": "FORM_FIELD",
-        "token": "<input id=\"c\" />"
+        "token": "<input id=\"c\" />",
+        "label_key": "case08.fr8a.FR8-A-F02.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-F02.fragment.05.token"
       },
       {
         "fragment_id": "button_send",
         "label": "<button>Отправить</button>",
         "kind": "BUTTON",
-        "token": "<button>Отправить</button>"
+        "token": "<button>Отправить</button>",
+        "label_key": "case08.fr8a.FR8-A-F02.fragment.06.label",
+        "token_key": "case08.fr8a.FR8-A-F02.fragment.06.token"
       },
       {
         "fragment_id": "close_form",
         "label": "</form>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</form>"
+        "token": "</form>",
+        "label_key": "case08.fr8a.FR8-A-F02.fragment.07.label",
+        "token_key": "case08.fr8a.FR8-A-F02.fragment.07.token"
       },
       {
-        "fragment_id": "шум_див",
+        "fragment_id": "С€СѓРј_РґРёРІ",
         "label": "<div>реклама</div>",
         "kind": "FOREIGN",
-        "token": "<div>реклама</div>"
+        "token": "<div>реклама</div>",
+        "label_key": "case08.fr8a.FR8-A-F02.fragment.08.label",
+        "token_key": "case08.fr8a.FR8-A-F02.fragment.08.token"
       }
     ],
     "expected_sequence": [
       "open_form",
-      "имя_лейбла",
-      "имя_входа",
-      "код_метки",
-      "входной_код",
+      "РёРјСЏ_Р»РµР№Р±Р»Р°",
+      "РёРјСЏ_РІС…РѕРґР°",
+      "РєРѕРґ_РјРµС‚РєРё",
+      "РІС…РѕРґРЅРѕР№_РєРѕРґ",
       "button_send",
       "close_form"
     ],
@@ -875,6 +1029,14 @@
       "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
       "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
       "OK": "Улики восстановлены. Файл читаем."
+    },
+    "briefing_key": "case08.fr8a.FR8-A-F02.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-F02.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-F02.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-F02.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-F02.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-F02.feedback.OK"
     }
   },
   {
@@ -904,37 +1066,49 @@
         "fragment_id": "open_article",
         "label": "<article>",
         "kind": "CONTAINER_OPEN",
-        "token": "<article>"
+        "token": "<article>",
+        "label_key": "case08.fr8a.FR8-A-A01.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-A01.fragment.01.token"
       },
       {
         "fragment_id": "h1_final",
         "label": "<h1>Окончательный отчёт</h1>",
         "kind": "TEXT_BLOCK",
-        "token": "<h1>Финальный отчёт</h1>"
+        "token": "<h1>Финальный отчёт</h1>",
+        "label_key": "case08.fr8a.FR8-A-A01.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-A01.fragment.02.token"
       },
       {
         "fragment_id": "p_evidence",
         "label": "<p>Улики восстановлены.</p>",
         "kind": "TEXT_BLOCK",
-        "token": "<p>Улики восстановлены.</p>"
+        "token": "<p>Улики восстановлены.</p>",
+        "label_key": "case08.fr8a.FR8-A-A01.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-A01.fragment.03.token"
       },
       {
         "fragment_id": "small_case",
         "label": "<small>#case08</small>",
         "kind": "TEXT_BLOCK",
-        "token": "<small>#case08</small>"
+        "token": "<small>#case08</small>",
+        "label_key": "case08.fr8a.FR8-A-A01.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-A01.fragment.04.token"
       },
       {
         "fragment_id": "close_article",
         "label": "</article>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</article>"
+        "token": "</article>",
+        "label_key": "case08.fr8a.FR8-A-A01.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-A01.fragment.05.token"
       },
       {
         "fragment_id": "close_nav",
         "label": "</nav>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</nav>"
+        "token": "</nav>",
+        "label_key": "case08.fr8a.FR8-A-A01.fragment.06.label",
+        "token_key": "case08.fr8a.FR8-A-A01.fragment.06.token"
       }
     ],
     "expected_sequence": [
@@ -943,7 +1117,7 @@
       "p_evidence",
       "small_case",
       "close_article",
-      "(ПУСТОЙ)"
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -986,7 +1160,15 @@
     "required_tags_all": [
       "h1",
       "p"
-    ]
+    ],
+    "briefing_key": "case08.fr8a.FR8-A-A01.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-A01.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-A01.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-A01.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-A01.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-A01.feedback.OK"
+    }
   },
   {
     "quest_id": "CASE_08_FINAL_REPORT",
@@ -1015,37 +1197,49 @@
         "fragment_id": "open_article",
         "label": "<article>",
         "kind": "CONTAINER_OPEN",
-        "token": "<article>"
+        "token": "<article>",
+        "label_key": "case08.fr8a.FR8-A-A02.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-A02.fragment.01.token"
       },
       {
         "fragment_id": "p_body",
         "label": "<p>Финальная заметка.</p>",
         "kind": "TEXT_BLOCK",
-        "token": "<p>Финальная заметка.</p>"
+        "token": "<p>Финальная заметка.</p>",
+        "label_key": "case08.fr8a.FR8-A-A02.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-A02.fragment.02.token"
       },
       {
         "fragment_id": "p_extra",
         "label": "<p>Приложение.</p>",
         "kind": "TEXT_BLOCK",
-        "token": "<p>Приложение.</p>"
+        "token": "<p>Приложение.</p>",
+        "label_key": "case08.fr8a.FR8-A-A02.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-A02.fragment.03.token"
       },
       {
         "fragment_id": "small_note",
         "label": "<small>#архив</small>",
         "kind": "TEXT_BLOCK",
-        "token": "<small>#архив</small>"
+        "token": "<small>#архив</small>",
+        "label_key": "case08.fr8a.FR8-A-A02.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-A02.fragment.04.token"
       },
       {
         "fragment_id": "close_article",
         "label": "</article>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</article>"
+        "token": "</article>",
+        "label_key": "case08.fr8a.FR8-A-A02.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-A02.fragment.05.token"
       },
       {
-        "fragment_id": "Шум_нав",
+        "fragment_id": "РЁСѓРј_РЅР°РІ",
         "label": "<nav>меню</nav>",
         "kind": "FOREIGN",
-        "token": "<nav>меню</nav>"
+        "token": "<nav>меню</nav>",
+        "label_key": "case08.fr8a.FR8-A-A02.fragment.06.label",
+        "token_key": "case08.fr8a.FR8-A-A02.fragment.06.token"
       }
     ],
     "expected_sequence": [
@@ -1053,8 +1247,8 @@
       "p_body",
       "small_note",
       "close_article",
-      "(ПУСТОЙ)",
-      "(ПУСТОЙ)"
+      "(EMPTY)",
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -1096,7 +1290,15 @@
     },
     "required_tags_all": [
       "p"
-    ]
+    ],
+    "briefing_key": "case08.fr8a.FR8-A-A02.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-A02.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-A02.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-A02.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-A02.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-A02.feedback.OK"
+    }
   },
   {
     "quest_id": "CASE_08_FINAL_REPORT",
@@ -1126,31 +1328,41 @@
         "fragment_id": "open_figure",
         "label": "<figure>",
         "kind": "CONTAINER_OPEN",
-        "token": "<figure>"
+        "token": "<figure>",
+        "label_key": "case08.fr8a.FR8-A-M01.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-M01.fragment.01.token"
       },
       {
         "fragment_id": "img_main",
         "label": "<img src=\"evidence.png\" />",
         "kind": "MEDIA",
-        "token": "<img src=\"evidence.png\" />"
+        "token": "<img src=\"evidence.png\" />",
+        "label_key": "case08.fr8a.FR8-A-M01.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-M01.fragment.02.token"
       },
       {
         "fragment_id": "caption_main",
         "label": "<figcaption>Камера 12</figcaption>",
         "kind": "TEXT_BLOCK",
-        "token": "<figcaption>Камера 12</figcaption>"
+        "token": "<figcaption>Камера 12</figcaption>",
+        "label_key": "case08.fr8a.FR8-A-M01.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-M01.fragment.03.token"
       },
       {
         "fragment_id": "close_figure",
         "label": "</figure>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</figure>"
+        "token": "</figure>",
+        "label_key": "case08.fr8a.FR8-A-M01.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-M01.fragment.04.token"
       },
       {
         "fragment_id": "li_fake",
         "label": "<li>фейк</li>",
         "kind": "FOREIGN",
-        "token": "<li>фейк</li>"
+        "token": "<li>фейк</li>",
+        "label_key": "case08.fr8a.FR8-A-M01.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-M01.fragment.05.token"
       }
     ],
     "expected_sequence": [
@@ -1158,8 +1370,8 @@
       "img_main",
       "caption_main",
       "close_figure",
-      "(ПУСТОЙ)",
-      "(ПУСТОЙ)"
+      "(EMPTY)",
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -1198,6 +1410,14 @@
       "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
       "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
       "OK": "Улики восстановлены. Файл читаем."
+    },
+    "briefing_key": "case08.fr8a.FR8-A-M01.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-M01.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-M01.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-M01.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-M01.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-M01.feedback.OK"
     }
   },
   {
@@ -1228,46 +1448,58 @@
         "fragment_id": "open_figure",
         "label": "<figure>",
         "kind": "CONTAINER_OPEN",
-        "token": "<figure>"
+        "token": "<figure>",
+        "label_key": "case08.fr8a.FR8-A-M02.fragment.01.label",
+        "token_key": "case08.fr8a.FR8-A-M02.fragment.01.token"
       },
       {
         "fragment_id": "img_cam",
         "label": "<img src=\"cam12.png\" />",
         "kind": "MEDIA",
-        "token": "<img src=\"cam12.png\" />"
+        "token": "<img src=\"cam12.png\" />",
+        "label_key": "case08.fr8a.FR8-A-M02.fragment.02.label",
+        "token_key": "case08.fr8a.FR8-A-M02.fragment.02.token"
       },
       {
-        "fragment_id": "подпись_камера",
+        "fragment_id": "РїРѕРґРїРёСЃСЊ_РєР°РјРµСЂР°",
         "label": "<figcaption>Камера 12</figcaption>",
         "kind": "TEXT_BLOCK",
-        "token": "<figcaption>Камера 12</figcaption>"
+        "token": "<figcaption>Камера 12</figcaption>",
+        "label_key": "case08.fr8a.FR8-A-M02.fragment.03.label",
+        "token_key": "case08.fr8a.FR8-A-M02.fragment.03.token"
       },
       {
         "fragment_id": "close_figure",
         "label": "</figure>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</figure>"
+        "token": "</figure>",
+        "label_key": "case08.fr8a.FR8-A-M02.fragment.04.label",
+        "token_key": "case08.fr8a.FR8-A-M02.fragment.04.token"
       },
       {
         "fragment_id": "open_div",
         "label": "<div>подпись</div>",
         "kind": "FOREIGN",
-        "token": "<div>подпись</div>"
+        "token": "<div>подпись</div>",
+        "label_key": "case08.fr8a.FR8-A-M02.fragment.05.label",
+        "token_key": "case08.fr8a.FR8-A-M02.fragment.05.token"
       },
       {
         "fragment_id": "close_div",
         "label": "</div>",
         "kind": "CONTAINER_CLOSE",
-        "token": "</div>"
+        "token": "</div>",
+        "label_key": "case08.fr8a.FR8-A-M02.fragment.06.label",
+        "token_key": "case08.fr8a.FR8-A-M02.fragment.06.token"
       }
     ],
     "expected_sequence": [
       "open_figure",
       "img_cam",
-      "подпись_камера",
+      "РїРѕРґРїРёСЃСЊ_РєР°РјРµСЂР°",
       "close_figure",
-      "(ПУСТОЙ)",
-      "(ПУСТОЙ)"
+      "(EMPTY)",
+      "(EMPTY)"
     ],
     "scoring_model": {
       "rules": [
@@ -1306,6 +1538,14 @@
       "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
       "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
       "OK": "Улики восстановлены. Файл читаем."
+    },
+    "briefing_key": "case08.fr8a.FR8-A-M02.briefing",
+    "feedback_rules_keys": {
+      "UNBALANCED_TAG": "case08.fr8a.FR8-A-M02.feedback.UNBALANCED_TAG",
+      "HIERARCHY_VIOLATION": "case08.fr8a.FR8-A-M02.feedback.HIERARCHY_VIOLATION",
+      "REQUIRED_TAG_MISSING": "case08.fr8a.FR8-A-M02.feedback.REQUIRED_TAG_MISSING",
+      "ORDER_MISMATCH": "case08.fr8a.FR8-A-M02.feedback.ORDER_MISMATCH",
+      "OK": "case08.fr8a.FR8-A-M02.feedback.OK"
     }
   }
 ]

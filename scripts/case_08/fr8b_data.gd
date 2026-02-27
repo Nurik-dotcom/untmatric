@@ -2,17 +2,15 @@ extends RefCounted
 
 const REQUIRED_LEVEL_KEYS: Array[String] = [
 	"id",
-	"briefing",
 	"format",
 	"cards",
 	"dependencies",
 	"expected_order",
-	"feedback_rules",
 	"scoring_model",
 	"anti_cheat"
 ]
 
-const REQUIRED_CARD_KEYS: Array[String] = ["stage_id", "title", "hint"]
+const REQUIRED_CARD_KEYS: Array[String] = ["stage_id"]
 const REQUIRED_DEP_KEYS: Array[String] = ["a", "b", "code"]
 const REQUIRED_FEEDBACK_KEYS: Array[String] = ["LOGIC_GAP", "CAUSALITY_LOOP", "ORDER_MISMATCH", "OK"]
 const REQUIRED_SCORE_KEYS: Array[String] = ["points", "stability_delta", "verdict_code"]
@@ -52,6 +50,10 @@ static func validate_level(level: Dictionary) -> bool:
 			push_error("FR8BData: missing key '%s' in level %s" % [key, str(level.get("id", "UNKNOWN"))])
 			return false
 
+	if not _has_text_or_key(level, "briefing"):
+		push_error("FR8BData: briefing/briefing_key is missing in level %s" % str(level.get("id", "UNKNOWN")))
+		return false
+
 	if str(level.get("format", "")) != "TIMELINE_SORT":
 		push_error("FR8BData: unsupported format in level %s" % str(level.get("id", "UNKNOWN")))
 		return false
@@ -78,6 +80,12 @@ static func validate_level(level: Dictionary) -> bool:
 		var stage_id: String = str(card.get("stage_id", "")).strip_edges()
 		if stage_id.is_empty() or stage_ids.has(stage_id):
 			push_error("FR8BData: duplicate/empty stage_id in level %s" % str(level.get("id", "UNKNOWN")))
+			return false
+		if not _has_text_or_key(card, "title"):
+			push_error("FR8BData: card title/title_key is missing in level %s" % str(level.get("id", "UNKNOWN")))
+			return false
+		if not _has_text_or_key(card, "hint"):
+			push_error("FR8BData: card hint/hint_key is missing in level %s" % str(level.get("id", "UNKNOWN")))
 			return false
 		stage_ids[stage_id] = true
 
@@ -131,15 +139,28 @@ static func validate_level(level: Dictionary) -> bool:
 		if not (dep_code in ALLOWED_DEP_CODES):
 			push_error("FR8BData: unsupported dependency code '%s' in level %s" % [dep_code, str(level.get("id", "UNKNOWN"))])
 			return false
+		if not _has_text_or_key(dep, "message"):
+			push_error("FR8BData: dependency message/message_key is missing in level %s" % str(level.get("id", "UNKNOWN")))
+			return false
 
 	var feedback_var: Variant = level.get("feedback_rules", {})
-	if typeof(feedback_var) != TYPE_DICTIONARY:
+	if typeof(feedback_var) != TYPE_DICTIONARY and level.get("feedback_rules", null) != null:
 		push_error("FR8BData: feedback_rules must be a dictionary in level %s" % str(level.get("id", "UNKNOWN")))
 		return false
 	var feedback_rules: Dictionary = feedback_var as Dictionary
+	var feedback_keys_var: Variant = level.get("feedback_rules_keys", {})
+	if typeof(feedback_keys_var) != TYPE_DICTIONARY and level.get("feedback_rules_keys", null) != null:
+		push_error("FR8BData: feedback_rules_keys must be a dictionary in level %s" % str(level.get("id", "UNKNOWN")))
+		return false
+	var feedback_keys: Dictionary = feedback_keys_var as Dictionary
+	if feedback_rules.is_empty() and feedback_keys.is_empty():
+		push_error("FR8BData: feedback_rules/feedback_rules_keys are missing in level %s" % str(level.get("id", "UNKNOWN")))
+		return false
 	for feedback_key in REQUIRED_FEEDBACK_KEYS:
-		if not feedback_rules.has(feedback_key):
-			push_error("FR8BData: feedback rule '%s' missing in level %s" % [feedback_key, str(level.get("id", "UNKNOWN"))])
+		var has_legacy: bool = feedback_rules.has(feedback_key) and not str(feedback_rules.get(feedback_key, "")).strip_edges().is_empty()
+		var has_key: bool = feedback_keys.has(feedback_key) and not str(feedback_keys.get(feedback_key, "")).strip_edges().is_empty()
+		if not has_legacy and not has_key:
+			push_error("FR8BData: feedback rule '%s' missing in level %s (feedback_rules/feedback_rules_keys)" % [feedback_key, str(level.get("id", "UNKNOWN"))])
 			return false
 
 	var scoring_var: Variant = level.get("scoring_model", {})
@@ -172,3 +193,11 @@ static func validate_level(level: Dictionary) -> bool:
 		return false
 
 	return true
+
+static func _has_text_or_key(entry: Dictionary, field: String) -> bool:
+	var legacy: String = str(entry.get(field, "")).strip_edges()
+	if not legacy.is_empty():
+		return true
+	var key_name: String = "%s_key" % field
+	var key_value: String = str(entry.get(key_name, "")).strip_edges()
+	return not key_value.is_empty()
