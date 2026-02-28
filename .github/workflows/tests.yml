@@ -21,6 +21,20 @@ jobs:
           version: "4.3"
           include-mono: false
 
+      - name: Repository Hygiene Checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd $GITHUB_WORKSPACE
+          python3 tools/ci/check_repo_hygiene.py
+
+      - name: Resource Reference Checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd $GITHUB_WORKSPACE
+          python3 tools/ci/check_res_paths.py
+
       - name: Run Tests
         shell: bash
         run: |

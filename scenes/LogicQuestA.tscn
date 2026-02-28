@@ -67,7 +67,7 @@ text = "ДЕТЕКТОР ЛЖИ A-01"
 [node name="LblSessionId" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "СЕССИЯ: 00/00 | CASE A_00"
+text = "СЕССИЯ: 00/00 | КЕЙС A_00"
 horizontal_alignment = 2
 
 [node name="BarsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
@@ -123,7 +123,7 @@ theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
 text = "[b]БРИФИНГ[/b]
 ..."
-fit_content = true
+fit_content = false
 
 [node name="RightPane" type="VBoxContainer" parent="SafeArea/MainLayout/ContentHSplit"]
 layout_mode = 2
@@ -131,13 +131,14 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="InteractionRow" type="HBoxContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane"]
+[node name="InteractionRow" type="GridContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
-alignment = 1
+columns = 2
 
 [node name="InputAFrame" type="PanelContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow"]
+custom_minimum_size = Vector2(200, 84)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -159,6 +160,7 @@ text = "A
 [0]"
 
 [node name="InputBFrame" type="PanelContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow"]
+custom_minimum_size = Vector2(200, 84)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -180,6 +182,7 @@ text = "B
 [0]"
 
 [node name="GateSlot" type="PanelContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow"]
+custom_minimum_size = Vector2(200, 84)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -194,10 +197,11 @@ horizontal_alignment = 1
 
 [node name="GateLabel" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/GateSlot/GateVBox"]
 layout_mode = 2
-text = "GATE: ?"
+text = "ВЕНТИЛЬ: ?"
 horizontal_alignment = 1
 
 [node name="OutputSlot" type="PanelContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow"]
+custom_minimum_size = Vector2(160, 84)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -207,22 +211,22 @@ theme_override_constants/separation = 6
 
 [node name="OutputTitle" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/OutputSlot/OutputVBox"]
 layout_mode = 2
-text = "ВЫВОД"
+text = "ПОКАЗАНИЯ"
 horizontal_alignment = 1
 
 [node name="OutputValueLabel" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/OutputSlot/OutputVBox"]
 layout_mode = 2
-text = "F = 0"
+text = "F (ПРИБОР) = ?"
 horizontal_alignment = 1
 
 [node name="ModelValueLabel" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/OutputSlot/OutputVBox"]
 layout_mode = 2
-text = "F_model = ?"
+text = "F (МОДЕЛЬ) = ?"
 horizontal_alignment = 1
 
 [node name="MatchLabel" type="Label" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow/OutputSlot/OutputVBox"]
 layout_mode = 2
-text = "MATCH: --"
+text = "СОВПАДЕНИЕ: --"
 horizontal_alignment = 1
 
 [node name="InventoryFrame" type="PanelContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane"]
@@ -240,45 +244,45 @@ theme_override_constants/margin_bottom = 8
 [node name="InventoryScroll" type="ScrollContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin"]
 layout_mode = 2
 
-[node name="GatesContainer" type="HBoxContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll"]
+[node name="GatesContainer" type="GridContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 14
-alignment = 1
+columns = 3
 
 [node name="GateAndBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
-custom_minimum_size = Vector2(128, 64)
+custom_minimum_size = Vector2(140, 64)
 layout_mode = 2
 toggle_mode = true
 text = "AND"
 
 [node name="GateOrBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
-custom_minimum_size = Vector2(128, 64)
+custom_minimum_size = Vector2(140, 64)
 layout_mode = 2
 toggle_mode = true
 text = "OR"
 
 [node name="GateNotBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
-custom_minimum_size = Vector2(128, 64)
+custom_minimum_size = Vector2(140, 64)
 layout_mode = 2
 toggle_mode = true
 text = "NOT"
 
 [node name="GateXorBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
-custom_minimum_size = Vector2(128, 64)
+custom_minimum_size = Vector2(140, 64)
 layout_mode = 2
 toggle_mode = true
 text = "XOR"
 
 [node name="GateNandBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
-custom_minimum_size = Vector2(128, 64)
+custom_minimum_size = Vector2(140, 64)
 layout_mode = 2
 toggle_mode = true
 text = "NAND"
 
 [node name="GateNorBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
-custom_minimum_size = Vector2(128, 64)
+custom_minimum_size = Vector2(140, 64)
 layout_mode = 2
 toggle_mode = true
 text = "NOR"
@@ -371,7 +375,7 @@ theme_override_constants/separation = 16
 [node name="PopupTitle" type="Label" parent="DiagnosticsPanelA/PopupMargin/PopupVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
-text = "SAFE MODE"
+text = "БЕЗОПАСНЫЙ РЕЖИМ"
 horizontal_alignment = 1
 
 [node name="PopupText" type="RichTextLabel" parent="DiagnosticsPanelA/PopupMargin/PopupVBox"]

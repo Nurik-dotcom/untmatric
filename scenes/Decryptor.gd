@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 
 @onready var btn_back = $UI/SafeArea/Main/HeaderBar/HeaderContent/BtnBack
 @onready var mode_label = $UI/SafeArea/Main/HeaderBar/HeaderContent/ModeChip/ModeLabel
@@ -865,11 +865,3 @@ func _sync_switches_to_input() -> void:
 		var btn: Button = bit_buttons[bit]
 		btn.set_pressed_no_signal(pressed)
 		btn.text = "1" if pressed else "0"
-
-
-
-
-
-
-
-

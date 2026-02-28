@@ -8,6 +8,10 @@ const SESSION_CASE_COUNT := 6
 const SUBMIT_BASE_TEXT := "SUBMIT"
 const LAYOUT_MOBILE := "mobile"
 const LAYOUT_DESKTOP := "desktop"
+const SCREEN_TRIAL := "trial"
+const SCREEN_COMPLETE := "complete"
+const SCREEN_LOCKED := "locked"
+const SCREEN_FATAL := "fatal"
 
 const MODE_FILTER := "FILTER"
 const MODE_RELATION := "RELATION"
@@ -47,11 +51,18 @@ var relation_choice_id := ""
 
 var current_layout_mode := LAYOUT_DESKTOP
 var exit_btn: Button
+var _screen_state: String = SCREEN_TRIAL
+var _fatal_i18n_key: String = ""
+var _fatal_i18n_default: String = ""
+var _relation_hint_key: String = ""
+var _relation_hint_default: String = ""
+var _relation_hint_params: Dictionary = {}
 
 @onready var filter_mode_root: HSplitContainer = $SafeArea/RootLayout/Body/FilterModeRoot
 @onready var relation_mode_root: VBoxContainer = $SafeArea/RootLayout/Body/RelationModeRoot
 @onready var body_container: VBoxContainer = $SafeArea/RootLayout/Body
 
+@onready var filter_table_title: Label = $SafeArea/RootLayout/Body/FilterModeRoot/TableSection/TableTitle
 @onready var data_tree: Tree = $SafeArea/RootLayout/Body/FilterModeRoot/TableSection/DataTree
 @onready var prompt_label: RichTextLabel = $SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/PromptLabel
 @onready var btn_submit: Button = $SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnSubmit
@@ -89,6 +100,8 @@ func _ready() -> void:
 	btn_submit.pressed.connect(_on_submit_pressed)
 	btn_clear.pressed.connect(_on_clear_pressed)
 	btn_back.pressed.connect(_on_back_pressed)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 
 	if not data_tree.gui_input.is_connected(_on_filter_tree_gui_input):
 		data_tree.gui_input.connect(_on_filter_tree_gui_input)
@@ -98,9 +111,92 @@ func _ready() -> void:
 		rel_tree_r.gui_input.connect(_on_relation_tree_r_gui_input)
 
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	_apply_i18n()
 	_init_session()
 	call_deferred("_on_viewport_size_changed")
 	_load_next_case()
+
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+	_refresh_runtime_i18n()
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _apply_i18n() -> void:
+	btn_back.text = _tr("da7.common.back", "BACK")
+	btn_clear.text = _tr("da7.b.ui.clear", "CLEAR")
+	filter_table_title.text = _tr("da7.b.ui.filter_title", "FILTER MODE // REDACTION")
+	if exit_btn != null and is_instance_valid(exit_btn):
+		exit_btn.text = _tr("da7.common.exit", "EXIT")
+	_refresh_submit_enabled()
+
+func _refresh_runtime_i18n() -> void:
+	match _screen_state:
+		SCREEN_COMPLETE:
+			_apply_complete_i18n()
+		SCREEN_LOCKED:
+			_apply_locked_i18n()
+		SCREEN_FATAL:
+			_apply_fatal_i18n()
+		_:
+			_refresh_case_ui_i18n()
+	_update_stability_ui()
+
+func _refresh_case_ui_i18n() -> void:
+	if current_case.is_empty():
+		return
+	title_label.text = _tr(
+		"da7.b.ui.title_running",
+		"DATA ARCHIVE // CASE {current}/{total} [B]",
+		{"current": current_case_index + 1, "total": session_cases.size()}
+	)
+	if mode == MODE_FILTER:
+		prompt_label.text = _case_prompt_text()
+		_refresh_submit_enabled()
+	else:
+		rel_prompt.text = _case_prompt_text()
+		_refresh_relation_hint_i18n()
+
+func _apply_complete_i18n() -> void:
+	title_label.text = _tr("da7.b.ui.title_complete", "DATA ARCHIVE // SESSION COMPLETE [B]")
+	prompt_label.text = _tr("da7.b.ui.complete_message", "Investigation complete.")
+	rel_prompt.text = _tr("da7.b.ui.complete_message", "Investigation complete.")
+	if exit_btn != null and is_instance_valid(exit_btn):
+		exit_btn.text = _tr("da7.common.exit", "EXIT")
+
+func _apply_locked_i18n() -> void:
+	title_label.text = _tr("da7.b.ui.title_locked", "DATA ARCHIVE // SYSTEM LOCK [B]")
+	prompt_label.text = _tr("da7.b.ui.lock_message", "Stability dropped to zero.")
+	rel_prompt.text = _tr("da7.b.ui.lock_message", "Stability dropped to zero.")
+	if exit_btn != null and is_instance_valid(exit_btn):
+		exit_btn.text = _tr("da7.common.exit", "EXIT")
+
+func _apply_fatal_i18n() -> void:
+	prompt_label.text = _tr(_fatal_i18n_key, _fatal_i18n_default)
+	rel_prompt.text = _tr(_fatal_i18n_key, _fatal_i18n_default)
+
+func _case_prompt_text() -> String:
+	if current_case.is_empty():
+		return ""
+	return _tr("da7.b.case.%s.prompt" % str(current_case.get("id", "")).to_lower(), str(current_case.get("prompt", "")))
+
+func _set_relation_hint_i18n(key: String, default_text: String, params: Dictionary = {}) -> void:
+	_relation_hint_key = key
+	_relation_hint_default = default_text
+	_relation_hint_params = params.duplicate(true)
+	_refresh_relation_hint_i18n()
+
+func _refresh_relation_hint_i18n() -> void:
+	if _relation_hint_key.is_empty():
+		return
+	rel_link_label.text = _tr(_relation_hint_key, _relation_hint_default, _relation_hint_params)
 
 func _input(event: InputEvent) -> void:
 	if mode != MODE_RELATION or not is_trial_active or not rel_drag_active:
@@ -185,7 +281,7 @@ func _render_filter_ui() -> void:
 	filter_mode_root.visible = true
 	relation_mode_root.visible = false
 	btn_submit.disabled = false
-	btn_submit.text = SUBMIT_BASE_TEXT
+	btn_submit.text = _tr("da7.b.ui.submit", "SUBMIT")
 	btn_clear.disabled = false
 
 	data_tree.clear()
@@ -231,7 +327,7 @@ func _render_filter_ui() -> void:
 			item.set_text(i, str(cells.get(col_id, "")))
 		_apply_redaction_style(item, false)
 
-	prompt_label.text = str(current_case.get("prompt", ""))
+	prompt_label.text = _case_prompt_text()
 	call_deferred("_update_table_scroll_flag")
 
 func _render_relation_ui() -> void:
@@ -247,9 +343,9 @@ func _render_relation_ui() -> void:
 	rel_right_col_ids = _fill_relation_tree(rel_tree_r, right_table)
 	rel_title_l.text = str(left_table.get("title", "Left"))
 	rel_title_r.text = str(right_table.get("title", "Right"))
-	rel_prompt.text = str(current_case.get("prompt", ""))
+	rel_prompt.text = _case_prompt_text()
 	rel_arrow_label.text = ""
-	rel_link_label.text = "Drag cable from PK to FK"
+	_set_relation_hint_i18n("da7.b.ui.rel.drag_hint", "Drag cable from PK to FK")
 	rel_committed.clear()
 	rel_cable_committed = false
 	rel_connected_pk = ""
@@ -275,7 +371,7 @@ func _render_relation_ui() -> void:
 		rel_options_row.add_child(btn)
 
 	if options.is_empty():
-		rel_link_label.text = "Connect cable to submit"
+		_set_relation_hint_i18n("da7.b.ui.rel.connect_hint", "Connect cable to submit")
 
 func _fill_relation_tree(tree: Tree, table_def: Dictionary) -> Array[String]:
 	tree.clear()
@@ -477,7 +573,7 @@ func _try_start_relation_drag(tree: Tree, local_pos: Vector2) -> void:
 			allowed_pk[pk_col] = true
 	if not allowed_pk.has(hit_col):
 		miss_connects += 1
-		rel_link_label.text = "Start cable from PK column"
+		_set_relation_hint_i18n("da7.b.ui.rel.start_from_pk", "Start cable from PK column")
 		return
 
 	rel_drag_active = true
@@ -509,7 +605,7 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 					connector_overlay.call("clear_drag")
 				elif connector_overlay.has_method("clear_connection"):
 					connector_overlay.call("clear_connection")
-			rel_link_label.text = "Pair already linked"
+			_set_relation_hint_i18n("da7.b.ui.rel.pair_already_linked", "Pair already linked")
 			_set_relation_options_enabled(_is_relation_ready_to_submit())
 			return
 
@@ -530,7 +626,7 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 
 		var needed := _get_required_connections().size()
 		var linked := rel_committed.size()
-		rel_link_label.text = "Cable linked (%d/%d)" % [linked, maxi(1, needed)]
+		_set_relation_hint_i18n("da7.b.ui.rel.pair_linked", "Cable linked ({done}/{total})", {"done": linked, "total": maxi(1, needed)})
 		var ready := _is_relation_ready_to_submit()
 		_set_relation_options_enabled(ready)
 		if (current_case.get("options", []) as Array).is_empty() and ready:
@@ -547,7 +643,7 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 				connector_overlay.call("clear_drag")
 			elif connector_overlay.has_method("clear_connection"):
 				connector_overlay.call("clear_connection")
-		rel_link_label.text = "Missed FK target"
+		_set_relation_hint_i18n("da7.b.ui.rel.missed_fk", "Missed FK target")
 		_set_relation_options_enabled(_is_relation_ready_to_submit())
 
 func _on_relation_option_selected(opt: Dictionary) -> void:
@@ -749,11 +845,11 @@ func _selected_crossed_count() -> int:
 func _refresh_submit_enabled() -> void:
 	if mode != MODE_FILTER or not is_trial_active:
 		btn_submit.disabled = true
-		btn_submit.text = SUBMIT_BASE_TEXT
+		btn_submit.text = _tr("da7.b.ui.submit", "SUBMIT")
 		return
 	var crossed_count := _selected_crossed_count()
 	btn_submit.disabled = false
-	btn_submit.text = "%s (%d)" % [SUBMIT_BASE_TEXT, crossed_count]
+	btn_submit.text = _tr("da7.b.ui.submit_with_count", "SUBMIT ({count})", {"count": crossed_count})
 
 func _resolve_tree_hit(tree: Tree, local_pos: Vector2, col_ids: Array[String]) -> Dictionary:
 	var item: TreeItem = tree.get_item_at_position(local_pos)
@@ -800,7 +896,7 @@ func _update_stability_ui() -> void:
 	if is_instance_valid(stability_bar):
 		stability_bar.value = GlobalMetrics.stability
 	if is_instance_valid(stability_label):
-		stability_label.text = "Stability: %d%%" % int(GlobalMetrics.stability)
+		stability_label.text = _tr("da7.common.stability", "STABILITY: {value}%", {"value": int(GlobalMetrics.stability)})
 
 func _on_viewport_size_changed() -> void:
 	var win_size := get_viewport_rect().size
@@ -913,23 +1009,21 @@ func _sets_equal(arr1: Array, arr2: Array) -> bool:
 
 func _finish_session() -> void:
 	_teardown_interaction(true)
-	title_label.text = "DATA ARCHIVE // SESSION COMPLETE [B]"
-	prompt_label.text = "Investigation complete."
-	rel_prompt.text = "Investigation complete."
+	_screen_state = SCREEN_COMPLETE
+	_apply_complete_i18n()
 	_ensure_exit_button()
 
 func _game_over() -> void:
 	_teardown_interaction(true)
-	title_label.text = "DATA ARCHIVE // SYSTEM LOCK [B]"
-	prompt_label.text = "Stability dropped to zero."
-	rel_prompt.text = "Stability dropped to zero."
+	_screen_state = SCREEN_LOCKED
+	_apply_locked_i18n()
 	_ensure_exit_button()
 
 func _ensure_exit_button() -> void:
 	if exit_btn != null and is_instance_valid(exit_btn):
 		return
 	exit_btn = Button.new()
-	exit_btn.text = "EXIT"
+	exit_btn.text = _tr("da7.common.exit", "EXIT")
 	exit_btn.custom_minimum_size = Vector2(140, 48)
 	exit_btn.pressed.connect(func() -> void:
 		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")

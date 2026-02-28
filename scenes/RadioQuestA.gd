@@ -127,11 +127,17 @@ var noise_seed: int = 1
 var _ui_ready: bool = false
 var _current_stability: float = 100.0
 var _body_scroll_installed: bool = false
+var _status_i18n_key: String = ""
+var _status_i18n_default: String = ""
+var _status_i18n_params: Dictionary = {}
+var _status_i18n_color: Color = Color(0.85, 0.85, 0.85, 1.0)
 
 func _ready() -> void:
 	randomize()
 	_load_level_config()
-	_apply_static_texts()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+	_apply_i18n()
 	_connect_signals()
 	_install_body_scroll()
 	_collect_sample_refs()
@@ -149,6 +155,38 @@ func _ready() -> void:
 	_start_trial()
 	_ui_ready = true
 
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+	_refresh_status_i18n()
+	if analysis_committed:
+		_set_fit_label_from_analysis()
+	else:
+		_set_fit_label_unknown()
+	_update_details_text()
+	_update_header_meta()
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _set_status_i18n(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
+	_status_i18n_key = key
+	_status_i18n_default = default_text
+	_status_i18n_params = params.duplicate(true)
+	_status_i18n_color = color
+	_refresh_status_i18n()
+
+func _refresh_status_i18n() -> void:
+	if _status_i18n_key.is_empty():
+		return
+	status_label.text = _tr(_status_i18n_key, _status_i18n_default, _status_i18n_params)
+	status_label.add_theme_color_override("font_color", _status_i18n_color)
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and _ui_ready:
 		_apply_safe_area_padding()
@@ -163,8 +201,12 @@ func _process(delta: float) -> void:
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if trial_active and analysis_revealing:
 		var remaining: float = maxf(0.0, analyze_reveal_until - now_sec)
-		status_label.text = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0430\u043d\u0430\u043b\u0438\u0437 \u043a\u0430\u043d\u0430\u043b\u0430... %.1f\u0441" % remaining
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n(
+			"radio.a.status.analyze_progress",
+			"\u0421\u0422\u0410\u0422\u0423\u0421: \u0430\u043d\u0430\u043b\u0438\u0437 \u043a\u0430\u043d\u0430\u043b\u0430... {seconds}\u0441",
+			COLOR_WARN,
+			{"seconds": "%.1f" % remaining}
+		)
 		if now_sec >= analyze_reveal_until:
 			analysis_revealing = false
 			analysis_committed = true
@@ -175,24 +217,26 @@ func _process(delta: float) -> void:
 			btn_analyze.disabled = false
 			_set_fit_label_from_analysis()
 			_update_details_text()
-			status_label.text = TXT_ANALYZE_DONE
-			status_label.add_theme_color_override("font_color", COLOR_GOOD)
+			_set_status_i18n("radio.a.status.analyze_done", TXT_ANALYZE_DONE, COLOR_GOOD)
 	_update_header_meta()
 	_update_waveform()
-func _apply_static_texts() -> void:
-	title_label.text = TXT_TITLE
-	btn_back.text = TXT_BACK
-	mission_title.text = TXT_MISSION
-	rule_label.text = TXT_RULE
-	decoder_title.text = TXT_DECODER
-	knob_hint.text = TXT_KNOB_HINT
-	btn_hint.text = TXT_BTN_HINT
-	btn_analyze.text = TXT_BTN_ANALYZE
-	btn_capture.text = TXT_BTN_CAPTURE
-	btn_next.text = TXT_BTN_NEXT
-	btn_details.text = TXT_BTN_DETAILS_CLOSED
-	details_title.text = TXT_DETAILS_TITLE
-	btn_close_details.text = TXT_DETAILS_CLOSE
+func _apply_i18n() -> void:
+	title_label.text = _tr("radio.a.ui.title", TXT_TITLE)
+	btn_back.text = _tr("ui.quest_select.back_to_menu", TXT_BACK)
+	mission_title.text = _tr("radio.a.ui.mission", TXT_MISSION)
+	rule_label.text = _tr("radio.a.ui.rule", TXT_RULE)
+	decoder_title.text = _tr("radio.a.ui.decoder", TXT_DECODER)
+	knob_hint.text = _tr("radio.a.ui.knob_hint", TXT_KNOB_HINT)
+	btn_hint.text = _tr("radio.a.ui.btn_hint", TXT_BTN_HINT)
+	btn_analyze.text = _tr("radio.a.ui.btn_analyze", TXT_BTN_ANALYZE)
+	btn_capture.text = _tr("radio.a.ui.btn_capture", TXT_BTN_CAPTURE)
+	btn_next.text = _tr("radio.a.ui.btn_next", TXT_BTN_NEXT)
+	details_title.text = _tr("radio.a.ui.details_title", TXT_DETAILS_TITLE)
+	btn_close_details.text = _tr("radio.a.ui.details_close", TXT_DETAILS_CLOSE)
+	btn_details.text = _tr(
+		"radio.a.ui.btn_details_open" if details_sheet.visible else "radio.a.ui.btn_details_closed",
+		TXT_BTN_DETAILS_OPEN if details_sheet.visible else TXT_BTN_DETAILS_CLOSED
+	)
 
 func _connect_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -284,8 +328,7 @@ func _start_trial() -> void:
 		_target_wave_line.visible = false
 		_target_wave_line.points = PackedVector2Array()
 
-	status_label.text = TXT_STATUS_PLAN
-	status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
+	_set_status_i18n("radio.a.status.plan", TXT_STATUS_PLAN, Color(0.85, 0.85, 0.85, 1.0))
 	_update_header_meta()
 	_update_details_text()
 
@@ -316,10 +359,9 @@ func _apply_user_bits(i_value: int, from_user: bool) -> void:
 			analysis_committed = false
 			last_analyzed_bits = -1
 			btn_capture.disabled = true
-			status_label.text = TXT_STATUS_PLAN
-			status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
+			_set_status_i18n("radio.a.status.plan", TXT_STATUS_PLAN, Color(0.85, 0.85, 0.85, 1.0))
 
-	bits_value_label.text = "i = %d \u0431\u0438\u0442" % current_bits
+	bits_value_label.text = _tr("radio.a.ui.bits_value", "i = {value} \u0431\u0438\u0442", {"value": current_bits})
 	if analysis_committed and current_bits == last_analyzed_bits:
 		_set_fit_label_from_analysis()
 	else:
@@ -331,8 +373,7 @@ func _on_hint_pressed() -> void:
 		return
 	_mark_first_action()
 	hint_used = true
-	status_label.text = TXT_STATUS_HINT
-	status_label.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0, 1.0))
+	_set_status_i18n("radio.a.status.hint", TXT_STATUS_HINT, Color(0.55, 0.85, 1.0, 1.0))
 	_update_details_text()
 
 func _on_analyze_pressed() -> void:
@@ -353,14 +394,11 @@ func _on_analyze_pressed() -> void:
 	last_analysis_minimal = current_bits == target_bits
 	last_analysis_overkill = last_analysis_fit and not last_analysis_minimal
 	if not last_analysis_fit:
-		status_label.text = TXT_ANALYZE_UNDERFIT
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n("radio.a.status.analyze_underfit", TXT_ANALYZE_UNDERFIT, COLOR_WARN)
 	elif last_analysis_overkill:
-		status_label.text = TXT_ANALYZE_OVERKILL
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n("radio.a.status.analyze_overkill", TXT_ANALYZE_OVERKILL, COLOR_WARN)
 	else:
-		status_label.text = TXT_ANALYZE_OK
-		status_label.add_theme_color_override("font_color", COLOR_GOOD)
+		_set_status_i18n("radio.a.status.analyze_ok", TXT_ANALYZE_OK, COLOR_GOOD)
 	_set_fit_label_from_analysis()
 	analyze_reveal_until = now_sec + ANALYZE_REVEAL_SECONDS
 	_update_details_text()
@@ -398,14 +436,11 @@ func _finish_trial(is_timeout: bool) -> void:
 		is_overkill = false
 
 	if not is_fit:
-		status_label.text = TXT_RESULT_BAD
-		status_label.add_theme_color_override("font_color", COLOR_BAD)
+		_set_status_i18n("radio.a.status.result_bad", TXT_RESULT_BAD, COLOR_BAD)
 	elif is_minimal:
-		status_label.text = TXT_RESULT_GOOD
-		status_label.add_theme_color_override("font_color", COLOR_GOOD)
+		_set_status_i18n("radio.a.status.result_good", TXT_RESULT_GOOD, COLOR_GOOD)
 	else:
-		status_label.text = TXT_RESULT_WARN
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n("radio.a.status.result_warn", TXT_RESULT_WARN, COLOR_WARN)
 
 	_update_sample_slot(is_fit, is_minimal)
 
@@ -484,52 +519,62 @@ func _on_dimmer_gui_input(event: InputEvent) -> void:
 func _set_details_visible(visible: bool) -> void:
 	details_sheet.visible = visible
 	dimmer.visible = visible
-	btn_details.text = TXT_BTN_DETAILS_OPEN if visible else TXT_BTN_DETAILS_CLOSED
+	btn_details.text = _tr(
+		"radio.a.ui.btn_details_open" if visible else "radio.a.ui.btn_details_closed",
+		TXT_BTN_DETAILS_OPEN if visible else TXT_BTN_DETAILS_CLOSED
+	)
 
 func _set_fit_label_unknown() -> void:
-	fit_value_label.text = TXT_FIT_UNKNOWN
+	fit_value_label.text = _tr("radio.a.ui.fit_unknown", TXT_FIT_UNKNOWN)
 	fit_value_label.add_theme_color_override("font_color", Color(0.80, 0.80, 0.80, 1.0))
 
 func _set_fit_label_from_analysis() -> void:
-	fit_value_label.text = TXT_FIT_YES if last_analysis_fit else TXT_FIT_NO
+	fit_value_label.text = _tr(
+		"radio.a.ui.fit_yes" if last_analysis_fit else "radio.a.ui.fit_no",
+		TXT_FIT_YES if last_analysis_fit else TXT_FIT_NO
+	)
 	fit_value_label.add_theme_color_override("font_color", COLOR_GOOD if last_analysis_fit else COLOR_BAD)
 
 func _update_details_text() -> void:
 	var lines: Array[String] = []
 	if trial_active:
-		lines.append("\u041f\u0440\u0430\u0432\u0438\u043b\u043e: \u043d\u0430\u0439\u0434\u0438\u0442\u0435 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0435 i, \u0433\u0434\u0435 2^i >= N.")
-		lines.append("\u0428\u0430\u0433\u0438:")
-		lines.append("1) \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 i \u0440\u0443\u0447\u043a\u043e\u0439.")
-		lines.append("2) \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0410\u041d\u0410\u041b\u0418\u0417\u00bb \u0438 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u0435 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0443 \u043d\u0430 3 \u0441\u0435\u043a\u0443\u043d\u0434\u044b.")
-		lines.append("3) \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0417\u0410\u0425\u0412\u0410\u0422\u00bb, \u0447\u0442\u043e\u0431\u044b \u0437\u0430\u0444\u0438\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043e\u0442\u0432\u0435\u0442.")
+		lines.append(_tr("radio.a.details.rule", "\u041f\u0440\u0430\u0432\u0438\u043b\u043e: \u043d\u0430\u0439\u0434\u0438\u0442\u0435 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0435 i, \u0433\u0434\u0435 2^i >= N."))
+		lines.append(_tr("radio.a.details.steps", "\u0428\u0430\u0433\u0438:"))
+		lines.append(_tr("radio.a.details.step1", "1) \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 i \u0440\u0443\u0447\u043a\u043e\u0439."))
+		lines.append(_tr("radio.a.details.step2", "2) \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0410\u041d\u0410\u041b\u0418\u0417\u00bb \u0438 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u0435 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0443 \u043d\u0430 3 \u0441\u0435\u043a\u0443\u043d\u0434\u044b."))
+		lines.append(_tr("radio.a.details.step3", "3) \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0417\u0410\u0425\u0412\u0410\u0422\u00bb, \u0447\u0442\u043e\u0431\u044b \u0437\u0430\u0444\u0438\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043e\u0442\u0432\u0435\u0442."))
 		if analysis_revealing:
-			lines.append("\u0418\u0434\u0451\u0442 \u0430\u043d\u0430\u043b\u0438\u0437 \u043a\u0430\u043d\u0430\u043b\u0430. \u0414\u043e\u0436\u0434\u0438\u0442\u0435\u0441\u044c \u043e\u043a\u043e\u043d\u0447\u0430\u043d\u0438\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438.")
+			lines.append(_tr("radio.a.details.analysis_running", "\u0418\u0434\u0451\u0442 \u0430\u043d\u0430\u043b\u0438\u0437 \u043a\u0430\u043d\u0430\u043b\u0430. \u0414\u043e\u0436\u0434\u0438\u0442\u0435\u0441\u044c \u043e\u043a\u043e\u043d\u0447\u0430\u043d\u0438\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438."))
 		elif analysis_committed:
-			lines.append("\u0410\u043d\u0430\u043b\u0438\u0437 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d. \u0415\u0441\u043b\u0438 \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c i, \u043f\u043e\u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u043d\u043e\u0432\u044b\u0439 \u0430\u043d\u0430\u043b\u0438\u0437.")
+			lines.append(_tr("radio.a.details.analysis_done", "\u0410\u043d\u0430\u043b\u0438\u0437 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d. \u0415\u0441\u043b\u0438 \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c i, \u043f\u043e\u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u043d\u043e\u0432\u044b\u0439 \u0430\u043d\u0430\u043b\u0438\u0437."))
 	else:
 		var lower_i: int = maxi(0, target_bits - 1)
 		var lower_capacity: int = int(pow(2.0, lower_i))
 		var minimal_capacity: int = int(pow(2.0, target_bits))
 		var chosen_capacity: int = int(pow(2.0, current_bits))
-		lines.append("\u0414\u0430\u043d\u043e: N = %d" % target_n)
-		lines.append("\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c \u0441\u0442\u0435\u043f\u0435\u043d\u0438 \u0434\u0432\u043e\u0439\u043a\u0438:")
-		lines.append("2^%d = %d < %d (\u043c\u0430\u043b\u043e)" % [lower_i, lower_capacity, target_n])
-		lines.append("2^%d = %d >= %d (\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e)" % [target_bits, minimal_capacity, target_n])
-		lines.append("\u041e\u0442\u0432\u0435\u0442: i = %d (\u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e)" % target_bits)
+		lines.append(_tr("radio.a.details.given_n", "\u0414\u0430\u043d\u043e: N = {n}", {"n": target_n}))
+		lines.append(_tr("radio.a.details.check_powers", "\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c \u0441\u0442\u0435\u043f\u0435\u043d\u0438 \u0434\u0432\u043e\u0439\u043a\u0438:"))
+		lines.append(_tr("radio.a.details.lower_check", "2^{i} = {cap} < {n} (\u043c\u0430\u043b\u043e)", {"i": lower_i, "cap": lower_capacity, "n": target_n}))
+		lines.append(_tr("radio.a.details.target_check", "2^{i} = {cap} >= {n} (\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e)", {"i": target_bits, "cap": minimal_capacity, "n": target_n}))
+		lines.append(_tr("radio.a.details.answer", "\u041e\u0442\u0432\u0435\u0442: i = {i} (\u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e)", {"i": target_bits}))
 		if current_bits > target_bits:
-			lines.append("\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = %d -> 2^%d = %d (\u043f\u0435\u0440\u0435\u0440\u0430\u0441\u0445\u043e\u0434)" % [current_bits, current_bits, chosen_capacity])
+			lines.append(_tr("radio.a.details.choice_over", "\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = {i} -> 2^{i} = {cap} (\u043f\u0435\u0440\u0435\u0440\u0430\u0441\u0445\u043e\u0434)", {"i": current_bits, "cap": chosen_capacity}))
 		elif current_bits < target_bits:
-			lines.append("\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = %d -> 2^%d = %d (\u043d\u0435 \u043f\u043e\u043c\u0435\u0449\u0430\u0435\u0442\u0441\u044f)" % [current_bits, current_bits, chosen_capacity])
+			lines.append(_tr("radio.a.details.choice_under", "\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = {i} -> 2^{i} = {cap} (\u043d\u0435 \u043f\u043e\u043c\u0435\u0449\u0430\u0435\u0442\u0441\u044f)", {"i": current_bits, "cap": chosen_capacity}))
 		else:
-			lines.append("\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = %d -> 2^%d = %d (\u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e)" % [current_bits, current_bits, chosen_capacity])
+			lines.append(_tr("radio.a.details.choice_ok", "\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = {i} -> 2^{i} = {cap} (\u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e)", {"i": current_bits, "cap": chosen_capacity}))
 	details_text.text = "\n".join(lines)
 
 func _update_header_meta() -> void:
-	var mode_text: String = "\u0421 \u0422\u0410\u0419\u041c\u0415\u0420\u041e\u041c" if is_timed_mode else "\u0411\u0415\u0417 \u0422\u0410\u0419\u041c\u0415\u0420\u0410"
+	var mode_text: String = _tr("radio.a.meta.mode_timed", "\u0421 \u0422\u0410\u0419\u041c\u0415\u0420\u041e\u041c") if is_timed_mode else _tr("radio.a.meta.mode_untimed", "\u0411\u0415\u0417 \u0422\u0410\u0419\u041c\u0415\u0420\u0410")
 	var timer_text: String = ""
 	if is_timed_mode:
-		timer_text = " | T: %.1f\u0441" % time_remaining
-	meta_label.text = "\u0420\u0415\u0416\u0418\u041c: %s | \u0421\u0422\u0410\u0411: %d%%%s" % [mode_text, int(_current_stability), timer_text]
+		timer_text = _tr("radio.a.meta.timer", " | T: {seconds}\u0441", {"seconds": "%.1f" % time_remaining})
+	meta_label.text = _tr(
+		"radio.a.meta.header",
+		"\u0420\u0415\u0416\u0418\u041c: {mode} | \u0421\u0422\u0410\u0411: {stability}%{timer}",
+		{"mode": mode_text, "stability": int(_current_stability), "timer": timer_text}
+	)
 
 func _on_stability_changed(new_value: float, _delta: float) -> void:
 	_current_stability = new_value

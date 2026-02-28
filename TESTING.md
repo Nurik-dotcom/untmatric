@@ -57,8 +57,9 @@ Workflow: `.github/workflows/tests.yml`
 
 ## Known limitations
 
-- Coverage is focused on logic layers (`GlobalMetrics`, matrix solver, shields).
-- Scene UI integration and full gameplay progression are not yet fully tested.
+- Coverage is focused on logic/data layers (`GlobalMetrics`, matrix solver, shields, i18n/data contracts).
+- Basic scene smoke coverage is included (`MainMenu`, `QuestSelect`, `LearnSelect`, and QuestSelect transition targets).
+- Full interaction-level UI progression is still not fully tested end-to-end.
 - Performance/load testing is not part of this suite.
 
 ## Troubleshooting

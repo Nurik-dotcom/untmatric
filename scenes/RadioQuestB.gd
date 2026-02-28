@@ -159,15 +159,22 @@ var _current_stability: float = 100.0
 var _ui_ready: bool = false
 var _right_scroll_installed: bool = false
 var _calc_panel_expanded: bool = false
+var _status_i18n_key: String = ""
+var _status_i18n_default: String = ""
+var _status_i18n_params: Dictionary = {}
+var _status_i18n_color: Color = Color(0.85, 0.85, 0.85, 1.0)
 
 func _ready() -> void:
 	randomize()
 	_ensure_fullscreen_layout()
 	_install_right_scroll()
 	_load_level_config()
-	_apply_static_texts()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+	_apply_i18n()
 	_connect_signals()
 	_install_numpad()
+	_apply_i18n()
 	btn_toggle_calc.visible = false
 	_set_calc_panel_visible(true)
 	_collect_sample_refs()
@@ -184,6 +191,37 @@ func _ready() -> void:
 	_start_trial()
 	_ui_ready = true
 
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+	_refresh_status_i18n()
+	_update_required_unit_ui()
+	_refresh_storage_labels()
+	_update_preview()
+	_update_details_text()
+	_update_header_meta()
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _set_status_i18n(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
+	_status_i18n_key = key
+	_status_i18n_default = default_text
+	_status_i18n_params = params.duplicate(true)
+	_status_i18n_color = color
+	_refresh_status_i18n()
+
+func _refresh_status_i18n() -> void:
+	if _status_i18n_key.is_empty():
+		return
+	status_label.text = _tr(_status_i18n_key, _status_i18n_default, _status_i18n_params)
+	status_label.add_theme_color_override("font_color", _status_i18n_color)
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and _ui_ready:
 		_ensure_fullscreen_layout()
@@ -194,14 +232,17 @@ func _process(_delta: float) -> void:
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if converter_lock_active:
 		var left: float = maxf(0.0, converter_lock_until - now_sec)
-		status_label.text = "\u0421\u0422\u0410\u0422\u0423\u0421: \u043a\u043e\u043d\u0432\u0435\u0440\u0442\u0435\u0440 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d %.1f\u0441" % left
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n(
+			"radio.b.status.converter_locked",
+			"\u0421\u0422\u0410\u0422\u0423\u0421: \u043a\u043e\u043d\u0432\u0435\u0440\u0442\u0435\u0440 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d {seconds}\u0441",
+			COLOR_WARN,
+			{"seconds": "%.1f" % left}
+		)
 		if now_sec < converter_lock_until:
 			return
 		converter_lock_active = false
 		_apply_phase_controls()
-		status_label.text = TXT_STATUS_CONVERTER
-		status_label.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0, 1.0))
+		_set_status_i18n("radio.b.status.converter_hint", TXT_STATUS_CONVERTER, Color(0.55, 0.85, 1.0, 1.0))
 		return
 
 	if phase != Phase.RESULT:
@@ -209,28 +250,31 @@ func _process(_delta: float) -> void:
 		if btn_converter.disabled != cooldown_active:
 			_apply_phase_controls()
 
-func _apply_static_texts() -> void:
-	title_label.text = TXT_TITLE
-	btn_back.text = TXT_BACK
-	storage_title.text = TXT_STORAGE_TITLE
-	context_title.text = TXT_CONTEXT_TITLE
-	task_label.text = TXT_TASK % 0
-	calc_title.text = TXT_CALC_TITLE
+func _apply_i18n() -> void:
+	title_label.text = _tr("radio.b.ui.title", TXT_TITLE)
+	btn_back.text = _tr("ui.quest_select.back_to_menu", TXT_BACK)
+	storage_title.text = _tr("radio.b.ui.storage_title", TXT_STORAGE_TITLE)
+	context_title.text = _tr("radio.b.ui.context_title", TXT_CONTEXT_TITLE)
+	task_label.text = _tr("radio.b.ui.task_template", TXT_TASK, {"k": 0})
+	calc_title.text = _tr("radio.b.ui.calc_title", TXT_CALC_TITLE)
 	btn_minus.text = "-8"
 	btn_plus.text = "+8"
-	btn_check_calc.text = TXT_BTN_CHECK
-	preview_title.text = TXT_PREVIEW_TITLE
-	btn_converter.text = TXT_BTN_CONVERTER
-	btn_capture.text = TXT_BTN_CONFIRM
-	btn_next.text = TXT_BTN_NEXT
-	btn_details.text = TXT_BTN_DETAILS_CLOSED
-	details_title.text = TXT_DETAILS_TITLE
-	btn_close_details.text = TXT_DETAILS_CLOSE
-	btn_toggle_calc.text = TXT_BTN_CALC_OPEN
+	btn_check_calc.text = _tr("radio.b.ui.btn_check", TXT_BTN_CHECK)
+	preview_title.text = _tr("radio.b.ui.preview_title", TXT_PREVIEW_TITLE)
+	btn_converter.text = _tr("radio.b.ui.btn_converter", TXT_BTN_CONVERTER)
+	btn_capture.text = _tr("radio.b.ui.btn_confirm", TXT_BTN_CONFIRM)
+	btn_next.text = _tr("radio.b.ui.btn_next", TXT_BTN_NEXT)
+	btn_details.text = _tr("radio.b.ui.btn_details_closed", TXT_BTN_DETAILS_CLOSED)
+	details_title.text = _tr("radio.b.ui.details_title", TXT_DETAILS_TITLE)
+	btn_close_details.text = _tr("radio.b.ui.details_close", TXT_DETAILS_CLOSE)
+	btn_toggle_calc.text = _tr(
+		"radio.b.ui.btn_calc_close" if _calc_panel_expanded else "radio.b.ui.btn_calc_open",
+		TXT_BTN_CALC_CLOSE if _calc_panel_expanded else TXT_BTN_CALC_OPEN
+	)
 	if answer_unit_toggle != null:
-		answer_unit_toggle.text = TXT_TOGGLE_BYTES
+		answer_unit_toggle.text = _tr("radio.b.ui.toggle_bytes", TXT_TOGGLE_BYTES)
 	if answer_unit_banner_label != null:
-		answer_unit_banner_label.text = TXT_REQUIRED_BITS
+		answer_unit_banner_label.text = _tr("radio.b.ui.required_bits", TXT_REQUIRED_BITS)
 
 func _connect_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -257,7 +301,7 @@ func _install_numpad() -> void:
 
 	answer_unit_banner_label = Label.new()
 	answer_unit_banner_label.name = "AnswerUnitBanner"
-	answer_unit_banner_label.text = TXT_REQUIRED_BITS
+	answer_unit_banner_label.text = _tr("radio.b.ui.required_bits", TXT_REQUIRED_BITS)
 	answer_unit_banner_label.theme = theme
 	answer_unit_banner_label.add_theme_font_size_override("font_size", 18)
 	answer_unit_banner_label.add_theme_color_override("font_color", Color(0.95, 0.90, 0.45, 1.0))
@@ -266,7 +310,7 @@ func _install_numpad() -> void:
 
 	answer_unit_toggle = CheckButton.new()
 	answer_unit_toggle.name = "AnswerUnitToggle"
-	answer_unit_toggle.text = TXT_TOGGLE_BYTES
+	answer_unit_toggle.text = _tr("radio.b.ui.toggle_bytes", TXT_TOGGLE_BYTES)
 	answer_unit_toggle.custom_minimum_size = Vector2(0.0, 56.0)
 	answer_unit_toggle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	answer_unit_toggle.toggled.connect(_on_answer_unit_toggled)
@@ -299,7 +343,10 @@ func _on_toggle_calc_pressed() -> void:
 func _set_calc_panel_visible(is_visible: bool) -> void:
 	_calc_panel_expanded = is_visible
 	calc_card.visible = is_visible
-	btn_toggle_calc.text = TXT_BTN_CALC_CLOSE if is_visible else TXT_BTN_CALC_OPEN
+	btn_toggle_calc.text = _tr(
+		"radio.b.ui.btn_calc_close" if is_visible else "radio.b.ui.btn_calc_open",
+		TXT_BTN_CALC_CLOSE if is_visible else TXT_BTN_CALC_OPEN
+	)
 
 func _on_answer_unit_toggled(pressed: bool) -> void:
 	if phase != Phase.CALC or converter_lock_active:
@@ -394,7 +441,10 @@ func _pick_k_for_trial(pool: Array[int]) -> int:
 func _update_required_unit_ui() -> void:
 	var needs_bytes: bool = answer_unit_mode == "bytes"
 	if answer_unit_banner_label != null:
-		answer_unit_banner_label.text = TXT_REQUIRED_BYTES if needs_bytes else TXT_REQUIRED_BITS
+		answer_unit_banner_label.text = _tr(
+			"radio.b.ui.required_bytes" if needs_bytes else "radio.b.ui.required_bits",
+			TXT_REQUIRED_BYTES if needs_bytes else TXT_REQUIRED_BITS
+		)
 		answer_unit_banner_label.add_theme_color_override(
 			"font_color",
 			Color(0.95, 0.90, 0.45, 1.0) if needs_bytes else Color(0.75, 0.85, 1.0, 1.0)
@@ -449,8 +499,8 @@ func _start_trial() -> void:
 	_update_required_unit_ui()
 
 	task_label.text = _build_task_text()
-	i_info_label.text = "i = %d \u0431\u0438\u0442" % i_bits
-	k_info_label.text = "K = %d \u0441\u0438\u043c\u0432\u043e\u043b\u043e\u0432" % k_symbols
+	i_info_label.text = _tr("radio.b.ui.i_bits", "i = {value} \u0431\u0438\u0442", {"value": i_bits})
+	k_info_label.text = _tr("radio.b.ui.k_symbols", "K = {value} \u0441\u0438\u043c\u0432\u043e\u043b\u043e\u0432", {"value": k_symbols})
 	i_bits_value_label.text = str(i_bits_user)
 	i_bits_value_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 
@@ -470,8 +520,7 @@ func _start_trial() -> void:
 		btn.modulate = Color(1, 1, 1, 1)
 	_apply_phase_controls()
 
-	status_label.text = TXT_STATUS_PLAN
-	status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
+	_set_status_i18n("radio.b.status.plan", TXT_STATUS_PLAN, Color(0.85, 0.85, 0.85, 1.0))
 	if footer_label != null:
 		footer_label.text = ""
 	_update_preview()
@@ -493,9 +542,9 @@ func _generate_storage_options() -> void:
 
 	if answer_unit_mode == "bytes":
 		var true_bytes: int = i_bits_true / 8
-		storage_options.append(_make_manual_option(true_bytes, true_bytes, "\u0431\u0438\u0442", "UNIT_TRAP", "unit"))
+		storage_options.append(_make_manual_option(true_bytes, true_bytes, "bit", "UNIT_TRAP", "unit"))
 	else:
-		storage_options.append(_make_manual_option(i_bits_true * 8, i_bits_true, "\u0431\u0430\u0439\u0442", "UNIT_TRAP", "unit"))
+		storage_options.append(_make_manual_option(i_bits_true * 8, i_bits_true, "byte", "UNIT_TRAP", "unit"))
 
 	storage_options.append(_make_auto_option(over_near_cap, "OVER", "near"))
 	storage_options.append(_make_auto_option(over_far_cap, "OVER", "far"))
@@ -505,13 +554,13 @@ func _generate_storage_options() -> void:
 
 func _make_auto_option(capacity_bits: int, tag: String, variant: String = "") -> Dictionary:
 	var display_size: int = capacity_bits
-	var display_unit: String = "\u0431\u0438\u0442"
+	var display_unit: String = "bit"
 	if capacity_bits >= 8192 and capacity_bits % 8192 == 0:
 		display_size = capacity_bits / 8192
-		display_unit = "\u041a\u0411"
+		display_unit = "kb"
 	elif capacity_bits >= 8 and capacity_bits % 8 == 0:
 		display_size = capacity_bits / 8
-		display_unit = "\u0431\u0430\u0439\u0442"
+		display_unit = "byte"
 	return {
 		"capacity_bits": capacity_bits,
 		"display_size": display_size,
@@ -585,7 +634,16 @@ func _ensure_unique_storage_options(required_bits: int) -> void:
 		storage_options[idx] = option
 
 func _format_storage_option(opt: Dictionary) -> String:
-	return "%d %s" % [int(opt["display_size"]), str(opt["display_unit"])]
+	return "%d %s" % [int(opt["display_size"]), _unit_label(str(opt["display_unit"]))]
+
+func _unit_label(unit_code: String) -> String:
+	match unit_code:
+		"byte":
+			return _tr("radio.b.unit.byte", "\u0431\u0430\u0439\u0442")
+		"kb":
+			return _tr("radio.b.unit.kb", "\u041a\u0411")
+		_:
+			return _tr("radio.b.unit.bit", "\u0431\u0438\u0442")
 
 func _register_action() -> void:
 	if first_action_ms < 0:
@@ -615,13 +673,11 @@ func _on_check_calc_pressed() -> void:
 	if phase != Phase.CALC or converter_lock_active:
 		return
 	if input_buffer.is_empty():
-		status_label.text = TXT_STATUS_NEED_INPUT
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n("radio.b.status.need_input", TXT_STATUS_NEED_INPUT, COLOR_WARN)
 		return
 	i_bits_user = input_buffer.to_int()
 	if i_bits_user <= 0:
-		status_label.text = TXT_STATUS_NEED_INPUT
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n("radio.b.status.need_input", TXT_STATUS_NEED_INPUT, COLOR_WARN)
 		return
 	i_bits_value_label.text = str(i_bits_user)
 	_register_action()
@@ -630,8 +686,7 @@ func _on_check_calc_pressed() -> void:
 	phase = Phase.SELECT
 
 	_apply_phase_controls()
-	status_label.text = TXT_STATUS_SELECT
-	status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
+	_set_status_i18n("radio.b.status.select", TXT_STATUS_SELECT, Color(0.85, 0.85, 0.85, 1.0))
 	i_bits_value_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 
 	_update_preview()
@@ -648,8 +703,7 @@ func _on_storage_selected(idx: int) -> void:
 		storage_btns[i].modulate = Color(1, 1, 0.75, 1) if i == idx else Color(1, 1, 1, 1)
 
 	_apply_phase_controls()
-	status_label.text = TXT_STATUS_CONFIRM
-	status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
+	_set_status_i18n("radio.b.status.confirm", TXT_STATUS_CONFIRM, Color(0.85, 0.85, 0.85, 1.0))
 	_update_preview()
 	_update_details_text()
 
@@ -662,16 +716,19 @@ func _on_converter_pressed() -> void:
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec < converter_cooldown_until:
 		var left: float = converter_cooldown_until - now_sec
-		status_label.text = "\u0421\u0422\u0410\u0422\u0423\u0421: \u043a\u043e\u043d\u0432\u0435\u0440\u0442\u0435\u0440 \u043d\u0430 \u043f\u0430\u0443\u0437\u0435 %.1f\u0441" % left
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n(
+			"radio.b.status.converter_cooldown",
+			"\u0421\u0422\u0410\u0422\u0423\u0421: \u043a\u043e\u043d\u0432\u0435\u0440\u0442\u0435\u0440 \u043d\u0430 \u043f\u0430\u0443\u0437\u0435 {seconds}\u0441",
+			COLOR_WARN,
+			{"seconds": "%.1f" % left}
+		)
 		return
 	used_converter = true
 	converter_use_count += 1
 	converter_lock_active = true
 	converter_lock_until = now_sec + CONVERTER_LOCK_SECONDS
 	converter_cooldown_until = now_sec + CONVERTER_COOLDOWN_SECONDS
-	status_label.text = TXT_STATUS_CONVERTER
-	status_label.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0, 1.0))
+	_set_status_i18n("radio.b.status.converter_hint", TXT_STATUS_CONVERTER, Color(0.55, 0.85, 1.0, 1.0))
 	_apply_phase_controls()
 	_update_preview()
 	_update_details_text()
@@ -705,24 +762,19 @@ func _finish_trial() -> void:
 	var valid_mastery: bool = (error_type == "best_fit") and calc_correct and (not used_converter)
 
 	if error_type == "best_fit":
-		status_label.text = TXT_RESULT_BEST
-		status_label.add_theme_color_override("font_color", COLOR_GOOD)
+		_set_status_i18n("radio.b.status.result_best", TXT_RESULT_BEST, COLOR_GOOD)
 		_update_sample_slot(COLOR_GOOD)
 	elif error_type == "underfit":
-		status_label.text = TXT_RESULT_UNDER
-		status_label.add_theme_color_override("font_color", COLOR_BAD)
+		_set_status_i18n("radio.b.status.result_under", TXT_RESULT_UNDER, COLOR_BAD)
 		_update_sample_slot(COLOR_BAD)
 	elif error_type == "calc_wrong":
-		status_label.text = TXT_RESULT_CALC
-		status_label.add_theme_color_override("font_color", COLOR_BAD)
+		_set_status_i18n("radio.b.status.result_calc_wrong", TXT_RESULT_CALC, COLOR_BAD)
 		_update_sample_slot(COLOR_BAD)
 	elif error_type == "unit_confusion":
-		status_label.text = TXT_RESULT_UNIT
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n("radio.b.status.result_unit_confusion", TXT_RESULT_UNIT, COLOR_WARN)
 		_update_sample_slot(COLOR_WARN)
 	else:
-		status_label.text = TXT_RESULT_OVER
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n("radio.b.status.result_overkill", TXT_RESULT_OVER, COLOR_WARN)
 		_update_sample_slot(COLOR_WARN)
 
 	var mode_token: String = "TIMED" if is_timed else "UNTIMED"
@@ -840,95 +892,125 @@ func _update_sample_slot(color: Color) -> void:
 	mark.visible = pool_type == "ANCHOR"
 	current_trial_idx = (current_trial_idx + 1) % min(SAMPLE_SLOTS, sample_refs.size())
 
+func _refresh_storage_labels() -> void:
+	for idx in range(storage_btns.size()):
+		var opt: Dictionary = storage_options[idx] if idx < storage_options.size() else _make_auto_option(i_bits_true, "OVER", "fallback")
+		storage_btns[idx].text = _format_storage_option(opt)
+
 func _update_preview() -> void:
 	var user_unit_mode: String = "bytes" if answer_in_bytes else "bits"
 	var entered_text: String = "\u2014"
 	if i_bits_user > 0:
-		entered_text = "%d %s" % [i_bits_user, "\u0431\u0430\u0439\u0442" if user_unit_mode == "bytes" else "\u0431\u0438\u0442"]
-	preview_calc_label.text = "\u0412\u0432\u0435\u0434\u0435\u043d\u043e I: %s" % entered_text
+		entered_text = _tr(
+			"radio.b.preview.entered_unit_bytes" if user_unit_mode == "bytes" else "radio.b.preview.entered_unit_bits",
+			"{value} \u0431\u0430\u0439\u0442" if user_unit_mode == "bytes" else "{value} \u0431\u0438\u0442",
+			{"value": i_bits_user}
+		)
+	preview_calc_label.text = _tr("radio.b.preview.entered", "\u0412\u0432\u0435\u0434\u0435\u043d\u043e I: {value}", {"value": entered_text})
 	preview_calc_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
 
 	if phase == Phase.CALC:
-		preview_fit_label.text = "\u0420\u0435\u0436\u0438\u043c \u0432\u0432\u043e\u0434\u0430: %s" % ("\u0431\u0430\u0439\u0442\u044b" if user_unit_mode == "bytes" else "\u0431\u0438\u0442\u044b")
-		preview_class_label.text = "\u041e\u0446\u0435\u043d\u043a\u0430 \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f \u043f\u043e\u0441\u043b\u0435 \u00ab\u0417\u0410\u0424\u0418\u041a\u0421\u0418\u0420\u041e\u0412\u0410\u0422\u042c\u00bb."
+		var mode_label: String = _tr("radio.b.preview.mode_bytes", "\u0431\u0430\u0439\u0442\u044b") if user_unit_mode == "bytes" else _tr("radio.b.preview.mode_bits", "\u0431\u0438\u0442\u044b")
+		preview_fit_label.text = _tr("radio.b.preview.input_mode", "\u0420\u0435\u0436\u0438\u043c \u0432\u0432\u043e\u0434\u0430: {mode}", {"mode": mode_label})
+		preview_class_label.text = _tr("radio.b.preview.class_after_confirm", "\u041e\u0446\u0435\u043d\u043a\u0430 \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f \u043f\u043e\u0441\u043b\u0435 \u00ab\u0417\u0410\u0424\u0418\u041a\u0421\u0418\u0420\u041e\u0412\u0410\u0422\u042c\u00bb.")
 		preview_fit_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1.0))
 		preview_class_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1.0))
 		return
 
 	if phase == Phase.SELECT:
 		if selected_storage_idx < 0:
-			preview_fit_label.text = "\u041d\u043e\u0441\u0438\u0442\u0435\u043b\u044c: \u043d\u0435 \u0432\u044b\u0431\u0440\u0430\u043d"
+			preview_fit_label.text = _tr("radio.b.preview.storage_none", "\u041d\u043e\u0441\u0438\u0442\u0435\u043b\u044c: \u043d\u0435 \u0432\u044b\u0431\u0440\u0430\u043d")
 		else:
-			preview_fit_label.text = "\u0412\u044b\u0431\u0440\u0430\u043d \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c: %s" % _format_storage_option(storage_options[selected_storage_idx])
-		preview_class_label.text = "\u041e\u0446\u0435\u043d\u043a\u0430 \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f \u043f\u043e\u0441\u043b\u0435 \u00ab\u0417\u0410\u0424\u0418\u041a\u0421\u0418\u0420\u041e\u0412\u0410\u0422\u042c\u00bb."
+			preview_fit_label.text = _tr(
+				"radio.b.preview.storage_selected",
+				"\u0412\u044b\u0431\u0440\u0430\u043d \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c: {value}",
+				{"value": _format_storage_option(storage_options[selected_storage_idx])}
+			)
+		preview_class_label.text = _tr("radio.b.preview.class_after_confirm", "\u041e\u0446\u0435\u043d\u043a\u0430 \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f \u043f\u043e\u0441\u043b\u0435 \u00ab\u0417\u0410\u0424\u0418\u041a\u0421\u0418\u0420\u041e\u0412\u0410\u0422\u042c\u00bb.")
 		preview_fit_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1.0))
 		preview_class_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1.0))
 		return
 
 	var result: Dictionary = _evaluate_selection()
 	if result.is_empty():
-		preview_fit_label.text = "\u041d\u043e\u0441\u0438\u0442\u0435\u043b\u044c: \u2014"
-		preview_class_label.text = "\u041a\u043b\u0430\u0441\u0441: \u2014"
+		preview_fit_label.text = _tr("radio.b.preview.storage_dash", "\u041d\u043e\u0441\u0438\u0442\u0435\u043b\u044c: \u2014")
+		preview_class_label.text = _tr("radio.b.preview.class_dash", "\u041a\u043b\u0430\u0441\u0441: \u2014")
 		return
 	var is_fit: bool = bool(result.get("is_fit", false))
 	var error_type: String = str(result.get("error_type", "calc_wrong"))
-	preview_fit_label.text = "\u041d\u043e\u0441\u0438\u0442\u0435\u043b\u044c: %s" % ("\u043f\u043e\u043c\u0435\u0449\u0430\u0435\u0442" if is_fit else "\u043d\u0435 \u043f\u043e\u043c\u0435\u0449\u0430\u0435\u0442")
+	preview_fit_label.text = _tr(
+		"radio.b.preview.storage_fit",
+		"\u041d\u043e\u0441\u0438\u0442\u0435\u043b\u044c: {value}",
+		{
+			"value": _tr("radio.b.preview.fit_yes", "\u043f\u043e\u043c\u0435\u0449\u0430\u0435\u0442") if is_fit else _tr("radio.b.preview.fit_no", "\u043d\u0435 \u043f\u043e\u043c\u0435\u0449\u0430\u0435\u0442")
+		}
+	)
 	preview_fit_label.add_theme_color_override("font_color", COLOR_GOOD if is_fit else COLOR_BAD)
 	match error_type:
 		"best_fit":
-			preview_class_label.text = "\u041a\u043b\u0430\u0441\u0441: BEST FIT"
+			preview_class_label.text = _tr("radio.b.preview.class_best", "\u041a\u043b\u0430\u0441\u0441: BEST FIT")
 			preview_class_label.add_theme_color_override("font_color", COLOR_GOOD)
 		"underfit":
-			preview_class_label.text = "\u041a\u043b\u0430\u0441\u0441: UNDERFIT"
+			preview_class_label.text = _tr("radio.b.preview.class_under", "\u041a\u043b\u0430\u0441\u0441: UNDERFIT")
 			preview_class_label.add_theme_color_override("font_color", COLOR_BAD)
 		"unit_confusion":
-			preview_class_label.text = "\u041a\u043b\u0430\u0441\u0441: UNIT CONFUSION"
+			preview_class_label.text = _tr("radio.b.preview.class_unit", "\u041a\u043b\u0430\u0441\u0441: UNIT CONFUSION")
 			preview_class_label.add_theme_color_override("font_color", COLOR_WARN)
 		"calc_wrong":
-			preview_class_label.text = "\u041a\u043b\u0430\u0441\u0441: CALC WRONG"
+			preview_class_label.text = _tr("radio.b.preview.class_calc", "\u041a\u043b\u0430\u0441\u0441: CALC WRONG")
 			preview_class_label.add_theme_color_override("font_color", COLOR_BAD)
 		_:
-			preview_class_label.text = "\u041a\u043b\u0430\u0441\u0441: OVERKILL"
+			preview_class_label.text = _tr("radio.b.preview.class_over", "\u041a\u043b\u0430\u0441\u0441: OVERKILL")
 			preview_class_label.add_theme_color_override("font_color", COLOR_WARN)
 
 func _update_details_text() -> void:
 	var lines: Array[String] = []
 	if phase != Phase.RESULT:
-		lines.append("\u041f\u0440\u0430\u0432\u0438\u043b\u043e: I = K * i.")
-		lines.append("\u0412\u0432\u0435\u0434\u0438\u0442\u0435 I \u0432 \u0442\u0440\u0435\u0431\u0443\u0435\u043c\u044b\u0445 \u0435\u0434\u0438\u043d\u0438\u0446\u0430\u0445 \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c.")
-		lines.append("\u0415\u0441\u043b\u0438 \u043e\u0442\u0432\u0435\u0442 \u0432 \u0431\u0430\u0439\u0442\u0430\u0445, \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u0434\u0435\u043b\u0435\u043d\u0438\u0435 \u043d\u0430 8.")
-		lines.append("\u0420\u0430\u0437\u0431\u043e\u0440 \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f \u043f\u043e\u0441\u043b\u0435 \u00ab\u0417\u0410\u0424\u0418\u041a\u0421\u0418\u0420\u041e\u0412\u0410\u0422\u042c\u00bb.")
+		lines.append(_tr("radio.b.details.rule", "\u041f\u0440\u0430\u0432\u0438\u043b\u043e: I = K * i."))
+		lines.append(_tr("radio.b.details.step1", "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 I \u0432 \u0442\u0440\u0435\u0431\u0443\u0435\u043c\u044b\u0445 \u0435\u0434\u0438\u043d\u0438\u0446\u0430\u0445 \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c."))
+		lines.append(_tr("radio.b.details.step2", "\u0415\u0441\u043b\u0438 \u043e\u0442\u0432\u0435\u0442 \u0432 \u0431\u0430\u0439\u0442\u0430\u0445, \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u0434\u0435\u043b\u0435\u043d\u0438\u0435 \u043d\u0430 8."))
+		lines.append(_tr("radio.b.details.step3", "\u0420\u0430\u0437\u0431\u043e\u0440 \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f \u043f\u043e\u0441\u043b\u0435 \u00ab\u0417\u0410\u0424\u0418\u041a\u0421\u0418\u0420\u041e\u0412\u0410\u0422\u042c\u00bb."))
 		details_text.text = "\n".join(lines)
 		return
 
 	var result: Dictionary = _evaluate_selection()
 	if result.is_empty():
-		details_text.text = "\u0420\u0430\u0437\u0431\u043e\u0440 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d."
+		details_text.text = _tr("radio.b.details.unavailable", "\u0420\u0430\u0437\u0431\u043e\u0440 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d.")
 		return
 	var error_type: String = str(result.get("error_type", "calc_wrong"))
 	var selected_display: String = str(result.get("selected_display", "\u2014"))
 	var user_unit_mode: String = "bytes" if answer_in_bytes else "bits"
 	var user_bits: int = int(result.get("user_bits", 0))
 	var choice_cap: int = int(result.get("choice_cap", 0))
-	lines.append("\u0414\u0430\u043d\u043e: K = %d, i = %d." % [k_symbols, i_bits])
-	lines.append("\u0420\u0430\u0441\u0447\u0451\u0442: I = K * i = %d * %d = %d \u0431\u0438\u0442." % [k_symbols, i_bits, i_bits_true])
+	lines.append(_tr("radio.b.details.given", "\u0414\u0430\u043d\u043e: K = {k}, i = {i}.", {"k": k_symbols, "i": i_bits}))
+	lines.append(_tr("radio.b.details.calc", "\u0420\u0430\u0441\u0447\u0451\u0442: I = K * i = {k} * {i} = {bits} \u0431\u0438\u0442.", {"k": k_symbols, "i": i_bits, "bits": i_bits_true}))
 	if answer_unit_mode == "bytes":
-		lines.append("\u041e\u0442\u0432\u0435\u0442 \u0442\u0440\u0435\u0431\u043e\u0432\u0430\u043b\u0441\u044f \u0432 \u0431\u0430\u0439\u0442\u0430\u0445: %d / 8 = %d \u0431\u0430\u0439\u0442." % [i_bits_true, i_bits_true / 8])
+		lines.append(_tr("radio.b.details.required_bytes", "\u041e\u0442\u0432\u0435\u0442 \u0442\u0440\u0435\u0431\u043e\u0432\u0430\u043b\u0441\u044f \u0432 \u0431\u0430\u0439\u0442\u0430\u0445: {bits} / 8 = {bytes} \u0431\u0430\u0439\u0442.", {"bits": i_bits_true, "bytes": i_bits_true / 8}))
 	else:
-		lines.append("\u041e\u0442\u0432\u0435\u0442 \u0442\u0440\u0435\u0431\u043e\u0432\u0430\u043b\u0441\u044f \u0432 \u0431\u0438\u0442\u0430\u0445.")
-	lines.append("\u0412\u0430\u0448 \u0432\u0432\u043e\u0434: I = %d %s (%d \u0431\u0438\u0442)." % [i_bits_user, "\u0431\u0430\u0439\u0442" if user_unit_mode == "bytes" else "\u0431\u0438\u0442", user_bits])
-	lines.append("\u0412\u044b\u0431\u0440\u0430\u043d \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c: %s (%d \u0431\u0438\u0442)." % [selected_display, choice_cap])
+		lines.append(_tr("radio.b.details.required_bits", "\u041e\u0442\u0432\u0435\u0442 \u0442\u0440\u0435\u0431\u043e\u0432\u0430\u043b\u0441\u044f \u0432 \u0431\u0438\u0442\u0430\u0445."))
+	lines.append(
+		_tr(
+			"radio.b.details.user_input",
+			"\u0412\u0430\u0448 \u0432\u0432\u043e\u0434: I = {user} {unit} ({bits} \u0431\u0438\u0442).",
+			{
+				"user": i_bits_user,
+				"unit": _tr("radio.b.details.unit_byte", "\u0431\u0430\u0439\u0442") if user_unit_mode == "bytes" else _tr("radio.b.details.unit_bit", "\u0431\u0438\u0442"),
+				"bits": user_bits
+			}
+		)
+	)
+	lines.append(_tr("radio.b.details.selected", "\u0412\u044b\u0431\u0440\u0430\u043d \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c: {value} ({bits} \u0431\u0438\u0442).", {"value": selected_display, "bits": choice_cap}))
 	match error_type:
 		"best_fit":
-			lines.append("\u0418\u0442\u043e\u0433: BEST FIT. \u042d\u0442\u043e \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u044b\u0439 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c, \u043a\u043e\u0442\u043e\u0440\u044b\u0439 \u0432\u043c\u0435\u0449\u0430\u0435\u0442 \u043f\u0430\u043a\u0435\u0442.")
+			lines.append(_tr("radio.b.details.outcome_best", "\u0418\u0442\u043e\u0433: BEST FIT. \u042d\u0442\u043e \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u044b\u0439 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c, \u043a\u043e\u0442\u043e\u0440\u044b\u0439 \u0432\u043c\u0435\u0449\u0430\u0435\u0442 \u043f\u0430\u043a\u0435\u0442."))
 		"underfit":
-			lines.append("\u0418\u0442\u043e\u0433: UNDERFIT. \u0412\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0439 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c \u043c\u0435\u043d\u044c\u0448\u0435, \u0447\u0435\u043c \u043d\u0443\u0436\u043d\u043e.")
+			lines.append(_tr("radio.b.details.outcome_under", "\u0418\u0442\u043e\u0433: UNDERFIT. \u0412\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0439 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c \u043c\u0435\u043d\u044c\u0448\u0435, \u0447\u0435\u043c \u043d\u0443\u0436\u043d\u043e."))
 		"unit_confusion":
-			lines.append("\u0418\u0442\u043e\u0433: UNIT CONFUSION. \u041f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u043e\u0435 \u0447\u0438\u0441\u043b\u043e \u0432\u0437\u044f\u0442\u043e \u0432 \u043d\u0435\u0432\u0435\u0440\u043d\u044b\u0445 \u0435\u0434\u0438\u043d\u0438\u0446\u0430\u0445.")
+			lines.append(_tr("radio.b.details.outcome_unit", "\u0418\u0442\u043e\u0433: UNIT CONFUSION. \u041f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u043e\u0435 \u0447\u0438\u0441\u043b\u043e \u0432\u0437\u044f\u0442\u043e \u0432 \u043d\u0435\u0432\u0435\u0440\u043d\u044b\u0445 \u0435\u0434\u0438\u043d\u0438\u0446\u0430\u0445."))
 		"calc_wrong":
-			lines.append("\u0418\u0442\u043e\u0433: CALC WRONG. \u041e\u0448\u0438\u0431\u043a\u0430 \u0432 \u0440\u0430\u0441\u0447\u0451\u0442\u0435 I.")
+			lines.append(_tr("radio.b.details.outcome_calc", "\u0418\u0442\u043e\u0433: CALC WRONG. \u041e\u0448\u0438\u0431\u043a\u0430 \u0432 \u0440\u0430\u0441\u0447\u0451\u0442\u0435 I."))
 		_:
-			lines.append("\u0418\u0442\u043e\u0433: OVERKILL. \u041d\u043e\u0441\u0438\u0442\u0435\u043b\u044c \u043f\u043e\u0434\u0445\u043e\u0434\u0438\u0442, \u043d\u043e \u0441 \u0438\u0437\u0431\u044b\u0442\u043a\u043e\u043c.")
+			lines.append(_tr("radio.b.details.outcome_over", "\u0418\u0442\u043e\u0433: OVERKILL. \u041d\u043e\u0441\u0438\u0442\u0435\u043b\u044c \u043f\u043e\u0434\u0445\u043e\u0434\u0438\u0442, \u043d\u043e \u0441 \u0438\u0437\u0431\u044b\u0442\u043a\u043e\u043c."))
 	details_text.text = "\n".join(lines)
 
 func _on_next_pressed() -> void:
@@ -950,11 +1032,18 @@ func _on_dimmer_gui_input(event: InputEvent) -> void:
 func _set_details_visible(visible: bool) -> void:
 	details_sheet.visible = visible
 	dimmer.visible = visible
-	btn_details.text = TXT_BTN_DETAILS_OPEN if visible else TXT_BTN_DETAILS_CLOSED
+	btn_details.text = _tr(
+		"radio.b.ui.btn_details_open" if visible else "radio.b.ui.btn_details_closed",
+		TXT_BTN_DETAILS_OPEN if visible else TXT_BTN_DETAILS_CLOSED
+	)
 
 func _update_header_meta() -> void:
-	var mode_text: String = "\u0411\u0415\u0417 \u0422\u0410\u0419\u041c\u0415\u0420\u0410"
-	meta_label.text = "\u0420\u0415\u0416\u0418\u041c: %s | \u0421\u0422\u0410\u0411: %d%%" % [mode_text, int(_current_stability)]
+	var mode_text: String = _tr("radio.b.meta.mode_untimed", "\u0411\u0415\u0417 \u0422\u0410\u0419\u041c\u0415\u0420\u0410")
+	meta_label.text = _tr(
+		"radio.b.meta.header",
+		"\u0420\u0415\u0416\u0418\u041c: {mode} | \u0421\u0422\u0410\u0411: {stability}%",
+		{"mode": mode_text, "stability": int(_current_stability)}
+	)
 
 func _on_stability_changed(new_value: float, _delta: float) -> void:
 	_current_stability = new_value
@@ -1010,7 +1099,17 @@ func _build_task_text() -> String:
 	var suffix: String = TXT_TASK_BITS_SUFFIX
 	if answer_unit_mode == "bytes":
 		suffix = TXT_TASK_BYTES_SUFFIX
-	return "%s %s" % [TXT_TASK % k_symbols, suffix]
+	return _tr(
+		"radio.b.ui.task_with_suffix",
+		"{task} {suffix}",
+		{
+			"task": _tr("radio.b.ui.task_template", TXT_TASK, {"k": k_symbols}),
+			"suffix": _tr(
+				"radio.b.ui.task_suffix_bytes" if answer_unit_mode == "bytes" else "radio.b.ui.task_suffix_bits",
+				suffix
+			)
+		}
+	)
 
 func _get_user_answer_bits() -> int:
 	var raw_value: int = maxi(i_bits_user, 0)

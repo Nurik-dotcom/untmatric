@@ -1,3 +1,14 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Temporary/editor artifacts
+.codex_tmp/
+backups/
+tmp_*.log
+tmp_godot.log
+*.tmp
+
+# Scratch and generated helper outputs
+repomix-clean.txt
+scenes/Tutorial/temp_replace.txt

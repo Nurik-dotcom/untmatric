@@ -50,7 +50,7 @@ func _apply_i18n() -> void:
 	learn_btn.text = I18n.tr_key("ui.main_menu.learn", {"default": "ОБУЧЕНИЕ"})
 	lab_btn.text = I18n.tr_key("ui.main_menu.lab_soon", {"default": "ЛАБОРАТОРИЯ (СКОРО)"})
 	lang_label.text = I18n.tr_key("ui.main_menu.language_label", {"default": "Язык"})
-	version_label.text = I18n.tr_key("ui.main_menu.version", {"default": "v1.0.0 • Godot 4.5"})
+	version_label.text = I18n.tr_key("ui.main_menu.version", {"default": "v1.0.0 | Godot 4.3"})
 	_refresh_language_select()
 
 func _refresh_language_select() -> void:

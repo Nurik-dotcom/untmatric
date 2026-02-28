@@ -183,11 +183,18 @@ var _anchor_every_max: int = 10
 var sample_cursor: int = 0
 var sample_refs: Array = []
 var _ui_ready: bool = false
+var _current_stability: float = 100.0
+var _status_i18n_key: String = ""
+var _status_i18n_default: String = ""
+var _status_i18n_params: Dictionary = {}
+var _status_i18n_color: Color = Color(0.85, 0.85, 0.85, 1.0)
 
 func _ready() -> void:
 	randomize()
 	_load_level_config()
-	_apply_static_texts()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+	_apply_i18n()
 	_connect_signals()
 	_collect_sample_refs()
 	_reset_sample_strip()
@@ -202,6 +209,35 @@ func _ready() -> void:
 	anchor_countdown = _random_anchor_gap()
 	_start_trial()
 	_ui_ready = true
+
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+	_refresh_status_i18n()
+	_update_runtime_ui()
+	_update_details_text()
+	_on_stability_changed(_current_stability, 0.0)
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _set_status_i18n(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
+	_status_i18n_key = key
+	_status_i18n_default = default_text
+	_status_i18n_params = params.duplicate(true)
+	_status_i18n_color = color
+	_refresh_status_i18n()
+
+func _refresh_status_i18n() -> void:
+	if _status_i18n_key.is_empty():
+		return
+	status_label.text = _tr(_status_i18n_key, _status_i18n_default, _status_i18n_params)
+	status_label.add_theme_color_override("font_color", _status_i18n_color)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and _ui_ready:
@@ -228,7 +264,16 @@ func _process(delta: float) -> void:
 	if state == State.ANALYZE_LOCK:
 		var now_sec: float = Time.get_ticks_msec() / 1000.0
 		var left: float = maxf(0.0, analyze_lock_until - now_sec)
-		status_label.text = "%s %.1f %s" % [TXT_ANALYZE_LOCK, left, SYMBOL_SEC]
+		_set_status_i18n(
+			"radio.c.status.analyze_lock_countdown",
+			"{prefix} {seconds} {unit}",
+			COLOR_SAMPLE_WARN,
+			{
+				"prefix": _tr("radio.c.status.analyze_lock_prefix", TXT_ANALYZE_LOCK),
+				"seconds": "%.1f" % left,
+				"unit": _tr("radio.c.unit.sec", SYMBOL_SEC)
+			}
+		)
 		if now_sec < analyze_lock_until:
 			return
 		analyze_lock_active = false
@@ -245,25 +290,25 @@ func _process(delta: float) -> void:
 			_finalize_trial(Outcome.INTERCEPTED, "RISK")
 			return
 
-func _apply_static_texts() -> void:
-	title_label.text = TXT_TITLE
-	mode_chip.text = TXT_MODE
-	mission_title.text = TXT_MISSION
-	micro_hint.text = TXT_HINT
-	step_1_label.text = TXT_STEP_1
-	step_2_label.text = TXT_STEP_2
-	step_3_label.text = TXT_STEP_3
-	detection_title.text = TXT_DETECT_TITLE
-	transfer_title.text = TXT_TRANSFER_TITLE
+func _apply_i18n() -> void:
+	title_label.text = _tr("radio.c.ui.title", TXT_TITLE)
+	mode_chip.text = _tr("radio.c.ui.mode", TXT_MODE)
+	mission_title.text = _tr("radio.c.ui.mission", TXT_MISSION)
+	micro_hint.text = _tr("radio.c.ui.hint", TXT_HINT)
+	step_1_label.text = _tr("radio.c.ui.step1", TXT_STEP_1)
+	step_2_label.text = _tr("radio.c.ui.step2", TXT_STEP_2)
+	step_3_label.text = _tr("radio.c.ui.step3", TXT_STEP_3)
+	detection_title.text = _tr("radio.c.ui.detect_title", TXT_DETECT_TITLE)
+	transfer_title.text = _tr("radio.c.ui.transfer_title", TXT_TRANSFER_TITLE)
 
-	btn_units.text = TXT_BTN_UNITS
-	btn_details.text = TXT_BTN_DETAILS
-	btn_analyze.text = TXT_BTN_ANALYZE
-	btn_risk.text = TXT_BTN_RISK
-	btn_abort.text = TXT_BTN_ABORT
-	btn_next.text = TXT_BTN_NEXT
-	details_sheet_title.text = TXT_DETAILS_TITLE
-	btn_close_details.text = TXT_DETAILS_CLOSE
+	btn_units.text = _tr("radio.c.ui.btn_units", TXT_BTN_UNITS)
+	btn_details.text = _tr("radio.c.ui.btn_details", TXT_BTN_DETAILS)
+	btn_analyze.text = _tr("radio.c.ui.btn_analyze", TXT_BTN_ANALYZE)
+	btn_risk.text = _tr("radio.c.ui.btn_risk", TXT_BTN_RISK)
+	btn_abort.text = _tr("radio.c.ui.btn_abort", TXT_BTN_ABORT)
+	btn_next.text = _tr("radio.c.ui.btn_next", TXT_BTN_NEXT)
+	details_sheet_title.text = _tr("radio.c.ui.details_title", TXT_DETAILS_TITLE)
+	btn_close_details.text = _tr("radio.c.ui.details_close", TXT_DETAILS_CLOSE)
 
 func _connect_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -605,16 +650,16 @@ func _compute_true_time(size_value: float, size_unit: String, speed: float) -> f
 	return i_mbit / speed
 
 func _refresh_task_labels() -> void:
-	task_line_1.text = "\u041e\u0431\u044a\u0451\u043c \u043f\u0430\u043a\u0435\u0442\u0430: %s %s" % [_format_num(file_size_value), file_size_unit]
-	task_line_2.text = "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u043a\u0430\u043d\u0430\u043b\u0430: %s %s" % [_format_num(speed_mbit), UNIT_MBIT_SEC]
-	task_line_3.text = "\u0414\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438: %s %s" % [_format_num(t_detect), SYMBOL_SEC]
+	task_line_1.text = _tr("radio.c.task.file_size", "\u041e\u0431\u044a\u0451\u043c \u043f\u0430\u043a\u0435\u0442\u0430: {value} {unit}", {"value": _format_num(file_size_value), "unit": _display_unit_label(file_size_unit)})
+	task_line_2.text = _tr("radio.c.task.speed", "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u043a\u0430\u043d\u0430\u043b\u0430: {value} {unit}", {"value": _format_num(speed_mbit), "unit": _display_unit_label(UNIT_MBIT_SEC)})
+	task_line_3.text = _tr("radio.c.task.detect", "\u0414\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438: {value} {unit}", {"value": _format_num(t_detect), "unit": _display_unit_label(SYMBOL_SEC)})
 
 func _reset_runtime_ui() -> void:
 	detection_bar.value = 0.0
 	transfer_bar.value = 0.0
-	detect_countdown.text = "%s %s" % [_format_num(t_detect), SYMBOL_SEC]
-	transfer_countdown.text = "\u2014"
-	risk_label.text = TXT_RISK_UNKNOWN
+	detect_countdown.text = _tr("radio.c.runtime.countdown_plain", "{value} {unit}", {"value": _format_num(t_detect), "unit": _display_unit_label(SYMBOL_SEC)})
+	transfer_countdown.text = _tr("radio.c.runtime.dash", "\u2014")
+	risk_label.text = _tr("radio.c.status.risk_unknown", TXT_RISK_UNKNOWN)
 	alarm_flash.color = Color(1.0, 0.05, 0.05, 0.0)
 
 func _set_tune_state_ui() -> void:
@@ -628,8 +673,8 @@ func _set_tune_state_ui() -> void:
 	btn_units.disabled = false
 	btn_details.disabled = false
 	btn_next.visible = false
-	status_label.text = TXT_PLAN_STATUS
-	risk_label.text = TXT_DETECT_WINDOW % _format_num(maxf(0.0, t_detect - detection_elapsed))
+	_set_status_i18n("radio.c.status.plan", TXT_PLAN_STATUS, Color(0.85, 0.85, 0.85, 1.0))
+	risk_label.text = _tr("radio.c.status.detect_window", "\u041e\u043a\u043d\u043e \u0434\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438: {seconds} \u0441", {"seconds": _format_num(maxf(0.0, t_detect - detection_elapsed))})
 	_apply_phantom_preview()
 
 func _set_analyze_lock_state_ui() -> void:
@@ -641,8 +686,8 @@ func _set_analyze_lock_state_ui() -> void:
 	btn_units.disabled = true
 	btn_details.disabled = true
 	btn_next.visible = false
-	status_label.text = TXT_ANALYZE_LOCK
-	risk_label.text = TXT_DETECT_WINDOW % _format_num(maxf(0.0, t_detect - detection_elapsed))
+	_set_status_i18n("radio.c.status.analyze_lock_prefix", TXT_ANALYZE_LOCK, COLOR_SAMPLE_WARN)
+	risk_label.text = _tr("radio.c.status.detect_window", "\u041e\u043a\u043d\u043e \u0434\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438: {seconds} \u0441", {"seconds": _format_num(maxf(0.0, t_detect - detection_elapsed))})
 	_apply_phantom_preview()
 
 func _set_decide_state_ui() -> void:
@@ -654,8 +699,8 @@ func _set_decide_state_ui() -> void:
 	btn_units.disabled = false
 	btn_details.disabled = false
 	btn_next.visible = false
-	status_label.text = TXT_DECIDE_NEUTRAL
-	risk_label.text = TXT_DETECT_WINDOW % _format_num(maxf(0.0, t_detect - detection_elapsed))
+	_set_status_i18n("radio.c.status.decide_neutral", TXT_DECIDE_NEUTRAL, Color(0.85, 0.85, 0.85, 1.0))
+	risk_label.text = _tr("radio.c.status.detect_window", "\u041e\u043a\u043d\u043e \u0434\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438: {seconds} \u0441", {"seconds": _format_num(maxf(0.0, t_detect - detection_elapsed))})
 	_apply_phantom_preview()
 
 func _set_exec_state_ui() -> void:
@@ -726,7 +771,7 @@ func _apply_estimate_delta(delta: float) -> void:
 
 func _set_estimate(value_sec: float) -> void:
 	t_est = clampf(value_sec, MIN_ESTIMATE, MAX_ESTIMATE)
-	estimate_value_label.text = "t = %s %s" % [_format_num(t_est), SYMBOL_SEC]
+	estimate_value_label.text = _tr("radio.c.runtime.estimate", "t = {value} {unit}", {"value": _format_num(t_est), "unit": _display_unit_label(SYMBOL_SEC)})
 	_apply_phantom_preview()
 	_update_details_text()
 
@@ -750,7 +795,7 @@ func _on_analyze_pressed() -> void:
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec < analyze_cooldown_until:
 		var left: float = analyze_cooldown_until - now_sec
-		status_label.text = "СТАТУС: Анализ будет доступен через %.1f %s." % [left, SYMBOL_SEC]
+		_set_status_i18n("radio.c.status.analyze_cooldown", "СТАТУС: Анализ будет доступен через {seconds} {unit}.", COLOR_SAMPLE_WARN, {"seconds": "%.1f" % left, "unit": _display_unit_label(SYMBOL_SEC)})
 		return
 	analyze_count += 1
 	if check_ms < 0:
@@ -774,7 +819,7 @@ func _on_risk_pressed() -> void:
 	transfer_started = true
 	transfer_elapsed = 0.0
 	_set_exec_state_ui()
-	status_label.text = TXT_EXEC_STARTED
+	_set_status_i18n("radio.c.status.exec_started", TXT_EXEC_STARTED, Color(0.85, 0.85, 0.85, 1.0))
 	_update_details_text()
 
 func _on_abort_pressed() -> void:
@@ -796,7 +841,7 @@ func _on_units_pressed() -> void:
 		return
 	_register_first_action()
 	used_units = true
-	status_label.text = TXT_UNITS_HINT
+	_set_status_i18n("radio.c.status.units_hint", TXT_UNITS_HINT, Color(0.55, 0.85, 1.0, 1.0))
 	_update_details_text()
 
 func _on_details_pressed() -> void:
@@ -833,25 +878,25 @@ func _update_runtime_ui() -> void:
 	if t_detect > 0.0:
 		detect_ratio = clampf(detection_elapsed / t_detect, 0.0, 1.0)
 	detection_bar.value = detect_ratio * 100.0
-	detect_countdown.text = "%s %s" % [_format_num(maxf(0.0, t_detect - detection_elapsed)), SYMBOL_SEC]
+	detect_countdown.text = _tr("radio.c.runtime.countdown_plain", "{value} {unit}", {"value": _format_num(maxf(0.0, t_detect - detection_elapsed)), "unit": _display_unit_label(SYMBOL_SEC)})
 	if state != State.DONE:
-		risk_label.text = TXT_DETECT_WINDOW % _format_num(maxf(0.0, t_detect - detection_elapsed))
+		risk_label.text = _tr("radio.c.status.detect_window", "\u041e\u043a\u043d\u043e \u0434\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438: {seconds} \u0441", {"seconds": _format_num(maxf(0.0, t_detect - detection_elapsed))})
 
 	if decision == Decision.RISK and transfer_started and t_true > 0.0:
 		var transfer_ratio: float = clampf(transfer_elapsed / t_true, 0.0, 1.0)
 		transfer_bar.value = transfer_ratio * 100.0
-		transfer_countdown.text = "%s %s" % [_format_num(maxf(0.0, t_true - transfer_elapsed)), SYMBOL_SEC]
+		transfer_countdown.text = _tr("radio.c.runtime.countdown_plain", "{value} {unit}", {"value": _format_num(maxf(0.0, t_true - transfer_elapsed)), "unit": _display_unit_label(SYMBOL_SEC)})
 	else:
 		if state == State.TUNE or state == State.ANALYZE_LOCK or state == State.DECIDE:
 			_apply_phantom_preview()
 		else:
 			transfer_bar.value = 0.0
-			transfer_countdown.text = "\u043e\u0436\u0438\u0434\u0430\u043d\u0438\u0435"
+			transfer_countdown.text = _tr("radio.c.runtime.waiting", "\u043e\u0436\u0438\u0434\u0430\u043d\u0438\u0435")
 
 func _apply_phantom_preview() -> void:
 	var phantom_ratio: float = clampf(t_est / maxf(_t_true_max, 0.1), 0.0, 1.0)
 	transfer_bar.value = phantom_ratio * 100.0
-	transfer_countdown.text = "\u043e\u0446\u0435\u043d\u043a\u0430: %s %s" % [_format_num(t_est), SYMBOL_SEC]
+	transfer_countdown.text = _tr("radio.c.runtime.estimate_countdown", "\u043e\u0446\u0435\u043d\u043a\u0430: {value} {unit}", {"value": _format_num(t_est), "unit": _display_unit_label(SYMBOL_SEC)})
 
 func _finalize_trial(result: Outcome, decision_label: String) -> void:
 	if state == State.DONE:
@@ -865,32 +910,33 @@ func _finalize_trial(result: Outcome, decision_label: String) -> void:
 	var status_color: Color = COLOR_SAMPLE_FAIL
 	match outcome:
 		Outcome.SUCCESS_SEND:
-			status_label.text = TXT_OUT_SUCCESS
+			_set_status_i18n("radio.c.status.out_success", TXT_OUT_SUCCESS, COLOR_SAMPLE_SUCCESS)
 			sample_color = COLOR_SAMPLE_SUCCESS
 			status_color = COLOR_SAMPLE_SUCCESS
 		Outcome.INTERCEPTED:
 			if decision == Decision.RISK:
 				if t_true > t_detect + EPS:
-					status_label.text = TXT_RISK_FAIL_NO_TIME % [t_true, t_detect]
+					_set_status_i18n("radio.c.status.risk_fail_no_time", "\u041e\u0428\u0418\u0411\u041a\u0410 \u0420\u0415\u0428\u0415\u041d\u0418\u042f!\n\u0420\u0430\u0441\u0447\u0451\u0442 \u0432\u0440\u0435\u043c\u0435\u043d\u0438: {true_sec} \u0441\u0435\u043a.\n\u0414\u043e \u043f\u0435\u043b\u0435\u043d\u0433\u0430\u0446\u0438\u0438: {detect_sec} \u0441\u0435\u043a.\n\u0412\u0440\u0435\u043c\u0435\u043d\u0438 \u043d\u0435 \u0445\u0432\u0430\u0442\u0430\u043b\u043e! \u0412 \u0442\u0430\u043a\u0438\u0445 \u0441\u043b\u0443\u0447\u0430\u044f\u0445 \u043d\u0430\u0436\u0438\u043c\u0430\u0439\u0442\u0435 \u00ab\u0421\u0411\u0420\u041e\u0421\u00bb.", COLOR_SAMPLE_FAIL, {"true_sec": "%.1f" % t_true, "detect_sec": "%.1f" % t_detect})
 				else:
-					status_label.text = TXT_RISK_FAIL_ARITH
+					_set_status_i18n("radio.c.status.risk_fail_arith", TXT_RISK_FAIL_ARITH, COLOR_SAMPLE_FAIL)
 			else:
-				status_label.text = TXT_OUT_INTERCEPT
+				_set_status_i18n("radio.c.status.out_intercept", TXT_OUT_INTERCEPT, COLOR_SAMPLE_FAIL)
 			sample_color = COLOR_SAMPLE_FAIL
 			status_color = COLOR_SAMPLE_FAIL
 		Outcome.SAFE_ABORT:
-			status_label.text = TXT_OUT_SAFE_ABORT
+			_set_status_i18n("radio.c.status.out_safe_abort", TXT_OUT_SAFE_ABORT, COLOR_SAMPLE_SUCCESS)
 			sample_color = COLOR_SAMPLE_SUCCESS
 			status_color = COLOR_SAMPLE_SUCCESS
 		Outcome.MISSED_WINDOW:
-			status_label.text = TXT_OUT_MISSED
+			_set_status_i18n("radio.c.status.out_missed", TXT_OUT_MISSED, COLOR_SAMPLE_WARN)
 			sample_color = COLOR_SAMPLE_WARN
 			status_color = COLOR_SAMPLE_WARN
 		_:
-			status_label.text = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u043e"
+			_set_status_i18n("radio.c.status.completed", "\u0421\u0422\u0410\u0422\u0423\u0421: \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u043e", COLOR_SAMPLE_FAIL)
 			sample_color = COLOR_SAMPLE_FAIL
 			status_color = COLOR_SAMPLE_FAIL
-	status_label.add_theme_color_override("font_color", status_color)
+	_status_i18n_color = status_color
+	_refresh_status_i18n()
 
 	_update_sample_slot(sample_color)
 	_send_trial_payload(is_success, decision_label)
@@ -1014,59 +1060,83 @@ func _outcome_to_text(current_outcome: Outcome) -> String:
 		_:
 			return "NONE"
 
+func _outcome_label(current_outcome: Outcome) -> String:
+	match current_outcome:
+		Outcome.SUCCESS_SEND:
+			return _tr("radio.c.outcome.success", "SUCCESS_SEND")
+		Outcome.INTERCEPTED:
+			return _tr("radio.c.outcome.intercepted", "INTERCEPTED")
+		Outcome.SAFE_ABORT:
+			return _tr("radio.c.outcome.safe_abort", "SAFE_ABORT")
+		Outcome.MISSED_WINDOW:
+			return _tr("radio.c.outcome.missed", "MISSED_WINDOW")
+		_:
+			return _tr("radio.c.outcome.none", "NONE")
+
+func _display_unit_label(unit_code: String) -> String:
+	match unit_code:
+		UNIT_GB:
+			return _tr("radio.c.unit.gb", UNIT_GB)
+		UNIT_MBIT_SEC:
+			return _tr("radio.c.unit.mbit_sec", UNIT_MBIT_SEC)
+		SYMBOL_SEC:
+			return _tr("radio.c.unit.sec", SYMBOL_SEC)
+		_:
+			return _tr("radio.c.unit.mb", UNIT_MB)
+
 func _update_details_text() -> void:
 	var lines: Array[String] = []
-	lines.append("Формула: t = I / v")
-	lines.append("Дано: объём %s %s, скорость %s %s" % [
-		_format_num(file_size_value),
-		file_size_unit,
-		_format_num(speed_mbit),
-		UNIT_MBIT_SEC
-	])
-	lines.append("До пеленгации: %s %s" % [_format_num(t_detect), SYMBOL_SEC])
-	lines.append("Ваша оценка: t_est = %s %s" % [_format_num(t_est), SYMBOL_SEC])
+	lines.append(_tr("radio.c.details.formula", "Формула: t = I / v"))
+	lines.append(_tr("radio.c.details.given", "Дано: объём {size} {size_unit}, скорость {speed} {speed_unit}", {
+		"size": _format_num(file_size_value),
+		"size_unit": _display_unit_label(file_size_unit),
+		"speed": _format_num(speed_mbit),
+		"speed_unit": _display_unit_label(UNIT_MBIT_SEC)
+	}))
+	lines.append(_tr("radio.c.details.detect", "До пеленгации: {value} {unit}", {"value": _format_num(t_detect), "unit": _display_unit_label(SYMBOL_SEC)}))
+	lines.append(_tr("radio.c.details.estimate", "Ваша оценка: t_est = {value} {unit}", {"value": _format_num(t_est), "unit": _display_unit_label(SYMBOL_SEC)}))
 	if used_units:
-		lines.append("Подсказка единиц использована.")
+		lines.append(_tr("radio.c.details.used_units", "Подсказка единиц использована."))
 	if state == State.DONE:
 		var size_mb: float = file_size_value if file_size_unit == UNIT_MB else file_size_value * 1024.0
 		var i_mbit: float = size_mb * 8.0
 		if file_size_unit == UNIT_GB:
-			lines.append("Конвертация: %s ГБ × 1024 = %s МБ" % [_format_num(file_size_value), _format_num(size_mb)])
-		lines.append("Конвертация: %s МБ × 8 = %s Мбит" % [_format_num(size_mb), _format_num(i_mbit)])
-		lines.append("t_true = %s / %s = %s %s" % [
-			_format_num(i_mbit),
-			_format_num(speed_mbit),
-			_format_num(t_true),
-			SYMBOL_SEC
-		])
-		var decision_text: String = "НЕ ПРИНЯТО"
+			lines.append(_tr("radio.c.details.gb_to_mb", "Конвертация: {gb} ГБ × 1024 = {mb} МБ", {"gb": _format_num(file_size_value), "mb": _format_num(size_mb)}))
+		lines.append(_tr("radio.c.details.mb_to_mbit", "Конвертация: {mb} МБ × 8 = {mbit} Мбит", {"mb": _format_num(size_mb), "mbit": _format_num(i_mbit)}))
+		lines.append(_tr("radio.c.details.true_time", "t_true = {i_mbit} / {speed} = {value} {unit}", {
+			"i_mbit": _format_num(i_mbit),
+			"speed": _format_num(speed_mbit),
+			"value": _format_num(t_true),
+			"unit": _display_unit_label(SYMBOL_SEC)
+		}))
+		var decision_text: String = _tr("radio.c.details.decision_none", "НЕ ПРИНЯТО")
 		if decision == Decision.RISK:
-			decision_text = "РИСК"
+			decision_text = _tr("radio.c.details.decision_risk", "РИСК")
 		elif decision == Decision.ABORT:
-			decision_text = "СБРОС"
-		lines.append("Решение: %s" % decision_text)
-		lines.append("Исход: %s" % _outcome_to_text(outcome))
+			decision_text = _tr("radio.c.details.decision_abort", "СБРОС")
+		lines.append(_tr("radio.c.details.decision", "Решение: {value}", {"value": decision_text}))
+		lines.append(_tr("radio.c.details.outcome", "Исход: {value}", {"value": _outcome_label(outcome)}))
 		var decision_elapsed_ms: int = (Time.get_ticks_msec() - start_ms) if decision_ms < 0 else (decision_ms - start_ms)
-		lines.append("Разбор: %s" % _describe_error_type(_classify_error_type(decision_elapsed_ms)))
+		lines.append(_tr("radio.c.details.analysis", "Разбор: {value}", {"value": _describe_error_type(_classify_error_type(decision_elapsed_ms))}))
 	else:
-		lines.append("t_true скрыто до завершения.")
-		lines.append("После результата здесь появится разбор ошибки.")
+		lines.append(_tr("radio.c.details.hidden_true", "t_true скрыто до завершения."))
+		lines.append(_tr("radio.c.details.after_result", "После результата здесь появится разбор ошибки."))
 	details_sheet_text.text = "\n".join(lines)
 
 func _describe_error_type(error_type: String) -> String:
 	match error_type:
 		"forgot_x8":
-			return "Забыто умножение на 8 при переводе МБ в Мбит."
+			return _tr("radio.c.error.forgot_x8", "Забыто умножение на 8 при переводе МБ в Мбит.")
 		"forgot_x1024":
-			return "Забыто умножение на 1024 при переводе ГБ в МБ."
+			return _tr("radio.c.error.forgot_x1024", "Забыто умножение на 1024 при переводе ГБ в МБ.")
 		"arithmetic_error":
-			return "Ошибка вычисления времени передачи."
+			return _tr("radio.c.error.arithmetic", "Ошибка вычисления времени передачи.")
 		"hesitation":
-			return "Промедление: решение принято слишком поздно."
+			return _tr("radio.c.error.hesitation", "Промедление: решение принято слишком поздно.")
 		"assisted":
-			return "Использована подсказка по единицам."
+			return _tr("radio.c.error.assisted", "Использована подсказка по единицам.")
 		_:
-			return "Критичных ошибок расчёта не выявлено."
+			return _tr("radio.c.error.none", "Критичных ошибок расчёта не выявлено.")
 
 func _format_num(value: float) -> String:
 	return "%.1f" % value
@@ -1140,6 +1210,7 @@ func _pick_from_float_pool(pool: Array[float], fallback_value: float) -> float:
 	return pool[randi() % pool.size()]
 
 func _on_stability_changed(new_value: float, _change: float) -> void:
-	stability_label.text = "\u0421\u0422\u0410\u0411\u0418\u041b\u042c\u041d\u041e\u0421\u0422\u042c: %d%%" % int(new_value)
+	_current_stability = new_value
+	stability_label.text = _tr("radio.c.status.stability", "\u0421\u0422\u0410\u0411\u0418\u041b\u042c\u041d\u041e\u0421\u0422\u042c: {value}%", {"value": int(new_value)})
 	if noir_overlay != null and noir_overlay.has_method("set_danger_level"):
 		noir_overlay.call("set_danger_level", new_value)
