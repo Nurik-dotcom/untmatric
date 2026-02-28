@@ -106,10 +106,14 @@ var is_safe_mode := false
 var is_code_ready := false
 var variant_hash := ""
 var task_session: Dictionary = {}
+var _current_session_id := ""
 
 var sfx_player: AudioStreamPlayer
 
 func _ready() -> void:
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+
 	_setup_runtime_controls()
 	_apply_theme()
 	_configure_overlay_shader()
@@ -120,7 +124,7 @@ func _ready() -> void:
 	_apply_layout_mode()
 
 	if not _load_levels_from_json():
-		_show_boot_error("Не удалось загрузить уровни квеста подозреваемого.")
+		_show_boot_error(_tr("suspect.a.error.load_failed", "Не удалось загрузить уровни квеста подозреваемого."))
 		return
 
 	if levels.size() != 18:
@@ -129,46 +133,68 @@ func _ready() -> void:
 	GlobalMetrics.current_level_index = 0
 	_load_level(0)
 
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and is_node_ready():
 		_apply_layout_mode()
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var opts: Dictionary = params.duplicate(true)
+	opts["default"] = default_text
+	return I18n.tr_key(key, opts)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_localized_texts()
 
 func _apply_theme() -> void:
 	theme = THEME_NOIR
 
 func _setup_runtime_controls() -> void:
 	popup_fx_select.clear()
-	popup_fx_select.add_item("Низко", FX_ID_LOW)
-	popup_fx_select.add_item("Высоко", FX_ID_HIGH)
+	popup_fx_select.add_item(_tr("suspect.a.settings.fx.low", "Низко"), FX_ID_LOW)
+	popup_fx_select.add_item(_tr("suspect.a.settings.fx.high", "Высоко"), FX_ID_HIGH)
 	popup_fx_select.select(FX_ID_HIGH if fx_quality == "high" else FX_ID_LOW)
 
 	popup_overlay_select.clear()
-	popup_overlay_select.add_item("Карандаш", OVERLAY_ID_PENCIL)
-	popup_overlay_select.add_item("CRT", OVERLAY_ID_CRT)
+	popup_overlay_select.add_item(_tr("suspect.a.settings.overlay.pencil", "Карандаш"), OVERLAY_ID_PENCIL)
+	popup_overlay_select.add_item(_tr("suspect.a.settings.overlay.crt", "CRT"), OVERLAY_ID_CRT)
 	popup_overlay_select.select(OVERLAY_ID_PENCIL if overlay_mode == "pencil" else OVERLAY_ID_CRT)
 
 func _apply_localized_texts() -> void:
-	btn_quest_back.text = "НАЗАД"
-	btn_settings.text = "НАСТР"
-	btn_analyze.text = "АНАЛИЗ"
-	btn_enter.text = "ВВОД"
-	btn_next.text = "ДАЛЕЕ"
-	btn_close_diag.text = "ЗАКРЫТЬ"
-	popup_close.text = "ЗАКРЫТЬ"
+	popup_fx_select.set_item_text(0, _tr("suspect.a.settings.fx.low", "Низко"))
+	popup_fx_select.set_item_text(1, _tr("suspect.a.settings.fx.high", "Высоко"))
+
+	popup_overlay_select.set_item_text(0, _tr("suspect.a.settings.overlay.pencil", "Карандаш"))
+	popup_overlay_select.set_item_text(1, _tr("suspect.a.settings.overlay.crt", "CRT"))
+
+	btn_quest_back.text = _tr("suspect.common.btn.back", "НАЗАД")
+	btn_settings.text = _tr("suspect.common.btn.settings", "НАСТР")
+	btn_analyze.text = _tr("suspect.common.btn.analyze", "АНАЛИЗ")
+	btn_enter.text = _tr("suspect.common.btn.enter", "ВВОД")
+	btn_next.text = _tr("suspect.common.btn.next", "ДАЛЕЕ")
+	btn_close_diag.text = _tr("suspect.common.btn.close", "ЗАКРЫТЬ")
+	popup_close.text = _tr("suspect.common.btn.close", "ЗАКРЫТЬ")
 
 	var popup_title: Label = inspector_popup.get_node_or_null("Root/LblTitle") as Label
 	if popup_title != null:
-		popup_title.text = "НАСТРОЙКИ"
+		popup_title.text = _tr("suspect.a.settings.title", "НАСТРОЙКИ")
 	var popup_fx_title: Label = inspector_popup.get_node_or_null("Root/SettingsGrid/LblFx") as Label
 	if popup_fx_title != null:
-		popup_fx_title.text = "ЭФФЕКТЫ"
+		popup_fx_title.text = _tr("suspect.a.settings.fx", "ЭФФЕКТЫ")
 	var popup_overlay_title: Label = inspector_popup.get_node_or_null("Root/SettingsGrid/LblOverlay") as Label
 	if popup_overlay_title != null:
-		popup_overlay_title.text = "НАЛОЖЕНИЕ"
+		popup_overlay_title.text = _tr("suspect.a.settings.overlay", "НАЛОЖЕНИЕ")
 
 	var diag_title: Label = diag_panel.get_node_or_null("VBoxContainer/Label") as Label
 	if diag_title != null:
-		diag_title.text = "ДИАГНОСТИКА"
+		diag_title.text = _tr("suspect.a.diag.title", "ДИАГНОСТИКА")
+
+	if state == State.BRIEFING or state == State.SOLVING:
+		_update_briefing_card()
+		_update_headers()
 
 func _configure_overlay_shader() -> void:
 	if noir_overlay != null and noir_overlay.has_method("set_overlay_mode"):
@@ -355,6 +381,11 @@ func _localized_briefing_text(task: Dictionary) -> String:
 		return str(BRIEFING_RU_MAP[source])
 	return source
 
+func _update_headers() -> void:
+	lbl_clue_title.text = _tr("suspect.a.header.clue_title", "УЛИКА #{id}", {"id": str(current_task.get("id", "A-00"))})
+	lbl_session.text = _tr("suspect.a.header.session", "СЕССИЯ {id}", {"id": _current_session_id})
+	lbl_attempts.text = _tr("suspect.a.status.attempts", "ПОПЫТКИ: {current}/{max}", {"current": wrong_count, "max": MAX_ATTEMPTS})
+
 func _load_level(idx: int) -> void:
 	if levels.is_empty():
 		return
@@ -384,12 +415,11 @@ func _load_level(idx: int) -> void:
 	is_code_ready = false
 	task_finished = false
 	task_result_sent = false
+	_current_session_id = "%04d" % (randi() % 10000)
 
-	lbl_clue_title.text = "УЛИКА #%s" % str(current_task.get("id", "A-00"))
-	lbl_session.text = "СЕССИЯ %04d" % (randi() % 10000)
-	lbl_status.text = "Загрузка кода подозреваемого..."
+	_update_headers()
+	lbl_status.text = _tr("suspect.a.status.loading", "Загрузка кода подозреваемого...")
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_NEUTRAL)
-	lbl_attempts.text = "ПОПЫТКИ: 0/%d" % MAX_ATTEMPTS
 	decrypt_bar.value = float(current_level_idx) / maxf(1.0, float(levels.size() - 1)) * 100.0
 	energy_bar.value = energy
 
@@ -410,34 +440,34 @@ func _load_level(idx: int) -> void:
 	state = State.SOLVING
 	btn_enter.disabled = false
 	btn_analyze.disabled = false
-	lbl_status.text = "Вычислите итоговое s и введите ответ."
+	lbl_status.text = _tr("suspect.a.status.solving", "Вычислите итоговое s и введите ответ.")
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_READY)
 
 func _update_briefing_card() -> void:
-	briefing_goal.text = "Цель: найти итоговое значение s"
+	briefing_goal.text = _tr("suspect.a.briefing.goal", "Цель: найти итоговое значение s")
 
 	var hints: Array[String] = []
 	for tag_var in current_task.get("topic_tags", []):
 		var tag: String = str(tag_var)
 		match tag:
 			"range_stop_exclusive":
-				hints.append("stop в range не включается")
+				hints.append(_tr("suspect.a.hint.range_stop", "stop в range не включается"))
 			"while_boundary":
-				hints.append("проверьте границу while")
+				hints.append(_tr("suspect.a.hint.while_boundary", "проверьте границу while"))
 			"break_flow":
-				hints.append("break завершает цикл")
+				hints.append(_tr("suspect.a.hint.break_flow", "break завершает цикл"))
 			"continue_flow":
-				hints.append("continue пропускает шаг")
+				hints.append(_tr("suspect.a.hint.continue_flow", "continue пропускает шаг"))
 			"list_iteration":
-				hints.append("список задает явный порядок")
+				hints.append(_tr("suspect.a.hint.list_iteration", "список задает явный порядок"))
 			"step_trap":
-				hints.append("проверьте шаг range")
+				hints.append(_tr("suspect.a.hint.step_trap", "проверьте шаг range"))
 			_:
-				hints.append(tag.replace("_", " "))
+				hints.append(_tr("suspect.a.hint.fallback", tag.replace("_", " ")))
 	if hints.is_empty():
-		hints.append("проверьте границы цикла и условие")
+		hints.append(_tr("suspect.a.hint.default", "проверьте границы цикла и условие"))
 
-	briefing_hint.text = "Подсказка: %s" % ", ".join(hints.slice(0, min(2, hints.size())))
+	briefing_hint.text = _tr("suspect.a.briefing.hint", "Подсказка: {hints}", {"hints": ", ".join(hints.slice(0, min(2, hints.size())))})
 
 func _typewrite_code(lines: Array) -> void:
 	for line_var in lines:
@@ -491,7 +521,7 @@ func _on_enter_pressed() -> void:
 		_play_sfx(AUDIO_ERROR)
 		_trigger_glitch()
 		_shake_screen()
-		lbl_status.text = "Некорректный формат ввода."
+		lbl_status.text = _tr("suspect.a.status.invalid_input", "Некорректный формат ввода.")
 		lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
 		(task_session["attempts"] as Array).append({
 			"kind": "numpad",
@@ -544,7 +574,7 @@ func _on_enter_pressed() -> void:
 
 func _handle_success_feedback() -> void:
 	state = State.FEEDBACK_SUCCESS
-	lbl_status.text = "Верно. Значение подтверждено."
+	lbl_status.text = _tr("suspect.a.status.success", "Верно. Значение подтверждено.")
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_SUCCESS)
 	btn_enter.disabled = true
 	btn_analyze.disabled = true
@@ -555,8 +585,8 @@ func _handle_success_feedback() -> void:
 
 func _handle_fail_feedback() -> void:
 	wrong_count += 1
-	lbl_attempts.text = "ПОПЫТКИ: %d/%d" % [wrong_count, MAX_ATTEMPTS]
-	lbl_status.text = "Неверно. Попробуйте еще раз."
+	lbl_attempts.text = _tr("suspect.a.status.attempts", "ПОПЫТКИ: {current}/{max}", {"current": wrong_count, "max": MAX_ATTEMPTS})
+	lbl_status.text = _tr("suspect.a.status.fail", "Неверно. Попробуйте еще раз.")
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
 
 	var wrong_penalty: int = int(current_task.get("economy", {}).get("wrong", 10))
@@ -577,7 +607,7 @@ func _trigger_safe_mode() -> void:
 	is_safe_mode = true
 	btn_enter.disabled = true
 	btn_next.visible = true
-	lbl_status.text = "Превышен лимит ошибок. Включен безопасный режим."
+	lbl_status.text = _tr("suspect.a.status.safe_mode", "Превышен лимит ошибок. Включен безопасный режим.")
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_WARN)
 
 	btn_analyze.disabled = false
@@ -594,7 +624,7 @@ func _on_analyze_pressed(free: bool = false) -> void:
 	if not free:
 		var analyze_cost: int = int(current_task.get("economy", {}).get("analyze", 20))
 		if energy < float(analyze_cost):
-			lbl_status.text = "Недостаточно энергии для анализа."
+			lbl_status.text = _tr("suspect.a.status.no_energy", "Недостаточно энергии для анализа.")
 			lbl_status.add_theme_color_override("font_color", STATUS_COLOR_WARN)
 			_play_sfx(AUDIO_ERROR)
 			return
