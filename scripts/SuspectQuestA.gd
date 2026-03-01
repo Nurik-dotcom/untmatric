@@ -12,26 +12,6 @@ const FX_ID_LOW := 0
 const FX_ID_HIGH := 1
 const OVERLAY_ID_PENCIL := 0
 const OVERLAY_ID_CRT := 1
-const BRIEFING_RU_MAP := {
-	"Sum a simple range window.": "Просуммируйте простое окно range.",
-	"Filter inside range by modulo.": "Отфильтруйте значения в range по модулю.",
-	"Iterate over explicit list values.": "Пройдите цикл по явному списку значений.",
-	"while loop with inclusive growth.": "Цикл while с возрастающей границей.",
-	"while loop with decrement step.": "Цикл while с шагом убывания.",
-	"range with explicit step.": "range с явным шагом.",
-	"while boundary with non-unit increment.": "Граница while с шагом больше единицы.",
-	"while loop as repeated transform.": "while как повторяющееся преобразование.",
-	"Count range width correctly.": "Правильно посчитайте ширину range.",
-	"Descending range with step trap.": "Убывающий range с ловушкой шага.",
-	"continue skips current iteration.": "continue пропускает текущую итерацию.",
-	"break exits loop immediately.": "break немедленно завершает цикл.",
-	"while with inner condition window.": "while с внутренним окном условия.",
-	"while with branch inside loop.": "while с ветвлением внутри цикла.",
-	"Descending range stop trap.": "Ловушка границы stop в убывающем range.",
-	"Range step and multiplication trap.": "Ловушка шага range и умножения.",
-	"Compound OR branch on explicit list.": "Составное OR-условие по явному списку.",
-	"Compound AND boundary over list.": "Составная AND-граница по списку."
-}
 const PHONE_PORTRAIT_MAX_WIDTH := 560.0
 const PHONE_LANDSCAPE_MAX_HEIGHT := 760.0
 
@@ -40,6 +20,11 @@ const STATUS_COLOR_READY := Color(0.93, 0.93, 0.91)
 const STATUS_COLOR_FAIL := Color(0.82, 0.82, 0.80)
 const STATUS_COLOR_WARN := Color(0.78, 0.78, 0.76)
 const STATUS_COLOR_SUCCESS := Color(0.97, 0.97, 0.95)
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
 
 enum State {
 	INIT,
@@ -110,17 +95,18 @@ var task_session: Dictionary = {}
 var sfx_player: AudioStreamPlayer
 
 func _ready() -> void:
-	_setup_runtime_controls()
 	_apply_theme()
 	_configure_overlay_shader()
 	_init_audio_player()
 	_connect_signals()
-	_apply_localized_texts()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+	_apply_i18n()
 	_apply_mobile_min_sizes()
 	_apply_layout_mode()
 
 	if not _load_levels_from_json():
-		_show_boot_error("Не удалось загрузить уровни квеста подозреваемого.")
+		_show_boot_error(_tr("suspect.a.status.boot_error", "Failed to load suspect quest levels."))
 		return
 
 	if levels.size() != 18:
@@ -128,6 +114,13 @@ func _ready() -> void:
 
 	GlobalMetrics.current_level_index = 0
 	_load_level(0)
+
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and is_node_ready():
@@ -137,38 +130,41 @@ func _apply_theme() -> void:
 	theme = THEME_NOIR
 
 func _setup_runtime_controls() -> void:
-	popup_fx_select.clear()
-	popup_fx_select.add_item("Низко", FX_ID_LOW)
-	popup_fx_select.add_item("Высоко", FX_ID_HIGH)
 	popup_fx_select.select(FX_ID_HIGH if fx_quality == "high" else FX_ID_LOW)
-
-	popup_overlay_select.clear()
-	popup_overlay_select.add_item("Карандаш", OVERLAY_ID_PENCIL)
-	popup_overlay_select.add_item("CRT", OVERLAY_ID_CRT)
 	popup_overlay_select.select(OVERLAY_ID_PENCIL if overlay_mode == "pencil" else OVERLAY_ID_CRT)
 
-func _apply_localized_texts() -> void:
-	btn_quest_back.text = "НАЗАД"
-	btn_settings.text = "НАСТР"
-	btn_analyze.text = "АНАЛИЗ"
-	btn_enter.text = "ВВОД"
-	btn_next.text = "ДАЛЕЕ"
-	btn_close_diag.text = "ЗАКРЫТЬ"
-	popup_close.text = "ЗАКРЫТЬ"
+func _apply_i18n() -> void:
+	btn_quest_back.text = _tr("suspect.a.btn.back", "BACK")
+	btn_settings.text = _tr("suspect.a.btn.settings", "SETT")
+	btn_analyze.text = _tr("suspect.a.btn.analyze", "ANALYZE")
+	btn_enter.text = _tr("suspect.a.btn.enter", "ENTER")
+	btn_next.text = _tr("suspect.a.btn.next", "NEXT")
+	btn_close_diag.text = _tr("suspect.a.btn.close", "CLOSE")
+	popup_close.text = _tr("suspect.a.btn.close", "CLOSE")
 
 	var popup_title: Label = inspector_popup.get_node_or_null("Root/LblTitle") as Label
 	if popup_title != null:
-		popup_title.text = "НАСТРОЙКИ"
+		popup_title.text = _tr("suspect.a.ui.settings_title", "SETTINGS")
 	var popup_fx_title: Label = inspector_popup.get_node_or_null("Root/SettingsGrid/LblFx") as Label
 	if popup_fx_title != null:
-		popup_fx_title.text = "ЭФФЕКТЫ"
+		popup_fx_title.text = _tr("suspect.a.ui.effects", "EFFECTS")
 	var popup_overlay_title: Label = inspector_popup.get_node_or_null("Root/SettingsGrid/LblOverlay") as Label
 	if popup_overlay_title != null:
-		popup_overlay_title.text = "НАЛОЖЕНИЕ"
+		popup_overlay_title.text = _tr("suspect.a.ui.overlay", "OVERLAY")
 
 	var diag_title: Label = diag_panel.get_node_or_null("VBoxContainer/Label") as Label
 	if diag_title != null:
-		diag_title.text = "ДИАГНОСТИКА"
+		diag_title.text = _tr("suspect.a.ui.diagnostics", "DIAGNOSTICS")
+
+	popup_fx_select.clear()
+	popup_fx_select.add_item(_tr("suspect.a.settings.fx_low", "Low"), FX_ID_LOW)
+	popup_fx_select.add_item(_tr("suspect.a.settings.fx_high", "High"), FX_ID_HIGH)
+	popup_fx_select.select(FX_ID_HIGH if fx_quality == "high" else FX_ID_LOW)
+
+	popup_overlay_select.clear()
+	popup_overlay_select.add_item(_tr("suspect.a.settings.overlay_pencil", "Pencil"), OVERLAY_ID_PENCIL)
+	popup_overlay_select.add_item("CRT", OVERLAY_ID_CRT)
+	popup_overlay_select.select(OVERLAY_ID_PENCIL if overlay_mode == "pencil" else OVERLAY_ID_CRT)
 
 func _configure_overlay_shader() -> void:
 	if noir_overlay != null and noir_overlay.has_method("set_overlay_mode"):
@@ -351,9 +347,8 @@ func _show_boot_error(text: String) -> void:
 
 func _localized_briefing_text(task: Dictionary) -> String:
 	var source: String = str(task.get("briefing", "")).strip_edges()
-	if BRIEFING_RU_MAP.has(source):
-		return str(BRIEFING_RU_MAP[source])
-	return source
+	var task_id: String = str(task.get("id", "unknown"))
+	return _tr("suspect.a.level.%s.briefing" % task_id, source)
 
 func _load_level(idx: int) -> void:
 	if levels.is_empty():
@@ -385,11 +380,11 @@ func _load_level(idx: int) -> void:
 	task_finished = false
 	task_result_sent = false
 
-	lbl_clue_title.text = "УЛИКА #%s" % str(current_task.get("id", "A-00"))
-	lbl_session.text = "СЕССИЯ %04d" % (randi() % 10000)
-	lbl_status.text = "Загрузка кода подозреваемого..."
+	lbl_clue_title.text = _tr("suspect.a.labels.clue_title", "CLUE #{id}", {"id": str(current_task.get("id", "A-00"))})
+	lbl_session.text = _tr("suspect.a.labels.session", "SESSION {n}", {"n": "%04d" % (randi() % 10000)})
+	lbl_status.text = _tr("suspect.a.status.loading", "Loading suspect code...")
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_NEUTRAL)
-	lbl_attempts.text = "ПОПЫТКИ: 0/%d" % MAX_ATTEMPTS
+	lbl_attempts.text = _tr("suspect.a.labels.attempts_init", "ATTEMPTS: 0/{max}", {"max": MAX_ATTEMPTS})
 	decrypt_bar.value = float(current_level_idx) / maxf(1.0, float(levels.size() - 1)) * 100.0
 	energy_bar.value = energy
 
@@ -410,34 +405,35 @@ func _load_level(idx: int) -> void:
 	state = State.SOLVING
 	btn_enter.disabled = false
 	btn_analyze.disabled = false
-	lbl_status.text = "Вычислите итоговое s и введите ответ."
+	lbl_status.text = _tr("suspect.a.status.ready", "Calculate the final s and enter your answer.")
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_READY)
 
 func _update_briefing_card() -> void:
-	briefing_goal.text = "Цель: найти итоговое значение s"
+	briefing_goal.text = _tr("suspect.a.labels.goal", "Goal: find the final value of s")
 
 	var hints: Array[String] = []
 	for tag_var in current_task.get("topic_tags", []):
 		var tag: String = str(tag_var)
 		match tag:
 			"range_stop_exclusive":
-				hints.append("stop в range не включается")
+				hints.append(_tr("suspect.a.hint.range_stop", "stop in range is exclusive"))
 			"while_boundary":
-				hints.append("проверьте границу while")
+				hints.append(_tr("suspect.a.hint.while_boundary", "check the while boundary"))
 			"break_flow":
-				hints.append("break завершает цикл")
+				hints.append(_tr("suspect.a.hint.break_flow", "break exits the loop"))
 			"continue_flow":
-				hints.append("continue пропускает шаг")
+				hints.append(_tr("suspect.a.hint.continue_flow", "continue skips the step"))
 			"list_iteration":
-				hints.append("список задает явный порядок")
+				hints.append(_tr("suspect.a.hint.list_iteration", "list defines explicit order"))
 			"step_trap":
-				hints.append("проверьте шаг range")
+				hints.append(_tr("suspect.a.hint.step_trap", "check the range step"))
 			_:
 				hints.append(tag.replace("_", " "))
 	if hints.is_empty():
-		hints.append("проверьте границы цикла и условие")
+		hints.append(_tr("suspect.a.hint.general", "check loop bounds and condition"))
 
-	briefing_hint.text = "Подсказка: %s" % ", ".join(hints.slice(0, min(2, hints.size())))
+	briefing_hint.text = _tr("suspect.a.labels.hint_prefix", "Hint: {hint}",
+		{"hint": ", ".join(hints.slice(0, min(2, hints.size())))})
 
 func _typewrite_code(lines: Array) -> void:
 	for line_var in lines:
@@ -491,7 +487,7 @@ func _on_enter_pressed() -> void:
 		_play_sfx(AUDIO_ERROR)
 		_trigger_glitch()
 		_shake_screen()
-		lbl_status.text = "Некорректный формат ввода."
+		lbl_status.text = _tr("suspect.a.status.invalid_format", "Invalid input format.")
 		lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
 		(task_session["attempts"] as Array).append({
 			"kind": "numpad",
@@ -544,7 +540,7 @@ func _on_enter_pressed() -> void:
 
 func _handle_success_feedback() -> void:
 	state = State.FEEDBACK_SUCCESS
-	lbl_status.text = "Верно. Значение подтверждено."
+	lbl_status.text = _tr("suspect.a.status.correct", "Correct. Value confirmed.")
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_SUCCESS)
 	btn_enter.disabled = true
 	btn_analyze.disabled = true
@@ -555,8 +551,8 @@ func _handle_success_feedback() -> void:
 
 func _handle_fail_feedback() -> void:
 	wrong_count += 1
-	lbl_attempts.text = "ПОПЫТКИ: %d/%d" % [wrong_count, MAX_ATTEMPTS]
-	lbl_status.text = "Неверно. Попробуйте еще раз."
+	lbl_attempts.text = _tr("suspect.a.labels.attempts", "ATTEMPTS: {n}/{max}", {"n": wrong_count, "max": MAX_ATTEMPTS})
+	lbl_status.text = _tr("suspect.a.status.incorrect", "Incorrect. Try again.")
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
 
 	var wrong_penalty: int = int(current_task.get("economy", {}).get("wrong", 10))
@@ -577,7 +573,7 @@ func _trigger_safe_mode() -> void:
 	is_safe_mode = true
 	btn_enter.disabled = true
 	btn_next.visible = true
-	lbl_status.text = "Превышен лимит ошибок. Включен безопасный режим."
+	lbl_status.text = _tr("suspect.a.status.error_limit", "Error limit reached. Safe mode enabled.")
 	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_WARN)
 
 	btn_analyze.disabled = false
@@ -594,7 +590,7 @@ func _on_analyze_pressed(free: bool = false) -> void:
 	if not free:
 		var analyze_cost: int = int(current_task.get("economy", {}).get("analyze", 20))
 		if energy < float(analyze_cost):
-			lbl_status.text = "Недостаточно энергии для анализа."
+			lbl_status.text = _tr("suspect.a.status.low_energy", "Insufficient energy for analysis.")
 			lbl_status.add_theme_color_override("font_color", STATUS_COLOR_WARN)
 			_play_sfx(AUDIO_ERROR)
 			return
@@ -611,9 +607,12 @@ func _render_diagnostic() -> void:
 	if explain_lines.is_empty():
 		explain_lines = current_task.get("explain", [])
 
-	var explain_text: String = "[b]ANALYSIS[/b]\n"
-	for line_var in explain_lines:
-		explain_text += "- %s\n" % str(line_var)
+	var task_id: String = str(current_task.get("id", "A-01"))
+	var explain_text: String = "[b]%s[/b]\n" % _tr("suspect.a.diag.analysis_title", "ANALYSIS")
+	for line_idx in range(explain_lines.size()):
+		var default_line: String = str(explain_lines[line_idx])
+		var key: String = "suspect.a.level.%s.explain.%d" % [task_id, line_idx]
+		explain_text += "- %s\n" % _tr(key, default_line)
 	diag_explain.text = explain_text
 
 	var trace: Array = current_task.get("trace", [])
@@ -629,7 +628,8 @@ func _render_diagnostic() -> void:
 			str(step.get("s_after", "?"))
 		])
 
-	var trace_text: String = "i sequence: [%s]\n\n%s" % [", ".join(i_values), "\n".join(trace_lines)]
+	var seq_label: String = _tr("suspect.a.diag.i_sequence_label", "i sequence")
+	var trace_text: String = "%s: [%s]\n\n%s" % [seq_label, ", ".join(i_values), "\n".join(trace_lines)]
 	diag_trace.text = trace_text
 
 func _on_close_diag_pressed() -> void:

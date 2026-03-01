@@ -53,6 +53,7 @@ var exit_btn: Button
 @onready var body_container: VBoxContainer = $SafeArea/RootLayout/Body
 
 @onready var data_tree: Tree = $SafeArea/RootLayout/Body/FilterModeRoot/TableSection/DataTree
+@onready var filter_table_title: Label = $SafeArea/RootLayout/Body/FilterModeRoot/TableSection/TableTitle
 @onready var prompt_label: RichTextLabel = $SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/PromptLabel
 @onready var btn_submit: Button = $SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnSubmit
 @onready var btn_clear: Button = $SafeArea/RootLayout/Body/FilterModeRoot/TaskSection/ControlRow/BtnClear
@@ -83,12 +84,53 @@ var relation_mobile_schema: VBoxContainer
 @onready var sfx_error: AudioStreamPlayer = $Runtime/Audio/SfxError
 @onready var sfx_relay: AudioStreamPlayer = $Runtime/Audio/SfxRelay
 
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	btn_back.text = _tr("da7.common.back", "BACK")
+	btn_clear.text = _tr("da7.b.ui.clear", "CLEAR")
+	if is_instance_valid(filter_table_title):
+		filter_table_title.text = _tr("da7.b.ui.filter_mode_title", "FILTER MODE // MULTI-SELECT")
+	_update_stability_ui()
+	if not current_case.is_empty():
+		_refresh_case_ui_i18n()
+
+func _refresh_case_ui_i18n() -> void:
+	title_label.text = _tr("da7.b.ui.title_running", "DATA ARCHIVE // CASE {current}/{total} [B]",
+		{"current": current_case_index + 1, "total": session_cases.size()})
+	var prompt_text: String = _case_prompt_text()
+	if is_instance_valid(prompt_label):
+		prompt_label.text = prompt_text
+	if is_instance_valid(rel_prompt):
+		rel_prompt.text = prompt_text
+
+func _case_prompt_text() -> String:
+	var case_id: String = str(current_case.get("id", ""))
+	var raw: String = str(current_case.get("prompt", ""))
+	return _tr("da7.b.case.%s.prompt" % case_id, raw)
+
+func _set_relation_hint_i18n(key: String, default_text: String, params: Dictionary = {}) -> void:
+	if is_instance_valid(rel_link_label):
+		rel_link_label.text = _tr(key, default_text, params)
+
 func _ready() -> void:
 	randomize()
 	_build_mobile_containers()
 	btn_submit.pressed.connect(_on_submit_pressed)
 	btn_clear.pressed.connect(_on_clear_pressed)
 	btn_back.pressed.connect(_on_back_pressed)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 
 	if not data_tree.gui_input.is_connected(_on_filter_tree_gui_input):
 		data_tree.gui_input.connect(_on_filter_tree_gui_input)
@@ -99,6 +141,7 @@ func _ready() -> void:
 
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
 	_init_session()
+	_apply_i18n()
 	call_deferred("_on_viewport_size_changed")
 	_load_next_case()
 
@@ -184,8 +227,10 @@ func _load_next_case() -> void:
 func _render_filter_ui() -> void:
 	filter_mode_root.visible = true
 	relation_mode_root.visible = false
+	title_label.text = _tr("da7.b.ui.title_running", "DATA ARCHIVE // CASE {current}/{total} [B]",
+		{"current": current_case_index + 1, "total": session_cases.size()})
 	btn_submit.disabled = false
-	btn_submit.text = SUBMIT_BASE_TEXT
+	btn_submit.text = _tr("da7.b.ui.submit", "SUBMIT")
 	btn_clear.disabled = false
 
 	data_tree.clear()
@@ -231,12 +276,14 @@ func _render_filter_ui() -> void:
 			item.set_text(i, str(cells.get(col_id, "")))
 		_apply_redaction_style(item, false)
 
-	prompt_label.text = str(current_case.get("prompt", ""))
+	prompt_label.text = _case_prompt_text()
 	call_deferred("_update_table_scroll_flag")
 
 func _render_relation_ui() -> void:
 	filter_mode_root.visible = false
 	relation_mode_root.visible = true
+	title_label.text = _tr("da7.b.ui.title_running", "DATA ARCHIVE // CASE {current}/{total} [B]",
+		{"current": current_case_index + 1, "total": session_cases.size()})
 
 	for child in rel_options_row.get_children():
 		child.queue_free()
@@ -247,9 +294,9 @@ func _render_relation_ui() -> void:
 	rel_right_col_ids = _fill_relation_tree(rel_tree_r, right_table)
 	rel_title_l.text = str(left_table.get("title", "Left"))
 	rel_title_r.text = str(right_table.get("title", "Right"))
-	rel_prompt.text = str(current_case.get("prompt", ""))
+	rel_prompt.text = _case_prompt_text()
 	rel_arrow_label.text = ""
-	rel_link_label.text = "Drag cable from PK to FK"
+	_set_relation_hint_i18n("da7.b.ui.rel.drag_hint", "Drag cable from PK to FK")
 	rel_committed.clear()
 	rel_cable_committed = false
 	rel_connected_pk = ""
@@ -275,7 +322,7 @@ func _render_relation_ui() -> void:
 		rel_options_row.add_child(btn)
 
 	if options.is_empty():
-		rel_link_label.text = "Connect cable to submit"
+		_set_relation_hint_i18n("da7.b.ui.rel.connect_hint", "Connect cable to submit")
 
 func _fill_relation_tree(tree: Tree, table_def: Dictionary) -> Array[String]:
 	tree.clear()
@@ -477,7 +524,7 @@ func _try_start_relation_drag(tree: Tree, local_pos: Vector2) -> void:
 			allowed_pk[pk_col] = true
 	if not allowed_pk.has(hit_col):
 		miss_connects += 1
-		rel_link_label.text = "Start cable from PK column"
+		_set_relation_hint_i18n("da7.b.ui.rel.start_from_pk", "Start cable from PK column")
 		return
 
 	rel_drag_active = true
@@ -509,7 +556,7 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 					connector_overlay.call("clear_drag")
 				elif connector_overlay.has_method("clear_connection"):
 					connector_overlay.call("clear_connection")
-			rel_link_label.text = "Pair already linked"
+			_set_relation_hint_i18n("da7.b.ui.rel.pair_already_linked", "Pair already linked")
 			_set_relation_options_enabled(_is_relation_ready_to_submit())
 			return
 
@@ -530,7 +577,7 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 
 		var needed := _get_required_connections().size()
 		var linked := rel_committed.size()
-		rel_link_label.text = "Cable linked (%d/%d)" % [linked, maxi(1, needed)]
+		_set_relation_hint_i18n("da7.b.ui.rel.pair_linked", "Cable linked ({done}/{total})", {"done": linked, "total": maxi(1, needed)})
 		var ready := _is_relation_ready_to_submit()
 		_set_relation_options_enabled(ready)
 		if (current_case.get("options", []) as Array).is_empty() and ready:
@@ -547,7 +594,7 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 				connector_overlay.call("clear_drag")
 			elif connector_overlay.has_method("clear_connection"):
 				connector_overlay.call("clear_connection")
-		rel_link_label.text = "Missed FK target"
+		_set_relation_hint_i18n("da7.b.ui.rel.missed_fk", "Missed FK target")
 		_set_relation_options_enabled(_is_relation_ready_to_submit())
 
 func _on_relation_option_selected(opt: Dictionary) -> void:
@@ -749,11 +796,11 @@ func _selected_crossed_count() -> int:
 func _refresh_submit_enabled() -> void:
 	if mode != MODE_FILTER or not is_trial_active:
 		btn_submit.disabled = true
-		btn_submit.text = SUBMIT_BASE_TEXT
+		btn_submit.text = _tr("da7.b.ui.submit", "SUBMIT")
 		return
 	var crossed_count := _selected_crossed_count()
 	btn_submit.disabled = false
-	btn_submit.text = "%s (%d)" % [SUBMIT_BASE_TEXT, crossed_count]
+	btn_submit.text = _tr("da7.b.ui.submit_with_count", "SUBMIT ({count})", {"count": crossed_count})
 
 func _resolve_tree_hit(tree: Tree, local_pos: Vector2, col_ids: Array[String]) -> Dictionary:
 	var item: TreeItem = tree.get_item_at_position(local_pos)
@@ -800,7 +847,7 @@ func _update_stability_ui() -> void:
 	if is_instance_valid(stability_bar):
 		stability_bar.value = GlobalMetrics.stability
 	if is_instance_valid(stability_label):
-		stability_label.text = "Stability: %d%%" % int(GlobalMetrics.stability)
+		stability_label.text = _tr("da7.common.stability", "STABILITY: {value}%", {"value": int(GlobalMetrics.stability)})
 
 func _on_viewport_size_changed() -> void:
 	var win_size := get_viewport_rect().size
@@ -913,23 +960,23 @@ func _sets_equal(arr1: Array, arr2: Array) -> bool:
 
 func _finish_session() -> void:
 	_teardown_interaction(true)
-	title_label.text = "DATA ARCHIVE // SESSION COMPLETE [B]"
-	prompt_label.text = "Investigation complete."
-	rel_prompt.text = "Investigation complete."
+	title_label.text = _tr("da7.b.ui.title_complete", "DATA ARCHIVE // SESSION COMPLETE [B]")
+	prompt_label.text = _tr("da7.b.ui.complete_message", "Investigation complete.")
+	rel_prompt.text = _tr("da7.b.ui.complete_message", "Investigation complete.")
 	_ensure_exit_button()
 
 func _game_over() -> void:
 	_teardown_interaction(true)
-	title_label.text = "DATA ARCHIVE // SYSTEM LOCK [B]"
-	prompt_label.text = "Stability dropped to zero."
-	rel_prompt.text = "Stability dropped to zero."
+	title_label.text = _tr("da7.b.ui.title_locked", "DATA ARCHIVE // SYSTEM LOCK [B]")
+	prompt_label.text = _tr("da7.b.ui.lock_message", "Stability dropped to zero.")
+	rel_prompt.text = _tr("da7.b.ui.lock_message", "Stability dropped to zero.")
 	_ensure_exit_button()
 
 func _ensure_exit_button() -> void:
 	if exit_btn != null and is_instance_valid(exit_btn):
 		return
 	exit_btn = Button.new()
-	exit_btn.text = "EXIT"
+	exit_btn.text = _tr("da7.common.exit", "EXIT")
 	exit_btn.custom_minimum_size = Vector2(140, 48)
 	exit_btn.pressed.connect(func() -> void:
 		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")

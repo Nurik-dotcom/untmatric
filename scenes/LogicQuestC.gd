@@ -601,7 +601,7 @@ func _update_ui_state() -> void:
 
 func _update_stats_ui() -> void:
 	var case_id := str(current_case.get("id", "C_00"))
-	session_label.text = "СЕССИЯ: %02d/%02d | КЕЙС %s" % [current_case_idx + 1, CASES.size(), case_id]
+	session_label.text = "СЕССИЯ: %d/%d | КЕЙС %s" % [current_case_idx + 1, CASES.size(), case_id]
 	var mismatch_text := "--"
 	if not last_equivalence_result.is_empty():
 		mismatch_text = "%d/%d" % [

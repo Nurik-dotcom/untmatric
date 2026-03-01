@@ -42,6 +42,11 @@ enum State {
 @onready var diagnostics_blocker: ColorRect = $DiagnosticsBlocker
 @onready var diag_panel: PanelContainer = $DiagnosticsPanelB
 
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
 var levels: Array = []
 var current_level_idx := 0
 var current_task: Dictionary = {}
@@ -63,6 +68,9 @@ var _slot_mobile_layout: VBoxContainer = null
 
 func _ready() -> void:
 	_load_levels_from_json()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
+	_apply_i18n()
 	_connect_signals()
 
 	diag_panel.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -80,8 +88,19 @@ func _ready() -> void:
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
 
 func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	btn_back.text = _tr("restore.b.btn.back", "BACK")
+	btn_analyze.text = _tr("restore.b.btn.analyze", "ANALYZE")
+	btn_submit.text = _tr("restore.b.btn.submit", "CHECK")
+	btn_next.text = _tr("restore.b.btn.next", "NEXT")
 
 func _load_levels_from_json() -> void:
 	levels.clear()
@@ -190,10 +209,10 @@ func _start_level(idx: int) -> void:
 	switches_before_submit = 0
 	is_safe_mode = false
 
-	lbl_clue_title.text = "ВОССТАНОВЛЕНИЕ " + str(current_task.get("id", "B-00"))
-	lbl_session.text = "СЕСС " + str(randi() % 9000 + 1000)
-	lbl_target.text = "ЦЕЛЬ: s = " + str(current_task.get("target_s", "?"))
-	lbl_slot_hint.text = "<-- Перетащите блок сюда"
+	lbl_clue_title.text = _tr("restore.b.labels.clue_title", "RESTORE {id}", {"id": str(current_task.get("id", "B-00"))})
+	lbl_session.text = _tr("restore.b.labels.session", "SESS {n}", {"n": str(randi() % 9000 + 1000)})
+	lbl_target.text = _tr("restore.b.labels.target", "TARGET: s = {val}", {"val": str(current_task.get("target_s", "?"))})
+	lbl_slot_hint.text = _tr("restore.b.status.drag_hint", "<-- Drag block here")
 
 	_render_code()
 	_render_inventory()
@@ -241,7 +260,7 @@ func _on_block_dropped(data: Dictionary) -> void:
 
 	state = State.SOLVING_FILLED
 	btn_submit.disabled = false
-	lbl_slot_hint.text = "Готово к проверке."
+	lbl_slot_hint.text = _tr("restore.b.status.ready_to_check", "Ready to check.")
 
 	_log_event("slot_changed", {"prev": prev_id, "new": new_id})
 
@@ -300,7 +319,7 @@ func _handle_fail_retry(selected_id) -> void:
 	energy_bar.value = energy
 	drop_zone.call("reset")
 	drop_zone.modulate = Color(0.88, 0.88, 0.86, 1.0)
-	lbl_slot_hint.text = "Неверно. Попробуйте снова."
+	lbl_slot_hint.text = _tr("restore.b.status.incorrect", "Incorrect. Try again.")
 	state = State.SOLVING_EMPTY
 	btn_submit.disabled = true
 	_show_distractor_feedback(selected_id)
@@ -335,7 +354,7 @@ func _on_analyze_pressed(free := false) -> void:
 
 	diag_panel.call(
 		"setup",
-		current_task.get("explain_short", []),
+		_get_localized_explain_lines(current_task),
 		current_task.get("trace_correct", [])
 	)
 	diag_panel.visible = true
@@ -444,13 +463,24 @@ func _show_distractor_feedback(selected_id) -> void:
 	var s_final = str((feedback as Dictionary).get("s_final", "?"))
 	var hint = str((feedback as Dictionary).get("hint", ""))
 	var target = str(current_task.get("target_s", "?"))
+	var task_id := str(current_task.get("id", "B-01"))
 	var explain_lines := [
-		"Получилось s=%s, нужно s=%s." % [s_final, target],
-		hint
+		_tr("restore.b.diag.distractor_result", "Got s={got}, expected s={need}.", {"got": s_final, "need": target}),
+		_tr("restore.b.level.%s.distractor.%s.hint" % [task_id, key], hint)
 	]
 	diag_panel.call("setup", explain_lines, [])
 	diag_panel.visible = true
 	_log_event("distractor_feedback_shown", {"selected": key, "s_final": s_final})
+
+func _get_localized_explain_lines(task: Dictionary) -> Array:
+	var raw_lines: Array = task.get("explain_short", [])
+	var task_id: String = str(task.get("id", "B-01"))
+	var result: Array = []
+	for line_idx in range(raw_lines.size()):
+		var default_line: String = str(raw_lines[line_idx])
+		var key: String = "restore.b.level.%s.explain.%d" % [task_id, line_idx]
+		result.append(_tr(key, default_line))
+	return result
 
 func _play_sound(stream: AudioStream) -> void:
 	var player := AudioStreamPlayer.new()

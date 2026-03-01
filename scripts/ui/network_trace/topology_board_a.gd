@@ -27,6 +27,11 @@ var packet_path: Array[Vector2] = []
 var trace_success: bool = true
 var trace_tween: Tween = null
 
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_STOP
 	_recalculate_layout()
@@ -275,9 +280,9 @@ func _draw() -> void:
 	draw_rect(slot_rect, Color(0.08, 0.12, 0.1, 0.95), true)
 	draw_rect(slot_rect, Color(0.95, 0.75, 0.25, 0.9), false, 3.0)
 	if tools_locked:
-		_draw_centered_text("Сначала соберите улики", slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.45, 0.4, 1.0), 18)
+		_draw_centered_text(_tr("nt.a.ui.topology_build_hint", "Gather evidence first"), slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.45, 0.4, 1.0), 18)
 	elif installed_device_id.is_empty():
-		_draw_centered_text("Перетащите устройство сюда", slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.95, 0.8, 1.0), 18)
+		_draw_centered_text(_tr("nt.a.ui.topology_drop_hint", "Drag device here"), slot_rect.get_center() + Vector2(0.0, 6.0), slot_rect.size.x - 8.0, Color(0.95, 0.95, 0.8, 1.0), 18)
 	else:
 		_draw_centered_text(installed_device_label, slot_rect.get_center() + Vector2(0.0, 0.0), slot_rect.size.x - 8.0, Color(0.75, 1.0, 0.82, 1.0), 18)
 

@@ -658,7 +658,7 @@ func _update_ui_state() -> void:
 
 func _update_stats_ui() -> void:
 	var case_id := str(current_case.get("id", "B_00"))
-	session_label.text = "СЕССИЯ: %02d/%02d | КЕЙС %s" % [current_case_idx + 1, CASES.size(), case_id]
+	session_label.text = "СЕССИЯ: %d/%d | КЕЙС %s" % [current_case_idx + 1, CASES.size(), case_id]
 	stats_label.text = "ПОП: %d/%d | ТЕСТЫ: %d | ВЕКТ: %d | АНАЛИЗ: %d | СТАБ: %d%%" % [
 		attempts,
 		MAX_ATTEMPTS,

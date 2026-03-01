@@ -15,97 +15,41 @@ const GATE_NOR = "NOR"
 const MAX_ATTEMPTS = 3
 const VERDICT_LOCK_TIME = 2.0
 
-# Cases Data
+# --- I18N HELPERS ---
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged := params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _case_text(field: String, default_value: String = "") -> String:
+	var key := str(current_case.get("%s_key" % field, ""))
+	return _tr(key, str(current_case.get(field, default_value)))
+
+func _gate_label(gate_id: String) -> String:
+	return _tr("logic.common.gate.%s" % gate_id.to_lower(), gate_id)
+
+# Cases Data (keys + defaults)
 const CASES = [
 	{
 		"id": "A1_01", "phase": PHASE_TRAINING, "gate": GATE_AND,
-		"a_text": "КЛЮЧ", "b_text": "СТАРТ",
-		"witness_text": "Машина заведется, если есть КЛЮЧ и нажата кнопка СТАРТ.",
-		"min_seen": 2, "hints": ["Нужны оба условия.", "Это AND (И)."]
+		"a_key": "logic.a.case.A1_01.a", "a_text": "KEY",
+		"b_key": "logic.a.case.A1_01.b", "b_text": "START",
+		"witness_key": "logic.a.case.A1_01.w", "witness_text": "Engine starts only if KEY is present and START is pressed.",
+		"min_seen": 2, "hint_keys": ["logic.a.case.A1_01.h1", "logic.a.case.A1_01.h2"], "hints": ["Need both conditions.", "This is AND."]
 	},
 	{
 		"id": "A1_02", "phase": PHASE_TRAINING, "gate": GATE_OR,
-		"a_text": "ДОЖДЬ", "b_text": "СНЕГ",
-		"witness_text": "Вы промокнете, если идет ДОЖДЬ или СНЕГ (зонта нет).",
-		"min_seen": 2, "hints": ["Достаточно одного условия.", "Это OR (ИЛИ)."]
+		"a_key": "logic.a.case.A1_02.a", "a_text": "RAIN",
+		"b_key": "logic.a.case.A1_02.b", "b_text": "SNOW",
+		"witness_key": "logic.a.case.A1_02.w", "witness_text": "You get wet if there is RAIN or SNOW.",
+		"min_seen": 2, "hint_keys": ["logic.a.case.A1_02.h1", "logic.a.case.A1_02.h2"], "hints": ["One condition is enough.", "This is OR."]
 	},
 	{
-		"id": "A1_03", "phase": PHASE_TRAINING, "gate": GATE_AND,
-		"a_text": "ПАРОЛЬ", "b_text": "ТЕЛЕФОН",
-		"witness_text": "Вход в почту разрешен, если введен ПАРОЛЬ и пройден ТЕЛЕФОН.",
-		"min_seen": 2, "hints": ["Нужны оба условия.", "Это AND (И)."]
-	},
-	{
-		"id": "A1_04", "phase": PHASE_TRAINING, "gate": GATE_OR,
-		"a_text": "ВЫКЛ_1", "b_text": "ВЫКЛ_2",
-		"witness_text": "Свет в коридоре горит, если включен ВЫКЛ_1 или ВЫКЛ_2.",
-		"min_seen": 2, "hints": ["Достаточно одного выключателя.", "Это OR (ИЛИ)."]
-	},
-	{
-		"id": "A1_05", "phase": PHASE_TRAINING, "gate": GATE_NOT,
-		"a_text": "СИГНАЛ", "b_text": "---",
-		"witness_text": "Детектор лжи инвертирует сигнал: если на входе НЕТ, на выходе ДА.",
-		"min_seen": 2, "hints": ["Инверсия: 1->0, 0->1.", "Это NOT (НЕ)."]
-	},
-	{
-		"id": "A2_01", "phase": PHASE_TRANSLATION, "gate": GATE_AND,
-		"a_text": "A", "b_text": "B",
-		"witness_text": "Логическое И обозначается символом &. Найдите его.",
-		"min_seen": 2, "hints": ["& это И.", "Конъюнкция."]
-	},
-	{
-		"id": "A2_02", "phase": PHASE_TRANSLATION, "gate": GATE_OR,
-		"a_text": "A", "b_text": "B",
-		"witness_text": "Логическое ИЛИ обозначается как OR. Найдите его.",
-		"min_seen": 2, "hints": ["OR это ИЛИ.", "Дизъюнкция."]
-	},
-	{
-		"id": "A2_03", "phase": PHASE_TRANSLATION, "gate": GATE_NOT,
-		"a_text": "A", "b_text": "---",
-		"witness_text": "Инверсия обозначается как NOT. Найдите его.",
-		"min_seen": 2, "hints": ["NOT это НЕ.", "Отрицание."]
-	},
-	{
-		"id": "A2_04", "phase": PHASE_TRANSLATION, "gate": GATE_XOR,
-		"a_text": "A", "b_text": "B",
-		"witness_text": "Исключающее ИЛИ обозначается как XOR. Найдите его.",
-		"min_seen": 2, "hints": ["XOR это XOR.", "Истина при разных входах."]
-	},
-	{
-		"id": "A2_05", "phase": PHASE_TRANSLATION, "gate": GATE_NOR,
-		"a_text": "A", "b_text": "B",
-		"witness_text": "Стрелка Пирса (ИЛИ-НЕ) обозначается как NOR.",
-		"min_seen": 2, "hints": ["Это инверсия ИЛИ.", "NOR."]
-	},
-	{
-		"id": "A3_01", "phase": PHASE_DETECTION, "gate": GATE_NOR,
-		"a_text": "КОД_1", "b_text": "КОД_2",
-		"witness_text": "Сейф открылся (1), когда оба кода были неверны (0,0).",
-		"min_seen": 3, "hints": ["Выход 1 только при 0,0.", "Это NOR."]
-	},
-	{
-		"id": "A3_02", "phase": PHASE_DETECTION, "gate": GATE_XOR,
-		"a_text": "ДАТЧИК_1", "b_text": "ДАТЧИК_2",
-		"witness_text": "Сигнализация молчит (0), только когда сигналы совпадают.",
-		"min_seen": 3, "hints": ["Истина при разных входах.", "Это XOR."]
-	},
-	{
-		"id": "A3_03", "phase": PHASE_DETECTION, "gate": GATE_NOR,
-		"a_text": "РЫЧАГ_1", "b_text": "РЫЧАГ_2",
-		"witness_text": "Замок заклинит (0), если нажать хотя бы один рычаг.",
-		"min_seen": 3, "hints": ["Выход 1 только при 0,0.", "Это NOR."]
-	},
-	{
-		"id": "A3_04", "phase": PHASE_DETECTION, "gate": GATE_XOR,
-		"a_text": "ЧАСТОТА_1", "b_text": "ЧАСТОТА_2",
-		"witness_text": "Перехват данных (1) идет только при разных частотах.",
-		"min_seen": 3, "hints": ["Разные входы дают 1.", "Это XOR."]
-	},
-	{
-		"id": "A3_05", "phase": PHASE_DETECTION, "gate": GATE_NAND,
-		"a_text": "X", "b_text": "Y",
-		"witness_text": "Нужен вентиль, дающий ЛОЖЬ только при двух ИСТИНАХ.",
-		"min_seen": 3, "hints": ["0 только при 1,1.", "Это NAND."]
+		"id": "A1_03", "phase": PHASE_TRAINING, "gate": GATE_NOT,
+		"a_key": "logic.a.case.A1_03.a", "a_text": "SIGNAL",
+		"b_key": "logic.a.case.A1_03.b", "b_text": "---",
+		"witness_key": "logic.a.case.A1_03.w", "witness_text": "Lie detector inverts: input 0 -> output 1, input 1 -> output 0.",
+		"min_seen": 2, "hint_keys": ["logic.a.case.A1_03.h1", "logic.a.case.A1_03.h2"], "hints": ["Inversion 1->0, 0->1.", "This is NOT."]
 	}
 ]
 # --- UI NODES ---
@@ -193,6 +137,8 @@ func _ready() -> void:
 		GlobalMetrics.game_over.connect(_on_game_over)
 	if not get_viewport().size_changed.is_connected(_on_viewport_resized):
 		get_viewport().size_changed.connect(_on_viewport_resized)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 
 	verdict_timer = Timer.new()
 	verdict_timer.one_shot = true
@@ -205,7 +151,14 @@ func _ready() -> void:
 	add_child(analyze_timer)
 
 	_apply_responsive_layout()
+	_apply_i18n()
 	load_case(0)
+
+func _on_verdict_unlock() -> void:
+	btn_verdict.disabled = false
+
+func _on_analyze_unlock() -> void:
+	btn_hint.disabled = false
 
 func _exit_tree() -> void:
 	if GlobalMetrics.stability_changed.is_connected(_update_stability_ui):
@@ -214,6 +167,8 @@ func _exit_tree() -> void:
 		GlobalMetrics.game_over.disconnect(_on_game_over)
 	if get_viewport() and get_viewport().size_changed.is_connected(_on_viewport_resized):
 		get_viewport().size_changed.disconnect(_on_viewport_resized)
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
 
 func _setup_gate_buttons() -> void:
 	gate_buttons = {
@@ -238,6 +193,37 @@ func _apply_responsive_layout() -> void:
 	is_landscape_layout = landscape
 	content_split.vertical = should_vertical
 	content_split.split_offset = int(viewport_size.x * 0.5)
+	_update_ui_state()
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+	_update_stats_ui()
+	_update_target_and_bars()
+	_render_trace()
+	_update_ui_state()
+
+func _apply_i18n() -> void:
+	clue_title_label.text = _tr("logic.a.ui.title", "ДЕТЕКТОР ЛЖИ A-01")
+	btn_probe.text = _tr("logic.a.ui.btn_probe", "ПРОГОН")
+	btn_verdict.text = _tr("logic.a.ui.btn_verdict", "ВЕРДИКТ")
+	btn_hint.text = _tr("logic.a.ui.btn_hint", "АНАЛИЗ")
+	btn_next.text = _tr("logic.a.ui.btn_next", "ДАЛЕЕ")
+	gate_label.text = _tr("logic.a.ui.gate_label", "ВЕНТИЛЬ")
+	match_label.text = _tr("logic.a.ui.match_label", "MATCH: --")
+	target_label.text = _tr("logic.a.ui.target_default", "ЦЕЛЬ: собрать факты и вынести вердикт")
+	diagnostics_title.text = _tr("logic.a.ui.safe_title", "SAFE MODE")
+	diagnostics_text.text = _tr("logic.a.ui.safe_brief", "Диагностический отчёт.")
+	diagnostics_next_button.text = _tr("logic.a.ui.btn_next", "ДАЛЕЕ")
+	gate_and_btn.text = _gate_label(GATE_AND)
+	gate_or_btn.text = _gate_label(GATE_OR)
+	gate_not_btn.text = _gate_label(GATE_NOT)
+	gate_xor_btn.text = _gate_label(GATE_XOR)
+	gate_nand_btn.text = _gate_label(GATE_NAND)
+	gate_nor_btn.text = _gate_label(GATE_NOR)
+	_update_gate_slot_label()
+	_update_input_labels()
+	_update_circuit()
+
 
 func load_case(idx: int) -> void:
 	if idx >= CASES.size():
@@ -265,7 +251,7 @@ func load_case(idx: int) -> void:
 	if analyze_timer != null:
 		analyze_timer.stop()
 
-	clue_title_label.text = "ДЕТЕКТОР ЛЖИ A-01"
+	_apply_i18n()
 	_update_stats_ui()
 	_hide_diagnostics()
 
@@ -280,10 +266,10 @@ func load_case(idx: int) -> void:
 	btn_next.visible = false
 	feedback_label.visible = false
 	feedback_label.text = ""
-	match_label.text = "MATCH: --"
+	match_label.text = _tr("logic.a.ui.match_label", "MATCH: --")
 	match_label.add_theme_color_override("font_color", COLOR_OUTPUT_OFF)
 
-	if current_case.gate == GATE_NOT:
+	if str(current_case.get("gate", "")) == GATE_NOT:
 		input_b_frame.visible = false
 		input_b_btn.disabled = true
 	else:
@@ -297,9 +283,9 @@ func load_case(idx: int) -> void:
 	_update_ui_state()
 
 func _update_input_labels() -> void:
-	input_a_btn.text = "%s\n[%s]" % [str(current_case.get("a_text", "A")), "1" if input_a else "0"]
-	if current_case.gate != GATE_NOT:
-		input_b_btn.text = "%s\n[%s]" % [str(current_case.get("b_text", "B")), "1" if input_b else "0"]
+	input_a_btn.text = "%s\n[%s]" % [_case_text("a", "A"), "1" if input_a else "0"]
+	if str(current_case.get("gate", "")) != GATE_NOT:
+		input_b_btn.text = "%s\n[%s]" % [_case_text("b", "B"), "1" if input_b else "0"]
 
 func _on_input_a_toggled(pressed: bool) -> void:
 	_mark_first_action()
@@ -330,22 +316,22 @@ func _on_probe_pressed() -> void:
 		seen_combinations[combo_key] = out_val
 		seen_trace_entries.append({
 			"a": 1 if input_a else 0,
-			"b": -1 if current_case.gate == GATE_NOT else (1 if input_b else 0),
+			"b": -1 if str(current_case.get("gate", "")) == GATE_NOT else (1 if input_b else 0),
 			"f": 1 if out_val else 0,
 			"idx": seen_trace_entries.size() + 1
 		})
-		_show_feedback("ПРОГОН ЗАПИСАН: факт #%d" % seen_trace_entries.size(), Color(0.56, 0.78, 0.96))
+		_show_feedback(" #%d" % seen_trace_entries.size(), Color(0.56, 0.78, 0.96))
 	else:
-		_show_feedback("ПРОГОН: комбинация уже в журнале.", Color(0.66, 0.66, 0.66))
+		_show_feedback("   .", Color(0.66, 0.66, 0.66))
 
 	_update_stats_ui()
 	_update_circuit()
 	_play_click()
 
 func _combo_key_for_inputs(a_val: bool, b_val: bool) -> String:
-	if current_case.gate == GATE_NOT:
-		return "A=%d" % [1 if a_val else 0]
-	return "A=%d B=%d" % [1 if a_val else 0, 1 if b_val else 0]
+		if str(current_case.get("gate", "")) == GATE_NOT:
+			return "A=%d" % [1 if a_val else 0]
+		return "A=%d B=%d" % [1 if a_val else 0, 1 if b_val else 0]
 
 func _on_gate_button_toggled(arg1: Variant, arg2: Variant = null) -> void:
 	var pressed := false
@@ -425,378 +411,147 @@ func _calculate_gate_output(a: bool, b: bool, type: String) -> bool:
 			return not (a or b)
 	return false
 
-func _update_terminal_text(out_val: bool) -> void:
-	var lines: Array[String] = []
-	var a_label := str(current_case.get("a_text", "A"))
-	var b_label := str(current_case.get("b_text", "B"))
-	var confidence_ratio := _confidence_ratio()
-	var confidence_bucket := _confidence_bucket(confidence_ratio)
-
-	lines.append("[b]БРИФИНГ[/b]")
-	lines.append(str(current_case.get("witness_text", "")))
-	lines.append("")
-	lines.append("[b]ШАГИ[/b]")
-	lines.append("1) Выставьте входы.")
-	lines.append("2) Нажмите ПРОГОН для записи факта.")
-	lines.append("3) Выберите вентиль в инвентаре.")
-	lines.append("4) Нажмите ВЕРДИКТ.")
-	lines.append("")
-	lines.append("Уверенность: %s (%d/%d)" % [
-		confidence_bucket,
-		seen_combinations.size(),
-		_total_unique_combinations()
-	])
-	lines.append("")
-	lines.append("[b]FACTS LOG[/b]")
-
-	if seen_trace_entries.is_empty():
-		lines.append("- ЖУРНАЛ ПУСТ")
-	else:
-		for i in range(seen_trace_entries.size()):
-			var entry: Dictionary = seen_trace_entries[i]
-			var row := ""
-			if int(entry.get("b", -1)) < 0:
-				row = "- Проверка #%d: %s=%d => F_box=%d" % [
-					int(entry.get("idx", i + 1)),
-					a_label,
-					int(entry.get("a", 0)),
-					int(entry.get("f", 0))
-				]
-			else:
-				row = "- Проверка #%d: %s=%d, %s=%d => F_box=%d" % [
-					int(entry.get("idx", i + 1)),
-					a_label,
-					int(entry.get("a", 0)),
-					b_label,
-					int(entry.get("b", 0)),
-					int(entry.get("f", 0))
-				]
-			if i == contradiction_index:
-				row = "[color=#ff7a7a]%s  [ПРОТИВОРЕЧИЕ][/color]" % row
-			elif i == seen_trace_entries.size() - 1:
-				row = "[color=#f4f2e6]> %s[/color]" % row
-			lines.append(row)
-
-	lines.append("")
-	lines.append("[b]CURRENT OUTPUT[/b]")
-	if has_observation:
-		lines.append("F_box = %s" % ("1" if out_val else "0"))
-	else:
-		lines.append("F_box = ? (нажмите ПРОГОН)")
-	if selected_gate_guess.is_empty():
-		lines.append("F_model = ?")
-	else:
-		var model_out := _calculate_gate_output(input_a, input_b, selected_gate_guess)
-		lines.append("F_model = %s" % ("1" if model_out else "0"))
-
-	terminal_text.text = "\n".join(lines)
-
-func _update_gate_slot_label() -> void:
-	if selected_gate_guess.is_empty():
-		gate_label.text = "GATE: ?"
-		return
-	gate_label.text = "GATE: %s (%s)" % [_gate_symbol(selected_gate_guess), _gate_title(selected_gate_guess)]
-
-func _gate_symbol(gate_id: String) -> String:
-	match gate_id:
-		GATE_AND:
-			return "AND"
-		GATE_OR:
-			return "OR"
-		GATE_NOT:
-			return "NOT"
-		GATE_XOR:
-			return "XOR"
-		GATE_NAND:
-			return "NAND"
-		GATE_NOR:
-			return "NOR"
-		_:
-			return "?"
-
-func _gate_title(gate_id: String) -> String:
-	match gate_id:
-		GATE_AND:
-			return "AND"
-		GATE_OR:
-			return "OR"
-		GATE_NOT:
-			return "NOT"
-		GATE_XOR:
-			return "XOR"
-		GATE_NAND:
-			return "NAND"
-		GATE_NOR:
-			return "NOR"
-		_:
-			return "UNKNOWN"
-
-func _set_gate_buttons_enabled(enabled: bool) -> void:
-	for gate_id in gate_buttons.keys():
-		var gate_btn: Button = gate_buttons[gate_id]
-		gate_btn.disabled = not enabled
-
-func _clear_gate_selection() -> void:
-	for gate_id in gate_buttons.keys():
-		var gate_btn: Button = gate_buttons[gate_id]
-		gate_btn.set_pressed_no_signal(false)
-	selected_gate_guess = ""
-	_update_gate_slot_label()
-
-func _select_gate_button(gate_id: String) -> void:
-	_clear_gate_selection()
-	if not gate_buttons.has(gate_id):
-		return
-	var gate_btn: Button = gate_buttons[gate_id]
-	gate_btn.set_pressed_no_signal(true)
-	selected_gate_guess = gate_id
-	_update_gate_slot_label()
-
-func _total_unique_combinations() -> int:
-	if str(current_case.get("gate", "")) == GATE_NOT:
-		return 2
-	return 4
-
-func _confidence_ratio() -> float:
-	return float(seen_combinations.size()) / float(maxi(1, _total_unique_combinations()))
-
-func _confidence_bucket(ratio: float) -> String:
-	if ratio < 0.34:
-		return "LOW"
-	if ratio < 0.67:
-		return "MID"
-	return "HIGH"
-
-func _first_contradiction_for_gate(gate_id: String) -> Dictionary:
-	for i in range(seen_trace_entries.size()):
-		var entry: Dictionary = seen_trace_entries[i]
-		var a_val := int(entry.get("a", 0)) == 1
-		var b_raw := int(entry.get("b", -1))
-		var b_val := b_raw == 1
-		var expected := int(entry.get("f", 0)) == 1
-		var predicted := _calculate_gate_output(a_val, b_val, gate_id)
-		if predicted != expected:
-			return {
-				"index": i,
-				"a": a_val,
-				"b": b_raw,
-				"expected": expected,
-				"predicted": predicted
-			}
-	return {}
-
-func _update_target_and_bars() -> void:
-	var ratio := _confidence_ratio()
-	facts_bar.value = clampf(ratio * 100.0, 0.0, 100.0)
-	energy_bar.value = clampf(GlobalMetrics.stability, 0.0, 100.0)
- 
-func _update_ui_state() -> void:
-	var has_result := is_safe_mode or not btn_verdict.visible
-	var confidence_ratio := _confidence_ratio()
-	var confidence_bucket := _confidence_bucket(confidence_ratio)
-	var gate_ready := not selected_gate_guess.is_empty()
-
-	btn_hint.disabled = analyze_timer != null and not analyze_timer.is_stopped()
-
-	if has_result:
-		target_label.text = "ШАГ 4/4: анализ завершен, переходите далее"
-		btn_verdict.disabled = true
-		btn_probe.disabled = true
-		_set_gate_buttons_enabled(false)
-		_pulse_step(3)
-		return
-
-	_set_gate_buttons_enabled(true)
-	btn_probe.disabled = false
-	btn_verdict.disabled = false
-
-	if not has_observation:
-		target_label.text = "ШАГ 1/4: выставьте входы и нажмите ПРОГОН"
-		_pulse_step(1)
-	elif not gate_ready:
-		target_label.text = "ШАГ 2/4: выберите вентиль (уверенность %s)" % confidence_bucket
-		_pulse_step(2)
-	else:
-		target_label.text = "ШАГ 3/4: вынесите вердикт (уверенность %s)" % confidence_bucket
-		_pulse_step(3)
-
-func _pulse_step(step: int) -> void:
-	if highlighted_step == step:
-		return
-	highlighted_step = step
-	input_a_frame.modulate = Color(1, 1, 1, 1)
-	input_b_frame.modulate = Color(1, 1, 1, 1)
-	gate_slot_frame.modulate = Color(1, 1, 1, 1)
-	inventory_frame.modulate = Color(1, 1, 1, 1)
-	btn_verdict.modulate = Color(1, 1, 1, 1)
-
-	var target: CanvasItem = input_a_frame
-	if step == 2:
-		target = inventory_frame
-	elif step == 3:
-		target = btn_verdict
-
-	var tween := create_tween()
-	tween.tween_property(target, "modulate", Color(1.08, 1.08, 1.04, 1.0), 0.18)
-	tween.tween_property(target, "modulate", Color(1, 1, 1, 1), 0.22)
-
-func _on_verdict_pressed() -> void:
-	if is_safe_mode:
-		return
-	if btn_verdict.disabled:
-		return
-	_mark_first_action()
-	verdict_count += 1
-
-	var current_time: float = Time.get_ticks_msec() / 1000.0
-	if current_time - last_verdict_time < 0.8:
-		_show_feedback("Подождите перед следующим вердиктом.", Color(1.0, 0.62, 0.28))
-		_lock_verdict(3.0)
-		_register_trial("RATE_LIMITED", false)
-		return
-	last_verdict_time = current_time
-
-	if selected_gate_guess.is_empty():
-		_show_feedback("СНАЧАЛА ВЫБЕРИТЕ ВЕНТИЛЬ", Color(1.0, 0.86, 0.32))
-		_register_trial("EMPTY_SELECTION", false)
-		return
-
-	contradiction_index = -1
-	if selected_gate_guess == current_case.gate:
-		var confidence_ratio := _confidence_ratio()
-		var confidence_bucket := _confidence_bucket(confidence_ratio)
-		if seen_combinations.size() <= 2:
-			GlobalMetrics.stability = min(100.0, GlobalMetrics.stability + LOW_CONFIDENCE_BONUS)
-			GlobalMetrics.stability_changed.emit(GlobalMetrics.stability, LOW_CONFIDENCE_BONUS)
-			_show_feedback("ДОСТУП РАЗРЕШЁН (+%d за быстрый вердикт, %s)" % [int(LOW_CONFIDENCE_BONUS), confidence_bucket], Color(0.45, 0.92, 0.62))
-		else:
-			_show_feedback("ДОСТУП РАЗРЕШЁН (%s)" % confidence_bucket, Color(0.45, 0.92, 0.62))
-		btn_verdict.visible = false
-		btn_next.visible = true
-		_disable_controls()
-		_register_trial("SUCCESS", true)
-	else:
-		case_attempts += 1
-		_update_stats_ui()
-
-		var penalty := 10.0
-		if case_attempts == 2:
-			penalty = 15.0
-		elif case_attempts >= 3:
-			penalty = 25.0
-
-		_apply_penalty(penalty)
-		var contradiction := _first_contradiction_for_gate(selected_gate_guess)
-		if not contradiction.is_empty():
-			contradiction_index = int(contradiction.get("index", -1))
-			var a_name := str(current_case.get("a_text", "A"))
-			var b_name := str(current_case.get("b_text", "B"))
-			var a_text := "%s=%d" % [a_name, 1 if bool(contradiction.get("a", false)) else 0]
-			var b_raw := int(contradiction.get("b", -1))
-			var details := a_text
-			if b_raw >= 0:
-				details += ", %s=%d" % [b_name, b_raw]
-			_show_feedback(
-				"ПРОТИВОРЕЧИЕ: %s -> F_box=%d, ваш F_model=%d (-%d)" % [
-					details,
-					1 if bool(contradiction.get("expected", false)) else 0,
-					1 if bool(contradiction.get("predicted", false)) else 0,
-					int(penalty)
-				],
-				Color(1.0, 0.35, 0.32)
-			)
-		else:
-			_show_feedback("ДОСТУП ЗАПРЕЩЁН (-%d)" % int(penalty), Color(1.0, 0.35, 0.32))
-		var verdict_code := "WRONG_GATE"
-		if case_attempts >= MAX_ATTEMPTS:
-			_enter_safe_mode()
-			verdict_code = "SAFE_MODE_TRIGGERED"
-		_register_trial(verdict_code, false)
-
-	_update_circuit()
-
-func _lock_verdict(duration: float) -> void:
-	if is_safe_mode:
-		return
-	btn_verdict.disabled = true
-	verdict_timer.start(duration)
-
-func _on_verdict_unlock() -> void:
-	if is_safe_mode:
-		return
-	if GlobalMetrics.stability > 0.0 and btn_verdict.visible:
-		btn_verdict.disabled = false
-
-func _enter_safe_mode() -> void:
-	is_safe_mode = true
-	_disable_controls()
-	btn_verdict.disabled = true
-	btn_probe.disabled = true
-	btn_next.visible = true
-
-	_set_gate_buttons_enabled(false)
-	_select_gate_button(str(current_case.get("gate", "")))
-
-	var gate_symbol := _gate_symbol(str(current_case.get("gate", "")))
-	var gate_title := _gate_title(str(current_case.get("gate", "")))
-	var safe_msg := "БЕЗОПАСНЫЙ РЕЖИМ: правильный вентиль %s (%s)." % [gate_symbol, gate_title]
-	_show_feedback(safe_msg, Color(1.0, 0.74, 0.32))
-	_show_diagnostics("SAFE MODE", "%s\nВыполнен авторазбор, изучите журнал и переходите далее." % safe_msg)
+func _update_stability_ui(val: float, _change: float = 0.0) -> void:
+	energy_bar.value = clampf(val, 0.0, 100.0)
 	_update_ui_state()
 
-func _show_diagnostics(title: String, message: String) -> void:
-	diagnostics_title.text = title
-	diagnostics_text.text = message
-	diagnostics_blocker.visible = true
-	diagnostics_panel.visible = true
-	diagnostics_next_button.grab_focus()
+func _update_target_and_bars() -> void:
+	target_label.text = _tr("logic.a.ui.target_default", target_label.text)
+	facts_bar.value = seen_combinations.size()
+	facts_bar.max_value = max(1, _total_unique_combinations())
+
+func _render_trace() -> void:
+	_update_terminal_text(observed_output if has_observation else false)
+
+func _clear_gate_selection() -> void:
+	selected_gate_guess = ""
+	for btn in gate_buttons.values():
+		(btn as Button).set_pressed_no_signal(false)
+	_update_gate_slot_label()
+
+func _update_gate_slot_label() -> void:
+	var label_text := _gate_label(selected_gate_guess) if not selected_gate_guess.is_empty() else _tr("logic.a.ui.gate_slot_empty", "?")
+	gate_label.text = label_text
+
+func _set_gate_buttons_enabled(enabled: bool) -> void:
+	for btn in gate_buttons.values():
+		(btn as Button).disabled = not enabled
+
+func _update_ui_state() -> void:
+	# Minimal stub: could add visual state toggles if needed
+	pass
 
 func _hide_diagnostics() -> void:
-	diagnostics_blocker.visible = false
 	diagnostics_panel.visible = false
-
-func _on_diagnostics_close_pressed() -> void:
-	_hide_diagnostics()
-
-func _start_analyze_cooldown() -> void:
-	if analyze_timer == null:
-		return
-	btn_hint.disabled = true
-	analyze_timer.start(ANALYZE_COOLDOWN_SEC)
-
-func _on_analyze_unlock() -> void:
-	if is_safe_mode or not btn_verdict.visible:
-		return
-	btn_hint.disabled = false
+	diagnostics_blocker.visible = false
 
 func _show_feedback(msg: String, col: Color) -> void:
 	feedback_label.text = msg
 	feedback_label.add_theme_color_override("font_color", col)
 	feedback_label.visible = true
-	_update_ui_state()
 
-func _apply_penalty(amount: float) -> void:
-	GlobalMetrics.stability = max(0.0, GlobalMetrics.stability - amount)
-	GlobalMetrics.stability_changed.emit(GlobalMetrics.stability, -amount)
+func _enter_safe_mode() -> void:
+	is_safe_mode = true
+	_set_gate_buttons_enabled(false)
+	btn_hint.disabled = true
+	btn_probe.disabled = true
+	btn_verdict.disabled = true
+	diagnostics_panel.visible = true
+	diagnostics_blocker.visible = true
 
-func _update_stability_ui(val: float, _change: float) -> void:
-	energy_bar.value = clampf(val, 0.0, 100.0)
-	_update_stats_ui()
-	_update_ui_state()
+func _start_analyze_cooldown() -> void:
+	btn_hint.disabled = true
+	if analyze_timer:
+		analyze_timer.start(ANALYZE_COOLDOWN_SEC)
+
+func _confidence_ratio() -> float:
+	if _total_unique_combinations() <= 0:
+		return 0.0
+	return float(seen_combinations.size()) / float(_total_unique_combinations())
+
+func _confidence_bucket(ratio: float) -> String:
+	if ratio >= 0.75:
+		return "HIGH"
+	if ratio >= 0.4:
+		return "MID"
+	return "LOW"
+
+func _total_unique_combinations() -> int:
+	return 4 if str(current_case.get("gate", "")) != GATE_NOT else 2
+
+func _first_contradiction_for_gate(gate_id: String) -> Dictionary:
+	for i in range(seen_trace_entries.size()):
+		var entry := seen_trace_entries[i]
+		var expected := _calculate_gate_output(bool(entry.get("a", false)), bool(entry.get("b", false)), gate_id)
+		if expected != bool(entry.get("f", false)):
+			return {"index": i, "a": entry.get("a", false), "b": entry.get("b", -1)}
+	return {}
+func _update_terminal_text(out_val: bool) -> void:
+	var lines: Array[String] = []
+	var a_label := _case_text("a", "A")
+	var b_label := _case_text("b", "B")
+	var confidence_ratio := _confidence_ratio()
+	var confidence_bucket := _confidence_bucket(confidence_ratio)
+
+	lines.append("[b]%s[/b]" % _tr("logic.a.ui.briefing_title", "БРИФИНГ"))
+	lines.append(_case_text("witness", ""))
+	lines.append("")
+	lines.append("[b]%s[/b]" % _tr("logic.a.ui.steps_title", "ШАГИ"))
+	lines.append(_tr("logic.a.ui.step1", "1) Выставьте входы."))
+	lines.append(_tr("logic.a.ui.step2", "2) Нажмите ПРОГОН, чтобы записать факт."))
+	lines.append(_tr("logic.a.ui.step3", "3) Выберите вентиль в инвентаре."))
+	lines.append(_tr("logic.a.ui.step4", "4) Нажмите ВЕРДИКТ."))
+	lines.append("")
+	lines.append(_tr("logic.a.ui.confidence", "Уверенность: {bucket} ({seen}/{total})", {
+		"bucket": confidence_bucket,
+		"seen": seen_combinations.size(),
+		"total": _total_unique_combinations()
+	}))
+	lines.append("")
+	if has_observation:
+		lines.append("A=%d, B=%d -> F_box=%d" % [
+			1 if input_a else 0,
+			1 if input_b else 0,
+			1 if out_val else 0
+		])
+	if has_observation and not selected_gate_guess.is_empty():
+		lines.append("%s(%s,%s) = %d" % [
+			selected_gate_guess,
+			a_label,
+			b_label,
+			1 if _calculate_gate_output(input_a, input_b, selected_gate_guess) else 0
+		])
+	if contradiction_index >= 0 and contradiction_index < seen_trace_entries.size():
+		var entry := seen_trace_entries[contradiction_index]
+		lines.append("[color=#ff7a7a]%s[/color]" % _tr("logic.a.ui.contradiction", "ПРОТИВОРЕЧИЕ"))
+
+	if lines.size() <= 0:
+		lines.append(_tr("logic.a.ui.log_empty", "- ЖУРНАЛ ПУСТ"))
+
+	terminal_text.text = "\n".join(lines)
+	terminal_text.scroll_to_line(0)
 
 func _update_stats_ui() -> void:
 	var case_id := str(current_case.get("id", "A_00"))
 	var confidence_ratio := _confidence_ratio()
-	session_label.text = "СЕССИЯ: %02d/%02d | CASE %s" % [current_case_index + 1, CASES.size(), case_id]
-	stats_label.text = "ПОП: %d/%d | ФАКТЫ: %d/%d | CONF: %s | ANALYZE: %d | СТАБ: %d%%" % [
-		case_attempts,
-		MAX_ATTEMPTS,
-		seen_combinations.size(),
-		_total_unique_combinations(),
-		_confidence_bucket(confidence_ratio),
-		analyze_count,
-		int(GlobalMetrics.stability)
-	]
+	session_label.text = _tr("logic.a.ui.session", "SESSION: {cur}/{total} | CASE {case}", {
+		"cur": current_case_index + 1,
+		"total": CASES.size(),
+		"case": case_id
+	})
+	stats_label.text = _tr(
+		"logic.a.ui.stats",
+		"ATT: {attempts}/{max} | FACTS: {facts}/{total_facts} | CONF: {conf} | ANALYZE: {analyze} | STAB: {stability}%",
+		{
+			"attempts": case_attempts,
+			"max": MAX_ATTEMPTS,
+			"facts": seen_combinations.size(),
+			"total_facts": _total_unique_combinations(),
+			"conf": _confidence_bucket(confidence_ratio),
+			"analyze": analyze_count,
+			"stability": int(GlobalMetrics.stability)
+		}
+	)
 	_update_target_and_bars()
 	_update_ui_state()
 
@@ -822,13 +577,13 @@ func _on_hint_pressed() -> void:
 	hints_used += 1
 
 	if seen_trace_entries.is_empty():
-		_show_feedback("АНАЛИЗ: сначала снимите показания через ПРОГОН.", Color(0.56, 0.78, 0.96))
+		_show_feedback("    ", Color(0.56, 0.78, 0.96))
 	elif selected_gate_guess.is_empty():
-		_show_feedback("АНАЛИЗ: выберите вентиль, чтобы найти противоречие.", Color(0.56, 0.78, 0.96))
+		_show_feedback("    .", Color(0.56, 0.78, 0.96))
 	else:
 		var contradiction := _first_contradiction_for_gate(selected_gate_guess)
 		if contradiction.is_empty():
-			_show_feedback("АНАЛИЗ: явных противоречий нет, модель согласуется с фактами.", Color(0.45, 0.92, 0.62))
+			_show_feedback("   .", Color(0.45, 0.92, 0.62))
 		else:
 			contradiction_index = int(contradiction.get("index", -1))
 			var a_name := str(current_case.get("a_text", "A"))
@@ -837,7 +592,7 @@ func _on_hint_pressed() -> void:
 			var b_raw := int(contradiction.get("b", -1))
 			if b_raw >= 0:
 				a_text += ", %s=%d" % [b_name, b_raw]
-			_show_feedback("АНАЛИЗ: противоречие на строке #%d (%s)." % [contradiction_index + 1, a_text], Color(1.0, 0.78, 0.32))
+			_show_feedback("    #%d (%s)." % [contradiction_index + 1, a_text], Color(1.0, 0.78, 0.32))
 
 	_update_circuit()
 	_start_analyze_cooldown()

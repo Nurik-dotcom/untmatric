@@ -1,4 +1,4 @@
-﻿extends Node
+extends Node
 
 const SCHEMA_VERSION := "DA7.B.v2"
 const LEVEL := "B"

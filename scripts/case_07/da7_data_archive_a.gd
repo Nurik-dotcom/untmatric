@@ -43,6 +43,7 @@ var _press_hit: Dictionary = {}
 @onready var table_section: VBoxContainer = $SafeArea/RootLayout/Body/DesktopLayout/TableSection
 @onready var task_section: VBoxContainer = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection
 @onready var data_tree: Tree = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/DataTree
+@onready var table_title: Label = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/TableTitle
 @onready var scanner_overlay: Control = get_node_or_null("SafeArea/RootLayout/Body/DesktopLayout/TableSection/ScannerOverlay") as Control
 @onready var inspect_label: RichTextLabel = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectLabel
 @onready var scan_label: Label = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/ScanLabel
@@ -59,8 +60,59 @@ var _press_hit: Dictionary = {}
 @onready var sfx_relay: AudioStreamPlayer = $Runtime/Audio/SfxRelay
 @onready var result_stamp: Control = $ResultStamp
 
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	btn_back.text = _tr("da7.common.back", "BACK")
+	if is_instance_valid(table_title):
+		table_title.text = _tr("da7.a.ui.data_mode_title", "DATA MODE // READ-ONLY")
+	_update_stability_ui()
+	if not current_case.is_empty():
+		_refresh_case_ui_i18n()
+
+func _refresh_case_ui_i18n() -> void:
+	var case_id: String = str(current_case.get("id", ""))
+	title_label.text = _tr("da7.a.ui.title_running", "CASE #7: DATA ARCHIVE [A {current}/{total}]",
+		{"current": current_case_index + 1, "total": session_cases.size()})
+	case_title_label.text = _tr("da7.a.ui.case_title", "CASE {value}",
+		{"value": str(current_case.get("case_title", current_case.get("id", "")))})
+	briefing_label.text = _case_text(case_id, "briefing")
+	objective_label.text = _tr("da7.a.ui.objective_label", "OBJECTIVE: {value}",
+		{"value": _case_text(case_id, "objective")})
+	prompt_label.text = _case_text(case_id, "prompt")
+	inspect_label.text = _tr("da7.a.ui.inspect_hint", "Long-press a row or cell to inspect.")
+	scan_label.text = _tr("da7.a.ui.scan", "SCAN: {count}", {"count": inspect_count})
+
+func _case_text(case_id: String, field: String) -> String:
+	var raw: String = str(current_case.get(field, ""))
+	return _tr("da7.a.case.%s.%s" % [case_id, field], raw)
+
+func _case_reveal_text(is_correct: bool, f_reason: Variant) -> String:
+	var case_id: String = str(current_case.get("id", ""))
+	var reveal: Dictionary = current_case.get("reveal", {}) as Dictionary
+	if is_correct:
+		var raw: String = str(reveal.get("on_correct", ""))
+		var fallback: String = raw if not raw.is_empty() else _tr("da7.a.ui.explain_default_correct", "Correct.")
+		return _tr("da7.a.case.%s.reveal.correct" % case_id, fallback)
+	var reason_map: Dictionary = reveal.get("on_wrong_by_reason", {}) as Dictionary
+	var raw: String = str(reason_map.get(str(f_reason), ""))
+	var fallback: String = raw if not raw.is_empty() else _tr("da7.a.ui.explain_default_wrong", "Incorrect.")
+	return _tr("da7.a.case.%s.reveal.%s" % [case_id, str(f_reason)], fallback)
+
 func _ready() -> void:
 	randomize()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	if not btn_back.pressed.is_connected(_on_back_pressed):
@@ -79,6 +131,7 @@ func _ready() -> void:
 
 	options_grid.visible = false
 	_init_session()
+	_apply_i18n()
 	call_deferred("_on_viewport_size_changed")
 	_load_next_case()
 
@@ -136,20 +189,22 @@ func _load_next_case() -> void:
 func _render_case() -> void:
 	_set_tree_locked(false)
 	trial_locked = false
-	title_label.text = "Дело №7: Секретный архив [A %d/%d]" % [current_case_index + 1, session_cases.size()]
-	case_title_label.text = "ДЕЛО %s" % str(current_case.get("case_title", current_case.get("id", "UNKNOWN")))
+	var case_id: String = str(current_case.get("id", ""))
+	title_label.text = _tr("da7.a.ui.title_running", "CASE #7: DATA ARCHIVE [A {current}/{total}]",
+		{"current": current_case_index + 1, "total": session_cases.size()})
+	case_title_label.text = _tr("da7.a.ui.case_title", "CASE {value}",
+		{"value": str(current_case.get("case_title", current_case.get("id", "")))})
 	briefing_label.bbcode_enabled = false
-	briefing_label.text = str(current_case.get("briefing", ""))
-	objective_label.text = "Цель: %s" % str(current_case.get("objective", ""))
-
+	briefing_label.text = _case_text(case_id, "briefing")
+	objective_label.text = _tr("da7.a.ui.objective_label", "OBJECTIVE: {value}",
+		{"value": _case_text(case_id, "objective")})
 	prompt_label.bbcode_enabled = false
-	prompt_label.text = str(current_case.get("prompt", ""))
+	prompt_label.text = _case_text(case_id, "prompt")
 	explain_line.bbcode_enabled = false
 	explain_line.text = ""
-
 	inspect_label.bbcode_enabled = false
-	inspect_label.text = "Проверьте подсказки, нажав и удерживая строку/ячейку."
-	scan_label.text = "СКАН: 0"
+	inspect_label.text = _tr("da7.a.ui.inspect_hint", "Long-press a row or cell to inspect.")
+	scan_label.text = _tr("da7.a.ui.scan", "SCAN: {count}", {"count": 0})
 	options_grid.visible = false
 	for child in options_grid.get_children():
 		child.queue_free()
@@ -416,12 +471,7 @@ func _submit_target(target: Dictionary, clicked_kind: String, row_id: String, co
 		_load_next_case()
 
 func _show_explain_line(is_correct: bool, f_reason: Variant) -> void:
-	var reveal: Dictionary = current_case.get("reveal", {}) as Dictionary
-	if is_correct:
-		explain_line.text = str(reveal.get("on_correct", "Правильный."))
-		return
-	var reason_map: Dictionary = reveal.get("on_wrong_by_reason", {}) as Dictionary
-	explain_line.text = str(reason_map.get(str(f_reason), "Неправильная цель."))
+	explain_line.text = _case_reveal_text(is_correct, f_reason)
 
 func _apply_highlight(highlight: Dictionary) -> void:
 	if highlight.is_empty():
@@ -481,11 +531,11 @@ func _register_inspection(row_id: String) -> void:
 	if not row_id.is_empty():
 		unique_rows_inspected[row_id] = true
 		last_inspected_row_id = row_id
-	scan_label.text = "СКАН: %d" % inspect_count
+	scan_label.text = _tr("da7.a.ui.scan", "SCAN: {count}", {"count": inspect_count})
 
 func _build_inspect_line(row_id: String, col_id: String) -> String:
 	if not row_data_by_id.has(row_id):
-		return "Проверьте: row=%s col=%s" % [row_id, col_id]
+		return _tr("da7.a.ui.inspect_missing", "INSPECT: row={row} col={col}", {"row": row_id, "col": col_id})
 	var row_data: Dictionary = row_data_by_id[row_id] as Dictionary
 	var table_def: Dictionary = current_case.get("table", {}) as Dictionary
 	var cols: Array = table_def.get("columns", []) as Array
@@ -595,18 +645,18 @@ func _on_scroll_input(event: InputEvent) -> void:
 func _finish_session() -> void:
 	trial_locked = true
 	_set_tree_locked(true)
-	title_label.text = "АРХИВ ДАННЫХ // СЕССИЯ ЗАВЕРШЕНА [A]"
+	title_label.text = _tr("da7.a.ui.title_complete", "DATA ARCHIVE // SESSION COMPLETE [A]")
 	prompt_label.bbcode_enabled = true
-	prompt_label.text = "[b]Расследование завершено.[/b]"
+	prompt_label.text = "[b]%s[/b]" % _tr("da7.a.ui.session_complete", "Investigation complete.")
 	explain_line.text = ""
 	_ensure_exit_button()
 
 func _game_over() -> void:
 	trial_locked = true
 	_set_tree_locked(true)
-	title_label.text = "АРХИВ ДАННЫХ // БЛОКИРОВКА СИСТЕМЫ [A]"
+	title_label.text = _tr("da7.a.ui.title_locked", "DATA ARCHIVE // SYSTEM LOCK [A]")
 	prompt_label.bbcode_enabled = true
-	prompt_label.text = "[b]Стабильность упала до нуля.[/b]"
+	prompt_label.text = "[b]%s[/b]" % _tr("da7.a.ui.system_lock", "Stability dropped to zero.")
 	explain_line.text = ""
 	_ensure_exit_button()
 
@@ -614,7 +664,7 @@ func _ensure_exit_button() -> void:
 	if exit_btn != null and is_instance_valid(exit_btn):
 		return
 	exit_btn = Button.new()
-	exit_btn.text = "EXIT"
+	exit_btn.text = _tr("da7.common.exit", "EXIT")
 	exit_btn.custom_minimum_size = Vector2(140, 48)
 	exit_btn.pressed.connect(func() -> void:
 		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
@@ -645,7 +695,7 @@ func _update_stability_ui() -> void:
 	if is_instance_valid(stability_bar):
 		stability_bar.value = GlobalMetrics.stability
 	if is_instance_valid(stability_label):
-		stability_label.text = "Стабильность: %d%%" % int(GlobalMetrics.stability)
+		stability_label.text = _tr("da7.common.stability", "STABILITY: {value}%", {"value": int(GlobalMetrics.stability)})
 
 func _on_viewport_size_changed() -> void:
 	var viewport_size := get_viewport_rect().size

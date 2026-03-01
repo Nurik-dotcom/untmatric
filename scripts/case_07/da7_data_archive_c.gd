@@ -37,6 +37,10 @@ var block_pick_count: int = 0
 var clear_used: bool = false
 var unique_blocks_used: Dictionary = {}
 
+var _status_i18n_key: String = ""
+var _status_i18n_default: String = ""
+var _status_i18n_params: Dictionary = {}
+
 @onready var title_label: Label = $SafeArea/Margin/Root/Header/HeaderVBox/Title
 @onready var btn_back: Button = $SafeArea/Margin/Root/BackRow/BtnBack
 @onready var stability_label: Label = $SafeArea/Margin/Root/Header/HeaderVBox/TimerRow/StabilityLabel
@@ -54,8 +58,54 @@ var unique_blocks_used: Dictionary = {}
 @onready var sfx_error: AudioStreamPlayer = $SFX/SfxError
 @onready var sfx_relay: AudioStreamPlayer = $SFX/SfxRelay
 
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	btn_back.text = _tr("da7.c.ui.btn_back", "BACK")
+	btn_undo.text = _tr("da7.c.ui.btn_undo", "UNDO")
+	btn_clear.text = _tr("da7.c.ui.btn_clear", "CLEAR")
+	btn_submit.text = _tr("da7.c.ui.btn_submit", "SUBMIT")
+	_update_stability_ui()
+	if session_finished:
+		_apply_complete_i18n()
+	elif is_trial_active or trial_locked:
+		_refresh_case_ui_i18n()
+	if not _status_i18n_key.is_empty():
+		status_label.text = _tr(_status_i18n_key, _status_i18n_default, _status_i18n_params)
+
+func _apply_complete_i18n() -> void:
+	title_label.text = _tr("da7.c.ui.title_complete", "CASE #7: SQL MASTER [COMPLETE]")
+	btn_next.text = _tr("da7.c.ui.btn_exit", "EXIT")
+
+func _refresh_case_ui_i18n() -> void:
+	if current_case.is_empty():
+		return
+	var case_id: String = str(current_case.get("id", "DA7-C-00"))
+	title_label.text = _tr("da7.c.ui.title_running", "CASE #7: SQL MASTER [{case_id}]",
+		{"case_id": case_id})
+	var raw_prompt: String = str(current_case.get("prompt", ""))
+	prompt_label.text = "[b]%s[/b]" % _tr("da7.c.case.%s.prompt" % case_id, raw_prompt)
+
+func _set_status_i18n(key: String, default_text: String, params: Dictionary = {}) -> void:
+	_status_i18n_key = key
+	_status_i18n_default = default_text
+	_status_i18n_params = params.duplicate(true)
+	status_label.text = _tr(key, default_text, params)
+
 func _ready() -> void:
 	randomize()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	get_tree().root.size_changed.connect(_on_viewport_size_changed)
@@ -66,6 +116,7 @@ func _ready() -> void:
 	btn_next.pressed.connect(_on_next_pressed)
 
 	_init_session()
+	_apply_i18n()
 	call_deferred("_on_viewport_size_changed")
 	_load_next_case()
 
@@ -129,14 +180,16 @@ func _load_next_case() -> void:
 
 func _render_case() -> void:
 	var case_id: String = str(current_case.get("id", "DA7-C-00"))
-	title_label.text = "ДЕЛО #7: МАСТЕР SQL [%s]" % case_id
+	title_label.text = _tr("da7.c.ui.title_running", "CASE #7: SQL MASTER [{case_id}]",
+		{"case_id": case_id})
 	var timing_policy: Dictionary = current_case.get("timing_policy", {}) as Dictionary
 	limit_sec = int(timing_policy.get("limit_sec", 120))
 	time_left_sec = float(limit_sec)
 	timer_bar.max_value = max(1.0, float(limit_sec))
 	timer_bar.value = timer_bar.max_value
 	prompt_label.bbcode_enabled = true
-	prompt_label.text = "[b]%s[/b]" % str(current_case.get("prompt", "Соберите SQL-последовательность."))
+	var raw_prompt: String = str(current_case.get("prompt", ""))
+	prompt_label.text = "[b]%s[/b]" % _tr("da7.c.case.%s.prompt" % case_id, raw_prompt)
 	prompt_label.visible_characters = 0
 	typewriter_active = true
 	typewriter_accum = 0.0
@@ -145,9 +198,9 @@ func _render_case() -> void:
 	_build_block_repository()
 	_rebuild_code_area()
 	_set_input_locked(false)
-	btn_next.text = "ДАЛЕЕ"
+	btn_next.text = _tr("da7.c.ui.btn_next", "NEXT")
 	btn_next.visible = false
-	status_label.text = "Соберите токены запроса и отправьте."
+	_set_status_i18n("da7.c.ui.status_initial", "Assemble the query and submit.")
 	_update_timer_ui()
 	_update_stability_ui()
 
@@ -188,7 +241,7 @@ func _on_block_pressed(block_id: String) -> void:
 	_register_interaction()
 	var role: String = str((block_by_id.get(block_id, {}) as Dictionary).get("role", ""))
 	if _role_is_single_use(role) and _sequence_has_role(role):
-		status_label.text = "Роль %s уже использована." % role
+		_set_status_i18n("da7.c.ui.status_role_used", "Role {role} already used.", {"role": role})
 		return
 	selected_sequence_ids.append(block_id)
 	block_pick_count += 1
@@ -292,7 +345,7 @@ func _on_clear_pressed() -> void:
 		if is_instance_valid(btn):
 			btn.disabled = false
 	_rebuild_code_area()
-	status_label.text = "Последовательность очищена."
+	_set_status_i18n("da7.c.ui.status_cleared", "Sequence cleared.")
 
 func _on_submit_pressed() -> void:
 	if trial_locked or not is_trial_active:
@@ -311,11 +364,11 @@ func _finish_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary,
 	prompt_label.visible_characters = -1
 	_set_input_locked(true)
 	if is_correct:
-		status_label.text = "ДОСТУП РАЗРЕШЁН. Запрос корректен."
+		_set_status_i18n("da7.c.ui.status_success", "ACCESS GRANTED. Query is correct.")
 		if is_instance_valid(sfx_relay):
 			sfx_relay.play()
 	else:
-		status_label.text = "ОШИБКА: %s" % str(f_reason)
+		_set_status_i18n("da7.c.ui.status_error", "ERROR: {reason}", {"reason": str(f_reason)})
 		if is_instance_valid(sfx_error):
 			sfx_error.play()
 	_log_trial(is_correct, f_reason, eval_result, end_state)
@@ -608,9 +661,8 @@ func _finish_session() -> void:
 	trial_locked = true
 	session_finished = true
 	typewriter_active = false
-	title_label.text = "ДЕЛО #7: МАСТЕР SQL [ЗАВЕРШЕНО]"
-	status_label.text = "Сессия завершена."
-	btn_next.text = "ВЫХОД"
+	_apply_complete_i18n()
+	_set_status_i18n("da7.c.ui.status_complete", "Session complete.")
 	btn_next.disabled = false
 	btn_next.visible = true
 	_set_input_locked(true)
@@ -619,7 +671,7 @@ func _on_stability_changed(_new_value: float, _delta: float) -> void:
 	_update_stability_ui()
 
 func _update_stability_ui() -> void:
-	stability_label.text = "Стабильность: %d%%" % int(GlobalMetrics.stability)
+	stability_label.text = _tr("da7.common.stability", "STABILITY: {value}%", {"value": int(GlobalMetrics.stability)})
 
 func _on_viewport_size_changed() -> void:
 	var size: Vector2 = get_viewport_rect().size
