@@ -84,6 +84,27 @@ var snapshot_b: Dictionary = {
 @onready var btn_confirm: Button = $SafeArea/MainVBox/BottomBar/BtnConfirm
 @onready var btn_next_level: Button = $SafeArea/MainVBox/BottomBar/BtnNextLevel
 
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	title_label.text = _tr("resus.title", "Кейс 01: Цифровая реанимация")
+	if levels.size() > 0:
+		stage_label.text = _tr("resus.b.stage", "ЭТАП Б {n}/{total}", {
+			"n": current_level_index + 1, "total": levels.size()
+		})
+	btn_reset.text = _tr("resus.b.btn.reset", "СБРОС")
+	btn_confirm.text = _tr("resus.b.btn.confirm", "ПОДТВЕРДИТЬ")
+	btn_benchmark.text = _tr("resus.b.btn.benchmark", "ЗАПУСТИТЬ ЭТАЛОН")
+	btn_next_level.text = _tr("resus.b.btn.next", "СЛЕД. ЭТАП")
+	if not diagnostic_card.visible:
+		diagnostic_headline.text = _tr("resus.b.diagnostic.waiting", "Жду эталона...")
+
 func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
@@ -102,8 +123,10 @@ func _ready() -> void:
 	_populate_levels()
 	levels = ResusData.load_stage_levels(LEVELS_PATH, "B")
 	if levels.is_empty():
-		_show_error("Не удалось загрузить данные случая 01, этап B.")
+		_show_error(_tr("resus.b.error.load", "Не удалось загрузить данные случая 01, этап B."))
 		return
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 
 	_load_current_level(0)
 	_on_viewport_size_changed()
@@ -111,6 +134,8 @@ func _ready() -> void:
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
 
 func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
@@ -131,17 +156,13 @@ func _load_current_level(index: int) -> void:
 	_begin_attempt()
 
 func _setup_level_ui() -> void:
-	title_label.text = "Кейс 01: Цифровая реанимация"
-	stage_label.text = "ЭТАП Б %d/%d" % [current_level_index + 1, levels.size()]
-	context_label.text = str(stage_b_data.get("context", "Настройте профиль и запустите тест"))
+	_apply_i18n()
+	var level_id: String = str(stage_b_data.get("id", ""))
+	context_label.text = _tr("resus.b.level.%s.context" % level_id, str(stage_b_data.get("context", "Настройте профиль и запустите тест")))
 	budget_value.text = "%d$" % int(stage_b_data.get("budget", 0))
-	btn_reset.text = "СБРОС"
-	btn_confirm.text = "ПОДТВЕРДИТЬ"
-	btn_benchmark.text = "ЗАПУСТИТЬ ЭТАЛОН"
-	btn_next_level.text = "СЛЕД. ЭТАП"
 	btn_next_level.visible = false
 	btn_next_level.disabled = true
-	diagnostic_headline.text = "Жду эталона..."
+	diagnostic_headline.text = _tr("resus.b.diagnostic.waiting", "Жду эталона...")
 	diagnostic_details.text = ""
 	diagnostic_card.visible = false
 	_populate_option_cards()
@@ -168,8 +189,8 @@ func _begin_attempt() -> void:
 	snapshot_b["classified_as"] = "UNKNOWN"
 	snapshot_b["benchmark_ran"] = false
 	snapshot_b["preview_metrics"] = {}
-	terminal_output.text = "[ГОТОВО] Выберите профиль BIOS и запустите тест."
-	status_label.text = "ГОТОВО"
+	terminal_output.text = _tr("resus.b.terminal.ready", "[ГОТОВО] Выберите профиль BIOS и запустите тест.")
+	status_label.text = _tr("resus.b.status.ready", "ГОТОВО")
 	status_label.modulate = COLOR_WARN
 
 func _on_cpu_changed(_index: int) -> void:
@@ -223,7 +244,7 @@ func _on_benchmark_pressed() -> void:
 		terminal_output.text += line + "\n"
 	terminal_output.scroll_to_line(max(0, terminal_output.get_line_count() - 1))
 
-	status_label.text = "ЭТАЛОН: %s" % class_code
+	status_label.text = _tr("resus.b.status.benchmark_result", "ЭТАЛОН: {code}", {"code": class_code})
 	status_label.modulate = COLOR_OK if class_code == str(stage_b_data.get("correct_option_id", "OPTIMAL")) else COLOR_WARN
 	_log_event("BENCHMARK_RUN", {
 		"selected_option_id": class_code,
@@ -235,7 +256,7 @@ func _on_confirm_pressed() -> void:
 	if input_locked:
 		return
 	if not bool(snapshot_b.get("benchmark_ran", false)):
-		status_label.text = "ЗАПУСТИТЕ ЭТАЛОННЫЙ ПРОВЕРКА ПЕРЕД ПОДТВЕРЖДЕНИЕМ"
+		status_label.text = _tr("resus.b.status.no_benchmark", "ЗАПУСТИТЕ ЭТАЛОННЫЙ ПРОВЕРКА ПЕРЕД ПОДТВЕРЖДЕНИЕМ")
 		status_label.modulate = COLOR_ERR
 		return
 
@@ -271,7 +292,7 @@ func _on_confirm_pressed() -> void:
 		_play_sfx("error")
 
 func _show_result(result: Dictionary) -> void:
-	var headline: String = str(result.get("diagnostic_headline", "Классификация завершена"))
+	var headline: String = str(result.get("diagnostic_headline", _tr("resus.b.fallback.classified", "Классификация завершена")))
 	var details: Array = result.get("diagnostic_details", []) as Array
 	var detail_lines: Array[String] = []
 	for detail_v in details:
@@ -280,7 +301,7 @@ func _show_result(result: Dictionary) -> void:
 	diagnostic_details.text = "\n".join(detail_lines)
 	diagnostic_card.visible = true
 
-	status_label.text = "ЗАБЛОКИРОВАНО | %s" % str(result.get("verdict_code", "WRONG"))
+	status_label.text = _tr("resus.b.status.blocked", "ЗАБЛОКИРОВАНО | {code}", {"code": str(result.get("verdict_code", "WRONG"))})
 	status_label.modulate = COLOR_OK if bool(result.get("is_correct", false)) else COLOR_ERR
 
 func _on_reset_pressed() -> void:
@@ -356,7 +377,7 @@ func _recompute_preview() -> void:
 	preview_ram_bar.value = float(int(metrics.get("ram_usage", 0)))
 
 	if not bool(snapshot_b.get("benchmark_ran", false)):
-		status_label.text = "ПРОФИЛЬ ГОТОВ | использовано %d$ / %d$" % [total_price, budget]
+		status_label.text = _tr("resus.b.status.profile_ready", "ПРОФИЛЬ ГОТОВ | использовано {used}$ / {budget}$", {"used": total_price, "budget": budget})
 		status_label.modulate = COLOR_WARN
 
 func _calculate_metrics(tuning: Dictionary) -> Dictionary:
@@ -459,7 +480,7 @@ func _benchmark_lines(class_code: String) -> Array[String]:
 	var outputs: Dictionary = stage_b_data.get("benchmark_lines", stage_b_data.get("benchmark_outputs", {})) as Dictionary
 	var lines: Array[String] = _to_string_array(outputs.get(class_code, []))
 	if lines.is_empty():
-		lines.append("[RESULT] %s" % class_code)
+		lines.append(_tr("resus.b.terminal.result_fallback", "[RESULT] {code}", {"code": class_code}))
 	return lines
 
 func _risk_label(score: int) -> String:

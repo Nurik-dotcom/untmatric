@@ -14,33 +14,7 @@ const COLOR_GOOD: Color = Color(0.20, 0.90, 0.30, 1.0)
 const COLOR_WARN: Color = Color(0.95, 0.75, 0.20, 1.0)
 const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 
-const TXT_TITLE: String = "\u0420\u0410\u0414\u0418\u041e\u041f\u0415\u0420\u0415\u0425\u0412\u0410\u0422 | A"
-const TXT_BACK: String = "\u041d\u0410\u0417\u0410\u0414"
-const TXT_MISSION: String = "\u0417\u0410\u0414\u0410\u041d\u0418\u0415"
-const TXT_RULE: String = "\u041d\u0430\u0439\u0434\u0438\u0442\u0435 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0435 i, \u0433\u0434\u0435 2^i >= N"
-const TXT_DECODER: String = "\u0414\u0415\u041a\u041e\u0414\u0415\u0420"
-const TXT_KNOB_HINT: String = "\u041f\u043e\u0432\u0435\u0440\u043d\u0438\u0442\u0435 \u0440\u0443\u0447\u043a\u0443, \u0437\u0430\u0442\u0435\u043c \u043d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0410\u041d\u0410\u041b\u0418\u0417\u00bb"
-const TXT_BTN_HINT: String = "\u041f\u041e\u0414\u0421\u041a\u0410\u0417\u041a\u0410"
-const TXT_BTN_ANALYZE: String = "\u0410\u041d\u0410\u041b\u0418\u0417"
-const TXT_BTN_CAPTURE: String = "\u0417\u0410\u0425\u0412\u0410\u0422"
-const TXT_BTN_NEXT: String = "\u0414\u0410\u041b\u0415\u0415"
-const TXT_BTN_DETAILS_CLOSED: String = "\u041f\u041e\u0414\u0420\u041e\u0411\u041d\u0415\u0415 \u25be"
-const TXT_BTN_DETAILS_OPEN: String = "\u0421\u041a\u0420\u042b\u0422\u042c \u25b4"
-const TXT_DETAILS_TITLE: String = "\u041f\u041e\u042f\u0421\u041d\u0415\u041d\u0418\u0415"
-const TXT_DETAILS_CLOSE: String = "\u0417\u0410\u041a\u0420\u042b\u0422\u042c"
 
-const TXT_STATUS_PLAN: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u041d\u0430\u0441\u0442\u0440\u043e\u0439\u0442\u0435 i, \u0437\u0430\u0442\u0435\u043c \u043d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0410\u041d\u0410\u041b\u0418\u0417\u00bb."
-const TXT_STATUS_HINT: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u043f\u0440\u0430\u0432\u0438\u043b\u043e 2^i >= N \u0438 \u043c\u0438\u043d\u0438\u043c\u0443\u043c i."
-const TXT_ANALYZE_UNDERFIT: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u041d\u0435 \u043f\u043e\u043c\u0435\u0449\u0430\u0435\u0442\u0441\u044f. \u0423\u0432\u0435\u043b\u0438\u0447\u044c\u0442\u0435 i."
-const TXT_ANALYZE_OVERKILL: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u041f\u043e\u043c\u0435\u0449\u0430\u0435\u0442\u0441\u044f, \u043d\u043e \u0435\u0441\u0442\u044c \u043f\u0435\u0440\u0435\u0440\u0430\u0441\u0445\u043e\u0434 \u0431\u0438\u0442."
-const TXT_ANALYZE_OK: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0420\u0435\u0448\u0435\u043d\u0438\u0435 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0435."
-const TXT_ANALYZE_DONE: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0410\u043d\u0430\u043b\u0438\u0437 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d. \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0417\u0410\u0425\u0412\u0410\u0422\u00bb."
-const TXT_RESULT_BAD: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u041d\u0435\u0432\u0435\u0440\u043d\u043e. \u041f\u0430\u043a\u0435\u0442 \u043d\u0435 \u043f\u043e\u043c\u0435\u0441\u0442\u0438\u043b\u0441\u044f."
-const TXT_RESULT_GOOD: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u041e\u0442\u043b\u0438\u0447\u043d\u043e. \u041c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0435 \u043a\u043e\u0434\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435."
-const TXT_RESULT_WARN: String = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0412\u0435\u0440\u043d\u043e, \u043d\u043e \u0441 \u043f\u0435\u0440\u0435\u0440\u0430\u0441\u0445\u043e\u0434\u043e\u043c."
-const TXT_FIT_UNKNOWN: String = "\u0421\u0418\u0413\u041d\u0410\u041b: \u041d\u0415 \u041f\u0420\u041e\u0412\u0415\u0420\u0415\u041d"
-const TXT_FIT_YES: String = "\u041f\u041e\u041c\u0415\u0429\u0410\u0415\u0422\u0421\u042f: \u0414\u0410"
-const TXT_FIT_NO: String = "\u041f\u041e\u041c\u0415\u0429\u0410\u0415\u0422\u0421\u042f: \u041d\u0415\u0422"
 
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var root_vbox: VBoxContainer = $SafeArea/RootVBox
@@ -127,11 +101,17 @@ var noise_seed: int = 1
 var _ui_ready: bool = false
 var _current_stability: float = 100.0
 var _body_scroll_installed: bool = false
+var _status_i18n_key: String = ""
+var _status_i18n_default: String = ""
+var _status_i18n_params: Dictionary = {}
+var _status_i18n_color: Color = Color(0.85, 0.85, 0.85, 1.0)
 
 func _ready() -> void:
 	randomize()
 	_load_level_config()
-	_apply_static_texts()
+	_apply_i18n()
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 	_connect_signals()
 	_install_body_scroll()
 	_collect_sample_refs()
@@ -149,6 +129,10 @@ func _ready() -> void:
 	_start_trial()
 	_ui_ready = true
 
+func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and _ui_ready:
 		_apply_safe_area_padding()
@@ -163,8 +147,12 @@ func _process(delta: float) -> void:
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if trial_active and analysis_revealing:
 		var remaining: float = maxf(0.0, analyze_reveal_until - now_sec)
-		status_label.text = "\u0421\u0422\u0410\u0422\u0423\u0421: \u0430\u043d\u0430\u043b\u0438\u0437 \u043a\u0430\u043d\u0430\u043b\u0430... %.1f\u0441" % remaining
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n(
+			"quest.radio.a.status.analyze_progress",
+			"STATUS: analyzing channel... {left}s",
+			COLOR_WARN,
+			{"left": "%.1f" % remaining}
+		)
 		if now_sec >= analyze_reveal_until:
 			analysis_revealing = false
 			analysis_committed = true
@@ -175,24 +163,58 @@ func _process(delta: float) -> void:
 			btn_analyze.disabled = false
 			_set_fit_label_from_analysis()
 			_update_details_text()
-			status_label.text = TXT_ANALYZE_DONE
-			status_label.add_theme_color_override("font_color", COLOR_GOOD)
+			_set_status_i18n(
+				"quest.radio.a.status.analyze_done",
+				"STATUS: analysis complete. Press CAPTURE.",
+				COLOR_GOOD
+			)
 	_update_header_meta()
 	_update_waveform()
-func _apply_static_texts() -> void:
-	title_label.text = TXT_TITLE
-	btn_back.text = TXT_BACK
-	mission_title.text = TXT_MISSION
-	rule_label.text = TXT_RULE
-	decoder_title.text = TXT_DECODER
-	knob_hint.text = TXT_KNOB_HINT
-	btn_hint.text = TXT_BTN_HINT
-	btn_analyze.text = TXT_BTN_ANALYZE
-	btn_capture.text = TXT_BTN_CAPTURE
-	btn_next.text = TXT_BTN_NEXT
-	btn_details.text = TXT_BTN_DETAILS_CLOSED
-	details_title.text = TXT_DETAILS_TITLE
-	btn_close_details.text = TXT_DETAILS_CLOSE
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.get_text(key, merged)
+
+func _apply_i18n() -> void:
+	title_label.text = _tr("quest.radio.a.ui.title", "RADIO INTERCEPT | A")
+	btn_back.text = _tr("quest.radio.common.btn.back", "BACK")
+	mission_title.text = _tr("quest.radio.a.ui.mission", "MISSION")
+	rule_label.text = _tr("quest.radio.a.ui.rule", "Find minimum i where 2^i >= N")
+	decoder_title.text = _tr("quest.radio.a.ui.decoder", "DECODER")
+	knob_hint.text = _tr("quest.radio.a.ui.knob_hint", "Rotate the knob, then press ANALYZE")
+	btn_hint.text = _tr("quest.radio.a.ui.btn_hint", "HINT")
+	btn_analyze.text = _tr("quest.radio.btn.analyze", "ANALYZE")
+	btn_capture.text = _tr("quest.radio.btn.capture", "CAPTURE")
+	btn_next.text = _tr("quest.radio.common.btn.next", "NEXT")
+	btn_details.text = _tr("quest.radio.common.btn.details_open", "DETAILS v")
+	details_title.text = _tr("quest.radio.a.ui.details_title", "EXPLANATION")
+	btn_close_details.text = _tr("quest.radio.common.btn.details_close", "CLOSE")
+	_update_dynamic_texts()
+	_apply_status_i18n()
+	_update_header_meta()
+	_update_details_text()
+
+func _update_dynamic_texts() -> void:
+	if target_n > 0:
+		target_label.text = _tr("quest.radio.a.task", "Signal detected. Alphabet size: %d chars. Set decoding depth.") % target_n
+	if current_bits > 0:
+		bits_value_label.text = _tr("quest.radio.a.bits", "%d BIT") % current_bits
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _set_status_i18n(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
+	_status_i18n_key = key
+	_status_i18n_default = default_text
+	_status_i18n_params = params.duplicate(true)
+	_status_i18n_color = color
+	_apply_status_i18n()
+
+func _apply_status_i18n() -> void:
+	if _status_i18n_key.is_empty():
+		return
+	status_label.text = _tr(_status_i18n_key, _status_i18n_default, _status_i18n_params)
+	status_label.add_theme_color_override("font_color", _status_i18n_color)
 
 func _connect_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -274,7 +296,7 @@ func _start_trial() -> void:
 		target_n = pool.pick_random()
 
 	target_bits = int(ceil(log(float(target_n)) / log(2.0)))
-	target_label.text = "N = %d" % target_n
+	target_label.text = _tr("quest.radio.a.task", "Signal detected. Alphabet size: %d chars. Set decoding depth.") % target_n
 
 	current_bits = _i_min
 	bit_knob.set("value", _i_min)
@@ -284,8 +306,11 @@ func _start_trial() -> void:
 		_target_wave_line.visible = false
 		_target_wave_line.points = PackedVector2Array()
 
-	status_label.text = TXT_STATUS_PLAN
-	status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
+	_set_status_i18n(
+		"quest.radio.a.status.plan",
+		"STATUS: set i, then press ANALYZE.",
+		Color(0.85, 0.85, 0.85, 1.0)
+	)
 	_update_header_meta()
 	_update_details_text()
 
@@ -316,10 +341,13 @@ func _apply_user_bits(i_value: int, from_user: bool) -> void:
 			analysis_committed = false
 			last_analyzed_bits = -1
 			btn_capture.disabled = true
-			status_label.text = TXT_STATUS_PLAN
-			status_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
+			_set_status_i18n(
+				"quest.radio.a.status.plan",
+				"STATUS: set i, then press ANALYZE.",
+				Color(0.85, 0.85, 0.85, 1.0)
+			)
 
-	bits_value_label.text = "i = %d \u0431\u0438\u0442" % current_bits
+	bits_value_label.text = _tr("quest.radio.a.bits", "%d BIT") % current_bits
 	if analysis_committed and current_bits == last_analyzed_bits:
 		_set_fit_label_from_analysis()
 	else:
@@ -331,8 +359,11 @@ func _on_hint_pressed() -> void:
 		return
 	_mark_first_action()
 	hint_used = true
-	status_label.text = TXT_STATUS_HINT
-	status_label.add_theme_color_override("font_color", Color(0.55, 0.85, 1.0, 1.0))
+	_set_status_i18n(
+		"quest.radio.a.status.hint",
+		"STATUS: use rule 2^i >= N and choose minimal i.",
+		Color(0.55, 0.85, 1.0, 1.0)
+	)
 	_update_details_text()
 
 func _on_analyze_pressed() -> void:
@@ -353,14 +384,23 @@ func _on_analyze_pressed() -> void:
 	last_analysis_minimal = current_bits == target_bits
 	last_analysis_overkill = last_analysis_fit and not last_analysis_minimal
 	if not last_analysis_fit:
-		status_label.text = TXT_ANALYZE_UNDERFIT
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n(
+			"quest.radio.a.status.analyze_underfit",
+			"STATUS: not enough capacity. Increase i.",
+			COLOR_WARN
+		)
 	elif last_analysis_overkill:
-		status_label.text = TXT_ANALYZE_OVERKILL
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n(
+			"quest.radio.a.status.analyze_overkill",
+			"STATUS: fits, but with bit overhead.",
+			COLOR_WARN
+		)
 	else:
-		status_label.text = TXT_ANALYZE_OK
-		status_label.add_theme_color_override("font_color", COLOR_GOOD)
+		_set_status_i18n(
+			"quest.radio.a.status.analyze_ok",
+			"STATUS: minimal solution confirmed.",
+			COLOR_GOOD
+		)
 	_set_fit_label_from_analysis()
 	analyze_reveal_until = now_sec + ANALYZE_REVEAL_SECONDS
 	_update_details_text()
@@ -398,14 +438,11 @@ func _finish_trial(is_timeout: bool) -> void:
 		is_overkill = false
 
 	if not is_fit:
-		status_label.text = TXT_RESULT_BAD
-		status_label.add_theme_color_override("font_color", COLOR_BAD)
+		_set_status_i18n("quest.radio.a.result.bad", "STATUS: incorrect. Packet did not fit.", COLOR_BAD)
 	elif is_minimal:
-		status_label.text = TXT_RESULT_GOOD
-		status_label.add_theme_color_override("font_color", COLOR_GOOD)
+		_set_status_i18n("quest.radio.a.result.good", "STATUS: excellent. Minimal coding depth.", COLOR_GOOD)
 	else:
-		status_label.text = TXT_RESULT_WARN
-		status_label.add_theme_color_override("font_color", COLOR_WARN)
+		_set_status_i18n("quest.radio.a.result.warn", "STATUS: correct, but overprovisioned.", COLOR_WARN)
 
 	_update_sample_slot(is_fit, is_minimal)
 
@@ -484,52 +521,73 @@ func _on_dimmer_gui_input(event: InputEvent) -> void:
 func _set_details_visible(visible: bool) -> void:
 	details_sheet.visible = visible
 	dimmer.visible = visible
-	btn_details.text = TXT_BTN_DETAILS_OPEN if visible else TXT_BTN_DETAILS_CLOSED
+	btn_details.text = _tr("quest.radio.common.btn.details_close", "CLOSE ^") if visible else _tr("quest.radio.common.btn.details_open", "DETAILS v")
 
 func _set_fit_label_unknown() -> void:
-	fit_value_label.text = TXT_FIT_UNKNOWN
+	fit_value_label.text = _tr("quest.radio.a.fit.unknown", "SIGNAL: NOT VERIFIED")
 	fit_value_label.add_theme_color_override("font_color", Color(0.80, 0.80, 0.80, 1.0))
 
 func _set_fit_label_from_analysis() -> void:
-	fit_value_label.text = TXT_FIT_YES if last_analysis_fit else TXT_FIT_NO
+	fit_value_label.text = _tr("quest.radio.a.fit.yes", "FIT: YES") if last_analysis_fit else _tr("quest.radio.a.fit.no", "FIT: NO")
 	fit_value_label.add_theme_color_override("font_color", COLOR_GOOD if last_analysis_fit else COLOR_BAD)
 
 func _update_details_text() -> void:
 	var lines: Array[String] = []
 	if trial_active:
-		lines.append("\u041f\u0440\u0430\u0432\u0438\u043b\u043e: \u043d\u0430\u0439\u0434\u0438\u0442\u0435 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0435 i, \u0433\u0434\u0435 2^i >= N.")
-		lines.append("\u0428\u0430\u0433\u0438:")
-		lines.append("1) \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 i \u0440\u0443\u0447\u043a\u043e\u0439.")
-		lines.append("2) \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0410\u041d\u0410\u041b\u0418\u0417\u00bb \u0438 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u0435 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0443 \u043d\u0430 3 \u0441\u0435\u043a\u0443\u043d\u0434\u044b.")
-		lines.append("3) \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u00ab\u0417\u0410\u0425\u0412\u0410\u0422\u00bb, \u0447\u0442\u043e\u0431\u044b \u0437\u0430\u0444\u0438\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043e\u0442\u0432\u0435\u0442.")
+		lines.append(_tr("quest.radio.a.details.rule", "Rule: find minimum i where 2^i >= N."))
+		lines.append(_tr("quest.radio.a.details.steps_title", "Steps:"))
+		lines.append(_tr("quest.radio.a.details.step1", "1) Select i with the knob."))
+		lines.append(_tr("quest.radio.a.details.step2", "2) Press ANALYZE and wait for scan."))
+		lines.append(_tr("quest.radio.a.details.step3", "3) Press CAPTURE to lock answer."))
 		if analysis_revealing:
-			lines.append("\u0418\u0434\u0451\u0442 \u0430\u043d\u0430\u043b\u0438\u0437 \u043a\u0430\u043d\u0430\u043b\u0430. \u0414\u043e\u0436\u0434\u0438\u0442\u0435\u0441\u044c \u043e\u043a\u043e\u043d\u0447\u0430\u043d\u0438\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438.")
+			lines.append(_tr("quest.radio.a.details.analyzing", "Channel analysis in progress. Please wait."))
 		elif analysis_committed:
-			lines.append("\u0410\u043d\u0430\u043b\u0438\u0437 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d. \u0415\u0441\u043b\u0438 \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c i, \u043f\u043e\u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u043d\u043e\u0432\u044b\u0439 \u0430\u043d\u0430\u043b\u0438\u0437.")
+			lines.append(_tr("quest.radio.a.details.analysis_done", "Analysis complete. Changing i requires a new scan."))
 	else:
 		var lower_i: int = maxi(0, target_bits - 1)
 		var lower_capacity: int = int(pow(2.0, lower_i))
 		var minimal_capacity: int = int(pow(2.0, target_bits))
 		var chosen_capacity: int = int(pow(2.0, current_bits))
-		lines.append("\u0414\u0430\u043d\u043e: N = %d" % target_n)
-		lines.append("\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c \u0441\u0442\u0435\u043f\u0435\u043d\u0438 \u0434\u0432\u043e\u0439\u043a\u0438:")
-		lines.append("2^%d = %d < %d (\u043c\u0430\u043b\u043e)" % [lower_i, lower_capacity, target_n])
-		lines.append("2^%d = %d >= %d (\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e)" % [target_bits, minimal_capacity, target_n])
-		lines.append("\u041e\u0442\u0432\u0435\u0442: i = %d (\u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e)" % target_bits)
+		lines.append(_tr("quest.radio.a.details.given", "Given: N = {n}", {"n": target_n}))
+		lines.append(_tr("quest.radio.a.details.powers_title", "Power-of-two check:"))
+		lines.append(_tr("quest.radio.a.details.lower", "2^{li} = {lc} < {n} (insufficient)", {
+			"li": lower_i,
+			"lc": lower_capacity,
+			"n": target_n
+		}))
+		lines.append(_tr("quest.radio.a.details.minimal", "2^{ti} = {tc} >= {n} (sufficient)", {
+			"ti": target_bits,
+			"tc": minimal_capacity,
+			"n": target_n
+		}))
+		lines.append(_tr("quest.radio.a.details.answer", "Answer: i = {i} (minimal)", {"i": target_bits}))
 		if current_bits > target_bits:
-			lines.append("\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = %d -> 2^%d = %d (\u043f\u0435\u0440\u0435\u0440\u0430\u0441\u0445\u043e\u0434)" % [current_bits, current_bits, chosen_capacity])
+			lines.append(_tr("quest.radio.a.details.choice_over", "Your choice: i = {i} -> 2^{i} = {cap} (overkill)", {
+				"i": current_bits,
+				"cap": chosen_capacity
+			}))
 		elif current_bits < target_bits:
-			lines.append("\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = %d -> 2^%d = %d (\u043d\u0435 \u043f\u043e\u043c\u0435\u0449\u0430\u0435\u0442\u0441\u044f)" % [current_bits, current_bits, chosen_capacity])
+			lines.append(_tr("quest.radio.a.details.choice_under", "Your choice: i = {i} -> 2^{i} = {cap} (does not fit)", {
+				"i": current_bits,
+				"cap": chosen_capacity
+			}))
 		else:
-			lines.append("\u0412\u0430\u0448 \u0432\u044b\u0431\u043e\u0440: i = %d -> 2^%d = %d (\u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e)" % [current_bits, current_bits, chosen_capacity])
+			lines.append(_tr("quest.radio.a.details.choice_ok", "Your choice: i = {i} -> 2^{i} = {cap} (minimal)", {
+				"i": current_bits,
+				"cap": chosen_capacity
+			}))
 	details_text.text = "\n".join(lines)
 
 func _update_header_meta() -> void:
-	var mode_text: String = "\u0421 \u0422\u0410\u0419\u041c\u0415\u0420\u041e\u041c" if is_timed_mode else "\u0411\u0415\u0417 \u0422\u0410\u0419\u041c\u0415\u0420\u0410"
+	var mode_text: String = _tr("quest.radio.a.meta.mode_timed", "WITH TIMER") if is_timed_mode else _tr("quest.radio.a.meta.mode_no_timer", "NO TIMER")
 	var timer_text: String = ""
 	if is_timed_mode:
-		timer_text = " | T: %.1f\u0441" % time_remaining
-	meta_label.text = "\u0420\u0415\u0416\u0418\u041c: %s | \u0421\u0422\u0410\u0411: %d%%%s" % [mode_text, int(_current_stability), timer_text]
+		timer_text = _tr("quest.radio.a.meta.timer", " | T: {t}s", {"t": "%.1f" % time_remaining})
+	meta_label.text = _tr("quest.radio.a.meta.main", "MODE: {mode} | STAB: {stability}%{timer}", {
+		"mode": mode_text,
+		"stability": int(_current_stability),
+		"timer": timer_text
+	})
 
 func _on_stability_changed(new_value: float, _delta: float) -> void:
 	_current_stability = new_value

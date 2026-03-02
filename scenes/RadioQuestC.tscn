@@ -61,23 +61,23 @@ theme_override_constants/separation = 12
 [node name="BtnBack" type="Button" parent="SafeArea/RootVBox/TopBar/TopBarHBox"]
 custom_minimum_size = Vector2(120, 58)
 layout_mode = 2
-text = "НАЗАД"
+text = "BACK"
 
 [node name="TitleLabel" type="Label" parent="SafeArea/RootVBox/TopBar/TopBarHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 30
-text = "РАДИОПЕРЕХВАТ • C"
+text = "RADIO INTERCEPT | C"
 
 [node name="ModeChip" type="Label" parent="SafeArea/RootVBox/TopBar/TopBarHBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "РЕЖИМ"
+text = "MODE"
 
 [node name="StabilityLabel" type="Label" parent="SafeArea/RootVBox/TopBar/TopBarHBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "СТАБИЛЬНОСТЬ"
+text = "STABILITY"
 
 [node name="BodyHSplit" type="HSplitContainer" parent="SafeArea/RootVBox"]
 layout_mode = 2
@@ -109,29 +109,29 @@ theme_override_constants/separation = 6
 [node name="MissionTitle" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
-text = "ЭКСТРЕННАЯ ПЕРЕДАЧА"
+text = "URGENT TRANSMISSION"
 
 [node name="TaskLine1" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "ОБЪЁМ: --"
+text = "SIZE: --"
 
 [node name="TaskLine2" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "СКОРОСТЬ: --"
+text = "SPEED: --"
 
 [node name="TaskLine3" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
-text = "ДО ПЕЛЕНГАЦИИ: --"
+text = "INTERCEPT IN: --"
 
 [node name="MicroHint" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
-text = "Шаг 1: оцените t. Шаг 2: анализ. Шаг 3: решение."
+text = "Step 1: estimate t. Step 2: analyze. Step 3: decide."
 autowrap_mode = 2
 
 [node name="KnobCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol"]
@@ -153,7 +153,7 @@ theme_override_constants/separation = 10
 [node name="Step1Label" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "ШАГ 1"
+text = "STEP 1"
 
 [node name="KnobCenter" type="CenterContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox"]
 layout_mode = 2
@@ -207,7 +207,7 @@ text = "+1"
 [node name="BtnAnalyze" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
-text = "АНАЛИЗ"
+text = "ANALYZE"
 
 [node name="StatusCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol"]
 custom_minimum_size = Vector2(0, 96)
@@ -223,7 +223,7 @@ theme_override_constants/margin_bottom = 8
 [node name="StatusLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/StatusCard/StatusMargin"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "СТАТУС"
+text = "STATUS"
 autowrap_mode = 2
 
 [node name="RightCol" type="VBoxContainer" parent="SafeArea/RootVBox/BodyHSplit"]
@@ -251,12 +251,12 @@ theme_override_constants/separation = 10
 [node name="Step2Label" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "ШАГ 2"
+text = "STEP 2"
 
 [node name="DetectionTitle" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "ПЕЛЕНГАЦИЯ"
+text = "DETECTION"
 
 [node name="DetectionBar" type="ProgressBar" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
 custom_minimum_size = Vector2(0, 36)
@@ -271,7 +271,7 @@ text = "--"
 [node name="TransferTitle" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "ПЕРЕДАЧА"
+text = "TRANSFER"
 
 [node name="TransferBar" type="ProgressBar" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
 custom_minimum_size = Vector2(0, 36)
@@ -286,7 +286,7 @@ text = "--"
 [node name="RiskLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Окно до пеленгации: -- с"
+text = "Intercept window: -- s"
 
 [node name="ActionsCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol"]
 custom_minimum_size = Vector2(0, 220)
@@ -306,7 +306,7 @@ theme_override_constants/separation = 8
 [node name="Step3Label" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "ШАГ 3"
+text = "STEP 3"
 
 [node name="PrimaryActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
 layout_mode = 2
@@ -318,7 +318,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_disabled_color = Color(0.64, 0.64, 0.64, 0.92)
 disabled = true
-text = "РИСКНУТЬ"
+text = "RISK IT"
 
 [node name="BtnAbort" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow"]
 custom_minimum_size = Vector2(0, 80)
@@ -326,7 +326,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_disabled_color = Color(0.64, 0.64, 0.64, 0.92)
 disabled = true
-text = "СБРОС"
+text = "ABORT"
 
 [node name="SecondaryActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
 layout_mode = 2
@@ -336,20 +336,20 @@ theme_override_constants/separation = 8
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ПОДСКАЗКА (ЕДИНИЦЫ)"
+text = "UNITS HELP"
 
 [node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ПОДРОБНЕЕ ▾"
+text = "DETAILS v"
 
 [node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
 visible = false
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ДАЛЕЕ"
+text = "NEXT"
 
 [node name="SampleStrip" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
 layout_mode = 2
@@ -368,7 +368,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Я"
+text = "ﾐｯ"
 horizontal_alignment = 1
 
 [node name="Sample2" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -384,7 +384,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Я"
+text = "ﾐｯ"
 horizontal_alignment = 1
 
 [node name="Sample3" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -400,7 +400,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Я"
+text = "ﾐｯ"
 horizontal_alignment = 1
 
 [node name="Sample4" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -416,7 +416,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Я"
+text = "ﾐｯ"
 horizontal_alignment = 1
 
 [node name="Sample5" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -432,7 +432,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Я"
+text = "ﾐｯ"
 horizontal_alignment = 1
 
 [node name="Sample6" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -448,7 +448,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Я"
+text = "ﾐｯ"
 horizontal_alignment = 1
 
 [node name="Sample7" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -464,7 +464,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Я"
+text = "ﾐｯ"
 horizontal_alignment = 1
 
 [node name="DetailsOverlay" type="Control" parent="."]
@@ -512,7 +512,7 @@ theme_override_constants/separation = 10
 [node name="SheetTitle" type="Label" parent="DetailsOverlay/BottomSheet/SheetMargin/SheetVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "ПОЯСНЕНИЕ"
+text = "EXPLANATION"
 
 [node name="SheetText" type="RichTextLabel" parent="DetailsOverlay/BottomSheet/SheetMargin/SheetVBox"]
 custom_minimum_size = Vector2(0, 220)
@@ -522,7 +522,7 @@ size_flags_vertical = 3
 [node name="BtnCloseDetails" type="Button" parent="DetailsOverlay/BottomSheet/SheetMargin/SheetVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "ЗАКРЫТЬ"
+text = "CLOSE"
 
 [node name="AlarmFlash" type="ColorRect" parent="."]
 layout_mode = 1

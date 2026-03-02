@@ -77,6 +77,24 @@ var _prompt_toggle_button: Button = null
 
 var _slot_nodes: Array[Node] = []
 
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	title_label.text = _tr("resus.title", "Кейс 01: Цифровая реанимация")
+	if levels.size() > 0:
+		stage_label.text = _tr("resus.c.stage", "ЭТАП C {n}/{total}", {
+			"n": current_level_index + 1, "total": levels.size()
+		})
+	btn_reset.text = _tr("resus.c.btn.reset", "СБРОС")
+	btn_analyze.text = _tr("resus.c.btn.analyze", "АНАЛИЗ СЕТИ")
+	btn_next_level.text = _tr("resus.c.btn.next", "СЛЕД. ЭТАП")
+
 func _ready() -> void:
 	add_to_group("resus_c_controller")
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
@@ -95,13 +113,17 @@ func _ready() -> void:
 
 	levels = ResusData.load_stage_levels(LEVELS_PATH, "C")
 	if levels.is_empty():
-		_show_error("Не удалось загрузить данные случая 01, этап C.")
+		_show_error(_tr("resus.c.error.load", "Не удалось загрузить данные случая 01, этап C."))
 		return
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 
 	_load_current_level(0)
 	_on_viewport_size_changed()
 
 func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
@@ -112,12 +134,9 @@ func _load_current_level(index: int) -> void:
 	_begin_attempt()
 
 func _setup_ui() -> void:
-	title_label.text = "Кейс 01: Цифровая реанимация"
-	stage_label.text = "ЭТАП C %d/%d" % [current_level_index + 1, levels.size()]
-	prompt_label.text = str(stage_c_data.get("prompt", "Монтирование модулей и безопасная связь"))
-	btn_reset.text = "СБРОС"
-	btn_analyze.text = "АНАЛИЗ СЕТИ"
-	btn_next_level.text = "СЛЕД. ЭТАП"
+	_apply_i18n()
+	var level_id: String = str(stage_c_data.get("id", ""))
+	prompt_label.text = _tr("resus.c.level.%s.prompt" % level_id, str(stage_c_data.get("prompt", "Монтирование модулей и безопасная связь")))
 	btn_next_level.visible = false
 	btn_next_level.disabled = true
 
@@ -228,7 +247,7 @@ func _begin_attempt() -> void:
 	if packets_layer != null and packets_layer.has_method("reset_to_idle"):
 		packets_layer.call("reset_to_idle")
 
-	_update_status_line("Готовы к установке модулей.")
+	_update_status_line(_tr("resus.c.status.ready", "Готовы к установке модулей."))
 	_update_risk_dashboard()
 	_update_stability_ui()
 
@@ -458,12 +477,13 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 	for detail_v in (result.get("feedback_details", []) as Array):
 		detail_lines.append("- %s" % str(detail_v))
 	detail_lines.append("")
-	detail_lines.append("Риск: столкновения=%s | подслушивать=%s | фильтрация=%s | медиа=%s" % [
-		str(risk.get("collisions", "MID")),
-		str(risk.get("eavesdrop", "MID")),
-		str(risk.get("filtering", "OFF")),
-		str(risk.get("media", "UNKNOWN"))
-	])
+	detail_lines.append(_tr("resus.c.explain.risk_line",
+		"Риск: столкновения={col} | подслушивать={eav} | фильтрация={fil} | медиа={med}", {
+		"col": str(risk.get("collisions", "MID")),
+		"eav": str(risk.get("eavesdrop", "MID")),
+		"fil": str(risk.get("filtering", "OFF")),
+		"med": str(risk.get("media", "UNKNOWN"))
+	}))
 	expl_details.text = "\n".join(detail_lines)
 
 	var why_lines: Array[String] = []
@@ -471,23 +491,23 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 	var missing_required: Array = result.get("missing_required", []) as Array
 	var wrong_selected: int = int(result.get("wrong_selected", 0))
 
-	why_lines.append("Выбранные модули:")
+	why_lines.append(_tr("resus.c.explain.selected_modules", "Выбранные модули:"))
 	for selected_id in _collect_selected_ids():
 		why_lines.append("- %s" % selected_id)
 
 	if missing_required.is_empty() and wrong_selected == 0:
-		why_lines.append("Все необходимые модули присутствуют.")
+		why_lines.append(_tr("resus.c.explain.all_present", "Все необходимые модули присутствуют."))
 	elif not missing_required.is_empty():
-		why_lines.append("Отсутствует обязательное: %s" % ", ".join(_to_string_array(missing_required)))
+		why_lines.append(_tr("resus.c.explain.missing", "Отсутствует обязательное: {ids}", {"ids": ", ".join(_to_string_array(missing_required))}))
 	if wrong_selected > 0:
-		why_lines.append("Выбрано вредоносных модулей: %d" % wrong_selected)
+		why_lines.append(_tr("resus.c.explain.wrong_count", "Выбрано вредоносных модулей: {n}", {"n": wrong_selected}))
 
 	if strategy_flags.has("TOUCHED_ALL_OPTIONS"):
-		why_lines.append("Флаг стратегии: TOUCHED_ALL_OPTIONS.")
+		why_lines.append(_tr("resus.c.explain.strategy_touched", "Флаг стратегии: TOUCHED_ALL_OPTIONS."))
 
 	expl_why.text = "\n".join(why_lines)
 
-	status_label.text = "ЗАБЛОКИРОВАНО | %s | слоты %d/3" % [verdict_code, _filled_slots_count()]
+	status_label.text = _tr("resus.c.status.blocked", "ЗАБЛОКИРОВАНО | {code} | слоты {slots}/3", {"code": verdict_code, "slots": _filled_slots_count()})
 	status_label.modulate = expl_headline.modulate
 
 func _apply_result_highlight(result: Dictionary) -> void:
@@ -568,9 +588,9 @@ func _update_status_line(prefix: String) -> void:
 	var filled: int = _filled_slots_count()
 	var used_unique: int = unique_used_set.size()
 	if prefix.strip_edges() == "":
-		status_label.text = "Слоты %d/3 | уникальные модули %d" % [filled, used_unique]
+		status_label.text = _tr("resus.c.status.slots", "Слоты {n}/3 | уникальные модули {u}", {"n": filled, "u": used_unique})
 	else:
-		status_label.text = "%s | слоты %d/3 | уникальные модули %d" % [prefix, filled, used_unique]
+		status_label.text = _tr("resus.c.status.slots_prefix", "{prefix} | слоты {n}/3 | уникальные модули {u}", {"prefix": prefix, "n": filled, "u": used_unique})
 	status_label.modulate = COLOR_WARN
 
 func _update_risk_dashboard() -> void:
@@ -780,7 +800,7 @@ func _setup_collapsible_prompt() -> void:
 		var top_row: HBoxContainer = HBoxContainer.new()
 		top_row.add_theme_constant_override("separation", 8)
 		var title: Label = Label.new()
-		title.text = "БРИФИНГ"
+		title.text = _tr("resus.c.labels.briefing", "БРИФИНГ")
 		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		top_row.add_child(title)
 

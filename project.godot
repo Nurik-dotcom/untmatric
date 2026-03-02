@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="UNTformatic"
-run/main_scene="res://scenes/MainMenu.tscn"
+run/main_scene="res://scenes/Auth.tscn"
 config/features=PackedStringArray("4.3", "Mobile")
 config/icon="res://icon.svg"
 
@@ -21,6 +21,7 @@ GlobalMetrics="*res://scripts/GlobalMetrics.gd"
 I18n="*res://scripts/I18n.gd"
 AudioManager="*res://scripts/AudioManager.gd"
 UIViewportFit="*res://scripts/UIViewportFit.gd"
+FirebaseAuth="*res://scripts/FirebaseAuth.gd"
 
 [display]
 

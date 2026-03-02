@@ -77,6 +77,22 @@ var _briefing_toggle_button: Button = null
 @onready var result_retry_button: Button = $ResultPopup/VBox/Buttons/BtnRetry
 @onready var result_back_button: Button = $ResultPopup/VBox/Buttons/BtnBack
 
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged: Dictionary = params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	title_label.text = _tr("resus.title", "Кейс 01: Цифровая реанимация")
+	stage_label.text = _tr("resus.a.stage", "ЭТАП А")
+	btn_reset.text = _tr("resus.a.btn.reset", "СБРОС")
+	btn_confirm.text = _tr("resus.a.btn.confirm", "ПОДТВЕРДИТЬ")
+	result_retry_button.text = _tr("resus.a.btn.retry", "ПОВТОР")
+	result_back_button.text = _tr("resus.a.btn.back", "НАЗАД")
+
 func _ready() -> void:
 	add_to_group("resus_a_controller")
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
@@ -93,14 +109,18 @@ func _ready() -> void:
 	_connect_zone_signals()
 	_load_levels()
 	if levels.is_empty():
-		_show_error("Не удалось загрузить данные этапа A случая 01.")
+		_show_error(_tr("resus.a.error.load", "Не удалось загрузить данные этапа A случая 01."))
 		return
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 	_start_level(current_level_index)
 	_on_viewport_size_changed()
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
 
 func _exit_tree() -> void:
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
@@ -129,13 +149,9 @@ func _start_level(index: int) -> void:
 	current_level_index = clamp(index, 0, max(0, levels.size() - 1))
 	level_data = (levels[current_level_index] as Dictionary).duplicate(true)
 	item_contracts = _item_contract_map(level_data.get("items", []) as Array)
-	title_label.text = "Кейс 01: Цифровая реанимация"
-	stage_label.text = "ЭТАП А"
-	briefing_label.text = str(level_data.get("briefing", ""))
-	btn_reset.text = "СБРОС"
-	btn_confirm.text = "ПОДТВЕРДИТЬ"
-	result_retry_button.text = "ПОВТОР"
-	result_back_button.text = "НАЗАД"
+	_apply_i18n()
+	var level_id: String = str(level_data.get("id", ""))
+	briefing_label.text = _tr("resus.a.level.%s.briefing" % level_id, str(level_data.get("briefing", "")))
 
 	_configure_zones()
 	_reset_attempt()
@@ -148,7 +164,7 @@ func _configure_zones() -> void:
 	var zones: Array = _socket_zones()
 
 	if pile_zone.has_method("setup"):
-		pile_zone.call("setup", "PILE", "УЛИКИ")
+		pile_zone.call("setup", "PILE", _tr("resus.a.labels.pile", "УЛИКИ"))
 
 	var setup_count: int = int(min(bucket_ids.size(), zones.size()))
 	for i in range(setup_count):
@@ -159,9 +175,9 @@ func _configure_zones() -> void:
 		var zone_node: Node = zone_value as Node
 		bucket_to_zone[bucket_id] = zone_node
 		if zone_node.has_method("setup"):
-			var bucket_label: String = str(bucket_labels_runtime.get(bucket_id, bucket_id))
+			var bucket_label: String = _tr("resus.a.labels.bucket.%s" % bucket_id, str(bucket_labels_runtime.get(bucket_id, bucket_id)))
 			if _is_cia_level():
-				bucket_label = "ПАПКА: %s" % bucket_label
+				bucket_label = _tr("resus.a.labels.cia_folder", "ПАПКА: {label}", {"label": bucket_label})
 			var accepted_ids: Array[String] = _accepted_item_ids_for_bucket(bucket_id)
 			zone_node.call("setup", bucket_id, bucket_label, accepted_ids)
 
@@ -237,7 +253,7 @@ func _on_drag_cancelled(item_id: String, from_zone: String) -> void:
 		"attempted_socket": "INVALID"
 	})
 	_play_sfx("error")
-	_show_socket_error("Неверный сокет")
+	_show_socket_error(_tr("resus.a.status.invalid_socket", "Неверный сокет"))
 	_highlight_hint_socket(item_id)
 	_set_all_zones_glow(false)
 
@@ -279,7 +295,7 @@ func _on_socket_drop_rejected(item_id: String, socket_id: String) -> void:
 		"item_id": item_id,
 		"attempted_socket": socket_id
 	})
-	_show_socket_error("Неверный сокет")
+	_show_socket_error(_tr("resus.a.status.invalid_socket", "Неверный сокет"))
 	_set_all_zones_glow(false)
 
 func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> void:
@@ -312,7 +328,7 @@ func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> v
 	_refresh_system_state(_build_placements_snapshot())
 	_bounce_node(source_node as Control)
 	_play_sfx("error")
-	_show_socket_error("Неверный сокет")
+	_show_socket_error(_tr("resus.a.status.invalid_socket", "Неверный сокет"))
 	_set_all_zones_glow(false)
 	if item_id != "":
 		_highlight_hint_socket(item_id)
@@ -410,14 +426,14 @@ func _refresh_system_state(placements: Dictionary) -> void:
 
 	if _is_cia_level():
 		var placed_count: int = _count_placed(placements)
-		status_label.text = "Разложите улики по CIA: %d/8" % placed_count
+		status_label.text = _tr("resus.a.status.cia_placed", "Разложите улики по CIA: {n}/8", {"n": placed_count})
 		status_label.modulate = COLOR_OK
 	else:
-		status_label.text = "ВИДЕО %s | ПАМЯТЬ %s | БУФЕР %s" % [
-			"OK" if gpu_ok else "FAIL",
-			"OK" if ram_ok else "FAIL",
-			"FAST" if cache_ok else "SLOW"
-		]
+		status_label.text = _tr("resus.a.status.hw_state", "ВИДЕО {gpu} | ПАМЯТЬ {ram} | БУФЕР {buf}", {
+			"gpu": "OK" if gpu_ok else "FAIL",
+			"ram": "OK" if ram_ok else "FAIL",
+			"buf": "FAST" if cache_ok else "SLOW"
+		})
 		status_label.modulate = COLOR_OK if gpu_ok and ram_ok and cache_ok else (COLOR_ERR if not ram_ok or not gpu_ok else COLOR_WARN)
 
 	_log_event("DIAG_STATE", {
@@ -429,17 +445,17 @@ func _refresh_system_state(placements: Dictionary) -> void:
 func _update_monitor(monitor_on: bool) -> void:
 	if _is_cia_level():
 		monitor_screen.color = Color(0.08, 0.2, 0.12, 1.0)
-		monitor_label.text = "АНАЛИЗ УЛИК"
+		monitor_label.text = _tr("resus.a.monitor.cia", "АНАЛИЗ УЛИК")
 		monitor_label.modulate = COLOR_OK
 		return
 
 	if monitor_on:
 		monitor_screen.color = Color(0.08, 0.2, 0.12, 1.0)
-		monitor_label.text = "СИГНАЛ ЕСТЬ"
+		monitor_label.text = _tr("resus.a.monitor.signal_on", "СИГНАЛ ЕСТЬ")
 		monitor_label.modulate = COLOR_OK
 	else:
 		monitor_screen.color = Color(0.03, 0.03, 0.03, 1.0)
-		monitor_label.text = "НЕТ СИГНАЛА"
+		monitor_label.text = _tr("resus.a.monitor.signal_off", "НЕТ СИГНАЛА")
 		monitor_label.modulate = COLOR_ERR
 
 func _update_diag_panel(gpu_ok: bool, ram_ok: bool, cache_ok: bool) -> void:
@@ -448,9 +464,9 @@ func _update_diag_panel(gpu_ok: bool, ram_ok: bool, cache_ok: bool) -> void:
 	var ram_diag: Dictionary = diag.get("RAM", {}) as Dictionary
 	var cache_diag: Dictionary = diag.get("CACHE", {}) as Dictionary
 
-	diag_video_value.text = str(gpu_diag.get("ok", "ВИДЕО: ОК")) if gpu_ok else str(gpu_diag.get("bad", "ВИДЕО: НЕТ СИГНАЛА"))
-	diag_memory_value.text = str(ram_diag.get("ok", "ПАМЯТЬ: ОК")) if ram_ok else str(ram_diag.get("bad", "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"))
-	diag_buffer_value.text = str(cache_diag.get("ok", "БУФЕР: БЫСТРЫЙ")) if cache_ok else str(cache_diag.get("bad", "БУФЕР: МЕДЛЕННЫЙ"))
+	diag_video_value.text = str(gpu_diag.get("ok", _tr("resus.a.diag.gpu_ok", "ВИДЕО: ОК"))) if gpu_ok else str(gpu_diag.get("bad", _tr("resus.a.diag.gpu_bad", "ВИДЕО: НЕТ СИГНАЛА")))
+	diag_memory_value.text = str(ram_diag.get("ok", _tr("resus.a.diag.ram_ok", "ПАМЯТЬ: ОК"))) if ram_ok else str(ram_diag.get("bad", _tr("resus.a.diag.ram_bad", "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ")))
+	diag_buffer_value.text = str(cache_diag.get("ok", _tr("resus.a.diag.buf_ok", "БУФЕР: БЫСТРЫЙ"))) if cache_ok else str(cache_diag.get("bad", _tr("resus.a.diag.buf_bad", "БУФЕР: МЕДЛЕННЫЙ")))
 
 	diag_video_value.modulate = COLOR_OK if gpu_ok else COLOR_ERR
 	diag_memory_value.modulate = COLOR_OK if ram_ok else COLOR_ERR
@@ -459,10 +475,10 @@ func _update_diag_panel(gpu_ok: bool, ram_ok: bool, cache_ok: bool) -> void:
 func _build_console_lines(gpu_ok: bool, ram_ok: bool, placements: Dictionary) -> Array[String]:
 	if _is_cia_level():
 		return [
-			"[CASE] Классифицируйте улики по CIA",
-			"[HINT] CONF: доступ посторонних",
-			"[HINT] INTE: подмена/искажение",
-			"[HINT] AVAI: доступность сервиса"
+			_tr("resus.a.console.cia_case", "[CASE] Классифицируйте улики по CIA"),
+			_tr("resus.a.console.cia_conf", "[HINT] CONF: доступ посторонних"),
+			_tr("resus.a.console.cia_inte", "[HINT] INTE: подмена/искажение"),
+			_tr("resus.a.console.cia_avai", "[HINT] AVAI: доступность сервиса")
 		]
 
 	var feedback_rules: Dictionary = level_data.get("feedback_rules", {}) as Dictionary
@@ -479,10 +495,10 @@ func _build_console_lines(gpu_ok: bool, ram_ok: bool, placements: Dictionary) ->
 			lines.append(line)
 
 	if not gpu_ok:
-		lines.append("[WARN] вывод на дисплей недоступен")
+		lines.append(_tr("resus.a.console.warn_gpu", "[WARN] вывод на дисплей недоступен"))
 
 	if lines.is_empty():
-		lines.append("[BOOT] ...")
+		lines.append(_tr("resus.a.console.boot_fallback", "[BOOT] ..."))
 	return lines
 
 func _input_devices_connected(placements: Dictionary) -> bool:
@@ -584,7 +600,7 @@ func _show_result(result: Dictionary, errors: Array) -> void:
 		int(result.get("points", 0)),
 		int(result.get("max_points", 2))
 	]
-	result_stability_label.text = "СТАБИЛЬНОСТЬ %d" % int(result.get("stability_delta", 0))
+	result_stability_label.text = _tr("resus.a.result.stability", "СТАБИЛЬНОСТЬ {n}", {"n": int(result.get("stability_delta", 0))})
 	if result_details_label != null:
 		result_details_label.text = _build_result_error_text(errors)
 
@@ -728,7 +744,7 @@ func _accepted_item_ids_for_bucket(bucket_id: String) -> Array[String]:
 func _bucket_label(bucket_id: String) -> String:
 	var normalized_bucket: String = bucket_id.to_upper()
 	if normalized_bucket == "PILE":
-		return "КУЧА"
+		return _tr("resus.a.labels.pile_default", "КУЧА")
 	return str(bucket_labels_runtime.get(normalized_bucket, normalized_bucket))
 
 func _is_cia_level() -> bool:
@@ -758,7 +774,7 @@ func _build_errors(placements: Dictionary) -> Array:
 
 func _build_result_error_text(errors: Array) -> String:
 	if errors.is_empty():
-		return "Ошибок нет."
+		return _tr("resus.a.result.no_errors", "Ошибок нет.")
 
 	var lines: Array[String] = []
 	for error_v in errors:
@@ -769,7 +785,7 @@ func _build_result_error_text(errors: Array) -> String:
 		var chosen_bucket: String = str(error_data.get("chosen", "PILE"))
 		var correct_bucket: String = str(error_data.get("correct", ""))
 		var explain_short: String = str(error_data.get("explain_short", "")).strip_edges()
-		lines.append("%s -> выбрано %s, должно быть %s" % [item_id, _bucket_label(chosen_bucket), _bucket_label(correct_bucket)])
+		lines.append(_tr("resus.a.result.error_line", "{item} -> выбрано {chosen}, должно быть {correct}", {"item": item_id, "chosen": _bucket_label(chosen_bucket), "correct": _bucket_label(correct_bucket)}))
 		if explain_short != "":
 			lines.append(explain_short)
 
@@ -857,7 +873,7 @@ func _setup_collapsible_briefing() -> void:
 		top_row.add_theme_constant_override("separation", 8)
 
 		var title: Label = Label.new()
-		title.text = "БРИФИНГ"
+		title.text = _tr("resus.a.labels.briefing_title", "БРИФИНГ")
 		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		top_row.add_child(title)
 

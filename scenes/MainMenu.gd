@@ -11,6 +11,7 @@ const LANGUAGE_CODES: Array[String] = ["ru", "kk", "en"]
 @onready var lang_label: Label = $Center/Menu/LangRow/LangLabel
 @onready var lang_select: OptionButton = $Center/Menu/LangRow/LangSelect
 @onready var version_label: Label = $Center/Menu/Version
+@onready var agent_label: Label = $ProfilePanel/AgentLabel
 
 var _syncing_lang_select: bool = false
 
@@ -20,6 +21,10 @@ func _ready() -> void:
 	lang_select.item_selected.connect(_on_language_selected)
 	if not I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.connect(_on_language_changed)
+	
+	# Отображаем никнейм агента
+	_update_agent_label()
+	
 	_apply_i18n()
 	_animate_intro()
 
@@ -70,3 +75,10 @@ func _animate_intro() -> void:
 	var tween: Tween = create_tween()
 	tween.tween_property(menu_root, "modulate:a", 1.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(menu_root, "position:y", menu_root.position.y - 32.0, 0.42).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+func _update_agent_label() -> void:
+	var nickname = GlobalMetrics.user_nickname if GlobalMetrics else ""
+	if nickname.is_empty():
+		agent_label.text = "[ AGENT: UNKNOWN ]"
+	else:
+		agent_label.text = "[ AGENT: " + nickname.to_upper() + " ]"

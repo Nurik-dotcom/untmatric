@@ -20,6 +20,12 @@ var current_level_index: int = 0
 var current_mode: String = "DEC"
 var current_target_value: int = 0
 
+# User Authentication
+var user_id: String = ""  # Firebase UID пользователя
+var user_nickname: String = ""  # Никнейм пользователя (часть email до @)
+var total_score: int = 0
+var levels_completed: Array = []
+
 # Analysis History
 var session_history: Array = []
 
@@ -615,3 +621,18 @@ func _combinations(items: Array, count: int) -> Array:
 				results.append([items[i], items[j]])
 		return results
 	return results
+
+	
+func save_progress_to_firebase():
+	if user_id == "": return
+	
+	var url = "https://untma-f6333-default-rtdb.firebaseio.com/users/" + user_id + ".json"
+	var data = {
+		"total_score": total_score,
+		"levels_completed": levels_completed,
+		"last_seen": Time.get_datetime_string_from_system()
+	}
+	
+	var http = HTTPRequest.new()
+	add_child(http)
+	http.request(url, [], HTTPClient.METHOD_PATCH, JSON.stringify(data))

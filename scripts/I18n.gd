@@ -56,6 +56,9 @@ func tr_key(key: String, params: Dictionary = {}) -> String:
 
 	return _format_params(resolved, params)
 
+func get_text(key: String, params: Dictionary = {}) -> String:
+	return tr_key(key, params)
+
 func resolve_field(entry: Dictionary, field: String, params: Dictionary = {}) -> String:
 	if typeof(entry) != TYPE_DICTIONARY:
 		return ""

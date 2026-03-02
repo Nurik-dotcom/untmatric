@@ -1,0 +1,75 @@
+[gd_scene load_steps=4 format=3 uid="uid://bvxqy8r7n2k3p"]
+
+[ext_resource type="PackedScene" uid="uid://dqxk4l8m7n3o2" path="res://ui/overlays/NoirOverlay.tscn" id="1_0x8y9"]
+[ext_resource type="Theme" uid="uid://a1b2c3d4e5f6g" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="Shader" path="res://ui/shaders/monitor_crt.gdshader" id="3_shader"]
+[ext_resource type="Script" path="res://scenes/Auth.gd" id="4_script"]
+
+[node name="Auth" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("2_theme")
+script = ExtResource("4_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 1)
+
+[node name="BackgroundShader" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 1)
+
+[node name="NoirOverlay" parent="." instance=ExtResource("1_0x8y9")]
+layout_mode = 1
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "IDENTITY VERIFICATION"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="EmailInput" type="LineEdit" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+placeholder_text = "AGENT_EMAIL@DOMAIN.KZ"
+
+[node name="PasswordInput" type="LineEdit" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+placeholder_text = "PASSWORD"
+secret = true
+
+[node name="ActionButtons" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="LoginButton" type="Button" parent="CenterContainer/VBoxContainer/ActionButtons"]
+layout_mode = 2
+text = "ACCESS_GRANTED"
+
+[node name="RegisterButton" type="Button" parent="CenterContainer/VBoxContainer/ActionButtons"]
+layout_mode = 2
+text = "CREATE_FILE"
+
+[node name="ErrorLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+modulate = Color(1, 0.5, 0, 1)
+horizontal_alignment = 1
