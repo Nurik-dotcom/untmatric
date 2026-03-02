@@ -71,12 +71,14 @@ text = "      |             "
 horizontal_alignment = 2
 
 [node name="BodyHSplit" type="HSplitContainer" parent="SafeArea/RootVBox"]
+clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 split_offset = 900
 
 [node name="LeftPane" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit"]
+clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -94,6 +96,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 10
 
 [node name="MissionCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
+clip_contents = true
 custom_minimum_size = Vector2(0, 130)
 layout_mode = 2
 
@@ -117,14 +120,18 @@ text = "       "
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "N = 128"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="RuleLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "                    i,     2^i >= N"
 autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="ScopeCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
+clip_contents = true
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -161,6 +168,7 @@ theme_override_font_sizes/font_size = 24
 text = "      :            "
 
 [node name="RightPane" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit"]
+clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -191,38 +199,48 @@ script = ExtResource("4_knob_script")
 [node name="KnobHint" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "               ,               �      �"
+text = "Rotate knob and press ANALYZE"
 autowrap_mode = 2
+text_overrun_behavior = 3
 
-[node name="ActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+[node name="ActionsRowTop" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
-[node name="BtnHint" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
+[node name="BtnHint" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowTop"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "         "
+autowrap_mode = 2
 
-[node name="BtnAnalyze" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
+[node name="BtnAnalyze" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowTop"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "      "
+autowrap_mode = 2
 
-[node name="BtnCapture" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
+[node name="ActionsRowBottom" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="BtnCapture" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowBottom"]
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "      "
+autowrap_mode = 2
 
-[node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
+[node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowBottom"]
 visible = false
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "     "
+autowrap_mode = 2
 
 [node name="SampleStrip" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 32)
@@ -425,11 +443,13 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "      "
 autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 text = "           "
+autowrap_mode = 2
 
 [node name="Dimmer" type="ColorRect" parent="."]
 visible = false

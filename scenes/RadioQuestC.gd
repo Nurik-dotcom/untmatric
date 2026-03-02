@@ -29,9 +29,19 @@ const MIN_ESTIMATE: float = 0.0
 const MAX_ESTIMATE: float = 30.0
 const SAMPLE_SLOTS: int = 7
 const TIGHT_LANDSCAPE_MAX_HEIGHT: float = 760.0
-const ANALYZE_LOCK_SECONDS: float = 3.0
+const ANALYZE_LOCK_DEFAULT: float = 1.5
 const ANALYZE_COOLDOWN_SECONDS: float = 6.0
 const ARCADE_MODE_ENABLED: bool = false
+const DEFAULT_PLAN_BUDGET_NORMAL: float = 8.0
+const DEFAULT_PLAN_BUDGET_ANCHOR: float = 6.0
+const DEFAULT_DETECT_MIN: float = 8.0
+const DEFAULT_DETECT_MAX: float = 20.0
+const DEFAULT_DETECT_MARGIN_INT: float = 3.0
+const DEFAULT_DETECT_MARGIN_FRAC: float = 4.0
+const DEFAULT_ANCHOR_DETECT_MIN: float = 6.0
+const DEFAULT_ANCHOR_DETECT_MAX: float = 12.0
+const DEFAULT_BOUNDARY_OFFSET_MIN: float = 0.1
+const DEFAULT_BOUNDARY_OFFSET_MAX: float = 0.3
 
 const UNIT_MB := "MB"
 const UNIT_GB := "GB"
@@ -97,7 +107,7 @@ const COLOR_SAMPLE_WARN: Color = Color(0.95, 0.75, 0.20, 1.0)
 @onready var btn_details: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow/BtnDetails
 @onready var btn_risk: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow/BtnRisk
 @onready var btn_abort: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow/BtnAbort
-@onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow/BtnNext
+@onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/NextRow/BtnNext
 @onready var sample_strip: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip
 
 @onready var details_overlay: Control = $DetailsOverlay
@@ -118,6 +128,10 @@ var speed_mbit: float = 0.0
 var t_detect: float = 0.0
 var t_true: float = 0.0
 var t_est: float = 0.0
+var t_plan: float = INF
+var plan_elapsed: float = 0.0
+var detection_active: bool = false
+var live_mode: bool = true
 
 var pool_type: String = "NORMAL"
 var anchor_type: String = "none"
@@ -127,6 +141,7 @@ var detection_elapsed: float = 0.0
 var transfer_elapsed: float = 0.0
 var transfer_started: bool = false
 var used_units: bool = false
+var _plan_timeout_triggered: bool = false
 
 var start_ms: int = 0
 var first_action_ms: int = -1
@@ -149,6 +164,17 @@ var _t_true_min: float = 2.0
 var _t_true_max: float = 20.0
 var _anchor_every_min: int = 7
 var _anchor_every_max: int = 10
+var _plan_budget_normal: float = DEFAULT_PLAN_BUDGET_NORMAL
+var _plan_budget_anchor: float = DEFAULT_PLAN_BUDGET_ANCHOR
+var _analyze_lock_seconds: float = ANALYZE_LOCK_DEFAULT
+var _detect_min_sec: float = DEFAULT_DETECT_MIN
+var _detect_max_sec: float = DEFAULT_DETECT_MAX
+var _detect_margin_int: float = DEFAULT_DETECT_MARGIN_INT
+var _detect_margin_frac: float = DEFAULT_DETECT_MARGIN_FRAC
+var _anchor_detect_min: float = DEFAULT_ANCHOR_DETECT_MIN
+var _anchor_detect_max: float = DEFAULT_ANCHOR_DETECT_MAX
+var _boundary_offset_min: float = DEFAULT_BOUNDARY_OFFSET_MIN
+var _boundary_offset_max: float = DEFAULT_BOUNDARY_OFFSET_MAX
 
 var sample_cursor: int = 0
 var sample_refs: Array = []
@@ -165,6 +191,7 @@ func _ready() -> void:
 	if not I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.connect(_on_language_changed)
 	_connect_signals()
+	_configure_text_overflow()
 	_collect_sample_refs()
 	_reset_sample_strip()
 	_apply_safe_area_padding()
@@ -192,13 +219,28 @@ func _process(delta: float) -> void:
 	if state == State.DONE:
 		return
 
-	detection_elapsed += delta
+	if state == State.TUNE:
+		if live_mode and is_finite(t_plan):
+			plan_elapsed += delta
+			if plan_elapsed >= t_plan:
+				plan_elapsed = t_plan
+				_plan_timeout_triggered = true
+				if decision_ms < 0:
+					decision_ms = Time.get_ticks_msec()
+				_play_alarm_flash()
+				_finalize_trial(Outcome.INTERCEPTED, "TIMEOUT")
+				return
+		_update_runtime_ui()
+		return
+
+	if detection_active and live_mode and is_finite(t_detect):
+		detection_elapsed += delta
 	if state == State.EXEC and decision == Decision.RISK and transfer_started:
 		transfer_elapsed += delta
 
 	_update_runtime_ui()
 
-	if decision == Decision.NONE and detection_elapsed >= t_detect:
+	if detection_active and live_mode and decision == Decision.NONE and detection_elapsed >= t_detect:
 		if decision_ms < 0:
 			decision_ms = Time.get_ticks_msec()
 		_play_alarm_flash()
@@ -222,10 +264,10 @@ func _process(delta: float) -> void:
 		return
 
 	if state == State.EXEC and decision == Decision.RISK:
-		if transfer_elapsed >= t_true and detection_elapsed <= t_detect + EPS:
+		if transfer_elapsed >= t_true and (not live_mode or detection_elapsed <= t_detect + EPS):
 			_finalize_trial(Outcome.SUCCESS_SEND, "RISK")
 			return
-		if detection_elapsed >= t_detect and transfer_elapsed < t_true - EPS:
+		if detection_active and live_mode and detection_elapsed >= t_detect and transfer_elapsed < t_true - EPS:
 			_play_alarm_flash()
 			_finalize_trial(Outcome.INTERCEPTED, "RISK")
 			return
@@ -237,7 +279,6 @@ func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 
 func _apply_i18n() -> void:
 	title_label.text = _tr("quest.radio.c.ui.title", "RADIO INTERCEPT | C")
-	mode_chip.text = _tr("quest.radio.c.ui.mode", "MODE: NO TIMER")
 	mission_title.text = _tr("quest.radio.c.ui.mission", "URGENT TRANSMISSION")
 	micro_hint.text = _tr("quest.radio.c.ui.hint", "First estimate t. Then ANALYZE. Then decide.")
 	step_1_label.text = _tr("quest.radio.c.ui.step1", "STEP 1: Set time estimate")
@@ -254,6 +295,7 @@ func _apply_i18n() -> void:
 	btn_next.text = _tr("quest.radio.common.btn.next", "NEXT")
 	details_sheet_title.text = _tr("quest.radio.c.ui.details_title", "EXPLANATION")
 	btn_close_details.text = _tr("quest.radio.common.btn.details_close", "CLOSE")
+	_update_mode_chip()
 	_refresh_task_labels()
 	_apply_status_i18n()
 	_update_runtime_ui()
@@ -261,6 +303,17 @@ func _apply_i18n() -> void:
 
 func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
+
+func _update_mode_chip() -> void:
+	var mode_name: String = _tr("quest.radio.c.ui.mode_live", "LIVE") if live_mode else _tr("quest.radio.c.ui.mode_training", "TRAINING")
+	mode_chip.text = _tr("quest.radio.c.ui.mode_template", "MODE: {mode}", {"mode": mode_name})
+
+func _configure_text_overflow() -> void:
+	for lbl in [task_line_1, task_line_2, task_line_3, micro_hint, status_label, risk_label]:
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	for btn in [btn_analyze, btn_units, btn_details, btn_risk, btn_abort, btn_next]:
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 func _set_status_i18n(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
 	_status_i18n_key = key
@@ -326,14 +379,19 @@ func _configure_layout() -> void:
 	var size: Vector2 = get_viewport_rect().size
 	var is_landscape: bool = size.x > size.y
 	var is_tight_landscape: bool = is_landscape and size.y <= TIGHT_LANDSCAPE_MAX_HEIGHT
+	var knob_min_side: float = 320.0
+	if size.y < 620.0:
+		knob_min_side = 260.0
+	elif size.y < 700.0:
+		knob_min_side = 300.0
 
 	if is_tight_landscape:
-		body_split.split_offset = int(size.x * 0.54)
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.58), 420, 420)
 		top_bar.custom_minimum_size.y = 52.0
 		mission_card.custom_minimum_size.y = 116.0
 		status_card.custom_minimum_size.y = 72.0
 		actions_card.custom_minimum_size.y = 176.0
-		time_knob.custom_minimum_size = Vector2(180, 180)
+		time_knob.custom_minimum_size = Vector2(260, 260)
 		title_label.add_theme_font_size_override("font_size", 22)
 		mode_chip.add_theme_font_size_override("font_size", 13)
 		stability_label.add_theme_font_size_override("font_size", 13)
@@ -341,72 +399,78 @@ func _configure_layout() -> void:
 		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
 			btn.custom_minimum_size.y = 56.0
 		for btn in [btn_analyze, btn_risk, btn_abort]:
-			btn.custom_minimum_size.y = 64.0
+			btn.custom_minimum_size.y = 80.0
 		sample_strip.visible = false
 		risk_card.size_flags_vertical = Control.SIZE_FILL
 		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		risk_card.size_flags_stretch_ratio = 0.8
 		actions_card.size_flags_stretch_ratio = 1.2
 	elif is_landscape and size.x < 1500.0:
-		body_split.split_offset = int(size.x * 0.58)
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.58), 460, 460)
 		top_bar.custom_minimum_size.y = 56.0
 		mission_card.custom_minimum_size.y = 128.0
 		status_card.custom_minimum_size.y = 84.0
 		actions_card.custom_minimum_size.y = 188.0
-		time_knob.custom_minimum_size = Vector2(220, 220)
+		time_knob.custom_minimum_size = Vector2(knob_min_side, knob_min_side)
 		title_label.add_theme_font_size_override("font_size", 24)
 		mode_chip.add_theme_font_size_override("font_size", 14)
 		stability_label.add_theme_font_size_override("font_size", 14)
 		estimate_value_label.add_theme_font_size_override("font_size", 28)
 		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
-			btn.custom_minimum_size.y = 56.0
+			btn.custom_minimum_size.y = 64.0
 		for btn in [btn_analyze, btn_risk, btn_abort]:
-			btn.custom_minimum_size.y = 72.0
+			btn.custom_minimum_size.y = 88.0
 		sample_strip.visible = true
 		risk_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		risk_card.size_flags_stretch_ratio = 1.0
 		actions_card.size_flags_stretch_ratio = 1.0
 	elif is_landscape:
-		body_split.split_offset = int(size.x * 0.57)
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.58), 500, 500)
 		top_bar.custom_minimum_size.y = 62.0
 		mission_card.custom_minimum_size.y = 144.0
 		status_card.custom_minimum_size.y = 92.0
 		actions_card.custom_minimum_size.y = 206.0
-		time_knob.custom_minimum_size = Vector2(260, 260)
+		time_knob.custom_minimum_size = Vector2(knob_min_side, knob_min_side)
 		title_label.add_theme_font_size_override("font_size", 28)
 		mode_chip.add_theme_font_size_override("font_size", 17)
 		stability_label.add_theme_font_size_override("font_size", 17)
 		estimate_value_label.add_theme_font_size_override("font_size", 32)
 		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
-			btn.custom_minimum_size.y = 58.0
+			btn.custom_minimum_size.y = 64.0
 		for btn in [btn_analyze, btn_risk, btn_abort]:
-			btn.custom_minimum_size.y = 74.0
+			btn.custom_minimum_size.y = 96.0
 		sample_strip.visible = true
 		risk_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		risk_card.size_flags_stretch_ratio = 1.0
 		actions_card.size_flags_stretch_ratio = 1.0
 	else:
-		body_split.split_offset = int(size.x * 0.56)
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 520, 460)
 		top_bar.custom_minimum_size.y = 62.0
 		mission_card.custom_minimum_size.y = 154.0
 		status_card.custom_minimum_size.y = 96.0
 		actions_card.custom_minimum_size.y = 220.0
-		time_knob.custom_minimum_size = Vector2(300, 300)
+		time_knob.custom_minimum_size = Vector2(knob_min_side, knob_min_side)
 		title_label.add_theme_font_size_override("font_size", 30)
 		mode_chip.add_theme_font_size_override("font_size", 18)
 		stability_label.add_theme_font_size_override("font_size", 18)
 		estimate_value_label.add_theme_font_size_override("font_size", 36)
 		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
-			btn.custom_minimum_size.y = 58.0
+			btn.custom_minimum_size.y = 64.0
 		for btn in [btn_analyze, btn_risk, btn_abort]:
-			btn.custom_minimum_size.y = 76.0
+			btn.custom_minimum_size.y = 96.0
 		sample_strip.visible = true
 		risk_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		risk_card.size_flags_stretch_ratio = 1.0
 		actions_card.size_flags_stretch_ratio = 1.0
+
+func _clamp_split_offset(target_offset: int, min_left: int, min_right: int) -> int:
+	var viewport_width: int = int(get_viewport_rect().size.x)
+	var min_offset: int = min_left
+	var max_offset: int = max(min_left, viewport_width - min_right)
+	return clampi(target_offset, min_offset, max_offset)
 
 func _collect_sample_refs() -> void:
 	sample_refs.clear()
@@ -432,8 +496,11 @@ func _start_trial() -> void:
 	outcome = Outcome.NONE
 	transfer_started = false
 	used_units = false
+	_plan_timeout_triggered = false
 
+	plan_elapsed = 0.0
 	detection_elapsed = 0.0
+	detection_active = false
 	transfer_elapsed = 0.0
 
 	analyze_count = 0
@@ -450,6 +517,8 @@ func _start_trial() -> void:
 	decision_ms = -1
 
 	_generate_trial()
+	t_plan = INF if not live_mode else (_plan_budget_anchor if pool_type == "ANCHOR" else _plan_budget_normal)
+	_update_mode_chip()
 	_refresh_task_labels()
 	_reset_runtime_ui()
 	_set_details_visible(false)
@@ -504,9 +573,9 @@ func _generate_normal_trial() -> Dictionary:
 		if true_time < _t_true_min or true_time > _t_true_max:
 			continue
 
-		var detect_time: float = clampf(true_time + randf_range(-3.0, 3.0), 0.8, 24.0)
-		if absf(true_time - detect_time) < 0.2:
-			detect_time = clampf(detect_time + 0.4, 0.8, 24.0)
+		var is_frac_speed: bool = absf(speed - roundf(speed)) > 0.01
+		var margin: float = _detect_margin_frac if is_frac_speed else _detect_margin_int
+		var detect_time: float = clampf(true_time + margin, _detect_min_sec, _detect_max_sec)
 
 		return {
 			"size_value": size_value,
@@ -521,7 +590,7 @@ func _generate_normal_trial() -> Dictionary:
 		"size_value": 10.0,
 		"size_unit": UNIT_MB,
 		"speed_mbit": 16.0,
-		"t_detect": 6.0,
+		"t_detect": 8.0,
 		"t_true": 5.0,
 		"anchor_type": "none"
 	}
@@ -535,8 +604,8 @@ func _generate_anchor_forgot_x8() -> Dictionary:
 			continue
 
 		var fake_time: float = size_value / speed
-		var detect_low: float = maxf(fake_time + 0.2, 0.6)
-		var detect_high: float = true_time - 0.2
+		var detect_low: float = maxf(fake_time, _anchor_detect_min)
+		var detect_high: float = minf(true_time - 0.1, _anchor_detect_max)
 		if detect_high <= detect_low:
 			continue
 
@@ -567,8 +636,12 @@ func _generate_anchor_boundary() -> Dictionary:
 		if true_time < _t_true_min or true_time > _t_true_max:
 			continue
 
-		var detect_time: float = clampf(true_time + randf_range(-0.18, 0.18), 0.8, 24.0)
-		if absf(true_time - detect_time) <= 0.2:
+		var detect_time: float = clampf(
+			true_time + randf_range(_boundary_offset_min, _boundary_offset_max),
+			_anchor_detect_min,
+			_anchor_detect_max
+		)
+		if detect_time >= true_time + 0.05:
 			return {
 				"size_value": size_value,
 				"size_unit": size_unit,
@@ -588,8 +661,8 @@ func _generate_anchor_gb() -> Dictionary:
 			continue
 
 		var fake_time: float = (size_value * 8.0) / speed
-		var detect_low: float = fake_time + 0.1
-		var detect_high: float = true_time - 0.3
+		var detect_low: float = maxf(fake_time, _anchor_detect_min)
+		var detect_high: float = minf(true_time - 0.1, _anchor_detect_max)
 		if detect_high <= detect_low:
 			continue
 
@@ -621,15 +694,18 @@ func _refresh_task_labels() -> void:
 		"speed": _format_num(speed_mbit),
 		"unit": _tr("quest.radio.common.unit.mbps", "Mbps")
 	})
+	var detect_time_label: String = "--"
+	if live_mode and is_finite(t_detect):
+		detect_time_label = _format_num(t_detect)
 	task_line_3.text = _tr("quest.radio.c.ui.task_detect", "Intercept in: {time} {unit}", {
-		"time": _format_num(t_detect),
+		"time": detect_time_label,
 		"unit": _tr("quest.radio.common.unit.sec", "s")
 	})
 
 func _reset_runtime_ui() -> void:
 	detection_bar.value = 0.0
 	transfer_bar.value = 0.0
-	detect_countdown.text = "%s %s" % [_format_num(t_detect), _tr("quest.radio.common.unit.sec", "s")]
+	detect_countdown.text = _tr("quest.radio.c.ui.waiting", "waiting") if not live_mode else "%s %s" % [_format_num(t_detect), _tr("quest.radio.common.unit.sec", "s")]
 	transfer_countdown.text = "\u2014"
 	risk_label.text = _tr("quest.radio.c.ui.risk_unknown", "Risk: UNKNOWN")
 	alarm_flash.color = Color(1.0, 0.05, 0.05, 0.0)
@@ -650,9 +726,12 @@ func _set_tune_state_ui() -> void:
 		"STATUS: set forecast and press ANALYZE.",
 		Color(0.85, 0.85, 0.85, 1.0)
 	)
-	risk_label.text = _tr("quest.radio.c.status.detect_window", "Intercept window: {time} s", {
-		"time": _format_num(maxf(0.0, t_detect - detection_elapsed))
-	})
+	if live_mode:
+		risk_label.text = _tr("quest.radio.c.status.plan_left", "STATUS: planning budget left {time}s.", {
+			"time": _format_num(maxf(0.0, t_plan - plan_elapsed))
+		})
+	else:
+		risk_label.text = _tr("quest.radio.c.ui.mode_training", "TRAINING")
 	_apply_phantom_preview()
 
 func _set_analyze_lock_state_ui() -> void:
@@ -669,9 +748,12 @@ func _set_analyze_lock_state_ui() -> void:
 		"STATUS: channel scan in progress...",
 		Color(0.85, 0.85, 0.85, 1.0)
 	)
-	risk_label.text = _tr("quest.radio.c.status.detect_window", "Intercept window: {time} s", {
-		"time": _format_num(maxf(0.0, t_detect - detection_elapsed))
-	})
+	if live_mode and is_finite(t_detect):
+		risk_label.text = _tr("quest.radio.c.ui.detect_left", "Detection in: {time} s", {
+			"time": _format_num(maxf(0.0, t_detect - detection_elapsed))
+		})
+	else:
+		risk_label.text = _tr("quest.radio.c.ui.mode_training", "TRAINING")
 	_apply_phantom_preview()
 
 func _set_decide_state_ui() -> void:
@@ -688,9 +770,12 @@ func _set_decide_state_ui() -> void:
 		"STATUS: forecast locked. Choose action.",
 		Color(0.85, 0.85, 0.85, 1.0)
 	)
-	risk_label.text = _tr("quest.radio.c.status.detect_window", "Intercept window: {time} s", {
-		"time": _format_num(maxf(0.0, t_detect - detection_elapsed))
-	})
+	if live_mode and is_finite(t_detect):
+		risk_label.text = _tr("quest.radio.c.ui.detect_left", "Detection in: {time} s", {
+			"time": _format_num(maxf(0.0, t_detect - detection_elapsed))
+		})
+	else:
+		risk_label.text = _tr("quest.radio.c.ui.mode_training", "TRAINING")
 	_apply_phantom_preview()
 
 func _set_exec_state_ui() -> void:
@@ -796,8 +881,11 @@ func _on_analyze_pressed() -> void:
 	if check_ms < 0:
 		check_ms = Time.get_ticks_msec()
 	analyze_lock_active = true
-	analyze_lock_until = now_sec + ANALYZE_LOCK_SECONDS
+	analyze_lock_until = now_sec + _analyze_lock_seconds
 	analyze_cooldown_until = now_sec + ANALYZE_COOLDOWN_SECONDS
+	if live_mode:
+		detection_active = true
+		detection_elapsed = 0.0
 	_set_analyze_lock_state_ui()
 	_update_details_text()
 
@@ -829,7 +917,7 @@ func _on_abort_pressed() -> void:
 		decision_ms = Time.get_ticks_msec()
 	decision = Decision.ABORT
 
-	var remaining_detect: float = maxf(0.0, t_detect - detection_elapsed)
+	var remaining_detect: float = INF if (not live_mode) else maxf(0.0, t_detect - detection_elapsed)
 	if t_true > remaining_detect + EPS:
 		_finalize_trial(Outcome.SAFE_ABORT, "ABORT")
 	else:
@@ -878,15 +966,36 @@ func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _update_runtime_ui() -> void:
-	var detect_ratio: float = 0.0
-	if t_detect > 0.0:
-		detect_ratio = clampf(detection_elapsed / t_detect, 0.0, 1.0)
-	detection_bar.value = detect_ratio * 100.0
-	detect_countdown.text = "%s %s" % [_format_num(maxf(0.0, t_detect - detection_elapsed)), _tr("quest.radio.common.unit.sec", "s")]
-	if state != State.DONE:
-		risk_label.text = _tr("quest.radio.c.status.detect_window", "Intercept window: {time} s", {
-			"time": _format_num(maxf(0.0, t_detect - detection_elapsed))
-		})
+	if state == State.TUNE:
+		if live_mode and is_finite(t_plan):
+			var plan_left: float = maxf(0.0, t_plan - plan_elapsed)
+			detection_bar.value = clampf(plan_elapsed / maxf(t_plan, 0.01), 0.0, 1.0) * 100.0
+			detect_countdown.text = "%s %s" % [_format_num(plan_left), _tr("quest.radio.common.unit.sec", "s")]
+			risk_label.text = _tr("quest.radio.c.status.plan_left", "STATUS: planning budget left {time}s.", {
+				"time": _format_num(plan_left)
+			})
+		else:
+			detection_bar.value = 0.0
+			detect_countdown.text = _tr("quest.radio.c.ui.waiting", "waiting")
+			risk_label.text = _tr("quest.radio.c.ui.mode_training", "TRAINING")
+	else:
+		var detect_left: float = maxf(0.0, t_detect - detection_elapsed)
+		if detection_active and live_mode and is_finite(t_detect):
+			detection_bar.value = clampf(detection_elapsed / maxf(t_detect, 0.01), 0.0, 1.0) * 100.0
+			detect_countdown.text = "%s %s" % [_format_num(detect_left), _tr("quest.radio.common.unit.sec", "s")]
+			task_line_3.text = _tr("quest.radio.c.ui.task_detect", "Window: {time} {unit}", {
+				"time": _format_num(detect_left),
+				"unit": _tr("quest.radio.common.unit.sec", "s")
+			})
+			if state != State.DONE:
+				risk_label.text = _tr("quest.radio.c.ui.detect_left", "Detection in: {time} s", {
+					"time": _format_num(detect_left)
+				})
+		else:
+			detection_bar.value = 0.0
+			detect_countdown.text = _tr("quest.radio.c.ui.waiting", "waiting")
+			if state != State.DONE:
+				risk_label.text = _tr("quest.radio.c.ui.mode_training", "TRAINING")
 
 	if decision == Decision.RISK and transfer_started and t_true > 0.0:
 		var transfer_ratio: float = clampf(transfer_elapsed / t_true, 0.0, 1.0)
@@ -924,14 +1033,20 @@ func _finalize_trial(result: Outcome, decision_label: String) -> void:
 			sample_color = COLOR_SAMPLE_SUCCESS
 			status_color = COLOR_SAMPLE_SUCCESS
 		Outcome.INTERCEPTED:
-			if decision == Decision.RISK:
+			if _plan_timeout_triggered:
+				_set_status_i18n(
+					"quest.radio.c.result.plan_timeout",
+					"STATUS: failed. Planning time expired before ANALYZE.",
+					COLOR_SAMPLE_FAIL
+				)
+			elif decision == Decision.RISK:
 				if t_true > t_detect + EPS:
-						_set_status_i18n(
-							"quest.radio.c.risk_fail_time",
-							"DECISION ERROR! Calc: {calc}s. Intercept in: {limit}s. Not enough time!",
-							COLOR_SAMPLE_FAIL,
-							{"calc": "%.1f" % t_true, "limit": "%.1f" % t_detect}
-						)
+					_set_status_i18n(
+						"quest.radio.c.risk_fail_time",
+						"DECISION ERROR! Calc: {calc}s. Intercept in: {limit}s. Not enough time!",
+						COLOR_SAMPLE_FAIL,
+						{"calc": "%.1f" % t_true, "limit": "%.1f" % t_detect}
+					)
 				else:
 					_set_status_i18n(
 						"quest.radio.c.risk_fail_math",
@@ -1100,7 +1215,9 @@ func _update_details_text() -> void:
 		"speed": _format_num(speed_mbit),
 		"speed_unit": _tr("quest.radio.common.unit.mbps", "Mbps")
 	}))
-	lines.append(_tr("quest.radio.c.details.detect", "Intercept in: {time} s", {"time": _format_num(t_detect)}))
+	lines.append(_tr("quest.radio.c.details.detect", "Intercept in: {time} s", {
+		"time": "--" if not live_mode else _format_num(t_detect)
+	}))
 	lines.append(_tr("quest.radio.c.details.estimate", "Your estimate: t_est = {time} s", {"time": _format_num(t_est)}))
 	if used_units:
 		lines.append(_tr("quest.radio.c.details.used_units", "Units hint used."))
@@ -1199,6 +1316,42 @@ func _load_level_config() -> void:
 		_anchor_every_min = 7
 	if _anchor_every_max < _anchor_every_min:
 		_anchor_every_max = _anchor_every_min
+
+	live_mode = bool(RadioLevels.get_value("C", "live_mode", true))
+	_plan_budget_normal = float(RadioLevels.get_value("C", "plan_budget_normal", DEFAULT_PLAN_BUDGET_NORMAL))
+	_plan_budget_anchor = float(RadioLevels.get_value("C", "plan_budget_anchor", DEFAULT_PLAN_BUDGET_ANCHOR))
+	_analyze_lock_seconds = float(RadioLevels.get_value("C", "analyze_lock_sec", ANALYZE_LOCK_DEFAULT))
+	_detect_min_sec = float(RadioLevels.get_value("C", "detect_min_sec", DEFAULT_DETECT_MIN))
+	_detect_max_sec = float(RadioLevels.get_value("C", "detect_max_sec", DEFAULT_DETECT_MAX))
+	_detect_margin_int = float(RadioLevels.get_value("C", "detect_margin_int_sec", DEFAULT_DETECT_MARGIN_INT))
+	_detect_margin_frac = float(RadioLevels.get_value("C", "detect_margin_frac_sec", DEFAULT_DETECT_MARGIN_FRAC))
+	_anchor_detect_min = float(RadioLevels.get_value("C", "anchor_detect_min_sec", DEFAULT_ANCHOR_DETECT_MIN))
+	_anchor_detect_max = float(RadioLevels.get_value("C", "anchor_detect_max_sec", DEFAULT_ANCHOR_DETECT_MAX))
+	_boundary_offset_min = float(RadioLevels.get_value("C", "boundary_offset_min_sec", DEFAULT_BOUNDARY_OFFSET_MIN))
+	_boundary_offset_max = float(RadioLevels.get_value("C", "boundary_offset_max_sec", DEFAULT_BOUNDARY_OFFSET_MAX))
+
+	if _plan_budget_normal <= 0.0:
+		_plan_budget_normal = DEFAULT_PLAN_BUDGET_NORMAL
+	if _plan_budget_anchor <= 0.0:
+		_plan_budget_anchor = DEFAULT_PLAN_BUDGET_ANCHOR
+	if _analyze_lock_seconds <= 0.0:
+		_analyze_lock_seconds = ANALYZE_LOCK_DEFAULT
+	if _detect_min_sec < 1.0:
+		_detect_min_sec = DEFAULT_DETECT_MIN
+	if _detect_max_sec <= _detect_min_sec:
+		_detect_max_sec = _detect_min_sec + 6.0
+	if _detect_margin_int < 0.1:
+		_detect_margin_int = DEFAULT_DETECT_MARGIN_INT
+	if _detect_margin_frac < 0.1:
+		_detect_margin_frac = DEFAULT_DETECT_MARGIN_FRAC
+	if _anchor_detect_min < 1.0:
+		_anchor_detect_min = DEFAULT_ANCHOR_DETECT_MIN
+	if _anchor_detect_max <= _anchor_detect_min:
+		_anchor_detect_max = _anchor_detect_min + 2.0
+	if _boundary_offset_min < 0.01:
+		_boundary_offset_min = DEFAULT_BOUNDARY_OFFSET_MIN
+	if _boundary_offset_max < _boundary_offset_min:
+		_boundary_offset_max = _boundary_offset_min
 
 func _to_float_array(raw: Array, fallback: Array[float]) -> Array[float]:
 	var result: Array[float] = []

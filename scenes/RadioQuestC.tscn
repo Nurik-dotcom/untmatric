@@ -84,6 +84,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 split_offset = 760
+clip_contents = true
 
 [node name="LeftCol" type="VBoxContainer" parent="SafeArea/RootVBox/BodyHSplit"]
 layout_mode = 2
@@ -94,6 +95,7 @@ theme_override_constants/separation = 10
 [node name="MissionCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol"]
 custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
+clip_contents = true
 
 [node name="MissionMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard"]
 layout_mode = 2
@@ -110,22 +112,30 @@ theme_override_constants/separation = 6
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "URGENT TRANSMISSION"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="TaskLine1" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "SIZE: --"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="TaskLine2" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "SPEED: --"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="TaskLine3" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
 text = "INTERCEPT IN: --"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="MicroHint" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
@@ -133,10 +143,12 @@ theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
 text = "Step 1: estimate t. Step 2: analyze. Step 3: decide."
 autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="KnobCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol"]
 layout_mode = 2
 size_flags_vertical = 3
+clip_contents = true
 
 [node name="KnobMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard"]
 layout_mode = 2
@@ -205,13 +217,15 @@ size_flags_horizontal = 3
 text = "+1"
 
 [node name="BtnAnalyze" type="Button" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 text = "ANALYZE"
+autowrap_mode = 2
 
 [node name="StatusCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol"]
 custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
+clip_contents = true
 
 [node name="StatusMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/StatusCard"]
 layout_mode = 2
@@ -225,6 +239,7 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "STATUS"
 autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="RightCol" type="VBoxContainer" parent="SafeArea/RootVBox/BodyHSplit"]
 layout_mode = 2
@@ -235,6 +250,7 @@ theme_override_constants/separation = 8
 [node name="RiskCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol"]
 layout_mode = 2
 size_flags_vertical = 3
+clip_contents = true
 
 [node name="RiskMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard"]
 layout_mode = 2
@@ -259,7 +275,7 @@ theme_override_font_sizes/font_size = 22
 text = "DETECTION"
 
 [node name="DetectionBar" type="ProgressBar" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 show_percentage = false
 
@@ -274,7 +290,7 @@ theme_override_font_sizes/font_size = 22
 text = "TRANSFER"
 
 [node name="TransferBar" type="ProgressBar" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 show_percentage = false
 
@@ -286,11 +302,14 @@ text = "--"
 [node name="RiskLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Intercept window: -- s"
+text = "Detection in: -- s"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="ActionsCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol"]
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
+clip_contents = true
 
 [node name="ActionsMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard"]
 layout_mode = 2
@@ -308,48 +327,58 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "STEP 3"
 
-[node name="PrimaryActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="BtnRisk" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow"]
-custom_minimum_size = Vector2(0, 80)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_disabled_color = Color(0.64, 0.64, 0.64, 0.92)
-disabled = true
-text = "RISK IT"
-
-[node name="BtnAbort" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow"]
-custom_minimum_size = Vector2(0, 80)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_disabled_color = Color(0.64, 0.64, 0.64, 0.92)
-disabled = true
-text = "ABORT"
-
 [node name="SecondaryActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="BtnUnits" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "UNITS HELP"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "DETAILS v"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
-[node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
+[node name="PrimaryActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnRisk" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_disabled_color = Color(0.64, 0.64, 0.64, 0.92)
+disabled = true
+text = "RISK IT"
+autowrap_mode = 2
+
+[node name="BtnAbort" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_disabled_color = Color(0.64, 0.64, 0.64, 0.92)
+disabled = true
+text = "ABORT"
+autowrap_mode = 2
+
+[node name="NextRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
+layout_mode = 2
+
+[node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/NextRow"]
 visible = false
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "NEXT"
+autowrap_mode = 2
 
 [node name="SampleStrip" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
 layout_mode = 2
@@ -368,7 +397,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "ﾐｯ"
+text = "Y"
 horizontal_alignment = 1
 
 [node name="Sample2" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -384,7 +413,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "ﾐｯ"
+text = "Y"
 horizontal_alignment = 1
 
 [node name="Sample3" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -400,7 +429,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "ﾐｯ"
+text = "Y"
 horizontal_alignment = 1
 
 [node name="Sample4" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -416,7 +445,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "ﾐｯ"
+text = "Y"
 horizontal_alignment = 1
 
 [node name="Sample5" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -432,7 +461,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "ﾐｯ"
+text = "Y"
 horizontal_alignment = 1
 
 [node name="Sample6" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -448,7 +477,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "ﾐｯ"
+text = "Y"
 horizontal_alignment = 1
 
 [node name="Sample7" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SampleStrip"]
@@ -464,7 +493,7 @@ color = Color(0.18, 0.18, 0.18, 1)
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "ﾐｯ"
+text = "Y"
 horizontal_alignment = 1
 
 [node name="DetailsOverlay" type="Control" parent="."]

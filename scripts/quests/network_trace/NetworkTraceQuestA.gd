@@ -96,7 +96,6 @@ func _ready() -> void:
 		return
 
 	_start_level(0)
-
 func _exit_tree() -> void:
 	if GlobalMetrics != null and GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.disconnect(_on_stability_changed)
@@ -290,7 +289,7 @@ func _start_level(index: int) -> void:
 
 	_update_meta_label()
 	_log_event("task_start", {"level": str(current_level.get("id", ""))})
-
+	GlobalMetrics.start_quest(str(current_level.get("id", "NetworkTrace_A")))
 func _render_text_blocks() -> void:
 	var level_id: String = str(current_level.get("id", ""))
 	lbl_briefing.clear()
@@ -552,7 +551,7 @@ func _handle_failure(error_code: String) -> void:
 	wrong_count += 1
 	_play_audio("error")
 	_trigger_glitch()
-
+	GlobalMetrics.add_mistake("Провал трейсинга. Ошибка: " + error_code)
 	var title: String = ERROR_MAP.get_error_title(error_code)
 	var tip: String = ERROR_MAP.get_error_tip(error_code)
 	lbl_status.text = "%s: %s" % [title, tip]
@@ -698,6 +697,10 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 	level_finished = true
 	timer_running = false
 	state = QuestState.DONE
+	var final_score = 100 if is_correct else 0
+	# Отправляем лог в Firebase (используем ID текущего уровня для точности)
+	GlobalMetrics.finish_quest(str(current_level.get("id", "NetworkTrace_A")), final_score, is_correct)
+	# ====================================
 	btn_run_trace.disabled = true
 	btn_reset.disabled = true
 	btn_analyze.disabled = true

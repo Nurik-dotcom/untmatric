@@ -39,10 +39,10 @@ const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 @onready var decoder_title: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/DecoderTitle
 @onready var bit_knob: Control = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/BitKnob
 @onready var knob_hint: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/KnobHint
-@onready var btn_hint: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnHint
-@onready var btn_analyze: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnAnalyze
-@onready var btn_capture: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnCapture
-@onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnNext
+@onready var btn_hint: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowTop/BtnHint
+@onready var btn_analyze: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowTop/BtnAnalyze
+@onready var btn_capture: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowBottom/BtnCapture
+@onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowBottom/BtnNext
 @onready var sample_strip: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/SampleStrip
 @onready var status_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusLabel
 @onready var btn_details: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/BtnDetails
@@ -113,6 +113,7 @@ func _ready() -> void:
 	if not I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.connect(_on_language_changed)
 	_connect_signals()
+	_configure_text_overflow()
 	_install_body_scroll()
 	_collect_sample_refs()
 	_ensure_target_wave_line()
@@ -174,6 +175,13 @@ func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 	var merged: Dictionary = params.duplicate(true)
 	merged["default"] = default_text
 	return I18n.get_text(key, merged)
+
+func _configure_text_overflow() -> void:
+	for lbl in [target_label, rule_label, knob_hint, status_label]:
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	for btn in [btn_hint, btn_analyze, btn_capture, btn_next, btn_details]:
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 func _apply_i18n() -> void:
 	title_label.text = _tr("quest.radio.a.ui.title", "RADIO INTERCEPT | A")
@@ -640,7 +648,7 @@ func _configure_layout() -> void:
 	var phone_landscape: bool = size.x > size.y and size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
 
 	if phone_landscape:
-		body_split.split_offset = int(size.x * 0.54)
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 380, 360)
 		root_vbox.add_theme_constant_override("separation", 8)
 		bit_knob.custom_minimum_size = Vector2(180, 180)
 		mission_card.custom_minimum_size.y = 110
@@ -652,7 +660,7 @@ func _configure_layout() -> void:
 		for btn in [btn_back, btn_hint, btn_analyze, btn_capture, btn_next, btn_details, btn_close_details]:
 			btn.custom_minimum_size.y = 56
 	elif size.x < 1280.0:
-		body_split.split_offset = int(size.x * 0.55)
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 420, 380)
 		root_vbox.add_theme_constant_override("separation", 10)
 		bit_knob.custom_minimum_size = Vector2(200, 200)
 		mission_card.custom_minimum_size.y = 122
@@ -664,7 +672,7 @@ func _configure_layout() -> void:
 		for btn in [btn_back, btn_hint, btn_analyze, btn_capture, btn_next, btn_details, btn_close_details]:
 			btn.custom_minimum_size.y = 58
 	else:
-		body_split.split_offset = int(size.x * 0.56)
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.57), 460, 420)
 		root_vbox.add_theme_constant_override("separation", 10)
 		bit_knob.custom_minimum_size = Vector2(220, 220)
 		mission_card.custom_minimum_size.y = 130
@@ -675,6 +683,10 @@ func _configure_layout() -> void:
 		meta_label.add_theme_font_size_override("font_size", 18)
 		for btn in [btn_back, btn_hint, btn_analyze, btn_capture, btn_next, btn_details, btn_close_details]:
 			btn.custom_minimum_size.y = 58
+
+func _clamp_split_offset(target_offset: int, min_left: int, min_right: int) -> int:
+	var viewport_width: int = int(get_viewport_rect().size.x)
+	return clampi(target_offset, min_left, max(min_left, viewport_width - min_right))
 
 func _update_waveform() -> void:
 	if wave_layer.size.x <= 1.0 or wave_layer.size.y <= 1.0:

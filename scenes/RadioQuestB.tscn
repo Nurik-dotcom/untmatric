@@ -72,12 +72,14 @@ text = "      |             "
 horizontal_alignment = 2
 
 [node name="BodyHSplit" type="HSplitContainer" parent="SafeArea/RootVBox"]
+clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 split_offset = 520
 
 [node name="LeftPane" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit"]
+clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -156,6 +158,7 @@ toggle_mode = true
 text = "        6"
 
 [node name="RightPane" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit"]
+clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -173,6 +176,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 10
 
 [node name="ContextCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+clip_contents = true
 custom_minimum_size = Vector2(0, 124)
 layout_mode = 2
 
@@ -207,8 +211,10 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "            I = K*i                    "
 autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="CalcCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+clip_contents = true
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
 
@@ -262,6 +268,7 @@ layout_mode = 2
 text = "        "
 
 [node name="PreviewCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+clip_contents = true
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
 
@@ -285,16 +292,22 @@ text = "           "
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "        I:"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="PreviewFitLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "        :"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="PreviewClassLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "     :"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="ActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 layout_mode = 2
@@ -305,6 +318,7 @@ custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "         "
+autowrap_mode = 2
 
 [node name="BtnCapture" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
 custom_minimum_size = Vector2(0, 56)
@@ -312,13 +326,18 @@ layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
 text = "             "
+autowrap_mode = 2
 
-[node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
+[node name="NextRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+layout_mode = 2
+
+[node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/NextRow"]
 visible = false
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "     "
+autowrap_mode = 2
 
 [node name="SampleStrip" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 32)

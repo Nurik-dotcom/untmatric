@@ -1620,7 +1620,7 @@
   "quest.radio.c.ui.details_title": "EXPLANATION",
   "quest.radio.c.ui.task_speed": "Channel speed: {speed} {unit}",
   "quest.radio.common.unit.mbps": "Mbps",
-  "quest.radio.c.ui.task_detect": "Intercept in: {time} {unit}",
+  "quest.radio.c.ui.task_detect": "Окно: {time} {unit}",
   "quest.radio.common.unit.sec": "с",
   "quest.radio.c.ui.risk_unknown": "Risk: UNKNOWN",
   "quest.radio.c.status.detect_window": "Intercept window: {time} s",
@@ -1661,7 +1661,6 @@
   "quest.radio.c.result.intercept": "STATUS: FAILED. You were intercepted.",
   "quest.radio.c.result.missed": "STATUS: MISSED. You could have made it.",
   "quest.radio.c.status.completed": "STATUS: completed",
-
   "resus.title": "Кейс 01: Цифровая реанимация",
   "resus.a.stage": "ЭТАП А",
   "resus.a.btn.reset": "СБРОС",
@@ -1736,5 +1735,11 @@
   "resus.c.error.load": "Не удалось загрузить данные случая 01, этап C.",
   "resus.c.level.CASE01_C_01.prompt": "Установите ровно три сетевых модуля, чтобы защитить ссылку на архив.",
   "resus.c.level.CASE01_C_02.prompt": "Профиль контроля столкновений: избегайте хаоса при трансляции и защищайте модули периметра.",
-  "resus.c.level.CASE01_C_03.prompt": "Профиль фильтрации: приоритет проверки пакетов и низкая поверхность перехвата."
+  "resus.c.level.CASE01_C_03.prompt": "Профиль фильтрации: приоритет проверки пакетов и низкая поверхность перехвата.",
+  "quest.radio.c.ui.mode_template": "?????: {mode}",
+  "quest.radio.c.ui.mode_live": "LIVE",
+  "quest.radio.c.ui.mode_training": "TRAINING",
+  "quest.radio.c.ui.detect_left": "?? ??????????: {time} ?",
+  "quest.radio.c.status.plan_left": "??????: ????? ?? ?????? {time}?.",
+  "quest.radio.c.result.plan_timeout": "??????: ??????. ????? ?? ?????? ??????? ?? ???????."
 }

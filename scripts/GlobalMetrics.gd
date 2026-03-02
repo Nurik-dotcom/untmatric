@@ -659,46 +659,42 @@ func record_login_session():
 	http.request_completed.connect(func(r, c, h, b): http.queue_free())
 
 
-# === ПЕРЕМЕННЫЕ ДЛЯ ТРЕКИНГА ТЕКУЩЕГО КВЕСТА ===
+# ==========================================
+# ТРЕКИНГ АКТИВНОГО КВЕСТА
+# ==========================================
 var current_quest_start_time: float = 0.0
 var current_quest_mistakes: Array = []
 
-# 1. Вызываем, когда игрок ТОЛЬКО ОТКРЫЛ квест
+# 1. Запуск таймера при входе в квест
 func start_quest(quest_name: String):
 	current_quest_start_time = Time.get_unix_time_from_system()
 	current_quest_mistakes.clear() # Очищаем старые ошибки
 	print("Начат квест: ", quest_name)
 
-# 2. Вызываем каждый раз, когда игрок нажал не туда или ввел неверный ответ
+# 2. Запись каждой ошибки, которую совершает игрок
 func add_mistake(mistake_detail: String):
 	current_quest_mistakes.append(mistake_detail)
-	print("Записана ошибка: ", mistake_detail)
+	print("Студент ошибся: ", mistake_detail)
 
-# 3. Вызываем, когда квест завершен (победа или поражение)
+# 3. Финиш квеста и отправка отчета в Firebase
 func finish_quest(quest_name: String, score: int, is_success: bool):
 	if user_id == "":
-		print("Игрок не авторизован, статистика не отправлена")
 		return
 		
-	# Считаем, сколько секунд игрок провел на уровне
 	var time_spent = Time.get_unix_time_from_system() - current_quest_start_time
-	
-	# Путь к новой папке quest_logs в БД
 	var url = str(DB_URL) + "users/" + str(user_id) + "/quest_logs.json"
 	
-	# Формируем наше подробное "досье" по этому прохождению
 	var data = {
 		"email": user_email,
 		"quest_name": quest_name,
 		"score": score,
-		"success": is_success, # true - прошел, false - провалил
-		"time_spent_seconds": round(time_spent), # Округляем до целых секунд
-		"mistakes": current_quest_mistakes, # Массив со всеми его ошибками!
+		"success": is_success,
+		"time_spent_seconds": round(time_spent),
+		"mistakes": current_quest_mistakes, # Отправляем весь массив ошибок
 		"completed_at": Time.get_datetime_string_from_system()
 	}
 	
 	var http = HTTPRequest.new()
 	add_child(http)
-	# Отправляем методом POST, чтобы каждое прохождение сохранялось как новая запись!
 	http.request(url, ["Content-Type: application/json"], HTTPClient.METHOD_POST, JSON.stringify(data))
 	http.request_completed.connect(func(r, c, h, b): http.queue_free())

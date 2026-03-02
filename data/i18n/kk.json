@@ -1619,7 +1619,7 @@
   "quest.radio.c.ui.details_title": "ТҮСІНДІРУ",
   "quest.radio.c.ui.task_speed": "Арна жылдамдығы: {speed} {unit}",
   "quest.radio.common.unit.mbps": "Мбит/с",
-  "quest.radio.c.ui.task_detect": "Кесу: {time} {unit}",
+  "quest.radio.c.ui.task_detect": "Терезе: {time} {unit}",
   "quest.radio.common.unit.sec": "с",
   "quest.radio.c.ui.risk_unknown": "Тәуекел: БЕЛГІСІЗ",
   "quest.radio.c.status.detect_window": "Кесу терезесі: {time} с",
@@ -1660,7 +1660,6 @@
   "quest.radio.c.result.intercept": "МӘРТЕБЕСІ: СӘТСІЗ. Сіз ұсталды.",
   "quest.radio.c.result.missed": "МӘРТЕБЕСІ: ӨТІРІЛДІ. Сіз мұны жасай алар едіңіз.",
   "quest.radio.c.status.completed": "МӘРТЕБЕСІ: аяқталды",
-
   "resus.title": "Іс 01: Цифрлық реанимация",
   "resus.a.stage": "КЕЗЕҢ А",
   "resus.a.btn.reset": "ҚАЙТА ОРНАТУ",
@@ -1735,5 +1734,11 @@
   "resus.c.error.load": "01-іс C кезеңінің деректерін жүктеу сәтсіз аяқталды.",
   "resus.c.level.CASE01_C_01.prompt": "Мұрағат сілтемесін қорғау үшін дәл үш желілік модуль орнатыңыз.",
   "resus.c.level.CASE01_C_02.prompt": "Соқтығыс бақылауы профилі: хабар таратудағы хаосты болдырмаңыз және периметр модульдерін қорғаңыз.",
-  "resus.c.level.CASE01_C_03.prompt": "Сүзгілеу профилі: пакетті тексеруге басымдық беріңіз және ұстап қалу бетін азайтыңыз."
+  "resus.c.level.CASE01_C_03.prompt": "Сүзгілеу профилі: пакетті тексеруге басымдық беріңіз және ұстап қалу бетін азайтыңыз.",
+  "quest.radio.c.ui.mode_template": "??????: {mode}",
+  "quest.radio.c.ui.mode_live": "LIVE",
+  "quest.radio.c.ui.mode_training": "TRAINING",
+  "quest.radio.c.ui.detect_left": "???????? ?????: {time} ?",
+  "quest.radio.c.status.plan_left": "???: ????????? ?????? ????? {time}?.",
+  "quest.radio.c.result.plan_timeout": "???: ??????. ??????-?? ????? ???? ?????? ?????."
 }

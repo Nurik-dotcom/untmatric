@@ -74,7 +74,7 @@ const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 @onready var btn_converter: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnConverter
 @onready var noir_overlay: CanvasLayer = $NoirOverlay
 @onready var btn_capture: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnCapture
-@onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnNext
+@onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/NextRow/BtnNext
 @onready var sample_strip: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/SampleStrip
 @onready var status_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusLabel
 @onready var btn_details: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/BtnDetails
@@ -141,6 +141,7 @@ func _ready() -> void:
 	if not I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.connect(_on_language_changed)
 	_connect_signals()
+	_configure_text_overflow()
 	_install_numpad()
 	btn_toggle_calc.visible = false
 	_set_calc_panel_visible(true)
@@ -197,6 +198,13 @@ func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 	var merged: Dictionary = params.duplicate(true)
 	merged["default"] = default_text
 	return I18n.get_text(key, merged)
+
+func _configure_text_overflow() -> void:
+	for lbl in [task_label, preview_calc_label, preview_fit_label, preview_class_label, status_label]:
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	for btn in [btn_converter, btn_capture, btn_next, btn_toggle_calc, btn_details]:
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 func _apply_i18n() -> void:
 	title_label.text = _tr("quest.radio.b.ui.title", "RADIO INTERCEPT | B")
@@ -1271,7 +1279,7 @@ func _configure_layout() -> void:
 
 	if compact_stack:
 		var landscape_stack: bool = size.x > size.y
-		body_split.split_offset = int(size.y * (0.30 if landscape_stack else 0.38))
+		body_split.split_offset = _clamp_split_offset(int(size.x * (0.54 if landscape_stack else 0.56)), 400, 380)
 		root_vbox.add_theme_constant_override("separation", 8)
 		right_vbox.add_theme_constant_override("separation", 8)
 		left_pane.size_flags_stretch_ratio = 0.8 if landscape_stack else 1.15
@@ -1295,7 +1303,7 @@ func _configure_layout() -> void:
 		if numpad_grid != null:
 			numpad_grid.custom_minimum_size.y = 146 if landscape_stack else 188
 	elif phone_landscape:
-		body_split.split_offset = int(size.x * 0.50)
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.52), 420, 400)
 		root_vbox.add_theme_constant_override("separation", 8)
 		right_vbox.add_theme_constant_override("separation", 8)
 		left_pane.size_flags_stretch_ratio = 1.0
@@ -1321,7 +1329,7 @@ func _configure_layout() -> void:
 			numpad_grid.custom_minimum_size.y = 210
 		meta_label.add_theme_font_size_override("font_size", 15)
 	elif size.x < 1280.0:
-		body_split.split_offset = int(size.x * 0.51)
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.53), 460, 420)
 		root_vbox.add_theme_constant_override("separation", 10)
 		right_vbox.add_theme_constant_override("separation", 10)
 		left_pane.size_flags_stretch_ratio = 1.0
@@ -1347,7 +1355,7 @@ func _configure_layout() -> void:
 		if numpad_grid != null:
 			numpad_grid.custom_minimum_size.y = 220
 	else:
-		body_split.split_offset = int(size.x * 0.53)
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.54), 500, 460)
 		root_vbox.add_theme_constant_override("separation", 10)
 		right_vbox.add_theme_constant_override("separation", 10)
 		left_pane.size_flags_stretch_ratio = 1.0
@@ -1372,3 +1380,7 @@ func _configure_layout() -> void:
 		status_label.add_theme_font_size_override("font_size", 18)
 		if numpad_grid != null:
 			numpad_grid.custom_minimum_size.y = 220
+
+func _clamp_split_offset(target_offset: int, min_left: int, min_right: int) -> int:
+	var viewport_width: int = int(get_viewport_rect().size.x)
+	return clampi(target_offset, min_left, max(min_left, viewport_width - min_right))
