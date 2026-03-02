@@ -88,6 +88,7 @@ var last_error_code := ""
 var current_layout := "landscape"
 
 func _ready() -> void:
+	
 	complexity_name = complexity_name.to_upper()
 	if not DATA_PATHS.has(complexity_name):
 		complexity_name = "A"

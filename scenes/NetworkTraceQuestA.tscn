@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://dnn0a5mgt8u1a"]
+[gd_scene load_steps=6 format=3 uid="uid://dnn0a5mgt8u1a"]
 
 [ext_resource type="Script" path="res://scripts/quests/network_trace/NetworkTraceQuestA.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://scenes/ui/DiagnosticsPanelC.tscn" id="3_diag_panel"]
 [ext_resource type="Script" path="res://scripts/ui/network_trace/topology_board_a.gd" id="4_topology"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="5_noir"]
@@ -40,16 +40,7 @@ theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 12
 
 [node name="Main" type="MarginContainer" parent="SafeArea"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 12.0
-offset_right = -16.0
-offset_bottom = -12.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
@@ -86,8 +77,8 @@ horizontal_alignment = 2
 vertical_alignment = 1
 
 [node name="PaletteSelect" type="OptionButton" parent="SafeArea/Main/V/Header"]
-custom_minimum_size = Vector2(150, 52)
 visible = false
+custom_minimum_size = Vector2(150, 52)
 layout_mode = 2
 disabled = true
 
@@ -119,14 +110,12 @@ theme_override_constants/separation = 8
 [node name="LblBriefing" type="RichTextLabel" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 custom_minimum_size = Vector2(0, 84)
 layout_mode = 2
-fit_content = false
 bbcode_enabled = true
 scroll_active = false
 
 [node name="LblPrompt" type="RichTextLabel" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
-fit_content = false
 bbcode_enabled = true
 scroll_active = false
 
@@ -183,7 +172,6 @@ text = "ПАЛИТРА УСТРОЙСТВ"
 [node name="PaletteScroll" type="ScrollContainer" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV"]
 custom_minimum_size = Vector2(0, 94)
 layout_mode = 2
-horizontal_scroll_mode = 1
 vertical_scroll_mode = 0
 
 [node name="Palette" type="HBoxContainer" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV/PaletteScroll"]
@@ -218,21 +206,21 @@ disabled = true
 text = "СБРОС"
 
 [node name="BtnNext" type="Button" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV/Actions"]
+visible = false
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
-visible = false
 text = "ДАЛЕЕ"
 
 [node name="LblStatus" type="Label" parent="SafeArea/Main/V/Body/MapPane/MapMargin/MapV"]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-autowrap_mode = 2
 text = "Статус"
+autowrap_mode = 2
 
 [node name="DiagnosticsPanel" parent="." instance=ExtResource("3_diag_panel")]
-layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.1
 anchor_top = 0.12
 anchor_right = 0.9
