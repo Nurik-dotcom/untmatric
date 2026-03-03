@@ -185,8 +185,676 @@
     },
     "stages": {
       "A": {
-        "level_id": "РЕСУС-А-01",
-        "diegetic_mode": true
+        "diegetic_mode": true,
+        "levels": [
+          {
+            "quest_id": "CASE_01_DIGITAL_RESUS",
+            "schema_version": "3.0.0",
+            "id": "RESUS-A-01",
+            "bucket": "newbie",
+            "briefing": "Восстановите рабочую станцию ​​судебно-медицинской экспертизы, подключив каждую часть к правильным группам разъемов.",
+            "format": "MATCHING",
+            "diegetic_mode": true,
+            "buckets": [
+              {
+                "bucket_id": "INPUT",
+                "label": "ВХОДНОЕ РАЗЪЕМ"
+              },
+              {
+                "bucket_id": "OUTPUT",
+                "label": "ВЫХОДНОЕ РАЗЪЕМ"
+              },
+              {
+                "bucket_id": "MEMORY",
+                "label": "ШИНА ПАМЯТИ"
+              }
+            ],
+            "items": [
+              {
+                "item_id": "keyboard",
+                "label": "KBD",
+                "correct_bucket_id": "INPUT"
+              },
+              {
+                "item_id": "mouse",
+                "label": "MOUSE",
+                "correct_bucket_id": "INPUT"
+              },
+              {
+                "item_id": "microphone",
+                "label": "MIC",
+                "correct_bucket_id": "INPUT"
+              },
+              {
+                "item_id": "gpu",
+                "label": "GPU",
+                "correct_bucket_id": "OUTPUT"
+              },
+              {
+                "item_id": "monitor",
+                "label": "MON",
+                "correct_bucket_id": "OUTPUT"
+              },
+              {
+                "item_id": "speaker",
+                "label": "SPK",
+                "correct_bucket_id": "OUTPUT"
+              },
+              {
+                "item_id": "ram",
+                "label": "RAM",
+                "correct_bucket_id": "MEMORY"
+              },
+              {
+                "item_id": "cache",
+                "label": "CACHE",
+                "correct_bucket_id": "MEMORY"
+              }
+            ],
+            "socket_map": {
+              "INPUT": [
+                "клавиатура",
+                "мышь",
+                "микрофон"
+              ],
+              "OUTPUT": [
+                "графический процессор",
+                "монитор",
+                "оратор"
+              ],
+              "MEMORY": [
+                "баран",
+                "кэш"
+              ]
+            },
+            "diag_panel": {
+              "GPU": {
+                "ok": "ВИДЕО: ОК",
+                "bad": "ВИДЕО: НЕТ СИГНАЛА"
+              },
+              "RAM": {
+                "ok": "ПАМЯТЬ: ОК",
+                "bad": "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"
+              },
+              "CACHE": {
+                "ok": "БУФЕР: БЫСТРЫЙ",
+                "bad": "БУФЕР: МЕДЛЕННЫЙ"
+              }
+            },
+            "fx_rules": {
+              "gpu_on": {
+                "item_id": "gpu",
+                "bucket_id": "OUTPUT"
+              },
+              "ram_ok": {
+                "item_id": "ram",
+                "bucket_id": "MEMORY"
+              },
+              "cache_ok": {
+                "item_id": "cache",
+                "bucket_id": "MEMORY"
+              },
+              "hid_lines_on_input": [
+                "СКРЫТО ПОДКЛЮЧЕНО",
+                "ВХОДНОЙ ДРАЙВЕР ОК"
+              ]
+            },
+            "scoring_rules": [],
+            "scoring_model": {
+              "rules": [
+                {
+                  "code": "PERFECT",
+                  "min_correct": 8,
+                  "points": 2,
+                  "stability_delta": 0,
+                  "verdict_code": "PERFECT"
+                },
+                {
+                  "code": "PARTIAL",
+                  "min_correct": 6,
+                  "points": 1,
+                  "stability_delta": -10,
+                  "verdict_code": "PARTIAL"
+                },
+                {
+                  "code": "FAIL",
+                  "min_correct": 0,
+                  "points": 0,
+                  "stability_delta": -30,
+                  "verdict_code": "FAIL"
+                }
+              ],
+              "default_rule": {
+                "code": "EMPTY_CONFIRM",
+                "points": 0,
+                "stability_delta": -50,
+                "verdict_code": "EMPTY"
+              }
+            },
+            "feedback_rules": {
+              "NO_GPU": {
+                "status": "Графический процессор отсутствует на ВЫХОДЕ. Сигнал монитора недоступен."
+              },
+              "NO_RAM": {
+                "status": "В MEMORY отсутствует ОЗУ. Ошибка загрузки во время проверки памяти.",
+                "console_lines": [
+                  "[BOOT] проверка памяти запущена",
+                  "[ALERT] модуль оперативной памяти не обнаружен",
+                  "[BOOT] повторить проверку памяти",
+                  "[ALERT] прерывает запуск"
+                ]
+              },
+              "NO_CACHE": {
+                "status": "КЭШ отсутствует. Диагностический поток ухудшился."
+              },
+              "HEALTHY": {
+                "status": "Все критические узлы онлайн. Продолжаем настройку производительности."
+              }
+            },
+            "system_state_rules": {
+              "monitor_on_if": {
+                "item_id": "gpu",
+                "zone_id": "OUTPUT"
+              },
+              "ram_ok_if": {
+                "item_id": "ram",
+                "zone_id": "MEMORY"
+              },
+              "fast_type_if": {
+                "item_id": "cache",
+                "zone_id": "MEMORY"
+              },
+              "boot_ok_lines": [
+                "[BOOT] сканирование периферийных устройств завершено",
+                "[BOOT] проверка памяти завершена",
+                "Подключена шина [BOOT] PCI",
+                "[BOOT] диагностическая трансляция онлайн"
+              ]
+            }
+          },
+          {
+            "quest_id": "CASE_01_DIGITAL_RESUS",
+            "schema_version": "3.0.0",
+            "id": "RESUS-A-02",
+            "bucket": "newbie",
+            "briefing": "Уровень ловушки: идентифицируйте ложные периферийные устройства и подключайте только действительные части рабочей станции.",
+            "format": "MATCHING",
+            "diegetic_mode": true,
+            "buckets": [
+              {
+                "bucket_id": "INPUT",
+                "label": "ВХОДНОЕ РАЗЪЕМ"
+              },
+              {
+                "bucket_id": "OUTPUT",
+                "label": "ВЫХОДНОЕ РАЗЪЕМ"
+              },
+              {
+                "bucket_id": "MEMORY",
+                "label": "ШИНА ПАМЯТИ"
+              }
+            ],
+            "items": [
+              {
+                "label": "KBD",
+                "item_id": "keyboard",
+                "correct_bucket_id": "INPUT"
+              },
+              {
+                "label": "SCAN",
+                "item_id": "scanner",
+                "correct_bucket_id": "INPUT"
+              },
+              {
+                "label": "CAM",
+                "item_id": "camera",
+                "correct_bucket_id": "INPUT"
+              },
+              {
+                "label": "GPU",
+                "item_id": "gpu",
+                "correct_bucket_id": "OUTPUT"
+              },
+              {
+                "label": "MON",
+                "item_id": "monitor",
+                "correct_bucket_id": "OUTPUT"
+              },
+              {
+                "label": "SPK",
+                "item_id": "speaker",
+                "correct_bucket_id": "OUTPUT"
+              },
+              {
+                "label": "RAM",
+                "item_id": "ram",
+                "correct_bucket_id": "MEMORY"
+              },
+              {
+                "label": "CACHE",
+                "item_id": "cache",
+                "correct_bucket_id": "MEMORY"
+              }
+            ],
+            "socket_map": {
+              "INPUT": [
+                "клавиатура",
+                "сканер",
+                "камера"
+              ],
+              "MEMORY": [
+                "баран",
+                "кэш"
+              ],
+              "OUTPUT": [
+                "графический процессор",
+                "монитор",
+                "оратор"
+              ]
+            },
+            "diag_panel": {
+              "GPU": {
+                "ok": "ВИДЕО: ОК",
+                "bad": "ВИДЕО: НЕТ СИГНАЛА"
+              },
+              "RAM": {
+                "ok": "ПАМЯТЬ: ОК",
+                "bad": "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"
+              },
+              "CACHE": {
+                "ok": "БУФЕР: БЫСТРЫЙ",
+                "bad": "БУФЕР: МЕДЛЕННЫЙ"
+              }
+            },
+            "fx_rules": {
+              "gpu_on": {
+                "item_id": "gpu",
+                "bucket_id": "OUTPUT"
+              },
+              "ram_ok": {
+                "item_id": "ram",
+                "bucket_id": "MEMORY"
+              },
+              "cache_ok": {
+                "item_id": "cache",
+                "bucket_id": "MEMORY"
+              },
+              "hid_lines_on_input": [
+                "ВХОДНАЯ ШИНА ПРОВЕРЕНА",
+                "СКРЫТАЯ МАРШРУТИЗАЦИЯ СТАБИЛЬНАЯ"
+              ]
+            },
+            "scoring_rules": [],
+            "scoring_model": {
+              "rules": [
+                {
+                  "code": "PERFECT",
+                  "min_correct": 8,
+                  "points": 2,
+                  "stability_delta": 0,
+                  "verdict_code": "PERFECT"
+                },
+                {
+                  "code": "PARTIAL",
+                  "min_correct": 6,
+                  "points": 1,
+                  "stability_delta": -10,
+                  "verdict_code": "PARTIAL"
+                },
+                {
+                  "code": "FAIL",
+                  "min_correct": 0,
+                  "points": 0,
+                  "stability_delta": -30,
+                  "verdict_code": "FAIL"
+                }
+              ],
+              "default_rule": {
+                "code": "EMPTY_CONFIRM",
+                "points": 0,
+                "stability_delta": -50,
+                "verdict_code": "EMPTY"
+              }
+            },
+            "feedback_rules": {
+              "NO_GPU": {
+                "status": "Графический процессор отсутствует на ВЫХОДЕ. Сигнал монитора недоступен."
+              },
+              "NO_RAM": {
+                "status": "В MEMORY отсутствует ОЗУ. Ошибка загрузки во время проверки памяти.",
+                "console_lines": [
+                  "[BOOT] проверка памяти запущена",
+                  "[ALERT] модуль оперативной памяти не обнаружен",
+                  "[BOOT] повторить проверку памяти",
+                  "[ALERT] прерывает запуск"
+                ]
+              },
+              "NO_CACHE": {
+                "status": "КЭШ отсутствует. Диагностический поток ухудшился."
+              },
+              "HEALTHY": {
+                "status": "Все критические узлы онлайн. Продолжаем настройку производительности."
+              }
+            },
+            "system_state_rules": {
+              "monitor_on_if": {
+                "item_id": "gpu",
+                "zone_id": "OUTPUT"
+              },
+              "ram_ok_if": {
+                "item_id": "ram",
+                "zone_id": "MEMORY"
+              },
+              "fast_type_if": {
+                "item_id": "cache",
+                "zone_id": "MEMORY"
+              },
+              "boot_ok_lines": [
+                "[BOOT] профиль ловушки загружен",
+                "[BOOT] целостность периферийных устройств проверена",
+                "[BOOT] проверка памяти завершена",
+                "[BOOT] безопасная консоль онлайн"
+              ]
+            }
+          },
+          {
+            "quest_id": "CASE_01_DIGITAL_RESUS",
+            "schema_version": "3.0.0",
+            "id": "RESUS-A-03",
+            "bucket": "newbie",
+            "briefing": "Продвинутый этап: перестроить рабочую станцию ​​с альтернативной топологией вывода в рамках диагностики.",
+            "format": "MATCHING",
+            "diegetic_mode": true,
+            "buckets": [
+              {
+                "bucket_id": "INPUT",
+                "label": "ВХОДНОЕ РАЗЪЕМ"
+              },
+              {
+                "bucket_id": "OUTPUT",
+                "label": "ВЫХОДНОЕ РАЗЪЕМ"
+              },
+              {
+                "bucket_id": "MEMORY",
+                "label": "ШИНА ПАМЯТИ"
+              }
+            ],
+            "items": [
+              {
+                "label": "KBD",
+                "item_id": "keyboard",
+                "correct_bucket_id": "INPUT"
+              },
+              {
+                "label": "MOUSE",
+                "item_id": "mouse",
+                "correct_bucket_id": "INPUT"
+              },
+              {
+                "label": "MIC",
+                "item_id": "microphone",
+                "correct_bucket_id": "INPUT"
+              },
+              {
+                "label": "GPU",
+                "item_id": "gpu",
+                "correct_bucket_id": "OUTPUT"
+              },
+              {
+                "label": "PROJ",
+                "item_id": "projector",
+                "correct_bucket_id": "OUTPUT"
+              },
+              {
+                "label": "SPK",
+                "item_id": "speaker",
+                "correct_bucket_id": "OUTPUT"
+              },
+              {
+                "label": "RAM",
+                "item_id": "ram",
+                "correct_bucket_id": "MEMORY"
+              },
+              {
+                "label": "CACHE",
+                "item_id": "cache",
+                "correct_bucket_id": "MEMORY"
+              }
+            ],
+            "socket_map": {
+              "INPUT": [
+                "клавиатура",
+                "мышь",
+                "микрофон"
+              ],
+              "MEMORY": [
+                "баран",
+                "кэш"
+              ],
+              "OUTPUT": [
+                "графический процессор",
+                "проектор",
+                "оратор"
+              ]
+            },
+            "diag_panel": {
+              "GPU": {
+                "ok": "ВИДЕО: ОК",
+                "bad": "ВИДЕО: НЕТ СИГНАЛА"
+              },
+              "RAM": {
+                "ok": "ПАМЯТЬ: ОК",
+                "bad": "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"
+              },
+              "CACHE": {
+                "ok": "БУФЕР: БЫСТРЫЙ",
+                "bad": "БУФЕР: МЕДЛЕННЫЙ"
+              }
+            },
+            "fx_rules": {
+              "gpu_on": {
+                "item_id": "gpu",
+                "bucket_id": "OUTPUT"
+              },
+              "ram_ok": {
+                "item_id": "ram",
+                "bucket_id": "MEMORY"
+              },
+              "cache_ok": {
+                "item_id": "cache",
+                "bucket_id": "MEMORY"
+              },
+              "hid_lines_on_input": [
+                "СКРЫТО ПОДКЛЮЧЕНО",
+                "ВХОДНОЙ ДРАЙВЕР ОК"
+              ]
+            },
+            "scoring_rules": [],
+            "scoring_model": {
+              "rules": [
+                {
+                  "code": "PERFECT",
+                  "min_correct": 8,
+                  "points": 2,
+                  "stability_delta": 0,
+                  "verdict_code": "PERFECT"
+                },
+                {
+                  "code": "PARTIAL",
+                  "min_correct": 6,
+                  "points": 1,
+                  "stability_delta": -10,
+                  "verdict_code": "PARTIAL"
+                },
+                {
+                  "code": "FAIL",
+                  "min_correct": 0,
+                  "points": 0,
+                  "stability_delta": -30,
+                  "verdict_code": "FAIL"
+                }
+              ],
+              "default_rule": {
+                "code": "EMPTY_CONFIRM",
+                "points": 0,
+                "stability_delta": -50,
+                "verdict_code": "EMPTY"
+              }
+            },
+            "feedback_rules": {
+              "NO_GPU": {
+                "status": "Графический процессор отсутствует на ВЫХОДЕ. Сигнал монитора недоступен."
+              },
+              "NO_RAM": {
+                "status": "В MEMORY отсутствует ОЗУ. Ошибка загрузки во время проверки памяти.",
+                "console_lines": [
+                  "[BOOT] проверка памяти запущена",
+                  "[ALERT] модуль оперативной памяти не обнаружен",
+                  "[BOOT] повторить проверку памяти",
+                  "[ALERT] прерывает запуск"
+                ]
+              },
+              "NO_CACHE": {
+                "status": "КЭШ отсутствует. Диагностический поток ухудшился."
+              },
+              "HEALTHY": {
+                "status": "Все критические узлы онлайн. Продолжаем настройку производительности."
+              }
+            },
+            "system_state_rules": {
+              "monitor_on_if": {
+                "item_id": "gpu",
+                "zone_id": "OUTPUT"
+              },
+              "ram_ok_if": {
+                "item_id": "ram",
+                "zone_id": "MEMORY"
+              },
+              "fast_type_if": {
+                "item_id": "cache",
+                "zone_id": "MEMORY"
+              },
+              "boot_ok_lines": [
+                "[BOOT] выходной мультиплексор инициализирован",
+                "[BOOT] проверка памяти завершена",
+                "Подключена шина [BOOT] PCI",
+                "[BOOT] диагностическая трансляция онлайн"
+              ]
+            }
+          },
+          {
+            "quest_id": "CASE_01_DIGITAL_RESUS",
+            "schema_version": "3.1.0",
+            "id": "A_CIA_01",
+            "bucket": "infosec",
+            "briefing": "Разложите улики по свойствам информации (CIA): Конфиденциальность, Целостность, Доступность. Часть улик — атаки, часть — меры защиты.",
+            "format": "MATCHING_CIA",
+            "buckets": [
+              {
+                "bucket_id": "CONF",
+                "label": "КОНФИДЕНЦИАЛЬНОСТЬ"
+              },
+              {
+                "bucket_id": "INTE",
+                "label": "ЦЕЛОСТНОСТЬ"
+              },
+              {
+                "bucket_id": "AVAI",
+                "label": "ДОСТУПНОСТЬ"
+              }
+            ],
+            "items": [
+              {
+                "item_id": "LEAK",
+                "type": "INC",
+                "label": "[INC] Слив паролей в сеть",
+                "correct_bucket_id": "CONF",
+                "explain_short": "Данные становятся доступны посторонним."
+              },
+              {
+                "item_id": "VIRUS",
+                "type": "INC",
+                "label": "[INC] Искажение файла вирусом",
+                "correct_bucket_id": "INTE",
+                "explain_short": "Данные изменены, теряют достоверность."
+              },
+              {
+                "item_id": "DDOS",
+                "type": "INC",
+                "label": "[INC] DDoS атака на сервер",
+                "correct_bucket_id": "AVAI",
+                "explain_short": "Сервис недоступен пользователям."
+              },
+              {
+                "item_id": "DNS",
+                "type": "INC",
+                "label": "[INC] Подмена DNS записи",
+                "correct_bucket_id": "INTE",
+                "explain_short": "Адрес подменён, целостность информации нарушена."
+              },
+              {
+                "item_id": "ENC",
+                "type": "CTRL",
+                "label": "[CTRL] Шифрование данных",
+                "correct_bucket_id": "CONF",
+                "explain_short": "Скрывает содержимое от посторонних."
+              },
+              {
+                "item_id": "HASH",
+                "type": "CTRL",
+                "label": "[CTRL] Хэш-сумма файла",
+                "correct_bucket_id": "INTE",
+                "explain_short": "Позволяет проверить, что файл не изменили."
+              },
+              {
+                "item_id": "BACKUP",
+                "type": "CTRL",
+                "label": "[CTRL] Резервное копирование",
+                "correct_bucket_id": "AVAI",
+                "explain_short": "Восстановление после сбоя повышает доступность."
+              },
+              {
+                "item_id": "ACL",
+                "type": "CTRL",
+                "label": "[CTRL] Контроль доступа (ACL)",
+                "correct_bucket_id": "CONF",
+                "explain_short": "Ограничивает доступ к данным."
+              }
+            ],
+            "scoring_model": {
+              "rules": [
+                {
+                  "code": "PERFECT",
+                  "min_correct": 8,
+                  "points": 2,
+                  "stability_delta": 0,
+                  "verdict_code": "PERFECT"
+                },
+                {
+                  "code": "PARTIAL",
+                  "min_correct": 6,
+                  "points": 1,
+                  "stability_delta": -10,
+                  "verdict_code": "PARTIAL"
+                },
+                {
+                  "code": "FAIL",
+                  "min_correct": 0,
+                  "points": 0,
+                  "stability_delta": -30,
+                  "verdict_code": "FAIL"
+                }
+              ],
+              "default_rule": {
+                "when": "EMPTY_CONFIRM",
+                "code": "EMPTY_CONFIRM",
+                "points": 0,
+                "stability_delta": -50,
+                "verdict_code": "EMPTY"
+              }
+            }
+          }
+        ]
       },
       "B": {
         "levels": [
@@ -243,37 +911,58 @@
               }
             },
             "classifier_thresholds": {
-              "bottleneck_cpu": "HIGH",
-              "bottleneck_ram": "LOW",
+              "gpu_low_max": 0,
+              "cpu_low_max": 1,
+              "ram_low_max": 1,
+              "cpu_mid_min": 2,
+              "cpu_high_min": 3,
+              "ram_good_min": 2,
+              "gpu_good_min": 2,
               "lowpower_perf_max": 4
             },
             "benchmark_outputs": {
-              "BOTTLENECK": [
-                "Пропускная способность памяти [SCAN] ниже целевой",
-                "[SCAN] обнаружена перегрузка очереди процессора",
-                "[RESULT] Узкое место"
-              ],
               "OPTIMAL": [
-                "[SCAN] стабильная тепловая оболочка",
-                "[SCAN] пропускная способность и задержка в диапазоне",
-                "[RESULT] ОПТИМАЛЬНО"
+                "[BENCH] frame pacing stable",
+                "[BENCH] memory queue nominal",
+                "[BENCH] render context synchronized",
+                "[RESULT] OPTIMAL profile accepted"
+              ],
+              "BOTTLENECK_RAM": [
+                "[BENCH] paging pressure detected",
+                "[BENCH] CPU wait states rising",
+                "[BENCH] dataset spills beyond working set",
+                "[RESULT] BOTTLENECK_RAM"
+              ],
+              "BOTTLENECK_GPU": [
+                "[BENCH] render queue saturated",
+                "[BENCH] frame output stalls at raster stage",
+                "[BENCH] CPU feed remains above display throughput",
+                "[RESULT] BOTTLENECK_GPU"
+              ],
+              "BOTTLENECK_CPU": [
+                "[BENCH] scheduler load pinned high",
+                "[BENCH] RAM and GPU utilization stay below ceiling",
+                "[BENCH] command submission cannot keep pace",
+                "[RESULT] BOTTLENECK_CPU"
               ],
               "OVERBUDGET": [
-                "[SCAN] конверт расходов нарушен",
-                "[SCAN] нарушение политики закупок",
-                "[RESULT] ПЕРЕБЮДЖЕТ"
+                "[BENCH] performance target reachable",
+                "[BENCH] procurement gate failed",
+                "[BENCH] spend exceeds approved envelope",
+                "[RESULT] OVERBUDGET"
               ],
               "LOWPOWER": [
-                "Базовые вычисления [SCAN] ниже порогового значения",
-                "[SCAN] конвейер рендеринга недостаточно обеспечен",
-                "[RESULT] НИЗКАЯ МОЩНОСТЬ"
+                "[BENCH] baseline throughput below target",
+                "[BENCH] no single subsystem dominates the slowdown",
+                "[BENCH] aggregate compute budget insufficient",
+                "[RESULT] LOWPOWER"
               ]
             },
             "options": [
               {
                 "option_id": "BOTTLENECK",
-                "title": "Высокий процессор + низкий уровень ОЗУ",
-                "total_price": 650,
+                "title": "Renderer boost with starved RAM",
+                "total_price": 850,
                 "parts": [
                   {
                     "k": "CPU",
@@ -284,31 +973,37 @@
                     "k": "RAM",
                     "v": "LOW",
                     "price": 50
+                  },
+                  {
+                    "k": "GPU",
+                    "v": "MID",
+                    "price": 200
                   }
                 ],
                 "tags": [
-                  "одноточечное напряжение",
-                  "память не хватает"
+                  "preset",
+                  "memory-starved"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "RAM",
+                  "bottleneck": "BOTTLENECK_RAM",
                   "cpu_load": 86,
                   "ram_usage": 92,
                   "fps": 44,
-                  "total_price": 650
+                  "total_price": 850
                 },
                 "feedback": {
                   "error_code": "BOTTLENECK_RAM",
-                  "headline": "Очередь процессора перегружена слабой оперативной памятью",
+                  "headline": "Memory pressure is the limiting factor",
                   "details": [
-                    "Перед подтверждением поднимите класс RAM до ХОРОШЕГО или ТОП."
+                    "Raise RAM before confirming the rig.",
+                    "CPU headroom is wasted while the workload waits on memory."
                   ]
                 }
               },
               {
                 "option_id": "OPTIMAL",
-                "title": "Средний процессор + ОЗУ в порядке",
-                "total_price": 700,
+                "title": "Balanced workstation preset",
+                "total_price": 900,
                 "parts": [
                   {
                     "k": "CPU",
@@ -319,31 +1014,37 @@
                     "k": "RAM",
                     "v": "GOOD",
                     "price": 300
+                  },
+                  {
+                    "k": "GPU",
+                    "v": "MID",
+                    "price": 200
                   }
                 ],
                 "tags": [
-                  "сбалансированный",
-                  "бюджетно безопасно"
+                  "preset",
+                  "balanced"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "OK",
+                  "bottleneck": "OPTIMAL",
                   "cpu_load": 56,
                   "ram_usage": 61,
                   "fps": 73,
-                  "total_price": 700
+                  "total_price": 900
                 },
                 "feedback": {
                   "error_code": "OK",
-                  "headline": "Сбалансированный профиль настройки подтвержден",
+                  "headline": "Balanced profile confirmed",
                   "details": [
-                    "Ограничения по производительности и бюджету удовлетворены."
+                    "Budget stays inside the cap.",
+                    "No dominant subsystem stalls the workload."
                   ]
                 }
               },
               {
                 "option_id": "OVERBUDGET",
-                "title": "Верхний стек",
-                "total_price": 1200,
+                "title": "Top-tier overspend preset",
+                "total_price": 1300,
                 "parts": [
                   {
                     "k": "CPU",
@@ -353,7 +1054,7 @@
                   {
                     "k": "RAM",
                     "v": "TOP",
-                    "price": 300
+                    "price": 400
                   },
                   {
                     "k": "GPU",
@@ -362,27 +1063,29 @@
                   }
                 ],
                 "tags": [
-                  "нарушение бюджета"
+                  "preset",
+                  "policy-fail"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "BUDGET",
+                  "bottleneck": "OVERBUDGET",
                   "cpu_load": 52,
                   "ram_usage": 59,
                   "fps": 79,
-                  "total_price": 1200
+                  "total_price": 1300
                 },
                 "feedback": {
                   "error_code": "OVER_BUDGET",
-                  "headline": "Ограничение бюджета превышено",
+                  "headline": "Target profile breaks the budget policy",
                   "details": [
-                    "Уменьшите один или несколько уровней, чтобы оставаться в пределах лимита."
+                    "Drop at least one component tier before confirmation.",
+                    "Performance is acceptable, but procurement rejects the spend."
                   ]
                 }
               },
               {
                 "option_id": "LOWPOWER",
-                "title": "Низкий стек",
-                "total_price": 250,
+                "title": "Minimal-power baseline preset",
+                "total_price": 200,
                 "parts": [
                   {
                     "k": "CPU",
@@ -392,24 +1095,31 @@
                   {
                     "k": "RAM",
                     "v": "LOW",
-                    "price": 100
+                    "price": 50
+                  },
+                  {
+                    "k": "GPU",
+                    "v": "NONE",
+                    "price": 0
                   }
                 ],
                 "tags": [
-                  "маломощный"
+                  "preset",
+                  "underpowered"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "CPU",
-                  "cpu_load": 78,
-                  "ram_usage": 68,
-                  "fps": 28,
-                  "total_price": 250
+                  "bottleneck": "LOWPOWER",
+                  "cpu_load": 84,
+                  "ram_usage": 75,
+                  "fps": 24,
+                  "total_price": 200
                 },
                 "feedback": {
                   "error_code": "LOW_POWER",
-                  "headline": "Вычислительный конверт слишком мал",
+                  "headline": "Overall compute envelope is too weak",
                   "details": [
-                    "Увеличьте класс CPU и/или GPU, чтобы пройти тест."
+                    "The build is underpowered across the board.",
+                    "Increase at least one core subsystem before benchmarking again."
                   ]
                 }
               }
@@ -428,32 +1138,52 @@
               }
             },
             "feedback_rules": {
-              "BOTTLENECK": {
-                "error_code": "BOTTLENECK_RAM",
-                "headline": "Очередь процессора перегружена слабой оперативной памятью",
-                "details": [
-                  "Перед подтверждением поднимите класс RAM до ХОРОШЕГО или ТОП."
-                ]
-              },
               "OPTIMAL": {
                 "error_code": "OK",
-                "headline": "Сбалансированный профиль настройки подтвержден",
+                "headline": "Balanced profile confirmed",
                 "details": [
-                  "Ограничения по производительности и бюджету удовлетворены."
+                  "Budget stays inside the cap.",
+                  "No dominant subsystem stalls the workload."
+                ]
+              },
+              "BOTTLENECK_RAM": {
+                "error_code": "BOTTLENECK_RAM",
+                "headline": "Memory pressure is the limiting factor",
+                "details": [
+                  "Raise RAM before confirming the rig.",
+                  "CPU headroom is wasted while the workload waits on memory."
+                ]
+              },
+              "BOTTLENECK_GPU": {
+                "error_code": "BOTTLENECK_GPU",
+                "headline": "Render path is blocked by the graphics layer",
+                "details": [
+                  "Add or upgrade the GPU tier.",
+                  "The rest of the rig can feed more frames than the renderer can output."
+                ]
+              },
+              "BOTTLENECK_CPU": {
+                "error_code": "BOTTLENECK_CPU",
+                "headline": "Processor throughput is below the rest of the stack",
+                "details": [
+                  "CPU class is the next upgrade point.",
+                  "RAM and GPU remain underused because the host cannot schedule fast enough."
                 ]
               },
               "OVERBUDGET": {
                 "error_code": "OVER_BUDGET",
-                "headline": "Ограничение бюджета превышено",
+                "headline": "Target profile breaks the budget policy",
                 "details": [
-                  "Уменьшите один или несколько уровней, чтобы оставаться в пределах лимита."
+                  "Drop at least one component tier before confirmation.",
+                  "Performance is acceptable, but procurement rejects the spend."
                 ]
               },
               "LOWPOWER": {
                 "error_code": "LOW_POWER",
-                "headline": "Вычислительный конверт слишком мал",
+                "headline": "Overall compute envelope is too weak",
                 "details": [
-                  "Увеличьте класс CPU и/или GPU, чтобы пройти тест."
+                  "The build is underpowered across the board.",
+                  "Increase at least one core subsystem before benchmarking again."
                 ]
               }
             },
@@ -464,54 +1194,70 @@
             },
             "preview_profiles": {
               "BOTTLENECK": {
-                "bottleneck": "RAM",
+                "bottleneck": "BOTTLENECK_RAM",
                 "cpu_load": 86,
                 "ram_usage": 92,
                 "fps": 44,
-                "total_price": 650
-              },
-              "LOWPOWER": {
-                "bottleneck": "CPU",
-                "cpu_load": 78,
-                "ram_usage": 68,
-                "fps": 28,
-                "total_price": 250
+                "total_price": 850
               },
               "OPTIMAL": {
-                "bottleneck": "OK",
+                "bottleneck": "OPTIMAL",
                 "cpu_load": 56,
                 "ram_usage": 61,
                 "fps": 73,
-                "total_price": 700
+                "total_price": 900
               },
               "OVERBUDGET": {
-                "bottleneck": "BUDGET",
+                "bottleneck": "OVERBUDGET",
                 "cpu_load": 52,
                 "ram_usage": 59,
                 "fps": 79,
-                "total_price": 1200
+                "total_price": 1300
+              },
+              "LOWPOWER": {
+                "bottleneck": "LOWPOWER",
+                "cpu_load": 84,
+                "ram_usage": 75,
+                "fps": 24,
+                "total_price": 200
               }
             },
             "benchmark_lines": {
-              "BOTTLENECK": [
-                "Пропускная способность памяти [SCAN] ниже целевой",
-                "[SCAN] обнаружена перегрузка очереди процессора",
-                "[RESULT] Узкое место"
-              ],
               "OPTIMAL": [
-                "[SCAN] стабильная тепловая оболочка",
-                "[SCAN] пропускная способность и задержка в диапазоне",
-                "[RESULT] ОПТИМАЛЬНО"
+                "[BENCH] frame pacing stable",
+                "[BENCH] memory queue nominal",
+                "[BENCH] render context synchronized",
+                "[RESULT] OPTIMAL profile accepted"
+              ],
+              "BOTTLENECK_RAM": [
+                "[BENCH] paging pressure detected",
+                "[BENCH] CPU wait states rising",
+                "[BENCH] dataset spills beyond working set",
+                "[RESULT] BOTTLENECK_RAM"
+              ],
+              "BOTTLENECK_GPU": [
+                "[BENCH] render queue saturated",
+                "[BENCH] frame output stalls at raster stage",
+                "[BENCH] CPU feed remains above display throughput",
+                "[RESULT] BOTTLENECK_GPU"
+              ],
+              "BOTTLENECK_CPU": [
+                "[BENCH] scheduler load pinned high",
+                "[BENCH] RAM and GPU utilization stay below ceiling",
+                "[BENCH] command submission cannot keep pace",
+                "[RESULT] BOTTLENECK_CPU"
               ],
               "OVERBUDGET": [
-                "[SCAN] конверт расходов нарушен",
-                "[SCAN] нарушение политики закупок",
-                "[RESULT] ПЕРЕБЮДЖЕТ"
+                "[BENCH] performance target reachable",
+                "[BENCH] procurement gate failed",
+                "[BENCH] spend exceeds approved envelope",
+                "[RESULT] OVERBUDGET"
               ],
               "LOWPOWER": [
-                "Базовые вычисления [SCAN] ниже порогового значения",
-                "[SCAN] конвейер рендеринга недостаточно обеспечен",
-                "[RESULT] НИЗКАЯ МОЩНОСТЬ"
+                "[BENCH] baseline throughput below target",
+                "[BENCH] no single subsystem dominates the slowdown",
+                "[BENCH] aggregate compute budget insufficient",
+                "[RESULT] LOWPOWER"
               ]
             }
           },
@@ -568,37 +1314,58 @@
               }
             },
             "classifier_thresholds": {
-              "bottleneck_cpu": "HIGH",
-              "bottleneck_ram": "LOW",
+              "gpu_low_max": 0,
+              "cpu_low_max": 1,
+              "ram_low_max": 1,
+              "cpu_mid_min": 2,
+              "cpu_high_min": 3,
+              "ram_good_min": 2,
+              "gpu_good_min": 2,
               "lowpower_perf_max": 5
             },
             "benchmark_outputs": {
-              "BOTTLENECK": [
-                "[BUILD] параллельные задания остановлены",
-                "[BUILD] RAM обнаружено насыщение очереди",
-                "[RESULT] Узкое место"
-              ],
               "OPTIMAL": [
-                "Коэффициент попадания в кеш [BUILD] стабильный",
-                "Очередь компиляции [BUILD] очищена в SLA",
-                "[RESULT] ОПТИМАЛЬНО"
+                "[BENCH] frame pacing stable",
+                "[BENCH] memory queue nominal",
+                "[BENCH] render context synchronized",
+                "[RESULT] OPTIMAL profile accepted"
+              ],
+              "BOTTLENECK_RAM": [
+                "[BENCH] paging pressure detected",
+                "[BENCH] CPU wait states rising",
+                "[BENCH] dataset spills beyond working set",
+                "[RESULT] BOTTLENECK_RAM"
+              ],
+              "BOTTLENECK_GPU": [
+                "[BENCH] render queue saturated",
+                "[BENCH] frame output stalls at raster stage",
+                "[BENCH] CPU feed remains above display throughput",
+                "[RESULT] BOTTLENECK_GPU"
+              ],
+              "BOTTLENECK_CPU": [
+                "[BENCH] scheduler load pinned high",
+                "[BENCH] RAM and GPU utilization stay below ceiling",
+                "[BENCH] command submission cannot keep pace",
+                "[RESULT] BOTTLENECK_CPU"
               ],
               "OVERBUDGET": [
-                "Финансовая политика [PROCURE] нарушена",
-                "[PROCURE] отклонить профиль перед развертыванием",
-                "[RESULT] ПЕРЕБЮДЖЕТ"
+                "[BENCH] performance target reachable",
+                "[BENCH] procurement gate failed",
+                "[BENCH] spend exceeds approved envelope",
+                "[RESULT] OVERBUDGET"
               ],
               "LOWPOWER": [
-                "Пропускная способность [BUILD] ниже запланированной по проекту",
-                "Профиль настройки [BUILD] не может удовлетворить рабочую нагрузку",
-                "[RESULT] НИЗКАЯ МОЩНОСТЬ"
+                "[BENCH] baseline throughput below target",
+                "[BENCH] no single subsystem dominates the slowdown",
+                "[BENCH] aggregate compute budget insufficient",
+                "[RESULT] LOWPOWER"
               ]
             },
             "options": [
               {
                 "option_id": "BOTTLENECK",
-                "title": "Высокий процессор + низкий уровень ОЗУ",
-                "total_price": 650,
+                "title": "Renderer boost with starved RAM",
+                "total_price": 850,
                 "parts": [
                   {
                     "k": "CPU",
@@ -609,31 +1376,37 @@
                     "k": "RAM",
                     "v": "LOW",
                     "price": 50
+                  },
+                  {
+                    "k": "GPU",
+                    "v": "MID",
+                    "price": 200
                   }
                 ],
                 "tags": [
-                  "одноточечное напряжение",
-                  "память не хватает"
+                  "preset",
+                  "memory-starved"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "RAM",
-                  "cpu_load": 88,
-                  "ram_usage": 94,
-                  "fps": 40,
-                  "total_price": 650
+                  "bottleneck": "BOTTLENECK_RAM",
+                  "cpu_load": 86,
+                  "ram_usage": 92,
+                  "fps": 44,
+                  "total_price": 850
                 },
                 "feedback": {
                   "error_code": "BOTTLENECK_RAM",
-                  "headline": "Очередь RAM блокирует параллельную сборку",
+                  "headline": "Memory pressure is the limiting factor",
                   "details": [
-                    "Обновите RAM перед подтверждением этого профиля."
+                    "Raise RAM before confirming the rig.",
+                    "CPU headroom is wasted while the workload waits on memory."
                   ]
                 }
               },
               {
                 "option_id": "OPTIMAL",
-                "title": "Средний процессор + ОЗУ в порядке",
-                "total_price": 700,
+                "title": "Balanced workstation preset",
+                "total_price": 900,
                 "parts": [
                   {
                     "k": "CPU",
@@ -644,31 +1417,37 @@
                     "k": "RAM",
                     "v": "GOOD",
                     "price": 300
+                  },
+                  {
+                    "k": "GPU",
+                    "v": "MID",
+                    "price": 200
                   }
                 ],
                 "tags": [
-                  "сбалансированный",
-                  "бюджетно безопасно"
+                  "preset",
+                  "balanced"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "OK",
-                  "cpu_load": 58,
-                  "ram_usage": 66,
-                  "fps": 68,
-                  "total_price": 700
+                  "bottleneck": "OPTIMAL",
+                  "cpu_load": 56,
+                  "ram_usage": 61,
+                  "fps": 73,
+                  "total_price": 900
                 },
                 "feedback": {
                   "error_code": "OK",
-                  "headline": "Профиль компиляции принят",
+                  "headline": "Balanced profile confirmed",
                   "details": [
-                    "Задержка и бюджет находятся в пределах целевого коридора."
+                    "Budget stays inside the cap.",
+                    "No dominant subsystem stalls the workload."
                   ]
                 }
               },
               {
                 "option_id": "OVERBUDGET",
-                "title": "Верхний стек",
-                "total_price": 1200,
+                "title": "Top-tier overspend preset",
+                "total_price": 1300,
                 "parts": [
                   {
                     "k": "CPU",
@@ -678,7 +1457,7 @@
                   {
                     "k": "RAM",
                     "v": "TOP",
-                    "price": 300
+                    "price": 400
                   },
                   {
                     "k": "GPU",
@@ -687,27 +1466,29 @@
                   }
                 ],
                 "tags": [
-                  "нарушение бюджета"
+                  "preset",
+                  "policy-fail"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "BUDGET",
-                  "cpu_load": 55,
-                  "ram_usage": 63,
-                  "fps": 75,
-                  "total_price": 1200
+                  "bottleneck": "OVERBUDGET",
+                  "cpu_load": 52,
+                  "ram_usage": 59,
+                  "fps": 79,
+                  "total_price": 1300
                 },
                 "feedback": {
                   "error_code": "OVER_BUDGET",
-                  "headline": "Превышен потолок затрат",
+                  "headline": "Target profile breaks the budget policy",
                   "details": [
-                    "Опустите один уровень, чтобы вернуться в соответствии с политикой закупок."
+                    "Drop at least one component tier before confirmation.",
+                    "Performance is acceptable, but procurement rejects the spend."
                   ]
                 }
               },
               {
                 "option_id": "LOWPOWER",
-                "title": "Низкий стек",
-                "total_price": 250,
+                "title": "Minimal-power baseline preset",
+                "total_price": 200,
                 "parts": [
                   {
                     "k": "CPU",
@@ -717,24 +1498,31 @@
                   {
                     "k": "RAM",
                     "v": "LOW",
-                    "price": 100
+                    "price": 50
+                  },
+                  {
+                    "k": "GPU",
+                    "v": "NONE",
+                    "price": 0
                   }
                 ],
                 "tags": [
-                  "маломощный"
+                  "preset",
+                  "underpowered"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "CPU",
-                  "cpu_load": 81,
-                  "ram_usage": 72,
-                  "fps": 25,
-                  "total_price": 250
+                  "bottleneck": "LOWPOWER",
+                  "cpu_load": 84,
+                  "ram_usage": 75,
+                  "fps": 24,
+                  "total_price": 200
                 },
                 "feedback": {
                   "error_code": "LOW_POWER",
-                  "headline": "Вычислительный резерв слишком слаб",
+                  "headline": "Overall compute envelope is too weak",
                   "details": [
-                    "Повысьте класс CPU или RAM, чтобы пройти этот уровень."
+                    "The build is underpowered across the board.",
+                    "Increase at least one core subsystem before benchmarking again."
                   ]
                 }
               }
@@ -753,32 +1541,52 @@
               }
             },
             "feedback_rules": {
-              "BOTTLENECK": {
-                "error_code": "BOTTLENECK_RAM",
-                "headline": "Очередь RAM блокирует параллельную сборку",
-                "details": [
-                  "Обновите RAM перед подтверждением этого профиля."
-                ]
-              },
               "OPTIMAL": {
                 "error_code": "OK",
-                "headline": "Профиль компиляции принят",
+                "headline": "Balanced profile confirmed",
                 "details": [
-                  "Задержка и бюджет находятся в пределах целевого коридора."
+                  "Budget stays inside the cap.",
+                  "No dominant subsystem stalls the workload."
+                ]
+              },
+              "BOTTLENECK_RAM": {
+                "error_code": "BOTTLENECK_RAM",
+                "headline": "Memory pressure is the limiting factor",
+                "details": [
+                  "Raise RAM before confirming the rig.",
+                  "CPU headroom is wasted while the workload waits on memory."
+                ]
+              },
+              "BOTTLENECK_GPU": {
+                "error_code": "BOTTLENECK_GPU",
+                "headline": "Render path is blocked by the graphics layer",
+                "details": [
+                  "Add or upgrade the GPU tier.",
+                  "The rest of the rig can feed more frames than the renderer can output."
+                ]
+              },
+              "BOTTLENECK_CPU": {
+                "error_code": "BOTTLENECK_CPU",
+                "headline": "Processor throughput is below the rest of the stack",
+                "details": [
+                  "CPU class is the next upgrade point.",
+                  "RAM and GPU remain underused because the host cannot schedule fast enough."
                 ]
               },
               "OVERBUDGET": {
                 "error_code": "OVER_BUDGET",
-                "headline": "Превышен потолок затрат",
+                "headline": "Target profile breaks the budget policy",
                 "details": [
-                  "Опустите один уровень, чтобы вернуться в соответствии с политикой закупок."
+                  "Drop at least one component tier before confirmation.",
+                  "Performance is acceptable, but procurement rejects the spend."
                 ]
               },
               "LOWPOWER": {
                 "error_code": "LOW_POWER",
-                "headline": "Вычислительный резерв слишком слаб",
+                "headline": "Overall compute envelope is too weak",
                 "details": [
-                  "Повысьте класс CPU или RAM, чтобы пройти этот уровень."
+                  "The build is underpowered across the board.",
+                  "Increase at least one core subsystem before benchmarking again."
                 ]
               }
             },
@@ -789,54 +1597,70 @@
             },
             "preview_profiles": {
               "BOTTLENECK": {
-                "bottleneck": "RAM",
-                "cpu_load": 88,
-                "ram_usage": 94,
-                "fps": 40,
-                "total_price": 650
-              },
-              "LOWPOWER": {
-                "bottleneck": "CPU",
-                "cpu_load": 81,
-                "ram_usage": 72,
-                "fps": 25,
-                "total_price": 250
+                "bottleneck": "BOTTLENECK_RAM",
+                "cpu_load": 86,
+                "ram_usage": 92,
+                "fps": 44,
+                "total_price": 850
               },
               "OPTIMAL": {
-                "bottleneck": "OK",
-                "cpu_load": 58,
-                "ram_usage": 66,
-                "fps": 68,
-                "total_price": 700
+                "bottleneck": "OPTIMAL",
+                "cpu_load": 56,
+                "ram_usage": 61,
+                "fps": 73,
+                "total_price": 900
               },
               "OVERBUDGET": {
-                "bottleneck": "BUDGET",
-                "cpu_load": 55,
-                "ram_usage": 63,
-                "fps": 75,
-                "total_price": 1200
+                "bottleneck": "OVERBUDGET",
+                "cpu_load": 52,
+                "ram_usage": 59,
+                "fps": 79,
+                "total_price": 1300
+              },
+              "LOWPOWER": {
+                "bottleneck": "LOWPOWER",
+                "cpu_load": 84,
+                "ram_usage": 75,
+                "fps": 24,
+                "total_price": 200
               }
             },
             "benchmark_lines": {
-              "BOTTLENECK": [
-                "[BUILD] параллельные задания остановлены",
-                "[BUILD] RAM обнаружено насыщение очереди",
-                "[RESULT] Узкое место"
-              ],
               "OPTIMAL": [
-                "Коэффициент попадания в кеш [BUILD] стабильный",
-                "Очередь компиляции [BUILD] очищена в SLA",
-                "[RESULT] ОПТИМАЛЬНО"
+                "[BENCH] frame pacing stable",
+                "[BENCH] memory queue nominal",
+                "[BENCH] render context synchronized",
+                "[RESULT] OPTIMAL profile accepted"
+              ],
+              "BOTTLENECK_RAM": [
+                "[BENCH] paging pressure detected",
+                "[BENCH] CPU wait states rising",
+                "[BENCH] dataset spills beyond working set",
+                "[RESULT] BOTTLENECK_RAM"
+              ],
+              "BOTTLENECK_GPU": [
+                "[BENCH] render queue saturated",
+                "[BENCH] frame output stalls at raster stage",
+                "[BENCH] CPU feed remains above display throughput",
+                "[RESULT] BOTTLENECK_GPU"
+              ],
+              "BOTTLENECK_CPU": [
+                "[BENCH] scheduler load pinned high",
+                "[BENCH] RAM and GPU utilization stay below ceiling",
+                "[BENCH] command submission cannot keep pace",
+                "[RESULT] BOTTLENECK_CPU"
               ],
               "OVERBUDGET": [
-                "Финансовая политика [PROCURE] нарушена",
-                "[PROCURE] отклонить профиль перед развертыванием",
-                "[RESULT] ПЕРЕБЮДЖЕТ"
+                "[BENCH] performance target reachable",
+                "[BENCH] procurement gate failed",
+                "[BENCH] spend exceeds approved envelope",
+                "[RESULT] OVERBUDGET"
               ],
               "LOWPOWER": [
-                "Пропускная способность [BUILD] ниже запланированной по проекту",
-                "Профиль настройки [BUILD] не может удовлетворить рабочую нагрузку",
-                "[RESULT] НИЗКАЯ МОЩНОСТЬ"
+                "[BENCH] baseline throughput below target",
+                "[BENCH] no single subsystem dominates the slowdown",
+                "[BENCH] aggregate compute budget insufficient",
+                "[RESULT] LOWPOWER"
               ]
             }
           },
@@ -893,37 +1717,58 @@
               }
             },
             "classifier_thresholds": {
-              "bottleneck_cpu": "HIGH",
-              "bottleneck_ram": "LOW",
+              "gpu_low_max": 0,
+              "cpu_low_max": 1,
+              "ram_low_max": 1,
+              "cpu_mid_min": 2,
+              "cpu_high_min": 3,
+              "ram_good_min": 2,
+              "gpu_good_min": 2,
               "lowpower_perf_max": 5
             },
             "benchmark_outputs": {
-              "BOTTLENECK": [
-                "Обнаружен шторм подкачки [VM]",
-                "[VM] host CPU waits for memory pages",
-                "[RESULT] Узкое место"
-              ],
               "OPTIMAL": [
-                "[VM] баланс хоста стабильный",
-                "Задержка гостя [VM] в пределах порогового значения",
-                "[RESULT] ОПТИМАЛЬНО"
+                "[BENCH] frame pacing stable",
+                "[BENCH] memory queue nominal",
+                "[BENCH] render context synchronized",
+                "[RESULT] OPTIMAL profile accepted"
+              ],
+              "BOTTLENECK_RAM": [
+                "[BENCH] paging pressure detected",
+                "[BENCH] CPU wait states rising",
+                "[BENCH] dataset spills beyond working set",
+                "[RESULT] BOTTLENECK_RAM"
+              ],
+              "BOTTLENECK_GPU": [
+                "[BENCH] render queue saturated",
+                "[BENCH] frame output stalls at raster stage",
+                "[BENCH] CPU feed remains above display throughput",
+                "[RESULT] BOTTLENECK_GPU"
+              ],
+              "BOTTLENECK_CPU": [
+                "[BENCH] scheduler load pinned high",
+                "[BENCH] RAM and GPU utilization stay below ceiling",
+                "[BENCH] command submission cannot keep pace",
+                "[RESULT] BOTTLENECK_CPU"
               ],
               "OVERBUDGET": [
-                "Превышен финансовый конверт [VM]",
-                "[VM] reject profile for production",
-                "[RESULT] ПЕРЕБЮДЖЕТ"
+                "[BENCH] performance target reachable",
+                "[BENCH] procurement gate failed",
+                "[BENCH] spend exceeds approved envelope",
+                "[RESULT] OVERBUDGET"
               ],
               "LOWPOWER": [
-                "Коэффициент консолидации [VM] слишком низкий",
-                "Профиль [VM] не может удовлетворить базовую нагрузку",
-                "[RESULT] НИЗКАЯ МОЩНОСТЬ"
+                "[BENCH] baseline throughput below target",
+                "[BENCH] no single subsystem dominates the slowdown",
+                "[BENCH] aggregate compute budget insufficient",
+                "[RESULT] LOWPOWER"
               ]
             },
             "options": [
               {
                 "option_id": "BOTTLENECK",
-                "title": "Высокий процессор + низкий уровень ОЗУ",
-                "total_price": 650,
+                "title": "Renderer boost with starved RAM",
+                "total_price": 850,
                 "parts": [
                   {
                     "k": "CPU",
@@ -934,31 +1779,37 @@
                     "k": "RAM",
                     "v": "LOW",
                     "price": 50
+                  },
+                  {
+                    "k": "GPU",
+                    "v": "MID",
+                    "price": 200
                   }
                 ],
                 "tags": [
-                  "одноточечное напряжение",
-                  "память не хватает"
+                  "preset",
+                  "memory-starved"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "RAM",
-                  "cpu_load": 90,
-                  "ram_usage": 96,
-                  "fps": 37,
-                  "total_price": 650
+                  "bottleneck": "BOTTLENECK_RAM",
+                  "cpu_load": 86,
+                  "ram_usage": 92,
+                  "fps": 44,
+                  "total_price": 850
                 },
                 "feedback": {
                   "error_code": "BOTTLENECK_RAM",
-                  "headline": "Нехватка памяти при нагрузке на виртуальную машину",
+                  "headline": "Memory pressure is the limiting factor",
                   "details": [
-                    "Поднимите класс RAM, чтобы избежать штормов подкачки."
+                    "Raise RAM before confirming the rig.",
+                    "CPU headroom is wasted while the workload waits on memory."
                   ]
                 }
               },
               {
                 "option_id": "OPTIMAL",
-                "title": "Средний процессор + ОЗУ в порядке",
-                "total_price": 700,
+                "title": "Balanced workstation preset",
+                "total_price": 900,
                 "parts": [
                   {
                     "k": "CPU",
@@ -969,31 +1820,37 @@
                     "k": "RAM",
                     "v": "GOOD",
                     "price": 300
+                  },
+                  {
+                    "k": "GPU",
+                    "v": "MID",
+                    "price": 200
                   }
                 ],
                 "tags": [
-                  "сбалансированный",
-                  "бюджетно безопасно"
+                  "preset",
+                  "balanced"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "OK",
-                  "cpu_load": 61,
-                  "ram_usage": 69,
-                  "fps": 64,
-                  "total_price": 700
+                  "bottleneck": "OPTIMAL",
+                  "cpu_load": 56,
+                  "ram_usage": 61,
+                  "fps": 73,
+                  "total_price": 900
                 },
                 "feedback": {
                   "error_code": "OK",
-                  "headline": "Профиль виртуализации принят",
+                  "headline": "Balanced profile confirmed",
                   "details": [
-                    "Хост остается стабильным и бюджетные ограничения сохраняются."
+                    "Budget stays inside the cap.",
+                    "No dominant subsystem stalls the workload."
                   ]
                 }
               },
               {
                 "option_id": "OVERBUDGET",
-                "title": "Верхний стек",
-                "total_price": 1200,
+                "title": "Top-tier overspend preset",
+                "total_price": 1300,
                 "parts": [
                   {
                     "k": "CPU",
@@ -1003,7 +1860,7 @@
                   {
                     "k": "RAM",
                     "v": "TOP",
-                    "price": 300
+                    "price": 400
                   },
                   {
                     "k": "GPU",
@@ -1012,27 +1869,29 @@
                   }
                 ],
                 "tags": [
-                  "нарушение бюджета"
+                  "preset",
+                  "policy-fail"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "BUDGET",
-                  "cpu_load": 57,
-                  "ram_usage": 66,
-                  "fps": 72,
-                  "total_price": 1200
+                  "bottleneck": "OVERBUDGET",
+                  "cpu_load": 52,
+                  "ram_usage": 59,
+                  "fps": 79,
+                  "total_price": 1300
                 },
                 "feedback": {
                   "error_code": "OVER_BUDGET",
-                  "headline": "Бюджетный лимит нарушен",
+                  "headline": "Target profile breaks the budget policy",
                   "details": [
-                    "Сократите один класс перед развертыванием."
+                    "Drop at least one component tier before confirmation.",
+                    "Performance is acceptable, but procurement rejects the spend."
                   ]
                 }
               },
               {
                 "option_id": "LOWPOWER",
-                "title": "Низкий стек",
-                "total_price": 250,
+                "title": "Minimal-power baseline preset",
+                "total_price": 200,
                 "parts": [
                   {
                     "k": "CPU",
@@ -1042,24 +1901,31 @@
                   {
                     "k": "RAM",
                     "v": "LOW",
-                    "price": 100
+                    "price": 50
+                  },
+                  {
+                    "k": "GPU",
+                    "v": "NONE",
+                    "price": 0
                   }
                 ],
                 "tags": [
-                  "маломощный"
+                  "preset",
+                  "underpowered"
                 ],
                 "preview_metrics": {
-                  "bottleneck": "CPU",
+                  "bottleneck": "LOWPOWER",
                   "cpu_load": 84,
                   "ram_usage": 75,
                   "fps": 24,
-                  "total_price": 250
+                  "total_price": 200
                 },
                 "feedback": {
                   "error_code": "LOW_POWER",
-                  "headline": "Целевая плотность виртуальных машин не достигнута",
+                  "headline": "Overall compute envelope is too weak",
                   "details": [
-                    "Увеличьте класс CPU или RAM, чтобы он соответствовал базовому уровню."
+                    "The build is underpowered across the board.",
+                    "Increase at least one core subsystem before benchmarking again."
                   ]
                 }
               }
@@ -1078,32 +1944,52 @@
               }
             },
             "feedback_rules": {
-              "BOTTLENECK": {
-                "error_code": "BOTTLENECK_RAM",
-                "headline": "Нехватка памяти при нагрузке на виртуальную машину",
-                "details": [
-                  "Поднимите класс RAM, чтобы избежать штормов подкачки."
-                ]
-              },
               "OPTIMAL": {
                 "error_code": "OK",
-                "headline": "Профиль виртуализации принят",
+                "headline": "Balanced profile confirmed",
                 "details": [
-                  "Хост остается стабильным и бюджетные ограничения сохраняются."
+                  "Budget stays inside the cap.",
+                  "No dominant subsystem stalls the workload."
+                ]
+              },
+              "BOTTLENECK_RAM": {
+                "error_code": "BOTTLENECK_RAM",
+                "headline": "Memory pressure is the limiting factor",
+                "details": [
+                  "Raise RAM before confirming the rig.",
+                  "CPU headroom is wasted while the workload waits on memory."
+                ]
+              },
+              "BOTTLENECK_GPU": {
+                "error_code": "BOTTLENECK_GPU",
+                "headline": "Render path is blocked by the graphics layer",
+                "details": [
+                  "Add or upgrade the GPU tier.",
+                  "The rest of the rig can feed more frames than the renderer can output."
+                ]
+              },
+              "BOTTLENECK_CPU": {
+                "error_code": "BOTTLENECK_CPU",
+                "headline": "Processor throughput is below the rest of the stack",
+                "details": [
+                  "CPU class is the next upgrade point.",
+                  "RAM and GPU remain underused because the host cannot schedule fast enough."
                 ]
               },
               "OVERBUDGET": {
                 "error_code": "OVER_BUDGET",
-                "headline": "Бюджетный лимит нарушен",
+                "headline": "Target profile breaks the budget policy",
                 "details": [
-                  "Сократите один класс перед развертыванием."
+                  "Drop at least one component tier before confirmation.",
+                  "Performance is acceptable, but procurement rejects the spend."
                 ]
               },
               "LOWPOWER": {
                 "error_code": "LOW_POWER",
-                "headline": "Целевая плотность виртуальных машин не достигнута",
+                "headline": "Overall compute envelope is too weak",
                 "details": [
-                  "Увеличьте класс CPU или RAM, чтобы он соответствовал базовому уровню."
+                  "The build is underpowered across the board.",
+                  "Increase at least one core subsystem before benchmarking again."
                 ]
               }
             },
@@ -1114,54 +2000,70 @@
             },
             "preview_profiles": {
               "BOTTLENECK": {
-                "bottleneck": "RAM",
-                "cpu_load": 90,
-                "ram_usage": 96,
-                "fps": 37,
-                "total_price": 650
+                "bottleneck": "BOTTLENECK_RAM",
+                "cpu_load": 86,
+                "ram_usage": 92,
+                "fps": 44,
+                "total_price": 850
+              },
+              "OPTIMAL": {
+                "bottleneck": "OPTIMAL",
+                "cpu_load": 56,
+                "ram_usage": 61,
+                "fps": 73,
+                "total_price": 900
+              },
+              "OVERBUDGET": {
+                "bottleneck": "OVERBUDGET",
+                "cpu_load": 52,
+                "ram_usage": 59,
+                "fps": 79,
+                "total_price": 1300
               },
               "LOWPOWER": {
-                "bottleneck": "CPU",
+                "bottleneck": "LOWPOWER",
                 "cpu_load": 84,
                 "ram_usage": 75,
                 "fps": 24,
-                "total_price": 250
-              },
-              "OPTIMAL": {
-                "bottleneck": "OK",
-                "cpu_load": 61,
-                "ram_usage": 69,
-                "fps": 64,
-                "total_price": 700
-              },
-              "OVERBUDGET": {
-                "bottleneck": "BUDGET",
-                "cpu_load": 57,
-                "ram_usage": 66,
-                "fps": 72,
-                "total_price": 1200
+                "total_price": 200
               }
             },
             "benchmark_lines": {
-              "BOTTLENECK": [
-                "Обнаружен шторм подкачки [VM]",
-                "[VM] host CPU waits for memory pages",
-                "[RESULT] Узкое место"
-              ],
               "OPTIMAL": [
-                "[VM] баланс хоста стабильный",
-                "Задержка гостя [VM] в пределах порогового значения",
-                "[RESULT] ОПТИМАЛЬНО"
+                "[BENCH] frame pacing stable",
+                "[BENCH] memory queue nominal",
+                "[BENCH] render context synchronized",
+                "[RESULT] OPTIMAL profile accepted"
+              ],
+              "BOTTLENECK_RAM": [
+                "[BENCH] paging pressure detected",
+                "[BENCH] CPU wait states rising",
+                "[BENCH] dataset spills beyond working set",
+                "[RESULT] BOTTLENECK_RAM"
+              ],
+              "BOTTLENECK_GPU": [
+                "[BENCH] render queue saturated",
+                "[BENCH] frame output stalls at raster stage",
+                "[BENCH] CPU feed remains above display throughput",
+                "[RESULT] BOTTLENECK_GPU"
+              ],
+              "BOTTLENECK_CPU": [
+                "[BENCH] scheduler load pinned high",
+                "[BENCH] RAM and GPU utilization stay below ceiling",
+                "[BENCH] command submission cannot keep pace",
+                "[RESULT] BOTTLENECK_CPU"
               ],
               "OVERBUDGET": [
-                "Превышен финансовый конверт [VM]",
-                "[VM] reject profile for production",
-                "[RESULT] ПЕРЕБЮДЖЕТ"
+                "[BENCH] performance target reachable",
+                "[BENCH] procurement gate failed",
+                "[BENCH] spend exceeds approved envelope",
+                "[RESULT] OVERBUDGET"
               ],
               "LOWPOWER": [
-                "Коэффициент консолидации [VM] слишком низкий",
-                "Профиль [VM] не может удовлетворить базовую нагрузку",
-                "[RESULT] НИЗКАЯ МОЩНОСТЬ"
+                "[BENCH] baseline throughput below target",
+                "[BENCH] no single subsystem dominates the slowdown",
+                "[BENCH] aggregate compute budget insufficient",
+                "[RESULT] LOWPOWER"
               ]
             }
           }
@@ -1292,35 +2194,59 @@
               }
             ],
             "visual_sim": {
-              "PERFECT": {
-                "speed": 1.3,
-                "scatter": 0.08,
-                "steal_rate": 0.0
-              },
-              "GOOD": {
-                "speed": 1.15,
-                "scatter": 0.14,
-                "steal_rate": 0.1
-              },
-              "NOISY": {
-                "speed": 1.0,
+              "EMPTY": {
+                "packet_count": 10,
+                "speed": 0.62,
                 "scatter": 0.24,
-                "steal_rate": 0.2
+                "steal_rate": 0.12,
+                "attacker_alpha": 0.38,
+                "packet_tint": "#bfcfe0",
+                "attacker_tint": "#ff7a7a"
               },
               "FAIL": {
-                "speed": 0.85,
+                "packet_count": 14,
+                "speed": 0.82,
                 "scatter": 0.35,
-                "steal_rate": 0.45
+                "steal_rate": 0.45,
+                "attacker_alpha": 0.9,
+                "packet_tint": "#ffd0bf",
+                "attacker_tint": "#ff5c5c"
               },
-              "EMPTY": {
-                "speed": 0.8,
-                "scatter": 0.4,
-                "steal_rate": 0.6
+              "GOOD": {
+                "packet_count": 18,
+                "speed": 1.12,
+                "scatter": 0.1,
+                "steal_rate": 0.0,
+                "attacker_alpha": 0.22,
+                "packet_tint": "#d9f5ff",
+                "attacker_tint": "#ff8d8d"
+              },
+              "NOISY": {
+                "packet_count": 16,
+                "speed": 0.94,
+                "scatter": 0.18,
+                "steal_rate": 0.08,
+                "attacker_alpha": 0.42,
+                "packet_tint": "#ffe6c8",
+                "attacker_tint": "#ff7676"
+              },
+              "PERFECT": {
+                "packet_count": 20,
+                "speed": 1.34,
+                "scatter": 0.06,
+                "steal_rate": 0.0,
+                "attacker_alpha": 0.12,
+                "packet_tint": "#e6fbff",
+                "attacker_tint": "#ffaaaa"
               },
               "SELECT_ALL": {
-                "speed": 0.82,
-                "scatter": 0.38,
-                "steal_rate": 0.55
+                "packet_count": 12,
+                "speed": 0.76,
+                "scatter": 0.42,
+                "steal_rate": 0.6,
+                "attacker_alpha": 1.0,
+                "packet_tint": "#ffc8b6",
+                "attacker_tint": "#ff4747"
               }
             },
             "scoring_model": {
@@ -1526,35 +2452,59 @@
               }
             ],
             "visual_sim": {
-              "PERFECT": {
-                "speed": 1.3,
-                "scatter": 0.08,
-                "steal_rate": 0.0
-              },
-              "GOOD": {
-                "speed": 1.15,
-                "scatter": 0.14,
-                "steal_rate": 0.1
-              },
-              "NOISY": {
-                "speed": 1.0,
+              "EMPTY": {
+                "packet_count": 10,
+                "speed": 0.62,
                 "scatter": 0.24,
-                "steal_rate": 0.2
+                "steal_rate": 0.12,
+                "attacker_alpha": 0.38,
+                "packet_tint": "#bfcfe0",
+                "attacker_tint": "#ff7a7a"
               },
               "FAIL": {
-                "speed": 0.85,
+                "packet_count": 14,
+                "speed": 0.82,
                 "scatter": 0.35,
-                "steal_rate": 0.45
+                "steal_rate": 0.45,
+                "attacker_alpha": 0.9,
+                "packet_tint": "#ffd0bf",
+                "attacker_tint": "#ff5c5c"
               },
-              "EMPTY": {
-                "speed": 0.8,
-                "scatter": 0.4,
-                "steal_rate": 0.6
+              "GOOD": {
+                "packet_count": 18,
+                "speed": 1.12,
+                "scatter": 0.1,
+                "steal_rate": 0.0,
+                "attacker_alpha": 0.22,
+                "packet_tint": "#d9f5ff",
+                "attacker_tint": "#ff8d8d"
+              },
+              "NOISY": {
+                "packet_count": 16,
+                "speed": 0.94,
+                "scatter": 0.18,
+                "steal_rate": 0.08,
+                "attacker_alpha": 0.42,
+                "packet_tint": "#ffe6c8",
+                "attacker_tint": "#ff7676"
+              },
+              "PERFECT": {
+                "packet_count": 20,
+                "speed": 1.34,
+                "scatter": 0.06,
+                "steal_rate": 0.0,
+                "attacker_alpha": 0.12,
+                "packet_tint": "#e6fbff",
+                "attacker_tint": "#ffaaaa"
               },
               "SELECT_ALL": {
-                "speed": 0.82,
-                "scatter": 0.38,
-                "steal_rate": 0.55
+                "packet_count": 12,
+                "speed": 0.76,
+                "scatter": 0.42,
+                "steal_rate": 0.6,
+                "attacker_alpha": 1.0,
+                "packet_tint": "#ffc8b6",
+                "attacker_tint": "#ff4747"
               }
             },
             "scoring_model": {
@@ -1760,35 +2710,59 @@
               }
             ],
             "visual_sim": {
-              "PERFECT": {
-                "speed": 1.3,
-                "scatter": 0.08,
-                "steal_rate": 0.0
-              },
-              "GOOD": {
-                "speed": 1.15,
-                "scatter": 0.14,
-                "steal_rate": 0.1
-              },
-              "NOISY": {
-                "speed": 1.0,
+              "EMPTY": {
+                "packet_count": 10,
+                "speed": 0.62,
                 "scatter": 0.24,
-                "steal_rate": 0.2
+                "steal_rate": 0.12,
+                "attacker_alpha": 0.38,
+                "packet_tint": "#bfcfe0",
+                "attacker_tint": "#ff7a7a"
               },
               "FAIL": {
-                "speed": 0.85,
+                "packet_count": 14,
+                "speed": 0.82,
                 "scatter": 0.35,
-                "steal_rate": 0.45
+                "steal_rate": 0.45,
+                "attacker_alpha": 0.9,
+                "packet_tint": "#ffd0bf",
+                "attacker_tint": "#ff5c5c"
               },
-              "EMPTY": {
-                "speed": 0.8,
-                "scatter": 0.4,
-                "steal_rate": 0.6
+              "GOOD": {
+                "packet_count": 18,
+                "speed": 1.12,
+                "scatter": 0.1,
+                "steal_rate": 0.0,
+                "attacker_alpha": 0.22,
+                "packet_tint": "#d9f5ff",
+                "attacker_tint": "#ff8d8d"
+              },
+              "NOISY": {
+                "packet_count": 16,
+                "speed": 0.94,
+                "scatter": 0.18,
+                "steal_rate": 0.08,
+                "attacker_alpha": 0.42,
+                "packet_tint": "#ffe6c8",
+                "attacker_tint": "#ff7676"
+              },
+              "PERFECT": {
+                "packet_count": 20,
+                "speed": 1.34,
+                "scatter": 0.06,
+                "steal_rate": 0.0,
+                "attacker_alpha": 0.12,
+                "packet_tint": "#e6fbff",
+                "attacker_tint": "#ffaaaa"
               },
               "SELECT_ALL": {
-                "speed": 0.82,
-                "scatter": 0.38,
-                "steal_rate": 0.55
+                "packet_count": 12,
+                "speed": 0.76,
+                "scatter": 0.42,
+                "steal_rate": 0.6,
+                "attacker_alpha": 1.0,
+                "packet_tint": "#ffc8b6",
+                "attacker_tint": "#ff4747"
               }
             },
             "scoring_model": {

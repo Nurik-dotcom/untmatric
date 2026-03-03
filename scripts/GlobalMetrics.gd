@@ -29,6 +29,38 @@ var levels_completed: Array = []
 
 # Analysis History
 var session_history: Array = []
+var active_case_flow: Dictionary = {}
+
+func start_case_flow(case_id: String, stages: Array[String] = ["A", "B", "C"]) -> String:
+	var case_run_id: String = "%s_%d" % [case_id, Time.get_ticks_usec()]
+	active_case_flow = {
+		"is_active": true,
+		"case_id": case_id,
+		"case_run_id": case_run_id,
+		"stages": stages.duplicate(),
+		"stage_results": {},
+		"completed_stages": [],
+		"started_at_unix": Time.get_unix_time_from_system()
+	}
+	return case_run_id
+
+func record_case_stage_result(stage_id: String, summary: Dictionary) -> void:
+	if active_case_flow.is_empty():
+		return
+	var stage_results: Dictionary = active_case_flow.get("stage_results", {}) as Dictionary
+	stage_results[stage_id] = summary.duplicate(true)
+	active_case_flow["stage_results"] = stage_results
+
+	var completed_stages: Array = (active_case_flow.get("completed_stages", []) as Array).duplicate()
+	if not completed_stages.has(stage_id):
+		completed_stages.append(stage_id)
+	active_case_flow["completed_stages"] = completed_stages
+
+func get_case_flow() -> Dictionary:
+	return active_case_flow.duplicate(true)
+
+func clear_case_flow() -> void:
+	active_case_flow.clear()
 
 func register_trial(data: Dictionary):
 	session_history.append(data)

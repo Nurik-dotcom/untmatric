@@ -44,6 +44,10 @@ var connect_attempts := 0
 var miss_connects := 0
 var drag_time_ms := 0
 var relation_choice_id := ""
+var rel_invalid_pair_count := 0
+var rel_duplicate_pair_count := 0
+var rel_last_invalid_fk_col_id := ""
+var _transition_token := 0
 
 var current_layout_mode := LAYOUT_DESKTOP
 var exit_btn: Button
@@ -85,8 +89,24 @@ var relation_mobile_schema: VBoxContainer
 @onready var sfx_relay: AudioStreamPlayer = $Runtime/Audio/SfxRelay
 
 func _exit_tree() -> void:
+	_bump_transition_token()
 	if I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.disconnect(_on_language_changed)
+	var root := get_tree().root
+	if root != null and root.size_changed.is_connected(_on_viewport_size_changed):
+		root.size_changed.disconnect(_on_viewport_size_changed)
+	if btn_submit.pressed.is_connected(_on_submit_pressed):
+		btn_submit.pressed.disconnect(_on_submit_pressed)
+	if btn_clear.pressed.is_connected(_on_clear_pressed):
+		btn_clear.pressed.disconnect(_on_clear_pressed)
+	if btn_back.pressed.is_connected(_on_back_pressed):
+		btn_back.pressed.disconnect(_on_back_pressed)
+	if data_tree.gui_input.is_connected(_on_filter_tree_gui_input):
+		data_tree.gui_input.disconnect(_on_filter_tree_gui_input)
+	if rel_tree_l.gui_input.is_connected(_on_relation_tree_l_gui_input):
+		rel_tree_l.gui_input.disconnect(_on_relation_tree_l_gui_input)
+	if rel_tree_r.gui_input.is_connected(_on_relation_tree_r_gui_input):
+		rel_tree_r.gui_input.disconnect(_on_relation_tree_r_gui_input)
 
 func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 	var merged: Dictionary = params.duplicate(true)
@@ -126,9 +146,12 @@ func _set_relation_hint_i18n(key: String, default_text: String, params: Dictiona
 func _ready() -> void:
 	randomize()
 	_build_mobile_containers()
-	btn_submit.pressed.connect(_on_submit_pressed)
-	btn_clear.pressed.connect(_on_clear_pressed)
-	btn_back.pressed.connect(_on_back_pressed)
+	if not btn_submit.pressed.is_connected(_on_submit_pressed):
+		btn_submit.pressed.connect(_on_submit_pressed)
+	if not btn_clear.pressed.is_connected(_on_clear_pressed):
+		btn_clear.pressed.connect(_on_clear_pressed)
+	if not btn_back.pressed.is_connected(_on_back_pressed):
+		btn_back.pressed.connect(_on_back_pressed)
 	if not I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.connect(_on_language_changed)
 
@@ -139,7 +162,9 @@ func _ready() -> void:
 	if not rel_tree_r.gui_input.is_connected(_on_relation_tree_r_gui_input):
 		rel_tree_r.gui_input.connect(_on_relation_tree_r_gui_input)
 
-	get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	var root := get_tree().root
+	if root != null and not root.size_changed.is_connected(_on_viewport_size_changed):
+		root.size_changed.connect(_on_viewport_size_changed)
 	_init_session()
 	_apply_i18n()
 	call_deferred("_on_viewport_size_changed")
@@ -182,6 +207,7 @@ func _init_session() -> void:
 	_update_stability_ui()
 
 func _load_next_case() -> void:
+	_bump_transition_token()
 	current_case_index += 1
 	if current_case_index >= session_cases.size():
 		_finish_session()
@@ -213,6 +239,9 @@ func _load_next_case() -> void:
 	miss_connects = 0
 	drag_time_ms = 0
 	relation_choice_id = ""
+	rel_invalid_pair_count = 0
+	rel_duplicate_pair_count = 0
+	rel_last_invalid_fk_col_id = ""
 
 	if str(current_case.get("case_kind", "")) == "FILTER_ROWS":
 		mode = MODE_FILTER
@@ -301,12 +330,17 @@ func _render_relation_ui() -> void:
 	rel_cable_committed = false
 	rel_connected_pk = ""
 	rel_connected_fk = ""
+	rel_invalid_pair_count = 0
+	rel_duplicate_pair_count = 0
+	rel_last_invalid_fk_col_id = ""
 
 	if is_instance_valid(connector_overlay):
 		if connector_overlay.has_method("clear_all"):
 			connector_overlay.call("clear_all")
 		elif connector_overlay.has_method("clear_connection"):
 			connector_overlay.call("clear_connection")
+		if connector_overlay.has_method("set_anchor_mode"):
+			connector_overlay.call("set_anchor_mode", "edge", "auto")
 
 	var options: Array = current_case.get("options", []) as Array
 	for opt_v in options:
@@ -551,11 +585,8 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 	var fk_col := str(hit.get("col_id", ""))
 	if not hit.is_empty() and _is_valid_relation_pair(rel_connected_pk, fk_col):
 		if _is_pair_already_committed(rel_connected_pk, fk_col):
-			if is_instance_valid(connector_overlay):
-				if connector_overlay.has_method("clear_drag"):
-					connector_overlay.call("clear_drag")
-				elif connector_overlay.has_method("clear_connection"):
-					connector_overlay.call("clear_connection")
+			rel_duplicate_pair_count += 1
+			_clear_relation_drag_overlay()
 			_set_relation_hint_i18n("da7.b.ui.rel.pair_already_linked", "Pair already linked")
 			_set_relation_options_enabled(_is_relation_ready_to_submit())
 			return
@@ -589,11 +620,9 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 			})
 	else:
 		miss_connects += 1
-		if is_instance_valid(connector_overlay):
-			if connector_overlay.has_method("clear_drag"):
-				connector_overlay.call("clear_drag")
-			elif connector_overlay.has_method("clear_connection"):
-				connector_overlay.call("clear_connection")
+		rel_invalid_pair_count += 1
+		rel_last_invalid_fk_col_id = fk_col
+		_clear_relation_drag_overlay()
 		_set_relation_hint_i18n("da7.b.ui.rel.missed_fk", "Missed FK target")
 		_set_relation_options_enabled(_is_relation_ready_to_submit())
 
@@ -689,8 +718,11 @@ func _handle_result(is_correct: bool, reason: Variant, extra_data: Dictionary) -
 		_play_sound("relay", sfx_relay)
 	_log_trial(is_correct, reason, extra_data)
 	_update_stability_ui()
+	var transition_token := _transition_token
 	await get_tree().create_timer(1.0).timeout
 	if not is_inside_tree():
+		return
+	if transition_token != _transition_token:
 		return
 	if current_case_index >= session_cases.size():
 		return
@@ -772,12 +804,17 @@ func _log_trial(is_correct: bool, f_reason: Variant, extra_data: Dictionary) -> 
 			"fk_target": current_case.get("fk_target", {}),
 			"expected_relation": str(current_case.get("expected_relation", "")),
 			"answer_id": str(current_case.get("answer_id", "")),
-			"required_connections": _get_required_connections()
+			"required_connections": _get_required_connections(),
+			"decoy_fk_col_ids": current_case.get("decoy_fk_col_ids", [])
 		}
 		payload["telemetry"] = {
 			"connect_attempts": connect_attempts,
 			"miss_connects": miss_connects,
-			"drag_time_ms": drag_time_ms
+			"drag_time_ms": drag_time_ms,
+			"required_connection_count": _get_required_connections().size(),
+			"invalid_pair_count": rel_invalid_pair_count,
+			"duplicate_pair_count": rel_duplicate_pair_count,
+			"last_invalid_fk_col_id": rel_last_invalid_fk_col_id
 		}
 
 	GlobalMetrics.register_trial(payload)
@@ -959,6 +996,7 @@ func _sets_equal(arr1: Array, arr2: Array) -> bool:
 	return _is_subset(arr1, arr2) and _is_subset(arr2, arr1)
 
 func _finish_session() -> void:
+	_bump_transition_token()
 	_teardown_interaction(true)
 	title_label.text = _tr("da7.b.ui.title_complete", "DATA ARCHIVE // SESSION COMPLETE [B]")
 	prompt_label.text = _tr("da7.b.ui.complete_message", "Investigation complete.")
@@ -966,6 +1004,7 @@ func _finish_session() -> void:
 	_ensure_exit_button()
 
 func _game_over() -> void:
+	_bump_transition_token()
 	_teardown_interaction(true)
 	title_label.text = _tr("da7.b.ui.title_locked", "DATA ARCHIVE // SYSTEM LOCK [B]")
 	prompt_label.text = _tr("da7.b.ui.lock_message", "Stability dropped to zero.")
@@ -984,6 +1023,7 @@ func _ensure_exit_button() -> void:
 	$SafeArea/RootLayout/Footer.add_child(exit_btn)
 
 func _show_fatal(text: String) -> void:
+	_bump_transition_token()
 	prompt_label.text = text
 	rel_prompt.text = text
 	_teardown_interaction(true)
@@ -1012,4 +1052,16 @@ func _play_sound(sound_name: String, fallback: AudioStreamPlayer) -> void:
 		fallback.play()
 
 func _on_back_pressed() -> void:
+	_bump_transition_token()
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+
+func _clear_relation_drag_overlay() -> void:
+	if not is_instance_valid(connector_overlay):
+		return
+	if connector_overlay.has_method("clear_drag"):
+		connector_overlay.call("clear_drag")
+	elif connector_overlay.has_method("clear_connection"):
+		connector_overlay.call("clear_connection")
+
+func _bump_transition_token() -> void:
+	_transition_token += 1

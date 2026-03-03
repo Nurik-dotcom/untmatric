@@ -35,6 +35,7 @@ var _press_start_ms := 0
 var _press_start_pos := Vector2.ZERO
 var _press_moved := false
 var _press_hit: Dictionary = {}
+var _transition_token := 0
 
 @onready var title_label: RichTextLabel = $SafeArea/RootLayout/Header/Margin/Title
 @onready var btn_back: Button = $SafeArea/RootLayout/BackRow/BtnBack
@@ -61,8 +62,22 @@ var _press_hit: Dictionary = {}
 @onready var result_stamp: Control = $ResultStamp
 
 func _exit_tree() -> void:
+	_bump_transition_token()
 	if I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.disconnect(_on_language_changed)
+	if GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
+		GlobalMetrics.stability_changed.disconnect(_on_stability_changed)
+	if btn_back.pressed.is_connected(_on_back_pressed):
+		btn_back.pressed.disconnect(_on_back_pressed)
+	if data_tree.gui_input.is_connected(_on_data_tree_gui_input):
+		data_tree.gui_input.disconnect(_on_data_tree_gui_input)
+	if data_tree.has_signal("column_title_clicked") and data_tree.column_title_clicked.is_connected(_on_column_title_clicked):
+		data_tree.column_title_clicked.disconnect(_on_column_title_clicked)
+	if prompt_label.gui_input.is_connected(_on_scroll_input):
+		prompt_label.gui_input.disconnect(_on_scroll_input)
+	var root := get_tree().root
+	if root != null and root.size_changed.is_connected(_on_viewport_size_changed):
+		root.size_changed.disconnect(_on_viewport_size_changed)
 
 func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 	var merged: Dictionary = params.duplicate(true)
@@ -123,7 +138,9 @@ func _ready() -> void:
 		data_tree.column_title_clicked.connect(_on_column_title_clicked)
 	if not prompt_label.gui_input.is_connected(_on_scroll_input):
 		prompt_label.gui_input.connect(_on_scroll_input)
-	get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	var root := get_tree().root
+	if root != null and not root.size_changed.is_connected(_on_viewport_size_changed):
+		root.size_changed.connect(_on_viewport_size_changed)
 	if is_instance_valid(result_stamp):
 		result_stamp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if is_instance_valid(scanner_overlay):
@@ -155,6 +172,7 @@ func _init_session() -> void:
 	_update_stability_ui()
 
 func _load_next_case() -> void:
+	_bump_transition_token()
 	if session_cases.is_empty():
 		return
 
@@ -460,8 +478,11 @@ func _submit_target(target: Dictionary, clicked_kind: String, row_id: String, co
 	_log_trial(is_correct, f_reason, target, clicked_kind, row_id, col_id)
 	_update_stability_ui()
 
+	var transition_token := _transition_token
 	await get_tree().create_timer(0.9).timeout
 	if not is_inside_tree():
+		return
+	if transition_token != _transition_token:
 		return
 	if current_case_index >= session_cases.size():
 		return
@@ -643,6 +664,7 @@ func _on_scroll_input(event: InputEvent) -> void:
 		scroll_used = true
 
 func _finish_session() -> void:
+	_bump_transition_token()
 	trial_locked = true
 	_set_tree_locked(true)
 	title_label.text = _tr("da7.a.ui.title_complete", "DATA ARCHIVE // SESSION COMPLETE [A]")
@@ -652,6 +674,7 @@ func _finish_session() -> void:
 	_ensure_exit_button()
 
 func _game_over() -> void:
+	_bump_transition_token()
 	trial_locked = true
 	_set_tree_locked(true)
 	title_label.text = _tr("da7.a.ui.title_locked", "DATA ARCHIVE // SYSTEM LOCK [A]")
@@ -672,6 +695,7 @@ func _ensure_exit_button() -> void:
 	$SafeArea/RootLayout/Footer.add_child(exit_btn)
 
 func _show_fatal(text: String) -> void:
+	_bump_transition_token()
 	prompt_label.bbcode_enabled = false
 	prompt_label.text = text
 	trial_locked = true
@@ -686,6 +710,7 @@ func _play_sound(sound_name: String, fallback: AudioStreamPlayer) -> void:
 		fallback.play()
 
 func _on_back_pressed() -> void:
+	_bump_transition_token()
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _on_stability_changed(_new_val: float, _delta: float) -> void:
@@ -720,3 +745,6 @@ func _on_viewport_size_changed() -> void:
 		desktop_layout.move_child(task_section, 1)
 		desktop_layout.visible = true
 		mobile_layout.visible = false
+
+func _bump_transition_token() -> void:
+	_transition_token += 1

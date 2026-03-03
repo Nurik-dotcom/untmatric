@@ -1,9 +1,14 @@
 extends Control
 
 const LEVELS_PATH: String = "res://data/clues_levels.json"
+const FLOW_SCENE_PATH: String = "res://scenes/case_01/Case01Flow.tscn"
+const QUEST_SELECT_SCENE: String = "res://scenes/QuestSelect.tscn"
+const CASE_ID: String = "CASE_01_DIGITAL_RESUS"
+const STAGE_ID: String = "C"
 const NET_ITEM_SCENE: PackedScene = preload("res://scenes/ui/NetItem.tscn")
 const ResusData = preload("res://scripts/case_01/ResusData.gd")
 const ResusScoring = preload("res://scripts/case_01/ResusScoring.gd")
+const TrialV2 = preload("res://scripts/TrialV2.gd")
 const PHONE_LANDSCAPE_MAX_HEIGHT := 740.0
 const PHONE_PORTRAIT_MAX_WIDTH := 520.0
 
@@ -30,50 +35,44 @@ var slot_change_count: int = 0
 var unique_used_set: Dictionary = {}
 var time_to_first_action_ms: int = -1
 var input_locked: bool = false
-
-var _content_scroll: ScrollContainer = null
-var _content_vbox: VBoxContainer = null
-var _bottom_mobile_layout: VBoxContainer = null
-var _prompt_collapsed: bool = true
-var _prompt_toggle_button: Button = null
+var _last_result: Dictionary = {}
+var _last_payload: Dictionary = {}
 
 @onready var noir_overlay: Node = $NoirOverlay
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
 @onready var header: HBoxContainer = $SafeArea/MainVBox/Header
-@onready var bottom_bar: HBoxContainer = $SafeArea/MainVBox/BottomBar
+@onready var content_scroll: ScrollContainer = $SafeArea/MainVBox/ContentScroll
+@onready var content_vbox: VBoxContainer = $SafeArea/MainVBox/ContentScroll/Content
+@onready var bottom_bar: VBoxContainer = $SafeArea/MainVBox/BottomBar
 @onready var title_label: Label = $SafeArea/MainVBox/Header/TitleLabel
 @onready var stage_label: Label = $SafeArea/MainVBox/Header/StageLabel
 @onready var stability_bar: ProgressBar = $SafeArea/MainVBox/Header/StabilityBar
 @onready var btn_back: Button = $SafeArea/MainVBox/Header/BtnBack
 
-@onready var prompt_card: PanelContainer = $SafeArea/MainVBox/PromptCard
-@onready var prompt_label: Label = $SafeArea/MainVBox/PromptCard/PromptLabel
-@onready var diagram_card: PanelContainer = $SafeArea/MainVBox/DiagramCard
-@onready var packets_layer: Node = $SafeArea/MainVBox/DiagramCard/PacketsLayer
+@onready var prompt_label: Label = $SafeArea/MainVBox/ContentScroll/Content/PromptCard/PromptLabel
+@onready var packets_layer: Node = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/PacketsLayer
+@onready var slot_1: Node = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/Slot1
+@onready var slot_2: Node = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/Slot2
+@onready var slot_3: Node = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/Slot3
+@onready var attacker_node: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/AttackerNode
+@onready var attacker_label: Label = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/AttackerNode/AttackerLabel
 
-@onready var slot_1: Node = $SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow/Slot1
-@onready var slot_2: Node = $SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow/Slot2
-@onready var slot_3: Node = $SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow/Slot3
+@onready var collisions_value: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/CollisionsRow/CollisionsValue
+@onready var eavesdrop_value: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/EavesdropRow/EavesdropValue
+@onready var filtering_value: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/FilteringRow/FilteringValue
+@onready var media_value: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/MediaRow/MediaValue
 
-@onready var collisions_value: Label = $SafeArea/MainVBox/RiskCard/RiskVBox/CollisionsRow/CollisionsValue
-@onready var eavesdrop_value: Label = $SafeArea/MainVBox/RiskCard/RiskVBox/EavesdropRow/EavesdropValue
-@onready var filtering_value: Label = $SafeArea/MainVBox/RiskCard/RiskVBox/FilteringRow/FilteringValue
-@onready var media_value: Label = $SafeArea/MainVBox/RiskCard/RiskVBox/MediaRow/MediaValue
+@onready var palette_flow: GridContainer = $SafeArea/MainVBox/ContentScroll/Content/PaletteCard/PaletteVBox/Scroll/PaletteFlow
+@onready var explanation_card: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/ExplanationCard
+@onready var expl_headline: Label = $SafeArea/MainVBox/ContentScroll/Content/ExplanationCard/ExplVBox/ExplHeadline
+@onready var expl_details: RichTextLabel = $SafeArea/MainVBox/ContentScroll/Content/ExplanationCard/ExplVBox/ExplDetails
+@onready var expl_why: RichTextLabel = $SafeArea/MainVBox/ContentScroll/Content/ExplanationCard/ExplVBox/ExplWhy
 
-@onready var palette_card: PanelContainer = $SafeArea/MainVBox/PaletteCard
-@onready var palette_scroll: ScrollContainer = $SafeArea/MainVBox/PaletteCard/PaletteVBox/Scroll
-@onready var palette_flow: GridContainer = $SafeArea/MainVBox/PaletteCard/PaletteVBox/Scroll/PaletteFlow
-
-@onready var explanation_card: PanelContainer = $SafeArea/MainVBox/ExplanationCard
-@onready var expl_headline: Label = $SafeArea/MainVBox/ExplanationCard/ExplVBox/ExplHeadline
-@onready var expl_details: RichTextLabel = $SafeArea/MainVBox/ExplanationCard/ExplVBox/ExplDetails
-@onready var expl_why: RichTextLabel = $SafeArea/MainVBox/ExplanationCard/ExplVBox/ExplWhy
-
-@onready var status_label: Label = $SafeArea/MainVBox/BottomBar/StatusLabel
-@onready var btn_reset: Button = $SafeArea/MainVBox/BottomBar/BtnReset
-@onready var btn_analyze: Button = $SafeArea/MainVBox/BottomBar/BtnAnalyze
-@onready var btn_next_level: Button = $SafeArea/MainVBox/BottomBar/BtnNextLevel
+@onready var status_label: Label = $SafeArea/MainVBox/BottomBar/StatusRow/StatusLabel
+@onready var btn_reset: Button = $SafeArea/MainVBox/BottomBar/ActionsRow/BtnReset
+@onready var btn_analyze: Button = $SafeArea/MainVBox/BottomBar/ActionsRow/BtnAnalyze
+@onready var btn_next_level: Button = $SafeArea/MainVBox/BottomBar/ActionsRow/BtnNextLevel
 
 var _slot_nodes: Array[Node] = []
 
@@ -82,25 +81,14 @@ func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 	merged["default"] = default_text
 	return I18n.tr_key(key, merged)
 
-func _on_language_changed(_code: String) -> void:
-	_apply_i18n()
-
-func _apply_i18n() -> void:
-	title_label.text = _tr("resus.title", "Кейс 01: Цифровая реанимация")
-	if levels.size() > 0:
-		stage_label.text = _tr("resus.c.stage", "ЭТАП C {n}/{total}", {
-			"n": current_level_index + 1, "total": levels.size()
-		})
-	btn_reset.text = _tr("resus.c.btn.reset", "СБРОС")
-	btn_analyze.text = _tr("resus.c.btn.analyze", "АНАЛИЗ СЕТИ")
-	btn_next_level.text = _tr("resus.c.btn.next", "СЛЕД. ЭТАП")
-
 func _ready() -> void:
 	add_to_group("resus_c_controller")
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 
 	btn_back.pressed.connect(_on_back_pressed)
 	btn_reset.pressed.connect(_on_reset_pressed)
@@ -108,15 +96,10 @@ func _ready() -> void:
 	btn_next_level.pressed.connect(_on_next_level_pressed)
 
 	_slot_nodes = [slot_1, slot_2, slot_3]
-	_ensure_scroll_layout()
-	_setup_collapsible_prompt()
-
-	levels = ResusData.load_stage_levels(LEVELS_PATH, "C")
+	levels = ResusData.load_stage_levels(LEVELS_PATH, STAGE_ID)
 	if levels.is_empty():
-		_show_error(_tr("resus.c.error.load", "Не удалось загрузить данные случая 01, этап C."))
+		_show_error(_tr("resus.c.error.load", "Stage C data is missing."))
 		return
-	if not I18n.language_changed.is_connected(_on_language_changed):
-		I18n.language_changed.connect(_on_language_changed)
 
 	_load_current_level(0)
 	_on_viewport_size_changed()
@@ -127,6 +110,19 @@ func _exit_tree() -> void:
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+
+func _apply_i18n() -> void:
+	title_label.text = _tr("resus.title", "Case 01: Digital Resus")
+	stage_label.text = _tr("resus.c.stage.progress", "STAGE C {n}/{total}", {
+		"n": current_level_index + 1,
+		"total": max(1, levels.size())
+	})
+	btn_reset.text = _tr("resus.c.btn.reset", "RESET")
+	btn_analyze.text = _tr("resus.c.btn.analyze", "ANALYZE")
+	btn_next_level.text = _next_level_button_text()
+
 func _load_current_level(index: int) -> void:
 	current_level_index = clamp(index, 0, max(0, levels.size() - 1))
 	stage_c_data = (levels[current_level_index] as Dictionary).duplicate(true)
@@ -135,8 +131,8 @@ func _load_current_level(index: int) -> void:
 
 func _setup_ui() -> void:
 	_apply_i18n()
-	var level_id: String = str(stage_c_data.get("id", ""))
-	prompt_label.text = _tr("resus.c.level.%s.prompt" % level_id, str(stage_c_data.get("prompt", "Монтирование модулей и безопасная связь")))
+	var level_id: String = str(stage_c_data.get("id", "CASE01_C"))
+	prompt_label.text = _tr("resus.c.level.%s.prompt" % level_id, str(stage_c_data.get("prompt", "")))
 	btn_next_level.visible = false
 	btn_next_level.disabled = true
 
@@ -151,8 +147,7 @@ func _build_option_catalog() -> void:
 	correct_set.clear()
 	option_order.clear()
 
-	var options: Array = stage_c_data.get("options", []) as Array
-	for option_v in options:
+	for option_v in stage_c_data.get("options", []) as Array:
 		if typeof(option_v) != TYPE_DICTIONARY:
 			continue
 		var option_data: Dictionary = option_v as Dictionary
@@ -208,6 +203,8 @@ func _begin_attempt() -> void:
 	time_to_first_action_ms = -1
 	stage_started_ms = Time.get_ticks_msec()
 	input_locked = false
+	_last_result.clear()
+	_last_payload.clear()
 
 	explanation_card.visible = false
 	btn_analyze.disabled = false
@@ -246,8 +243,9 @@ func _begin_attempt() -> void:
 
 	if packets_layer != null and packets_layer.has_method("reset_to_idle"):
 		packets_layer.call("reset_to_idle")
+	_apply_attacker_visual("IDLE", _calculate_risk(slots))
 
-	_update_status_line(_tr("resus.c.status.ready", "Готовы к установке модулей."))
+	_update_status_line(_tr("resus.c.status.ready", "Mount three modules, then analyze the link."))
 	_update_risk_dashboard()
 	_update_stability_ui()
 
@@ -402,7 +400,7 @@ func _on_analyze_pressed() -> void:
 
 	var selected_ids: Array[String] = _collect_selected_ids()
 	var risk: Dictionary = _calculate_risk(slots)
-	var snapshot: Dictionary = {
+	var scoring_snapshot: Dictionary = {
 		"slots": slots.duplicate(),
 		"selected": selected_ids.duplicate(),
 		"unique_used_count": unique_used_set.size()
@@ -413,9 +411,10 @@ func _on_analyze_pressed() -> void:
 		"filled_slots": _filled_slots_count()
 	})
 
-	var result: Dictionary = ResusScoring.calculate_stage_c_result(stage_c_data, snapshot)
+	var result: Dictionary = ResusScoring.calculate_stage_c_result(stage_c_data, scoring_snapshot)
 	if packets_layer != null and packets_layer.has_method("configure_from_verdict"):
-		packets_layer.call("configure_from_verdict", str(result.get("verdict_code", "FAIL")), stage_c_data.get("visual_sim", {}))
+		packets_layer.call("configure_from_verdict", str(result.get("verdict_code", "FAIL")), stage_c_data.get("visual_sim", {}), risk)
+	_apply_attacker_visual(str(result.get("verdict_code", "FAIL")), risk)
 
 	_register_trial(result, risk)
 	attempt_index += 1
@@ -426,9 +425,10 @@ func _on_analyze_pressed() -> void:
 	input_locked = true
 	btn_analyze.disabled = true
 	_set_input_locked(true)
-	var has_next: bool = _has_next_level()
-	btn_next_level.visible = has_next
-	btn_next_level.disabled = not has_next
+	var can_advance: bool = bool(result.get("is_correct", false)) and (_has_next_level() or _is_flow_active())
+	btn_next_level.visible = can_advance
+	btn_next_level.disabled = not can_advance
+	btn_next_level.text = _next_level_button_text()
 
 	if bool(result.get("is_correct", false)):
 		_play_sfx("relay")
@@ -445,10 +445,15 @@ func _on_reset_pressed() -> void:
 	_play_sfx("click")
 
 func _on_next_level_pressed() -> void:
-	if not _has_next_level():
+	if _last_result.is_empty() or not bool(_last_result.get("is_correct", false)):
 		return
-	_load_current_level(current_level_index + 1)
-	_play_sfx("click")
+	if _has_next_level():
+		_load_current_level(current_level_index + 1)
+		_play_sfx("click")
+		return
+	if _is_flow_active():
+		GlobalMetrics.record_case_stage_result(STAGE_ID, _build_flow_stage_summary())
+		get_tree().change_scene_to_file(FLOW_SCENE_PATH)
 
 func _has_next_level() -> bool:
 	return current_level_index < levels.size() - 1
@@ -474,15 +479,15 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 		expl_headline.modulate = COLOR_ERR
 
 	var detail_lines: Array[String] = []
-	for detail_v in (result.get("feedback_details", []) as Array):
+	for detail_v in result.get("feedback_details", []) as Array:
 		detail_lines.append("- %s" % str(detail_v))
 	detail_lines.append("")
 	detail_lines.append(_tr("resus.c.explain.risk_line",
-		"Риск: столкновения={col} | подслушивать={eav} | фильтрация={fil} | медиа={med}", {
-		"col": str(risk.get("collisions", "MID")),
-		"eav": str(risk.get("eavesdrop", "MID")),
-		"fil": str(risk.get("filtering", "OFF")),
-		"med": str(risk.get("media", "UNKNOWN"))
+		"Risk: collisions={col} | eavesdrop={eav} | filtering={fil} | media={med}", {
+			"col": str(risk.get("collisions", "MID")),
+			"eav": str(risk.get("eavesdrop", "MID")),
+			"fil": str(risk.get("filtering", "OFF")),
+			"med": str(risk.get("media", "UNKNOWN"))
 	}))
 	expl_details.text = "\n".join(detail_lines)
 
@@ -491,23 +496,27 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 	var missing_required: Array = result.get("missing_required", []) as Array
 	var wrong_selected: int = int(result.get("wrong_selected", 0))
 
-	why_lines.append(_tr("resus.c.explain.selected_modules", "Выбранные модули:"))
+	why_lines.append(_tr("resus.c.explain.selected_modules", "Selected modules:"))
 	for selected_id in _collect_selected_ids():
 		why_lines.append("- %s" % selected_id)
 
 	if missing_required.is_empty() and wrong_selected == 0:
-		why_lines.append(_tr("resus.c.explain.all_present", "Все необходимые модули присутствуют."))
+		why_lines.append(_tr("resus.c.explain.all_present", "All required modules are present."))
 	elif not missing_required.is_empty():
-		why_lines.append(_tr("resus.c.explain.missing", "Отсутствует обязательное: {ids}", {"ids": ", ".join(_to_string_array(missing_required))}))
+		why_lines.append(_tr("resus.c.explain.missing", "Missing required modules: {ids}", {
+			"ids": ", ".join(_to_string_array(missing_required))
+		}))
 	if wrong_selected > 0:
-		why_lines.append(_tr("resus.c.explain.wrong_count", "Выбрано вредоносных модулей: {n}", {"n": wrong_selected}))
-
+		why_lines.append(_tr("resus.c.explain.wrong_count", "Wrong modules selected: {n}", {"n": wrong_selected}))
 	if strategy_flags.has("TOUCHED_ALL_OPTIONS"):
-		why_lines.append(_tr("resus.c.explain.strategy_touched", "Флаг стратегии: TOUCHED_ALL_OPTIONS."))
+		why_lines.append(_tr("resus.c.explain.strategy_touched", "Strategy flag: TOUCHED_ALL_OPTIONS"))
 
 	expl_why.text = "\n".join(why_lines)
 
-	status_label.text = _tr("resus.c.status.blocked", "ЗАБЛОКИРОВАНО | {code} | слоты {slots}/3", {"code": verdict_code, "slots": _filled_slots_count()})
+	status_label.text = _tr("resus.c.status.blocked", "{code} | slots {slots}/3", {
+		"code": verdict_code,
+		"slots": _filled_slots_count()
+	})
 	status_label.modulate = expl_headline.modulate
 
 func _apply_result_highlight(result: Dictionary) -> void:
@@ -533,7 +542,7 @@ func _apply_result_highlight(result: Dictionary) -> void:
 		if item_v is Node and (item_v as Node).has_method("set_feedback_state"):
 			(item_v as Node).call("set_feedback_state", state)
 
-	for missing_id_v in (result.get("missing_required", []) as Array):
+	for missing_id_v in result.get("missing_required", []) as Array:
 		var missing_id: String = str(missing_id_v)
 		if _is_option_in_slots(missing_id):
 			continue
@@ -544,43 +553,49 @@ func _apply_result_highlight(result: Dictionary) -> void:
 func _register_trial(result: Dictionary, risk: Dictionary) -> void:
 	var elapsed_ms: int = Time.get_ticks_msec() - stage_started_ms
 	var selected_ids: Array[String] = _collect_selected_ids()
-	var snapshot_c: Dictionary = {
+	var strategy_flags: Array[String] = _to_string_array(result.get("strategy_flags", []))
+	var level_id: String = str(stage_c_data.get("id", "CASE01_C_01"))
+	var payload: Dictionary = TrialV2.build(
+		CASE_ID,
+		STAGE_ID,
+		level_id,
+		"NETWORK_HARDENING",
+		str(attempt_index)
+	)
+	var snapshot: Dictionary = {
 		"slots": slots.duplicate(),
 		"selected": selected_ids.duplicate(),
 		"risk": risk.duplicate(true),
-		"strategy_flags": _to_string_array(result.get("strategy_flags", []) as Array)
+		"strategy_flags": strategy_flags.duplicate(),
+		"unique_used_count": unique_used_set.size()
 	}
-	var payload: Dictionary = {
-		"quest_id": "CASE_01_DIGITAL_RESUS",
-		"stage": "C",
-		"format": "MULTI_CHOICE_SLOTS",
-		"level_id": str(stage_c_data.get("id", "CASE01_C_01")),
-		"level_index": current_level_index,
-		"match_key": "CASE01_C_%d_%d" % [current_level_index, attempt_index],
-		"prompt": str(stage_c_data.get("prompt", "")),
-		"snapshot": snapshot_c,
-		"slots": slots.duplicate(),
-		"selected": selected_ids.duplicate(),
-		"selected_count": int(result.get("selected_count", selected_ids.size())),
-		"correct_selected": int(result.get("correct_selected", 0)),
-		"wrong_selected": int(result.get("wrong_selected", 0)),
-		"risk_state": risk.duplicate(true),
+	payload.merge({
+		"case_run_id": _case_run_id(),
+		"level_id": level_id,
+		"format": str(stage_c_data.get("format", "MULTI_CHOICE_SLOTS")),
+		"snapshot": snapshot,
+		"risk": risk.duplicate(true),
 		"points": int(result.get("points", 0)),
 		"max_points": int(result.get("max_points", 2)),
 		"is_correct": bool(result.get("is_correct", false)),
 		"is_fit": bool(result.get("is_fit", false)),
 		"stability_delta": int(result.get("stability_delta", 0)),
 		"verdict_code": str(result.get("verdict_code", "FAIL")),
-		"missing_required": _to_string_array(result.get("missing_required", []) as Array),
+		"selected_count": int(result.get("selected_count", selected_ids.size())),
+		"correct_selected": int(result.get("correct_selected", 0)),
+		"wrong_selected": int(result.get("wrong_selected", 0)),
+		"missing_required": _to_string_array(result.get("missing_required", [])),
 		"drag_count": drag_count,
 		"slot_change_count": slot_change_count,
 		"unique_used_count": unique_used_set.size(),
-		"strategy_flags": _to_string_array(result.get("strategy_flags", []) as Array),
+		"strategy_flags": strategy_flags.duplicate(),
 		"time_to_first_action_ms": max(-1, time_to_first_action_ms),
 		"elapsed_ms": elapsed_ms,
 		"trace": trace.duplicate(true)
-	}
+	}, true)
 	GlobalMetrics.register_trial(payload)
+	_last_result = result.duplicate(true)
+	_last_payload = payload.duplicate(true)
 
 func _update_status_line(prefix: String) -> void:
 	if input_locked:
@@ -588,9 +603,13 @@ func _update_status_line(prefix: String) -> void:
 	var filled: int = _filled_slots_count()
 	var used_unique: int = unique_used_set.size()
 	if prefix.strip_edges() == "":
-		status_label.text = _tr("resus.c.status.slots", "Слоты {n}/3 | уникальные модули {u}", {"n": filled, "u": used_unique})
+		status_label.text = _tr("resus.c.status.slots", "Slots {n}/3 | touched {u}", {"n": filled, "u": used_unique})
 	else:
-		status_label.text = _tr("resus.c.status.slots_prefix", "{prefix} | слоты {n}/3 | уникальные модули {u}", {"prefix": prefix, "n": filled, "u": used_unique})
+		status_label.text = _tr("resus.c.status.slots_prefix", "{prefix} | slots {n}/3 | touched {u}", {
+			"prefix": prefix,
+			"n": filled,
+			"u": used_unique
+		})
 	status_label.modulate = COLOR_WARN
 
 func _update_risk_dashboard() -> void:
@@ -678,6 +697,37 @@ func _risk_color(kind: String, value: String) -> Color:
 		_:
 			return COLOR_WARN
 
+func _apply_attacker_visual(verdict_code: String, risk: Dictionary) -> void:
+	var config: Dictionary = (stage_c_data.get("visual_sim", {}) as Dictionary).get(verdict_code, {}) as Dictionary
+	var alpha: float = float(config.get("attacker_alpha", 0.3))
+	var tint: Color = Color(0.92, 0.32, 0.36, 1.0)
+	if config.has("attacker_tint"):
+		tint = _parse_color(config.get("attacker_tint"), tint)
+
+	if verdict_code == "IDLE":
+		alpha = 0.22
+	elif verdict_code == "PERFECT" or verdict_code == "GOOD":
+		alpha = min(alpha, 0.28)
+	elif verdict_code == "NOISY":
+		alpha = max(alpha, 0.55)
+	else:
+		alpha = max(alpha, 0.82)
+
+	if str(risk.get("eavesdrop", "MID")) == "HIGH":
+		alpha = min(1.0, alpha + 0.08)
+
+	attacker_node.self_modulate = Color(tint.r, tint.g, tint.b, alpha)
+	attacker_label.modulate = Color(1.0, 1.0, 1.0, min(1.0, alpha + 0.15))
+
+func _parse_color(value: Variant, fallback: Color) -> Color:
+	if value is Color:
+		return value
+	var text: String = str(value).strip_edges()
+	if text == "":
+		return fallback
+	var parsed := Color.from_string(text, fallback)
+	return parsed
+
 func _collect_selected_ids() -> Array[String]:
 	var selected_set: Dictionary = {}
 	for option_id in slots:
@@ -727,12 +777,6 @@ func _mark_first_action() -> void:
 	if time_to_first_action_ms < 0:
 		time_to_first_action_ms = Time.get_ticks_msec() - stage_started_ms
 
-func _to_string_array(values: Array) -> Array[String]:
-	var out: Array[String] = []
-	for value_v in values:
-		out.append(str(value_v))
-	return out
-
 func _log_event(event_name: String, data: Dictionary = {}) -> void:
 	trace.append({
 		"t_ms": Time.get_ticks_msec() - stage_started_ms,
@@ -740,12 +784,22 @@ func _log_event(event_name: String, data: Dictionary = {}) -> void:
 		"data": data.duplicate(true)
 	})
 
+func _to_string_array(values: Variant) -> Array[String]:
+	var out: Array[String] = []
+	if typeof(values) != TYPE_ARRAY:
+		return out
+	for value_v in values as Array:
+		out.append(str(value_v))
+	return out
+
 func _play_sfx(event_name: String) -> void:
 	if has_node("/root/AudioManager"):
 		AudioManager.play(event_name)
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+	if _is_flow_active():
+		GlobalMetrics.clear_case_flow()
+	get_tree().change_scene_to_file(QUEST_SELECT_SCENE)
 
 func _on_stability_changed(_new_value: float, _delta: float) -> void:
 	_update_stability_ui()
@@ -755,80 +809,12 @@ func _update_stability_ui() -> void:
 	if noir_overlay != null and noir_overlay.has_method("set_danger_level"):
 		noir_overlay.call("set_danger_level", float(GlobalMetrics.stability))
 
-func _ensure_scroll_layout() -> void:
-	if _content_scroll != null and is_instance_valid(_content_scroll):
-		return
-
-	_content_scroll = ScrollContainer.new()
-	_content_scroll.name = "КонтентПрокрутка"
-	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_content_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-
-	_content_vbox = VBoxContainer.new()
-	_content_vbox.name = "КонтентВБокс"
-	_content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_content_vbox.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_content_vbox.add_theme_constant_override("separation", 10)
-	_content_scroll.add_child(_content_vbox)
-
-	var move_nodes: Array[Node] = []
-	for child in main_vbox.get_children():
-		if child == header or child == bottom_bar:
-			continue
-		move_nodes.append(child)
-
-	for node in move_nodes:
-		node.reparent(_content_vbox)
-
-	main_vbox.add_child(_content_scroll)
-	var bottom_index: int = main_vbox.get_children().find(bottom_bar)
-	if bottom_index >= 0:
-		main_vbox.move_child(_content_scroll, bottom_index)
-
-func _setup_collapsible_prompt() -> void:
-	if prompt_card == null or prompt_label == null:
-		return
-
-	if prompt_label.get_parent() == prompt_card:
-		var wrapper: VBoxContainer = VBoxContainer.new()
-		wrapper.name = "PromptVBox"
-		wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		wrapper.add_theme_constant_override("separation", 6)
-
-		var top_row: HBoxContainer = HBoxContainer.new()
-		top_row.add_theme_constant_override("separation", 8)
-		var title: Label = Label.new()
-		title.text = _tr("resus.c.labels.briefing", "БРИФИНГ")
-		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		top_row.add_child(title)
-
-		_prompt_toggle_button = Button.new()
-		_prompt_toggle_button.name = "PromptToggleButton"
-		_prompt_toggle_button.text = "?"
-		_prompt_toggle_button.custom_minimum_size = Vector2(40.0, 36.0)
-		_prompt_toggle_button.pressed.connect(_on_prompt_toggle_pressed)
-		top_row.add_child(_prompt_toggle_button)
-
-		prompt_card.remove_child(prompt_label)
-		wrapper.add_child(top_row)
-		wrapper.add_child(prompt_label)
-		prompt_card.add_child(wrapper)
-
-	_apply_prompt_collapse_state()
-
-func _on_prompt_toggle_pressed() -> void:
-	_prompt_collapsed = not _prompt_collapsed
-	_apply_prompt_collapse_state()
-
-func _apply_prompt_collapse_state() -> void:
-	if prompt_label == null:
-		return
-	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	prompt_label.max_lines_visible = 2 if _prompt_collapsed else 0
-	if _prompt_toggle_button != null:
-		_prompt_toggle_button.text = "?" if _prompt_collapsed else "x"
+func _show_error(message: String) -> void:
+	status_label.text = message
+	status_label.modulate = COLOR_ERR
+	btn_analyze.disabled = true
+	btn_reset.disabled = true
+	btn_next_level.disabled = true
 
 func _on_viewport_size_changed() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
@@ -839,79 +825,22 @@ func _on_viewport_size_changed() -> void:
 
 	_apply_safe_area_padding(compact)
 	main_vbox.add_theme_constant_override("separation", 8 if compact else 10)
-	if _content_vbox != null:
-		_content_vbox.add_theme_constant_override("separation", 8 if compact else 10)
+	content_vbox.add_theme_constant_override("separation", 8 if compact else 10)
 	header.add_theme_constant_override("separation", 8 if compact else 10)
 	bottom_bar.add_theme_constant_override("separation", 8 if compact else 10)
-
-	palette_flow.columns = 1 if phone_portrait else 2
-	palette_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	palette_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-
-	if compact and not phone_portrait:
-		diagram_card.custom_minimum_size.y = 136.0
-		palette_card.custom_minimum_size.y = 228.0
-		palette_scroll.custom_minimum_size.y = 152.0
-	else:
-		diagram_card.custom_minimum_size.y = 170.0
-		palette_card.custom_minimum_size.y = 0.0
-		palette_scroll.custom_minimum_size.y = 180.0
-
-	for slot_node in _slot_nodes:
-		if slot_node is Control:
-			(slot_node as Control).custom_minimum_size = Vector2(0, 86 if compact else 110)
-
-	var module_card_height: float = 72.0 if compact else 88.0
-	for child in palette_flow.get_children():
-		if child is Control:
-			(child as Control).custom_minimum_size.y = module_card_height
-
-	btn_back.custom_minimum_size = Vector2(56.0 if compact else 72.0, 56.0 if compact else 72.0)
 	stability_bar.custom_minimum_size.x = 160.0 if compact else 220.0
-	status_label.custom_minimum_size.y = 60.0 if compact else 72.0
-	btn_reset.custom_minimum_size = Vector2(0.0 if compact else 150.0, 60.0 if compact else 72.0)
-	btn_analyze.custom_minimum_size = Vector2(0.0 if compact else 190.0, 60.0 if compact else 72.0)
-	btn_next_level.custom_minimum_size = Vector2(0.0 if compact else 170.0, 60.0 if compact else 72.0)
-	for node in [btn_reset, btn_analyze, btn_next_level]:
-		node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
-	_set_bottom_mobile_mode(phone_portrait)
-
-func _set_bottom_mobile_mode(use_mobile: bool) -> void:
-	var mobile_layout: VBoxContainer = _ensure_bottom_mobile_layout()
-	if use_mobile:
-		if bottom_bar.visible:
-			for node in [status_label, btn_reset, btn_analyze, btn_next_level]:
-				if node.get_parent() != mobile_layout:
-					node.reparent(mobile_layout)
-		bottom_bar.visible = false
-		mobile_layout.visible = true
-	else:
-		if not bottom_bar.visible:
-			for node in [status_label, btn_reset, btn_analyze, btn_next_level]:
-				if node.get_parent() != bottom_bar:
-					node.reparent(bottom_bar)
-		mobile_layout.visible = false
-		bottom_bar.visible = true
-
-func _ensure_bottom_mobile_layout() -> VBoxContainer:
-	if _bottom_mobile_layout != null and is_instance_valid(_bottom_mobile_layout):
-		return _bottom_mobile_layout
-	_bottom_mobile_layout = VBoxContainer.new()
-	_bottom_mobile_layout.name = "НижнийБарМобильныйМакет"
-	_bottom_mobile_layout.visible = false
-	_bottom_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_bottom_mobile_layout.add_theme_constant_override("separation", 8)
-	main_vbox.add_child(_bottom_mobile_layout)
-	main_vbox.move_child(_bottom_mobile_layout, main_vbox.get_children().find(bottom_bar) + 1)
-	return _bottom_mobile_layout
+	btn_back.custom_minimum_size = Vector2(56.0 if compact else 72.0, 56.0 if compact else 72.0)
+	btn_reset.custom_minimum_size = Vector2(0.0, 60.0 if compact else 72.0)
+	btn_analyze.custom_minimum_size = Vector2(0.0, 60.0 if compact else 72.0)
+	btn_next_level.custom_minimum_size = Vector2(0.0, 60.0 if compact else 72.0)
+	status_label.custom_minimum_size.y = 44.0 if compact else 56.0
+	palette_flow.columns = 1 if phone_portrait else 2
 
 func _apply_safe_area_padding(compact: bool) -> void:
 	var left: float = 8.0 if compact else 16.0
 	var top: float = 8.0 if compact else 12.0
 	var right: float = 8.0 if compact else 16.0
 	var bottom: float = 8.0 if compact else 12.0
-
 	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
 	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
 		var viewport_size: Vector2 = get_viewport_rect().size
@@ -919,15 +848,46 @@ func _apply_safe_area_padding(compact: bool) -> void:
 		top = maxf(top, float(safe_rect.position.y))
 		right = maxf(right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
 		bottom = maxf(bottom, viewport_size.y - float(safe_rect.position.y + safe_rect.size.y))
-
 	safe_area.add_theme_constant_override("margin_left", int(round(left)))
 	safe_area.add_theme_constant_override("margin_top", int(round(top)))
 	safe_area.add_theme_constant_override("margin_right", int(round(right)))
 	safe_area.add_theme_constant_override("margin_bottom", int(round(bottom)))
 
-func _show_error(message: String) -> void:
-	status_label.text = message
-	status_label.modulate = COLOR_ERR
-	btn_analyze.disabled = true
-	btn_reset.disabled = true
-	btn_next_level.disabled = true
+func _build_flow_stage_summary() -> Dictionary:
+	var case_run_id: String = _case_run_id()
+	var total_points: int = 0
+	var total_stability_delta: int = 0
+	for entry_v in GlobalMetrics.session_history:
+		if typeof(entry_v) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_v as Dictionary
+		if str(entry.get("quest_id", "")) != CASE_ID:
+			continue
+		if str(entry.get("stage", "")) != STAGE_ID:
+			continue
+		if str(entry.get("case_run_id", "")) != case_run_id:
+			continue
+		total_points += int(entry.get("points", 0))
+		total_stability_delta += int(entry.get("stability_delta", 0))
+	return {
+		"stage": STAGE_ID,
+		"case_run_id": case_run_id,
+		"levels_completed": levels.size(),
+		"last_level_id": str(stage_c_data.get("id", "")),
+		"points": total_points,
+		"stability_delta": total_stability_delta,
+		"completed_at_unix": Time.get_unix_time_from_system()
+	}
+
+func _next_level_button_text() -> String:
+	if not _has_next_level() and _is_flow_active():
+		return _tr("resus.c.btn.close_case", "CLOSE CASE")
+	return _tr("resus.c.btn.next_level", "NEXT LEVEL")
+
+func _is_flow_active() -> bool:
+	var flow: Dictionary = GlobalMetrics.get_case_flow()
+	return bool(flow.get("is_active", false)) and str(flow.get("case_id", "")) == CASE_ID
+
+func _case_run_id() -> String:
+	var flow: Dictionary = GlobalMetrics.get_case_flow()
+	return str(flow.get("case_run_id", ""))

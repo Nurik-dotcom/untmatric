@@ -16,7 +16,6 @@ shader_parameter/glow_radius = 0.5
 shader_parameter/pulse_speed = 2.0
 shader_parameter/pulse_intensity = 0.3
 shader_parameter/active = false
-shader_parameter/valid_placement = true
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_output"]
 shader = ExtResource("6_zone_glow")
@@ -26,7 +25,6 @@ shader_parameter/glow_radius = 0.5
 shader_parameter/pulse_speed = 2.0
 shader_parameter/pulse_intensity = 0.3
 shader_parameter/active = false
-shader_parameter/valid_placement = true
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_memory"]
 shader = ExtResource("6_zone_glow")
@@ -36,7 +34,6 @@ shader_parameter/glow_radius = 0.5
 shader_parameter/pulse_speed = 2.0
 shader_parameter/pulse_intensity = 0.3
 shader_parameter/active = false
-shader_parameter/valid_placement = true
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_monitor"]
 shader = ExtResource("7_monitor_crt")
@@ -104,7 +101,7 @@ text = "<"
 [node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Case 01: Digital Reanimation"
+text = "Case 01: Digital Resus"
 vertical_alignment = 1
 
 [node name="StageLabel" type="Label" parent="SafeArea/MainVBox/Header"]
@@ -121,28 +118,40 @@ size_flags_vertical = 4
 value = 100.0
 show_percentage = false
 
-[node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="ContentScroll" type="ScrollContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
 layout_mode = 2
 
-[node name="BriefingLabel" type="Label" parent="SafeArea/MainVBox/BriefingCard"]
+[node name="BriefingLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/BriefingCard"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 text = "Briefing"
 autowrap_mode = 3
 
-[node name="SystemCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="SystemCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SystemVBox" type="VBoxContainer" parent="SafeArea/MainVBox/SystemCard"]
+[node name="SystemVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="MonitorFrame" type="PanelContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox"]
+[node name="MonitorFrame" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox"]
 custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
 
-[node name="MonitorScreen" type="ColorRect" parent="SafeArea/MainVBox/SystemCard/SystemVBox/MonitorFrame"]
+[node name="MonitorScreen" type="ColorRect" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/MonitorFrame"]
 material = SubResource("ShaderMaterial_monitor")
 layout_mode = 1
 anchors_preset = 15
@@ -152,7 +161,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.03, 0.03, 0.03, 1)
 
-[node name="MonitorLabel" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/MonitorFrame"]
+[node name="MonitorLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/MonitorFrame"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -169,130 +178,129 @@ text = "NO SIGNAL"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BootConsole" type="RichTextLabel" parent="SafeArea/MainVBox/SystemCard/SystemVBox"]
+[node name="BootConsole" type="RichTextLabel" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox"]
 custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 fit_content = false
 scroll_active = true
-text = ""
 autowrap_mode = 2
 
-[node name="DiagPanel" type="PanelContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox"]
+[node name="DiagPanel" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox"]
 custom_minimum_size = Vector2(0, 104)
 layout_mode = 2
 
-[node name="DiagVBox" type="VBoxContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel"]
+[node name="DiagVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/DiagPanel"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="VideoRow" type="HBoxContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox"]
+[node name="VideoRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/DiagPanel/DiagVBox"]
 layout_mode = 2
 
-[node name="VideoLabel" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/VideoRow"]
+[node name="VideoLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/DiagPanel/DiagVBox/VideoRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "VIDEO"
 
-[node name="VideoValue" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/VideoRow"]
+[node name="VideoValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/DiagPanel/DiagVBox/VideoRow"]
 layout_mode = 2
 text = "VIDEO: NO SIGNAL"
 
-[node name="MemoryRow" type="HBoxContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox"]
+[node name="MemoryRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/DiagPanel/DiagVBox"]
 layout_mode = 2
 
-[node name="MemoryLabel" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/MemoryRow"]
+[node name="MemoryLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/DiagPanel/DiagVBox/MemoryRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "MEMORY"
 
-[node name="MemoryValue" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/MemoryRow"]
+[node name="MemoryValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/DiagPanel/DiagVBox/MemoryRow"]
 layout_mode = 2
 text = "MEMORY: READ ERROR"
 
-[node name="BufferRow" type="HBoxContainer" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox"]
+[node name="BufferRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/DiagPanel/DiagVBox"]
 layout_mode = 2
 
-[node name="BufferLabel" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/BufferRow"]
+[node name="BufferLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/DiagPanel/DiagVBox/BufferRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "BUFFER"
 
-[node name="BufferValue" type="Label" parent="SafeArea/MainVBox/SystemCard/SystemVBox/DiagPanel/DiagVBox/BufferRow"]
+[node name="BufferValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/DiagPanel/DiagVBox/BufferRow"]
 layout_mode = 2
 text = "BUFFER: SLOW"
 
-[node name="ZonesCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="ZonesCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ZonesVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard"]
+[node name="ZonesVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="ZoneInput" type="PanelContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox"]
+[node name="ZoneInput" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox"]
 custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
 script = ExtResource("3_socket")
 
-[node name="GlowRect" type="ColorRect" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput"]
+[node name="GlowRect" type="ColorRect" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneInput"]
 material = SubResource("ShaderMaterial_input")
 layout_mode = 2
 color = Color(0.13, 0.59, 0.95, 0.15)
 
-[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput"]
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneInput"]
 layout_mode = 2
 
-[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput/VBox"]
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneInput/VBox"]
 layout_mode = 2
 text = "INPUT"
 
-[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneInput/VBox"]
+[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneInput/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ZoneOutput" type="PanelContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox"]
+[node name="ZoneOutput" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox"]
 custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
 script = ExtResource("3_socket")
 
-[node name="GlowRect" type="ColorRect" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput"]
+[node name="GlowRect" type="ColorRect" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneOutput"]
 material = SubResource("ShaderMaterial_output")
 layout_mode = 2
 color = Color(0.3, 0.69, 0.31, 0.15)
 
-[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput"]
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneOutput"]
 layout_mode = 2
 
-[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput/VBox"]
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneOutput/VBox"]
 layout_mode = 2
 text = "OUTPUT"
 
-[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneOutput/VBox"]
+[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneOutput/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ZoneMemory" type="PanelContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox"]
+[node name="ZoneMemory" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox"]
 custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
 script = ExtResource("3_socket")
 
-[node name="GlowRect" type="ColorRect" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory"]
+[node name="GlowRect" type="ColorRect" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneMemory"]
 material = SubResource("ShaderMaterial_memory")
 layout_mode = 2
 color = Color(0.61, 0.15, 0.69, 0.15)
 
-[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory"]
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneMemory"]
 layout_mode = 2
 
-[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory/VBox"]
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneMemory/VBox"]
 layout_mode = 2
 text = "MEMORY"
 
-[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ZonesCard/ZonesVBox/ZoneMemory/VBox"]
+[node name="ItemsFlow" type="HFlowContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ZonesCard/ZonesVBox/ZoneMemory/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="PartsPileCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="PartsPileCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -300,19 +308,19 @@ size_flags_vertical = 3
 script = ExtResource("4_pile")
 items_container_path = NodePath("VBox/Scroll/PartsGrid")
 
-[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/PartsPileCard"]
+[node name="VBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PartsPileCard"]
 layout_mode = 2
 
-[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/PartsPileCard/VBox"]
+[node name="BucketTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PartsPileCard/VBox"]
 layout_mode = 2
 text = "PARTS"
 
-[node name="Scroll" type="ScrollContainer" parent="SafeArea/MainVBox/PartsPileCard/VBox"]
+[node name="Scroll" type="ScrollContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PartsPileCard/VBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="PartsGrid" type="GridContainer" parent="SafeArea/MainVBox/PartsPileCard/VBox/Scroll"]
+[node name="PartsGrid" type="GridContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PartsPileCard/VBox/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -320,9 +328,9 @@ theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 2
 
-[node name="BottomBar" type="HBoxContainer" parent="SafeArea/MainVBox"]
+[node name="BottomBar" type="VBoxContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 
 [node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(0, 72)
@@ -332,14 +340,20 @@ text = "READY"
 autowrap_mode = 2
 vertical_alignment = 1
 
-[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+[node name="ActionsRow" type="HBoxContainer" parent="SafeArea/MainVBox/BottomBar"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar/ActionsRow"]
 custom_minimum_size = Vector2(160, 72)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "RESET"
 
-[node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+[node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar/ActionsRow"]
 custom_minimum_size = Vector2(180, 72)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "CONFIRM"
 
 [node name="Dimmer" type="ColorRect" parent="."]
@@ -361,10 +375,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -190.0
-offset_top = -140.0
-offset_right = 190.0
-offset_bottom = 140.0
+offset_left = -220.0
+offset_top = -180.0
+offset_right = 220.0
+offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -389,12 +403,11 @@ text = "STABILITY"
 horizontal_alignment = 1
 
 [node name="ResultDetails" type="RichTextLabel" parent="ResultPopup/VBox"]
-custom_minimum_size = Vector2(0, 120)
+custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
 size_flags_vertical = 3
 fit_content = false
 scroll_active = true
-text = ""
 autowrap_mode = 3
 
 [node name="Buttons" type="HBoxContainer" parent="ResultPopup/VBox"]
@@ -403,11 +416,17 @@ alignment = 1
 theme_override_constants/separation = 12
 
 [node name="BtnRetry" type="Button" parent="ResultPopup/VBox/Buttons"]
-custom_minimum_size = Vector2(140, 56)
+custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
 text = "RETRY"
 
+[node name="BtnNextLevel" type="Button" parent="ResultPopup/VBox/Buttons"]
+visible = false
+custom_minimum_size = Vector2(150, 56)
+layout_mode = 2
+text = "NEXT LEVEL"
+
 [node name="BtnBack" type="Button" parent="ResultPopup/VBox/Buttons"]
-custom_minimum_size = Vector2(140, 56)
+custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
 text = "BACK"

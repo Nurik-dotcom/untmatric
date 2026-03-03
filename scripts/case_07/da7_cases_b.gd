@@ -99,34 +99,51 @@ const CASES_B: Array = [
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
-		"id": "DA7-B2-04",
+		"id": "DA7-B2-R3",
 		"schema_version": SCHEMA_VERSION,
 		"level": LEVEL,
-		"topic": "DB_FILTERING",
-		"case_kind": "FILTER_ROWS",
-		"interaction_type": "MULTI_SELECT_ROWS",
-		"interaction_variant": "REDACTION",
-		"prompt": "Redact transactions that do NOT satisfy Amount < 100.",
-		"predicate": {"field_col_id": "sum", "operator": "<", "value": "100", "value_type": "INT", "strict_expected": true},
-		"table": {
+		"topic": "DB_RELATIONSHIPS",
+		"case_kind": "RELATIONSHIP",
+		"interaction_type": "RELATIONSHIP_CHOICE",
+		"interaction_variant": "PATCH_CABLE_MULTI",
+		"prompt": "Patch cable: connect TWO valid PK to FK links. One port is a decoy.",
+		"left_table": {
+			"title": "Users",
 			"columns": [
-				{"col_id": "tx", "title": "TX_ID"},
-				{"col_id": "sum", "title": "Amount"}
+				{"col_id": "u_id", "title": "ID (PK)"},
+				{"col_id": "u_name", "title": "Name"}
 			],
-			"rows": [
-				{"row_id": "r1", "cells": {"tx": "1", "sum": "50"}},
-				{"row_id": "r2", "cells": {"tx": "2", "sum": "100"}},
-				{"row_id": "r3", "cells": {"tx": "3", "sum": "150"}},
-				{"row_id": "r4", "cells": {"tx": "4", "sum": "99"}},
-				{"row_id": "r5", "cells": {"tx": "5", "sum": "NaN"}}
+			"rows_preview": [
+				{"row_id": "u1", "cells": {"u_id": "1", "u_name": "Alice"}},
+				{"row_id": "u2", "cells": {"u_id": "2", "u_name": "Bob"}}
 			]
 		},
-		"answer_row_ids": ["r1", "r4"],
-		"boundary_row_ids": ["r2"],
-		"opposite_row_ids": ["r3"],
-		"unrelated_row_ids": ["r5"],
-		"decoy_row_ids": [],
-		"anti_cheat": {"shuffle_rows": true},
+		"right_table": {
+			"title": "Posts",
+			"columns": [
+				{"col_id": "p_id", "title": "PostID"},
+				{"col_id": "p_uid", "title": "UserID (FK)"},
+				{"col_id": "editor_uid", "title": "EditorID (FK)"},
+				{"col_id": "ghost_uid", "title": "GhostID (??)"}
+			],
+			"rows_preview": [
+				{"row_id": "p1", "cells": {"p_id": "10", "p_uid": "1", "editor_uid": "2", "ghost_uid": "-"}},
+				{"row_id": "p2", "cells": {"p_id": "11", "p_uid": "1", "editor_uid": "1", "ghost_uid": "-"}}
+			]
+		},
+		"pk_target": {"table": "left", "col_id": "u_id"},
+		"required_connections": [
+			{"pk_col_id": "u_id", "fk_col_id": "p_uid"},
+			{"pk_col_id": "u_id", "fk_col_id": "editor_uid"}
+		],
+		"decoy_fk_col_ids": ["ghost_uid"],
+		"expected_relation": "1:M",
+		"options": [
+			{"id": "opt1", "text": "1:1", "f_reason": "RELATION_CONFUSION_1TO1_1TOM"},
+			{"id": "opt2", "text": "1:M", "f_reason": null},
+			{"id": "opt3", "text": "M:M", "f_reason": "RELATION_CONFUSION_1TOM_MTOM"}
+		],
+		"answer_id": "opt2",
 		"timing_policy": {"mode": "LEARNING", "limit_sec": 120}
 	},
 	{
@@ -258,14 +275,70 @@ static func validate_case_b(case_data: Dictionary) -> bool:
 			return false
 		return true
 	if interaction_type == "RELATIONSHIP_CHOICE":
-		if str(case_data.get("interaction_variant", "")) != "PATCH_CABLE":
+		var interaction_variant := str(case_data.get("interaction_variant", ""))
+		if interaction_variant != "PATCH_CABLE" and interaction_variant != "PATCH_CABLE_MULTI":
 			return false
-		if not case_data.has_all(["left_table", "right_table", "pk_target", "fk_target"]):
+		if not case_data.has_all(["left_table", "right_table", "pk_target"]):
 			return false
 		if case_data.has("options") and not case_data.has("answer_id"):
 			return false
+		var left_cols := _collect_column_ids(case_data.get("left_table", {}) as Dictionary)
+		var right_cols := _collect_column_ids(case_data.get("right_table", {}) as Dictionary)
+		if left_cols.is_empty() or right_cols.is_empty():
+			return false
+		var pk_target: Dictionary = case_data.get("pk_target", {}) as Dictionary
+		var pk_target_id := str(pk_target.get("col_id", ""))
+		if pk_target_id.is_empty() or not left_cols.has(pk_target_id):
+			return false
+		var required_connections: Array = case_data.get("required_connections", []) as Array
+		var has_required := false
+		var required_fk_ids: Array = []
+		var seen_pairs: Dictionary = {}
+		for pair_v in required_connections:
+			if typeof(pair_v) != TYPE_DICTIONARY:
+				return false
+			var pair: Dictionary = pair_v as Dictionary
+			var pk_col_id := str(pair.get("pk_col_id", ""))
+			var fk_col_id := str(pair.get("fk_col_id", ""))
+			if pk_col_id.is_empty() or fk_col_id.is_empty():
+				return false
+			if not left_cols.has(pk_col_id) or not right_cols.has(fk_col_id):
+				return false
+			var pair_key := _pair_key(pk_col_id, fk_col_id)
+			if seen_pairs.has(pair_key):
+				return false
+			seen_pairs[pair_key] = true
+			required_fk_ids.append(fk_col_id)
+			has_required = true
+		if not has_required:
+			var fk_target: Dictionary = case_data.get("fk_target", {}) as Dictionary
+			var fk_target_id := str(fk_target.get("col_id", ""))
+			if fk_target_id.is_empty() or not right_cols.has(fk_target_id):
+				return false
+		var decoy_fk_col_ids: Array = case_data.get("decoy_fk_col_ids", []) as Array
+		for decoy_v in decoy_fk_col_ids:
+			var decoy_id := str(decoy_v)
+			if decoy_id.is_empty() or not right_cols.has(decoy_id):
+				return false
+			if required_fk_ids.has(decoy_id):
+				return false
 		return true
 	return false
+
+static func _collect_column_ids(table_data: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	var columns: Array = table_data.get("columns", []) as Array
+	for column_v in columns:
+		if typeof(column_v) != TYPE_DICTIONARY:
+			continue
+		var column: Dictionary = column_v as Dictionary
+		var col_id := str(column.get("col_id", ""))
+		if not col_id.is_empty():
+			out[col_id] = true
+	return out
+
+static func _pair_key(pk_col_id: String, fk_col_id: String) -> String:
+	return "%s::%s" % [pk_col_id, fk_col_id]
 
 static func _all_exist_in(ids: Array, allowed: Dictionary) -> bool:
 	for id_v in ids:

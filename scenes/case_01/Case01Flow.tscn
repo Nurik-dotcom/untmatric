@@ -1,0 +1,105 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/case_01/Case01Flow.gd" id="1_script"]
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
+
+[node name="Case01Flow" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.07, 0.08, 1)
+
+[node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
+intensity = 0.12
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="MainVBox" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Case 01 Flow"
+
+[node name="RunLabel" type="Label" parent="SafeArea/MainVBox/Header"]
+layout_mode = 2
+horizontal_alignment = 2
+text = "RUN"
+
+[node name="BodyCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BodyVBox" type="VBoxContainer" parent="SafeArea/MainVBox/BodyCard"]
+layout_mode = 2
+
+[node name="BodyLabel" type="RichTextLabel" parent="SafeArea/MainVBox/BodyCard/BodyVBox"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_vertical = 3
+fit_content = false
+scroll_active = true
+autowrap_mode = 2
+
+[node name="SummaryCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+visible = false
+layout_mode = 2
+
+[node name="SummaryVBox" type="VBoxContainer" parent="SafeArea/MainVBox/SummaryCard"]
+layout_mode = 2
+
+[node name="SummaryLabel" type="RichTextLabel" parent="SafeArea/MainVBox/SummaryCard/SummaryVBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+fit_content = false
+scroll_active = true
+autowrap_mode = 2
+
+[node name="Footer" type="HBoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnAbort" type="Button" parent="SafeArea/MainVBox/Footer"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ABORT CASE"
+
+[node name="BtnClose" type="Button" parent="SafeArea/MainVBox/Footer"]
+visible = false
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "RETURN"

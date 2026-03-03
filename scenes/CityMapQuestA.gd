@@ -413,6 +413,7 @@ func _load_sublevel(index: int) -> void:
 	btn_next.visible = false
 	btn_next.disabled = true
 	_set_progress_ui()
+	GlobalMetrics.start_quest(str(level_data.get("level_id", _current_level_entry().get("id", "CityMapQuestA"))))
 
 func _current_level_entry() -> Dictionary:
 	if level_index < 0 or level_index >= pack_levels.size():
@@ -1018,6 +1019,13 @@ func _on_reset_pressed() -> void:
 	if _is_round_locked():
 		return
 	n_reset += 1
+	GlobalMetrics.add_mistake("Сброс маршрута: level=%s, current_node=%s, path=%s, path_sum=%d, resets=%d" % [
+		str(level_data.get("level_id", _current_level_entry().get("id", "CityMapQuestA"))),
+		current_node,
+		" -> ".join(path),
+		path_sum,
+		n_reset
+	])
 	_reset_round_state(false)
 	_recalculate_stability()
 
@@ -1069,6 +1077,7 @@ func _on_submit_pressed() -> void:
 			"Route accepted. Optimal sum confirmed.",
 			Color(0.38, 1.0, 0.62)
 		)
+		GlobalMetrics.finish_quest(str(level_data.get("level_id", _current_level_entry().get("id", "CityMapQuestA"))), 100, true)
 		stage_completed = true
 		levels_completed += 1
 		run_total_time_seconds += t_elapsed_seconds
@@ -1085,6 +1094,15 @@ func _on_submit_pressed() -> void:
 		return
 
 	var result_code: String = str(verdict.result_code)
+	GlobalMetrics.add_mistake("Ошибка маршрута: level=%s, code=%s, input=%s, actual_sum=%d, min_sum=%d, current_node=%s, path=%s" % [
+		str(level_data.get("level_id", _current_level_entry().get("id", "CityMapQuestA"))),
+		result_code,
+		sum_input.text.strip_edges(),
+		int(verdict.get("sum_actual", -1)),
+		min_sum,
+		current_node,
+		" -> ".join(path)
+	])
 	var result_meta: Dictionary = _result_message_meta(result_code)
 	_set_status_i18n(
 		str(result_meta.get("key", "city_map.common.result.unhandled")),
@@ -1181,6 +1199,18 @@ func _recalculate_stability() -> void:
 	if stability <= 10.0 and not is_game_over:
 		is_game_over = true
 		stage_completed = false
+		GlobalMetrics.add_mistake("Критическая потеря стабильности: level=%s, stability=%d, calc=%d, opt=%d, parse=%d, reset=%d, undo=%d, wait=%d, overtime=%d" % [
+			str(level_data.get("level_id", _current_level_entry().get("id", "CityMapQuestA"))),
+			int(stability),
+			n_calc,
+			n_opt,
+			n_parse,
+			n_reset,
+			undo_count,
+			wait_count,
+			overtime_penalty
+		])
+		GlobalMetrics.finish_quest(str(level_data.get("level_id", _current_level_entry().get("id", "CityMapQuestA"))), 0, false)
 		_set_status_i18n(
 			"city_map.common.status.mission_failed",
 			"MISSION FAILED: CRITICAL STABILITY.",

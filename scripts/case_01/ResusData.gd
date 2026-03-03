@@ -11,6 +11,10 @@ static func load_levels(path: String) -> Array:
 	if typeof(root) == TYPE_NIL:
 		return []
 
+	var normalized_stage_levels: Array = _extract_stage_a_levels(root)
+	if not normalized_stage_levels.is_empty():
+		return _validated_matching_levels(normalized_stage_levels)
+
 	var levels: Array = []
 	if typeof(root) == TYPE_ARRAY:
 		for level_v in root:
@@ -21,13 +25,8 @@ static func load_levels(path: String) -> Array:
 				levels.append(level_data)
 	elif typeof(root) == TYPE_DICTIONARY:
 		var root_dict: Dictionary = root as Dictionary
-		if root_dict.has("stages"):
-			var stages: Dictionary = root_dict.get("stages", {}) as Dictionary
-			var stage_a: Variant = stages.get("A", null)
-			if typeof(stage_a) == TYPE_DICTIONARY:
-				var stage_a_data: Dictionary = stage_a as Dictionary
-				if validate_level(stage_a_data):
-					levels.append(stage_a_data)
+		if validate_level(root_dict):
+			levels.append(root_dict)
 	return levels
 
 static func load_stage_b(path: String) -> Dictionary:
@@ -120,6 +119,36 @@ static func _extract_stage_levels(root_dict: Dictionary, stage_id: String) -> Ar
 				out.append((level_v as Dictionary).duplicate(true))
 	else:
 		out.append(stage_dict.duplicate(true))
+	return out
+
+static func _extract_stage_a_levels(root: Variant) -> Array:
+	if typeof(root) == TYPE_DICTIONARY:
+		var root_dict: Dictionary = root as Dictionary
+		var stage_dict: Dictionary = _extract_stage(root_dict, "A")
+		if stage_dict.has("levels"):
+			return (stage_dict.get("levels", []) as Array).duplicate(true)
+		return []
+
+	if typeof(root) != TYPE_ARRAY:
+		return []
+
+	for item_v in root as Array:
+		if typeof(item_v) != TYPE_DICTIONARY:
+			continue
+		var candidate: Dictionary = item_v as Dictionary
+		var stage_dict: Dictionary = _extract_stage(candidate, "A")
+		if stage_dict.has("levels"):
+			return (stage_dict.get("levels", []) as Array).duplicate(true)
+	return []
+
+static func _validated_matching_levels(levels: Array) -> Array:
+	var out: Array = []
+	for level_v in levels:
+		if typeof(level_v) != TYPE_DICTIONARY:
+			continue
+		var level: Dictionary = (level_v as Dictionary).duplicate(true)
+		if validate_level(level):
+			out.append(level)
 	return out
 
 static func validate_level(level: Dictionary) -> bool:
@@ -327,12 +356,21 @@ static func validate_stage_b(stage_b: Dictionary) -> bool:
 	if classifier_thresholds.is_empty():
 		push_error("ResusData: Stage B classifier_thresholds is missing")
 		return false
-	if not classifier_thresholds.has_all(["bottleneck_cpu", "bottleneck_ram", "lowpower_perf_max"]):
+	if not classifier_thresholds.has_all([
+		"gpu_low_max",
+		"cpu_low_max",
+		"ram_low_max",
+		"cpu_mid_min",
+		"cpu_high_min",
+		"ram_good_min",
+		"gpu_good_min",
+		"lowpower_perf_max"
+	]):
 		push_error("ResusData: Stage B classifier_thresholds incomplete")
 		return false
 
-	var benchmark_outputs: Dictionary = stage_b.get("benchmark_outputs", {}) as Dictionary
-	for class_code in ["BOTTLENECK", "OPTIMAL", "OVERBUDGET", "LOWPOWER"]:
+	var benchmark_outputs: Dictionary = stage_b.get("benchmark_lines", stage_b.get("benchmark_outputs", {})) as Dictionary
+	for class_code in ["OPTIMAL", "BOTTLENECK_RAM", "BOTTLENECK_GPU", "BOTTLENECK_CPU", "OVERBUDGET", "LOWPOWER"]:
 		if not benchmark_outputs.has(class_code):
 			push_error("ResusData: Stage B benchmark output is missing for %s" % class_code)
 			return false
@@ -358,10 +396,9 @@ static func validate_stage_b(stage_b: Dictionary) -> bool:
 		return false
 
 	var feedback_rules: Dictionary = stage_b.get("feedback_rules", {}) as Dictionary
-	for option_id_v in option_ids.keys():
-		var option_id: String = str(option_id_v)
-		if not feedback_rules.has(option_id):
-			push_error("ResusData: Stage B feedback rule is missing for %s" % option_id)
+	for class_code in ["OPTIMAL", "BOTTLENECK_RAM", "BOTTLENECK_GPU", "BOTTLENECK_CPU", "OVERBUDGET", "LOWPOWER"]:
+		if not feedback_rules.has(class_code):
+			push_error("ResusData: Stage B feedback rule is missing for %s" % class_code)
 			return false
 
 	var scoring_model: Dictionary = stage_b.get("scoring_model", {}) as Dictionary

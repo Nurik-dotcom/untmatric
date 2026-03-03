@@ -59,7 +59,7 @@ text = "<"
 [node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Case 01: Digital Reanimation"
+text = "Case 01: Digital Resus"
 vertical_alignment = 1
 
 [node name="StageLabel" type="Label" parent="SafeArea/MainVBox/Header"]
@@ -76,20 +76,32 @@ size_flags_vertical = 4
 value = 100.0
 show_percentage = false
 
-[node name="PromptCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="ContentScroll" type="ScrollContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="PromptCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
 layout_mode = 2
 
-[node name="PromptLabel" type="Label" parent="SafeArea/MainVBox/PromptCard"]
+[node name="PromptLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PromptCard"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 text = "Mount three modules and start the secure link."
 autowrap_mode = 2
 
-[node name="DiagramCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="DiagramCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
 custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
 
-[node name="PacketsLayer" type="Control" parent="SafeArea/MainVBox/DiagramCard"]
+[node name="PacketsLayer" type="Control" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -99,142 +111,142 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("5_packets")
 
-[node name="DiagramVBox" type="VBoxContainer" parent="SafeArea/MainVBox/DiagramCard"]
+[node name="DiagramVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="DiagramTitle" type="Label" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox"]
+[node name="DiagramTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox"]
 layout_mode = 2
 text = "NETWORK LINK"
 
-[node name="DiagramRow" type="HBoxContainer" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox"]
+[node name="DiagramRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="PcNode" type="PanelContainer" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow"]
+[node name="PcNode" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow"]
 custom_minimum_size = Vector2(96, 110)
 layout_mode = 2
 
-[node name="PcLabel" type="Label" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow/PcNode"]
+[node name="PcLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/PcNode"]
 layout_mode = 2
 text = "PC"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Slot1" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow" instance=ExtResource("3_slot")]
+[node name="Slot1" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow" instance=ExtResource("3_slot")]
 layout_mode = 2
 size_flags_horizontal = 3
 slot_index = 1
 
-[node name="Slot2" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow" instance=ExtResource("3_slot")]
+[node name="Slot2" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow" instance=ExtResource("3_slot")]
 layout_mode = 2
 size_flags_horizontal = 3
 slot_index = 2
 
-[node name="Slot3" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow" instance=ExtResource("3_slot")]
+[node name="Slot3" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow" instance=ExtResource("3_slot")]
 layout_mode = 2
 size_flags_horizontal = 3
 slot_index = 3
 
-[node name="ArchiveNode" type="PanelContainer" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow"]
+[node name="ArchiveNode" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow"]
 custom_minimum_size = Vector2(116, 110)
 layout_mode = 2
 
-[node name="ArchiveLabel" type="Label" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow/ArchiveNode"]
+[node name="ArchiveLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/ArchiveNode"]
 layout_mode = 2
 text = "ARCHIVE"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="AttackerNode" type="PanelContainer" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow"]
+[node name="AttackerNode" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow"]
 custom_minimum_size = Vector2(90, 110)
 layout_mode = 2
+self_modulate = Color(0.92, 0.32, 0.36, 0.22)
 
-[node name="AttackerLabel" type="Label" parent="SafeArea/MainVBox/DiagramCard/DiagramVBox/DiagramRow/AttackerNode"]
+[node name="AttackerLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/AttackerNode"]
 layout_mode = 2
 text = "ATTACK"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RiskCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="RiskCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
 layout_mode = 2
 
-[node name="RiskVBox" type="VBoxContainer" parent="SafeArea/MainVBox/RiskCard"]
+[node name="RiskVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="RiskTitle" type="Label" parent="SafeArea/MainVBox/RiskCard/RiskVBox"]
+[node name="RiskTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox"]
 layout_mode = 2
 text = "RISK DASHBOARD"
 
-[node name="CollisionsRow" type="HBoxContainer" parent="SafeArea/MainVBox/RiskCard/RiskVBox"]
+[node name="CollisionsRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox"]
 layout_mode = 2
 
-[node name="CollisionsLabel" type="Label" parent="SafeArea/MainVBox/RiskCard/RiskVBox/CollisionsRow"]
+[node name="CollisionsLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/CollisionsRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "COLLISIONS"
 
-[node name="CollisionsValue" type="Label" parent="SafeArea/MainVBox/RiskCard/RiskVBox/CollisionsRow"]
+[node name="CollisionsValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/CollisionsRow"]
 layout_mode = 2
 text = "MID"
 
-[node name="EavesdropRow" type="HBoxContainer" parent="SafeArea/MainVBox/RiskCard/RiskVBox"]
+[node name="EavesdropRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox"]
 layout_mode = 2
 
-[node name="EavesdropLabel" type="Label" parent="SafeArea/MainVBox/RiskCard/RiskVBox/EavesdropRow"]
+[node name="EavesdropLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/EavesdropRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "EAVESDROP"
 
-[node name="EavesdropValue" type="Label" parent="SafeArea/MainVBox/RiskCard/RiskVBox/EavesdropRow"]
+[node name="EavesdropValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/EavesdropRow"]
 layout_mode = 2
 text = "MID"
 
-[node name="FilteringRow" type="HBoxContainer" parent="SafeArea/MainVBox/RiskCard/RiskVBox"]
+[node name="FilteringRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox"]
 layout_mode = 2
 
-[node name="FilteringLabel" type="Label" parent="SafeArea/MainVBox/RiskCard/RiskVBox/FilteringRow"]
+[node name="FilteringLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/FilteringRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "FILTERING"
 
-[node name="FilteringValue" type="Label" parent="SafeArea/MainVBox/RiskCard/RiskVBox/FilteringRow"]
+[node name="FilteringValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/FilteringRow"]
 layout_mode = 2
 text = "OFF"
 
-[node name="MediaRow" type="HBoxContainer" parent="SafeArea/MainVBox/RiskCard/RiskVBox"]
+[node name="MediaRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox"]
 layout_mode = 2
 
-[node name="MediaLabel" type="Label" parent="SafeArea/MainVBox/RiskCard/RiskVBox/MediaRow"]
+[node name="MediaLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/MediaRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "MEDIA"
 
-[node name="MediaValue" type="Label" parent="SafeArea/MainVBox/RiskCard/RiskVBox/MediaRow"]
+[node name="MediaValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/MediaRow"]
 layout_mode = 2
 text = "UNKNOWN"
 
-[node name="PaletteCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="PaletteCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
 layout_mode = 2
-size_flags_vertical = 3
 
-[node name="PaletteVBox" type="VBoxContainer" parent="SafeArea/MainVBox/PaletteCard"]
+[node name="PaletteVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PaletteCard"]
 layout_mode = 2
-size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="PaletteTitle" type="Label" parent="SafeArea/MainVBox/PaletteCard/PaletteVBox"]
+[node name="PaletteTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PaletteCard/PaletteVBox"]
 layout_mode = 2
 text = "MODULE PALETTE"
 
-[node name="Scroll" type="ScrollContainer" parent="SafeArea/MainVBox/PaletteCard/PaletteVBox"]
+[node name="Scroll" type="ScrollContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PaletteCard/PaletteVBox"]
+custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="PaletteFlow" type="GridContainer" parent="SafeArea/MainVBox/PaletteCard/PaletteVBox/Scroll"]
+[node name="PaletteFlow" type="GridContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PaletteCard/PaletteVBox/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -242,29 +254,20 @@ columns = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 
-[node name="ExplanationCard" type="PanelContainer" parent="SafeArea/MainVBox"]
+[node name="ExplanationCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
 visible = false
-custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 
-[node name="ExplVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ExplanationCard"]
+[node name="ExplVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ExplanationCard"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="ExplHeadline" type="Label" parent="SafeArea/MainVBox/ExplanationCard/ExplVBox"]
+[node name="ExplHeadline" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/ExplanationCard/ExplVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "VERDICT"
 
-[node name="ExplDetails" type="RichTextLabel" parent="SafeArea/MainVBox/ExplanationCard/ExplVBox"]
-custom_minimum_size = Vector2(0, 70)
-layout_mode = 2
-fit_content = false
-scroll_active = true
-text = ""
-autowrap_mode = 2
-
-[node name="ExplWhy" type="RichTextLabel" parent="SafeArea/MainVBox/ExplanationCard/ExplVBox"]
+[node name="ExplDetails" type="RichTextLabel" parent="SafeArea/MainVBox/ContentScroll/Content/ExplanationCard/ExplVBox"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 fit_content = false
@@ -272,30 +275,47 @@ scroll_active = true
 text = ""
 autowrap_mode = 2
 
-[node name="BottomBar" type="HBoxContainer" parent="SafeArea/MainVBox"]
+[node name="ExplWhy" type="RichTextLabel" parent="SafeArea/MainVBox/ContentScroll/Content/ExplanationCard/ExplVBox"]
+custom_minimum_size = Vector2(0, 90)
 layout_mode = 2
-theme_override_constants/separation = 10
+fit_content = false
+scroll_active = true
+text = ""
+autowrap_mode = 2
 
-[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomBar"]
-custom_minimum_size = Vector2(0, 72)
+[node name="BottomBar" type="VBoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StatusRow" type="HBoxContainer" parent="SafeArea/MainVBox/BottomBar"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomBar/StatusRow"]
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "READY"
 autowrap_mode = 2
 vertical_alignment = 1
 
-[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar"]
-custom_minimum_size = Vector2(150, 72)
+[node name="ActionsRow" type="GridContainer" parent="SafeArea/MainVBox/BottomBar"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar/ActionsRow"]
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 text = "RESET"
 
-[node name="BtnAnalyze" type="Button" parent="SafeArea/MainVBox/BottomBar"]
-custom_minimum_size = Vector2(190, 72)
+[node name="BtnAnalyze" type="Button" parent="SafeArea/MainVBox/BottomBar/ActionsRow"]
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-text = "LINK START"
+text = "ANALYZE"
 
-[node name="BtnNextLevel" type="Button" parent="SafeArea/MainVBox/BottomBar"]
+[node name="BtnNextLevel" type="Button" parent="SafeArea/MainVBox/BottomBar/ActionsRow"]
 visible = false
-custom_minimum_size = Vector2(170, 72)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 text = "NEXT LEVEL"

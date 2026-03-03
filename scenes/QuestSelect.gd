@@ -144,7 +144,7 @@ func _on_radio_pressed() -> void:
 
 func _on_clues_pressed() -> void:
 	selected_quest_type = QuestType.CLUES
-	_set_complexity_enabled(true, true)
+	_set_complexity_enabled(false, false, false, false)
 	modal.visible = true
 
 func _on_script_pressed() -> void:
@@ -192,7 +192,7 @@ func _on_complexity_a_pressed() -> void:
 		QuestType.NETWORK_TRACE:
 			get_tree().change_scene_to_file("res://scenes/NetworkTraceQuestA.tscn")
 		QuestType.CLUES:
-			get_tree().change_scene_to_file("res://scenes/case_01/DigitalResusQuestA.tscn")
+			get_tree().change_scene_to_file("res://scenes/case_01/Case01Flow.tscn")
 
 func _on_complexity_b_pressed() -> void:
 	if selected_quest_type == QuestType.FINAL_REPORT:
@@ -245,9 +245,11 @@ func _on_close_modal_pressed() -> void:
 func _on_back_to_menu_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
-func _set_complexity_enabled(enable_b: bool, enable_c: bool) -> void:
+func _set_complexity_enabled(enable_b: bool, enable_c: bool, show_b: bool = true, show_c: bool = true) -> void:
 	btn_complexity_b.disabled = not enable_b
 	btn_complexity_c.disabled = not enable_c
+	btn_complexity_b.visible = show_b
+	btn_complexity_c.visible = show_c
 
 func _on_viewport_size_changed() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size

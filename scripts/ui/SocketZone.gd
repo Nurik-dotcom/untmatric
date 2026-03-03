@@ -8,20 +8,28 @@ signal drop_rejected(item_id: String, socket_id: String)
 @export var socket_id: String = ""
 @export var title_path: NodePath = NodePath("VBox/BucketTitle")
 @export var items_container_path: NodePath = NodePath("VBox/ItemsFlow")
+@export var glow_path: NodePath = NodePath("GlowRect")
 @export var accept_ids: Array[String] = []
 
 var occupied_ids: Array[String] = []
 var _drag_item_id: String = ""
 var _hover_accepts: bool = false
+var _feedback_mode: String = "neutral"
+var _base_glow_color: Color = Color(0.6, 0.6, 0.6, 0.18)
 
 @onready var _title_label: Label = get_node_or_null(title_path) as Label
 @onready var _items_container: Control = get_node_or_null(items_container_path) as Control
+@onready var _glow_rect: ColorRect = get_node_or_null(glow_path) as ColorRect
 
 func _ready() -> void:
+	if is_instance_valid(_glow_rect):
+		_base_glow_color = _glow_rect.color
+		_glow_rect.visible = false
+
 	mouse_exited.connect(func() -> void:
 		_drag_item_id = ""
 		_hover_accepts = false
-		_apply_hover(false, false)
+		_apply_visual_state()
 	)
 
 func setup(p_socket_id: String, p_label_text: String, p_accept_ids: Array[String] = []) -> void:
@@ -29,9 +37,23 @@ func setup(p_socket_id: String, p_label_text: String, p_accept_ids: Array[String
 	accept_ids = p_accept_ids.duplicate()
 	if is_instance_valid(_title_label):
 		_title_label.text = p_label_text
+	set_feedback_mode("neutral")
 
 func set_accept_ids(ids: Array[String]) -> void:
 	accept_ids = ids.duplicate()
+
+func set_feedback_mode(mode: String) -> void:
+	_feedback_mode = mode
+	_apply_visual_state()
+
+func flash_reject() -> void:
+	set_feedback_mode("rejected")
+	var tween: Tween = create_tween()
+	tween.tween_interval(0.18)
+	tween.tween_callback(func() -> void:
+		if _feedback_mode == "rejected":
+			set_feedback_mode("neutral")
+	)
 
 func clear_items() -> void:
 	occupied_ids.clear()
@@ -72,11 +94,10 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	if _hover_accepts:
 		hint_requested.emit(_drag_item_id, socket_id)
 		hint_hover.emit(_drag_item_id, socket_id)
-	_apply_hover(true, _hover_accepts)
-	return _hover_accepts
+	_apply_visual_state()
+	return true
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
-	_apply_hover(false, false)
 	if _is_input_locked():
 		return
 	if typeof(data) != TYPE_DICTIONARY:
@@ -97,18 +118,49 @@ func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	if controller != null and controller.has_method("on_socket_drop"):
 		controller.call("on_socket_drop", payload, socket_id, accepted)
 
+	_drag_item_id = ""
+	_hover_accepts = false
+	_apply_visual_state()
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END:
-		_apply_hover(false, false)
+		_drag_item_id = ""
+		_hover_accepts = false
+		_apply_visual_state()
 
-func _apply_hover(active: bool, accepted: bool) -> void:
-	if not active:
-		modulate = Color(1.0, 1.0, 1.0, 1.0)
+func _apply_visual_state() -> void:
+	var mode: String = _feedback_mode
+	if _drag_item_id != "":
+		mode = "hover_valid" if _hover_accepts else "hover_invalid"
+
+	match mode:
+		"target_valid":
+			modulate = Color(1.04, 1.08, 1.04, 1.0)
+			_set_glow(true, _base_glow_color)
+		"target_invalid":
+			modulate = Color(0.96, 0.96, 0.96, 1.0)
+			_set_glow(true, Color(0.92, 0.74, 0.32, 0.16))
+		"hover_valid":
+			modulate = Color(1.08, 1.12, 1.08, 1.0)
+			_set_glow(true, _base_glow_color.lightened(0.15))
+		"hover_invalid":
+			modulate = Color(1.08, 0.92, 0.92, 1.0)
+			_set_glow(true, Color(0.92, 0.32, 0.36, 0.2))
+		"rejected":
+			modulate = Color(1.12, 0.88, 0.9, 1.0)
+			_set_glow(true, Color(0.95, 0.36, 0.38, 0.24))
+		_:
+			modulate = Color(1.0, 1.0, 1.0, 1.0)
+			_set_glow(false, _base_glow_color)
+
+func _set_glow(active: bool, color: Color) -> void:
+	if not is_instance_valid(_glow_rect):
 		return
-	if accepted:
-		modulate = Color(1.05, 1.1, 1.05, 1.0)
-	else:
-		modulate = Color(1.1, 0.92, 0.92, 1.0)
+	_glow_rect.visible = active
+	_glow_rect.color = color
+	var material: ShaderMaterial = _glow_rect.material as ShaderMaterial
+	if material != null:
+		material.set_shader_parameter("active", active)
 
 func _accepts_item(item_id: String) -> bool:
 	if item_id == "":

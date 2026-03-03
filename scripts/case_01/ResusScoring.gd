@@ -193,7 +193,7 @@ static func calculate_stage_c_result(stage_c_data: Dictionary, snapshot: Diction
 	var default_rule: Dictionary = scoring_model.get("default_rule", {}) as Dictionary
 	var empty_rule: Dictionary = scoring_model.get("empty_rule", {}) as Dictionary
 	var select_all_rule: Dictionary = scoring_model.get("select_all_rule", default_rule) as Dictionary
-	var is_select_all_behavior: bool = options.size() > 0 and selected_count == options.size()
+	var is_select_all_behavior: bool = options.size() > 0 and selected_ids.size() == options.size()
 
 	if selected_count == 0:
 		verdict_code = str(empty_rule.get("verdict_code", "EMPTY"))

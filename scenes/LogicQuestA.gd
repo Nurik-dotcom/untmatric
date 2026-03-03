@@ -281,6 +281,7 @@ func load_case(idx: int) -> void:
 	_update_input_labels()
 	_update_circuit()
 	_update_ui_state()
+	GlobalMetrics.start_quest(str(current_case.get("id", "LogicQuestA")))
 
 func _update_input_labels() -> void:
 	input_a_btn.text = "%s\n[%s]" % [_case_text("a", "A"), "1" if input_a else "0"]
@@ -556,6 +557,15 @@ func _update_stats_ui() -> void:
 	_update_ui_state()
 
 func _on_game_over() -> void:
+	if not is_safe_mode and btn_verdict.visible:
+		GlobalMetrics.add_mistake("Критический провал логического квеста: case=%s, selected_gate=%s, attempts=%d, seen=%d, stability=%d" % [
+			str(current_case.get("id", "LogicQuestA")),
+			selected_gate_guess,
+			case_attempts,
+			seen_combinations.size(),
+			int(GlobalMetrics.stability)
+		])
+		GlobalMetrics.finish_quest(str(current_case.get("id", "LogicQuestA")), 0, false)
 	_enter_safe_mode()
 
 func _on_back_button_pressed() -> void:
@@ -634,3 +644,129 @@ func _disable_controls() -> void:
 	_set_gate_buttons_enabled(false)
 	btn_hint.disabled = true
 	btn_probe.disabled = true
+
+func _on_verdict_pressed() -> void:
+	if is_safe_mode:
+		return
+	if btn_verdict.disabled:
+		return
+	_mark_first_action()
+	verdict_count += 1
+
+	var current_time: float = Time.get_ticks_msec() / 1000.0
+	if current_time - last_verdict_time < 0.8:
+		_show_feedback("Подождите перед следующим вердиктом.", Color(1.0, 0.62, 0.28))
+		GlobalMetrics.add_mistake("Слишком быстрый повтор вердикта: case=%s, selected_gate=%s, delta=%.2f" % [
+			str(current_case.get("id", "LogicQuestA")),
+			selected_gate_guess,
+			current_time - last_verdict_time
+		])
+		_lock_verdict(3.0)
+		_register_trial("RATE_LIMITED", false)
+		return
+	last_verdict_time = current_time
+
+	if selected_gate_guess.is_empty():
+		_show_feedback("СНАЧАЛА ВЫБЕРИТЕ ВЕНТИЛЬ", Color(1.0, 0.86, 0.32))
+		GlobalMetrics.add_mistake("Вердикт без выбора вентиля: case=%s, seen=%d" % [
+			str(current_case.get("id", "LogicQuestA")),
+			seen_combinations.size()
+		])
+		_register_trial("EMPTY_SELECTION", false)
+		return
+
+	var min_seen: int = int(current_case.get("min_seen", 2))
+	if seen_combinations.size() < min_seen:
+		_show_feedback("INSUFFICIENT DATA (%d/%d)" % [seen_combinations.size(), min_seen], Color(1.0, 0.5, 0.0))
+		GlobalMetrics.add_mistake("Недостаточно фактов для вердикта: case=%s, selected_gate=%s, seen=%d, required=%d" % [
+			str(current_case.get("id", "LogicQuestA")),
+			selected_gate_guess,
+			seen_combinations.size(),
+			min_seen
+		])
+		_apply_penalty(2.0)
+		_lock_verdict(VERDICT_LOCK_TIME)
+		_register_trial("INSUFFICIENT_DATA", false)
+		return
+
+	contradiction_index = -1
+	if selected_gate_guess == str(current_case.get("gate", "")):
+		var confidence_ratio := _confidence_ratio()
+		var confidence_bucket := _confidence_bucket(confidence_ratio)
+		if seen_combinations.size() <= 2:
+			GlobalMetrics.stability = min(100.0, GlobalMetrics.stability + LOW_CONFIDENCE_BONUS)
+			GlobalMetrics.stability_changed.emit(GlobalMetrics.stability, LOW_CONFIDENCE_BONUS)
+			_show_feedback("ДОСТУП РАЗРЕШЁН (+%d за быстрый вердикт, %s)" % [int(LOW_CONFIDENCE_BONUS), confidence_bucket], Color(0.45, 0.92, 0.62))
+		else:
+			_show_feedback("ДОСТУП РАЗРЕШЁН (%s)" % confidence_bucket, Color(0.45, 0.92, 0.62))
+		_register_trial("SUCCESS", true)
+		GlobalMetrics.finish_quest(str(current_case.get("id", "LogicQuestA")), 100, true)
+		btn_verdict.visible = false
+		btn_next.visible = true
+		_disable_controls()
+	else:
+		case_attempts += 1
+		_update_stats_ui()
+
+		var penalty := 10.0
+		if case_attempts == 2:
+			penalty = 15.0
+		elif case_attempts >= 3:
+			penalty = 25.0
+
+		_apply_penalty(penalty)
+		var contradiction := _first_contradiction_for_gate(selected_gate_guess)
+		var mistake_detail := "Неверный выбор вентиля: case=%s, selected=%s, correct=%s, attempts=%d, penalty=%d" % [
+			str(current_case.get("id", "LogicQuestA")),
+			selected_gate_guess,
+			str(current_case.get("gate", "")),
+			case_attempts,
+			int(penalty)
+		]
+		if not contradiction.is_empty():
+			contradiction_index = int(contradiction.get("index", -1))
+			var a_name := str(current_case.get("a_text", "A"))
+			var b_name := str(current_case.get("b_text", "B"))
+			var a_text := "%s=%d" % [a_name, 1 if bool(contradiction.get("a", false)) else 0]
+			var b_raw := int(contradiction.get("b", -1))
+			var details := a_text
+			if b_raw >= 0:
+				details += ", %s=%d" % [b_name, b_raw]
+			_show_feedback(
+				"ПРОТИВОРЕЧИЕ: %s -> F_box=%d, ваш F_model=%d (-%d)" % [
+					details,
+					1 if bool(contradiction.get("expected", false)) else 0,
+					1 if bool(contradiction.get("predicted", false)) else 0,
+					int(penalty)
+				],
+				Color(1.0, 0.35, 0.32)
+			)
+			mistake_detail += ", contradiction=%s, expected=%d, predicted=%d" % [
+				details,
+				1 if bool(contradiction.get("expected", false)) else 0,
+				1 if bool(contradiction.get("predicted", false)) else 0
+			]
+		else:
+			_show_feedback("ДОСТУП ЗАПРЕЩЁН (-%d)" % int(penalty), Color(1.0, 0.35, 0.32))
+		GlobalMetrics.add_mistake(mistake_detail)
+		var verdict_code := "WRONG_GATE"
+		if case_attempts >= MAX_ATTEMPTS:
+			GlobalMetrics.finish_quest(str(current_case.get("id", "LogicQuestA")), 0, false)
+			_enter_safe_mode()
+			verdict_code = "SAFE_MODE_TRIGGERED"
+		_register_trial(verdict_code, false)
+
+	_update_circuit()
+
+func _lock_verdict(duration: float) -> void:
+	if is_safe_mode:
+		return
+	btn_verdict.disabled = true
+	verdict_timer.start(duration)
+
+func _apply_penalty(amount: float) -> void:
+	GlobalMetrics.stability = max(0.0, GlobalMetrics.stability - amount)
+	GlobalMetrics.stability_changed.emit(GlobalMetrics.stability, -amount)
+
+func _on_diagnostics_close_pressed() -> void:
+	_hide_diagnostics()

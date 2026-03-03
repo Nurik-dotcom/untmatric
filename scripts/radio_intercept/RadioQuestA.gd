@@ -86,6 +86,7 @@ func _start_new_task() -> void:
 	hint_label.text = ""
 	analyze_button.disabled = false
 	confirm_button.disabled = false
+	GlobalMetrics.start_quest("RadioQuestA")
 
 func _on_bits_slider_value_changed(value: float) -> void:
 	if first_action_at == 0:
@@ -121,6 +122,9 @@ func _check_answer() -> void:
 	var overkill: bool = correct and chosen_i > i_min
 	var elapsed_ms: int = Time.get_ticks_msec() - started_at
 
+	if not correct:
+		GlobalMetrics.add_mistake("Неверная глубина кодирования: N=%d, i_min=%d, chosen_i=%d, capacity=%d" % [current_n, i_min, chosen_i, capacity])
+
 	var payload: Dictionary = {
 		"quest": "radio_intercept",
 		"stage": "A",
@@ -135,6 +139,7 @@ func _check_answer() -> void:
 		"elapsed_ms": elapsed_ms
 	}
 	GlobalMetrics.register_trial(payload)
+	GlobalMetrics.finish_quest("RadioQuestA", 100 if correct else 0, correct)
 
 	_start_new_task()
 	_draw_signal()
