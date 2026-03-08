@@ -144,7 +144,7 @@ func _on_radio_pressed() -> void:
 
 func _on_clues_pressed() -> void:
 	selected_quest_type = QuestType.CLUES
-	_set_complexity_enabled(false, false, false, false)
+	_set_complexity_enabled(true, true)
 	modal.visible = true
 
 func _on_script_pressed() -> void:
