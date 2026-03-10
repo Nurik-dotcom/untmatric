@@ -15,6 +15,26 @@
 		{
 			"id": "6_2_03",
 			"path": "res://data/city_map/level_6_2_03.json"
+		},
+		{
+			"id": "6_2_04",
+			"path": "res://data/city_map/level_6_2_04.json"
+		},
+		{
+			"id": "6_2_05",
+			"path": "res://data/city_map/level_6_2_05.json"
+		},
+		{
+			"id": "6_2_06",
+			"path": "res://data/city_map/level_6_2_06.json"
+		},
+		{
+			"id": "6_2_07",
+			"path": "res://data/city_map/level_6_2_07.json"
+		},
+		{
+			"id": "6_2_08",
+			"path": "res://data/city_map/level_6_2_08.json"
 		}
 	]
 }

@@ -2,6 +2,8 @@ extends Button
 
 signal drag_started(module_id: String, source: String, from_slot: int)
 
+@onready var desc_label: Label = get_node_or_null("DescLabel") as Label
+
 var module_id: String = ""
 var module_label: String = ""
 var source: String = "PALETTE"
@@ -12,10 +14,17 @@ var _feedback_state: String = "neutral"
 
 func setup(option_data: Dictionary) -> void:
 	module_id = str(option_data.get("module_id", option_data.get("option_id", ""))).strip_edges()
-	module_label = str(option_data.get("label", module_id))
+	module_label = I18n.resolve_field(option_data, "label", {"default": module_id})
 	text = module_label
-	tooltip_text = "МОДУЛЬ %s\n%s" % [module_label, str(option_data.get("why", ""))]
-	custom_minimum_size = Vector2(0, 88)
+	var desc_key: String = str(option_data.get("desc_key", "")).strip_edges()
+	var desc_fallback: String = str(option_data.get("why", "")).strip_edges()
+	var desc_text: String = desc_fallback
+	if desc_key != "":
+		desc_text = I18n.tr_key(desc_key, {"default": desc_fallback})
+	tooltip_text = "%s\n%s" % [module_label, desc_text]
+	if desc_label != null:
+		desc_label.text = desc_text
+	custom_minimum_size = Vector2(0, 108)
 	set_source("PALETTE", -1)
 	set_feedback_state("neutral")
 	set_locked(false)
@@ -72,3 +81,5 @@ func _apply_visual_state() -> void:
 		tone = Color(0.82, 0.82, 0.82, 1.0)
 
 	self_modulate = tone
+	if desc_label != null:
+		desc_label.modulate = Color(0.86, 0.86, 0.86, 0.95) if not _locked else Color(0.68, 0.68, 0.68, 0.95)

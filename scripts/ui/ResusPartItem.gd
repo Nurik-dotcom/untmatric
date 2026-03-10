@@ -13,11 +13,11 @@ var item_label: String = ""
 var correct_bucket_id: String = ""
 var _drag_from_zone: String = "PILE"
 
-# Colors for different bucket types
-const COLOR_INPUT := Color(0.13, 0.59, 0.95, 1.0)   # Blue
-const COLOR_OUTPUT := Color(0.3, 0.69, 0.31, 1.0)   # Green
-const COLOR_MEMORY := Color(0.61, 0.15, 0.69, 1.0)  # Purple
-const COLOR_UNKNOWN := Color(0.5, 0.5, 0.5, 1.0)   # Gray
+const COLOR_INPUT := Color(0.13, 0.59, 0.95, 1.0)
+const COLOR_OUTPUT := Color(0.3, 0.69, 0.31, 1.0)
+const COLOR_MEMORY := Color(0.61, 0.15, 0.69, 1.0)
+const COLOR_UNKNOWN := Color(0.5, 0.5, 0.5, 1.0)
+const COLOR_NEUTRAL := Color(0.45, 0.55, 0.65, 1.0)
 
 func _ready() -> void:
 	_update_visuals()
@@ -26,7 +26,7 @@ func _ready() -> void:
 
 func setup(item_data: Dictionary) -> void:
 	item_id = str(item_data.get("item_id", ""))
-	item_label = str(item_data.get("label", ""))
+	_apply_item_label(item_data)
 	correct_bucket_id = str(item_data.get("correct_bucket_id", "")).to_upper()
 	text = item_label
 	custom_minimum_size = Vector2(0, 76)
@@ -34,30 +34,42 @@ func setup(item_data: Dictionary) -> void:
 	set_meta("zone_id", "PILE")
 	_update_visuals()
 
+func refresh_localized_text(item_data: Dictionary) -> void:
+	_apply_item_label(item_data)
+	text = item_label
+
+func _apply_item_label(item_data: Dictionary) -> void:
+	var label_key: String = str(item_data.get("label_key", ""))
+	var label_fallback: String = str(item_data.get("label", ""))
+	if label_key != "":
+		item_label = I18n.tr_key(label_key, {"default": label_fallback})
+	else:
+		item_label = label_fallback
+
 func _update_visuals() -> void:
-	# Set color based on correct bucket
-	var color := COLOR_UNKNOWN
+	# Neutral style before confirmation: no category hints via color/icon.
+	var color := COLOR_NEUTRAL
 	var icon_text := "?"
+	if type_indicator:
+		type_indicator.color = color
+	if glow_overlay:
+		glow_overlay.color = Color(color.r, color.g, color.b, 0.2)
+	if type_icon:
+		type_icon.text = icon_text
+
+func reveal_correct_color() -> void:
+	var color := COLOR_UNKNOWN
 	match correct_bucket_id:
-		"INPUT", "A":
+		"INPUT":
 			color = COLOR_INPUT
-			icon_text = "◉"
-		"OUTPUT", "B":
+		"OUTPUT":
 			color = COLOR_OUTPUT
-			icon_text = "▶"
-		"MEMORY", "C":
+		"MEMORY":
 			color = COLOR_MEMORY
-			icon_text = "◈"
-		_:
-			color = COLOR_UNKNOWN
-			icon_text = "?"
-	
 	if type_indicator:
 		type_indicator.color = color
 	if glow_overlay:
 		glow_overlay.color = Color(color.r, color.g, color.b, 0.3)
-	if type_icon:
-		type_icon.text = icon_text
 
 func set_zone_id(zone_id: String) -> void:
 	set_meta("zone_id", zone_id)
@@ -81,7 +93,6 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	_drag_from_zone = from_zone
 	drag_started.emit(item_id, from_zone)
 
-	# Show drag hint
 	if drag_hint:
 		drag_hint.visible = true
 
@@ -95,7 +106,7 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 
 	var preview: Button = duplicate() as Button
 	preview.modulate.a = 0.9
-	preview.modulate.v = 1.2  # Slight brightness boost
+	preview.modulate.v = 1.2
 	var holder: Control = Control.new()
 	holder.add_child(preview)
 	preview.position = -0.5 * preview.size

@@ -14,6 +14,41 @@ const GATE_NOR := "NOR"
 const MAX_ATTEMPTS := 3
 const ANALYZE_COOLDOWN_SEC := 4.0
 
+const DIAG_NONE := ""
+const DIAG_NEXT := "NEXT_CASE"
+const DIAG_EXIT := "EXIT_QUEST_SELECT"
+
+const ACTION_HINT := "HINT"
+const ACTION_TEST := "TEST"
+const ACTION_NEXT := "NEXT"
+
+enum UiState {
+	STATE_EMPTY,
+	STATE_SELECT_FIRST_SLOT,
+	STATE_FILL_FIRST_SLOT,
+	STATE_SELECT_SECOND_SLOT,
+	STATE_FILL_SECOND_SLOT,
+	STATE_READY_FOR_TEST,
+	STATE_TEST_FAILED,
+	STATE_SOLVED,
+	STATE_SAFE_MODE
+}
+
+const COLOR_STATE_DEFAULT := Color(1.0, 1.0, 1.0, 1.0)
+const COLOR_STATE_ACTIVE := Color(1.0, 0.95, 0.86, 1.0)
+const COLOR_STATE_FILLED := Color(0.86, 0.93, 1.0, 1.0)
+const COLOR_STATE_DISABLED := Color(0.70, 0.70, 0.72, 1.0)
+const COLOR_STATE_SUCCESS := Color(0.82, 0.98, 0.88, 1.0)
+const COLOR_STATE_ERROR := Color(1.0, 0.83, 0.83, 1.0)
+const COLOR_STATE_SAFE := Color(0.96, 0.90, 0.78, 1.0)
+
+const COLOR_TEXT_MAIN := Color(0.95, 0.95, 0.90, 1.0)
+const COLOR_TEXT_MUTED := Color(0.68, 0.68, 0.70, 1.0)
+const COLOR_TEXT_SUCCESS := Color(0.45, 0.92, 0.62, 1.0)
+const COLOR_TEXT_ERROR := Color(1.0, 0.35, 0.32, 1.0)
+const COLOR_TEXT_WARNING := Color(1.0, 0.78, 0.32, 1.0)
+const COLOR_TEXT_INFO := Color(0.56, 0.78, 0.96, 1.0)
+
 const CASES := [
 	{
 		"id": "B_01",
@@ -21,15 +56,15 @@ const CASES := [
 		"story": "Соберите двухэтапную схему: сначала узел A/B, затем результат с C.",
 		"labels": ["ДАТЧИК A", "ДАТЧИК B", "ДАТЧИК C"],
 		"correct_gates": [GATE_OR, GATE_AND],
-		"hint": "Сначала объедините A и B через ИЛИ, затем примените И с C."
+		"hint": "Для CASCADE_TOP сначала сопоставьте A и B, затем объедините INTER с C."
 	},
 	{
 		"id": "B_02",
 		"layout": LAYOUT_CASCADE_BOTTOM,
-		"story": "Схема перестроена: сначала обрабатывается пара B/C, затем узел A.",
+		"story": "Схема перестроена: сначала обрабатывается пара B/C, затем подключается A.",
 		"labels": ["КЛЮЧ A", "КЛЮЧ B", "КЛЮЧ C"],
 		"correct_gates": [GATE_AND, GATE_OR],
-		"hint": "Во внутреннем слоте нужен И, во внешнем слоте - ИЛИ."
+		"hint": "Для CASCADE_BOTTOM внутренний этап работает на B/C, внешний - на A и INTER."
 	},
 	{
 		"id": "B_03",
@@ -37,7 +72,7 @@ const CASES := [
 		"story": "Нужен канал, где первый этап ловит различие A/B, а второй фильтрует через C.",
 		"labels": ["КАНАЛ A", "КАНАЛ B", "ФИЛЬТР C"],
 		"correct_gates": [GATE_XOR, GATE_AND],
-		"hint": "Различие на первом этапе даёт ИСКЛ-ИЛИ."
+		"hint": "Если в первом этапе важна разница сигналов A/B, проверьте XOR."
 	},
 	{
 		"id": "B_04",
@@ -45,7 +80,7 @@ const CASES := [
 		"story": "Схема с инверсией: сначала инвертируется B/C, затем объединяется с A.",
 		"labels": ["ОПОРНЫЙ A", "ШУМ B", "ШУМ C"],
 		"correct_gates": [GATE_NOR, GATE_OR],
-		"hint": "Внутренний этап - ИЛИ-НЕ (NOR), внешний - ИЛИ."
+		"hint": "При CASCADE_BOTTOM внимательно разделяйте внутренний и внешний этапы."
 	},
 	{
 		"id": "B_05",
@@ -53,21 +88,47 @@ const CASES := [
 		"story": "Соберите устойчивый тракт с финальным отрицанием совпадения.",
 		"labels": ["ЛИНИЯ A", "ЛИНИЯ B", "ЛИНИЯ C"],
 		"correct_gates": [GATE_AND, GATE_NAND],
-		"hint": "Сначала нужно совпадение A и B, затем отрицание с C."
+		"hint": "Сначала оцените пару A/B, затем проверьте реакцию второго этапа на C."
 	}
 ]
 
 @onready var clue_title_label: Label = $SafeArea/MainLayout/Header/LblClueTitle
 @onready var session_label: Label = $SafeArea/MainLayout/Header/LblSessionId
+@onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
+
+@onready var facts_bar_label: Label = $SafeArea/MainLayout/BarsRow/FactsBarLabel
 @onready var facts_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/FactsBar
+@onready var energy_bar_label: Label = $SafeArea/MainLayout/BarsRow/EnergyBarLabel
 @onready var energy_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/EnergyBar
+
 @onready var target_label: Label = $SafeArea/MainLayout/TargetDisplay/LblTarget
-@onready var terminal_text: RichTextLabel = $SafeArea/MainLayout/TerminalFrame/TerminalScroll/TerminalRichText
-@onready var stats_label: Label = $SafeArea/MainLayout/StatusRow/StatsLabel
-@onready var feedback_label: Label = $SafeArea/MainLayout/StatusRow/FeedbackLabel
+@onready var scheme_label: Label = $SafeArea/MainLayout/SchemePanel/LblScheme
+@onready var validation_mode_label: Label = $SafeArea/MainLayout/ValidationPanel/LblValidationMode
+
 @onready var terminal_frame: PanelContainer = $SafeArea/MainLayout/TerminalFrame
-@onready var interaction_row: HBoxContainer = $SafeArea/MainLayout/InteractionRow
+@onready var terminal_text: RichTextLabel = $SafeArea/MainLayout/TerminalFrame/TerminalScroll/TerminalRichText
+
+@onready var interaction_row: GridContainer = $SafeArea/MainLayout/InteractionRow
+@onready var actions_container: BoxContainer = $SafeArea/MainLayout/Actions
+@onready var status_row: BoxContainer = $SafeArea/MainLayout/StatusRow
+@onready var gates_container: GridContainer = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer
+
+@onready var input_a_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/InputAFrame
+@onready var input_b_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/InputBFrame
+@onready var input_c_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/InputCFrame
+@onready var slot1_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/Slot1Frame
+@onready var slot2_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/Slot2Frame
+@onready var inter_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/InterSlot
+@onready var output_frame: PanelContainer = $SafeArea/MainLayout/InteractionRow/OutputSlot
 @onready var inventory_frame: PanelContainer = $SafeArea/MainLayout/InventoryFrame
+
+@onready var input_a_title_label: Label = $SafeArea/MainLayout/InteractionRow/InputAFrame/InputAVBox/InputATitle
+@onready var input_b_title_label: Label = $SafeArea/MainLayout/InteractionRow/InputBFrame/InputBVBox/InputBTitle
+@onready var input_c_title_label: Label = $SafeArea/MainLayout/InteractionRow/InputCFrame/InputCVBox/InputCTitle
+@onready var slot1_title_label: Label = $SafeArea/MainLayout/InteractionRow/Slot1Frame/Slot1VBox/Slot1Title
+@onready var slot2_title_label: Label = $SafeArea/MainLayout/InteractionRow/Slot2Frame/Slot2VBox/Slot2Title
+@onready var inter_title_label: Label = $SafeArea/MainLayout/InteractionRow/InterSlot/InterVBox/InterTitle
+@onready var output_title_label: Label = $SafeArea/MainLayout/InteractionRow/OutputSlot/OutputVBox/OutputTitle
 
 @onready var input_a_btn: Button = $SafeArea/MainLayout/InteractionRow/InputAFrame/InputAVBox/InputA_Btn
 @onready var input_b_btn: Button = $SafeArea/MainLayout/InteractionRow/InputBFrame/InputBVBox/InputB_Btn
@@ -75,19 +136,23 @@ const CASES := [
 @onready var slot1_btn: Button = $SafeArea/MainLayout/InteractionRow/Slot1Frame/Slot1VBox/Slot1SelectBtn
 @onready var slot2_btn: Button = $SafeArea/MainLayout/InteractionRow/Slot2Frame/Slot2VBox/Slot2SelectBtn
 @onready var inter_value_label: Label = $SafeArea/MainLayout/InteractionRow/InterSlot/InterVBox/InterValueLabel
+@onready var inter_hint_label: Label = $SafeArea/MainLayout/InteractionRow/InterSlot/InterVBox/InterHintLabel
 @onready var output_value_label: Label = $SafeArea/MainLayout/InteractionRow/OutputSlot/OutputVBox/OutputValueLabel
+@onready var output_hint_label: Label = $SafeArea/MainLayout/InteractionRow/OutputSlot/OutputVBox/OutputHintLabel
 
 @onready var gate_and_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateAndBtn
 @onready var gate_or_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateOrBtn
-@onready var gate_not_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNotBtn
 @onready var gate_xor_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateXorBtn
 @onready var gate_nand_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNandBtn
 @onready var gate_nor_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNorBtn
+@onready var gate_not_btn: Button = $SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer/GateNotBtn
+
+@onready var stats_label: Label = $SafeArea/MainLayout/StatusRow/StatsLabel
+@onready var feedback_label: Label = $SafeArea/MainLayout/StatusRow/FeedbackLabel
 
 @onready var btn_hint: Button = $SafeArea/MainLayout/Actions/BtnHint
 @onready var btn_test: Button = $SafeArea/MainLayout/Actions/BtnTest
 @onready var btn_next: Button = $SafeArea/MainLayout/Actions/BtnNext
-@onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
 
 @onready var diagnostics_blocker: ColorRect = $DiagnosticsBlocker
 @onready var diagnostics_panel: PanelContainer = $DiagnosticsPanelB
@@ -111,17 +176,25 @@ var is_complete: bool = false
 var is_safe_mode: bool = false
 var case_started_ms: int = 0
 var first_action_ms: int = -1
+
 var trace_lines: Array[String] = []
 var vector_cache: Array[Dictionary] = []
 var last_counterexample: Dictionary = {}
-var is_landscape_layout: bool = false
 
 var gate_buttons: Dictionary = {}
 var analyze_timer: Timer = null
+var diagnostics_action: String = DIAG_NONE
+var is_landscape_layout: bool = true
+
+func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
+	var merged := params.duplicate(true)
+	merged["default"] = default_text
+	return I18n.tr_key(key, merged)
 
 func _ready() -> void:
 	_connect_ui_signals()
 	_setup_gate_buttons()
+
 	_update_stability_ui(GlobalMetrics.stability, 0.0)
 	if not GlobalMetrics.stability_changed.is_connected(_update_stability_ui):
 		GlobalMetrics.stability_changed.connect(_update_stability_ui)
@@ -129,42 +202,43 @@ func _ready() -> void:
 		GlobalMetrics.game_over.connect(_on_game_over)
 	if not get_viewport().size_changed.is_connected(_on_viewport_resized):
 		get_viewport().size_changed.connect(_on_viewport_resized)
+	if not I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.connect(_on_language_changed)
 
 	analyze_timer = Timer.new()
 	analyze_timer.one_shot = true
 	analyze_timer.timeout.connect(_on_analyze_unlock)
 	add_child(analyze_timer)
 
+	_apply_i18n_static()
 	_apply_responsive_layout()
 	load_case(0)
+
+func _exit_tree() -> void:
+	if GlobalMetrics.stability_changed.is_connected(_update_stability_ui):
+		GlobalMetrics.stability_changed.disconnect(_update_stability_ui)
+	if GlobalMetrics.game_over.is_connected(_on_game_over):
+		GlobalMetrics.game_over.disconnect(_on_game_over)
+	if get_viewport() and get_viewport().size_changed.is_connected(_on_viewport_resized):
+		get_viewport().size_changed.disconnect(_on_viewport_resized)
+	if I18n.language_changed.is_connected(_on_language_changed):
+		I18n.language_changed.disconnect(_on_language_changed)
 
 func _connect_ui_signals() -> void:
 	if not btn_back.pressed.is_connected(_on_back_button_pressed):
 		btn_back.pressed.connect(_on_back_button_pressed)
+
 	if not input_a_btn.toggled.is_connected(_on_input_a_toggled):
 		input_a_btn.toggled.connect(_on_input_a_toggled)
 	if not input_b_btn.toggled.is_connected(_on_input_b_toggled):
 		input_b_btn.toggled.connect(_on_input_b_toggled)
 	if not input_c_btn.toggled.is_connected(_on_input_c_toggled):
 		input_c_btn.toggled.connect(_on_input_c_toggled)
+
 	if not slot1_btn.pressed.is_connected(_on_slot1_pressed):
 		slot1_btn.pressed.connect(_on_slot1_pressed)
 	if not slot2_btn.pressed.is_connected(_on_slot2_pressed):
 		slot2_btn.pressed.connect(_on_slot2_pressed)
-
-	var gate_callbacks: Dictionary = {
-		gate_and_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_AND),
-		gate_or_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_OR),
-		gate_not_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_NOT),
-		gate_xor_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_XOR),
-		gate_nand_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_NAND),
-		gate_nor_btn: Callable(self, "_on_gate_button_toggled").bind(GATE_NOR)
-	}
-	for gate_btn_var in gate_callbacks.keys():
-		var gate_btn: Button = gate_btn_var
-		var cb: Callable = gate_callbacks[gate_btn]
-		if not gate_btn.toggled.is_connected(cb):
-			gate_btn.toggled.connect(cb)
 
 	if not btn_hint.pressed.is_connected(_on_hint_pressed):
 		btn_hint.pressed.connect(_on_hint_pressed)
@@ -172,42 +246,109 @@ func _connect_ui_signals() -> void:
 		btn_test.pressed.connect(_on_test_pressed)
 	if not btn_next.pressed.is_connected(_on_next_button_pressed):
 		btn_next.pressed.connect(_on_next_button_pressed)
+
 	if not diagnostics_next_button.pressed.is_connected(_on_diagnostics_close_pressed):
 		diagnostics_next_button.pressed.connect(_on_diagnostics_close_pressed)
+
+func _setup_gate_buttons() -> void:
+	gate_buttons = {
+		GATE_AND: gate_and_btn,
+		GATE_OR: gate_or_btn,
+		GATE_XOR: gate_xor_btn,
+		GATE_NAND: gate_nand_btn,
+		GATE_NOR: gate_nor_btn
+	}
+
+	for gate_id in gate_buttons.keys():
+		var gate_btn: Button = gate_buttons[gate_id]
+		var call := Callable(self, "_on_gate_button_toggled").bind(gate_id)
+		if not gate_btn.toggled.is_connected(call):
+			gate_btn.toggled.connect(call)
+
+	gate_not_btn.visible = false
+	gate_not_btn.disabled = true
+	_clear_gate_button_presses()
+
+func _on_language_changed() -> void:
+	_apply_i18n_static()
+	_refresh_case_labels()
+	_update_outputs()
+	_update_terminal()
+	_update_ui_state()
+
+func _apply_i18n_static() -> void:
+	clue_title_label.text = _tr("logic.b.ui.title", "ДЕТЕКТОР ЛЖИ")
+	btn_back.text = _tr("logic.common.back", "НАЗАД")
+
+	facts_bar_label.text = _tr("logic.b.ui.assembly_bar", "СБОРКА")
+	energy_bar_label.text = _tr("logic.b.ui.stability_bar", "СТАБИЛЬНОСТЬ")
+
+	slot1_title_label.text = _tr("logic.b.ui.slot1_title", "СЛОТ 1 · ЭТАП 1")
+	slot2_title_label.text = _tr("logic.b.ui.slot2_title", "СЛОТ 2 · ЭТАП 2")
+	inter_title_label.text = _tr("logic.b.ui.inter_title", "ПРОМЕЖУТОЧНЫЙ")
+	output_title_label.text = _tr("logic.b.ui.output_title", "ВЫХОД")
+
+	btn_hint.text = _tr("logic.b.ui.analyze_btn", "АНАЛИЗ")
+	btn_test.text = _tr("logic.b.ui.test_btn", "ПРОВЕРИТЬ")
+	btn_next.text = _tr("logic.common.next", "ДАЛЕЕ")
+
+	validation_mode_label.text = _tr(
+		"logic.b.ui.validation_note",
+		"Текущие A/B/C показывают локальную симуляцию. Кнопка «ПРОВЕРИТЬ» запускает полную сверку по всем 8 комбинациям."
+	)
 
 func _on_viewport_resized() -> void:
 	_apply_responsive_layout()
 
 func _apply_responsive_layout() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var landscape := viewport_size.x > viewport_size.y
-	if is_landscape_layout == landscape:
-		return
-	is_landscape_layout = landscape
-	terminal_frame.size_flags_vertical = 0 if landscape else Control.SIZE_EXPAND_FILL
-	inventory_frame.size_flags_stretch_ratio = 0.35 if landscape else 0.55
-	interaction_row.add_theme_constant_override("separation", 10 if landscape else 12)
+	var landscape := viewport_size.x >= viewport_size.y
+	var narrow := viewport_size.x < 980.0
+	var very_narrow := viewport_size.x < 700.0
 
-func _setup_gate_buttons() -> void:
-	gate_buttons = {
-		GATE_AND: gate_and_btn,
-		GATE_OR: gate_or_btn,
-		GATE_NOT: gate_not_btn,
-		GATE_XOR: gate_xor_btn,
-		GATE_NAND: gate_nand_btn,
-		GATE_NOR: gate_nor_btn
-	}
-	_clear_gate_button_presses()
+	is_landscape_layout = landscape
+	if landscape:
+		terminal_frame.custom_minimum_size = Vector2(0, 260)
+		terminal_frame.size_flags_vertical = 3
+		interaction_row.columns = 7 if viewport_size.x >= 1550.0 else 4
+		gates_container.columns = 5 if viewport_size.x >= 1550.0 else 3
+		actions_container.vertical = false
+		status_row.vertical = false
+		inventory_frame.size_flags_stretch_ratio = 0.45
+		terminal_text.add_theme_font_size_override("normal_font_size", 18 if narrow else 20)
+	else:
+		terminal_frame.custom_minimum_size = Vector2(0, 170)
+		terminal_frame.size_flags_vertical = 0
+		interaction_row.columns = 2 if very_narrow else 3
+		gates_container.columns = 2 if very_narrow else 3
+		actions_container.vertical = true
+		status_row.vertical = true
+		inventory_frame.size_flags_stretch_ratio = 0.65
+		terminal_text.add_theme_font_size_override("normal_font_size", 17 if very_narrow else 18)
+
+	interaction_row.add_theme_constant_override("h_separation", 10 if narrow else 12)
+	interaction_row.add_theme_constant_override("v_separation", 10 if narrow else 12)
+
+	for gate_btn in gate_buttons.values():
+		(gate_btn as Button).custom_minimum_size = Vector2(0, 54 if very_narrow else 60)
+
+	for action_btn in [btn_hint, btn_test, btn_next]:
+		action_btn.custom_minimum_size = Vector2(0, 56 if very_narrow else 60)
 
 func load_case(idx: int) -> void:
-	if idx >= CASES.size():
+	if idx < 0:
 		idx = 0
+	if idx >= CASES.size():
+		_show_completion_state()
+		return
 
 	current_case_idx = idx
 	current_case = CASES[idx]
+
 	inputs = [false, false, false]
 	placed_gates = [GATE_NONE, GATE_NONE]
 	selected_slot_idx = -1
+
 	attempts = 0
 	hints_used = 0
 	test_count = 0
@@ -216,206 +357,288 @@ func load_case(idx: int) -> void:
 	is_safe_mode = false
 	case_started_ms = Time.get_ticks_msec()
 	first_action_ms = -1
+
 	trace_lines.clear()
-	last_counterexample.clear()
 	vector_cache = _build_control_vectors(current_case)
-	if analyze_timer != null:
+	last_counterexample.clear()
+
+	if analyze_timer:
 		analyze_timer.stop()
 
-	clue_title_label.text = "ДЕТЕКТОР ЛЖИ B-01"
-	input_a_btn.text = "%s\n[0]" % str(current_case.get("labels", ["A"])[0])
-	input_b_btn.text = "%s\n[0]" % str(current_case.get("labels", ["A", "B"])[1])
-	input_c_btn.text = "%s\n[0]" % str(current_case.get("labels", ["A", "B", "C"])[2])
-	input_a_btn.button_pressed = false
-	input_b_btn.button_pressed = false
-	input_c_btn.button_pressed = false
-	input_a_btn.disabled = false
-	input_b_btn.disabled = false
-	input_c_btn.disabled = false
-
-	btn_hint.disabled = false
-	btn_test.disabled = true
-	btn_next.visible = false
-	feedback_label.visible = false
-	feedback_label.text = ""
 	_hide_diagnostics()
-	_set_gate_buttons_enabled(false)
-	_clear_gate_button_presses()
+	_refresh_case_labels()
 
-	_update_slot_visual(0)
-	_update_slot_visual(1)
+	input_a_btn.set_pressed_no_signal(false)
+	input_b_btn.set_pressed_no_signal(false)
+	input_c_btn.set_pressed_no_signal(false)
+
+	_clear_gate_button_presses()
+	_append_trace(_tr("logic.b.trace.case_loaded", "Кейс загружен. Выберите SLOT 1 и установите модуль."))
+	_append_trace(_tr("logic.b.trace.full_validation", "ПРОВЕРИТЬ выполняет полную сверку по {count} векторам.", {"count": vector_cache.size()}))
+
 	_update_outputs()
-	_append_trace("Сценарий загружен. Выберите слот и установите модуль.")
-	_append_trace("Контрольные векторы: %d" % vector_cache.size())
 	_update_terminal()
-	_update_stats_ui()
 	_update_ui_state()
+	_play_click()
+
+func _refresh_case_labels() -> void:
+	if current_case.is_empty():
+		return
+
+	var labels: Array = current_case.get("labels", ["A", "B", "C"])
+	var a_label := str(labels[0])
+	var b_label := str(labels[1])
+	var c_label := str(labels[2])
+
+	input_a_title_label.text = a_label
+	input_b_title_label.text = b_label
+	input_c_title_label.text = c_label
+
+	input_a_btn.text = "%s\n[%d]" % [a_label, 1 if inputs[0] else 0]
+	input_b_btn.text = "%s\n[%d]" % [b_label, 1 if inputs[1] else 0]
+	input_c_btn.text = "%s\n[%d]" % [c_label, 1 if inputs[2] else 0]
+
+	_update_slot_button_text(0)
+	_update_slot_button_text(1)
+	_set_layout_scheme_text()
 
 func _on_input_a_toggled(pressed: bool) -> void:
+	if is_complete or is_safe_mode:
+		input_a_btn.set_pressed_no_signal(inputs[0])
+		return
 	_mark_first_action()
 	inputs[0] = pressed
-	input_a_btn.text = "%s\n[%d]" % [str(current_case.get("labels", ["A"])[0]), 1 if pressed else 0]
+	_refresh_case_labels()
+	_append_trace(_local_simulation_trace("A"))
 	_update_outputs()
 	_update_terminal()
 	_update_ui_state()
 	_play_click()
 
 func _on_input_b_toggled(pressed: bool) -> void:
+	if is_complete or is_safe_mode:
+		input_b_btn.set_pressed_no_signal(inputs[1])
+		return
 	_mark_first_action()
 	inputs[1] = pressed
-	input_b_btn.text = "%s\n[%d]" % [str(current_case.get("labels", ["A", "B"])[1]), 1 if pressed else 0]
+	_refresh_case_labels()
+	_append_trace(_local_simulation_trace("B"))
 	_update_outputs()
 	_update_terminal()
 	_update_ui_state()
 	_play_click()
 
 func _on_input_c_toggled(pressed: bool) -> void:
+	if is_complete or is_safe_mode:
+		input_c_btn.set_pressed_no_signal(inputs[2])
+		return
 	_mark_first_action()
 	inputs[2] = pressed
-	input_c_btn.text = "%s\n[%d]" % [str(current_case.get("labels", ["A", "B", "C"])[2]), 1 if pressed else 0]
+	_refresh_case_labels()
+	_append_trace(_local_simulation_trace("C"))
 	_update_outputs()
 	_update_terminal()
 	_update_ui_state()
 	_play_click()
 
 func _on_slot1_pressed() -> void:
-	if is_complete:
+	if is_complete or is_safe_mode:
 		return
 	_mark_first_action()
 	selected_slot_idx = 0
-	_update_slot_selection_visual()
-	_set_gate_buttons_enabled(true)
-	_show_feedback("Выбран СЛОТ 1. Установите модуль из инвентаря.", Color(0.56, 0.78, 0.96))
+	_append_trace(_tr("logic.b.trace.select_slot1", "Выбран SLOT 1 (этап 1)."))
+	_show_feedback(_tr("logic.b.feedback.select_slot1", "Выбран SLOT 1. Установите модуль из инвентаря."), COLOR_TEXT_INFO)
+	_update_ui_state()
 	_play_click()
 
 func _on_slot2_pressed() -> void:
-	if is_complete:
+	if is_complete or is_safe_mode:
 		return
 	_mark_first_action()
 	selected_slot_idx = 1
-	_update_slot_selection_visual()
-	_set_gate_buttons_enabled(true)
-	_show_feedback("Выбран СЛОТ 2. Установите модуль из инвентаря.", Color(0.56, 0.78, 0.96))
+	_append_trace(_tr("logic.b.trace.select_slot2", "Выбран SLOT 2 (этап 2)."))
+	_show_feedback(_tr("logic.b.feedback.select_slot2", "Выбран SLOT 2. Установите модуль из инвентаря."), COLOR_TEXT_INFO)
+	_update_ui_state()
 	_play_click()
 
-func _on_gate_button_toggled(arg1: Variant, arg2: Variant = null) -> void:
-	var pressed := false
-	var gate_id := ""
-	if arg1 is bool:
-		pressed = arg1
-		gate_id = str(arg2)
-	else:
-		gate_id = str(arg1)
-		pressed = bool(arg2)
-	if gate_id.is_empty():
-		return
-
+func _on_gate_button_toggled(pressed: bool, gate_id: String) -> void:
 	if not pressed:
 		return
+
 	if is_complete or is_safe_mode:
 		_clear_gate_button_presses()
 		return
+
 	if selected_slot_idx < 0:
-		_show_feedback("Сначала выберите СЛОТ 1 или СЛОТ 2.", Color(1.0, 0.78, 0.32))
 		_clear_gate_button_presses()
+		_show_feedback(_tr("logic.b.feedback.slot_required", "Сначала выберите SLOT 1 или SLOT 2."), COLOR_TEXT_WARNING)
 		return
 
 	_mark_first_action()
-	placed_gates[selected_slot_idx] = gate_id
-	_update_slot_visual(selected_slot_idx)
-	_append_trace("СЛОТ %d <= %s" % [selected_slot_idx + 1, _gate_symbol(gate_id)])
+	_set_slot_filled(selected_slot_idx, gate_id)
+	_append_trace(_tr(
+		"logic.b.trace.slot_filled",
+		"SLOT {slot} <= {gate}",
+		{"slot": selected_slot_idx + 1, "gate": _gate_symbol(gate_id)}
+	))
+
+	last_counterexample.clear()
 	selected_slot_idx = -1
-	_update_slot_selection_visual()
-	_set_gate_buttons_enabled(false)
 	_clear_gate_button_presses()
+
+	_show_feedback(_tr("logic.b.feedback.module_set", "Модуль установлен. Продолжайте сборку схемы."), COLOR_TEXT_INFO)
 	_update_outputs()
 	_update_terminal()
 	_update_ui_state()
 	_play_click()
 
-func _update_slot_visual(idx: int) -> void:
-	var gate_id := placed_gates[idx]
-	var slot_btn := slot1_btn if idx == 0 else slot2_btn
+func _set_slot_filled(slot_idx: int, gate_id: String) -> void:
+	if slot_idx < 0 or slot_idx >= placed_gates.size():
+		return
+	placed_gates[slot_idx] = gate_id
+	_update_slot_button_text(slot_idx)
+
+func _set_slot_empty(slot_idx: int) -> void:
+	if slot_idx < 0 or slot_idx >= placed_gates.size():
+		return
+	placed_gates[slot_idx] = GATE_NONE
+	_update_slot_button_text(slot_idx)
+
+func _update_slot_button_text(slot_idx: int) -> void:
+	var btn := slot1_btn if slot_idx == 0 else slot2_btn
+	var gate_id := placed_gates[slot_idx]
 	if gate_id == GATE_NONE:
-		slot_btn.text = "УСТАНОВИТЬ\n?"
+		btn.text = _tr("logic.b.ui.slot_empty", "УСТАНОВИТЬ\n?")
 	else:
-		slot_btn.text = "УСТАНОВЛЕНО\n%s" % _gate_symbol(gate_id)
-
-func _update_slot_selection_visual() -> void:
-	slot1_btn.add_theme_color_override("font_color", Color(0.95, 0.95, 0.90, 1.0) if selected_slot_idx == 0 else Color(0.74, 0.74, 0.70, 1.0))
-	slot2_btn.add_theme_color_override("font_color", Color(0.95, 0.95, 0.90, 1.0) if selected_slot_idx == 1 else Color(0.74, 0.74, 0.70, 1.0))
-
-func _update_outputs() -> void:
-	var result := _calculate_circuit()
-	inter_value_label.text = "I = %d" % (1 if bool(result.get("inter", false)) else 0)
-	output_value_label.text = "F = %d" % (1 if bool(result.get("final", false)) else 0)
-	inter_value_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.90, 1.0) if bool(result.get("inter", false)) else Color(0.55, 0.55, 0.55, 1.0))
-	output_value_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.90, 1.0) if bool(result.get("final", false)) else Color(0.55, 0.55, 0.55, 1.0))
+		btn.text = _tr(
+			"logic.b.ui.slot_filled",
+			"ЭТАП {slot}\n{gate}",
+			{"slot": slot_idx + 1, "gate": _gate_symbol(gate_id)}
+		)
 
 func _calculate_circuit() -> Dictionary:
 	var g1 := placed_gates[0]
 	var g2 := placed_gates[1]
+
+	var has_stage1 := g1 != GATE_NONE
+	var has_stage2 := g2 != GATE_NONE
+
 	var inter := false
 	var final := false
 
-	if str(current_case.get("layout", LAYOUT_CASCADE_TOP)) == LAYOUT_CASCADE_TOP:
-		if g1 != GATE_NONE:
+	var layout := str(current_case.get("layout", LAYOUT_CASCADE_TOP))
+	if layout == LAYOUT_CASCADE_TOP:
+		if has_stage1:
 			inter = _gate_op(inputs[0], inputs[1], g1)
-		if g2 != GATE_NONE:
+		if has_stage1 and has_stage2:
 			final = _gate_op(inter, inputs[2], g2)
 	else:
-		if g1 != GATE_NONE:
+		if has_stage1:
 			inter = _gate_op(inputs[1], inputs[2], g1)
-		if g2 != GATE_NONE:
+		if has_stage1 and has_stage2:
 			final = _gate_op(inputs[0], inter, g2)
 
-	return {"inter": inter, "final": final}
+	return {
+		"has_stage1": has_stage1,
+		"has_stage2": has_stage2,
+		"inter": inter,
+		"final": final
+	}
 
 func _evaluate_with_gates(gates: Array, in_a: bool, in_b: bool, in_c: bool) -> Dictionary:
 	var g1 := str(gates[0]) if gates.size() > 0 else GATE_NONE
 	var g2 := str(gates[1]) if gates.size() > 1 else GATE_NONE
+
+	var has_stage1 := g1 != GATE_NONE
+	var has_stage2 := g2 != GATE_NONE
+
 	var inter := false
 	var final := false
-	if str(current_case.get("layout", LAYOUT_CASCADE_TOP)) == LAYOUT_CASCADE_TOP:
-		if g1 != GATE_NONE:
+
+	var layout := str(current_case.get("layout", LAYOUT_CASCADE_TOP))
+	if layout == LAYOUT_CASCADE_TOP:
+		if has_stage1:
 			inter = _gate_op(in_a, in_b, g1)
-		if g2 != GATE_NONE:
+		if has_stage1 and has_stage2:
 			final = _gate_op(inter, in_c, g2)
 	else:
-		if g1 != GATE_NONE:
+		if has_stage1:
 			inter = _gate_op(in_b, in_c, g1)
-		if g2 != GATE_NONE:
+		if has_stage1 and has_stage2:
 			final = _gate_op(in_a, inter, g2)
-	return {"inter": inter, "final": final}
+
+	return {
+		"has_stage1": has_stage1,
+		"has_stage2": has_stage2,
+		"inter": inter,
+		"final": final
+	}
 
 func _build_control_vectors(case_data: Dictionary) -> Array[Dictionary]:
 	var vectors: Array[Dictionary] = []
 	var correct: Array = case_data.get("correct_gates", [])
+
 	for mask in range(8):
 		var in_a := (mask & 1) != 0
 		var in_b := (mask & 2) != 0
 		var in_c := (mask & 4) != 0
 		var expected := _evaluate_with_gates(correct, in_a, in_b, in_c)
 		vectors.append({
+			"index": mask,
 			"a": in_a,
 			"b": in_b,
 			"c": in_c,
-			"expected_final": bool(expected.get("final", false)),
-			"expected_inter": bool(expected.get("inter", false))
+			"expected_inter": bool(expected.get("inter", false)),
+			"expected_final": bool(expected.get("final", false))
 		})
+
 	return vectors
 
 func _find_counterexample() -> Dictionary:
 	for vector in vector_cache:
-		var actual := _evaluate_with_gates(placed_gates, bool(vector.get("a", false)), bool(vector.get("b", false)), bool(vector.get("c", false)))
+		var in_a := bool(vector.get("a", false))
+		var in_b := bool(vector.get("b", false))
+		var in_c := bool(vector.get("c", false))
+
+		var actual := _evaluate_with_gates(placed_gates, in_a, in_b, in_c)
 		var expected_final := bool(vector.get("expected_final", false))
 		var actual_final := bool(actual.get("final", false))
+
 		if expected_final != actual_final:
-			var mismatch := vector.duplicate()
-			mismatch["actual_final"] = actual_final
-			mismatch["actual_inter"] = bool(actual.get("inter", false))
+			var mismatch := {
+				"index": int(vector.get("index", 0)),
+				"a": in_a,
+				"b": in_b,
+				"c": in_c,
+				"expected_inter": bool(vector.get("expected_inter", false)),
+				"actual_inter": bool(actual.get("inter", false)),
+				"expected_final": expected_final,
+				"actual_final": actual_final
+			}
+			mismatch["human"] = _format_counterexample(mismatch)
 			return mismatch
+
 	return {}
+
+func _format_counterexample(mismatch: Dictionary) -> String:
+	return "A=%d, B=%d, C=%d | ЭТАЛОН F=%d | ВАША СХЕМА F=%d" % [
+		1 if bool(mismatch.get("a", false)) else 0,
+		1 if bool(mismatch.get("b", false)) else 0,
+		1 if bool(mismatch.get("c", false)) else 0,
+		1 if bool(mismatch.get("expected_final", false)) else 0,
+		1 if bool(mismatch.get("actual_final", false)) else 0
+	]
+
+func _format_counterexample_multiline(mismatch: Dictionary) -> Array[String]:
+	return [
+		"A=%d, B=%d, C=%d" % [
+			1 if bool(mismatch.get("a", false)) else 0,
+			1 if bool(mismatch.get("b", false)) else 0,
+			1 if bool(mismatch.get("c", false)) else 0
+		],
+		"ЭТАЛОН: F=%d" % [1 if bool(mismatch.get("expected_final", false)) else 0],
+		"ВАША СХЕМА: F=%d" % [1 if bool(mismatch.get("actual_final", false)) else 0]
+	]
 
 func _gate_op(a: bool, b: bool, gate_id: String) -> bool:
 	match gate_id:
@@ -436,159 +659,199 @@ func _gate_op(a: bool, b: bool, gate_id: String) -> bool:
 func _on_test_pressed() -> void:
 	if is_complete or is_safe_mode:
 		return
-	_mark_first_action()
 
-	if placed_gates[0] == GATE_NONE or placed_gates[1] == GATE_NONE:
-		_show_feedback("Заполните оба слота перед проверкой.", Color(1.0, 0.78, 0.32))
+	var assembled := _filled_slots_count() == 2
+	if not assembled:
+		_show_feedback(_tr("logic.b.feedback.incomplete", "Проверка недоступна: заполните оба слота."), COLOR_TEXT_WARNING)
+		_append_trace(_tr("logic.b.trace.incomplete_test", "ПРОВЕРИТЬ отклонено: схема собрана не полностью."))
+		_update_terminal()
+		_update_ui_state()
 		return
 
+	_mark_first_action()
 	test_count += 1
-	var result := _calculate_circuit()
-	_append_trace("ПРОВЕРКА #%d | A=%d B=%d C=%d | I=%d F=%d" % [
-		test_count, 1 if inputs[0] else 0, 1 if inputs[1] else 0, 1 if inputs[2] else 0,
-		1 if bool(result.get("inter", false)) else 0,
-		1 if bool(result.get("final", false)) else 0
-	])
+	_append_trace(_tr("logic.b.trace.test_start", "ПРОВЕРКА #{n}: запущена полная валидация по {count} векторам.", {"n": test_count, "count": vector_cache.size()}))
 
 	last_counterexample = _find_counterexample()
-	var is_correct := last_counterexample.is_empty()
 
-	if is_correct:
+	if last_counterexample.is_empty():
 		is_complete = true
-		btn_next.visible = true
-		btn_hint.disabled = true
-		btn_test.disabled = true
-		_disable_controls()
-		_show_feedback("УСПЕХ: конфигурация подтверждена.", Color(0.45, 0.92, 0.62))
+		_append_trace(_tr("logic.b.trace.test_success", "ВАЛИДАЦИЯ УСПЕШНА: схема совпадает с эталоном на всех 8 векторах."))
+		_show_feedback(_tr("logic.b.feedback.test_success", "СХЕМА ПОДТВЕРЖДЕНА ПО ВСЕМ 8 ВЕКТОРАМ."), COLOR_TEXT_SUCCESS)
 		_register_trial("SUCCESS", true)
+		GlobalMetrics.finish_quest(str(current_case.get("id", "B_00")), 100, true)
 	else:
 		attempts += 1
-		var penalty := 15.0 + float(attempts * 5)
+		var penalty := 12.0 + float(attempts * 4)
 		_apply_penalty(penalty)
-		var mismatch := last_counterexample
+
+		var mismatch_line := _format_counterexample(last_counterexample)
+		_append_trace("КОНТРПРИМЕР: %s" % mismatch_line)
 		_show_feedback(
-			"ПРОВАЛ: A=%d B=%d C=%d, ожидалось F=%d, получено F=%d (-%d)." % [
-				1 if bool(mismatch.get("a", false)) else 0,
-				1 if bool(mismatch.get("b", false)) else 0,
-				1 if bool(mismatch.get("c", false)) else 0,
-				1 if bool(mismatch.get("expected_final", false)) else 0,
-				1 if bool(mismatch.get("actual_final", false)) else 0,
-				int(penalty)
-			],
-			Color(1.0, 0.35, 0.32)
+			"НАЙДЕНО РАСХОЖДЕНИЕ: %s (-%d)." % [mismatch_line, int(penalty)],
+			COLOR_TEXT_ERROR
 		)
-		_append_trace(
-			"КОНТРПРИМЕР: A=%d B=%d C=%d -> ожидалось %d, получено %d" % [
-				1 if bool(mismatch.get("a", false)) else 0,
-				1 if bool(mismatch.get("b", false)) else 0,
-				1 if bool(mismatch.get("c", false)) else 0,
-				1 if bool(mismatch.get("expected_final", false)) else 0,
-				1 if bool(mismatch.get("actual_final", false)) else 0
-			]
-		)
-		_register_trial("COUNTEREXAMPLE_FAIL", false)
+
+		var verdict_code := "COUNTEREXAMPLE_FAIL"
 		if attempts >= MAX_ATTEMPTS:
+			verdict_code = "SAFE_MODE_TRIGGERED"
+		_register_trial(verdict_code, false)
+
+		if attempts >= MAX_ATTEMPTS:
+			GlobalMetrics.finish_quest(str(current_case.get("id", "B_00")), 0, false)
 			_enter_safe_mode()
 
+	_update_outputs()
 	_update_terminal()
 	_update_ui_state()
+	_play_click()
+
+func _analysis_text() -> String:
+	var layout := str(current_case.get("layout", LAYOUT_CASCADE_TOP))
+	var prefix := _tr("logic.b.analysis.prefix", "АНАЛИЗ: ")
+
+	if _filled_slots_count() == 0:
+		if layout == LAYOUT_CASCADE_TOP:
+			return prefix + _tr("logic.b.analysis.start_top", "Для CASCADE_TOP сначала выберите SLOT 1: он обрабатывает пару A/B.")
+		return prefix + _tr("logic.b.analysis.start_bottom", "Для CASCADE_BOTTOM сначала выберите SLOT 1: он обрабатывает пару B/C.")
+
+	if placed_gates[0] == GATE_NONE:
+		return prefix + _tr("logic.b.analysis.need_slot1", "Сначала заполните SLOT 1: без внутреннего этапа не появится INTER.")
+
+	if placed_gates[1] == GATE_NONE:
+		if layout == LAYOUT_CASCADE_TOP:
+			return prefix + _tr("logic.b.analysis.need_slot2_top", "Теперь заполните SLOT 2: он объединяет INTER с входом C.")
+		return prefix + _tr("logic.b.analysis.need_slot2_bottom", "Теперь заполните SLOT 2: он объединяет вход A с промежуточным INTER.")
+
+	if last_counterexample.is_empty():
+		return prefix + _tr("logic.b.analysis.ready", "Схема собрана. Нажмите ПРОВЕРИТЬ для полной сверки по 8 векторам.")
+
+	var mismatch := _format_counterexample(last_counterexample)
+	return prefix + _tr("logic.b.analysis.counterexample", "Есть расхождение: {mismatch}. Перепроверьте этапы каскада.", {"mismatch": mismatch})
 
 func _on_hint_pressed() -> void:
 	if is_complete or is_safe_mode:
 		return
-	_mark_first_action()
-	if analyze_timer != null and not analyze_timer.is_stopped():
-		_show_feedback("ПЕРЕГРЕВ АНАЛИЗА... %.1fс" % analyze_timer.time_left, Color(1.0, 0.78, 0.32))
+
+	if analyze_timer and not analyze_timer.is_stopped():
+		_show_feedback(
+			_tr("logic.b.feedback.analyze_cooldown", "Анализ недоступен: перегрев {left}с.", {"left": "%.1f" % analyze_timer.time_left}),
+			COLOR_TEXT_WARNING
+		)
 		return
 
-	hints_used += 1
+	_mark_first_action()
 	analyze_count += 1
-	if placed_gates[0] == GATE_NONE or placed_gates[1] == GATE_NONE:
-		_show_feedback("АНАЛИЗ: заполните оба слота для диагностики.", Color(0.56, 0.78, 0.96))
-		_append_trace("АНАЛИЗ: требуется заполнить слоты.")
-	else:
-		var mismatch := _find_counterexample()
-		if mismatch.is_empty():
-			_show_feedback("АНАЛИЗ: нарушений не найдено, схема проходит векторы.", Color(0.45, 0.92, 0.62))
-			_append_trace("АНАЛИЗ: нарушений нет.")
-		else:
-			_show_feedback(
-				"АНАЛИЗ: контрпример A=%d B=%d C=%d (ожидалось %d, получено %d)." % [
-					1 if bool(mismatch.get("a", false)) else 0,
-					1 if bool(mismatch.get("b", false)) else 0,
-					1 if bool(mismatch.get("c", false)) else 0,
-					1 if bool(mismatch.get("expected_final", false)) else 0,
-					1 if bool(mismatch.get("actual_final", false)) else 0
-				],
-				Color(1.0, 0.78, 0.32)
-			)
-			_append_trace(
-				"АНАЛИЗ КОНТРПРИМЕРА: A=%d B=%d C=%d ожидалось=%d получено=%d" % [
-					1 if bool(mismatch.get("a", false)) else 0,
-					1 if bool(mismatch.get("b", false)) else 0,
-					1 if bool(mismatch.get("c", false)) else 0,
-					1 if bool(mismatch.get("expected_final", false)) else 0,
-					1 if bool(mismatch.get("actual_final", false)) else 0
-				]
-			)
-	if analyze_timer != null:
-		btn_hint.disabled = true
+	hints_used += 1
+
+	var analysis := _analysis_text()
+	_show_feedback(analysis, COLOR_TEXT_INFO)
+	_append_trace("АНАЛИЗ #%d: %s" % [analyze_count, analysis])
+
+	if analyze_timer:
 		analyze_timer.start(ANALYZE_COOLDOWN_SEC)
+
 	_update_terminal()
 	_update_ui_state()
+	_play_click()
 
 func _enter_safe_mode() -> void:
+	if is_safe_mode:
+		return
+
 	is_safe_mode = true
 	is_complete = true
-	btn_next.visible = true
-	btn_test.disabled = true
-	btn_hint.disabled = true
+	selected_slot_idx = -1
 
 	var correct: Array = current_case.get("correct_gates", [])
-	placed_gates[0] = str(correct[0])
-	placed_gates[1] = str(correct[1])
-	_update_slot_visual(0)
-	_update_slot_visual(1)
-	_update_outputs()
-	_disable_controls()
-	_set_gate_buttons_enabled(false)
-	_clear_gate_button_presses()
+	placed_gates[0] = str(correct[0]) if correct.size() > 0 else GATE_NONE
+	placed_gates[1] = str(correct[1]) if correct.size() > 1 else GATE_NONE
 
-	var safe_msg := "БЕЗОПАСНЫЙ РЕЖИМ: СЛОТ1=%s, СЛОТ2=%s" % [_gate_symbol(placed_gates[0]), _gate_symbol(placed_gates[1])]
-	_show_feedback(safe_msg, Color(1.0, 0.74, 0.32))
-	_append_trace(safe_msg)
-	_show_diagnostics("БЕЗОПАСНЫЙ РЕЖИМ", "Правильная конфигурация подставлена автоматически.\nИзучите сборку и переходите далее.")
+	_update_slot_button_text(0)
+	_update_slot_button_text(1)
+	_clear_gate_button_presses()
+	_append_trace(_tr("logic.b.trace.safe_mode", "SAFE MODE: верная сборка подставлена автоматически."))
+
+	_show_feedback(
+		_tr("logic.b.feedback.safe_mode", "SAFE MODE: кейс завершён в режиме диагностики. Изучите сборку и переходите далее."),
+		COLOR_TEXT_WARNING
+	)
+
+	_show_diagnostics(
+		_tr("logic.b.safe.title", "SAFE MODE"),
+		_tr("logic.b.safe.body", "Система зафиксировала серию ошибок и подставила верную конфигурацию для обучения.\n\nSLOT 1: {slot1}\nSLOT 2: {slot2}", {
+			"slot1": _gate_symbol(placed_gates[0]),
+			"slot2": _gate_symbol(placed_gates[1])
+		}),
+		_tr("logic.b.safe.next", "К СЛЕДУЮЩЕМУ КЕЙСУ"),
+		DIAG_NEXT
+	)
+
+	_update_outputs()
 	_update_terminal()
 	_update_ui_state()
 
-func _disable_controls() -> void:
-	input_a_btn.disabled = true
-	input_b_btn.disabled = true
-	input_c_btn.disabled = true
-	slot1_btn.disabled = true
-	slot2_btn.disabled = true
+func _show_completion_state() -> void:
+	is_complete = true
+	is_safe_mode = false
+	selected_slot_idx = -1
+	btn_hint.disabled = true
+	btn_test.disabled = true
+	_set_gate_buttons_enabled(false)
 
-func _on_game_over() -> void:
-	_enter_safe_mode()
+	_show_feedback(_tr("logic.b.feedback.finished", "СЛОЖНОСТЬ B ЗАВЕРШЕНА. Возврат к выбору квестов."), COLOR_TEXT_SUCCESS)
+	_show_diagnostics(
+		_tr("logic.b.finish.title", "СЛОЖНОСТЬ B ЗАВЕРШЕНА"),
+		_tr("logic.b.finish.body", "Все кейсы сложности B закрыты. Возвращайтесь в меню выбора квестов."),
+		_tr("logic.b.finish.button", "К ВЫБОРУ КВЕСТОВ"),
+		DIAG_EXIT
+	)
+	_append_trace(_tr("logic.b.trace.finish", "Сложность B завершена."))
+	_update_terminal()
+	_update_ui_state()
+	target_label.text = _tr("logic.b.target.finished", "СЛОЖНОСТЬ B ЗАВЕРШЕНА")
+	btn_next.visible = false
+
+func _advance_case_or_exit() -> void:
+	_hide_diagnostics()
+	var next_idx := current_case_idx + 1
+	if next_idx < CASES.size():
+		load_case(next_idx)
+		return
+	_show_completion_state()
+
+func _on_next_button_pressed() -> void:
+	_advance_case_or_exit()
 
 func _on_back_button_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
-func _on_next_button_pressed() -> void:
-	_hide_diagnostics()
-	load_case(current_case_idx + 1)
+func _on_game_over() -> void:
+	if is_safe_mode or is_complete:
+		return
+	GlobalMetrics.finish_quest(str(current_case.get("id", "B_00")), 0, false)
+	_enter_safe_mode()
 
 func _on_diagnostics_close_pressed() -> void:
+	if diagnostics_action == DIAG_NEXT:
+		_advance_case_or_exit()
+		return
+
+	if diagnostics_action == DIAG_EXIT:
+		_hide_diagnostics()
+		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+		return
+
 	_hide_diagnostics()
 
 func _on_analyze_unlock() -> void:
-	if is_complete or is_safe_mode:
-		return
-	btn_hint.disabled = false
+	_update_ui_state()
 
-func _show_diagnostics(title: String, message: String) -> void:
+func _show_diagnostics(title: String, message: String, button_text: String, action: String) -> void:
 	diagnostics_title.text = title
 	diagnostics_text.text = message
+	diagnostics_next_button.text = button_text
+	diagnostics_action = action
 	diagnostics_blocker.visible = true
 	diagnostics_panel.visible = true
 	diagnostics_next_button.grab_focus()
@@ -596,70 +859,424 @@ func _show_diagnostics(title: String, message: String) -> void:
 func _hide_diagnostics() -> void:
 	diagnostics_blocker.visible = false
 	diagnostics_panel.visible = false
-
-func _set_gate_buttons_enabled(enabled: bool) -> void:
-	for gate_id in gate_buttons.keys():
-		var gate_btn: Button = gate_buttons[gate_id]
-		gate_btn.disabled = not enabled
-
-func _clear_gate_button_presses() -> void:
-	for gate_id in gate_buttons.keys():
-		var gate_btn: Button = gate_buttons[gate_id]
-		gate_btn.set_pressed_no_signal(false)
-
-func _append_trace(line: String) -> void:
-	trace_lines.append(line)
-	if trace_lines.size() > 12:
-		trace_lines.remove_at(0)
-
-func _update_terminal() -> void:
-	var lines: Array[String] = []
-	lines.append("[b]БРИФИНГ[/b]")
-	lines.append(str(current_case.get("story", "")))
-	lines.append("Контрольные векторы: %d" % vector_cache.size())
-	lines.append("")
-	lines.append("[b]ЖУРНАЛ[/b]")
-	if trace_lines.is_empty():
-		lines.append("- ЖУРНАЛ ПУСТ")
-	else:
-		for i in range(trace_lines.size()):
-			var row := "- " + trace_lines[i]
-			if i == trace_lines.size() - 1:
-				row = "[color=#f4f2e6]> %s[/color]" % row
-			lines.append(row)
-	terminal_text.text = "\n".join(lines)
+	diagnostics_action = DIAG_NONE
 
 func _show_feedback(msg: String, col: Color) -> void:
 	feedback_label.text = msg
 	feedback_label.add_theme_color_override("font_color", col)
 	feedback_label.visible = true
 
-func _update_ui_state() -> void:
-	var filled_slots := 0
-	if placed_gates[0] != GATE_NONE:
-		filled_slots += 1
-	if placed_gates[1] != GATE_NONE:
-		filled_slots += 1
+func _set_gate_buttons_enabled(enabled: bool) -> void:
+	for gate_id in gate_buttons.keys():
+		var btn: Button = gate_buttons[gate_id]
+		btn.disabled = not enabled
 
-	var step_text := ""
+func _clear_gate_button_presses() -> void:
+	for gate_id in gate_buttons.keys():
+		var btn: Button = gate_buttons[gate_id]
+		btn.set_pressed_no_signal(false)
+
+func _append_trace(line: String) -> void:
+	var trimmed := line.strip_edges()
+	if trimmed.is_empty():
+		return
+	trace_lines.append(trimmed)
+	if trace_lines.size() > 18:
+		trace_lines.remove_at(0)
+
+func _layout_scheme_text() -> String:
+	var labels: Array = current_case.get("labels", ["A", "B", "C"])
+	var a_label := str(labels[0])
+	var b_label := str(labels[1])
+	var c_label := str(labels[2])
+
+	if str(current_case.get("layout", LAYOUT_CASCADE_TOP)) == LAYOUT_CASCADE_TOP:
+		return "СХЕМА: (%s, %s) -> SLOT 1 -> INTER -> SLOT 2 + %s -> F" % [a_label, b_label, c_label]
+	return "СХЕМА: (%s, %s) -> SLOT 1 -> INTER -> SLOT 2 + %s -> F" % [b_label, c_label, a_label]
+
+func _set_layout_scheme_text() -> void:
+	scheme_label.text = _layout_scheme_text()
+
+func _local_simulation_values() -> Dictionary:
+	var result := _calculate_circuit()
+
+	var inter_text := "—"
+	if bool(result.get("has_stage1", false)):
+		inter_text = str(1 if bool(result.get("inter", false)) else 0)
+
+	var final_text := "—"
+	if bool(result.get("has_stage1", false)) and bool(result.get("has_stage2", false)):
+		final_text = str(1 if bool(result.get("final", false)) else 0)
+
+	return {"inter": inter_text, "final": final_text}
+
+func _local_simulation_trace(source: String) -> String:
+	var local_vals := _local_simulation_values()
+	return "%s изменён: A=%d, B=%d, C=%d -> I=%s, F=%s (локальная симуляция)." % [
+		source,
+		1 if inputs[0] else 0,
+		1 if inputs[1] else 0,
+		1 if inputs[2] else 0,
+		str(local_vals.get("inter", "—")),
+		str(local_vals.get("final", "—"))
+	]
+
+func _confidence_ratio() -> float:
+	var ratio := float(_filled_slots_count()) / 2.0
+	if not last_counterexample.is_empty() and ratio > 0.0:
+		ratio -= 0.2
 	if is_complete:
-		step_text = "ШАГ 3/3: проверка завершена, переходите далее"
-	elif filled_slots < 2:
-		step_text = "ШАГ 1/3: выберите слот и установите 2 модуля"
-	else:
-		step_text = "ШАГ 2/3: нажмите ПРОВЕРИТЬ"
+		ratio = 1.0
+	return clampf(ratio, 0.0, 1.0)
 
-	target_label.text = step_text
-	facts_bar.value = 100.0 if is_complete else float(filled_slots) * 50.0
+func _confidence_label() -> String:
+	var ratio := _confidence_ratio()
+	if ratio >= 0.85:
+		return "высокая"
+	if ratio >= 0.5:
+		return "средняя"
+	return "низкая"
+
+func _update_terminal() -> void:
+	var lines: Array[String] = []
+	lines.append("[b]БРИФИНГ[/b]")
+	lines.append(str(current_case.get("story", "")))
+	lines.append("Кейс: %s | Тип каскада: %s" % [
+		str(current_case.get("id", "B_00")),
+		_layout_label(str(current_case.get("layout", LAYOUT_CASCADE_TOP)))
+	])
+	lines.append("")
+
+	lines.append("[b]СХЕМА СИГНАЛА[/b]")
+	lines.append(_layout_scheme_text())
+	lines.append("")
+
+	lines.append("[b]РЕЖИМ ПРОВЕРКИ[/b]")
+	lines.append("Локальная симуляция: текущие A/B/C показывают I и F на экране.")
+	lines.append("Полная проверка: кнопка «ПРОВЕРИТЬ» сверяет схему по всем 8 комбинациям.")
+	var local_vals := _local_simulation_values()
+	lines.append("СЕЙЧАС: A=%d, B=%d, C=%d -> I=%s, F=%s" % [
+		1 if inputs[0] else 0,
+		1 if inputs[1] else 0,
+		1 if inputs[2] else 0,
+		str(local_vals.get("inter", "—")),
+		str(local_vals.get("final", "—"))
+	])
+	lines.append("")
+
+	lines.append("[b]ЖУРНАЛ ДЕЙСТВИЙ[/b]")
+	if trace_lines.is_empty():
+		lines.append("- Журнал пуст")
+	else:
+		for i in range(trace_lines.size()):
+			var row := "#%d: %s" % [i + 1, trace_lines[i]]
+			if i == trace_lines.size() - 1:
+				row = "[color=#f4f2e6]> %s[/color]" % row
+			lines.append(row)
+	lines.append("")
+
+	lines.append("[b]ГИПОТЕЗА[/b]")
+	lines.append("SLOT 1: %s" % _gate_symbol(placed_gates[0]))
+	lines.append("SLOT 2: %s" % _gate_symbol(placed_gates[1]))
+	lines.append("УВЕРЕННОСТЬ: %s (%d/2)" % [_confidence_label(), _filled_slots_count()])
+
+	if not last_counterexample.is_empty():
+		lines.append("")
+		lines.append("[b]КОНТРПРИМЕР[/b]")
+		for row in _format_counterexample_multiline(last_counterexample):
+			lines.append(row)
+
+	if is_safe_mode:
+		lines.append("")
+		lines.append("[color=#ffd084]SAFE MODE: корректная сборка подставлена автоматически.[/color]")
+
+	terminal_text.text = "\n".join(lines)
+
+func _derive_ui_state() -> int:
+	if is_safe_mode:
+		return UiState.STATE_SAFE_MODE
+	if is_complete:
+		return UiState.STATE_SOLVED
+
+	var slot1_filled := placed_gates[0] != GATE_NONE
+	var slot2_filled := placed_gates[1] != GATE_NONE
+
+	if not slot1_filled and not slot2_filled:
+		if selected_slot_idx == 0:
+			return UiState.STATE_FILL_FIRST_SLOT
+		return UiState.STATE_EMPTY
+
+	if slot1_filled and not slot2_filled:
+		if selected_slot_idx == 1:
+			return UiState.STATE_FILL_SECOND_SLOT
+		return UiState.STATE_SELECT_SECOND_SLOT
+
+	if not slot1_filled and slot2_filled:
+		if selected_slot_idx == 0:
+			return UiState.STATE_FILL_FIRST_SLOT
+		return UiState.STATE_SELECT_FIRST_SLOT
+
+	if not last_counterexample.is_empty():
+		return UiState.STATE_TEST_FAILED
+
+	return UiState.STATE_READY_FOR_TEST
+
+func _update_ui_state() -> void:
+	var state := _derive_ui_state()
+	var has_full_assembly := _filled_slots_count() == 2
+	var controls_locked := is_complete or is_safe_mode
+	var analyze_cooldown := analyze_timer and not analyze_timer.is_stopped()
+
+	input_a_btn.disabled = controls_locked
+	input_b_btn.disabled = controls_locked
+	input_c_btn.disabled = controls_locked
+	slot1_btn.disabled = controls_locked
+	slot2_btn.disabled = controls_locked
+
+	btn_hint.disabled = controls_locked or analyze_cooldown
+	btn_test.visible = not (is_complete or is_safe_mode)
+	btn_test.disabled = controls_locked or not has_full_assembly
+	btn_next.visible = is_complete or is_safe_mode
+	if diagnostics_action == DIAG_EXIT:
+		btn_next.visible = false
+
+	_set_gate_buttons_enabled(not controls_locked and selected_slot_idx >= 0)
+	_update_slot_selection_visual()
+	_update_inventory_visual(not controls_locked and selected_slot_idx >= 0)
+
+	_set_target_text_by_state(state)
+	_set_primary_action(_primary_action_for_state(state, has_full_assembly))
+
+	facts_bar.max_value = 2
+	facts_bar.value = float(_filled_slots_count())
 	energy_bar.value = clampf(GlobalMetrics.stability, 0.0, 100.0)
-	btn_test.disabled = is_complete or is_safe_mode or filled_slots < 2
-	btn_hint.disabled = is_complete or is_safe_mode or (analyze_timer != null and not analyze_timer.is_stopped())
+
+	_update_panel_states(state)
 	_update_stats_ui()
+
+func _update_panel_states(state: int) -> void:
+	_set_panel_state(input_a_frame, "active" if not is_complete and not is_safe_mode else "disabled")
+	_set_panel_state(input_b_frame, "active" if not is_complete and not is_safe_mode else "disabled")
+	_set_panel_state(input_c_frame, "active" if not is_complete and not is_safe_mode else "disabled")
+
+	var slot1_filled := placed_gates[0] != GATE_NONE
+	var slot2_filled := placed_gates[1] != GATE_NONE
+
+	if is_safe_mode:
+		_set_panel_state(slot1_frame, "safe")
+		_set_panel_state(slot2_frame, "safe")
+	else:
+		_set_panel_state(slot1_frame, "active" if selected_slot_idx == 0 else ("filled" if slot1_filled else "default"))
+		_set_panel_state(slot2_frame, "active" if selected_slot_idx == 1 else ("filled" if slot2_filled else "default"))
+
+	if state == UiState.STATE_READY_FOR_TEST:
+		_set_panel_state(output_frame, "active")
+	elif state == UiState.STATE_TEST_FAILED:
+		_set_panel_state(output_frame, "error")
+	elif state == UiState.STATE_SOLVED:
+		_set_panel_state(output_frame, "success")
+	elif state == UiState.STATE_SAFE_MODE:
+		_set_panel_state(output_frame, "safe")
+
+func _set_panel_state(panel: PanelContainer, mode: String) -> void:
+	match mode:
+		"active":
+			panel.self_modulate = COLOR_STATE_ACTIVE
+		"filled":
+			panel.self_modulate = COLOR_STATE_FILLED
+		"disabled":
+			panel.self_modulate = COLOR_STATE_DISABLED
+		"success":
+			panel.self_modulate = COLOR_STATE_SUCCESS
+		"error":
+			panel.self_modulate = COLOR_STATE_ERROR
+		"safe":
+			panel.self_modulate = COLOR_STATE_SAFE
+		_:
+			panel.self_modulate = COLOR_STATE_DEFAULT
+
+func _set_target_text_by_state(state: int) -> void:
+	match state:
+		UiState.STATE_EMPTY:
+			target_label.text = _tr("logic.b.target.empty", "ШАГ 1/3: выберите SLOT 1 и установите первый модуль")
+		UiState.STATE_SELECT_FIRST_SLOT:
+			target_label.text = _tr("logic.b.target.select_first", "ШАГ 1/3: выберите SLOT 1, чтобы заполнить внутренний этап")
+		UiState.STATE_FILL_FIRST_SLOT:
+			target_label.text = _tr("logic.b.target.fill_first", "ШАГ 1/3: выберите модуль для SLOT 1")
+		UiState.STATE_SELECT_SECOND_SLOT:
+			target_label.text = _tr("logic.b.target.select_second", "ШАГ 1/3: выберите SLOT 2 и установите второй модуль")
+		UiState.STATE_FILL_SECOND_SLOT:
+			target_label.text = _tr("logic.b.target.fill_second", "ШАГ 1/3: выберите модуль для SLOT 2")
+		UiState.STATE_READY_FOR_TEST:
+			target_label.text = _tr("logic.b.target.ready", "ШАГ 2/3: запустите полную проверку по всем 8 контрольным векторам")
+		UiState.STATE_TEST_FAILED:
+			target_label.text = _tr("logic.b.target.failed", "ШАГ 2/3: найдена ошибка, изучите контрпример и исправьте схему")
+		UiState.STATE_SOLVED:
+			target_label.text = _tr("logic.b.target.solved", "ШАГ 3/3: схема подтверждена, переходите далее")
+		UiState.STATE_SAFE_MODE:
+			target_label.text = _tr("logic.b.target.safe", "SAFE MODE: верная сборка подставлена автоматически")
+
+func _primary_action_for_state(state: int, has_full_assembly: bool) -> String:
+	if state == UiState.STATE_SOLVED or state == UiState.STATE_SAFE_MODE:
+		return ACTION_NEXT
+	if has_full_assembly:
+		return ACTION_TEST
+	return ACTION_HINT
+
+func _set_primary_action(action_id: String) -> void:
+	btn_hint.modulate = Color(0.84, 0.84, 0.86, 1.0)
+	btn_test.modulate = Color(0.84, 0.84, 0.86, 1.0)
+	btn_next.modulate = Color(0.84, 0.84, 0.86, 1.0)
+
+	if action_id == ACTION_HINT and not btn_hint.disabled:
+		btn_hint.modulate = Color(0.90, 0.93, 0.98, 1.0)
+	elif action_id == ACTION_TEST and not btn_test.disabled:
+		btn_test.modulate = Color(1.0, 0.92, 0.78, 1.0)
+	elif action_id == ACTION_NEXT and btn_next.visible:
+		btn_next.modulate = Color(0.84, 0.98, 0.88, 1.0)
+
+func _update_slot_selection_visual() -> void:
+	_update_slot_button_text(0)
+	_update_slot_button_text(1)
+
+	var slot1_filled := placed_gates[0] != GATE_NONE
+	var slot2_filled := placed_gates[1] != GATE_NONE
+
+	slot1_btn.add_theme_color_override(
+		"font_color",
+		COLOR_TEXT_MAIN if selected_slot_idx == 0 else (COLOR_TEXT_INFO if slot1_filled else COLOR_TEXT_MUTED)
+	)
+	slot2_btn.add_theme_color_override(
+		"font_color",
+		COLOR_TEXT_MAIN if selected_slot_idx == 1 else (COLOR_TEXT_INFO if slot2_filled else COLOR_TEXT_MUTED)
+	)
+
+func _update_inventory_visual(enabled: bool) -> void:
+	_set_panel_state(inventory_frame, "active" if enabled else "default")
+
+	for gate_id in gate_buttons.keys():
+		var gate_btn: Button = gate_buttons[gate_id]
+		if gate_btn.disabled:
+			gate_btn.modulate = Color(0.65, 0.65, 0.67, 1.0)
+		elif enabled:
+			gate_btn.modulate = Color(0.94, 0.92, 0.86, 1.0)
+		else:
+			gate_btn.modulate = Color(0.78, 0.78, 0.80, 1.0)
+
+func _update_outputs() -> void:
+	var result := _calculate_circuit()
+	var has_stage1 := bool(result.get("has_stage1", false))
+	var has_stage2 := bool(result.get("has_stage2", false))
+
+	if has_stage1:
+		inter_value_label.text = "I_local = %d" % [1 if bool(result.get("inter", false)) else 0]
+		inter_value_label.add_theme_color_override("font_color", COLOR_TEXT_MAIN)
+	else:
+		inter_value_label.text = "I = —"
+		inter_value_label.add_theme_color_override("font_color", COLOR_TEXT_MUTED)
+
+	if has_stage1 and has_stage2:
+		output_value_label.text = "F_local = %d" % [1 if bool(result.get("final", false)) else 0]
+		output_value_label.add_theme_color_override("font_color", COLOR_TEXT_MAIN)
+	else:
+		output_value_label.text = "F = —"
+		output_value_label.add_theme_color_override("font_color", COLOR_TEXT_MUTED)
+
+	if is_safe_mode:
+		_set_inter_state("safe" if has_stage1 else "empty")
+		_set_output_state("safe")
+		return
+
+	if is_complete:
+		_set_inter_state("success" if has_stage1 else "empty")
+		_set_output_state("success")
+		return
+
+	if not last_counterexample.is_empty():
+		_set_inter_state("mismatch" if has_stage1 else "partial")
+		_set_output_state("mismatch")
+		return
+
+	if not has_stage1 and not has_stage2:
+		_set_inter_state("empty")
+		_set_output_state("empty")
+	elif has_stage1 and not has_stage2:
+		_set_inter_state("partial")
+		_set_output_state("partial")
+	elif not has_stage1 and has_stage2:
+		_set_inter_state("partial")
+		_set_output_state("partial")
+	else:
+		_set_inter_state("local")
+		_set_output_state("local")
+
+func _set_inter_state(mode: String) -> void:
+	match mode:
+		"local":
+			_set_panel_state(inter_frame, "filled")
+			inter_hint_label.text = "INTER вычислен по текущим входам"
+			inter_hint_label.add_theme_color_override("font_color", COLOR_TEXT_INFO)
+		"partial":
+			_set_panel_state(inter_frame, "active")
+			inter_hint_label.text = "INTER доступен после заполнения SLOT 1"
+			inter_hint_label.add_theme_color_override("font_color", COLOR_TEXT_WARNING)
+		"mismatch":
+			_set_panel_state(inter_frame, "error")
+			inter_hint_label.text = "Есть расхождение на полной проверке"
+			inter_hint_label.add_theme_color_override("font_color", COLOR_TEXT_WARNING)
+		"success":
+			_set_panel_state(inter_frame, "success")
+			inter_hint_label.text = "INTER подтвержден в валидной схеме"
+			inter_hint_label.add_theme_color_override("font_color", COLOR_TEXT_SUCCESS)
+		"safe":
+			_set_panel_state(inter_frame, "safe")
+			inter_hint_label.text = "SAFE MODE: эталонный INTER"
+			inter_hint_label.add_theme_color_override("font_color", COLOR_TEXT_WARNING)
+		_:
+			_set_panel_state(inter_frame, "default")
+			inter_hint_label.text = "INTER появится после этапа 1"
+			inter_hint_label.add_theme_color_override("font_color", COLOR_TEXT_MUTED)
+
+func _set_output_state(mode: String) -> void:
+	match mode:
+		"local":
+			_set_panel_state(output_frame, "filled")
+			output_hint_label.text = "Локальный результат по текущим A/B/C"
+			output_hint_label.add_theme_color_override("font_color", COLOR_TEXT_INFO)
+		"partial":
+			_set_panel_state(output_frame, "active")
+			output_hint_label.text = "Соберите оба этапа, чтобы получить F"
+			output_hint_label.add_theme_color_override("font_color", COLOR_TEXT_WARNING)
+		"mismatch":
+			_set_panel_state(output_frame, "error")
+			output_hint_label.text = "Последняя полная проверка выявила контрпример"
+			output_hint_label.add_theme_color_override("font_color", COLOR_TEXT_ERROR)
+		"success":
+			_set_panel_state(output_frame, "success")
+			output_hint_label.text = "Схема подтверждена по всем 8 векторам"
+			output_hint_label.add_theme_color_override("font_color", COLOR_TEXT_SUCCESS)
+		"safe":
+			_set_panel_state(output_frame, "safe")
+			output_hint_label.text = "SAFE MODE: показана верная сборка"
+			output_hint_label.add_theme_color_override("font_color", COLOR_TEXT_WARNING)
+		_:
+			_set_panel_state(output_frame, "default")
+			output_hint_label.text = "F появится после полной сборки"
+			output_hint_label.add_theme_color_override("font_color", COLOR_TEXT_MUTED)
+
+func _filled_slots_count() -> int:
+	var filled := 0
+	if placed_gates[0] != GATE_NONE:
+		filled += 1
+	if placed_gates[1] != GATE_NONE:
+		filled += 1
+	return filled
 
 func _update_stats_ui() -> void:
 	var case_id := str(current_case.get("id", "B_00"))
 	session_label.text = "СЕССИЯ: %d/%d | КЕЙС %s" % [current_case_idx + 1, CASES.size(), case_id]
-	stats_label.text = "ПОП: %d/%d | ТЕСТЫ: %d | ВЕКТ: %d | АНАЛИЗ: %d | СТАБ: %d%%" % [
+
+	stats_label.text = "ПОПЫТКИ: %d/%d | ПРОВЕРКИ: %d | ВЕКТОРЫ: %d | АНАЛИЗ: %d | СТАБИЛЬНОСТЬ: %d%%" % [
 		attempts,
 		MAX_ATTEMPTS,
 		test_count,
@@ -682,9 +1299,15 @@ func _mark_first_action() -> void:
 
 func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	var case_id := str(current_case.get("id", "B_00"))
-	var variant_hash := str(hash("%s|%s|%s" % [str(current_case.get("layout", "")), placed_gates[0], placed_gates[1]]))
+	var variant_hash := str(hash("%s|%s|%s" % [
+		str(current_case.get("layout", "")),
+		placed_gates[0],
+		placed_gates[1]
+	]))
+
 	var payload := TrialV2.build("LOGIC_QUEST", "B", case_id, "MODULE_ASSEMBLY", variant_hash)
 	var elapsed_ms := maxi(0, Time.get_ticks_msec() - case_started_ms)
+
 	payload["elapsed_ms"] = elapsed_ms
 	payload["duration"] = float(elapsed_ms) / 1000.0
 	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms
@@ -692,21 +1315,26 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	payload["is_fit"] = is_correct
 	payload["stability_delta"] = 0
 	payload["verdict_code"] = verdict_code
+
 	payload["attempts"] = attempts
 	payload["hints_used"] = hints_used
 	payload["analyze_count"] = analyze_count
 	payload["test_count"] = test_count
 	payload["vector_count"] = vector_cache.size()
+
+	payload["inputs"] = [inputs[0], inputs[1], inputs[2]]
 	payload["placed_gates"] = placed_gates.duplicate()
 	payload["correct_gates"] = current_case.get("correct_gates", []).duplicate()
-	payload["inputs"] = [inputs[0], inputs[1], inputs[2]]
+
 	if not last_counterexample.is_empty():
-		payload["counterexample"] = last_counterexample.duplicate()
+		payload["counterexample"] = last_counterexample.duplicate(true)
+
 	GlobalMetrics.register_trial(payload)
 
-func _play_click() -> void:
-	if click_player.stream:
-		click_player.play()
+func _layout_label(layout: String) -> String:
+	if layout == LAYOUT_CASCADE_BOTTOM:
+		return "CASCADE_BOTTOM"
+	return "CASCADE_TOP"
 
 func _gate_symbol(gate_id: String) -> String:
 	match gate_id:
@@ -722,5 +1350,11 @@ func _gate_symbol(gate_id: String) -> String:
 			return "И-НЕ"
 		GATE_NOR:
 			return "ИЛИ-НЕ"
+		GATE_NONE:
+			return "—"
 		_:
 			return "?"
+
+func _play_click() -> void:
+	if click_player.stream:
+		click_player.play()

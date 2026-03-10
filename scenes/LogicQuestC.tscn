@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scenes/LogicQuestC.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
-[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_a03yj"]
+[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_overlay_script"]
 
 [node name="LogicQuestC" type="Control"]
 layout_mode = 3
@@ -26,7 +26,7 @@ color = Color(0.06, 0.07, 0.08, 1)
 
 [node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("3_noir")]
 layer = 100
-script = ExtResource("4_a03yj")
+script = ExtResource("4_overlay_script")
 intensity = 0.18
 fx_quality = 1
 tint_color = Color(0.93, 0.93, 0.93, 1)
@@ -46,37 +46,43 @@ theme_override_constants/margin_bottom = 12
 [node name="MainLayout" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
 theme_override_constants/separation = 8
-alignment = 1
 
 [node name="Header" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
-alignment = 1
 
 [node name="BtnBack" type="Button" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "НАЗАД"
+text = "BACK"
 
 [node name="LblClueTitle" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ДЕТЕКТОР ЛЖИ C-01"
+text = "LIE DETECTOR | C"
 
 [node name="LblSessionId" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "СЕССИЯ: 00/00 | CASE C_00"
 horizontal_alignment = 2
+text = "SESSION"
 
 [node name="BarsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
-alignment = 1
+theme_override_constants/separation = 8
+
+[node name="FactsBarLabel" type="Label" parent="SafeArea/MainLayout/BarsRow"]
+layout_mode = 2
+text = "PROGRESS"
 
 [node name="FactsBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_horizontal = 3
 show_percentage = false
+
+[node name="EnergyBarLabel" type="Label" parent="SafeArea/MainLayout/BarsRow"]
+layout_mode = 2
+text = "STABILITY"
 
 [node name="EnergyBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
 custom_minimum_size = Vector2(0, 8)
@@ -90,162 +96,320 @@ layout_mode = 2
 
 [node name="LblTarget" type="Label" parent="SafeArea/MainLayout/TargetDisplay"]
 layout_mode = 2
-text = "ШАГ 1/3: выберите патч"
 horizontal_alignment = 1
+text = "TARGET"
 
-[node name="TerminalFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="TerminalScroll" type="ScrollContainer" parent="SafeArea/MainLayout/TerminalFrame"]
-layout_mode = 2
-
-[node name="TerminalRichText" type="RichTextLabel" parent="SafeArea/MainLayout/TerminalFrame/TerminalScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_font_sizes/normal_font_size = 20
-bbcode_enabled = true
-text = "[b]БРИФИНГ[/b]"
-fit_content = true
-
-[node name="InteractionRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
+[node name="WorkbenchRow" type="BoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 theme_override_constants/separation = 12
-alignment = 1
 
-[node name="ExprSlot" type="PanelContainer" parent="SafeArea/MainLayout/InteractionRow"]
-custom_minimum_size = Vector2(360, 108)
+[node name="SourcePanel" type="PanelContainer" parent="SafeArea/MainLayout/WorkbenchRow"]
+custom_minimum_size = Vector2(280, 160)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ExprVBox" type="VBoxContainer" parent="SafeArea/MainLayout/InteractionRow/ExprSlot"]
+[node name="SourceMargin" type="MarginContainer" parent="SafeArea/MainLayout/WorkbenchRow/SourcePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="SourceVBox" type="VBoxContainer" parent="SafeArea/MainLayout/WorkbenchRow/SourcePanel/SourceMargin"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="ExprTitle" type="Label" parent="SafeArea/MainLayout/InteractionRow/ExprSlot/ExprVBox"]
+[node name="SourceTitle" type="Label" parent="SafeArea/MainLayout/WorkbenchRow/SourcePanel/SourceMargin/SourceVBox"]
 layout_mode = 2
-text = "CURRENT CONDITION"
 horizontal_alignment = 1
+text = "SOURCE"
 
-[node name="ExprValue" type="RichTextLabel" parent="SafeArea/MainLayout/InteractionRow/ExprSlot/ExprVBox"]
+[node name="SourceExpr" type="RichTextLabel" parent="SafeArea/MainLayout/WorkbenchRow/SourcePanel/SourceMargin/SourceVBox"]
 layout_mode = 2
-theme_override_font_sizes/normal_font_size = 24
+size_flags_vertical = 3
 bbcode_enabled = true
+fit_content = false
 text = "[b]A[/b]"
-fit_content = true
 
-[node name="PatchSlot" type="PanelContainer" parent="SafeArea/MainLayout/InteractionRow"]
-custom_minimum_size = Vector2(360, 108)
+[node name="SourceFocus" type="Label" parent="SafeArea/MainLayout/WorkbenchRow/SourcePanel/SourceMargin/SourceVBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "FOCUS"
+
+[node name="PatchPanel" type="PanelContainer" parent="SafeArea/MainLayout/WorkbenchRow"]
+custom_minimum_size = Vector2(280, 160)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="PatchVBox" type="VBoxContainer" parent="SafeArea/MainLayout/InteractionRow/PatchSlot"]
+[node name="PatchMargin" type="MarginContainer" parent="SafeArea/MainLayout/WorkbenchRow/PatchPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="PatchVBox" type="VBoxContainer" parent="SafeArea/MainLayout/WorkbenchRow/PatchPanel/PatchMargin"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="PatchTitle" type="Label" parent="SafeArea/MainLayout/InteractionRow/PatchSlot/PatchVBox"]
+[node name="PatchTitle" type="Label" parent="SafeArea/MainLayout/WorkbenchRow/PatchPanel/PatchMargin/PatchVBox"]
 layout_mode = 2
-text = "PATCH SLOT"
 horizontal_alignment = 1
+text = "PATCH"
 
-[node name="PatchValue" type="Label" parent="SafeArea/MainLayout/InteractionRow/PatchSlot/PatchVBox"]
+[node name="PatchLaw" type="Label" parent="SafeArea/MainLayout/WorkbenchRow/PatchPanel/PatchMargin/PatchVBox"]
 layout_mode = 2
-text = "PATCH: EMPTY"
-horizontal_alignment = 1
+autowrap_mode = 3
+text = "LAW"
 
-[node name="LoadSlot" type="PanelContainer" parent="SafeArea/MainLayout/InteractionRow"]
-custom_minimum_size = Vector2(280, 108)
+[node name="PatchValue" type="Label" parent="SafeArea/MainLayout/WorkbenchRow/PatchPanel/PatchMargin/PatchVBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "PATCH EMPTY"
+
+[node name="PatchNote" type="Label" parent="SafeArea/MainLayout/WorkbenchRow/PatchPanel/PatchMargin/PatchVBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "NOTE"
+
+[node name="ResultPanel" type="PanelContainer" parent="SafeArea/MainLayout/WorkbenchRow"]
+custom_minimum_size = Vector2(280, 160)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="LoadVBox" type="VBoxContainer" parent="SafeArea/MainLayout/InteractionRow/LoadSlot"]
+[node name="ResultMargin" type="MarginContainer" parent="SafeArea/MainLayout/WorkbenchRow/ResultPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ResultVBox" type="VBoxContainer" parent="SafeArea/MainLayout/WorkbenchRow/ResultPanel/ResultMargin"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="LoadTitle" type="Label" parent="SafeArea/MainLayout/InteractionRow/LoadSlot/LoadVBox"]
+[node name="ResultTitle" type="Label" parent="SafeArea/MainLayout/WorkbenchRow/ResultPanel/ResultMargin/ResultVBox"]
 layout_mode = 2
+horizontal_alignment = 1
+text = "RESULT"
+
+[node name="ResultValue" type="RichTextLabel" parent="SafeArea/MainLayout/WorkbenchRow/ResultPanel/ResultMargin/ResultVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = false
+text = "[b]RESULT NOT BUILT[/b]"
+
+[node name="ResultStatus" type="Label" parent="SafeArea/MainLayout/WorkbenchRow/ResultPanel/ResultMargin/ResultVBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "STATUS"
+
+[node name="LoadDiagRow" type="BoxContainer" parent="SafeArea/MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LoadPanel" type="PanelContainer" parent="SafeArea/MainLayout/LoadDiagRow"]
+custom_minimum_size = Vector2(280, 112)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LoadMargin" type="MarginContainer" parent="SafeArea/MainLayout/LoadDiagRow/LoadPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="LoadVBox" type="VBoxContainer" parent="SafeArea/MainLayout/LoadDiagRow/LoadPanel/LoadMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LoadTitle" type="Label" parent="SafeArea/MainLayout/LoadDiagRow/LoadPanel/LoadMargin/LoadVBox"]
+layout_mode = 2
+horizontal_alignment = 1
 text = "LOAD"
-horizontal_alignment = 1
 
-[node name="LoadBar" type="ProgressBar" parent="SafeArea/MainLayout/InteractionRow/LoadSlot/LoadVBox"]
-custom_minimum_size = Vector2(0, 16)
+[node name="LoadBar" type="ProgressBar" parent="SafeArea/MainLayout/LoadDiagRow/LoadPanel/LoadMargin/LoadVBox"]
+custom_minimum_size = Vector2(0, 14)
 layout_mode = 2
 size_flags_horizontal = 3
 show_percentage = false
 
-[node name="LoadLabel" type="Label" parent="SafeArea/MainLayout/InteractionRow/LoadSlot/LoadVBox"]
+[node name="LoadLabel" type="Label" parent="SafeArea/MainLayout/LoadDiagRow/LoadPanel/LoadMargin/LoadVBox"]
 layout_mode = 2
-text = "LOAD: 0 / 0"
-horizontal_alignment = 1
+autowrap_mode = 3
+text = "LOAD DATA"
 
-[node name="InventoryFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
+[node name="DiagnosticSummaryPanel" type="PanelContainer" parent="SafeArea/MainLayout/LoadDiagRow"]
+custom_minimum_size = Vector2(280, 112)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SummaryMargin" type="MarginContainer" parent="SafeArea/MainLayout/LoadDiagRow/DiagnosticSummaryPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="SummaryVBox" type="VBoxContainer" parent="SafeArea/MainLayout/LoadDiagRow/DiagnosticSummaryPanel/SummaryMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SummaryTitle" type="Label" parent="SafeArea/MainLayout/LoadDiagRow/DiagnosticSummaryPanel/SummaryMargin/SummaryVBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "VALIDATION SUMMARY"
+
+[node name="SummaryText" type="RichTextLabel" parent="SafeArea/MainLayout/LoadDiagRow/DiagnosticSummaryPanel/SummaryMargin/SummaryVBox"]
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 0.55
+bbcode_enabled = true
+fit_content = false
+text = "NO DATA"
 
-[node name="InventoryMargin" type="MarginContainer" parent="SafeArea/MainLayout/InventoryFrame"]
+[node name="LawFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
+layout_mode = 2
+
+[node name="LawMargin" type="MarginContainer" parent="SafeArea/MainLayout/LawFrame"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="LawVBox" type="VBoxContainer" parent="SafeArea/MainLayout/LawFrame/LawMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LawTitle" type="Label" parent="SafeArea/MainLayout/LawFrame/LawMargin/LawVBox"]
+layout_mode = 2
+text = "LAW CARDS"
+
+[node name="LawDescription" type="Label" parent="SafeArea/MainLayout/LawFrame/LawMargin/LawVBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Choose law family."
+
+[node name="LawCardsGrid" type="GridContainer" parent="SafeArea/MainLayout/LawFrame/LawMargin/LawVBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 3
+
+[node name="PatchInventoryFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PatchInventoryMargin" type="MarginContainer" parent="SafeArea/MainLayout/PatchInventoryFrame"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="PatchInventoryVBox" type="VBoxContainer" parent="SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PatchInventoryTitle" type="Label" parent="SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox"]
+layout_mode = 2
+text = "PATCH CARDS"
+
+[node name="PatchInventoryDescription" type="Label" parent="SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Choose proposal."
+
+[node name="PatchCardsScroll" type="ScrollContainer" parent="SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PatchCardsGrid" type="GridContainer" parent="SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox/PatchCardsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="TerminalFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.7
+
+[node name="TerminalMargin" type="MarginContainer" parent="SafeArea/MainLayout/TerminalFrame"]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="InventoryScroll" type="ScrollContainer" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin"]
-layout_mode = 2
-
-[node name="PatchContainer" type="VBoxContainer" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll"]
+[node name="TerminalScroll" type="ScrollContainer" parent="SafeArea/MainLayout/TerminalFrame/TerminalMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 10
+
+[node name="TerminalRichText" type="RichTextLabel" parent="SafeArea/MainLayout/TerminalFrame/TerminalMargin/TerminalScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 19
+bbcode_enabled = true
+fit_content = false
+text = "[b]LOG[/b]"
 
 [node name="StatusRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 theme_override_constants/separation = 12
-alignment = 1
 
 [node name="StatsLabel" type="Label" parent="SafeArea/MainLayout/StatusRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ПОП: 0/3 | СКАНЫ: 0 | СТАБ: 100%"
+text = "STATS"
 
 [node name="FeedbackLabel" type="Label" parent="SafeArea/MainLayout/StatusRow"]
-visible = false
 layout_mode = 2
 size_flags_horizontal = 3
-text = "..."
 horizontal_alignment = 2
+text = "..."
+visible = false
 
-[node name="Actions" type="HBoxContainer" parent="SafeArea/MainLayout"]
+[node name="Actions" type="BoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
-theme_override_constants/separation = 16
-alignment = 1
+theme_override_constants/separation = 12
 
 [node name="BtnHint" type="Button" parent="SafeArea/MainLayout/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "АНАЛИЗ"
+text = "ANALYZE"
+
+[node name="BtnApplyPatch" type="Button" parent="SafeArea/MainLayout/Actions"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "APPLY PATCH"
+disabled = true
 
 [node name="BtnScan" type="Button" parent="SafeArea/MainLayout/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
+text = "VALIDATE"
 disabled = true
-text = "СКАН"
 
 [node name="BtnNext" type="Button" parent="SafeArea/MainLayout/Actions"]
-visible = false
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ДАЛЕЕ"
+text = "NEXT"
+visible = false
 
 [node name="ClickPlayer" type="AudioStreamPlayer" parent="."]
 
 [node name="DiagnosticsBlocker" type="ColorRect" parent="."]
-visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -253,21 +417,22 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.45)
+visible = false
 
 [node name="DiagnosticsPanelC" type="PanelContainer" parent="."]
-visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -360.0
-offset_top = -210.0
-offset_right = 360.0
-offset_bottom = 210.0
+offset_left = -380.0
+offset_top = -220.0
+offset_right = 380.0
+offset_bottom = 220.0
 grow_horizontal = 2
 grow_vertical = 2
+visible = false
 
 [node name="PopupMargin" type="MarginContainer" parent="DiagnosticsPanelC"]
 layout_mode = 2
@@ -283,19 +448,17 @@ theme_override_constants/separation = 16
 [node name="PopupTitle" type="Label" parent="DiagnosticsPanelC/PopupMargin/PopupVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
-text = "SAFE MODE"
 horizontal_alignment = 1
+text = "SAFE MODE"
 
 [node name="PopupText" type="RichTextLabel" parent="DiagnosticsPanelC/PopupMargin/PopupVBox"]
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "Диагностический отчёт."
-fit_content = true
+fit_content = false
+text = "Diagnostics"
 
 [node name="PopupBtnNext" type="Button" parent="DiagnosticsPanelC/PopupMargin/PopupVBox"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "ДАЛЕЕ"
-
-[connection signal="pressed" from="DiagnosticsPanelC/PopupMargin/PopupVBox/PopupBtnNext" to="." method="_on_diagnostics_close_pressed"]
+text = "CLOSE"

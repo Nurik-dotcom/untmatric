@@ -42,6 +42,8 @@ const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 @onready var meta_label: Label = $SafeArea/RootVBox/Header/HeaderHBox/MetaLabel
 
 @onready var storage_title: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageTitle
+@onready var storage_banner_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageBannerCard
+@onready var storage_banner_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageBannerCard/StorageBannerMargin/StorageBannerLabel
 @onready var storage_btns: Array[Button] = [
 	$SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid/StorageBtn1,
 	$SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageGrid/StorageBtn2,
@@ -52,9 +54,11 @@ const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 ]
 
 @onready var context_title: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox/ContextTitle
+@onready var flow_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox/FlowLabel
 @onready var i_info_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox/IInfoLabel
 @onready var k_info_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox/KInfoLabel
 @onready var task_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox/TaskLabel
+@onready var dependency_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox/DependencyLabel
 @onready var context_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard
 
 @onready var calc_title: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/CalcCard/CalcMargin/CalcVBox/CalcTitle
@@ -71,12 +75,14 @@ const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 @onready var preview_class_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard/PreviewMargin/PreviewVBox/PreviewClassLabel
 @onready var preview_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/PreviewCard
 
-@onready var btn_converter: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnConverter
+@onready var status_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusCard
+@onready var helper_row: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/HelperRow
+@onready var btn_converter: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/HelperRow/BtnConverter
 @onready var noir_overlay: CanvasLayer = $NoirOverlay
 @onready var btn_capture: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow/BtnCapture
 @onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/NextRow/BtnNext
 @onready var sample_strip: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/SampleStrip
-@onready var status_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusLabel
+@onready var status_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusCard/StatusMargin/StatusLabel
 @onready var btn_details: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/BtnDetails
 @onready var footer_label: Label = get_node_or_null("SafeArea/RootVBox/Footer/FooterMargin/FooterLabel") as Label
 
@@ -146,6 +152,7 @@ func _ready() -> void:
 	btn_toggle_calc.visible = false
 	_set_calc_panel_visible(true)
 	_collect_sample_refs()
+	sample_strip.visible = false
 	_reset_sample_strip()
 	_set_details_visible(false)
 	_apply_safe_area_padding()
@@ -175,7 +182,7 @@ func _process(_delta: float) -> void:
 		var left: float = maxf(0.0, converter_lock_until - now_sec)
 		_set_status_i18n(
 			"quest.radio.b.status.converter_locked",
-			"STATUS: converter unavailable {left}s",
+			"Converter locked for {left}s.",
 			COLOR_WARN,
 			{"left": "%.1f" % left}
 		)
@@ -183,11 +190,12 @@ func _process(_delta: float) -> void:
 			return
 		converter_lock_active = false
 		_apply_phase_controls()
-		_set_status_i18n(
-			"quest.radio.b.status.converter",
-			"STATUS: hint: I = K * i; for bytes divide by 8.",
-			Color(0.55, 0.85, 1.0, 1.0)
-		)
+		if phase == Phase.CALC:
+			_set_status_i18n("quest.radio.b.status.step_calc", "STEP 1/3: compute I and press ENTER.", Color(0.85, 0.85, 0.85, 1.0))
+		elif phase == Phase.SELECT and selected_storage_idx < 0:
+			_set_status_i18n("quest.radio.b.status.step_select", "STEP 2/3: choose the minimal storage that fits.", Color(0.85, 0.85, 0.85, 1.0))
+		elif phase == Phase.SELECT:
+			_set_status_i18n("quest.radio.b.status.step_capture", "STEP 3/3: verify and press CAPTURE.", Color(0.85, 0.85, 0.85, 1.0))
 		return
 
 	if phase != Phase.RESULT:
@@ -200,7 +208,16 @@ func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 	return I18n.get_text(key, merged)
 
 func _configure_text_overflow() -> void:
-	for lbl in [task_label, preview_calc_label, preview_fit_label, preview_class_label, status_label]:
+	for lbl in [
+		task_label,
+		flow_label,
+		dependency_label,
+		storage_banner_label,
+		preview_calc_label,
+		preview_fit_label,
+		preview_class_label,
+		status_label
+	]:
 		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	for btn in [btn_converter, btn_capture, btn_next, btn_toggle_calc, btn_details]:
@@ -209,14 +226,14 @@ func _configure_text_overflow() -> void:
 func _apply_i18n() -> void:
 	title_label.text = _tr("quest.radio.b.ui.title", "RADIO INTERCEPT | B")
 	btn_back.text = _tr("quest.radio.common.btn.back", "BACK")
-	storage_title.text = _tr("quest.radio.b.ui.storage_title", "STORAGE INVENTORY")
-	context_title.text = _tr("quest.radio.b.ui.context_title", "TERMINAL")
-	calc_title.text = _tr("quest.radio.b.ui.calc_title", "CALC I")
+	storage_title.text = _tr("quest.radio.b.ui.storage_step_title", "STEP 2/3 - STORAGE")
+	context_title.text = _tr("quest.radio.b.ui.context_title", "TASK CONTEXT")
+	calc_title.text = _tr("quest.radio.b.ui.calc_step_title", "STEP 1/3 - COMPUTE I")
 	btn_minus.text = "-8"
 	btn_plus.text = "+8"
 	btn_check_calc.text = _tr("quest.radio.b.ui.btn_check", "ENTER")
-	preview_title.text = _tr("quest.radio.b.ui.preview_title", "DIAGNOSTICS")
-	btn_converter.text = _tr("quest.radio.b.ui.btn_converter", "CONVERTER")
+	preview_title.text = _tr("quest.radio.b.ui.preview_step_title", "CHECKPOINT")
+	btn_converter.text = _tr("quest.radio.b.ui.btn_converter", "CONVERTER HELP")
 	btn_capture.text = _tr("quest.radio.btn.capture", "CAPTURE")
 	btn_next.text = _tr("quest.radio.common.btn.next", "NEXT")
 	btn_details.text = _tr("quest.radio.common.btn.details_open", "DETAILS v")
@@ -224,17 +241,23 @@ func _apply_i18n() -> void:
 	btn_close_details.text = _tr("quest.radio.common.btn.details_close", "CLOSE")
 	btn_toggle_calc.text = _tr("quest.radio.b.ui.btn_calc_close", "HIDE CALC TERMINAL") if _calc_panel_expanded else _tr("quest.radio.b.ui.btn_calc_open", "OPEN CALC TERMINAL")
 	_refresh_dynamic_i18n()
+	_update_flow_ui()
 
 func _refresh_dynamic_i18n() -> void:
 	if k_symbols > 0:
 		task_label.text = _build_task_text()
-		i_info_label.text = _tr("quest.radio.b.ui.info_i", "i = {i} bit", {"i": i_bits})
-		k_info_label.text = _tr("quest.radio.b.ui.info_k", "K = {k} chars", {"k": k_symbols})
+		i_info_label.text = _tr("quest.radio.b.ui.info_i", "Encoding depth: i = {i} bit", {"i": i_bits})
+		k_info_label.text = _tr("quest.radio.b.ui.info_k", "Message length: K = {k} chars", {"k": k_symbols})
 	else:
-		task_label.text = _tr("quest.radio.b.task", "Message length: %d chars. Calculate size (I=K*i) and select drive.") % 0
+		task_label.text = _tr(
+			"quest.radio.b.task",
+			"Given: message length K = {k}. Use i and compute I = K * i. Then choose the minimal suitable storage.",
+			{"k": 0}
+		)
 	for idx in range(storage_btns.size()):
 		if idx < storage_options.size():
 			storage_btns[idx].text = _format_storage_option(storage_options[idx])
+	_update_flow_ui()
 	_update_required_unit_ui()
 	_update_preview()
 	_update_details_text()
@@ -243,6 +266,29 @@ func _refresh_dynamic_i18n() -> void:
 
 func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
+	_update_flow_ui()
+
+func _update_flow_ui() -> void:
+	if dependency_mode == "from_stage_a":
+		dependency_label.text = _tr("quest.radio.b.ui.dependency_from_a", "i was inherited from Stage A.")
+	else:
+		dependency_label.text = _tr("quest.radio.b.ui.dependency_default", "i uses the scene default baseline.")
+
+	match phase:
+		Phase.CALC:
+			flow_label.text = _tr("quest.radio.b.ui.flow_calc", "Route: compute I, then choose storage.")
+			storage_title.text = _tr("quest.radio.b.ui.storage_step_title", "STEP 2/3 - STORAGE")
+			storage_banner_card.visible = true
+			storage_banner_label.text = _tr("quest.radio.b.ui.storage_locked", "STEP 2/3: storage unlocks after ENTER.")
+		Phase.SELECT:
+			flow_label.text = _tr("quest.radio.b.ui.flow_select", "Route: choose the minimal storage that fits.")
+			storage_title.text = _tr("quest.radio.b.ui.storage_step_title", "STEP 2/3 - STORAGE")
+			storage_banner_card.visible = true
+			storage_banner_label.text = _tr("quest.radio.b.ui.storage_select", "STEP 2/3: choose the minimal suitable storage.")
+		_:
+			flow_label.text = _tr("quest.radio.b.ui.flow_result", "Route: result is captured.")
+			storage_title.text = _tr("quest.radio.b.ui.storage_step_title", "STEP 2/3 - STORAGE")
+			storage_banner_card.visible = false
 
 func _set_status_i18n(key: String, default_text: String, color: Color, params: Dictionary = {}) -> void:
 	_status_i18n_key = key
@@ -282,7 +328,7 @@ func _install_numpad() -> void:
 
 	answer_unit_banner_label = Label.new()
 	answer_unit_banner_label.name = "AnswerUnitBanner"
-	answer_unit_banner_label.text = _tr("quest.radio.b.ui.required_bits", "ANSWER UNIT: BITS")
+	answer_unit_banner_label.text = _tr("quest.radio.b.ui.condition_bits", "CONDITION: answer must be entered in BITS")
 	answer_unit_banner_label.theme = theme
 	answer_unit_banner_label.add_theme_font_size_override("font_size", 18)
 	answer_unit_banner_label.add_theme_color_override("font_color", Color(0.95, 0.90, 0.45, 1.0))
@@ -291,7 +337,7 @@ func _install_numpad() -> void:
 
 	answer_unit_toggle = CheckButton.new()
 	answer_unit_toggle.name = "AnswerUnitToggle"
-	answer_unit_toggle.text = _tr("quest.radio.b.ui.toggle_bytes", "Answer in BYTES (/8)")
+	answer_unit_toggle.text = _tr("quest.radio.b.ui.toggle_bytes_clear", "Switch input to BYTES (/8)")
 	answer_unit_toggle.custom_minimum_size = Vector2(0.0, 56.0)
 	answer_unit_toggle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	answer_unit_toggle.toggled.connect(_on_answer_unit_toggled)
@@ -419,17 +465,19 @@ func _pick_k_for_trial(pool: Array[int]) -> int:
 func _update_required_unit_ui() -> void:
 	var needs_bytes: bool = answer_unit_mode == "bytes"
 	if answer_unit_banner_label != null:
-		answer_unit_banner_label.text = _tr("quest.radio.b.ui.required_bytes", "ANSWER UNIT: BYTES") if needs_bytes else _tr("quest.radio.b.ui.required_bits", "ANSWER UNIT: BITS")
+		answer_unit_banner_label.text = _tr("quest.radio.b.ui.condition_bytes", "CONDITION: answer must be entered in BYTES") if needs_bytes else _tr("quest.radio.b.ui.condition_bits", "CONDITION: answer must be entered in BITS")
 		answer_unit_banner_label.add_theme_color_override(
 			"font_color",
 			Color(0.95, 0.90, 0.45, 1.0) if needs_bytes else Color(0.75, 0.85, 1.0, 1.0)
 		)
 	if answer_unit_toggle != null:
-		answer_unit_toggle.visible = true
-		answer_unit_toggle.text = _tr("quest.radio.b.ui.toggle_bytes", "Answer in BYTES (/8)")
+		answer_unit_toggle.text = _tr("quest.radio.b.ui.toggle_bytes_clear", "Switch input to BYTES (/8)")
 		if not needs_bytes:
 			answer_in_bytes = false
 			answer_unit_toggle.set_pressed_no_signal(false)
+			answer_unit_toggle.visible = false
+		else:
+			answer_unit_toggle.visible = true
 
 func _start_trial() -> void:
 	phase = Phase.CALC
@@ -475,8 +523,8 @@ func _start_trial() -> void:
 	_update_required_unit_ui()
 
 	task_label.text = _build_task_text()
-	i_info_label.text = _tr("quest.radio.b.ui.info_i", "i = {i} bit", {"i": i_bits})
-	k_info_label.text = _tr("quest.radio.b.ui.info_k", "K = {k} chars", {"k": k_symbols})
+	i_info_label.text = _tr("quest.radio.b.ui.info_i", "Encoding depth: i = {i} bit", {"i": i_bits})
+	k_info_label.text = _tr("quest.radio.b.ui.info_k", "Message length: K = {k} chars", {"k": k_symbols})
 	i_bits_value_label.text = str(i_bits_user)
 	i_bits_value_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 
@@ -497,12 +545,13 @@ func _start_trial() -> void:
 	_apply_phase_controls()
 
 	_set_status_i18n(
-		"quest.radio.b.status.plan",
-		"STATUS: enter I and press ENTER.",
+		"quest.radio.b.status.step_calc",
+		"STEP 1/3: compute I and press ENTER.",
 		Color(0.85, 0.85, 0.85, 1.0)
 	)
 	if footer_label != null:
 		footer_label.text = ""
+	_update_flow_ui()
 	_update_preview()
 	_update_header_meta()
 	_update_details_text()
@@ -667,12 +716,13 @@ func _on_check_calc_pressed() -> void:
 
 	_apply_phase_controls()
 	_set_status_i18n(
-		"quest.radio.b.status.select",
-		"STATUS: choose storage medium.",
+		"quest.radio.b.status.step_select",
+		"STEP 2/3: choose the minimal storage that fits.",
 		Color(0.85, 0.85, 0.85, 1.0)
 	)
 	i_bits_value_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 
+	_update_flow_ui()
 	_update_preview()
 	_update_details_text()
 
@@ -688,10 +738,11 @@ func _on_storage_selected(idx: int) -> void:
 
 	_apply_phase_controls()
 	_set_status_i18n(
-		"quest.radio.b.status.confirm",
-		"STATUS: press CAPTURE.",
+		"quest.radio.b.status.step_capture",
+		"STEP 3/3: verify and press CAPTURE.",
 		Color(0.85, 0.85, 0.85, 1.0)
 	)
+	_update_flow_ui()
 	_update_preview()
 	_update_details_text()
 
@@ -706,7 +757,7 @@ func _on_converter_pressed() -> void:
 		var left: float = converter_cooldown_until - now_sec
 		_set_status_i18n(
 			"quest.radio.b.status.converter_cooldown",
-			"STATUS: converter cooldown {left}s",
+			"Converter cooldown {left}s.",
 			COLOR_WARN,
 			{"left": "%.1f" % left}
 		)
@@ -718,7 +769,7 @@ func _on_converter_pressed() -> void:
 	converter_cooldown_until = now_sec + CONVERTER_COOLDOWN_SECONDS
 	_set_status_i18n(
 		"quest.radio.b.status.converter",
-		"STATUS: hint: I = K * i; for bytes divide by 8.",
+		"Hint: I = K * i; divide by 8 for bytes.",
 		Color(0.55, 0.85, 1.0, 1.0)
 	)
 	_apply_phase_controls()
@@ -754,19 +805,19 @@ func _finish_trial() -> void:
 	var valid_mastery: bool = (error_type == "best_fit") and calc_correct and (not used_converter)
 
 	if error_type == "best_fit":
-		_set_status_i18n("quest.radio.b.result.best", "STATUS: excellent. Optimal storage selected.", COLOR_GOOD)
+		_set_status_i18n("quest.radio.b.result.best_clean", "Result: optimal storage selected.", COLOR_GOOD)
 		_update_sample_slot(COLOR_GOOD)
 	elif error_type == "underfit":
-		_set_status_i18n("quest.radio.b.result.under", "STATUS: incorrect. Storage does not fit data.", COLOR_BAD)
+		_set_status_i18n("quest.radio.b.result.under_clean", "Result: selected storage is too small.", COLOR_BAD)
 		_update_sample_slot(COLOR_BAD)
 	elif error_type == "calc_wrong":
-		_set_status_i18n("quest.radio.b.result.calc", "STATUS: storage picked, but I calculation is wrong.", COLOR_BAD)
+		_set_status_i18n("quest.radio.b.result.calc_clean", "Result: storage chosen, but I calculation is wrong.", COLOR_BAD)
 		_update_sample_slot(COLOR_BAD)
 	elif error_type == "unit_confusion":
-		_set_status_i18n("quest.radio.b.result.unit", "STATUS: likely unit confusion (bit/byte).", COLOR_WARN)
+		_set_status_i18n("quest.radio.b.result.unit_clean", "Result: likely bit/byte unit confusion.", COLOR_WARN)
 		_update_sample_slot(COLOR_WARN)
 	else:
-		_set_status_i18n("quest.radio.b.result.over", "STATUS: valid but storage is overkill.", COLOR_WARN)
+		_set_status_i18n("quest.radio.b.result.over_clean", "Result: storage fits but is excessive.", COLOR_WARN)
 		_update_sample_slot(COLOR_WARN)
 
 	var mode_token: String = "TIMED" if is_timed else "UNTIMED"
@@ -824,6 +875,7 @@ func _finish_trial() -> void:
 	payload["stability_delta"] = stability_delta
 	GlobalMetrics.register_trial(payload)
 
+	_update_flow_ui()
 	_update_preview()
 	_update_details_text()
 
@@ -886,29 +938,49 @@ func _update_sample_slot(color: Color) -> void:
 
 func _update_preview() -> void:
 	var user_unit_mode: String = "bytes" if answer_in_bytes else "bits"
-	var entered_text: String = "\u2014"
+	var entered_text: String = "-"
 	if i_bits_user > 0:
 		entered_text = "%d %s" % [i_bits_user, _tr("quest.radio.common.unit.byte", "byte") if user_unit_mode == "bytes" else _tr("quest.radio.common.unit.bit", "bit")]
-	preview_calc_label.text = _tr("quest.radio.b.preview.entered", "Entered I: {value}", {"value": entered_text})
-	preview_calc_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
 
 	if phase == Phase.CALC:
-		preview_fit_label.text = _tr("quest.radio.b.preview.input_mode", "Input mode: {mode}", {
-			"mode": _tr("quest.radio.common.unit.bytes", "bytes") if user_unit_mode == "bytes" else _tr("quest.radio.common.unit.bits", "bits")
+		preview_calc_label.text = _tr("quest.radio.b.preview.entered", "Entered: {value}", {"value": entered_text})
+		preview_fit_label.text = _tr("quest.radio.b.preview.required_unit", "Required unit: {unit}", {
+			"unit": _tr("quest.radio.common.unit.bytes", "bytes") if answer_unit_mode == "bytes" else _tr("quest.radio.common.unit.bits", "bits")
 		})
-		preview_class_label.text = _tr("quest.radio.b.preview.wait_result", "Evaluation appears after CAPTURE.")
+		preview_class_label.text = _tr("quest.radio.b.ui.storage_locked", "STEP 2/3: storage unlocks after ENTER.")
+		preview_calc_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
 		preview_fit_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1.0))
 		preview_class_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1.0))
 		return
 
 	if phase == Phase.SELECT:
+		var entered_bits: int = _get_user_answer_bits()
+		if i_bits_user <= 0:
+			preview_calc_label.text = _tr("quest.radio.b.preview.entered", "Entered: {value}", {"value": "-"})
+		elif answer_in_bytes:
+			preview_calc_label.text = _tr(
+				"quest.radio.b.preview.entered_bits_equiv",
+				"Input: {value} bytes = {bits} bits",
+				{"value": i_bits_user, "bits": entered_bits}
+			)
+		else:
+			preview_calc_label.text = _tr("quest.radio.b.preview.entered", "Entered: {value}", {
+				"value": "%d %s" % [i_bits_user, _tr("quest.radio.common.unit.bit", "bit")]
+			})
 		if selected_storage_idx < 0:
 			preview_fit_label.text = _tr("quest.radio.b.preview.storage_none", "Storage: not selected")
 		else:
-			preview_fit_label.text = _tr("quest.radio.b.preview.storage_selected", "Selected storage: {storage}", {
-				"storage": _format_storage_option(storage_options[selected_storage_idx])
-			})
-		preview_class_label.text = _tr("quest.radio.b.preview.wait_result", "Evaluation appears after CAPTURE.")
+			var option: Dictionary = storage_options[selected_storage_idx]
+			preview_fit_label.text = _tr(
+				"quest.radio.b.preview.storage_capacity",
+				"Storage: {storage} = {bits} bit",
+				{
+					"storage": _format_storage_option(option),
+					"bits": int(option.get("capacity_bits", 0))
+				}
+			)
+		preview_class_label.text = _tr("quest.radio.b.preview.think_fit", "Check whether storage contains the full volume.")
+		preview_calc_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
 		preview_fit_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1.0))
 		preview_class_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75, 1.0))
 		return
@@ -918,6 +990,8 @@ func _update_preview() -> void:
 		preview_fit_label.text = _tr("quest.radio.b.preview.storage_empty", "Storage: -")
 		preview_class_label.text = _tr("quest.radio.b.preview.class_empty", "Class: -")
 		return
+	preview_calc_label.text = _tr("quest.radio.b.preview.entered", "Entered: {value}", {"value": entered_text})
+	preview_calc_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85, 1.0))
 	var is_fit: bool = bool(result.get("is_fit", false))
 	var error_type: String = str(result.get("error_type", "calc_wrong"))
 	preview_fit_label.text = _tr("quest.radio.b.preview.storage_fit", "Storage: {fit}", {
@@ -945,9 +1019,11 @@ func _update_details_text() -> void:
 	var lines: Array[String] = []
 	if phase != Phase.RESULT:
 		lines.append(_tr("quest.radio.b.details.rule", "Rule: I = K * i."))
-		lines.append(_tr("quest.radio.b.details.input", "Enter I in required units and choose storage."))
-		lines.append(_tr("quest.radio.b.details.bytes_note", "If answer is in bytes, divide by 8."))
-		lines.append(_tr("quest.radio.b.details.after_capture", "Breakdown appears after CAPTURE."))
+		lines.append(_tr("quest.radio.b.details.given", "Given: K = {k}, i = {i}.", {"k": k_symbols, "i": i_bits}))
+		lines.append(_tr("quest.radio.b.ui.condition_bytes", "CONDITION: answer must be entered in BYTES") if answer_unit_mode == "bytes" else _tr("quest.radio.b.ui.condition_bits", "CONDITION: answer must be entered in BITS"))
+		lines.append(_tr("quest.radio.b.details.route", "1. Enter I\n2. Press ENTER\n3. Choose storage"))
+		if phase == Phase.SELECT:
+			lines.append(_tr("quest.radio.b.details.select_minimum", "Choose the minimal storage that holds the full volume."))
 		details_text.text = "\n".join(lines)
 		return
 
@@ -1014,7 +1090,6 @@ func _on_dimmer_gui_input(event: InputEvent) -> void:
 func _set_details_visible(visible: bool) -> void:
 	details_sheet.visible = visible
 	dimmer.visible = visible
-	btn_details.text = _tr("quest.radio.common.btn.details_close", "CLOSE ^") if visible else _tr("quest.radio.common.btn.details_open", "DETAILS v")
 
 func _update_header_meta() -> void:
 	var mode_text: String = _tr("quest.radio.b.meta.mode_no_timer", "NO TIMER")
@@ -1050,6 +1125,9 @@ func _apply_phase_controls() -> void:
 		for btn in storage_btns:
 			btn.disabled = true
 		btn_capture.disabled = true
+		storage_grid.modulate = Color(1.0, 1.0, 1.0, 0.55)
+		storage_title.modulate = Color(0.85, 0.85, 0.85, 0.8)
+		storage_banner_card.visible = true
 	elif phase == Phase.SELECT:
 		btn_minus.disabled = true
 		btn_plus.disabled = true
@@ -1057,6 +1135,9 @@ func _apply_phase_controls() -> void:
 		for btn in storage_btns:
 			btn.disabled = converter_lock_active
 		btn_capture.disabled = converter_lock_active or selected_storage_idx < 0
+		storage_grid.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		storage_title.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		storage_banner_card.visible = true
 	else:
 		btn_minus.disabled = true
 		btn_plus.disabled = true
@@ -1064,8 +1145,12 @@ func _apply_phase_controls() -> void:
 		for btn in storage_btns:
 			btn.disabled = true
 		btn_capture.disabled = true
+		storage_grid.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		storage_title.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		storage_banner_card.visible = false
 
 	btn_converter.disabled = (phase == Phase.RESULT) or converter_lock_active or cooldown_active
+	_update_flow_ui()
 
 func _pick_answer_unit_mode() -> String:
 	if _answer_unit_modes.is_empty():
@@ -1077,7 +1162,12 @@ func _build_task_text() -> String:
 	var suffix: String = _tr("quest.radio.b.ui.task_suffix_bits", "Answer in BITS.")
 	if answer_unit_mode == "bytes":
 		suffix = _tr("quest.radio.b.ui.task_suffix_bytes", "Answer in BYTES.")
-	return "%s %s" % [_tr("quest.radio.b.task", "Message length: %d chars. Calculate size (I=K*i) and select drive.") % k_symbols, suffix]
+	var task_core: String = _tr(
+		"quest.radio.b.task",
+		"Given: message length K = {k}. Use i and compute I = K * i. Then choose the minimal suitable storage.",
+		{"k": k_symbols}
+	)
+	return "%s %s" % [task_core, suffix]
 
 func _get_user_answer_bits() -> int:
 	var raw_value: int = maxi(i_bits_user, 0)
@@ -1276,6 +1366,9 @@ func _configure_layout() -> void:
 	var phone_landscape: bool = size.x > size.y and size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
 
 	storage_grid.columns = 2
+	sample_strip.visible = false
+	helper_row.add_theme_constant_override("separation", 0)
+	helper_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	if compact_stack:
 		var landscape_stack: bool = size.x > size.y
@@ -1290,44 +1383,28 @@ func _configure_layout() -> void:
 		meta_label.visible = false
 		context_title.add_theme_font_size_override("font_size", 18)
 		task_label.add_theme_font_size_override("font_size", 15)
+		flow_label.add_theme_font_size_override("font_size", 14)
+		dependency_label.add_theme_font_size_override("font_size", 14)
+		i_info_label.add_theme_font_size_override("font_size", 17)
+		k_info_label.add_theme_font_size_override("font_size", 17)
 		calc_title.add_theme_font_size_override("font_size", 18)
 		preview_title.add_theme_font_size_override("font_size", 18)
-		status_label.add_theme_font_size_override("font_size", 15)
-		context_card.custom_minimum_size.y = 94 if landscape_stack else 108
-		calc_card.custom_minimum_size.y = 96 if landscape_stack else 108
-		preview_card.custom_minimum_size.y = 90 if landscape_stack else 102
+		status_label.add_theme_font_size_override("font_size", 16)
+		context_card.custom_minimum_size.y = 136 if landscape_stack else 146
+		calc_card.custom_minimum_size.y = 120 if landscape_stack else 128
+		status_card.custom_minimum_size.y = 70 if landscape_stack else 76
+		preview_card.custom_minimum_size.y = 94 if landscape_stack else 100
+		storage_banner_card.custom_minimum_size.y = 58 if landscape_stack else 62
 		for btn in storage_btns:
 			btn.custom_minimum_size.y = 58 if landscape_stack else 62
-		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details, btn_toggle_calc]:
-			btn.custom_minimum_size.y = 58 if landscape_stack else 64
+		btn_capture.custom_minimum_size.y = 62 if landscape_stack else 64
+		btn_next.custom_minimum_size.y = 62 if landscape_stack else 64
+		btn_converter.custom_minimum_size.y = 50 if landscape_stack else 52
+		btn_details.custom_minimum_size.y = 44 if landscape_stack else 46
+		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_close_details, btn_toggle_calc]:
+			btn.custom_minimum_size.y = 56 if landscape_stack else 60
 		if numpad_grid != null:
 			numpad_grid.custom_minimum_size.y = 146 if landscape_stack else 188
-	elif phone_landscape:
-		body_split.split_offset = _clamp_split_offset(int(size.x * 0.52), 420, 400)
-		root_vbox.add_theme_constant_override("separation", 8)
-		right_vbox.add_theme_constant_override("separation", 8)
-		left_pane.size_flags_stretch_ratio = 1.0
-		right_pane.size_flags_stretch_ratio = 1.0
-		storage_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		header_panel.custom_minimum_size.y = 58
-		title_label.add_theme_font_size_override("font_size", 24)
-		meta_label.visible = true
-		meta_label.custom_minimum_size.x = 180.0
-		context_title.add_theme_font_size_override("font_size", 19)
-		task_label.add_theme_font_size_override("font_size", 16)
-		calc_title.add_theme_font_size_override("font_size", 19)
-		preview_title.add_theme_font_size_override("font_size", 19)
-		status_label.add_theme_font_size_override("font_size", 16)
-		context_card.custom_minimum_size.y = 106
-		calc_card.custom_minimum_size.y = 102
-		preview_card.custom_minimum_size.y = 98
-		for btn in storage_btns:
-			btn.custom_minimum_size.y = 64
-		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details, btn_toggle_calc]:
-			btn.custom_minimum_size.y = 56
-		if numpad_grid != null:
-			numpad_grid.custom_minimum_size.y = 210
-		meta_label.add_theme_font_size_override("font_size", 15)
 	elif size.x < 1280.0:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.53), 460, 420)
 		root_vbox.add_theme_constant_override("separation", 10)
@@ -1341,17 +1418,27 @@ func _configure_layout() -> void:
 		meta_label.custom_minimum_size.x = 260.0
 		context_title.add_theme_font_size_override("font_size", 22)
 		task_label.add_theme_font_size_override("font_size", 18)
+		flow_label.add_theme_font_size_override("font_size", 17)
+		dependency_label.add_theme_font_size_override("font_size", 17)
+		i_info_label.add_theme_font_size_override("font_size", 20)
+		k_info_label.add_theme_font_size_override("font_size", 20)
 		calc_title.add_theme_font_size_override("font_size", 20)
 		preview_title.add_theme_font_size_override("font_size", 20)
-		context_card.custom_minimum_size.y = 112
-		calc_card.custom_minimum_size.y = 106
-		preview_card.custom_minimum_size.y = 100
+		status_label.add_theme_font_size_override("font_size", 18)
+		context_card.custom_minimum_size.y = 156
+		calc_card.custom_minimum_size.y = 132
+		status_card.custom_minimum_size.y = 76
+		preview_card.custom_minimum_size.y = 102
+		storage_banner_card.custom_minimum_size.y = 60
 		for btn in storage_btns:
 			btn.custom_minimum_size.y = 74
-		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details, btn_toggle_calc]:
+		btn_capture.custom_minimum_size.y = 62
+		btn_next.custom_minimum_size.y = 62
+		btn_converter.custom_minimum_size.y = 52
+		btn_details.custom_minimum_size.y = 46
+		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_close_details, btn_toggle_calc]:
 			btn.custom_minimum_size.y = 58
 		meta_label.add_theme_font_size_override("font_size", 17)
-		status_label.add_theme_font_size_override("font_size", 18)
 		if numpad_grid != null:
 			numpad_grid.custom_minimum_size.y = 220
 	else:
@@ -1367,19 +1454,38 @@ func _configure_layout() -> void:
 		meta_label.custom_minimum_size.x = 360.0
 		context_title.add_theme_font_size_override("font_size", 22)
 		task_label.add_theme_font_size_override("font_size", 18)
+		flow_label.add_theme_font_size_override("font_size", 17)
+		dependency_label.add_theme_font_size_override("font_size", 17)
+		i_info_label.add_theme_font_size_override("font_size", 20)
+		k_info_label.add_theme_font_size_override("font_size", 20)
 		calc_title.add_theme_font_size_override("font_size", 20)
 		preview_title.add_theme_font_size_override("font_size", 20)
-		context_card.custom_minimum_size.y = 114
-		calc_card.custom_minimum_size.y = 108
-		preview_card.custom_minimum_size.y = 102
+		status_label.add_theme_font_size_override("font_size", 18)
+		context_card.custom_minimum_size.y = 160
+		calc_card.custom_minimum_size.y = 134
+		status_card.custom_minimum_size.y = 78
+		preview_card.custom_minimum_size.y = 106
+		storage_banner_card.custom_minimum_size.y = 62
 		for btn in storage_btns:
 			btn.custom_minimum_size.y = 78
-		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_converter, btn_capture, btn_next, btn_details, btn_close_details, btn_toggle_calc]:
+		btn_capture.custom_minimum_size.y = 62
+		btn_next.custom_minimum_size.y = 62
+		btn_converter.custom_minimum_size.y = 52
+		btn_details.custom_minimum_size.y = 46
+		for btn in [btn_back, btn_minus, btn_plus, btn_check_calc, btn_close_details, btn_toggle_calc]:
 			btn.custom_minimum_size.y = 58
 		meta_label.add_theme_font_size_override("font_size", 18)
-		status_label.add_theme_font_size_override("font_size", 18)
 		if numpad_grid != null:
 			numpad_grid.custom_minimum_size.y = 220
+
+	if phone_landscape:
+		meta_label.add_theme_font_size_override("font_size", 15)
+	btn_capture.add_theme_font_size_override("font_size", 24)
+	btn_converter.add_theme_font_size_override("font_size", 18)
+	btn_details.add_theme_font_size_override("font_size", 15)
+	btn_capture.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	btn_converter.modulate = Color(0.92, 0.92, 0.96, 1.0)
+	btn_details.modulate = Color(0.82, 0.82, 0.88, 1.0)
 
 func _clamp_split_offset(target_offset: int, min_left: int, min_right: int) -> int:
 	var viewport_width: int = int(get_viewport_rect().size.x)

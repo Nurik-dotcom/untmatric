@@ -6,6 +6,8 @@ const QUEST_SELECT_SCENE: String = "res://scenes/QuestSelect.tscn"
 const CASE_ID: String = "CASE_01_DIGITAL_RESUS"
 const STAGE_ID: String = "C"
 const NET_ITEM_SCENE: PackedScene = preload("res://scenes/ui/NetItem.tscn")
+const ATTACK_RENDERER_SCENE: PackedScene = preload("res://scenes/case_01/renderers/AttackMatchRenderer.tscn")
+const SUBNET_RENDERER_SCENE: PackedScene = preload("res://scenes/case_01/renderers/SubnetRenderer.tscn")
 const ResusData = preload("res://scripts/case_01/ResusData.gd")
 const ResusScoring = preload("res://scripts/case_01/ResusScoring.gd")
 const TrialV2 = preload("res://scripts/TrialV2.gd")
@@ -37,6 +39,8 @@ var time_to_first_action_ms: int = -1
 var input_locked: bool = false
 var _last_result: Dictionary = {}
 var _last_payload: Dictionary = {}
+var _renderer: Node = null
+var _renderer_rounds_complete: bool = false
 
 @onready var noir_overlay: Node = $NoirOverlay
 @onready var safe_area: MarginContainer = $SafeArea
@@ -50,7 +54,9 @@ var _last_payload: Dictionary = {}
 @onready var stability_bar: ProgressBar = $SafeArea/MainVBox/Header/StabilityBar
 @onready var btn_back: Button = $SafeArea/MainVBox/Header/BtnBack
 
+@onready var prompt_card: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/PromptCard
 @onready var prompt_label: Label = $SafeArea/MainVBox/ContentScroll/Content/PromptCard/PromptLabel
+@onready var diagram_card: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard
 @onready var packets_layer: Node = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/PacketsLayer
 @onready var slot_1: Node = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/Slot1
 @onready var slot_2: Node = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/Slot2
@@ -58,16 +64,24 @@ var _last_payload: Dictionary = {}
 @onready var attacker_node: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/AttackerNode
 @onready var attacker_label: Label = $SafeArea/MainVBox/ContentScroll/Content/DiagramCard/DiagramVBox/DiagramRow/AttackerNode/AttackerLabel
 
+@onready var risk_card: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/RiskCard
+@onready var risk_title: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/RiskTitle
+@onready var collisions_label: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/CollisionsRow/CollisionsLabel
+@onready var eavesdrop_label: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/EavesdropRow/EavesdropLabel
+@onready var filtering_label: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/FilteringRow/FilteringLabel
+@onready var media_label: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/MediaRow/MediaLabel
 @onready var collisions_value: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/CollisionsRow/CollisionsValue
 @onready var eavesdrop_value: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/EavesdropRow/EavesdropValue
 @onready var filtering_value: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/FilteringRow/FilteringValue
 @onready var media_value: Label = $SafeArea/MainVBox/ContentScroll/Content/RiskCard/RiskVBox/MediaRow/MediaValue
 
+@onready var palette_card: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/PaletteCard
 @onready var palette_flow: GridContainer = $SafeArea/MainVBox/ContentScroll/Content/PaletteCard/PaletteVBox/Scroll/PaletteFlow
 @onready var explanation_card: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/ExplanationCard
 @onready var expl_headline: Label = $SafeArea/MainVBox/ContentScroll/Content/ExplanationCard/ExplVBox/ExplHeadline
 @onready var expl_details: RichTextLabel = $SafeArea/MainVBox/ContentScroll/Content/ExplanationCard/ExplVBox/ExplDetails
 @onready var expl_why: RichTextLabel = $SafeArea/MainVBox/ContentScroll/Content/ExplanationCard/ExplVBox/ExplWhy
+@onready var renderer_host: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/RendererHost
 
 @onready var status_label: Label = $SafeArea/MainVBox/BottomBar/StatusRow/StatusLabel
 @onready var btn_reset: Button = $SafeArea/MainVBox/BottomBar/ActionsRow/BtnReset
@@ -107,11 +121,15 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.disconnect(_on_language_changed)
+	if GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
+		GlobalMetrics.stability_changed.disconnect(_on_stability_changed)
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 
 func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
+	if _renderer != null and _renderer.has_method("apply_i18n"):
+		_renderer.call("apply_i18n")
 
 func _apply_i18n() -> void:
 	title_label.text = _tr("resus.title", "Case 01: Digital Resus")
@@ -120,19 +138,39 @@ func _apply_i18n() -> void:
 		"total": max(1, levels.size())
 	})
 	btn_reset.text = _tr("resus.c.btn.reset", "RESET")
-	btn_analyze.text = _tr("resus.c.btn.analyze", "ANALYZE")
+	btn_analyze.text = _tr("resus.c.btn.analyze", "ANALYZE") if _is_slots_level() else _tr("resus.btn.confirm", "CONFIRM")
 	btn_next_level.text = _next_level_button_text()
+	risk_title.text = _tr("resus.c01.dashboard.title", "RISK DASHBOARD")
+	collisions_label.text = _tr("resus.c01.dashboard.collisions", "COLLISIONS")
+	eavesdrop_label.text = _tr("resus.c01.dashboard.eavesdrop", "EAVESDROP")
+	filtering_label.text = _tr("resus.c01.dashboard.filtering", "FILTERING")
+	media_label.text = _tr("resus.c01.dashboard.media", "MEDIA")
+	if not stage_c_data.is_empty():
+		if _is_slots_level():
+			prompt_label.text = I18n.resolve_field(stage_c_data, "prompt", {"default": str(stage_c_data.get("prompt", ""))})
+		else:
+			prompt_label.text = I18n.resolve_field(stage_c_data, "briefing", {"default": str(stage_c_data.get("briefing", ""))})
 
 func _load_current_level(index: int) -> void:
 	current_level_index = clamp(index, 0, max(0, levels.size() - 1))
 	stage_c_data = (levels[current_level_index] as Dictionary).duplicate(true)
-	_setup_ui()
-	_begin_attempt()
+	if _is_slots_level():
+		_setup_slots_level()
+		_begin_attempt()
+	else:
+		_setup_renderer_level()
+		_begin_renderer_attempt()
 
-func _setup_ui() -> void:
+func _setup_slots_level() -> void:
+	_clear_renderer()
+	prompt_card.visible = true
+	diagram_card.visible = true
+	risk_card.visible = true
+	palette_card.visible = true
+	explanation_card.visible = true
+	renderer_host.visible = false
 	_apply_i18n()
-	var level_id: String = str(stage_c_data.get("id", "CASE01_C"))
-	prompt_label.text = _tr("resus.c.level.%s.prompt" % level_id, str(stage_c_data.get("prompt", "")))
+	prompt_label.text = I18n.resolve_field(stage_c_data, "prompt", {"default": str(stage_c_data.get("prompt", ""))})
 	btn_next_level.visible = false
 	btn_next_level.disabled = true
 
@@ -140,6 +178,139 @@ func _setup_ui() -> void:
 	_build_palette()
 	_setup_slots()
 	_update_risk_dashboard()
+	_update_stability_ui()
+
+func _setup_renderer_level() -> void:
+	prompt_card.visible = true
+	diagram_card.visible = false
+	risk_card.visible = false
+	palette_card.visible = false
+	explanation_card.visible = false
+	renderer_host.visible = true
+	btn_next_level.visible = false
+	btn_next_level.disabled = true
+	_apply_i18n()
+	prompt_label.text = I18n.resolve_field(stage_c_data, "briefing", {"default": str(stage_c_data.get("briefing", ""))})
+	_swap_renderer()
+	_update_stability_ui()
+
+func _swap_renderer() -> void:
+	_clear_renderer()
+	_renderer_rounds_complete = false
+	var format: String = str(stage_c_data.get("format", "")).to_upper()
+	var scene: PackedScene = null
+	match format:
+		"ATTACK_MATCH":
+			scene = ATTACK_RENDERER_SCENE
+		"SUBNET_CALC":
+			scene = SUBNET_RENDERER_SCENE
+		_:
+			_show_error(_tr("resus.c.error.format", "Unknown format: {format}", {"format": format}))
+			return
+	_renderer = scene.instantiate()
+	renderer_host.add_child(_renderer)
+	if _renderer.has_method("setup"):
+		_renderer.call("setup", stage_c_data, self)
+	if _renderer.has_signal("all_rounds_complete"):
+		_renderer.connect("all_rounds_complete", Callable(self, "_on_renderer_complete"))
+	else:
+		_renderer_rounds_complete = true
+
+func _clear_renderer() -> void:
+	if _renderer != null:
+		_renderer.queue_free()
+		_renderer = null
+
+func _begin_renderer_attempt() -> void:
+	trace.clear()
+	drag_count = 0
+	slot_change_count = 0
+	unique_used_set.clear()
+	time_to_first_action_ms = -1
+	stage_started_ms = Time.get_ticks_msec()
+	input_locked = false
+	_last_result.clear()
+	_last_payload.clear()
+	if _renderer != null and _renderer.has_signal("all_rounds_complete"):
+		_renderer_rounds_complete = false
+	else:
+		_renderer_rounds_complete = true
+	btn_analyze.disabled = not _renderer_rounds_complete
+	btn_next_level.visible = false
+	btn_next_level.disabled = true
+	status_label.text = _tr("resus.status.quiz_progress", "Complete all rounds, then confirm.")
+	status_label.modulate = COLOR_OK
+	if _renderer != null and _renderer.has_method("reset"):
+		_renderer.call("reset")
+
+func _analyze_renderer() -> void:
+	if _renderer == null or not _renderer.has_method("get_answers"):
+		return
+	if not _renderer_rounds_complete:
+		return
+	var answers: Variant = _renderer.call("get_answers")
+	var result: Dictionary = _score_renderer(answers)
+	_register_renderer_trial(answers, result)
+	input_locked = true
+	btn_analyze.disabled = true
+	if _renderer.has_method("show_result"):
+		_renderer.call("show_result", result)
+	status_label.text = _tr("resus.status.result", "{verdict} | {points}/{max}", {
+		"verdict": str(result.get("verdict_code", "FAIL")),
+		"points": int(result.get("points", 0)),
+		"max": int(result.get("max_points", 2))
+	})
+	status_label.modulate = COLOR_OK if bool(result.get("is_correct", false)) else COLOR_WARN
+	var can_advance: bool = bool(result.get("is_correct", false)) and (_has_next_level() or _is_flow_active())
+	btn_next_level.visible = can_advance
+	btn_next_level.disabled = not can_advance
+	btn_next_level.text = _next_level_button_text()
+	if bool(result.get("is_correct", false)):
+		_play_sfx("relay")
+	elif bool(result.get("is_fit", false)):
+		_play_sfx("click")
+	else:
+		_play_sfx("error")
+
+func _score_renderer(answers: Variant) -> Dictionary:
+	var format: String = str(stage_c_data.get("format", "")).to_upper()
+	match format:
+		"ATTACK_MATCH":
+			return ResusScoring.calculate_attack_match_result(stage_c_data, answers as Array)
+		"SUBNET_CALC":
+			return ResusScoring.calculate_subnet_result(stage_c_data, answers as Array)
+		_:
+			return {
+				"points": 0,
+				"max_points": 2,
+				"is_correct": false,
+				"is_fit": false,
+				"stability_delta": -30,
+				"verdict_code": "FAIL"
+			}
+
+func _register_renderer_trial(answers: Variant, result: Dictionary) -> void:
+	var elapsed_ms: int = Time.get_ticks_msec() - stage_started_ms
+	var level_id: String = str(stage_c_data.get("id", "CASE01_C"))
+	var payload: Dictionary = TrialV2.build(CASE_ID, STAGE_ID, level_id, "FORMAT_ROUTER", str(attempt_index))
+	payload.merge({
+		"case_run_id": _case_run_id(),
+		"level_id": level_id,
+		"format": str(stage_c_data.get("format", "")),
+		"snapshot": answers,
+		"elapsed_ms": elapsed_ms,
+		"points": int(result.get("points", 0)),
+		"max_points": int(result.get("max_points", 2)),
+		"is_correct": bool(result.get("is_correct", false)),
+		"is_fit": bool(result.get("is_fit", false)),
+		"stability_delta": int(result.get("stability_delta", 0)),
+		"verdict_code": str(result.get("verdict_code", "FAIL")),
+		"details": (result.get("details", []) as Array).duplicate(true)
+	}, true)
+	GlobalMetrics.register_trial(payload)
+	_last_result = result.duplicate(true)
+	_last_payload = payload.duplicate(true)
+	attempt_index += 1
 	_update_stability_ui()
 
 func _build_option_catalog() -> void:
@@ -397,6 +568,9 @@ func _on_item_drag_started(module_id: String, source: String, from_slot: int) ->
 func _on_analyze_pressed() -> void:
 	if input_locked:
 		return
+	if not _is_slots_level():
+		_analyze_renderer()
+		return
 
 	var selected_ids: Array[String] = _collect_selected_ids()
 	var risk: Dictionary = _calculate_risk(slots)
@@ -425,6 +599,7 @@ func _on_analyze_pressed() -> void:
 	input_locked = true
 	btn_analyze.disabled = true
 	_set_input_locked(true)
+	_update_risk_dashboard()
 	var can_advance: bool = bool(result.get("is_correct", false)) and (_has_next_level() or _is_flow_active())
 	btn_next_level.visible = can_advance
 	btn_next_level.disabled = not can_advance
@@ -441,7 +616,11 @@ func _on_reset_pressed() -> void:
 	_log_event("RESET_PRESSED", {
 		"prev_filled_slots": _filled_slots_count()
 	})
-	_begin_attempt()
+	_apply_retry_floor()
+	if _is_slots_level():
+		_begin_attempt()
+	else:
+		_begin_renderer_attempt()
 	_play_sfx("click")
 
 func _on_next_level_pressed() -> void:
@@ -454,6 +633,14 @@ func _on_next_level_pressed() -> void:
 	if _is_flow_active():
 		GlobalMetrics.record_case_stage_result(STAGE_ID, _build_flow_stage_summary())
 		get_tree().change_scene_to_file(FLOW_SCENE_PATH)
+
+func _on_renderer_complete() -> void:
+	_renderer_rounds_complete = true
+	if input_locked:
+		return
+	btn_analyze.disabled = false
+	status_label.text = _tr("resus.status.quiz_done", "Quiz complete. Confirm to submit.")
+	status_label.modulate = COLOR_OK
 
 func _has_next_level() -> bool:
 	return current_level_index < levels.size() - 1
@@ -470,7 +657,8 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 	explanation_card.visible = true
 
 	var verdict_code: String = str(result.get("verdict_code", "FAIL"))
-	expl_headline.text = str(result.get("feedback_headline", verdict_code))
+	var raw_headline: String = str(result.get("feedback_headline", verdict_code))
+	expl_headline.text = _resolve_feedback_text(raw_headline)
 	if verdict_code == "PERFECT":
 		expl_headline.modulate = COLOR_OK
 	elif verdict_code == "GOOD" or verdict_code == "NOISY":
@@ -480,7 +668,8 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 
 	var detail_lines: Array[String] = []
 	for detail_v in result.get("feedback_details", []) as Array:
-		detail_lines.append("- %s" % str(detail_v))
+		var raw_detail: String = str(detail_v)
+		detail_lines.append("- %s" % _resolve_feedback_text(raw_detail))
 	detail_lines.append("")
 	detail_lines.append(_tr("resus.c.explain.risk_line",
 		"Risk: collisions={col} | eavesdrop={eav} | filtering={fil} | media={med}", {
@@ -518,6 +707,12 @@ func _show_explanation(result: Dictionary, risk: Dictionary) -> void:
 		"slots": _filled_slots_count()
 	})
 	status_label.modulate = expl_headline.modulate
+
+func _resolve_feedback_text(text: String) -> String:
+	var normalized: String = text.strip_edges()
+	if normalized.begins_with("resus.") and normalized.find(" ") == -1:
+		return I18n.tr_key(normalized, {"default": normalized})
+	return normalized
 
 func _apply_result_highlight(result: Dictionary) -> void:
 	for i in range(1, 4):
@@ -598,6 +793,8 @@ func _register_trial(result: Dictionary, risk: Dictionary) -> void:
 	_last_payload = payload.duplicate(true)
 
 func _update_status_line(prefix: String) -> void:
+	if not _is_slots_level():
+		return
 	if input_locked:
 		return
 	var filled: int = _filled_slots_count()
@@ -613,6 +810,19 @@ func _update_status_line(prefix: String) -> void:
 	status_label.modulate = COLOR_WARN
 
 func _update_risk_dashboard() -> void:
+	if not _is_slots_level():
+		return
+	if not input_locked:
+		collisions_value.text = "???"
+		eavesdrop_value.text = "???"
+		filtering_value.text = "???"
+		media_value.text = "???"
+		var hidden_tone := Color(0.55, 0.55, 0.55, 1.0)
+		collisions_value.modulate = hidden_tone
+		eavesdrop_value.modulate = hidden_tone
+		filtering_value.modulate = hidden_tone
+		media_value.modulate = hidden_tone
+		return
 	var risk: Dictionary = _calculate_risk(slots)
 	var collisions_raw: String = str(risk.get("collisions", "MID"))
 	var eavesdrop_raw: String = str(risk.get("eavesdrop", "MID"))
@@ -883,6 +1093,15 @@ func _next_level_button_text() -> String:
 	if not _has_next_level() and _is_flow_active():
 		return _tr("resus.c.btn.close_case", "CLOSE CASE")
 	return _tr("resus.c.btn.next_level", "NEXT LEVEL")
+
+func _is_slots_level() -> bool:
+	return str(stage_c_data.get("format", "")).to_upper() == "MULTI_CHOICE_SLOTS"
+
+func _apply_retry_floor() -> void:
+	if GlobalMetrics.stability < 20.0:
+		var previous: float = float(GlobalMetrics.stability)
+		GlobalMetrics.stability = 20.0
+		GlobalMetrics.emit_signal("stability_changed", GlobalMetrics.stability, GlobalMetrics.stability - previous)
 
 func _is_flow_active() -> bool:
 	var flow: Dictionary = GlobalMetrics.get_case_flow()

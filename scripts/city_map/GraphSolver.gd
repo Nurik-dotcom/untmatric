@@ -374,6 +374,160 @@ func simulate_dynamic_path(path_local: Array, edge_adjacency: Dictionary, start_
 	}
 
 
+func simulate_dynamic_path_timeline(path_local: Array, edge_adjacency: Dictionary, start_sim_time_sec: int = 0) -> Dictionary:
+	var sim := start_sim_time_sec
+	var total := 0
+	var timeline: Array[Dictionary] = []
+	var closed_attempts := 0
+	var danger_steps := 0
+
+	for i in range(path_local.size() - 1):
+		var from_id := str(path_local[i])
+		var to_id := str(path_local[i + 1])
+		if not edge_adjacency.has(from_id):
+			return {
+				"sum": -1,
+				"sim_end": sim,
+				"closed_attempts": closed_attempts,
+				"danger_steps": danger_steps,
+				"timeline": timeline
+			}
+		var neighbors: Dictionary = edge_adjacency[from_id]
+		if not neighbors.has(to_id):
+			return {
+				"sum": -1,
+				"sim_end": sim,
+				"closed_attempts": closed_attempts,
+				"danger_steps": danger_steps,
+				"timeline": timeline
+			}
+
+		var edge: Dictionary = neighbors[to_id]
+		var runtime := edge_runtime_state(edge, sim)
+		var state := str(runtime.get("state", "open"))
+		if state == "closed":
+			closed_attempts += 1
+			timeline.append({
+				"from": from_id,
+				"to": to_id,
+				"sim_before": sim,
+				"sim_after": sim,
+				"state": state,
+				"weight": -1,
+				"next_change_sec": int(runtime.get("next_change_sec", -1))
+			})
+			return {
+				"sum": -1,
+				"sim_end": sim,
+				"closed_attempts": closed_attempts,
+				"danger_steps": danger_steps,
+				"timeline": timeline
+			}
+
+		if bool(runtime.get("danger", false)):
+			danger_steps += 1
+
+		var weight := int(runtime.get("weight", edge.get("w", 0)))
+		var sim_before := sim
+		sim += weight
+		total += weight
+		timeline.append({
+			"from": from_id,
+			"to": to_id,
+			"sim_before": sim_before,
+			"sim_after": sim,
+			"state": state,
+			"weight": weight,
+			"next_change_sec": int(runtime.get("next_change_sec", -1))
+		})
+
+	return {
+		"sum": total,
+		"sim_end": sim,
+		"closed_attempts": closed_attempts,
+		"danger_steps": danger_steps,
+		"timeline": timeline
+	}
+
+
+func path_has_cycle(path_local: Array) -> bool:
+	var seen: Dictionary = {}
+	for node_var in path_local:
+		var node_id := str(node_var)
+		if seen.has(node_id):
+			return true
+		seen[node_id] = true
+	return false
+
+
+func first_invalid_step_index(path_local: Array, adjacency: Dictionary) -> int:
+	for i in range(path_local.size() - 1):
+		var from_id := str(path_local[i])
+		var to_id := str(path_local[i + 1])
+		if not adjacency.has(from_id):
+			return i + 1
+		var neighbors: Dictionary = adjacency[from_id]
+		if not neighbors.has(to_id):
+			return i + 1
+	return -1
+
+
+func build_best_path_preview(min_path_examples: Array) -> Array[String]:
+	if min_path_examples.is_empty():
+		return []
+	var first_example: Variant = min_path_examples[0]
+	if typeof(first_example) != TYPE_ARRAY:
+		return []
+	var preview: Array[String] = []
+	for node_var in first_example:
+		preview.append(str(node_var))
+	return preview
+
+
+func build_reveal_payload(
+		path_local: Array,
+		result_code: String,
+		sum_actual: int,
+		min_sum: int,
+		end_node: String,
+		sum_input_value: Variant = null,
+		must_visit_ok: bool = true,
+		cycle_ok: bool = true,
+		xor_ok: bool = true,
+		blacklist_ok: bool = true,
+		dynamic_ok: bool = true,
+		player_error_step_idx: int = -1,
+		best_known_path_preview: Array = [],
+		best_known_cost: int = -1
+	) -> Dictionary:
+	var route_valid := sum_actual >= 0
+	var finish_reached := (not path_local.is_empty()) and str(path_local[path_local.size() - 1]) == end_node
+	var calc_ok := sum_input_value != null and sum_actual >= 0 and int(sum_input_value) == sum_actual
+	var best_cost := best_known_cost
+	if best_cost < 0:
+		best_cost = min_sum
+	var optimal_ok := route_valid and finish_reached and sum_actual >= 0 and best_cost >= 0 and sum_actual == best_cost
+
+	return {
+		"result_code": result_code,
+		"route_valid": route_valid,
+		"finish_reached": finish_reached,
+		"calc_ok": calc_ok,
+		"must_visit_ok": must_visit_ok,
+		"cycle_ok": cycle_ok,
+		"xor_ok": xor_ok,
+		"blacklist_ok": blacklist_ok,
+		"dynamic_ok": dynamic_ok,
+		"optimal_ok": optimal_ok,
+		"best_known_path_preview": best_known_path_preview.duplicate(),
+		"best_known_cost": best_cost,
+		"player_cost": sum_actual,
+		"sum_input": sum_input_value,
+		"player_error_step_idx": player_error_step_idx,
+		"path": path_local.duplicate()
+	}
+
+
 func _lowest_cost_index(frontier: Array) -> int:
 	var best_index := 0
 	for i in range(1, frontier.size()):

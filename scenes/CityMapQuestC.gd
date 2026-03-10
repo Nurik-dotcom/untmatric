@@ -7,6 +7,10 @@ const ARROW_ANGLE_RAD := 0.52
 const ARROW_LEN := 16.0
 const AUTO_FIT_MARGIN_PX := 24.0
 const TRAFFIC_BASE_SPEED := 2.4
+const PHASE_BUILD := 1
+const PHASE_RULES := 2
+const PHASE_INPUT := 3
+const PHASE_REVIEW := 4
 
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
@@ -97,6 +101,8 @@ var first_attempt_edge: String = ""
 var level_started_ms: int = 0
 var first_action_ms: int = -1
 var planning_time_ms: int = 0
+var round_phase: int = PHASE_BUILD
+var phase_time_ms: Dictionary = {"1": 0, "2": 0, "3": 0, "4": 0}
 
 var backtrack_count: int = 0
 var cycle_events: int = 0
@@ -151,6 +157,17 @@ var _status_i18n_key: String = ""
 var _status_i18n_default: String = ""
 var _status_i18n_params: Dictionary = {}
 var _status_i18n_color: Color = Color(1, 1, 1, 1)
+var _phase_started_ms: int = 0
+var _hint_count: int = 0
+var _last_reveal: Dictionary = {}
+var _last_step_cost: int = 0
+var _phase_label: Label
+var _reveal_label: Label
+var _btn_schedule_toggle: Button
+var _schedule_collapsed: bool = true
+var _solver = preload("res://scripts/city_map/GraphSolver.gd").new()
+var _pack_summary_ready: bool = false
+var _pack_summary_data: Dictionary = {}
 
 func _ready() -> void:
 	if not btn_back.pressed.is_connected(_on_back_pressed):
@@ -197,6 +214,17 @@ func _apply_i18n() -> void:
 	label_mode.text = _tr("city_map.c.header.mode", "MODE: C")
 	if is_instance_valid(_btn_help):
 		_btn_help.tooltip_text = _tr("city_map.common.tooltip.dossier", "DOSSIER")
+	if is_instance_valid(_btn_undo):
+		_btn_undo.text = _tr("city_map.common.btn.undo_step", "UNDO STEP")
+	if is_instance_valid(_btn_wait):
+		_btn_wait.text = _tr("city_map.c.btn.wait", "WAIT +5")
+	if is_instance_valid(_btn_schedule_toggle):
+		_btn_schedule_toggle.text = _tr(
+			"city_map.c.schedule.toggle_context",
+			"Schedule: context only"
+		) if _schedule_collapsed else _tr("city_map.c.schedule.toggle_all", "Schedule: show all")
+	btn_reset.text = _tr("city_map.common.btn.reset_route", "RESET ROUTE")
+	btn_submit.text = _tr("city_map.common.btn.check", "CHECK")
 	input_label.text = _tr("city_map.common.input.enter_sum", "ENTER FINAL SUM")
 	schedule_title.text = _tr("city_map.c.schedule.title", "SCHEDULE")
 	footer_meta.text = _tr("city_map.c.footer.meta", "CITY MAP / C")
@@ -204,6 +232,8 @@ func _apply_i18n() -> void:
 	_set_briefing()
 	_update_visuals()
 	_update_timer_display()
+	if is_instance_valid(_phase_label):
+		_phase_label.text = _phase_text()
 	if not _status_i18n_key.is_empty():
 		_set_status_i18n(_status_i18n_key, _status_i18n_default, _status_i18n_color, _status_i18n_params)
 	_apply_content_layout_mode()
@@ -229,12 +259,12 @@ func _setup_noir_ui() -> void:
 	_btn_help = Button.new()
 	_btn_help.text = "?"
 	_btn_help.custom_minimum_size = Vector2(44, 44)
-	_btn_help.tooltip_text = "Р”РћРЎР¬Р•"
+	_btn_help.tooltip_text = "DOSSIER"
 	_btn_help.pressed.connect(_on_help_pressed)
 	header.add_child(_btn_help)
 
 	_btn_undo = Button.new()
-	_btn_undo.text = "РћРўРљРђРў"
+	_btn_undo.text = "UNDO STEP"
 	_btn_undo.custom_minimum_size = Vector2(0, 44)
 	_btn_undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_undo.pressed.connect(_on_undo_pressed)
@@ -242,12 +272,20 @@ func _setup_noir_ui() -> void:
 	buttons_row.move_child(_btn_undo, 0)
 
 	_btn_wait = Button.new()
-	_btn_wait.text = "Р–Р”РђРўР¬ +5"
+	_btn_wait.text = "WAIT +5"
 	_btn_wait.custom_minimum_size = Vector2(0, 44)
 	_btn_wait.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_wait.pressed.connect(_on_wait_pressed)
 	buttons_row.add_child(_btn_wait)
 	buttons_row.move_child(_btn_wait, 1)
+
+	_phase_label = Label.new()
+	_phase_label.name = "PhaseLabelRuntime"
+	_phase_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_phase_label.add_theme_font_size_override("font_size", 14)
+	_phase_label.add_theme_color_override("font_color", Color(0.90, 0.94, 1.0, 0.95))
+	info_vbox.add_child(_phase_label)
+	info_vbox.move_child(_phase_label, 0)
 
 	_numpad_panel = PanelContainer.new()
 	_numpad_panel.name = "NumpadPanel"
@@ -269,6 +307,14 @@ func _setup_noir_ui() -> void:
 		_numpad_buttons.append(btn)
 	info_vbox.move_child(_numpad_panel, info_vbox.get_child_count() - 2)
 
+	_reveal_label = Label.new()
+	_reveal_label.name = "RevealLabelRuntime"
+	_reveal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_reveal_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_reveal_label.add_theme_color_override("font_color", Color(0.90, 0.86, 0.70, 1.0))
+	info_vbox.add_child(_reveal_label)
+	info_vbox.move_child(_reveal_label, info_vbox.get_child_count() - 2)
+
 	_traffic_layer = Control.new()
 	_traffic_layer.name = "TrafficLayer"
 	_traffic_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -278,6 +324,7 @@ func _setup_noir_ui() -> void:
 
 	briefing_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	briefing_card.visible = false
+	_phase_started_ms = Time.get_ticks_msec()
 
 func _configure_info_text_wrapping() -> void:
 	constraint_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -311,6 +358,157 @@ func _configure_sum_input_display() -> void:
 	sum_input.focus_mode = Control.FOCUS_CLICK
 	sum_input.set("virtual_keyboard_enabled", false)
 	sum_input.set("virtual_keyboard_show_on_focus", false)
+
+func _phase_text() -> String:
+	match round_phase:
+		PHASE_BUILD:
+			return _tr("city_map.common.phase.build", "STEP 1/4: Build route")
+		PHASE_RULES:
+			return _tr("city_map.common.phase.rules", "STEP 2/4: Check rules")
+		PHASE_INPUT:
+			return _tr("city_map.common.phase.input", "STEP 3/4: Enter total")
+		_:
+			return _tr("city_map.common.phase.review", "STEP 4/4: Review")
+
+func _set_phase(next_phase: int, force: bool = false) -> void:
+	var clamped_phase := clampi(next_phase, PHASE_BUILD, PHASE_REVIEW)
+	if not force and round_phase == clamped_phase:
+		if is_instance_valid(_phase_label):
+			_phase_label.text = _phase_text()
+		return
+	var now_ms := Time.get_ticks_msec()
+	if _phase_started_ms > 0:
+		var key := str(round_phase)
+		phase_time_ms[key] = int(phase_time_ms.get(key, 0)) + maxi(0, now_ms - _phase_started_ms)
+	round_phase = clamped_phase
+	_phase_started_ms = now_ms
+	if is_instance_valid(_phase_label):
+		_phase_label.text = _phase_text()
+
+func _phase_snapshot_ms() -> Dictionary:
+	var snapshot: Dictionary = phase_time_ms.duplicate(true)
+	var now_ms := Time.get_ticks_msec()
+	if _phase_started_ms > 0:
+		var key := str(round_phase)
+		snapshot[key] = int(snapshot.get(key, 0)) + maxi(0, now_ms - _phase_started_ms)
+	return snapshot
+
+func _route_display_text_with_timing() -> String:
+	if path.size() <= 1:
+		return "[%s]" % str(path[0]) if not path.is_empty() else "-"
+	var chunks: Array[String] = []
+	chunks.append(str(path[0]))
+	for i in range(path.size() - 1):
+		var next_node := str(path[i + 1])
+		var step_weight := int(step_weights[i]) if i < step_weights.size() else -1
+		var suffix := ""
+		if step_weight >= 0:
+			suffix = " (+%ds)" % step_weight
+		if i == path.size() - 2:
+			chunks.append("[%s%s]" % [next_node, suffix])
+		else:
+			chunks.append("%s%s" % [next_node, suffix])
+	return " -> ".join(chunks)
+
+func _best_known_path_preview() -> Array[String]:
+	return _solver.build_best_path_preview(level_data.get("min_path_examples", []))
+
+func _soft_hint_text(result_code: String) -> String:
+	if attempt_in_sublevel < 2:
+		return ""
+	match result_code:
+		"ERR_LOGIC_VIOLATION":
+			return _tr("city_map.c.hint.xor", "Hint: in XOR groups choose no more than one node.")
+		"ERR_AMBUSH":
+			return _tr("city_map.c.hint.blacklist", "Hint: blacklist nodes are forbidden zones.")
+		"ERR_MISSING_TRANSIT":
+			return _tr("city_map.c.hint.must", "Hint: include required nodes before final approach.")
+		"ERR_PATH_INVALID":
+			return _tr("city_map.c.hint.closed", "Hint: closed edges can block transitions at current sim-time.")
+		_:
+			return _tr("city_map.c.hint.generic", "Hint: review time windows and pick a route tempo that keeps edges available.")
+
+func _build_wait_preview(delta_sec: int) -> String:
+	var target_sim := sim_time_sec + delta_sec
+	var opened: Array[String] = []
+	var closed: Array[String] = []
+	for edge_var in level_data.get("edges", []):
+		var edge: Dictionary = edge_var
+		var from_id := str(edge.get("from", ""))
+		if from_id != current_node:
+			continue
+		var now_runtime := get_edge_runtime_state(edge, sim_time_sec)
+		var next_runtime := get_edge_runtime_state(edge, target_sim)
+		var key := "%s->%s" % [from_id, str(edge.get("to", ""))]
+		if str(now_runtime.get("state", "OPEN")) == "CLOSED" and str(next_runtime.get("state", "OPEN")) != "CLOSED":
+			opened.append(key)
+		if str(now_runtime.get("state", "OPEN")) != "CLOSED" and str(next_runtime.get("state", "OPEN")) == "CLOSED":
+			closed.append(key)
+	var open_text := "-" if opened.is_empty() else ",".join(opened)
+	var close_text := "-" if closed.is_empty() else ",".join(closed)
+	return _tr(
+		"city_map.c.wait.preview",
+		"WAIT +{delta}s: sim {from}->{to}, opens={opens}, closes={closes}",
+		{"delta": delta_sec, "from": sim_time_sec, "to": target_sim, "opens": open_text, "closes": close_text}
+	)
+
+func _build_review_text(verdict: Dictionary) -> String:
+	var result_code := str(verdict.get("result_code", "ERR_UNKNOWN"))
+	var player_cost := int(verdict.get("player_cost", int(verdict.get("sum_actual", -1))))
+	var best_cost := int(verdict.get("best_known_cost", min_sum))
+	var must_ok := bool(verdict.get("must_visit_ok", false))
+	var xor_ok := bool(verdict.get("xor_ok", false))
+	var blacklist_ok := bool(verdict.get("blacklist_ok", false))
+	var dynamic_ok := bool(verdict.get("dynamic_ok", false))
+	var optimal_ok := bool(verdict.get("optimal_ok", false))
+
+	var happened := ""
+	var where := ""
+	var revisit := ""
+	var keep := ""
+	match result_code:
+		"OK":
+			happened = _tr("city_map.common.review.ok.happened", "What happened: your route is valid and optimal.")
+			where = _tr("city_map.c.review.ok.where", "Where: constraints and timing windows are satisfied.")
+			revisit = _tr("city_map.c.review.ok.revisit", "Review: keep balancing route choice and movement tempo.")
+			keep = _tr("city_map.c.review.ok.keep", "Still correct: dynamic model and constraints are both respected.")
+		"ERR_LOGIC_VIOLATION":
+			happened = _tr("city_map.c.review.xor.happened", "What happened: XOR rule is violated.")
+			where = _tr("city_map.c.review.xor.where", "Where: nodes from one XOR group were combined.")
+			revisit = _tr("city_map.c.review.xor.revisit", "Review: keep only one node from each XOR group.")
+			keep = _tr("city_map.c.review.xor.keep", "Still correct: valid timed edges can be reused.")
+		"ERR_AMBUSH":
+			happened = _tr("city_map.c.review.blacklist.happened", "What happened: blacklist node was visited.")
+			where = _tr("city_map.c.review.blacklist.where", "Where: route entered a forbidden zone.")
+			revisit = _tr("city_map.c.review.blacklist.revisit", "Review: reroute around blacklist nodes.")
+			keep = _tr("city_map.c.review.blacklist.keep", "Still correct: timing insights remain useful.")
+		_:
+			happened = _tr("city_map.common.review.generic.happened", "What happened: route check failed.")
+			where = _tr("city_map.common.review.generic.where", "Where: inspect constraints and time windows.")
+			revisit = _tr("city_map.common.review.generic.revisit", "Review: adjust route and pace.")
+			keep = _tr("city_map.common.review.generic.keep", "Still correct: preserve valid route segments.")
+
+	var status_line := _tr(
+		"city_map.c.review.status",
+		"Status: must={must}, xor={xor}, blacklist={blacklist}, dynamic={dyn}, optimal={opt}",
+		{
+			"must": "yes" if must_ok else "no",
+			"xor": "yes" if xor_ok else "no",
+			"blacklist": "yes" if blacklist_ok else "no",
+			"dyn": "yes" if dynamic_ok else "no",
+			"opt": "yes" if optimal_ok else "no"
+		}
+	)
+	var cost_line := _tr(
+		"city_map.c.review.cost",
+		"Cost: yours={player}, best_known={best}",
+		{"player": player_cost, "best": best_cost}
+	)
+	var hint_text := _soft_hint_text(result_code)
+	if not hint_text.is_empty():
+		_hint_count += 1
+		return "%s\n%s\n%s\n%s\n%s\n%s\n%s" % [happened, where, revisit, keep, status_line, cost_line, hint_text]
+	return "%s\n%s\n%s\n%s\n%s\n%s" % [happened, where, revisit, keep, status_line, cost_line]
 
 func _on_help_pressed() -> void:
 	_set_dossier_open(not briefing_card.visible)
@@ -348,16 +546,22 @@ func _on_numpad_button_pressed(key: String) -> void:
 func _on_wait_pressed() -> void:
 	if _is_round_locked():
 		return
+	_push_undo_snapshot()
+	if first_attempt_edge.is_empty():
+		first_attempt_edge = "WAIT+5"
+		first_action_ms = Time.get_ticks_msec() - level_started_ms
+		planning_time_ms = first_action_ms
+	var preview := _build_wait_preview(5)
 	wait_count += 1
 	wait_total_sim_sec += 5
 	sim_time_sec += 5
+	_last_step_cost = 0
 	_last_move_ms = Time.get_ticks_msec()
 	_set_status_i18n(
 		"city_map.c.status.wait",
-		"WAIT +5: sim-time updated, stability -1",
+		preview,
 		Color(1.0, 0.78, 0.34)
 	)
-	_recalculate_stability()
 	_update_visuals()
 
 func _on_undo_pressed() -> void:
@@ -367,6 +571,7 @@ func _on_undo_pressed() -> void:
 	current_node = str(snapshot.get("current_node", current_node))
 	path = snapshot.get("path", path).duplicate()
 	path_sum = int(snapshot.get("path_sum", path_sum))
+	_last_step_cost = int(snapshot.get("last_step_cost", _last_step_cost))
 	step_weights = snapshot.get("step_weights", step_weights).duplicate()
 	sim_time_sec = int(snapshot.get("sim_time_sec", sim_time_sec))
 	backtrack_count = int(snapshot.get("backtrack_count", backtrack_count))
@@ -389,6 +594,7 @@ func _push_undo_snapshot() -> void:
 		"current_node": current_node,
 		"path": path.duplicate(),
 		"path_sum": path_sum,
+		"last_step_cost": _last_step_cost,
 		"step_weights": step_weights.duplicate(),
 		"sim_time_sec": sim_time_sec,
 		"backtrack_count": backtrack_count,
@@ -495,7 +701,15 @@ func _load_sublevel(index: int) -> void:
 	time_dossier_open_ms = 0
 	wait_count = 0
 	wait_total_sim_sec = 0
-	schedule_panel_open_count = 1
+	schedule_panel_open_count = 0
+	_hint_count = 0
+	_last_reveal = {}
+	_last_step_cost = 0
+	_pack_summary_ready = false
+	_pack_summary_data = {}
+	round_phase = PHASE_BUILD
+	phase_time_ms = {"1": 0, "2": 0, "3": 0, "4": 0}
+	_phase_started_ms = Time.get_ticks_msec()
 	think_time_before_move_ms.clear()
 	_last_move_ms = Time.get_ticks_msec()
 	_dossier_open_started_ms = -1
@@ -535,7 +749,7 @@ func _set_progress_ui() -> void:
 		{
 			"current": shown_index,
 			"total": total,
-			"suffix": ("" if sub_id.is_empty() else " вЂў " + sub_id)
+			"suffix": ("" if sub_id.is_empty() else " | " + sub_id)
 		}
 	)
 	if level_index >= total - 1:
@@ -560,13 +774,16 @@ func _lock_input(locked: bool) -> void:
 func _on_next_pressed() -> void:
 	if not stage_completed:
 		return
-	if level_index + 1 >= level_total:
-		_finalize_pack_run()
+	if _pack_summary_ready:
 		_request_back_navigation("pack_complete")
+		return
+	if level_index + 1 >= level_total:
+		var summary := _finalize_pack_run()
+		_show_pack_summary(summary)
 		return
 	_load_sublevel(level_index + 1)
 
-func _finalize_pack_run() -> void:
+func _finalize_pack_run() -> Dictionary:
 	var summary := {
 		"schema_version": "city_map.run.v1",
 		"quest_id": "CITY_MAP",
@@ -588,6 +805,54 @@ func _finalize_pack_run() -> void:
 		"finished_at_unix": int(Time.get_unix_time_from_system())
 	}
 	_save_json_log(summary, true)
+	return summary
+
+func _show_pack_summary(summary: Dictionary) -> void:
+	_pack_summary_ready = true
+	_pack_summary_data = summary.duplicate(true)
+	var solved := int(summary.get("levels_completed", levels_completed))
+	var total := int(summary.get("levels_total", level_total))
+	var perfect := int(summary.get("levels_perfect", levels_perfect))
+	var route_err := int(summary.get("total_closed_errors", run_total_closed_errors))
+	var cond_err := int(summary.get("total_transit_errors", run_total_transit_errors)) + int(summary.get("total_logic_errors", run_total_logic_errors))
+	var calc_err := int(summary.get("total_calc_errors", run_total_calc_errors))
+	var opt_err := int(summary.get("total_opt_errors", run_total_opt_errors))
+	var avg_time := 0.0 if solved <= 0 else float(int(summary.get("total_time_seconds", run_total_time_seconds))) / float(solved)
+	var recommendation := _pack_recommendation_text(route_err, cond_err, calc_err, opt_err)
+
+	briefing_title.text = _tr("city_map.common.summary.title", "PACK SUMMARY")
+	briefing_text.text = _tr(
+		"city_map.c.summary.body",
+		"Solved: {solved}/{total}\nFirst try: {perfect}\nErrors:\n- Dynamic route: {route}\n- Constraints: {cond}\n- Arithmetic: {calc}\n- Optimality: {opt}\nAverage time: {avg}s",
+		{
+			"solved": solved,
+			"total": total,
+			"perfect": perfect,
+			"route": route_err,
+			"cond": cond_err,
+			"calc": calc_err,
+			"opt": opt_err,
+			"avg": int(round(avg_time))
+		}
+	)
+	footer_label.text = _tr("city_map.common.summary.recommendation", "Recommendation: {text}", {"text": recommendation})
+	_set_dossier_open(true)
+	_set_status_i18n("city_map.common.summary.ready", "Pack summary is ready. Press FINISH to exit.", Color(0.82, 0.92, 1.0))
+	_lock_input(true)
+	btn_next.visible = true
+	btn_next.disabled = false
+	btn_next.text = _tr("city_map.common.btn.finish", "FINISH")
+
+func _pack_recommendation_text(route_err: int, cond_err: int, calc_err: int, opt_err: int) -> String:
+	if cond_err >= route_err and cond_err >= calc_err and cond_err >= opt_err and cond_err > 0:
+		return _tr("city_map.c.summary.reco.constraints", "Track must-visit, XOR, and blacklist constraints step by step.")
+	if route_err >= calc_err and route_err >= opt_err and route_err > 0:
+		return _tr("city_map.c.summary.reco.dynamic", "Plan tempo with schedule windows and avoid closed edges.")
+	if opt_err >= calc_err and opt_err > 0:
+		return _tr("city_map.c.summary.reco.opt", "Compare dynamic route alternatives, not only immediate edge cost.")
+	if calc_err > 0:
+		return _tr("city_map.c.summary.reco.calc", "Recalculate simulated path cost after each timed step.")
+	return _tr("city_map.c.summary.reco.good", "Strong dynamic planning and constraint control.")
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
@@ -626,13 +891,12 @@ func _apply_content_layout_mode() -> void:
 	if content_split.vertical:
 		graph_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		info_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		graph_panel.size_flags_stretch_ratio = 3.2
-		info_panel.size_flags_stretch_ratio = 1.8
+		graph_panel.size_flags_stretch_ratio = 3.8
+		info_panel.size_flags_stretch_ratio = 1.2
 	else:
 		graph_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		info_panel.size_flags_horizontal = Control.SIZE_FILL
-		# Keep the graph dominant in landscape: ~72-75% width.
-		graph_panel.size_flags_stretch_ratio = 2.8 if compact_landscape else 2.6
+		graph_panel.size_flags_stretch_ratio = 4.0 if compact_landscape else 4.2
 		info_panel.size_flags_stretch_ratio = 1.0
 	_apply_compact_phone_layout(compact_landscape or compact_portrait)
 
@@ -658,19 +922,19 @@ func _apply_compact_phone_layout(compact: bool) -> void:
 	graph_panel.custom_minimum_size = Vector2.ZERO
 	graph_container.custom_minimum_size = Vector2.ZERO
 	if is_landscape:
-		var info_width_max: float = viewport.x * 0.30
-		var info_width_min: float = minf(220.0, info_width_max)
-		var info_width_target: float = viewport.x * (0.24 if compact else 0.27)
+		var info_width_max: float = viewport.x * 0.26
+		var info_width_min: float = minf(190.0, info_width_max)
+		var info_width_target: float = viewport.x * (0.20 if compact else 0.23)
 		var info_width: float = clampf(info_width_target, info_width_min, info_width_max)
 		info_panel.custom_minimum_size = Vector2(info_width, 0.0)
 	else:
 		info_panel.custom_minimum_size = Vector2(0.0, 0.0)
 	sum_input.custom_minimum_size.y = 36.0 if compact else 44.0
 	status_label.custom_minimum_size.y = 44.0 if compact else 64.0
-	_btn_undo.text = _tr("city_map.c.btn.undo.compact", "UN") if compact else _tr("city_map.common.btn.undo", "UNDO")
+	_btn_undo.text = _tr("city_map.c.btn.undo.compact", "UN") if compact else _tr("city_map.common.btn.undo_step", "UNDO STEP")
 	_btn_wait.text = _tr("city_map.c.btn.wait.compact", "W+5") if compact else _tr("city_map.c.btn.wait", "WAIT +5")
-	btn_reset.text = _tr("city_map.c.btn.reset.compact", "RST") if compact else _tr("city_map.common.btn.reset", "RESET")
-	btn_submit.text = _tr("city_map.c.btn.submit.compact", "OK") if compact else _tr("city_map.common.btn.submit", "SUBMIT")
+	btn_reset.text = _tr("city_map.c.btn.reset.compact", "RST") if compact else _tr("city_map.common.btn.reset_route", "RESET ROUTE")
+	btn_submit.text = _tr("city_map.c.btn.submit.compact", "CHK") if compact else _tr("city_map.common.btn.check", "CHECK")
 	if is_instance_valid(_btn_help):
 		_btn_help.custom_minimum_size = Vector2(36.0, 36.0) if compact else Vector2(44.0, 44.0)
 	if is_instance_valid(_btn_undo):
@@ -792,15 +1056,29 @@ func _set_briefing() -> void:
 	briefing_title.text = _tr("city_map.c.briefing.title", "CURFEW WINDOW")
 	briefing_text.text = _tr(
 		"city_map.c.briefing.text",
-		"Reach node L under dynamic patrol windows. CLOSED edges are blocked; DANGER edges have increased cost."
+		"Reach {end}. Time changes edge state: OPEN, DANGER, CLOSED. Plan both route and tempo.",
+		{"end": str(level_data.get("end_node", "L"))}
 	)
 	update_conditions_panel()
 	footer_label.text = _tr(
 		"city_map.c.briefing.footer",
-		"Real timer is in the header. Sim-time changes only after successful movement."
+		"WAIT is tactical: preview state changes before using it."
 	)
 
 func _build_schedule_ui() -> void:
+	if _btn_schedule_toggle == null and schedule_title.get_parent() is VBoxContainer:
+		var schedule_vbox := schedule_title.get_parent() as VBoxContainer
+		_btn_schedule_toggle = Button.new()
+		_btn_schedule_toggle.name = "ScheduleToggleRuntime"
+		_btn_schedule_toggle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_btn_schedule_toggle.custom_minimum_size = Vector2(0, 34)
+		_btn_schedule_toggle.pressed.connect(_on_schedule_toggle_pressed)
+		schedule_vbox.add_child(_btn_schedule_toggle)
+		schedule_vbox.move_child(_btn_schedule_toggle, schedule_title.get_index() + 1)
+	_schedule_collapsed = true
+	if is_instance_valid(_btn_schedule_toggle):
+		_btn_schedule_toggle.text = _tr("city_map.c.schedule.toggle_context", "Schedule: context only")
+
 	for child in schedule_list.get_children():
 		child.queue_free()
 	_schedule_rows.clear()
@@ -819,6 +1097,15 @@ func _build_schedule_ui() -> void:
 			"edge": edge.duplicate(true)
 		})
 	_apply_schedule_typography(_is_compact_schedule_mode())
+	refresh_schedule_ui()
+
+func _on_schedule_toggle_pressed() -> void:
+	_schedule_collapsed = not _schedule_collapsed
+	if _schedule_collapsed:
+		_btn_schedule_toggle.text = _tr("city_map.c.schedule.toggle_context", "Schedule: context only")
+	else:
+		_btn_schedule_toggle.text = _tr("city_map.c.schedule.toggle_all", "Schedule: show all")
+		schedule_panel_open_count += 1
 	refresh_schedule_ui()
 
 func _is_compact_schedule_mode() -> bool:
@@ -858,10 +1145,9 @@ func update_conditions_panel() -> void:
 			xor_text = " | ".join(xor_parts)
 
 	var lines: Array[String] = [
-		_tr("city_map.c.constraints.header", "CONSTRAINTS:"),
-		_tr("city_map.c.constraints.must_visit", "MUST VISIT: {nodes}", {"nodes": must_visit_text}),
-		_tr("city_map.c.constraints.xor", "XOR: {value}", {"value": xor_text}),
-		_tr("city_map.c.constraints.blacklist", "BLACKLIST: {nodes}", {"nodes": blacklist_text})
+		_tr("city_map.c.constraints.must_visit", "Required node(s): {nodes}", {"nodes": must_visit_text}),
+		_tr("city_map.c.constraints.xor", "XOR (pick at most one): {value}", {"value": xor_text}),
+		_tr("city_map.c.constraints.blacklist", "Blacklist: {nodes}", {"nodes": blacklist_text})
 	]
 	var conditions_text: String = "\n".join(lines)
 	constraint_info_label.text = conditions_text
@@ -874,6 +1160,12 @@ func refresh_schedule_ui() -> void:
 		var row_label: Label = row.get("label", null) as Label
 		var edge: Dictionary = row.get("edge", {})
 		if row_label == null:
+			continue
+		var edge_from: String = str(edge.get("from", ""))
+		var edge_to: String = str(edge.get("to", ""))
+		var is_relevant_now := edge_from == current_node or (path.has(edge_from) and path.has(edge_to))
+		row_label.visible = (not _schedule_collapsed) or is_relevant_now
+		if not row_label.visible:
 			continue
 		var runtime: Dictionary = get_edge_runtime_state(edge, sim_time_sec)
 		var parts: Array[String] = []
@@ -890,8 +1182,6 @@ func refresh_schedule_ui() -> void:
 				slot_text = _tr("city_map.c.schedule.active_slot", ">>{slot}<<", {"slot": slot_text})
 			parts.append(slot_text)
 
-		var edge_from: String = str(edge.get("from", ""))
-		var edge_to: String = str(edge.get("to", ""))
 		var ttc: int = int(runtime.get("time_to_change", -1))
 		var state_text: String = str(runtime.get("state", "OPEN"))
 		var state_text_ru: String = state_text
@@ -927,60 +1217,7 @@ func _calculate_min_sum_dynamic() -> int:
 	var end_node := str(level_data.get("end_node", ""))
 	if start_node.is_empty() or end_node.is_empty():
 		return 0
-
-	var frontier: Array[Dictionary] = [{
-		"node": start_node,
-		"sim": 0,
-		"cost": 0,
-		"path": [start_node]
-	}]
-	var best := 1_000_000_000
-
-	while not frontier.is_empty():
-		var best_index := 0
-		for i in range(1, frontier.size()):
-			if int(frontier[i].cost) < int(frontier[best_index].cost):
-				best_index = i
-		var state: Dictionary = frontier.pop_at(best_index)
-
-		var node_id := str(state.node)
-		var sim := int(state.sim)
-		var cost := int(state.cost)
-		var path_local: Array = state.path
-		if cost >= best:
-			continue
-
-		if node_id == end_node and _must_visit_ok(path_local) and not _is_xor_violation(path_local) and not _path_has_blacklist(path_local):
-			best = min(best, cost)
-			continue
-
-		for next_id in adjacency.get(node_id, {}).keys():
-			var edge: Dictionary = adjacency[node_id][next_id]
-			var runtime := _edge_runtime_state(edge, sim)
-			if runtime.state == "closed":
-				continue
-
-			var visits := 0
-			for p in path_local:
-				if str(p) == str(next_id):
-					visits += 1
-			if visits >= 2:
-				continue
-
-			var next_path := path_local + [str(next_id)]
-			if _is_xor_violation(next_path):
-				continue
-			if _path_has_blacklist(next_path):
-				continue
-
-			frontier.append({
-				"node": str(next_id),
-				"sim": sim + int(runtime.weight),
-				"cost": cost + int(runtime.weight),
-				"path": next_path
-			})
-
-	return 0 if best >= 1_000_000_000 else best
+	return _solver.compute_min_sum_dynamic(adjacency, start_node, end_node, must_visit_nodes, xor_groups, blacklist_nodes, 0, 2)
 
 func _on_graph_resized() -> void:
 	if graph_container.size.x <= 0.0 or graph_container.size.y <= 0.0:
@@ -1049,7 +1286,26 @@ func _rebuild_graph_ui() -> void:
 	for node_id in node_defs.keys():
 		var node: Dictionary = node_defs[node_id]
 		var btn := Button.new()
-		btn.text = str(node.get("label", node_id))
+		var base_label := str(node.get("label", node_id))
+		var in_xor := false
+		for group_var in xor_groups:
+			var group: Dictionary = group_var
+			if str(group.get("type", "")) != "AT_MOST_ONE":
+				continue
+			for member_var in group.get("nodes", []):
+				if str(member_var) == node_id:
+					in_xor = true
+					break
+			if in_xor:
+				break
+		if blacklist_nodes.has(node_id):
+			btn.text = "[X] %s" % base_label
+		elif must_visit_nodes.has(node_id):
+			btn.text = "[M] %s" % base_label
+		elif in_xor:
+			btn.text = "[XOR] %s" % base_label
+		else:
+			btn.text = base_label
 		btn.flat = false
 		var diameter := hit_radius * 2.0
 		btn.size = Vector2(diameter, diameter)
@@ -1223,6 +1479,7 @@ func _reset_round_state(full_reset: bool) -> void:
 	current_node = str(level_data.get("start_node", "A"))
 	path = [current_node]
 	path_sum = 0
+	_last_step_cost = 0
 	step_weights.clear()
 	sim_time_sec = 0
 	backtrack_count = 0
@@ -1238,20 +1495,41 @@ func _reset_round_state(full_reset: bool) -> void:
 	planning_time_ms = 0
 	sum_input.clear()
 	_clear_status_i18n()
+	_last_reveal = {}
+	if is_instance_valid(_reveal_label):
+		_reveal_label.text = ""
 	_undo_stack.clear()
 	_last_move_ms = Time.get_ticks_msec()
 
 	if full_reset:
 		level_started_ms = Time.get_ticks_msec()
 		real_time_sec = 0
+		phase_time_ms = {"1": 0, "2": 0, "3": 0, "4": 0}
+		_phase_started_ms = Time.get_ticks_msec()
+	_set_phase(PHASE_BUILD, true)
 
 	update_conditions_panel()
 	_update_visuals()
 
 func _update_visuals() -> void:
-	path_display.text = _tr("city_map.common.input.path", "PATH: {path}", {"path": " -> ".join(path)})
+	var end_node := str(level_data.get("end_node", "L"))
+	var at_finish := current_node == end_node
+	if stage_completed:
+		_set_phase(PHASE_REVIEW)
+	elif at_finish and sum_input.text.strip_edges().is_empty():
+		_set_phase(PHASE_RULES)
+	elif at_finish:
+		_set_phase(PHASE_INPUT)
+	else:
+		_set_phase(PHASE_BUILD)
+
+	path_display.text = _tr("city_map.common.input.path", "PATH: {path}", {"path": _route_display_text_with_timing()})
 	sim_time_label.text = _tr("city_map.c.input.sim_time", "SIM: {value}", {"value": sim_time_sec})
-	sum_live_label.text = _tr("city_map.common.input.sum", "SUM: {value}", {"value": path_sum})
+	sum_live_label.text = _tr(
+		"city_map.c.input.last_step",
+		"Last step: {step}s | Sim-time: {sim}",
+		{"step": _last_step_cost, "sim": sim_time_sec}
+	)
 	update_warnings_panel()
 
 	for node_id in node_buttons.keys():
@@ -1261,9 +1539,13 @@ func _update_visuals() -> void:
 		if adjacency.has(current_node) and adjacency[current_node].has(node_id):
 			var runtime_to_node := get_edge_runtime_state(adjacency[current_node][node_id], sim_time_sec)
 			is_available = str(runtime_to_node.get("state", "OPEN")) != "CLOSED"
-		btn.disabled = is_current or not is_available or _is_round_locked()
+		btn.disabled = is_current or _is_round_locked()
 		if is_current:
 			btn.modulate = Color(0.95, 0.86, 0.45)
+		elif blacklist_nodes.has(node_id):
+			btn.modulate = Color(0.90, 0.40, 0.40)
+		elif must_visit_nodes.has(node_id) and not path.has(node_id):
+			btn.modulate = Color(0.92, 0.86, 0.32)
 		elif is_available:
 			btn.modulate = Color(1, 1, 1)
 		else:
@@ -1305,6 +1587,9 @@ func _update_visuals() -> void:
 		_btn_undo.disabled = _is_round_locked() or _undo_stack.is_empty()
 	if is_instance_valid(_btn_wait):
 		_btn_wait.disabled = _is_round_locked()
+	btn_submit.disabled = _is_round_locked() or not at_finish
+	btn_next.visible = stage_completed
+	btn_next.disabled = not stage_completed
 
 func update_warnings_panel() -> void:
 	var warnings: Array[String] = []
@@ -1317,27 +1602,33 @@ func update_warnings_panel() -> void:
 		warnings.append(
 			_tr(
 				"city_map.c.warning.missing_must",
-				"Required nodes not visited: {nodes}",
+				"You still need required node(s): {nodes}",
 				{"nodes": ",".join(missing_must)}
 			)
 		)
 	if xor_violation:
-		warnings.append(_tr("city_map.c.warning.xor", "XOR violation"))
+		warnings.append(_tr("city_map.c.warning.xor", "XOR group conflict: choose at most one node"))
 	if _path_has_blacklist(path):
-		warnings.append(_tr("city_map.c.warning.blacklist", "Entered blacklist node"))
+		warnings.append(_tr("city_map.c.warning.blacklist", "Blacklist entered: reroute away from forbidden zone"))
 	if closed_edge_attempts > 0:
-		warnings.append(_tr("city_map.c.warning.closed_edge", "Closed edge is blocked"))
+		warnings.append(_tr("city_map.c.warning.closed_edge", "Closed edge blocked: wait or pick another branch"))
 	if cycle_events > 0:
-		warnings.append(_tr("city_map.c.warning.cycle", "Cycle detected"))
+		warnings.append(_tr("city_map.c.warning.cycle", "Loop detected: avoid revisiting same branch"))
 	if backtrack_count > 0:
-		warnings.append(_tr("city_map.c.warning.undo", "Undo used"))
+		warnings.append(_tr("city_map.c.warning.undo", "Undo is normal while exploring dynamic options"))
+
+	if warnings.size() > 2:
+		var limited: Array[String] = []
+		for i in range(2):
+			limited.append(warnings[i])
+		warnings = limited
 
 	if warnings.is_empty():
-		warning_label.text = _tr("city_map.common.warning.none", "WARNINGS:\n-")
+		warning_label.text = _tr("city_map.common.warning.none", "Warnings:\n-")
 	else:
 		warning_label.text = _tr(
 			"city_map.common.warning.list",
-			"WARNINGS:\n{items}",
+			"Warnings:\n{items}",
 			{"items": "\n".join(warnings)}
 		)
 
@@ -1455,6 +1746,11 @@ func _on_node_pressed(node_id: String) -> void:
 	if _is_round_locked():
 		return
 	if not adjacency.has(current_node) or not adjacency[current_node].has(node_id):
+		_set_status_i18n(
+			"city_map.c.status.invalid_move",
+			"Cannot move: this transition is not available from current node.",
+			Color(1.0, 0.65, 0.35)
+		)
 		return
 
 	var now_ms := Time.get_ticks_msec()
@@ -1484,7 +1780,7 @@ func _on_node_pressed(node_id: String) -> void:
 		dynamic_weight_awareness = false
 		_set_status_i18n(
 			"city_map.c.status.closed_edge",
-			"CLOSED EDGE: movement blocked",
+			"Closed edge: movement blocked. Try WAIT or pick another open branch.",
 			Color(1.0, 0.35, 0.35)
 		)
 		_recalculate_stability()
@@ -1495,11 +1791,15 @@ func _on_node_pressed(node_id: String) -> void:
 		dynamic_weight_awareness = false
 
 	var edge_weight: int = int(runtime.get("w", 0))
+	_last_step_cost = edge_weight
 	path_sum += edge_weight
 	step_weights.append(edge_weight)
 	sim_time_sec += edge_weight
 	path.append(node_id)
 	current_node = node_id
+	_last_reveal = {}
+	if is_instance_valid(_reveal_label):
+		_reveal_label.text = ""
 	if path.size() == 2:
 		_set_dossier_open(false)
 
@@ -1563,16 +1863,30 @@ func _on_sum_input_changed(new_text: String) -> void:
 	if digits != new_text:
 		sum_input.text = digits
 		sum_input.caret_column = digits.length()
+	if current_node == str(level_data.get("end_node", "L")) and not digits.is_empty():
+		_set_phase(PHASE_INPUT)
 
 func _on_submit_pressed() -> void:
 	if _is_round_locked():
 		return
+	if current_node != str(level_data.get("end_node", "L")):
+		_set_status_i18n(
+			"city_map.c.result.err_incomplete",
+			"Reach node L before check.",
+			Color(1.0, 0.62, 0.28)
+		)
+		_set_phase(PHASE_BUILD)
+		return
 	_set_dossier_open(false)
+	_set_phase(PHASE_REVIEW)
 
 	attempt_in_sublevel += 1
 	attempt_in_run += 1
 	var verdict := _judge_solution(sum_input.text.strip_edges())
+	_last_reveal = verdict
 	_log_attempt(verdict)
+	if is_instance_valid(_reveal_label):
+		_reveal_label.text = _build_review_text(verdict)
 
 	if verdict.result_code == "OK":
 		_set_status_i18n(
@@ -1646,22 +1960,28 @@ func _judge_solution(input_text: String) -> Dictionary:
 	var sum_actual := _compute_path_sum()
 	var sum_input_value: Variant = null
 	var result_code := "OK"
+	var player_error_step_idx := -1
+	var must_ok := _must_visit_ok(path)
+	var xor_ok := not _is_xor_violation(path)
+	var blacklist_ok := not _path_has_blacklist(path)
+	var dynamic_ok := closed_edge_attempts == 0 and sum_actual >= 0
 
 	if sum_actual < 0:
 		result_code = "ERR_PATH_INVALID"
+		player_error_step_idx = _solver.first_invalid_step_index(path, adjacency)
 	elif current_node != str(level_data.get("end_node", "L")):
 		result_code = "ERR_INCOMPLETE"
-	elif not _must_visit_ok(path):
+	elif not must_ok:
 		n_transit += 1
 		constraint_violations += 1
 		result_code = "ERR_MISSING_TRANSIT"
-	elif _is_xor_violation(path):
+	elif not xor_ok:
 		if not xor_violation:
 			xor_violation = true
 			n_logic += 1
 		constraint_violations += 1
 		result_code = "ERR_LOGIC_VIOLATION"
-	elif _path_has_blacklist(path):
+	elif not blacklist_ok:
 		result_code = "ERR_AMBUSH"
 	elif input_regex.search(input_text) == null:
 		n_parse += 1
@@ -1675,12 +1995,27 @@ func _judge_solution(input_text: String) -> Dictionary:
 			n_opt += 1
 			result_code = "ERR_NOT_OPT"
 
-	return {
-		"result_code": result_code,
-		"sum_actual": sum_actual,
-		"sum_input": sum_input_value,
-		"must_visit_ok": _must_visit_ok(path)
-	}
+	var reveal := _solver.build_reveal_payload(
+		path,
+		result_code,
+		sum_actual,
+		min_sum,
+		str(level_data.get("end_node", "L")),
+		sum_input_value,
+		must_ok,
+		true,
+		xor_ok,
+		blacklist_ok,
+		dynamic_ok,
+		player_error_step_idx,
+		_best_known_path_preview(),
+		min_sum
+	)
+	reveal["sum_actual"] = sum_actual
+	reveal["sum_input"] = sum_input_value
+	reveal["sim_time_sec"] = sim_time_sec
+	reveal["step_weights"] = step_weights.duplicate()
+	return reveal
 
 func _compute_path_sum() -> int:
 	var total := 0
@@ -1728,7 +2063,7 @@ func _recalculate_stability() -> void:
 		n_calc * int(trust_cfg.get("penalty_calc", 25))
 		+ n_opt * int(trust_cfg.get("penalty_opt", 25))
 		+ n_parse * int(trust_cfg.get("penalty_parse", 5))
-		+ n_reset * int(trust_cfg.get("penalty_reset", 5))
+		+ n_reset * maxi(1, int(trust_cfg.get("penalty_reset", 5)) / 2)
 		+ n_transit * int(trust_cfg.get("penalty_transit", 25))
 		+ n_logic * int(trust_cfg.get("penalty_logic_violation", 30))
 		+ n_closed * int(trust_cfg.get("penalty_closed_edge", 8))
@@ -1740,7 +2075,6 @@ func _recalculate_stability() -> void:
 	var ambush_multiplier := float(trust_cfg.get("ambush_multiplier", 0.5))
 	for _i in range(ambush_hits):
 		effective *= ambush_multiplier
-	effective -= float(wait_count)
 
 	stability = clampf(effective, 0.0, 100.0)
 	label_state.text = _tr("city_map.common.status.stability", "STABILITY: {value}%", {"value": int(stability)})
@@ -1774,6 +2108,7 @@ func _log_attempt(verdict: Dictionary) -> void:
 	var sum_input_value: Variant = verdict.get("sum_input", null)
 	var result_code := str(verdict.get("result_code", "ERR_UNKNOWN"))
 	var must_visit_ok := bool(verdict.get("must_visit_ok", false))
+	var phase_snapshot: Dictionary = _phase_snapshot_ms()
 	var level_entry := _current_level_entry()
 	var sublevel_id := str(level_entry.get("id", "6_3_%02d" % (level_index + 1)))
 	var sublevel_path := str(level_entry.get("path", ""))
@@ -1802,9 +2137,14 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"contract_version": str(level_data.get("contract_version", "city_map.v2.1.0")),
 		"attempt_no": attempt_no,
 		"result_code": result_code,
+		"route_valid": bool(verdict.get("route_valid", false)),
+		"finish_reached": bool(verdict.get("finish_reached", false)),
 		"calc_ok": sum_input_value != null and int(sum_input_value) == sum_actual,
-		"optimal_ok": sum_actual == min_sum and result_code == "OK" and must_visit_ok and not xor_violation and not _path_has_blacklist(path),
+		"optimal_ok": sum_actual == min_sum and result_code == "OK" and must_visit_ok and bool(verdict.get("xor_ok", true)) and bool(verdict.get("blacklist_ok", true)),
 		"must_visit_ok": must_visit_ok,
+		"xor_ok": bool(verdict.get("xor_ok", true)),
+		"blacklist_ok": bool(verdict.get("blacklist_ok", true)),
+		"dynamic_ok": bool(verdict.get("dynamic_ok", true)),
 		"first_attempt_edge": first_attempt_edge_value,
 		"t_elapsed_seconds": real_time_sec,
 		"path": path.duplicate(),
@@ -1836,8 +2176,14 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"closed_edges_seen_count": _closed_edges_seen.size(),
 		"dossier_open_count": dossier_open_count,
 		"time_dossier_open_ms": time_dossier_open_ms,
+		"help_open_count": dossier_open_count,
 		"numpad_input_count": numpad_input_count,
 		"backspace_count": backspace_count,
+		"hint_count": _hint_count,
+		"phase_build_ms": int(phase_snapshot.get("1", 0)),
+		"phase_rules_ms": int(phase_snapshot.get("2", 0)),
+		"phase_input_ms": int(phase_snapshot.get("3", 0)),
+		"phase_review_ms": int(phase_snapshot.get("4", 0)),
 		"think_time_before_move_ms": think_time_before_move_ms.duplicate(),
 		"is_correct": result_code == "OK",
 		"is_fit": result_code == "OK",

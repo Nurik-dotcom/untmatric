@@ -93,6 +93,13 @@ text = "B"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="LevelProgressBar" type="ProgressBar" parent="SafeArea/MainLayout/Header"]
+custom_minimum_size = Vector2(140, 12)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 100.0
+show_percentage = false
+
 [node name="StabilityBar" type="ProgressBar" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(210, 24)
 layout_mode = 2

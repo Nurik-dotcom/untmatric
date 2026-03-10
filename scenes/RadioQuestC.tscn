@@ -145,6 +145,14 @@ text = "Step 1: estimate t. Step 2: analyze. Step 3: decide."
 autowrap_mode = 2
 text_overrun_behavior = 3
 
+[node name="DecisionRuleLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.82, 0.85, 0.9, 1)
+text = "Rule: compare estimate with intercept window before choosing action."
+autowrap_mode = 2
+text_overrun_behavior = 3
+
 [node name="KnobCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -229,14 +237,15 @@ clip_contents = true
 
 [node name="StatusMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/StatusCard"]
 layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
 
 [node name="StatusLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/StatusCard/StatusMargin"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 21
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
 text = "STATUS"
 autowrap_mode = 2
 text_overrun_behavior = 3
@@ -299,6 +308,42 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "--"
 
+[node name="CompareCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
+custom_minimum_size = Vector2(0, 82)
+layout_mode = 2
+clip_contents = true
+
+[node name="CompareMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/CompareCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="CompareVBox" type="VBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/CompareCard/CompareMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="CompareTitle" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/CompareCard/CompareMargin/CompareVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "DECISION BASIS"
+
+[node name="CompareLine1" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/CompareCard/CompareMargin/CompareVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Estimate: --"
+autowrap_mode = 2
+text_overrun_behavior = 3
+
+[node name="CompareLine2" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/CompareCard/CompareMargin/CompareVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+text = "Analyze to prepare decision basis."
+autowrap_mode = 2
+text_overrun_behavior = 3
+
 [node name="RiskLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
@@ -327,26 +372,6 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "STEP 3"
 
-[node name="SecondaryActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="BtnUnits" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "UNITS HELP"
-autowrap_mode = 2
-text_overrun_behavior = 3
-
-[node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow"]
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "DETAILS v"
-autowrap_mode = 2
-text_overrun_behavior = 3
-
 [node name="PrimaryActionsRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
 layout_mode = 2
 theme_override_constants/separation = 8
@@ -368,6 +393,26 @@ theme_override_colors/font_disabled_color = Color(0.64, 0.64, 0.64, 0.92)
 disabled = true
 text = "ABORT"
 autowrap_mode = 2
+
+[node name="HelperRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnUnits" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/HelperRow"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UNITS HELP"
+autowrap_mode = 2
+text_overrun_behavior = 3
+
+[node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/HelperRow"]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "DETAILS v"
+autowrap_mode = 2
+text_overrun_behavior = 3
 
 [node name="NextRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox"]
 layout_mode = 2

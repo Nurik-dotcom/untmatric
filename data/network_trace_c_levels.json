@@ -53,7 +53,8 @@
       "сеть",
       "сидр",
       "подсеть"
-    ]
+    ],
+    "hint": "Convert IP_last and mask_last to binary and apply bitwise AND."
   },
   {
     "id": "NT_C_02",
@@ -109,7 +110,8 @@
       "сеть",
       "сидр",
       "граница"
-    ]
+    ],
+    "hint": "Compute step as 256 - mask_last and find the segment start for IP."
   },
   {
     "id": "NT_C_03",
@@ -165,7 +167,8 @@
       "сеть",
       "сидр",
       "шаг 16"
-    ]
+    ],
+    "hint": "Use AND first, then confirm segment boundaries by step."
   },
   {
     "id": "NT_C_04",
@@ -221,7 +224,8 @@
       "сеть",
       "тренироваться",
       "cidr25"
-    ]
+    ],
+    "hint": "TRAIN: verify mask bits and AND result bit-by-bit."
   },
   {
     "id": "NT_C_05",
@@ -277,7 +281,8 @@
       "сеть",
       "тренироваться",
       "cidr26"
-    ]
+    ],
+    "hint": "TRAIN: ensure mask continuity, then identify segment start."
   },
   {
     "id": "NT_C_06",
@@ -333,7 +338,8 @@
       "сеть",
       "cidr26",
       "граница"
-    ]
+    ],
+    "hint": "Do not default to /24; use the actual CIDR and mask."
   },
   {
     "id": "NT_C_07",
@@ -389,7 +395,8 @@
       "сеть",
       "cidr27",
       "и"
-    ]
+    ],
+    "hint": "Compare IP_last with nearest step boundaries to find network start."
   },
   {
     "id": "NT_C_08",
@@ -445,7 +452,8 @@
       "сеть",
       "сидр28",
       "сегмент"
-    ]
+    ],
+    "hint": "If unsure, verify both binary AND and CIDR step range."
   },
   {
     "id": "NT_C_09",
@@ -501,7 +509,8 @@
       "сеть",
       "тренироваться",
       "маска"
-    ]
+    ],
+    "hint": "TRAIN: after AND, choose network ID, not broadcast."
   },
   {
     "id": "NT_C_10",
@@ -557,6 +566,7 @@
       "сеть",
       "финальный",
       "подсеть"
-    ]
+    ],
+    "hint": "mask_last defines step; AND gives the segment start."
   }
 ]

@@ -1,21 +1,19 @@
 [gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://scenes/case_01/DigitalResusQuestB.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
-[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
+[ext_resource type="Script" path="res://scenes/case_01/DigitalResusQuestB.gd" id="1"]
+[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3"]
 
 [node name="DigitalResusQuestB" type="Control"]
-layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("2_theme")
-script = ExtResource("1_script")
+theme = ExtResource("2")
+script = ExtResource("1")
 
 [node name="Background" type="ColorRect" parent="."]
-layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -23,342 +21,80 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
+[node name="NoirOverlay" parent="." instance=ExtResource("3")]
 intensity = 0.12
 
 [node name="SafeArea" type="MarginContainer" parent="."]
-layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 12
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
 
 [node name="MainVBox" type="VBoxContainer" parent="SafeArea"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 10
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
 
 [node name="Header" type="HBoxContainer" parent="SafeArea/MainVBox"]
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-theme_override_constants/separation = 10
+custom_minimum_size = Vector2(0, 56)
 
 [node name="BtnBack" type="Button" parent="SafeArea/MainVBox/Header"]
-custom_minimum_size = Vector2(72, 72)
-layout_mode = 2
+custom_minimum_size = Vector2(56, 56)
 text = "<"
 
 [node name="TitleLabel" type="Label" parent="SafeArea/MainVBox/Header"]
-layout_mode = 2
 size_flags_horizontal = 3
 text = "Case 01: Digital Resus"
 vertical_alignment = 1
 
 [node name="StageLabel" type="Label" parent="SafeArea/MainVBox/Header"]
-custom_minimum_size = Vector2(120, 0)
-layout_mode = 2
+custom_minimum_size = Vector2(140, 0)
 text = "STAGE B"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="StabilityBar" type="ProgressBar" parent="SafeArea/MainVBox/Header"]
-custom_minimum_size = Vector2(220, 28)
-layout_mode = 2
+custom_minimum_size = Vector2(180, 18)
 size_flags_vertical = 4
+max_value = 100.0
 value = 100.0
 show_percentage = false
 
-[node name="ContentScroll" type="ScrollContainer" parent="SafeArea/MainVBox"]
-layout_mode = 2
-size_flags_horizontal = 3
+[node name="ContentArea" type="PanelContainer" parent="SafeArea/MainVBox"]
 size_flags_vertical = 3
-horizontal_scroll_mode = 0
-vertical_scroll_mode = 1
-
-[node name="Content" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 10
-
-[node name="ContextCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
-layout_mode = 2
-
-[node name="ContextVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ContextCard"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="ContextLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/ContextCard/ContextVBox"]
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-text = "Tune BIOS profile before benchmark."
-autowrap_mode = 2
-
-[node name="BudgetRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/ContextCard/ContextVBox"]
-layout_mode = 2
-
-[node name="BudgetLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/ContextCard/ContextVBox/BudgetRow"]
-layout_mode = 2
-text = "BUDGET"
-
-[node name="BudgetValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/ContextCard/ContextVBox/BudgetRow"]
-layout_mode = 2
-text = "0$"
-
-[node name="OptionsCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
-layout_mode = 2
-
-[node name="OptionsVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/OptionsCard"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="OptionsTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/OptionsCard/OptionsVBox"]
-layout_mode = 2
-text = "PRESET RIGS"
-
-[node name="OptionsScroll" type="ScrollContainer" parent="SafeArea/MainVBox/ContentScroll/Content/OptionsCard/OptionsVBox"]
-custom_minimum_size = Vector2(0, 180)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="OptionsList" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/OptionsCard/OptionsVBox/OptionsScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="BiosCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
-layout_mode = 2
-
-[node name="BiosVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="TuneGrid" type="GridContainer" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox"]
-layout_mode = 2
-columns = 2
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 8
-
-[node name="CpuLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox/TuneGrid"]
-layout_mode = 2
-text = "CPU"
-
-[node name="CpuLevel" type="OptionButton" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox/TuneGrid"]
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-
-[node name="RamLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox/TuneGrid"]
-layout_mode = 2
-text = "RAM"
-
-[node name="RamLevel" type="OptionButton" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox/TuneGrid"]
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-
-[node name="GpuLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox/TuneGrid"]
-layout_mode = 2
-text = "GPU"
-
-[node name="GpuLevel" type="OptionButton" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox/TuneGrid"]
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-
-[node name="UsedBudgetLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox/TuneGrid"]
-layout_mode = 2
-text = "USED"
-
-[node name="UsedBudgetValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox/TuneGrid"]
-layout_mode = 2
-text = "0$"
-
-[node name="BudgetBar" type="ProgressBar" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox"]
-custom_minimum_size = Vector2(0, 20)
-layout_mode = 2
-max_value = 100.0
-show_percentage = false
-
-[node name="RiskRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox"]
-layout_mode = 2
-
-[node name="RiskLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox/RiskRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "RISK"
-
-[node name="RiskValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox/RiskRow"]
-layout_mode = 2
-text = "LOW"
-
-[node name="RiskBar" type="ProgressBar" parent="SafeArea/MainVBox/ContentScroll/Content/BiosCard/BiosVBox"]
-custom_minimum_size = Vector2(0, 20)
-layout_mode = 2
-max_value = 100.0
-show_percentage = false
-
-[node name="PreviewCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
-layout_mode = 2
-
-[node name="PreviewVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="PreviewTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox"]
-layout_mode = 2
-text = "LIVE PREVIEW"
-
-[node name="BottleneckRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox"]
-layout_mode = 2
-
-[node name="BottleneckLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox/BottleneckRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "CLASS"
-
-[node name="BottleneckValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox/BottleneckRow"]
-layout_mode = 2
-text = "OPTIMAL"
-
-[node name="FpsRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox"]
-layout_mode = 2
-
-[node name="FpsLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox/FpsRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "FPS"
-
-[node name="FpsValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox/FpsRow"]
-layout_mode = 2
-text = "0"
-
-[node name="FpsBar" type="ProgressBar" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox"]
-custom_minimum_size = Vector2(0, 18)
-layout_mode = 2
-max_value = 100.0
-show_percentage = false
-
-[node name="CpuRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox"]
-layout_mode = 2
-
-[node name="CpuLoadLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox/CpuRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "CPU LOAD"
-
-[node name="CpuLoadValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox/CpuRow"]
-layout_mode = 2
-text = "0%"
-
-[node name="CpuBar" type="ProgressBar" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox"]
-custom_minimum_size = Vector2(0, 18)
-layout_mode = 2
-max_value = 100.0
-show_percentage = false
-
-[node name="RamRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox"]
-layout_mode = 2
-
-[node name="RamUsageLabel" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox/RamRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "RAM USAGE"
-
-[node name="RamUsageValue" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox/RamRow"]
-layout_mode = 2
-text = "0%"
-
-[node name="RamBar" type="ProgressBar" parent="SafeArea/MainVBox/ContentScroll/Content/PreviewCard/PreviewVBox"]
-custom_minimum_size = Vector2(0, 18)
-layout_mode = 2
-max_value = 100.0
-show_percentage = false
-
-[node name="TerminalCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
-layout_mode = 2
-
-[node name="TerminalVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/TerminalCard"]
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="TerminalTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/TerminalCard/TerminalVBox"]
-layout_mode = 2
-text = "BENCHMARK TERMINAL"
-
-[node name="TerminalOutput" type="RichTextLabel" parent="SafeArea/MainVBox/ContentScroll/Content/TerminalCard/TerminalVBox"]
-custom_minimum_size = Vector2(0, 150)
-layout_mode = 2
-fit_content = false
-scroll_active = true
-text = ""
-autowrap_mode = 2
-
-[node name="DiagnosticCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
-visible = false
-layout_mode = 2
-
-[node name="DiagnosticVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentScroll/Content/DiagnosticCard"]
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="DiagnosticTitle" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/DiagnosticCard/DiagnosticVBox"]
-layout_mode = 2
-text = "DIAGNOSTIC"
-
-[node name="DiagnosticHeadline" type="Label" parent="SafeArea/MainVBox/ContentScroll/Content/DiagnosticCard/DiagnosticVBox"]
-layout_mode = 2
-text = "Awaiting benchmark."
-
-[node name="DiagnosticDetails" type="RichTextLabel" parent="SafeArea/MainVBox/ContentScroll/Content/DiagnosticCard/DiagnosticVBox"]
-custom_minimum_size = Vector2(0, 90)
-layout_mode = 2
-fit_content = false
-scroll_active = true
-text = ""
-autowrap_mode = 2
 
 [node name="BottomBar" type="VBoxContainer" parent="SafeArea/MainVBox"]
-layout_mode = 2
+custom_minimum_size = Vector2(0, 100)
 theme_override_constants/separation = 8
 
-[node name="StatusRow" type="HBoxContainer" parent="SafeArea/MainVBox/BottomBar"]
-layout_mode = 2
-
-[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomBar/StatusRow"]
-custom_minimum_size = Vector2(0, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "READY"
+[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/BottomBar"]
+custom_minimum_size = Vector2(0, 40)
 autowrap_mode = 2
-vertical_alignment = 1
+text = "Ready"
 
-[node name="ActionsRow" type="GridContainer" parent="SafeArea/MainVBox/BottomBar"]
-layout_mode = 2
-columns = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+[node name="Buttons" type="HBoxContainer" parent="SafeArea/MainVBox/BottomBar"]
+theme_override_constants/separation = 8
 
-[node name="BtnBenchmark" type="Button" parent="SafeArea/MainVBox/BottomBar/ActionsRow"]
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-text = "RUN BENCHMARK"
-
-[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar/ActionsRow"]
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
+[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/BottomBar/Buttons"]
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 52)
 text = "RESET"
 
-[node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar/ActionsRow"]
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
+[node name="BtnConfirm" type="Button" parent="SafeArea/MainVBox/BottomBar/Buttons"]
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 52)
 text = "CONFIRM"
 
-[node name="BtnNextLevel" type="Button" parent="SafeArea/MainVBox/BottomBar/ActionsRow"]
+[node name="BtnNext" type="Button" parent="SafeArea/MainVBox/BottomBar/Buttons"]
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 52)
+text = "NEXT"
 visible = false
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-text = "NEXT LEVEL"

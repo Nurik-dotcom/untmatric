@@ -101,6 +101,24 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "               "
 
+[node name="StorageBannerCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+
+[node name="StorageBannerMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageBannerCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="StorageBannerLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/StorageBannerCard/StorageBannerMargin"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "                 "
+autowrap_mode = 2
+text_overrun_behavior = 3
+
 [node name="StorageGrid" type="GridContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -196,6 +214,20 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "        "
 
+[node name="TaskLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "            I = K*i                    "
+autowrap_mode = 2
+text_overrun_behavior = 3
+
+[node name="FlowLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "                    "
+autowrap_mode = 2
+text_overrun_behavior = 3
+
 [node name="IInfoLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
@@ -206,10 +238,10 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "K = 128         "
 
-[node name="TaskLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox"]
+[node name="DependencyLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ContextCard/ContextMargin/ContextVBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "            I = K*i                    "
+theme_override_font_sizes/font_size = 17
+text = "                    "
 autowrap_mode = 2
 text_overrun_behavior = 3
 
@@ -267,6 +299,26 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "        "
 
+[node name="StatusCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+
+[node name="StatusMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="StatusLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusCard/StatusMargin"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.94, 0.94, 1)
+theme_override_font_sizes/font_size = 18
+text = "      "
+autowrap_mode = 2
+text_overrun_behavior = 3
+
 [node name="PreviewCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
 clip_contents = true
 custom_minimum_size = Vector2(0, 120)
@@ -313,15 +365,8 @@ text_overrun_behavior = 3
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BtnConverter" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
-custom_minimum_size = Vector2(0, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "         "
-autowrap_mode = 2
-
 [node name="BtnCapture" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRow"]
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
@@ -333,10 +378,20 @@ layout_mode = 2
 
 [node name="BtnNext" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/NextRow"]
 visible = false
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "     "
+autowrap_mode = 2
+
+[node name="HelperRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+layout_mode = 2
+
+[node name="BtnConverter" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/HelperRow"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "         "
 autowrap_mode = 2
 
 [node name="SampleStrip" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
@@ -534,16 +589,10 @@ text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="StatusLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
-custom_minimum_size = Vector2(0, 88)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "      "
-autowrap_mode = 2
-
 [node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "           "
 
 [node name="Dimmer" type="ColorRect" parent="."]

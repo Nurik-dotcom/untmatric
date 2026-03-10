@@ -1,13 +1,13 @@
 extends Control
 
 const THEME_NOIR: Theme = preload("res://ui/theme_noir_pencil.tres")
+const TRACE_ROW_SCENE: PackedScene = preload("res://scenes/components/TraceRow.tscn")
 
 const AUDIO_CLICK: AudioStream = preload("res://audio/click.wav")
 const AUDIO_ERROR: AudioStream = preload("res://audio/error.wav")
 const AUDIO_RELAY: AudioStream = preload("res://audio/relay.wav")
 
 const LEVELS_PATH := "res://data/suspect_a_levels.json"
-const MAX_ATTEMPTS := 3
 const FX_ID_LOW := 0
 const FX_ID_HIGH := 1
 const OVERLAY_ID_PENCIL := 0
@@ -26,70 +26,109 @@ func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 	merged["default"] = default_text
 	return I18n.tr_key(key, merged)
 
-enum State {
-	INIT,
-	BRIEFING,
-	SOLVING,
-	FEEDBACK_SUCCESS,
-	FEEDBACK_FAIL,
-	SAFE_MODE,
-	DIAGNOSTIC
+enum QuestState {
+	INTRO,
+	READY,
+	TRACE_GUIDED,
+	TRACE_FULL,
+	AWAIT_ANSWER,
+	WRONG_RETRY,
+	SUCCESS,
+	EXPLANATION
 }
 
 @export_enum("low", "high") var fx_quality: String = "high"
 @export_enum("pencil", "crt") var overlay_mode: String = "pencil"
-@export var typewriter_delay_sec: float = 0.03
 
 @onready var safe_area: MarginContainer = $SafeArea
-@onready var main_layout: VBoxContainer = $SafeArea/MainLayout
-@onready var header_row: HBoxContainer = $SafeArea/MainLayout/Header
-@onready var terminal_frame: PanelContainer = $SafeArea/MainLayout/TerminalFrame
-@onready var actions_row: HBoxContainer = $SafeArea/MainLayout/Actions
-@onready var noir_overlay: CanvasLayer = $NoirOverlay
+@onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
+@onready var header_bar: HBoxContainer = $SafeArea/MainVBox/HeaderBar
+@onready var workspace_container: BoxContainer = $SafeArea/MainVBox/WorkspaceContainer
+@onready var code_panel: PanelContainer = $SafeArea/MainVBox/WorkspaceContainer/CodePanel
+@onready var trace_panel: PanelContainer = $SafeArea/MainVBox/WorkspaceContainer/TracePanel
+@onready var solve_panel: PanelContainer = $SafeArea/MainVBox/SolvePanel
 
-@onready var briefing_goal: Label = $SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox/LblGoal
-@onready var briefing_hint: Label = $SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox/LblHint
+@onready var btn_quest_back: Button = $SafeArea/MainVBox/HeaderBar/BtnQuestBack
+@onready var btn_settings: Button = $SafeArea/MainVBox/HeaderBar/BtnSettings
+@onready var lbl_clue_title: Label = $SafeArea/MainVBox/HeaderBar/LblClueTitle
+@onready var lbl_session: Label = $SafeArea/MainVBox/HeaderBar/LblSessionId
 
-@onready var code_label: RichTextLabel = $SafeArea/MainLayout/TerminalFrame/ScrollContainer/CodeLabel
-@onready var code_scroll: ScrollContainer = $SafeArea/MainLayout/TerminalFrame/ScrollContainer
-@onready var input_display: Label = $SafeArea/MainLayout/InputFrame/InputDisplay
-@onready var lbl_status: Label = $SafeArea/MainLayout/StatusRow/LblStatus
-@onready var lbl_attempts: Label = $SafeArea/MainLayout/StatusRow/LblAttempts
-@onready var decrypt_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/DecryptBar
-@onready var energy_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/EnergyBar
+@onready var clue_label: Label = $SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox/ClueLabel
+@onready var briefing_title: Label = $SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox/BriefingTitle
+@onready var briefing_text: Label = $SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox/BriefingText
+@onready var topic_hint_badge: Label = $SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox/TopicHintBadge
 
-@onready var diag_panel: PanelContainer = $DiagnosticsPanel
-@onready var diag_trace: RichTextLabel = $DiagnosticsPanel/VBoxContainer/TraceList
-@onready var diag_explain: RichTextLabel = $DiagnosticsPanel/VBoxContainer/ExplainList
+@onready var code_title: Label = $SafeArea/MainVBox/WorkspaceContainer/CodePanel/CodeMargin/CodeVBox/CodeHeader/CodeTitle
+@onready var code_scroll: ScrollContainer = $SafeArea/MainVBox/WorkspaceContainer/CodePanel/CodeMargin/CodeVBox/CodeScroll
+@onready var code_lines_container: VBoxContainer = $SafeArea/MainVBox/WorkspaceContainer/CodePanel/CodeMargin/CodeVBox/CodeScroll/CodeLines
 
-@onready var btn_enter: Button = $SafeArea/MainLayout/Actions/BtnEnter
-@onready var btn_analyze: Button = $SafeArea/MainLayout/Actions/BtnAnalyze
-@onready var btn_next: Button = $SafeArea/MainLayout/Actions/BtnNext
-@onready var btn_close_diag: Button = $DiagnosticsPanel/VBoxContainer/BtnCloseDiag
-@onready var btn_quest_back: Button = $SafeArea/MainLayout/Header/BtnQuestBack
-@onready var btn_settings: Button = $SafeArea/MainLayout/Header/BtnSettings
-@onready var lbl_clue_title: Label = $SafeArea/MainLayout/Header/LblClueTitle
-@onready var lbl_session: Label = $SafeArea/MainLayout/Header/LblSessionId
-@onready var numpad: GridContainer = $SafeArea/MainLayout/Numpad
+@onready var trace_title: Label = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceHeader/TraceTitle
+@onready var trace_mode_badge: Label = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceHeader/TraceModeBadge
+@onready var toggle_trace_button: Button = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceHeader/ToggleTraceButton
+@onready var trace_body: VBoxContainer = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceBody
+@onready var trace_scroll: ScrollContainer = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceBody/TraceScroll
+@onready var trace_rows_container: VBoxContainer = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceBody/TraceScroll/TraceRowsContainer
+@onready var trace_controls: HBoxContainer = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls
+@onready var step_prev_button: Button = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls/StepPrevButton
+@onready var step_next_button: Button = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls/StepNextButton
+@onready var show_all_button: Button = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls/ShowAllButton
+@onready var reset_trace_button: Button = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls/ResetTraceButton
+
+@onready var answer_label: Label = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerLabel
+@onready var answer_input: LineEdit = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow/AnswerInput
+@onready var primary_check_button: Button = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow/PrimaryCheckButton
+@onready var btn_next: Button = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow/BtnNext
+@onready var step_analysis_button: Button = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions/StepAnalysisButton
+@onready var hint_button: Button = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions/HintButton
+@onready var why_button: Button = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions/WhyButton
+
+@onready var lbl_status: Label = $SafeArea/MainVBox/StatusBar/StatusMargin/StatusRow/LblStatus
+@onready var lbl_attempts: Label = $SafeArea/MainVBox/StatusBar/StatusMargin/StatusRow/LblAttempts
+
+@onready var explanation_overlay: PanelContainer = $ExplanationOverlay
+@onready var explanation_title: Label = $ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/ExplanationTitle
+@onready var explanation_text: RichTextLabel = $ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/ExplanationText
+@onready var btn_close_overlay: Button = $ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/OverlayButtons/BtnCloseOverlay
+@onready var btn_open_steps: Button = $ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/OverlayButtons/BtnOpenSteps
+@onready var btn_overlay_next: Button = $ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/OverlayButtons/BtnOverlayNext
 
 @onready var inspector_popup: PopupPanel = $InspectorPopup
 @onready var popup_fx_select: OptionButton = $InspectorPopup/Root/SettingsGrid/FxSelect
 @onready var popup_overlay_select: OptionButton = $InspectorPopup/Root/SettingsGrid/OverlaySelect
 @onready var popup_close: Button = $InspectorPopup/Root/BtnClose
 
+@onready var noir_overlay: CanvasLayer = $NoirOverlay
+
 var levels: Array = []
-var current_level_idx := 0
-var current_task: Dictionary = {}
-var user_input := ""
-var state: State = State.INIT
-var energy := 100.0
-var wrong_count := 0
-var task_started_at := 0
-var task_finished := false
-var task_result_sent := false
-var is_safe_mode := false
-var is_code_ready := false
-var variant_hash := ""
+var current_level_idx: int = 0
+var current_level: Dictionary = {}
+
+var current_state: int = QuestState.INTRO
+var previous_state_before_overlay: int = QuestState.READY
+
+var trace_steps: Array = []
+var current_trace_index: int = -1
+var trace_mode: String = "collapsed"
+var used_guided_trace: bool = false
+var used_full_trace: bool = false
+var shown_auto_help: bool = false
+var attempts_used: int = 0
+var answer_locked: bool = false
+var trace_steps_revealed_count: int = 0
+var topic_hint_used_count: int = 0
+
+var code_line_rows: Array[Control] = []
+var code_line_number_labels: Array[Label] = []
+var code_line_text_labels: Array[Label] = []
+var trace_row_nodes: Array[Control] = []
+var current_highlight_line: int = -1
+
+var is_compact_layout: bool = false
+
+var task_started_at: int = 0
+var task_finished: bool = false
+var task_result_sent: bool = false
+var variant_hash: String = ""
 var task_session: Dictionary = {}
 
 var sfx_player: AudioStreamPlayer
@@ -102,7 +141,7 @@ func _ready() -> void:
 	if not I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.connect(_on_language_changed)
 	_apply_i18n()
-	_apply_mobile_min_sizes()
+	_setup_runtime_controls()
 	_apply_layout_mode()
 
 	if not _load_levels_from_json():
@@ -113,18 +152,22 @@ func _ready() -> void:
 		push_warning("Suspect levels expected 18, got %d" % levels.size())
 
 	GlobalMetrics.current_level_index = 0
-	_load_level(0)
+	_load_case(0)
 
 func _exit_tree() -> void:
 	if I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.disconnect(_on_language_changed)
 
-func _on_language_changed(_code: String) -> void:
-	_apply_i18n()
-
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and is_node_ready():
 		_apply_layout_mode()
+
+func _on_language_changed(_code: String) -> void:
+	_apply_i18n()
+	if not current_level.is_empty():
+		_render_case_brief()
+		if explanation_overlay.visible:
+			_render_explanation_overlay()
 
 func _apply_theme() -> void:
 	theme = THEME_NOIR
@@ -135,26 +178,38 @@ func _setup_runtime_controls() -> void:
 
 func _apply_i18n() -> void:
 	btn_quest_back.text = _tr("suspect.a.btn.back", "BACK")
-	btn_settings.text = _tr("suspect.a.btn.settings", "SETT")
-	btn_analyze.text = _tr("suspect.a.btn.analyze", "ANALYZE")
-	btn_enter.text = _tr("suspect.a.btn.enter", "ENTER")
-	btn_next.text = _tr("suspect.a.btn.next", "NEXT")
-	btn_close_diag.text = _tr("suspect.a.btn.close", "CLOSE")
-	popup_close.text = _tr("suspect.a.btn.close", "CLOSE")
+	btn_settings.text = _tr("suspect.a.btn.settings", "SET")
+	code_title.text = _tr("suspect.a.ui.code_title", "CODE")
+	trace_title.text = _tr("suspect.a.ui.trace_title", "EXECUTION LOG")
+	answer_label.text = _tr("suspect.a.ui.answer", "Final answer (s)")
+	answer_input.placeholder_text = _tr("suspect.a.ui.answer_placeholder", "Enter integer")
+	primary_check_button.text = _tr("suspect.a.btn.check", "Check")
+	btn_next.text = _tr("suspect.a.btn.next", "Next")
+	step_analysis_button.text = _tr("suspect.a.btn.step_analysis", "Open Execution Log")
+	hint_button.text = _tr("suspect.a.btn.hint", "Hint")
+	why_button.text = _tr("suspect.a.btn.why", "Why this?")
+	toggle_trace_button.text = _tr("suspect.a.btn.trace_open", "Open")
+	step_prev_button.text = _tr("suspect.a.btn.prev", "Prev")
+	step_next_button.text = _tr("suspect.a.btn.next_step", "Next")
+	show_all_button.text = _tr("suspect.a.btn.show_all", "Show all")
+	reset_trace_button.text = _tr("suspect.a.btn.reset_trace", "Reset")
+	trace_mode_badge.text = _tr("suspect.a.trace.collapsed", "Collapsed")
 
+	explanation_title.text = _tr("suspect.a.overlay.title", "Why this final value")
+	btn_close_overlay.text = _tr("suspect.a.btn.close", "Close")
+	btn_open_steps.text = _tr("suspect.a.btn.open_steps", "Open steps")
+	btn_overlay_next.text = _tr("suspect.a.btn.next", "Next")
+
+	popup_close.text = _tr("suspect.a.btn.close", "Close")
 	var popup_title: Label = inspector_popup.get_node_or_null("Root/LblTitle") as Label
 	if popup_title != null:
 		popup_title.text = _tr("suspect.a.ui.settings_title", "SETTINGS")
 	var popup_fx_title: Label = inspector_popup.get_node_or_null("Root/SettingsGrid/LblFx") as Label
 	if popup_fx_title != null:
-		popup_fx_title.text = _tr("suspect.a.ui.effects", "EFFECTS")
+		popup_fx_title.text = _tr("suspect.a.ui.effects", "Effects")
 	var popup_overlay_title: Label = inspector_popup.get_node_or_null("Root/SettingsGrid/LblOverlay") as Label
 	if popup_overlay_title != null:
-		popup_overlay_title.text = _tr("suspect.a.ui.overlay", "OVERLAY")
-
-	var diag_title: Label = diag_panel.get_node_or_null("VBoxContainer/Label") as Label
-	if diag_title != null:
-		diag_title.text = _tr("suspect.a.ui.diagnostics", "DIAGNOSTICS")
+		popup_overlay_title.text = _tr("suspect.a.ui.overlay", "Overlay")
 
 	popup_fx_select.clear()
 	popup_fx_select.add_item(_tr("suspect.a.settings.fx_low", "Low"), FX_ID_LOW)
@@ -215,19 +270,29 @@ func _init_audio_player() -> void:
 	add_child(sfx_player)
 
 func _connect_signals() -> void:
-	for btn_var in numpad.get_children():
-		if btn_var is Button:
-			(btn_var as Button).pressed.connect(_on_numpad_pressed.bind(btn_var))
-
-	btn_enter.pressed.connect(_on_enter_pressed)
-	btn_analyze.pressed.connect(_on_analyze_pressed)
-	btn_next.pressed.connect(_on_next_pressed)
-	btn_close_diag.pressed.connect(_on_close_diag_pressed)
 	btn_quest_back.pressed.connect(_on_back_pressed)
 	btn_settings.pressed.connect(_on_settings_pressed)
 	popup_close.pressed.connect(_on_settings_close_pressed)
 	popup_fx_select.item_selected.connect(_on_popup_fx_selected)
 	popup_overlay_select.item_selected.connect(_on_popup_overlay_selected)
+
+	primary_check_button.pressed.connect(_on_primary_check_pressed)
+	btn_next.pressed.connect(_on_next_pressed)
+	answer_input.text_submitted.connect(_on_answer_submitted)
+
+	step_analysis_button.pressed.connect(_on_step_analysis_pressed)
+	hint_button.pressed.connect(_on_hint_pressed)
+	why_button.pressed.connect(_on_why_pressed)
+
+	toggle_trace_button.pressed.connect(_on_toggle_trace_pressed)
+	step_prev_button.pressed.connect(_on_step_prev_pressed)
+	step_next_button.pressed.connect(_on_step_next_pressed)
+	show_all_button.pressed.connect(_on_show_all_pressed)
+	reset_trace_button.pressed.connect(_on_reset_trace_pressed)
+
+	btn_close_overlay.pressed.connect(_on_close_overlay_pressed)
+	btn_open_steps.pressed.connect(_on_overlay_open_steps_pressed)
+	btn_overlay_next.pressed.connect(_on_overlay_next_pressed)
 
 func _on_settings_pressed() -> void:
 	inspector_popup.popup_centered_ratio(0.38)
@@ -245,43 +310,45 @@ func _on_popup_overlay_selected(index: int) -> void:
 	overlay_mode = "pencil" if item_id == OVERLAY_ID_PENCIL else "crt"
 	_configure_overlay_shader()
 
-func _apply_mobile_min_sizes() -> void:
-	for btn_var in numpad.get_children():
-		if btn_var is Button:
-			(btn_var as Button).custom_minimum_size = Vector2(64, 64)
-	btn_enter.custom_minimum_size = Vector2(0, 56)
-	btn_analyze.custom_minimum_size = Vector2(0, 56)
-	btn_next.custom_minimum_size = Vector2(0, 56)
-	popup_fx_select.custom_minimum_size = Vector2(220, 48)
-	popup_overlay_select.custom_minimum_size = Vector2(220, 48)
-
 func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var portrait: bool = viewport_size.x < viewport_size.y
 	var compact: bool = (portrait and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH) or ((not portrait) and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT)
+	is_compact_layout = compact
 
 	safe_area.add_theme_constant_override("margin_left", 10 if compact else 16)
 	safe_area.add_theme_constant_override("margin_top", 8 if compact else 12)
 	safe_area.add_theme_constant_override("margin_right", 10 if compact else 16)
 	safe_area.add_theme_constant_override("margin_bottom", 8 if compact else 12)
 
-	main_layout.add_theme_constant_override("separation", 6 if compact else 8)
-	header_row.add_theme_constant_override("separation", 6 if compact else 8)
-	terminal_frame.size_flags_stretch_ratio = 2.0 if compact else 2.2
-	terminal_frame.custom_minimum_size = Vector2(0, 180 if compact else 230)
-	numpad.size_flags_stretch_ratio = 0.7 if compact else 0.72
-	actions_row.size_flags_stretch_ratio = 0.34 if compact else 0.36
-	code_label.add_theme_font_size_override("normal_font_size", 24 if compact else 28)
-	code_label.add_theme_font_size_override("mono_font_size", 30 if compact else 34)
-	briefing_goal.add_theme_font_size_override("font_size", 18 if compact else 20)
-	briefing_hint.add_theme_font_size_override("font_size", 15 if compact else 16)
+	main_vbox.add_theme_constant_override("separation", 6 if compact else 8)
+	header_bar.add_theme_constant_override("separation", 6 if compact else 8)
+	workspace_container.add_theme_constant_override("separation", 8 if compact else 10)
 
-	for btn_var in numpad.get_children():
-		if btn_var is Button:
-			(btn_var as Button).custom_minimum_size = Vector2(52, 52) if compact else Vector2(64, 64)
-	btn_enter.custom_minimum_size = Vector2(0, 48) if compact else Vector2(0, 56)
-	btn_analyze.custom_minimum_size = Vector2(0, 48) if compact else Vector2(0, 56)
-	btn_next.custom_minimum_size = Vector2(0, 48) if compact else Vector2(0, 56)
+	var mobile_portrait: bool = portrait and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
+	workspace_container.vertical = mobile_portrait
+	if mobile_portrait:
+		code_panel.custom_minimum_size = Vector2(0, 210 if compact else 240)
+		trace_panel.custom_minimum_size = Vector2(0, 170 if compact else 210)
+		code_panel.size_flags_stretch_ratio = 1.25
+		trace_panel.size_flags_stretch_ratio = 1.0
+	else:
+		code_panel.custom_minimum_size = Vector2(0, 220 if compact else 250)
+		trace_panel.custom_minimum_size = Vector2(320 if compact else 380, 0)
+		code_panel.size_flags_stretch_ratio = 1.4
+		trace_panel.size_flags_stretch_ratio = 1.0
+
+	var clue_font: int = 13 if compact else 14
+	var title_font: int = 18 if compact else 20
+	var body_font: int = 15 if compact else 16
+	clue_label.add_theme_font_size_override("font_size", clue_font)
+	briefing_title.add_theme_font_size_override("font_size", title_font)
+	briefing_text.add_theme_font_size_override("font_size", body_font)
+	topic_hint_badge.add_theme_font_size_override("font_size", body_font)
+	answer_label.add_theme_font_size_override("font_size", body_font)
+
+	for idx in range(code_line_rows.size()):
+		_apply_code_line_style(idx, current_highlight_line == idx + 1)
 
 func _load_levels_from_json() -> bool:
 	var file: FileAccess = FileAccess.open(LEVELS_PATH, FileAccess.READ)
@@ -309,7 +376,7 @@ func _load_levels_from_json() -> bool:
 	return levels.size() > 0
 
 func _validate_level(level: Dictionary) -> bool:
-	var required_keys: Array[String] = ["id", "bucket", "briefing", "code", "expected", "trace", "economy", "topic_tags", "explain_short"]
+	var required_keys: Array[String] = ["id", "bucket", "briefing", "code", "expected", "trace", "topic_tags", "explain_short"]
 	for key in required_keys:
 		if not level.has(key):
 			return false
@@ -318,52 +385,49 @@ func _validate_level(level: Dictionary) -> bool:
 		return false
 	if typeof(level.get("trace")) != TYPE_ARRAY:
 		return false
-	if typeof(level.get("economy")) != TYPE_DICTIONARY:
-		return false
 	if typeof(level.get("topic_tags")) != TYPE_ARRAY:
 		return false
 	if typeof(level.get("explain_short")) != TYPE_ARRAY:
 		return false
 
-	var trace: Array = level.get("trace", [])
-	if trace.is_empty():
-		return false
-
-	for step_var in trace:
-		if typeof(step_var) != TYPE_DICTIONARY:
-			return false
-		var step: Dictionary = step_var
-		if not step.has("i") or not step.has("cond") or not step.has("s_before") or not step.has("s_after"):
-			return false
-
 	return true
 
 func _show_boot_error(text: String) -> void:
-	lbl_status.text = text
-	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
-	btn_enter.disabled = true
-	btn_analyze.disabled = true
-	btn_next.disabled = true
+	_update_status(text, STATUS_COLOR_FAIL)
+	primary_check_button.disabled = true
+	step_analysis_button.disabled = true
+	show_all_button.disabled = true
 
-func _localized_briefing_text(task: Dictionary) -> String:
-	var source: String = str(task.get("briefing", "")).strip_edges()
-	var task_id: String = str(task.get("id", "unknown"))
-	return _tr("suspect.a.level.%s.briefing" % task_id, source)
-
-func _load_level(idx: int) -> void:
+func _load_case(case_idx: int) -> void:
 	if levels.is_empty():
 		return
 
-	if idx >= levels.size():
-		idx = 0
-	current_level_idx = idx
+	if case_idx >= levels.size():
+		case_idx = 0
+	current_level_idx = case_idx
+	GlobalMetrics.current_level_index = current_level_idx
 
-	current_task = (levels[idx] as Dictionary).duplicate(true)
-	variant_hash = str(hash(JSON.stringify(current_task)))
+	current_level = (levels[case_idx] as Dictionary).duplicate(true)
+	trace_steps = _normalize_trace(current_level.get("trace", []))
+	current_trace_index = -1
+	trace_mode = "collapsed"
+	used_guided_trace = false
+	used_full_trace = false
+	shown_auto_help = false
+	attempts_used = 0
+	answer_locked = false
+	trace_steps_revealed_count = 0
+	topic_hint_used_count = 0
+	current_highlight_line = -1
+	btn_next.visible = false
+	btn_overlay_next.visible = false
+
 	task_started_at = Time.get_ticks_msec()
-
+	task_finished = false
+	task_result_sent = false
+	variant_hash = str(hash(JSON.stringify(current_level)))
 	task_session = {
-		"task_id": str(current_task.get("id", "A-00")),
+		"task_id": str(current_level.get("id", "A-00")),
 		"variant_hash": variant_hash,
 		"started_at_ticks": task_started_at,
 		"ended_at_ticks": 0,
@@ -371,283 +435,650 @@ func _load_level(idx: int) -> void:
 		"events": []
 	}
 
-	state = State.BRIEFING
-	wrong_count = 0
-	energy = 100.0
-	user_input = ""
-	is_safe_mode = false
-	is_code_ready = false
-	task_finished = false
-	task_result_sent = false
-
-	lbl_clue_title.text = _tr("suspect.a.labels.clue_title", "CLUE #{id}", {"id": str(current_task.get("id", "A-00"))})
+	lbl_clue_title.text = _tr("suspect.a.labels.clue_title", "CLUE #{id}", {"id": str(current_level.get("id", "A-00"))})
 	lbl_session.text = _tr("suspect.a.labels.session", "SESSION {n}", {"n": "%04d" % (randi() % 10000)})
-	lbl_status.text = _tr("suspect.a.status.loading", "Loading suspect code...")
-	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_NEUTRAL)
-	lbl_attempts.text = _tr("suspect.a.labels.attempts_init", "ATTEMPTS: 0/{max}", {"max": MAX_ATTEMPTS})
-	decrypt_bar.value = float(current_level_idx) / maxf(1.0, float(levels.size() - 1)) * 100.0
-	energy_bar.value = energy
 
-	btn_enter.disabled = true
-	btn_analyze.disabled = true
-	btn_next.visible = false
-	diag_panel.visible = false
+	explanation_overlay.visible = false
+	_render_case_brief()
+	_render_code_immediate()
+	_build_trace_panel()
+	_reset_answer_ui()
+	_set_state(QuestState.READY)
+	_update_status_learning_focus()
+	_update_attempts_label()
+	_log_event("task_start", {"bucket": str(current_level.get("bucket", "unknown"))})
 
-	_update_input_display()
-	_update_briefing_card()
-	_log_event("task_start", {"bucket": str(current_task.get("bucket", "unknown"))})
+func _localized_briefing_text(level: Dictionary) -> String:
+	var source: String = str(level.get("briefing", "")).strip_edges()
+	var level_id: String = str(level.get("id", "unknown"))
+	return _tr("suspect.a.level.%s.briefing" % level_id, source)
 
-	var briefing: String = _localized_briefing_text(current_task)
-	code_label.text = "[color=#8A8A8A]%s[/color]\n\n" % briefing
-	await _typewrite_code(current_task.get("code", []))
+func _render_case_brief() -> void:
+	var case_id: String = str(current_level.get("id", "A-00"))
+	clue_label.text = _tr("suspect.a.brief.clue", "Case focus: loop tracing")
+	briefing_title.text = _tr("suspect.a.brief.title", "Cipher Block %s" % case_id)
+	briefing_text.text = _localized_briefing_text(current_level)
+	topic_hint_badge.text = _build_topic_hint_badge(current_level.get("topic_tags", []))
 
-	is_code_ready = true
-	state = State.SOLVING
-	btn_enter.disabled = false
-	btn_analyze.disabled = false
-	lbl_status.text = _tr("suspect.a.status.ready", "Calculate the final s and enter your answer.")
-	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_READY)
+func _build_topic_hint_badge(tags_variant: Variant) -> String:
+	var tags: Array = tags_variant if typeof(tags_variant) == TYPE_ARRAY else []
+	return _tr("suspect.a.brief.topic_hint", "Analysis angle: {hint}", {"hint": _topic_hint_sentence(tags)})
 
-func _update_briefing_card() -> void:
-	briefing_goal.text = _tr("suspect.a.labels.goal", "Goal: find the final value of s")
+func _topic_hint_sentence(tags: Array) -> String:
+	if tags.is_empty():
+		return _tr("suspect.a.hint.general", "Check loop boundaries and accumulator updates.")
 
-	var hints: Array[String] = []
-	for tag_var in current_task.get("topic_tags", []):
+	for tag_var in tags:
 		var tag: String = str(tag_var)
 		match tag:
 			"range_stop_exclusive":
-				hints.append(_tr("suspect.a.hint.range_stop", "stop in range is exclusive"))
+				return _tr("suspect.a.hint.range_stop", "Watch range stop: the stop value is excluded.")
 			"while_boundary":
-				hints.append(_tr("suspect.a.hint.while_boundary", "check the while boundary"))
+				return _tr("suspect.a.hint.while_boundary", "Check the while boundary on every iteration.")
 			"break_flow":
-				hints.append(_tr("suspect.a.hint.break_flow", "break exits the loop"))
+				return _tr("suspect.a.hint.break_flow", "Track where break exits the loop.")
 			"continue_flow":
-				hints.append(_tr("suspect.a.hint.continue_flow", "continue skips the step"))
+				return _tr("suspect.a.hint.continue_flow", "Track how continue skips accumulator updates.")
 			"list_iteration":
-				hints.append(_tr("suspect.a.hint.list_iteration", "list defines explicit order"))
+				return _tr("suspect.a.hint.list_iteration", "List order is explicit and fixed.")
 			"step_trap":
-				hints.append(_tr("suspect.a.hint.step_trap", "check the range step"))
+				return _tr("suspect.a.hint.step_trap", "Check the loop step value carefully.")
+			"condition_filter":
+				return _tr("suspect.a.hint.condition_filter", "Verify which iterations pass the condition.")
+			"boundary_count":
+				return _tr("suspect.a.hint.boundary_count", "Count iterations from start to stop correctly.")
 			_:
-				hints.append(tag.replace("_", " "))
-	if hints.is_empty():
-		hints.append(_tr("suspect.a.hint.general", "check loop bounds and condition"))
+				continue
 
-	briefing_hint.text = _tr("suspect.a.labels.hint_prefix", "Hint: {hint}",
-		{"hint": ", ".join(hints.slice(0, min(2, hints.size())))})
+	return _tr("suspect.a.hint.fallback", "Inspect each step where s changes.")
 
-func _typewrite_code(lines: Array) -> void:
-	for line_var in lines:
-		var line: String = str(line_var)
-		code_label.append_text("[code]%s[/code]\n" % line)
-		code_scroll.scroll_vertical = 1000000
-		await get_tree().create_timer(typewriter_delay_sec).timeout
+func _show_learning_hint() -> void:
+	var hint_text: String = _topic_hint_sentence(current_level.get("topic_tags", []))
+	topic_hint_used_count += 1
+	_log_event("topic_hint_used", {"count": topic_hint_used_count, "hint": hint_text})
+	_update_status(hint_text, STATUS_COLOR_WARN)
+
+func _update_status_learning_focus() -> void:
+	_update_status(_tr("suspect.a.status.learning_focus", "Code is ready. Trace the execution if needed, then confirm final s."), STATUS_COLOR_READY)
+
+func _render_code_immediate() -> void:
+	for child in code_lines_container.get_children():
+		child.queue_free()
+	code_line_rows.clear()
+	code_line_number_labels.clear()
+	code_line_text_labels.clear()
+
+	var lines: Array = current_level.get("code", [])
+	for idx in range(lines.size()):
+		var row := PanelContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.custom_minimum_size = Vector2(0, 28)
+
+		var row_margin := MarginContainer.new()
+		row_margin.add_theme_constant_override("margin_left", 6)
+		row_margin.add_theme_constant_override("margin_top", 2)
+		row_margin.add_theme_constant_override("margin_right", 6)
+		row_margin.add_theme_constant_override("margin_bottom", 2)
+
+		var line_box := HBoxContainer.new()
+		line_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		line_box.add_theme_constant_override("separation", 10)
+
+		var number_label := Label.new()
+		number_label.custom_minimum_size = Vector2(40, 0)
+		number_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		number_label.text = "%2d" % (idx + 1)
+
+		var code_label := Label.new()
+		code_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		code_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		code_label.text = str(lines[idx])
+
+		line_box.add_child(number_label)
+		line_box.add_child(code_label)
+		row_margin.add_child(line_box)
+		row.add_child(row_margin)
+		code_lines_container.add_child(row)
+
+		code_line_rows.append(row)
+		code_line_number_labels.append(number_label)
+		code_line_text_labels.append(code_label)
+		_apply_code_line_style(idx, false)
+
+	current_highlight_line = -1
+	call_deferred("_scroll_code_to_top")
 	_log_event("code_shown", {"line_count": lines.size()})
 
-func _on_numpad_pressed(btn_node: Node) -> void:
-	if state != State.SOLVING or not is_code_ready or task_finished:
+func _apply_code_line_style(index: int, is_active: bool) -> void:
+	if index < 0 or index >= code_line_rows.size():
 		return
 
-	var btn: Button = btn_node as Button
-	if btn == null:
+	var row: Control = code_line_rows[index]
+	var number_label: Label = code_line_number_labels[index]
+	var code_label: Label = code_line_text_labels[index]
+	var font_size: int = 22 if is_compact_layout else 25
+
+	var fill: Color = Color(0.17, 0.17, 0.15, 0.65) if is_active else Color(0.0, 0.0, 0.0, 0.0)
+	var border: Color = Color(0.93, 0.87, 0.56, 0.95) if is_active else Color(0.24, 0.24, 0.24, 0.0)
+	var number_color: Color = Color(0.94, 0.90, 0.72) if is_active else Color(0.56, 0.56, 0.56)
+	var code_color: Color = Color(0.98, 0.97, 0.95) if is_active else Color(0.79, 0.79, 0.77)
+
+	row.add_theme_stylebox_override("panel", _make_row_style(fill, border))
+	number_label.add_theme_color_override("font_color", number_color)
+	code_label.add_theme_color_override("font_color", code_color)
+	number_label.add_theme_font_size_override("font_size", font_size - 2)
+	code_label.add_theme_font_size_override("font_size", font_size)
+
+func _make_row_style(fill: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	return style
+
+func _scroll_code_to_top() -> void:
+	code_scroll.scroll_vertical = 0
+
+func _scroll_code_to_line(line_idx: int) -> void:
+	if line_idx <= 0 or line_idx > code_line_rows.size():
+		return
+	var row: Control = code_line_rows[line_idx - 1]
+	var target: int = int(maxf(0.0, row.position.y - 20.0))
+	var tw: Tween = create_tween()
+	tw.tween_property(code_scroll, "scroll_vertical", target, 0.14)
+
+func _highlight_code_line(line_idx: int) -> void:
+	if current_highlight_line == line_idx:
 		return
 
-	_play_sfx(AUDIO_CLICK)
-	var char: String = btn.text
-	if char == "CLR":
-		user_input = ""
-	elif char == "<-":
-		if user_input.length() > 0:
-			user_input = user_input.left(user_input.length() - 1)
-	elif user_input.length() < 4:
-		user_input += char
+	if current_highlight_line > 0 and current_highlight_line <= code_line_rows.size():
+		_apply_code_line_style(current_highlight_line - 1, false)
 
-	_update_input_display()
+	current_highlight_line = line_idx
+	if current_highlight_line > 0 and current_highlight_line <= code_line_rows.size():
+		_apply_code_line_style(current_highlight_line - 1, true)
+		call_deferred("_scroll_code_to_line", current_highlight_line)
 
-func _update_input_display() -> void:
-	input_display.text = "----" if user_input.is_empty() else user_input
+func _build_trace_panel() -> void:
+	for child in trace_rows_container.get_children():
+		child.queue_free()
+	trace_row_nodes.clear()
 
-func _normalize(raw: String) -> Dictionary:
-	var stripped: String = raw.strip_edges().replace(" ", "")
+	for step_var in trace_steps:
+		if typeof(step_var) != TYPE_DICTIONARY:
+			continue
+		var step: Dictionary = step_var
+		var row_instance: Control = TRACE_ROW_SCENE.instantiate() as Control
+		if row_instance == null:
+			continue
+		trace_rows_container.add_child(row_instance)
+		if row_instance.has_method("set_step_data"):
+			row_instance.call_deferred("set_step_data", step)
+		trace_row_nodes.append(row_instance)
+
+	_set_trace_mode("collapsed")
+	_update_trace_controls()
+
+func _normalize_trace(raw_trace_variant: Variant) -> Array:
+	var raw_trace: Array = raw_trace_variant if typeof(raw_trace_variant) == TYPE_ARRAY else []
+	var normalized: Array = []
+	for idx in range(raw_trace.size()):
+		if typeof(raw_trace[idx]) != TYPE_DICTIONARY:
+			continue
+		var step_src: Dictionary = raw_trace[idx]
+		var step_index: int = idx + 1
+		var cond_text: String = str(step_src.get("cond", step_src.get("event", "loop")))
+		var event_text: String = str(step_src.get("event", "")).strip_edges()
+		if event_text.is_empty():
+			event_text = "loop iteration" if cond_text == "loop" else cond_text
+
+		var step: Dictionary = {
+			"step": step_index,
+			"i": step_src.get("i", "?"),
+			"cond": cond_text,
+			"s_before": step_src.get("s_before", step_src.get("before", 0)),
+			"s_after": step_src.get("s_after", step_src.get("after", 0)),
+			"event": event_text,
+			"line_ref": int(step_src.get("line_ref", -1))
+		}
+
+		if int(step.get("line_ref", -1)) <= 0:
+			step["line_ref"] = _derive_line_ref(step, idx)
+
+		normalized.append(step)
+
+	return normalized
+
+func _derive_line_ref(step: Dictionary, step_idx: int) -> int:
+	var accumulator_line: int = _find_code_line(["s =", "s+=", "s *=", "s -=", "s /="])
+	var loop_line: int = _find_code_line(["for ", "while "])
+	var condition_line: int = _find_code_line(["if ", "elif "])
+
+	var cond_text: String = str(step.get("cond", "")).to_lower()
+	var before_val: Variant = step.get("s_before", null)
+	var after_val: Variant = step.get("s_after", null)
+	var value_changed: bool = before_val != null and after_val != null and str(before_val) != str(after_val)
+
+	if cond_text == "true" or cond_text == "false":
+		if condition_line > 0:
+			return condition_line
+
+	if value_changed and accumulator_line > 0:
+		return accumulator_line
+	if loop_line > 0:
+		return loop_line
+	if condition_line > 0:
+		return condition_line
+
+	var code_lines: Array = current_level.get("code", [])
+	if code_lines.is_empty():
+		return -1
+	return clampi(step_idx + 1, 1, code_lines.size())
+
+func _find_code_line(patterns: Array[String]) -> int:
+	var code_lines: Array = current_level.get("code", [])
+	for idx in range(code_lines.size()):
+		var line_lower: String = str(code_lines[idx]).to_lower()
+		for pattern in patterns:
+			if line_lower.find(pattern.to_lower()) != -1:
+				return idx + 1
+	return -1
+
+func _set_trace_mode(mode: String) -> void:
+	trace_mode = mode
+	match trace_mode:
+		"guided":
+			trace_mode_badge.text = _tr("suspect.a.trace.guided", "Guided")
+		"full":
+			trace_mode_badge.text = _tr("suspect.a.trace.full", "Full")
+		_:
+			trace_mode_badge.text = _tr("suspect.a.trace.collapsed", "Collapsed")
+
+	var collapsed: bool = trace_mode == "collapsed"
+	trace_body.visible = not collapsed
+	trace_controls.visible = not collapsed
+	toggle_trace_button.text = _tr("suspect.a.btn.trace_collapse", "Collapse") if not collapsed else _tr("suspect.a.btn.trace_open", "Open")
+
+	if collapsed:
+		current_trace_index = -1
+		for row in trace_row_nodes:
+			_set_trace_row_mode(row, "hidden")
+		_highlight_code_line(-1)
+
+	_update_trace_controls()
+
+func _set_trace_row_mode(row: Control, mode: String) -> void:
+	if row == null:
+		return
+	if row.has_method("set_row_mode"):
+		row.call("set_row_mode", mode)
+	else:
+		row.visible = mode != "hidden"
+
+func _enter_guided_trace_mode() -> void:
+	if trace_steps.is_empty():
+		_update_status(_tr("suspect.a.trace.missing", "No trace data available for this case."), STATUS_COLOR_WARN)
+		return
+
+	if trace_mode != "guided":
+		used_guided_trace = true
+		_log_event("opened_guided_trace", {"level_id": str(current_level.get("id", ""))})
+
+	_set_trace_mode("guided")
+	_set_state(QuestState.TRACE_GUIDED)
+	_reveal_guided_trace_index(0)
+	_update_status(_tr("suspect.a.trace.guided_intro", "Guided trace opened. Move step by step."), STATUS_COLOR_READY)
+
+func _reveal_guided_trace_index(index: int) -> void:
+	if trace_steps.is_empty():
+		return
+
+	var clamped: int = clampi(index, 0, trace_steps.size() - 1)
+	current_trace_index = clamped
+	for row_idx in range(trace_row_nodes.size()):
+		var mode: String = "hidden"
+		if row_idx < clamped:
+			mode = "completed"
+		elif row_idx == clamped:
+			mode = "active"
+		_set_trace_row_mode(trace_row_nodes[row_idx], mode)
+
+	trace_steps_revealed_count = maxi(trace_steps_revealed_count, clamped + 1)
+	_log_event("trace_steps_revealed_count", {"count": trace_steps_revealed_count})
+
+	var step: Dictionary = trace_steps[clamped]
+	_highlight_code_line(int(step.get("line_ref", -1)))
+	call_deferred("_scroll_trace_to_index", clamped)
+	_update_trace_controls()
+
+func _scroll_trace_to_index(index: int) -> void:
+	if index < 0 or index >= trace_row_nodes.size():
+		return
+	var row: Control = trace_row_nodes[index]
+	var target: int = int(maxf(0.0, row.position.y - 20.0))
+	var tw: Tween = create_tween()
+	tw.tween_property(trace_scroll, "scroll_vertical", target, 0.14)
+
+func _show_next_trace_step() -> void:
+	if trace_steps.is_empty():
+		return
+
+	if trace_mode != "guided":
+		_enter_guided_trace_mode()
+		return
+
+	if current_trace_index < trace_steps.size() - 1:
+		_reveal_guided_trace_index(current_trace_index + 1)
+		if current_trace_index == trace_steps.size() - 1:
+			_update_status(_tr("suspect.a.trace.guided_done", "Trace complete. Confirm final s."), STATUS_COLOR_READY)
+	else:
+		_update_status(_tr("suspect.a.trace.end", "Already at the final trace step."), STATUS_COLOR_NEUTRAL)
+
+func _show_prev_trace_step() -> void:
+	if trace_mode != "guided":
+		return
+	if current_trace_index > 0:
+		_reveal_guided_trace_index(current_trace_index - 1)
+	else:
+		_update_status(_tr("suspect.a.trace.start", "Already at the first trace step."), STATUS_COLOR_NEUTRAL)
+
+func _show_full_trace() -> void:
+	if trace_steps.is_empty():
+		_update_status(_tr("suspect.a.trace.missing", "No trace data available for this case."), STATUS_COLOR_WARN)
+		return
+
+	if trace_mode != "full":
+		used_full_trace = true
+		_log_event("opened_full_trace", {"level_id": str(current_level.get("id", ""))})
+
+	_set_trace_mode("full")
+	_set_state(QuestState.TRACE_FULL)
+
+	for idx in range(trace_row_nodes.size()):
+		var row: Control = trace_row_nodes[idx]
+		var step: Dictionary = trace_steps[idx]
+		var mode: String = "revealed"
+		if idx < trace_row_nodes.size() - 1 and str(step.get("s_before", "")) != str(step.get("s_after", "")):
+			mode = "completed"
+		if idx == trace_row_nodes.size() - 1:
+			mode = "active"
+		_set_trace_row_mode(row, mode)
+
+	current_trace_index = trace_steps.size() - 1
+	trace_steps_revealed_count = maxi(trace_steps_revealed_count, trace_steps.size())
+	_log_event("trace_steps_revealed_count", {"count": trace_steps_revealed_count})
+	_highlight_code_line(int(trace_steps[current_trace_index].get("line_ref", -1)))
+	call_deferred("_scroll_trace_to_index", current_trace_index)
+	_update_trace_controls()
+	_update_status(_tr("suspect.a.trace.full_opened", "Full execution log opened."), STATUS_COLOR_READY)
+
+func _reset_trace_panel() -> void:
+	_set_trace_mode("collapsed")
+	if not task_finished:
+		_set_state(QuestState.READY)
+		_update_status_learning_focus()
+
+func _update_trace_controls() -> void:
+	var has_trace: bool = not trace_steps.is_empty()
+	toggle_trace_button.disabled = not has_trace
+	step_prev_button.disabled = trace_mode != "guided" or current_trace_index <= 0
+	step_next_button.disabled = trace_mode != "guided" or current_trace_index >= trace_steps.size() - 1
+	show_all_button.disabled = not has_trace or trace_mode == "full"
+	reset_trace_button.disabled = trace_mode == "collapsed"
+
+func _reset_answer_ui() -> void:
+	answer_input.text = ""
+	answer_input.editable = true
+	answer_input.grab_focus()
+	answer_locked = false
+	primary_check_button.disabled = false
+	btn_next.visible = false
+
+func _parse_answer() -> Dictionary:
+	var stripped: String = answer_input.text.strip_edges().replace(" ", "")
 	if stripped.is_empty():
 		return {"ok": false, "error": "EMPTY"}
 	if not stripped.is_valid_int():
 		return {"ok": false, "error": "NAN"}
-	var value: int = int(stripped)
-	if value < 0 or value > 9999:
-		return {"ok": false, "error": "RANGE"}
-	return {"ok": true, "val": value, "str": str(value)}
+	return {"ok": true, "value": int(stripped), "str": stripped}
 
-func _on_enter_pressed() -> void:
-	if state != State.SOLVING or not is_code_ready or task_finished:
+func _on_primary_check_pressed() -> void:
+	_check_answer()
+
+func _on_answer_submitted(_text: String) -> void:
+	_check_answer()
+
+func _check_answer() -> void:
+	if answer_locked or task_finished or explanation_overlay.visible:
 		return
 
-	var now: int = Time.get_ticks_msec()
-	var normalized: Dictionary = _normalize(user_input)
+	var normalized: Dictionary = _parse_answer()
 	if not bool(normalized.get("ok", false)):
 		_play_sfx(AUDIO_ERROR)
 		_trigger_glitch()
 		_shake_screen()
-		lbl_status.text = _tr("suspect.a.status.invalid_format", "Invalid input format.")
-		lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
-		(task_session["attempts"] as Array).append({
-			"kind": "numpad",
-			"raw": user_input,
-			"norm": "",
-			"duration_input_ms": now - task_started_at,
-			"correct": false,
-			"parse_error": str(normalized.get("error", "UNKNOWN")),
-			"state_after": "INVALID_INPUT",
-			"energy_after": energy,
-			"wrong_count_after": wrong_count
-		})
+		_update_status(_tr("suspect.a.status.invalid_format", "Invalid input format."), STATUS_COLOR_FAIL)
 		return
 
-	var expected: int = int(current_task.get("expected", 0))
-	var is_correct: bool = int(normalized.get("val", -1)) == expected
-	var state_after: String = "SOLVING"
+	var user_answer: int = int(normalized.get("value", 0))
+	var expected: int = int(current_level.get("expected", 0))
+	var is_correct: bool = user_answer == expected
 
+	_record_attempt(user_answer, is_correct)
 	if is_correct:
-		_handle_success_feedback()
-		state_after = "FEEDBACK_SUCCESS"
+		if not used_guided_trace and not used_full_trace:
+			_log_event("answered_without_trace", {})
+		else:
+			_log_event("answered_after_trace", {"guided": used_guided_trace, "full": used_full_trace})
+		_handle_success()
 	else:
-		_handle_fail_feedback()
-		if is_safe_mode:
-			state_after = "SAFE_MODE"
-		elif state == State.FEEDBACK_FAIL:
-			state_after = "FEEDBACK_FAIL"
+		_handle_wrong_answer()
 
-	var attempt: Dictionary = {
-		"kind": "numpad",
-		"raw": user_input,
-		"norm": str(normalized.get("str", "")),
+func _record_attempt(user_answer: int, is_correct: bool) -> void:
+	var now: int = Time.get_ticks_msec()
+	var attempts: Array = task_session.get("attempts", [])
+	attempts.append({
+		"kind": "line_edit",
+		"raw": answer_input.text,
+		"norm": str(user_answer),
 		"duration_input_ms": now - task_started_at,
-		"hint_open_at_enter": diag_panel.visible,
+		"hint_open_at_enter": explanation_overlay.visible,
 		"correct": is_correct,
-		"state_after": state_after,
-		"energy_after": energy,
-		"wrong_count_after": wrong_count
-	}
-	(task_session["attempts"] as Array).append(attempt)
+		"state_after": current_state,
+		"wrong_count_after": attempts_used
+	})
+	task_session["attempts"] = attempts
 
-	if is_correct:
-		_finalize_task_result(true, "SUCCESS")
-	elif is_safe_mode:
-		_finalize_task_result(false, "SAFE_MODE")
-
-	if not is_correct and not is_safe_mode:
-		user_input = ""
-		_update_input_display()
-
-func _handle_success_feedback() -> void:
-	state = State.FEEDBACK_SUCCESS
-	lbl_status.text = _tr("suspect.a.status.correct", "Correct. Value confirmed.")
-	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_SUCCESS)
-	btn_enter.disabled = true
-	btn_analyze.disabled = true
-	btn_next.visible = true
-	decrypt_bar.value = minf(100.0, decrypt_bar.value + float(current_task.get("economy", {}).get("reward", 0)))
-	_play_sfx(AUDIO_RELAY)
-	_play_success_clean_effect()
-
-func _handle_fail_feedback() -> void:
-	wrong_count += 1
-	lbl_attempts.text = _tr("suspect.a.labels.attempts", "ATTEMPTS: {n}/{max}", {"n": wrong_count, "max": MAX_ATTEMPTS})
-	lbl_status.text = _tr("suspect.a.status.incorrect", "Incorrect. Try again.")
-	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_FAIL)
-
-	var wrong_penalty: int = int(current_task.get("economy", {}).get("wrong", 10))
-	energy = maxf(0.0, energy - float(wrong_penalty))
-	energy_bar.value = energy
+func _handle_wrong_answer() -> void:
+	attempts_used += 1
+	_set_state(QuestState.WRONG_RETRY)
+	_update_attempts_label()
+	_log_event("wrong_attempt_count", {"count": attempts_used})
 
 	_play_sfx(AUDIO_ERROR)
 	_trigger_glitch()
 	_shake_screen()
 
-	if wrong_count >= MAX_ATTEMPTS:
-		_trigger_safe_mode()
+	if attempts_used == 1:
+		_update_status(_tr("suspect.a.status.wrong_soft", "Answer mismatch. Check how s changes step by step."), STATUS_COLOR_FAIL)
+	elif attempts_used == 2 and not shown_auto_help:
+		shown_auto_help = true
+		_update_status(_tr("suspect.a.status.wrong_guided", "Likely a loop trap. Guided trace has been opened."), STATUS_COLOR_WARN)
+		_offer_guided_trace()
 	else:
-		state = State.SOLVING
+		_update_status(_tr("suspect.a.status.wrong_explain", "Use full trace and explanation to pinpoint the divergence."), STATUS_COLOR_WARN)
+		_offer_explanation_and_trace()
 
-func _trigger_safe_mode() -> void:
-	state = State.SAFE_MODE
-	is_safe_mode = true
-	btn_enter.disabled = true
+	answer_input.select_all()
+	answer_input.grab_focus()
+
+func _offer_guided_trace() -> void:
+	if trace_mode == "collapsed":
+		_enter_guided_trace_mode()
+
+func _offer_explanation_and_trace() -> void:
+	if trace_mode == "collapsed":
+		_show_full_trace()
+	_open_explanation_overlay()
+
+func _handle_success() -> void:
+	answer_locked = true
+	_set_state(QuestState.SUCCESS)
+	_update_status(_tr("suspect.a.status.correct", "Correct. Final value confirmed."), STATUS_COLOR_SUCCESS)
 	btn_next.visible = true
-	lbl_status.text = _tr("suspect.a.status.error_limit", "Error limit reached. Safe mode enabled.")
-	lbl_status.add_theme_color_override("font_color", STATUS_COLOR_WARN)
+	btn_overlay_next.visible = true
+	answer_input.editable = false
+	primary_check_button.disabled = true
+	_play_sfx(AUDIO_RELAY)
+	_play_success_clean_effect()
+	_finalize_task_result(true, "SUCCESS")
 
-	btn_analyze.disabled = false
-	_on_analyze_pressed(true)
-	btn_analyze.disabled = true
-	_log_event("safe_mode_triggered", {})
-
-func _on_analyze_pressed(free: bool = false) -> void:
-	if not is_code_ready:
+func _open_explanation_overlay() -> void:
+	if explanation_overlay.visible:
 		return
-	if state != State.SOLVING and state != State.SAFE_MODE:
+	previous_state_before_overlay = current_state
+	explanation_overlay.visible = true
+	_set_state(QuestState.EXPLANATION)
+	_render_explanation_overlay()
+	_log_event("explanation_opened", {"state_before": previous_state_before_overlay})
+
+func _render_explanation_overlay() -> void:
+	if current_level.is_empty():
 		return
 
-	if not free:
-		var analyze_cost: int = int(current_task.get("economy", {}).get("analyze", 20))
-		if energy < float(analyze_cost):
-			lbl_status.text = _tr("suspect.a.status.low_energy", "Insufficient energy for analysis.")
-			lbl_status.add_theme_color_override("font_color", STATUS_COLOR_WARN)
-			_play_sfx(AUDIO_ERROR)
-			return
-		energy -= float(analyze_cost)
-		energy_bar.value = energy
+	explanation_title.text = _tr("suspect.a.overlay.title", "Why this final value")
+	var short_lines: Array = current_level.get("explain_short", [])
+	var full_lines: Array = current_level.get("explain", [])
+	if short_lines.is_empty():
+		short_lines = full_lines
+	if full_lines.is_empty():
+		full_lines = short_lines
 
-	diag_panel.visible = true
-	_render_diagnostic()
-	_log_event("analyze_open", {"free": free})
-	state = State.DIAGNOSTIC if state == State.SOLVING else state
+	var final_value: int = int(current_level.get("expected", 0))
+	var trap_text: String = _topic_hint_sentence(current_level.get("topic_tags", []))
+	var summary_line: String = ""
+	if not trace_steps.is_empty():
+		var last_step: Dictionary = trace_steps[trace_steps.size() - 1]
+		summary_line = "s %s -> %s" % [str(last_step.get("s_before", "?")), str(last_step.get("s_after", "?"))]
 
-func _render_diagnostic() -> void:
-	var explain_lines: Array = current_task.get("explain_short", [])
-	if explain_lines.is_empty():
-		explain_lines = current_task.get("explain", [])
+	var level_id: String = str(current_level.get("id", "A-00"))
+	var body: String = "[b]%s[/b]\n- %s\n\n[b]%s[/b]\n" % [
+		_tr("suspect.a.overlay.key_trap", "Key trap"),
+		trap_text,
+		_tr("suspect.a.overlay.reasoning", "Reasoning")
+	]
 
-	var task_id: String = str(current_task.get("id", "A-01"))
-	var explain_text: String = "[b]%s[/b]\n" % _tr("suspect.a.diag.analysis_title", "ANALYSIS")
-	for line_idx in range(explain_lines.size()):
-		var default_line: String = str(explain_lines[line_idx])
-		var key: String = "suspect.a.level.%s.explain.%d" % [task_id, line_idx]
-		explain_text += "- %s\n" % _tr(key, default_line)
-	diag_explain.text = explain_text
+	for line_idx in range(short_lines.size()):
+		var default_line: String = str(short_lines[line_idx])
+		var key: String = "suspect.a.level.%s.explain.%d" % [level_id, line_idx]
+		body += "- %s\n" % _tr(key, default_line)
 
-	var trace: Array = current_task.get("trace", [])
-	var i_values: Array[String] = []
-	var trace_lines: Array[String] = []
-	for step_var in trace:
-		var step: Dictionary = step_var
-		i_values.append(str(step.get("i", "?")))
-		trace_lines.append("i=%s | cond=%s | s: %s -> %s" % [
-			str(step.get("i", "?")),
-			str(step.get("cond", "?")),
-			str(step.get("s_before", "?")),
-			str(step.get("s_after", "?"))
-		])
+	if not summary_line.is_empty():
+		body += "\n[b]%s[/b]\n- %s\n" % [_tr("suspect.a.overlay.trace_summary", "Trace summary"), summary_line]
 
-	var seq_label: String = _tr("suspect.a.diag.i_sequence_label", "i sequence")
-	var trace_text: String = "%s: [%s]\n\n%s" % [seq_label, ", ".join(i_values), "\n".join(trace_lines)]
-	diag_trace.text = trace_text
+	body += "\n[b]%s[/b]\n- %d" % [_tr("suspect.a.overlay.final_s", "Final s"), final_value]
+	explanation_text.text = body
 
-func _on_close_diag_pressed() -> void:
-	if not diag_panel.visible:
+func _close_explanation_overlay() -> void:
+	if not explanation_overlay.visible:
 		return
-	diag_panel.visible = false
-	_log_event("analyze_close", {})
-	if state == State.DIAGNOSTIC and not is_safe_mode and not task_finished:
-		state = State.SOLVING
+	explanation_overlay.visible = false
+	if task_finished:
+		_set_state(QuestState.SUCCESS)
+	elif trace_mode == "guided":
+		_set_state(QuestState.TRACE_GUIDED)
+	elif trace_mode == "full":
+		_set_state(QuestState.TRACE_FULL)
+	else:
+		_set_state(QuestState.READY)
+
+func _on_toggle_trace_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	if trace_mode == "collapsed":
+		_enter_guided_trace_mode()
+	else:
+		_reset_trace_panel()
+
+func _on_step_prev_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	_show_prev_trace_step()
+
+func _on_step_next_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	_show_next_trace_step()
+
+func _on_show_all_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	_show_full_trace()
+
+func _on_reset_trace_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	_reset_trace_panel()
+
+func _on_step_analysis_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	if trace_mode == "guided":
+		_show_next_trace_step()
+	else:
+		_enter_guided_trace_mode()
+
+func _on_hint_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	_show_learning_hint()
+
+func _on_why_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	_open_explanation_overlay()
+
+func _on_close_overlay_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	_close_explanation_overlay()
+
+func _on_overlay_open_steps_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	explanation_overlay.visible = false
+	_show_full_trace()
+
+func _on_overlay_next_pressed() -> void:
+	_play_sfx(AUDIO_CLICK)
+	if task_finished:
+		_on_next_pressed()
+	else:
+		_close_explanation_overlay()
 
 func _on_next_pressed() -> void:
 	if not task_finished:
 		return
-	_log_event("next_pressed", {"from_task": str(current_task.get("id", "A-00"))})
-	_load_level(current_level_idx + 1)
+	_log_event("next_pressed", {"from_task": str(current_level.get("id", "A-00"))})
+	_load_case(current_level_idx + 1)
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+
+func _set_state(new_state: int) -> void:
+	current_state = new_state
+
+	var answer_enabled: bool = not answer_locked and not task_finished and current_state != QuestState.EXPLANATION
+	answer_input.editable = answer_enabled
+	primary_check_button.disabled = not answer_enabled
+	step_analysis_button.disabled = trace_steps.is_empty()
+	show_all_button.disabled = trace_steps.is_empty() or trace_mode == "full"
+	why_button.disabled = current_level.is_empty()
+	btn_next.visible = task_finished
+
+func _update_status(text: String, color: Color = STATUS_COLOR_NEUTRAL) -> void:
+	lbl_status.text = text
+	lbl_status.add_theme_color_override("font_color", color)
+
+func _update_attempts_label() -> void:
+	lbl_attempts.text = _tr("suspect.a.labels.attempts", "Attempts: {n}", {"n": attempts_used})
 
 func _finalize_task_result(is_correct: bool, reason: String) -> void:
 	if task_result_sent:
@@ -659,8 +1090,8 @@ func _finalize_task_result(is_correct: bool, reason: String) -> void:
 	task_session["ended_at_ticks"] = ended
 	_log_event("task_end", {"reason": reason, "is_correct": is_correct})
 
-	var level_id: String = str(current_task.get("id", "A-00"))
-	var bucket: String = str(current_task.get("bucket", "unknown"))
+	var level_id: String = str(current_level.get("id", "A-00"))
+	var bucket: String = str(current_level.get("bucket", "unknown"))
 	var elapsed_ms: int = ended - task_started_at
 
 	var result_data: Dictionary = {
@@ -672,9 +1103,14 @@ func _finalize_task_result(is_correct: bool, reason: String) -> void:
 		"variant_hash": variant_hash,
 		"is_correct": is_correct,
 		"is_fit": is_correct,
-		"safe_mode": is_safe_mode,
+		"safe_mode": false,
 		"elapsed_ms": elapsed_ms,
 		"duration": float(elapsed_ms) / 1000.0,
+		"used_guided_trace": used_guided_trace,
+		"used_full_trace": used_full_trace,
+		"trace_steps_revealed_count": trace_steps_revealed_count,
+		"topic_hint_used": topic_hint_used_count > 0,
+		"wrong_attempt_count": attempts_used,
 		"task_session": task_session
 	}
 
@@ -704,11 +1140,11 @@ func _trigger_glitch() -> void:
 	tw.parallel().tween_method(func(v: float) -> void: _set_overlay_param(shader_mat, "glitch_strength", v), 0.9 if high_fx else 0.55, 0.0, 0.22)
 
 func _shake_screen() -> void:
-	var original_pos: Vector2 = main_layout.position
+	var original_pos: Vector2 = main_vbox.position
 	var tw: Tween = create_tween()
 	for _i in range(4):
-		tw.tween_property(main_layout, "position", original_pos + Vector2(randf_range(-2.0, 2.0), randf_range(-1.5, 1.5)), 0.04)
-	tw.tween_property(main_layout, "position", original_pos, 0.05)
+		tw.tween_property(main_vbox, "position", original_pos + Vector2(randf_range(-2.0, 2.0), randf_range(-1.5, 1.5)), 0.04)
+	tw.tween_property(main_vbox, "position", original_pos, 0.05)
 
 func _play_success_clean_effect() -> void:
 	var overlay_rect: ColorRect = noir_overlay.get_node_or_null("CRT_Overlay") as ColorRect

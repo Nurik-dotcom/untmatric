@@ -139,6 +139,21 @@ theme_override_constants/margin_bottom = 8
 layout_mode = 2
 theme_override_constants/separation = 4
 
+[node name="InspectToolbar" type="HBoxContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnInspect" type="Button" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectToolbar"]
+custom_minimum_size = Vector2(132, 42)
+layout_mode = 2
+text = "INSPECT"
+
+[node name="InspectModeLabel" type="Label" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectToolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Inspect mode: OFF"
+vertical_alignment = 1
+
 [node name="InspectLabel" type="RichTextLabel" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox"]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
@@ -150,6 +165,40 @@ text = "Выберите строку для проверки улики."
 [node name="ScanLabel" type="Label" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox"]
 layout_mode = 2
 text = "СКАН: 0"
+
+[node name="ActionPanel" type="PanelContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection"]
+custom_minimum_size = Vector2(0, 116)
+layout_mode = 2
+
+[node name="ActionMargin" type="MarginContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/ActionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="ActionVBox" type="VBoxContainer" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/ActionPanel/ActionMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SelectedLabel" type="RichTextLabel" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/ActionPanel/ActionMargin/ActionVBox"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+fit_content = false
+scroll_active = false
+autowrap_mode = 2
+text = "No target selected."
+
+[node name="StatusLabel" type="Label" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/ActionPanel/ActionMargin/ActionVBox"]
+layout_mode = 2
+text = ""
+autowrap_mode = 2
+
+[node name="BtnConfirmAnswer" type="Button" parent="SafeArea/RootLayout/Body/DesktopLayout/TableSection/ActionPanel/ActionMargin/ActionVBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+disabled = true
+text = "CONFIRM ANSWER"
 
 [node name="TaskSection" type="VBoxContainer" parent="SafeArea/RootLayout/Body/DesktopLayout"]
 layout_mode = 2
@@ -242,6 +291,67 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="TutorialOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0, 0, 0, 0.62)
+z_index = 30
+
+[node name="Center" type="CenterContainer" parent="TutorialOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TutorialPanel" type="PanelContainer" parent="TutorialOverlay/Center"]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 2
+
+[node name="TutorialMargin" type="MarginContainer" parent="TutorialOverlay/Center/TutorialPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="TutorialVBox" type="VBoxContainer" parent="TutorialOverlay/Center/TutorialPanel/TutorialMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TutorialTitle" type="Label" parent="TutorialOverlay/Center/TutorialPanel/TutorialMargin/TutorialVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "ARCHIVE BRIEFING"
+horizontal_alignment = 1
+
+[node name="TutorialStep1" type="Label" parent="TutorialOverlay/Center/TutorialPanel/TutorialMargin/TutorialVBox"]
+layout_mode = 2
+text = "Tap a table element to select an answer target."
+autowrap_mode = 2
+
+[node name="TutorialStep2" type="Label" parent="TutorialOverlay/Center/TutorialPanel/TutorialMargin/TutorialVBox"]
+layout_mode = 2
+text = "Long-press or use Inspect to examine evidence."
+autowrap_mode = 2
+
+[node name="TutorialStep3" type="Label" parent="TutorialOverlay/Center/TutorialPanel/TutorialMargin/TutorialVBox"]
+layout_mode = 2
+text = "Column headers can also be correct answers."
+autowrap_mode = 2
+
+[node name="BtnTutorialClose" type="Button" parent="TutorialOverlay/Center/TutorialPanel/TutorialMargin/TutorialVBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "START INVESTIGATION"
 
 [node name="Runtime" type="Node" parent="."]
 

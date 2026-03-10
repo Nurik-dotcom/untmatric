@@ -191,6 +191,10 @@ func style_for_state(state: String, accent_color: Color, runtime: Dictionary = {
 			start_color = Color(0.58, 0.14, 0.14, 0.55)
 			end_color = Color(1.0, 0.25, 0.25, 1.0)
 			label_text = "CLOSED"
+		"cycle":
+			start_color = Color(0.72, 0.26, 0.22, 0.70)
+			end_color = Color(1.0, 0.44, 0.30, 1.0)
+			label_text = "LOOP"
 		_:
 			pass
 

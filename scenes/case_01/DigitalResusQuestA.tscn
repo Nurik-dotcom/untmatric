@@ -328,6 +328,13 @@ theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 2
 
+[node name="RendererHost" type="PanelContainer" parent="SafeArea/MainVBox/ContentScroll/Content"]
+visible = false
+custom_minimum_size = Vector2(0, 320)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
 [node name="BottomBar" type="VBoxContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
 theme_override_constants/separation = 8

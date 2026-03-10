@@ -145,7 +145,8 @@
       "сеть",
       "математика",
       "пропускная способность"
-    ]
+    ],
+    "hint": "Assemble payload -> x1024 -> x8 -> /time, then verify output unit."
   },
   {
     "id": "NT_B_02",
@@ -293,7 +294,8 @@
       "сеть",
       "математика",
       "единицы"
-    ]
+    ],
+    "hint": "Check binary KB conversion and byte-to-bit conversion."
   },
   {
     "id": "NT_B_03",
@@ -441,7 +443,8 @@
       "сеть",
       "математика",
       "трубопровод"
-    ]
+    ],
+    "hint": "Convert to bits first, then divide by time window."
   },
   {
     "id": "NT_B_04",
@@ -589,7 +592,8 @@
       "сеть",
       "математика",
       "мб"
-    ]
+    ],
+    "hint": "Calculate in bps first, then compare with requested output unit."
   },
   {
     "id": "NT_B_05",
@@ -737,7 +741,8 @@
       "сеть",
       "математика",
       "kbps"
-    ]
+    ],
+    "hint": "If target is kbps, compute bps first and convert at the end."
   },
   {
     "id": "NT_B_06",
@@ -885,7 +890,8 @@
       "сеть",
       "математика",
       "пропускная способность"
-    ]
+    ],
+    "hint": "Verify x8 in bit slot and division in time slot."
   },
   {
     "id": "NT_B_07",
@@ -1033,7 +1039,8 @@
       "сеть",
       "математика",
       "сервер"
-    ]
+    ],
+    "hint": "Watch operation order and avoid bps/kbps mix-ups."
   },
   {
     "id": "NT_B_08",
@@ -1181,7 +1188,8 @@
       "сеть",
       "математика",
       "самый быстрый"
-    ]
+    ],
+    "hint": "Common traps are /1 in time slot and 1000 vs 1024."
   },
   {
     "id": "NT_B_09",
@@ -1329,7 +1337,8 @@
       "сеть",
       "математика",
       "виртуализация"
-    ]
+    ],
+    "hint": "Before answering, compare ask_unit with your pipeline output unit."
   },
   {
     "id": "NT_B_10",
@@ -1477,6 +1486,7 @@
       "сеть",
       "математика",
       "финальный"
-    ]
+    ],
+    "hint": "Validate all 4 pipeline slots before choosing the final answer."
   }
 ]

@@ -42,6 +42,8 @@ var start_time_ms: int = 0
 var level_solved: bool = false
 var trial_locked: bool = false
 var trace: Array = []
+var stage_run_history_start: int = 0
+var stage_level_ids: Dictionary = {}
 
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
 @onready var body: BoxContainer = $SafeArea/MainLayout/Body
@@ -51,6 +53,7 @@ var trace: Array = []
 @onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
 @onready var title_label: Label = $SafeArea/MainLayout/Header/TitleLabel
 @onready var level_label: Label = $SafeArea/MainLayout/Header/LevelLabel
+@onready var level_progress_bar: ProgressBar = $SafeArea/MainLayout/Header/LevelProgressBar
 @onready var stability_bar: ProgressBar = $SafeArea/MainLayout/Header/StabilityBar
 
 @onready var briefing_label: Label = $SafeArea/MainLayout/BriefingCard/BriefingLabel
@@ -84,6 +87,7 @@ func _ready() -> void:
 	if levels.is_empty():
 		_show_error(_tr("case08.fr8c.load_error", "Не удалось загрузить уровни финального отчёта C."))
 		return
+	stage_run_history_start = GlobalMetrics.session_history.size()
 
 	_apply_i18n()
 
@@ -114,7 +118,12 @@ func _apply_i18n() -> void:
 	btn_back.text = _tr("case08.common.back", TEXT_BACK)
 	btn_reset.text = _tr("case08.common.reset", TEXT_RESET)
 	btn_confirm.text = _tr("case08.common.confirm", TEXT_CONFIRM)
-	btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if (not levels.is_empty() and _is_last_level()) else _tr("case08.common.next", TEXT_NEXT)
+	if levels.is_empty():
+		btn_next.text = _tr("case08.common.next", TEXT_NEXT)
+	elif trial_locked and level_solved and btn_confirm.disabled and btn_reset.disabled and _is_last_level():
+		btn_next.text = _tr("case08.common.exit", "ВЫХОД")
+	else:
+		btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
 	code_title_label.text = _tr("case08.fr8c.code_title", "КОД")
 	decrypt_title_label.text = _tr("case08.fr8c.decrypt_title", "ДЕШИФРАТОР")
 	hint_line_label.text = _tr("case08.fr8c.hint_line", "Нажмите по селектору для ПРОСМОТРА.")
@@ -132,6 +141,7 @@ func _apply_runtime_i18n() -> void:
 		var feedback_text: String = FR8CScoring.feedback_text(level_data, evaluation)
 		var cascade_explanation: String = str(evaluation.get("cascade_explanation", "")).strip_edges()
 		explain_label.text = cascade_explanation if not cascade_explanation.is_empty() else feedback_text
+		_highlight_winning_rule(evaluation)
 		if bool(evaluation.get("is_correct", false)):
 			_set_status("%s %s" % [feedback_text, _tr("case08.fr8c.status.next_hint", STATUS_NEXT_HINT)], COLOR_OK)
 		else:
@@ -166,6 +176,14 @@ func _load_levels() -> void:
 		for i in range(SESSION_LEVEL_COUNT):
 			limited.append(levels[i])
 		levels = limited
+	stage_level_ids.clear()
+	for level_var in levels:
+		if typeof(level_var) != TYPE_DICTIONARY:
+			continue
+		var id_value: String = str((level_var as Dictionary).get("id", "")).strip_edges()
+		if id_value.is_empty():
+			continue
+		stage_level_ids[id_value] = true
 
 func _start_level(index: int) -> void:
 	if levels.is_empty():
@@ -185,6 +203,7 @@ func _start_level(index: int) -> void:
 	start_time_ms = Time.get_ticks_msec()
 
 	level_label.text = _build_level_label()
+	_update_progress_ui()
 	briefing_label.text = I18n.resolve_field(level_data, "briefing")
 	target_preview.text = I18n.resolve_field(level_data, "target_text", {"default": _tr("case08.fr8c.target_default", "Секретный код")})
 	target_preview.modulate = COLOR_INFO
@@ -200,11 +219,19 @@ func _start_level(index: int) -> void:
 	_apply_layout_mode()
 
 func _build_level_label() -> String:
-	return "C | %s (%d/%d)" % [
+	var progress_pct: int = int((float(current_level_index + 1) / maxf(1.0, float(levels.size()))) * 100.0)
+	return "C | %s (%d/%d) — %d%%" % [
 		str(level_data.get("id", "FR8-C")),
 		current_level_index + 1,
-		levels.size()
+		levels.size(),
+		progress_pct
 	]
+
+func _update_progress_ui() -> void:
+	if level_progress_bar == null:
+		return
+	var progress_pct: float = (float(current_level_index + 1) / maxf(1.0, float(levels.size()))) * 100.0
+	level_progress_bar.value = progress_pct
 
 func _is_last_level() -> bool:
 	return current_level_index >= levels.size() - 1
@@ -269,27 +296,7 @@ func _render_code_window() -> void:
 		var rule_var: Variant = rules[i]
 		if typeof(rule_var) != TYPE_DICTIONARY:
 			continue
-		var rule: Dictionary = rule_var as Dictionary
-		var source_id: String = str(rule.get("source_id", "R%s" % str(i + 1))).strip_edges()
-		var selector: String = _selector_of(rule)
-		var decl: Dictionary = rule.get("decl", {}) as Dictionary
-		var color_value: String = str(decl.get("value", "")).strip_edges().to_lower()
-		var bb_color: String = _bbcode_color(color_value)
-		var important_suffix: String = " !important" if bool(rule.get("important", false)) else ""
-		var order_value: int = int(rule.get("order", i + 1))
-		var weight_value: int = int(rule.get("weight", 0))
-
-		css_lines.append(
-			"[url=inspect:%s][color=#ffca5f]%s[/color][/url] { color: [color=%s]%s[/color]%s; } [color=#8d8d8d]w:%d o:%d[/color]" % [
-				source_id,
-				_escape_bbcode(selector),
-				bb_color,
-				_escape_bbcode(color_value),
-				important_suffix,
-				weight_value,
-				order_value
-			]
-		)
+		css_lines.append(_render_css_rule_bbcode(rule_var as Dictionary, i))
 
 	if css_lines.is_empty():
 		css_lines.append("-")
@@ -371,11 +378,34 @@ func _on_meta_clicked(meta: Variant) -> void:
 
 	inspect_count += 1
 	_log_event("INSPECT", {"source_id": source_id})
-	if inspector_popup != null and inspector_popup.has_method("show_inspection"):
-		inspector_popup.call("show_inspection", source_data)
+	_show_inspector(source_data, get_viewport().get_mouse_position())
 	_set_status(_tr("case08.fr8c.status.inspected", STATUS_INSPECTED), COLOR_INFO)
 	if AudioManager != null:
 		AudioManager.play("click")
+
+func _show_inspector(source_data: Dictionary, at_position: Vector2) -> void:
+	if inspector_popup == null or not inspector_popup.has_method("show_inspection"):
+		return
+	inspector_popup.call("show_inspection", source_data)
+	var vp_size: Vector2 = get_viewport_rect().size
+	inspector_popup.max_size = Vector2i(
+		int(min(400.0, vp_size.x - 32.0)),
+		int(min(300.0, vp_size.y - 64.0))
+	)
+	call_deferred("_position_inspector_popup", at_position)
+
+func _position_inspector_popup(at_position: Vector2) -> void:
+	if inspector_popup == null or not inspector_popup.visible:
+		return
+	var vp_size: Vector2 = get_viewport_rect().size
+	var popup_size: Vector2 = Vector2(inspector_popup.size)
+	if popup_size.x <= 0.0 or popup_size.y <= 0.0:
+		popup_size = inspector_popup.get_contents_minimum_size()
+	var safe_pos: Vector2 = Vector2(
+		clampf(at_position.x, 8.0, maxf(8.0, vp_size.x - popup_size.x - 8.0)),
+		clampf(at_position.y, 8.0, maxf(8.0, vp_size.y - popup_size.y - 8.0))
+	)
+	inspector_popup.position = Vector2i(int(safe_pos.x), int(safe_pos.y))
 
 func _on_confirm_pressed() -> void:
 	if trial_locked:
@@ -396,6 +426,7 @@ func _on_confirm_pressed() -> void:
 	var evaluation: Dictionary = FR8CScoring.evaluate(level_data, selected_option_id)
 	var feedback_text: String = FR8CScoring.feedback_text(level_data, evaluation)
 	var cascade_explanation: String = str(evaluation.get("cascade_explanation", "")).strip_edges()
+	_highlight_winning_rule(evaluation)
 	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
 	var level_id: String = str(level_data.get("id", "FR8-C-00"))
 	var match_key: String = "FR8_C|%s|%d" % [level_id, GlobalMetrics.session_history.size()]
@@ -489,18 +520,16 @@ func _on_next_pressed() -> void:
 		_set_status(_tr("case08.fr8c.status.solve_first", STATUS_SOLVE_FIRST), COLOR_WARN)
 		return
 
-	var from_level_id: String = str(level_data.get("id", "FR8-C-00"))
-	var from_index: int = current_level_index
 	if _is_last_level():
-		_log_event("NEXT_PRESSED", {
-			"from_level_id": from_level_id,
-			"from_index": from_index,
-			"to_index": -1
-		})
-		GlobalMetrics.current_level_index = 0
-		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+		if btn_next.text == _tr("case08.common.exit", "ВЫХОД"):
+			GlobalMetrics.current_level_index = 0
+			get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+			return
+		_show_session_summary()
 		return
 
+	var from_level_id: String = str(level_data.get("id", "FR8-C-00"))
+	var from_index: int = current_level_index
 	var to_index: int = current_level_index + 1
 	_log_event("NEXT_PRESSED", {
 		"from_level_id": from_level_id,
@@ -508,6 +537,68 @@ func _on_next_pressed() -> void:
 		"to_index": to_index
 	})
 	_start_level(to_index)
+
+func _show_session_summary() -> void:
+	trial_locked = true
+	level_solved = true
+	btn_confirm.disabled = true
+	btn_reset.disabled = true
+	btn_next.text = _tr("case08.common.exit", "ВЫХОД")
+	btn_next.disabled = false
+	level_label.text = "C | ИТОГИ"
+	if level_progress_bar != null:
+		level_progress_bar.value = 100.0
+
+	var latest_by_level: Dictionary = {}
+	for idx in range(stage_run_history_start, GlobalMetrics.session_history.size()):
+		var entry_var: Variant = GlobalMetrics.session_history[idx]
+		if typeof(entry_var) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_var as Dictionary
+		if str(entry.get("quest_id", "")) != "CASE_08_FINAL_REPORT":
+			continue
+		if str(entry.get("stage", "")) != "C":
+			continue
+		var level_id: String = str(entry.get("level_id", "")).strip_edges()
+		if level_id.is_empty() or not stage_level_ids.has(level_id):
+			continue
+		latest_by_level[level_id] = entry
+
+	var total: int = levels.size()
+	var correct: int = 0
+	var total_ms: int = 0
+	for level_var in levels:
+		if typeof(level_var) != TYPE_DICTIONARY:
+			continue
+		var level_id: String = str((level_var as Dictionary).get("id", "")).strip_edges()
+		if level_id.is_empty():
+			continue
+		if not latest_by_level.has(level_id):
+			continue
+		var row: Dictionary = latest_by_level[level_id] as Dictionary
+		if bool(row.get("is_correct", false)):
+			correct += 1
+		total_ms += int(row.get("elapsed_ms", 0))
+
+	var pct: int = int((float(correct) / maxf(1.0, float(total))) * 100.0)
+	var avg_sec: float = (float(total_ms) / 1000.0) / maxf(1.0, float(total))
+
+	briefing_label.text = "СЕССИЯ ЗАВЕРШЕНА\n\nПравильно: %d / %d (%d%%)\nСреднее время: %.1f с\n" % [correct, total, pct, avg_sec]
+	explain_label.text = ""
+	target_preview.text = "ИТОГ"
+	target_preview.modulate = COLOR_INFO
+	attack_bar.value = 0.0
+	defense_bar.value = 0.0
+	for child in options_vbox.get_children():
+		child.queue_free()
+	css_label.text = "-"
+
+	if pct >= 90:
+		_set_status("Сессия пройдена успешно.", COLOR_OK)
+	elif pct >= 60:
+		_set_status("Рекомендуется повторить.", COLOR_WARN)
+	else:
+		_set_status("Нужно повторить материал.", COLOR_ERR)
 
 func _on_back_pressed() -> void:
 	GlobalMetrics.current_level_index = 0
@@ -520,6 +611,8 @@ func _on_reset_pressed() -> void:
 
 func _on_viewport_size_changed() -> void:
 	_apply_layout_mode()
+	if inspector_popup != null and inspector_popup.visible:
+		_position_inspector_popup(Vector2(inspector_popup.position))
 
 func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
@@ -579,6 +672,68 @@ func _update_stability_ui() -> void:
 	var shared_overlay: Node = get_tree().get_first_node_in_group("noir_overlay")
 	if shared_overlay != null and shared_overlay.has_method("set_danger_level"):
 		shared_overlay.call("set_danger_level", GlobalMetrics.stability)
+
+func _render_css_rule_bbcode(rule: Dictionary, index: int) -> String:
+	var source_id_raw: String = str(rule.get("source_id", "R%s" % str(index + 1))).strip_edges()
+	var source_id: String = _safe_inspect_source_id(source_id_raw)
+	if source_id.is_empty():
+		source_id = "R%s" % str(index + 1)
+	var selector: String = _selector_of(rule)
+	var decl: Dictionary = rule.get("decl", {}) as Dictionary
+	var prop_value: String = str(decl.get("prop", "color")).strip_edges().to_lower()
+	var color_value: String = str(decl.get("value", "")).strip_edges().to_lower()
+	var bb_color: String = _bbcode_color(color_value)
+	var important_suffix: String = " !important" if bool(rule.get("important", false)) else ""
+	var order_value: int = int(rule.get("order", index + 1))
+	var weight_value: int = int(rule.get("weight", 0))
+	return (
+		"[url=inspect:%s][color=#ffca5f]%s[/color][/url] { %s: [color=%s]%s[/color]%s; } [color=#8d8d8d]w:%d o:%d[/color]"
+		% [
+			source_id,
+			_escape_bbcode(selector),
+			_escape_bbcode(prop_value),
+			bb_color,
+			_escape_bbcode(color_value),
+			important_suffix,
+			weight_value,
+			order_value
+		]
+	)
+
+func _safe_inspect_source_id(source_id: String) -> String:
+	return source_id.replace("[", "").replace("]", "").replace("\"", "").strip_edges()
+
+func _highlight_winning_rule(evaluation: Dictionary) -> void:
+	var winning_source_id: String = str(
+		evaluation.get("winning_source_id", evaluation.get("winner_source_id", ""))
+	).strip_edges()
+	if winning_source_id.is_empty():
+		return
+
+	var rules: Array = level_data.get("rules", []) as Array
+	var css_lines: Array[String] = []
+	for i in range(rules.size()):
+		var rule_var: Variant = rules[i]
+		if typeof(rule_var) != TYPE_DICTIONARY:
+			continue
+		var rule: Dictionary = rule_var as Dictionary
+		var source_id: String = str(rule.get("source_id", "R%s" % str(i + 1))).strip_edges()
+		var selector: String = _selector_of(rule)
+		var decl: Dictionary = rule.get("decl", {}) as Dictionary
+		var prop: String = str(decl.get("prop", "color")).strip_edges()
+		var value: String = str(decl.get("value", "")).strip_edges()
+		var important: bool = bool(rule.get("important", false))
+		var weight: int = int(rule.get("weight", 0))
+		var imp_text: String = " !important" if important else ""
+		var line: String = "%s { %s: %s%s; } /* w=%d */" % [selector, prop, value, imp_text, weight]
+		if source_id == winning_source_id:
+			css_lines.append("[color=#4eff6a][b]-> %s[/b][/color]" % _escape_bbcode(line))
+		else:
+			css_lines.append("[color=#888888]  %s[/color]" % _escape_bbcode(line))
+
+	if css_lines.is_empty():
+		css_lines.append("-")
+	css_label.text = "\n".join(css_lines)
 
 func _selector_of(rule: Dictionary) -> String:
 	var selector: String = str(rule.get("selector", "")).strip_edges()

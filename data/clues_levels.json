@@ -1,305 +1,90 @@
 [
   {
     "quest_id": "CASE_01_DIGITAL_RESUS",
-    "schema_version": "3.0.0",
-    "id": "RESUS-A-01",
-    "bucket": "newbie",
-    "briefing": "Восстановите рабочую станцию ​​судебно-медицинской экспертизы, подключив каждую часть к правильным группам разъемов.",
-    "format": "MATCHING",
-    "diegetic_mode": true,
-    "buckets": [
-      {
-        "bucket_id": "INPUT",
-        "label": "ВХОДНОЕ РАЗЪЕМ"
-      },
-      {
-        "bucket_id": "OUTPUT",
-        "label": "ВЫХОДНОЕ РАЗЪЕМ"
-      },
-      {
-        "bucket_id": "MEMORY",
-        "label": "ШИНА ПАМЯТИ"
-      }
-    ],
-    "items": [
-      {
-        "item_id": "keyboard",
-        "label": "KBD",
-        "correct_bucket_id": "INPUT"
-      },
-      {
-        "item_id": "mouse",
-        "label": "MOUSE",
-        "correct_bucket_id": "INPUT"
-      },
-      {
-        "item_id": "microphone",
-        "label": "MIC",
-        "correct_bucket_id": "INPUT"
-      },
-      {
-        "item_id": "gpu",
-        "label": "GPU",
-        "correct_bucket_id": "OUTPUT"
-      },
-      {
-        "item_id": "monitor",
-        "label": "MON",
-        "correct_bucket_id": "OUTPUT"
-      },
-      {
-        "item_id": "speaker",
-        "label": "SPK",
-        "correct_bucket_id": "OUTPUT"
-      },
-      {
-        "item_id": "ram",
-        "label": "RAM",
-        "correct_bucket_id": "MEMORY"
-      },
-      {
-        "item_id": "cache",
-        "label": "CACHE",
-        "correct_bucket_id": "MEMORY"
-      }
-    ],
-    "socket_map": {
-      "INPUT": [
-        "клавиатура",
-        "мышь",
-        "микрофон"
-      ],
-      "OUTPUT": [
-        "графический процессор",
-        "монитор",
-        "оратор"
-      ],
-      "MEMORY": [
-        "баран",
-        "кэш"
-      ]
-    },
-    "diag_panel": {
-      "GPU": {
-        "ok": "ВИДЕО: ОК",
-        "bad": "ВИДЕО: НЕТ СИГНАЛА"
-      },
-      "RAM": {
-        "ok": "ПАМЯТЬ: ОК",
-        "bad": "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"
-      },
-      "CACHE": {
-        "ok": "БУФЕР: БЫСТРЫЙ",
-        "bad": "БУФЕР: МЕДЛЕННЫЙ"
-      }
-    },
-    "fx_rules": {
-      "gpu_on": {
-        "item_id": "gpu",
-        "bucket_id": "OUTPUT"
-      },
-      "ram_ok": {
-        "item_id": "ram",
-        "bucket_id": "MEMORY"
-      },
-      "cache_ok": {
-        "item_id": "cache",
-        "bucket_id": "MEMORY"
-      },
-      "hid_lines_on_input": [
-        "СКРЫТО ПОДКЛЮЧЕНО",
-        "ВХОДНОЙ ДРАЙВЕР ОК"
-      ]
-    },
-    "scoring_rules": [],
-    "scoring_model": {
-      "rules": [
-        {
-          "code": "PERFECT",
-          "min_correct": 8,
-          "points": 2,
-          "stability_delta": 0,
-          "verdict_code": "PERFECT"
-        },
-        {
-          "code": "PARTIAL",
-          "min_correct": 6,
-          "points": 1,
-          "stability_delta": -10,
-          "verdict_code": "PARTIAL"
-        },
-        {
-          "code": "FAIL",
-          "min_correct": 0,
-          "points": 0,
-          "stability_delta": -30,
-          "verdict_code": "FAIL"
-        }
-      ],
-      "default_rule": {
-        "code": "EMPTY_CONFIRM",
-        "points": 0,
-        "stability_delta": -50,
-        "verdict_code": "EMPTY"
-      }
-    },
-    "feedback_rules": {
-      "NO_GPU": {
-        "status": "Графический процессор отсутствует на ВЫХОДЕ. Сигнал монитора недоступен."
-      },
-      "NO_RAM": {
-        "status": "В MEMORY отсутствует ОЗУ. Ошибка загрузки во время проверки памяти.",
-        "console_lines": [
-          "[BOOT] проверка памяти запущена",
-          "[ALERT] модуль оперативной памяти не обнаружен",
-          "[BOOT] повторить проверку памяти",
-          "[ALERT] прерывает запуск"
-        ]
-      },
-      "NO_CACHE": {
-        "status": "КЭШ отсутствует. Диагностический поток ухудшился."
-      },
-      "HEALTHY": {
-        "status": "Все критические узлы онлайн. Продолжаем настройку производительности."
-      }
-    },
-    "system_state_rules": {
-      "monitor_on_if": {
-        "item_id": "gpu",
-        "zone_id": "OUTPUT"
-      },
-      "ram_ok_if": {
-        "item_id": "ram",
-        "zone_id": "MEMORY"
-      },
-      "fast_type_if": {
-        "item_id": "cache",
-        "zone_id": "MEMORY"
-      },
-      "boot_ok_lines": [
-        "[BOOT] сканирование периферийных устройств завершено",
-        "[BOOT] проверка памяти завершена",
-        "Подключена шина [BOOT] PCI",
-        "[BOOT] диагностическая трансляция онлайн"
-      ]
-    },
+    "schema_version": "4.0.0",
     "stages": {
       "A": {
-        "diegetic_mode": true,
         "levels": [
           {
-            "quest_id": "CASE_01_DIGITAL_RESUS",
-            "schema_version": "3.0.0",
             "id": "RESUS-A-01",
-            "bucket": "newbie",
-            "briefing": "Восстановите рабочую станцию ​​судебно-медицинской экспертизы, подключив каждую часть к правильным группам разъемов.",
             "format": "MATCHING",
-            "diegetic_mode": true,
+            "briefing_key": "resus.a01.briefing",
+            "briefing": "Sort devices into INPUT / OUTPUT / MEMORY.",
             "buckets": [
               {
                 "bucket_id": "INPUT",
-                "label": "ВХОДНОЕ РАЗЪЕМ"
+                "label_key": "resus.a01.bucket.input",
+                "label": "INPUT"
               },
               {
                 "bucket_id": "OUTPUT",
-                "label": "ВЫХОДНОЕ РАЗЪЕМ"
+                "label_key": "resus.a01.bucket.output",
+                "label": "OUTPUT"
               },
               {
                 "bucket_id": "MEMORY",
-                "label": "ШИНА ПАМЯТИ"
+                "label_key": "resus.a01.bucket.memory",
+                "label": "MEMORY"
               }
             ],
             "items": [
               {
                 "item_id": "keyboard",
-                "label": "KBD",
-                "correct_bucket_id": "INPUT"
+                "label_key": "resus.a01.item.keyboard",
+                "label": "KEYBOARD",
+                "correct_bucket_id": "INPUT",
+                "explain_short_key": "resus.a01.explain.keyboard"
               },
               {
                 "item_id": "mouse",
+                "label_key": "resus.a01.item.mouse",
                 "label": "MOUSE",
-                "correct_bucket_id": "INPUT"
+                "correct_bucket_id": "INPUT",
+                "explain_short_key": "resus.a01.explain.mouse"
               },
               {
                 "item_id": "microphone",
-                "label": "MIC",
-                "correct_bucket_id": "INPUT"
+                "label_key": "resus.a01.item.microphone",
+                "label": "MICROPHONE",
+                "correct_bucket_id": "INPUT",
+                "explain_short_key": "resus.a01.explain.microphone"
               },
               {
                 "item_id": "gpu",
-                "label": "GPU",
-                "correct_bucket_id": "OUTPUT"
+                "label_key": "resus.a01.item.gpu",
+                "label": "VIDEO CARD",
+                "correct_bucket_id": "OUTPUT",
+                "explain_short_key": "resus.a01.explain.gpu"
               },
               {
                 "item_id": "monitor",
-                "label": "MON",
-                "correct_bucket_id": "OUTPUT"
+                "label_key": "resus.a01.item.monitor",
+                "label": "MONITOR",
+                "correct_bucket_id": "OUTPUT",
+                "explain_short_key": "resus.a01.explain.monitor"
               },
               {
                 "item_id": "speaker",
-                "label": "SPK",
-                "correct_bucket_id": "OUTPUT"
+                "label_key": "resus.a01.item.speaker",
+                "label": "SPEAKER",
+                "correct_bucket_id": "OUTPUT",
+                "explain_short_key": "resus.a01.explain.speaker"
               },
               {
                 "item_id": "ram",
+                "label_key": "resus.a01.item.ram",
                 "label": "RAM",
-                "correct_bucket_id": "MEMORY"
+                "correct_bucket_id": "MEMORY",
+                "explain_short_key": "resus.a01.explain.ram"
               },
               {
                 "item_id": "cache",
+                "label_key": "resus.a01.item.cache",
                 "label": "CACHE",
-                "correct_bucket_id": "MEMORY"
+                "correct_bucket_id": "MEMORY",
+                "explain_short_key": "resus.a01.explain.cache"
               }
             ],
-            "socket_map": {
-              "INPUT": [
-                "клавиатура",
-                "мышь",
-                "микрофон"
-              ],
-              "OUTPUT": [
-                "графический процессор",
-                "монитор",
-                "оратор"
-              ],
-              "MEMORY": [
-                "баран",
-                "кэш"
-              ]
-            },
-            "diag_panel": {
-              "GPU": {
-                "ok": "ВИДЕО: ОК",
-                "bad": "ВИДЕО: НЕТ СИГНАЛА"
-              },
-              "RAM": {
-                "ok": "ПАМЯТЬ: ОК",
-                "bad": "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"
-              },
-              "CACHE": {
-                "ok": "БУФЕР: БЫСТРЫЙ",
-                "bad": "БУФЕР: МЕДЛЕННЫЙ"
-              }
-            },
-            "fx_rules": {
-              "gpu_on": {
-                "item_id": "gpu",
-                "bucket_id": "OUTPUT"
-              },
-              "ram_ok": {
-                "item_id": "ram",
-                "bucket_id": "MEMORY"
-              },
-              "cache_ok": {
-                "item_id": "cache",
-                "bucket_id": "MEMORY"
-              },
-              "hid_lines_on_input": [
-                "СКРЫТО ПОДКЛЮЧЕНО",
-                "ВХОДНОЙ ДРАЙВЕР ОК"
-              ]
-            },
-            "scoring_rules": [],
             "scoring_model": {
               "rules": [
                 {
@@ -310,11 +95,11 @@
                   "verdict_code": "PERFECT"
                 },
                 {
-                  "code": "PARTIAL",
-                  "min_correct": 6,
+                  "code": "GOOD",
+                  "min_correct": 5,
                   "points": 1,
                   "stability_delta": -10,
-                  "verdict_code": "PARTIAL"
+                  "verdict_code": "GOOD"
                 },
                 {
                   "code": "FAIL",
@@ -330,161 +115,88 @@
                 "stability_delta": -50,
                 "verdict_code": "EMPTY"
               }
-            },
-            "feedback_rules": {
-              "NO_GPU": {
-                "status": "Графический процессор отсутствует на ВЫХОДЕ. Сигнал монитора недоступен."
-              },
-              "NO_RAM": {
-                "status": "В MEMORY отсутствует ОЗУ. Ошибка загрузки во время проверки памяти.",
-                "console_lines": [
-                  "[BOOT] проверка памяти запущена",
-                  "[ALERT] модуль оперативной памяти не обнаружен",
-                  "[BOOT] повторить проверку памяти",
-                  "[ALERT] прерывает запуск"
-                ]
-              },
-              "NO_CACHE": {
-                "status": "КЭШ отсутствует. Диагностический поток ухудшился."
-              },
-              "HEALTHY": {
-                "status": "Все критические узлы онлайн. Продолжаем настройку производительности."
-              }
-            },
-            "system_state_rules": {
-              "monitor_on_if": {
-                "item_id": "gpu",
-                "zone_id": "OUTPUT"
-              },
-              "ram_ok_if": {
-                "item_id": "ram",
-                "zone_id": "MEMORY"
-              },
-              "fast_type_if": {
-                "item_id": "cache",
-                "zone_id": "MEMORY"
-              },
-              "boot_ok_lines": [
-                "[BOOT] сканирование периферийных устройств завершено",
-                "[BOOT] проверка памяти завершена",
-                "Подключена шина [BOOT] PCI",
-                "[BOOT] диагностическая трансляция онлайн"
-              ]
             }
           },
           {
-            "quest_id": "CASE_01_DIGITAL_RESUS",
-            "schema_version": "3.0.0",
             "id": "RESUS-A-02",
-            "bucket": "newbie",
-            "briefing": "Уровень ловушки: идентифицируйте ложные периферийные устройства и подключайте только действительные части рабочей станции.",
             "format": "MATCHING",
-            "diegetic_mode": true,
+            "briefing_key": "resus.a02.briefing",
+            "briefing": "Classify advanced peripherals.",
             "buckets": [
               {
                 "bucket_id": "INPUT",
-                "label": "ВХОДНОЕ РАЗЪЕМ"
+                "label_key": "resus.a02.bucket.input",
+                "label": "INPUT"
               },
               {
                 "bucket_id": "OUTPUT",
-                "label": "ВЫХОДНОЕ РАЗЪЕМ"
+                "label_key": "resus.a02.bucket.output",
+                "label": "OUTPUT"
               },
               {
                 "bucket_id": "MEMORY",
-                "label": "ШИНА ПАМЯТИ"
+                "label_key": "resus.a02.bucket.memory",
+                "label": "MEMORY"
               }
             ],
             "items": [
               {
-                "label": "KBD",
-                "item_id": "keyboard",
-                "correct_bucket_id": "INPUT"
-              },
-              {
-                "label": "SCAN",
                 "item_id": "scanner",
-                "correct_bucket_id": "INPUT"
+                "label_key": "resus.a02.item.scanner",
+                "label": "SCANNER",
+                "correct_bucket_id": "INPUT",
+                "explain_short_key": "resus.a02.explain.scanner"
               },
               {
-                "label": "CAM",
-                "item_id": "camera",
-                "correct_bucket_id": "INPUT"
+                "item_id": "webcam",
+                "label_key": "resus.a02.item.webcam",
+                "label": "WEBCAM",
+                "correct_bucket_id": "INPUT",
+                "explain_short_key": "resus.a02.explain.webcam"
               },
               {
-                "label": "GPU",
-                "item_id": "gpu",
-                "correct_bucket_id": "OUTPUT"
+                "item_id": "touchscreen",
+                "label_key": "resus.a02.item.touchscreen",
+                "label": "TOUCHSCREEN",
+                "correct_bucket_id": "INPUT",
+                "explain_short_key": "resus.a02.explain.touchscreen"
               },
               {
-                "label": "MON",
-                "item_id": "monitor",
-                "correct_bucket_id": "OUTPUT"
+                "item_id": "printer",
+                "label_key": "resus.a02.item.printer",
+                "label": "PRINTER",
+                "correct_bucket_id": "OUTPUT",
+                "explain_short_key": "resus.a02.explain.printer"
               },
               {
-                "label": "SPK",
-                "item_id": "speaker",
-                "correct_bucket_id": "OUTPUT"
+                "item_id": "projector",
+                "label_key": "resus.a02.item.projector",
+                "label": "PROJECTOR",
+                "correct_bucket_id": "OUTPUT",
+                "explain_short_key": "resus.a02.explain.projector"
               },
               {
-                "label": "RAM",
-                "item_id": "ram",
-                "correct_bucket_id": "MEMORY"
+                "item_id": "headphones",
+                "label_key": "resus.a02.item.headphones",
+                "label": "HEADPHONES",
+                "correct_bucket_id": "OUTPUT",
+                "explain_short_key": "resus.a02.explain.headphones"
               },
               {
-                "label": "CACHE",
-                "item_id": "cache",
-                "correct_bucket_id": "MEMORY"
+                "item_id": "ssd",
+                "label_key": "resus.a02.item.ssd",
+                "label": "SSD",
+                "correct_bucket_id": "MEMORY",
+                "explain_short_key": "resus.a02.explain.ssd"
+              },
+              {
+                "item_id": "hdd",
+                "label_key": "resus.a02.item.hdd",
+                "label": "HDD",
+                "correct_bucket_id": "MEMORY",
+                "explain_short_key": "resus.a02.explain.hdd"
               }
             ],
-            "socket_map": {
-              "INPUT": [
-                "клавиатура",
-                "сканер",
-                "камера"
-              ],
-              "MEMORY": [
-                "баран",
-                "кэш"
-              ],
-              "OUTPUT": [
-                "графический процессор",
-                "монитор",
-                "оратор"
-              ]
-            },
-            "diag_panel": {
-              "GPU": {
-                "ok": "ВИДЕО: ОК",
-                "bad": "ВИДЕО: НЕТ СИГНАЛА"
-              },
-              "RAM": {
-                "ok": "ПАМЯТЬ: ОК",
-                "bad": "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"
-              },
-              "CACHE": {
-                "ok": "БУФЕР: БЫСТРЫЙ",
-                "bad": "БУФЕР: МЕДЛЕННЫЙ"
-              }
-            },
-            "fx_rules": {
-              "gpu_on": {
-                "item_id": "gpu",
-                "bucket_id": "OUTPUT"
-              },
-              "ram_ok": {
-                "item_id": "ram",
-                "bucket_id": "MEMORY"
-              },
-              "cache_ok": {
-                "item_id": "cache",
-                "bucket_id": "MEMORY"
-              },
-              "hid_lines_on_input": [
-                "ВХОДНАЯ ШИНА ПРОВЕРЕНА",
-                "СКРЫТАЯ МАРШРУТИЗАЦИЯ СТАБИЛЬНАЯ"
-              ]
-            },
-            "scoring_rules": [],
             "scoring_model": {
               "rules": [
                 {
@@ -495,11 +207,11 @@
                   "verdict_code": "PERFECT"
                 },
                 {
-                  "code": "PARTIAL",
-                  "min_correct": 6,
+                  "code": "GOOD",
+                  "min_correct": 5,
                   "points": 1,
                   "stability_delta": -10,
-                  "verdict_code": "PARTIAL"
+                  "verdict_code": "GOOD"
                 },
                 {
                   "code": "FAIL",
@@ -515,176 +227,110 @@
                 "stability_delta": -50,
                 "verdict_code": "EMPTY"
               }
-            },
-            "feedback_rules": {
-              "NO_GPU": {
-                "status": "Графический процессор отсутствует на ВЫХОДЕ. Сигнал монитора недоступен."
-              },
-              "NO_RAM": {
-                "status": "В MEMORY отсутствует ОЗУ. Ошибка загрузки во время проверки памяти.",
-                "console_lines": [
-                  "[BOOT] проверка памяти запущена",
-                  "[ALERT] модуль оперативной памяти не обнаружен",
-                  "[BOOT] повторить проверку памяти",
-                  "[ALERT] прерывает запуск"
-                ]
-              },
-              "NO_CACHE": {
-                "status": "КЭШ отсутствует. Диагностический поток ухудшился."
-              },
-              "HEALTHY": {
-                "status": "Все критические узлы онлайн. Продолжаем настройку производительности."
-              }
-            },
-            "system_state_rules": {
-              "monitor_on_if": {
-                "item_id": "gpu",
-                "zone_id": "OUTPUT"
-              },
-              "ram_ok_if": {
-                "item_id": "ram",
-                "zone_id": "MEMORY"
-              },
-              "fast_type_if": {
-                "item_id": "cache",
-                "zone_id": "MEMORY"
-              },
-              "boot_ok_lines": [
-                "[BOOT] профиль ловушки загружен",
-                "[BOOT] целостность периферийных устройств проверена",
-                "[BOOT] проверка памяти завершена",
-                "[BOOT] безопасная консоль онлайн"
-              ]
             }
           },
           {
-            "quest_id": "CASE_01_DIGITAL_RESUS",
-            "schema_version": "3.0.0",
             "id": "RESUS-A-03",
-            "bucket": "newbie",
-            "briefing": "Продвинутый этап: перестроить рабочую станцию ​​с альтернативной топологией вывода в рамках диагностики.",
             "format": "MATCHING",
-            "diegetic_mode": true,
+            "briefing_key": "resus.a03.briefing",
+            "briefing": "Sort software by type.",
             "buckets": [
               {
-                "bucket_id": "INPUT",
-                "label": "ВХОДНОЕ РАЗЪЕМ"
+                "bucket_id": "SYSTEM_SW",
+                "label_key": "resus.a03.bucket.system_sw",
+                "label": "SYSTEM SOFTWARE"
               },
               {
-                "bucket_id": "OUTPUT",
-                "label": "ВЫХОДНОЕ РАЗЪЕМ"
+                "bucket_id": "APP_SW",
+                "label_key": "resus.a03.bucket.app_sw",
+                "label": "APPLICATION SOFTWARE"
               },
               {
-                "bucket_id": "MEMORY",
-                "label": "ШИНА ПАМЯТИ"
+                "bucket_id": "DEV_SW",
+                "label_key": "resus.a03.bucket.dev_sw",
+                "label": "DEVELOPMENT TOOLS"
               }
             ],
             "items": [
               {
-                "label": "KBD",
-                "item_id": "keyboard",
-                "correct_bucket_id": "INPUT"
+                "item_id": "os",
+                "label_key": "resus.a03.item.os",
+                "label": "OPERATING SYSTEM",
+                "correct_bucket_id": "SYSTEM_SW",
+                "explain_short_key": "resus.a03.explain.os"
               },
               {
-                "label": "MOUSE",
-                "item_id": "mouse",
-                "correct_bucket_id": "INPUT"
+                "item_id": "driver",
+                "label_key": "resus.a03.item.driver",
+                "label": "DRIVER",
+                "correct_bucket_id": "SYSTEM_SW",
+                "explain_short_key": "resus.a03.explain.driver"
               },
               {
-                "label": "MIC",
-                "item_id": "microphone",
-                "correct_bucket_id": "INPUT"
+                "item_id": "antivirus",
+                "label_key": "resus.a03.item.antivirus",
+                "label": "ANTIVIRUS",
+                "correct_bucket_id": "SYSTEM_SW",
+                "explain_short_key": "resus.a03.explain.antivirus"
               },
               {
-                "label": "GPU",
-                "item_id": "gpu",
-                "correct_bucket_id": "OUTPUT"
+                "item_id": "text_editor",
+                "label_key": "resus.a03.item.text_editor",
+                "label": "TEXT EDITOR",
+                "correct_bucket_id": "APP_SW",
+                "explain_short_key": "resus.a03.explain.text_editor"
               },
               {
-                "label": "PROJ",
-                "item_id": "projector",
-                "correct_bucket_id": "OUTPUT"
+                "item_id": "spreadsheet",
+                "label_key": "resus.a03.item.spreadsheet",
+                "label": "SPREADSHEET",
+                "correct_bucket_id": "APP_SW",
+                "explain_short_key": "resus.a03.explain.spreadsheet"
               },
               {
-                "label": "SPK",
-                "item_id": "speaker",
-                "correct_bucket_id": "OUTPUT"
+                "item_id": "browser",
+                "label_key": "resus.a03.item.browser",
+                "label": "BROWSER",
+                "correct_bucket_id": "APP_SW",
+                "explain_short_key": "resus.a03.explain.browser"
               },
               {
-                "label": "RAM",
-                "item_id": "ram",
-                "correct_bucket_id": "MEMORY"
+                "item_id": "ide",
+                "label_key": "resus.a03.item.ide",
+                "label": "IDE",
+                "correct_bucket_id": "DEV_SW",
+                "explain_short_key": "resus.a03.explain.ide"
               },
               {
-                "label": "CACHE",
-                "item_id": "cache",
-                "correct_bucket_id": "MEMORY"
+                "item_id": "compiler",
+                "label_key": "resus.a03.item.compiler",
+                "label": "COMPILER",
+                "correct_bucket_id": "DEV_SW",
+                "explain_short_key": "resus.a03.explain.compiler"
+              },
+              {
+                "item_id": "debugger",
+                "label_key": "resus.a03.item.debugger",
+                "label": "DEBUGGER",
+                "correct_bucket_id": "DEV_SW",
+                "explain_short_key": "resus.a03.explain.debugger"
               }
             ],
-            "socket_map": {
-              "INPUT": [
-                "клавиатура",
-                "мышь",
-                "микрофон"
-              ],
-              "MEMORY": [
-                "баран",
-                "кэш"
-              ],
-              "OUTPUT": [
-                "графический процессор",
-                "проектор",
-                "оратор"
-              ]
-            },
-            "diag_panel": {
-              "GPU": {
-                "ok": "ВИДЕО: ОК",
-                "bad": "ВИДЕО: НЕТ СИГНАЛА"
-              },
-              "RAM": {
-                "ok": "ПАМЯТЬ: ОК",
-                "bad": "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"
-              },
-              "CACHE": {
-                "ok": "БУФЕР: БЫСТРЫЙ",
-                "bad": "БУФЕР: МЕДЛЕННЫЙ"
-              }
-            },
-            "fx_rules": {
-              "gpu_on": {
-                "item_id": "gpu",
-                "bucket_id": "OUTPUT"
-              },
-              "ram_ok": {
-                "item_id": "ram",
-                "bucket_id": "MEMORY"
-              },
-              "cache_ok": {
-                "item_id": "cache",
-                "bucket_id": "MEMORY"
-              },
-              "hid_lines_on_input": [
-                "СКРЫТО ПОДКЛЮЧЕНО",
-                "ВХОДНОЙ ДРАЙВЕР ОК"
-              ]
-            },
-            "scoring_rules": [],
             "scoring_model": {
               "rules": [
                 {
                   "code": "PERFECT",
-                  "min_correct": 8,
+                  "min_correct": 9,
                   "points": 2,
                   "stability_delta": 0,
                   "verdict_code": "PERFECT"
                 },
                 {
-                  "code": "PARTIAL",
-                  "min_correct": 6,
+                  "code": "GOOD",
+                  "min_correct": 5,
                   "points": 1,
                   "stability_delta": -10,
-                  "verdict_code": "PARTIAL"
+                  "verdict_code": "GOOD"
                 },
                 {
                   "code": "FAIL",
@@ -700,142 +346,211 @@
                 "stability_delta": -50,
                 "verdict_code": "EMPTY"
               }
-            },
-            "feedback_rules": {
-              "NO_GPU": {
-                "status": "Графический процессор отсутствует на ВЫХОДЕ. Сигнал монитора недоступен."
-              },
-              "NO_RAM": {
-                "status": "В MEMORY отсутствует ОЗУ. Ошибка загрузки во время проверки памяти.",
-                "console_lines": [
-                  "[BOOT] проверка памяти запущена",
-                  "[ALERT] модуль оперативной памяти не обнаружен",
-                  "[BOOT] повторить проверку памяти",
-                  "[ALERT] прерывает запуск"
-                ]
-              },
-              "NO_CACHE": {
-                "status": "КЭШ отсутствует. Диагностический поток ухудшился."
-              },
-              "HEALTHY": {
-                "status": "Все критические узлы онлайн. Продолжаем настройку производительности."
-              }
-            },
-            "system_state_rules": {
-              "monitor_on_if": {
-                "item_id": "gpu",
-                "zone_id": "OUTPUT"
-              },
-              "ram_ok_if": {
-                "item_id": "ram",
-                "zone_id": "MEMORY"
-              },
-              "fast_type_if": {
-                "item_id": "cache",
-                "zone_id": "MEMORY"
-              },
-              "boot_ok_lines": [
-                "[BOOT] выходной мультиплексор инициализирован",
-                "[BOOT] проверка памяти завершена",
-                "Подключена шина [BOOT] PCI",
-                "[BOOT] диагностическая трансляция онлайн"
-              ]
             }
           },
           {
-            "quest_id": "CASE_01_DIGITAL_RESUS",
-            "schema_version": "3.1.0",
-            "id": "A_CIA_01",
-            "bucket": "infosec",
-            "briefing": "Разложите улики по свойствам информации (CIA): Конфиденциальность, Целостность, Доступность. Часть улик — атаки, часть — меры защиты.",
+            "id": "RESUS-A-04",
+            "format": "MATCHING_TABLE",
+            "briefing_key": "resus.a04.briefing",
+            "briefing": "Match each task to the best PC config.",
+            "configs": [
+              {
+                "config_id": "PC1",
+                "label": "PC-1",
+                "cpu": "Intel i3",
+                "ram": "4 GB",
+                "gpu": "Integrated",
+                "storage": "256 GB SSD"
+              },
+              {
+                "config_id": "PC2",
+                "label": "PC-2",
+                "cpu": "Intel i5",
+                "ram": "8 GB",
+                "gpu": "GTX 1650",
+                "storage": "512 GB SSD"
+              },
+              {
+                "config_id": "PC3",
+                "label": "PC-3",
+                "cpu": "Intel i7",
+                "ram": "16 GB",
+                "gpu": "RTX 3060",
+                "storage": "1 TB SSD"
+              },
+              {
+                "config_id": "PC4",
+                "label": "PC-4",
+                "cpu": "Intel i9",
+                "ram": "32 GB",
+                "gpu": "RTX 4070",
+                "storage": "2 TB SSD"
+              }
+            ],
+            "tasks": [
+              {
+                "task_id": "TASK_OFFICE",
+                "label_key": "resus.a04.task.office",
+                "label": "Office work",
+                "correct_config": "PC1",
+                "explain_key": "resus.a04.explain.office"
+              },
+              {
+                "task_id": "TASK_GAMING",
+                "label_key": "resus.a04.task.gaming",
+                "label": "Modern gaming",
+                "correct_config": "PC3",
+                "explain_key": "resus.a04.explain.gaming"
+              },
+              {
+                "task_id": "TASK_VIDEO",
+                "label_key": "resus.a04.task.video",
+                "label": "4K video editing",
+                "correct_config": "PC4",
+                "explain_key": "resus.a04.explain.video"
+              },
+              {
+                "task_id": "TASK_PROGRAMMING",
+                "label_key": "resus.a04.task.programming",
+                "label": "Programming",
+                "correct_config": "PC2",
+                "explain_key": "resus.a04.explain.programming"
+              }
+            ],
+            "scoring_model": {
+              "rules": [
+                {
+                  "code": "PERFECT",
+                  "min_correct": 4,
+                  "points": 2,
+                  "stability_delta": 0,
+                  "verdict_code": "PERFECT"
+                },
+                {
+                  "code": "GOOD",
+                  "min_correct": 2,
+                  "points": 1,
+                  "stability_delta": -10,
+                  "verdict_code": "GOOD"
+                },
+                {
+                  "code": "FAIL",
+                  "min_correct": 0,
+                  "points": 0,
+                  "stability_delta": -30,
+                  "verdict_code": "FAIL"
+                }
+              ],
+              "default_rule": {
+                "code": "EMPTY_CONFIRM",
+                "points": 0,
+                "stability_delta": -50,
+                "verdict_code": "EMPTY"
+              }
+            }
+          },
+          {
+            "id": "RESUS-A-05",
             "format": "MATCHING_CIA",
+            "briefing_key": "resus.a05.briefing",
+            "briefing": "Sort controls by CIA triad.",
             "buckets": [
               {
                 "bucket_id": "CONF",
-                "label": "КОНФИДЕНЦИАЛЬНОСТЬ"
+                "label_key": "resus.a05.bucket.conf",
+                "label": "CONFIDENTIALITY"
               },
               {
                 "bucket_id": "INTE",
-                "label": "ЦЕЛОСТНОСТЬ"
+                "label_key": "resus.a05.bucket.inte",
+                "label": "INTEGRITY"
               },
               {
                 "bucket_id": "AVAI",
-                "label": "ДОСТУПНОСТЬ"
+                "label_key": "resus.a05.bucket.avai",
+                "label": "AVAILABILITY"
               }
             ],
             "items": [
               {
-                "item_id": "LEAK",
-                "type": "INC",
-                "label": "[INC] Слив паролей в сеть",
+                "item_id": "encryption",
+                "label_key": "resus.a05.item.encryption",
+                "label": "ENCRYPTION",
                 "correct_bucket_id": "CONF",
-                "explain_short": "Данные становятся доступны посторонним."
+                "explain_short_key": "resus.a05.explain.encryption"
               },
               {
-                "item_id": "VIRUS",
-                "type": "INC",
-                "label": "[INC] Искажение файла вирусом",
+                "item_id": "access_control",
+                "label_key": "resus.a05.item.access_control",
+                "label": "ACCESS CONTROL",
+                "correct_bucket_id": "CONF",
+                "explain_short_key": "resus.a05.explain.access_control"
+              },
+              {
+                "item_id": "vpn",
+                "label_key": "resus.a05.item.vpn",
+                "label": "VPN",
+                "correct_bucket_id": "CONF",
+                "explain_short_key": "resus.a05.explain.vpn"
+              },
+              {
+                "item_id": "hash_check",
+                "label_key": "resus.a05.item.hash_check",
+                "label": "HASH CHECK",
                 "correct_bucket_id": "INTE",
-                "explain_short": "Данные изменены, теряют достоверность."
+                "explain_short_key": "resus.a05.explain.hash_check"
               },
               {
-                "item_id": "DDOS",
-                "type": "INC",
-                "label": "[INC] DDoS атака на сервер",
+                "item_id": "digital_sign",
+                "label_key": "resus.a05.item.digital_sign",
+                "label": "DIGITAL SIGNATURE",
+                "correct_bucket_id": "INTE",
+                "explain_short_key": "resus.a05.explain.digital_sign"
+              },
+              {
+                "item_id": "version_control",
+                "label_key": "resus.a05.item.version_control",
+                "label": "VERSION CONTROL",
+                "correct_bucket_id": "INTE",
+                "explain_short_key": "resus.a05.explain.version_control"
+              },
+              {
+                "item_id": "backup",
+                "label_key": "resus.a05.item.backup",
+                "label": "BACKUP",
                 "correct_bucket_id": "AVAI",
-                "explain_short": "Сервис недоступен пользователям."
+                "explain_short_key": "resus.a05.explain.backup"
               },
               {
-                "item_id": "DNS",
-                "type": "INC",
-                "label": "[INC] Подмена DNS записи",
-                "correct_bucket_id": "INTE",
-                "explain_short": "Адрес подменён, целостность информации нарушена."
-              },
-              {
-                "item_id": "ENC",
-                "type": "CTRL",
-                "label": "[CTRL] Шифрование данных",
-                "correct_bucket_id": "CONF",
-                "explain_short": "Скрывает содержимое от посторонних."
-              },
-              {
-                "item_id": "HASH",
-                "type": "CTRL",
-                "label": "[CTRL] Хэш-сумма файла",
-                "correct_bucket_id": "INTE",
-                "explain_short": "Позволяет проверить, что файл не изменили."
-              },
-              {
-                "item_id": "BACKUP",
-                "type": "CTRL",
-                "label": "[CTRL] Резервное копирование",
+                "item_id": "ups",
+                "label_key": "resus.a05.item.ups",
+                "label": "UPS",
                 "correct_bucket_id": "AVAI",
-                "explain_short": "Восстановление после сбоя повышает доступность."
+                "explain_short_key": "resus.a05.explain.ups"
               },
               {
-                "item_id": "ACL",
-                "type": "CTRL",
-                "label": "[CTRL] Контроль доступа (ACL)",
-                "correct_bucket_id": "CONF",
-                "explain_short": "Ограничивает доступ к данным."
+                "item_id": "raid",
+                "label_key": "resus.a05.item.raid",
+                "label": "RAID",
+                "correct_bucket_id": "AVAI",
+                "explain_short_key": "resus.a05.explain.raid"
               }
             ],
             "scoring_model": {
               "rules": [
                 {
                   "code": "PERFECT",
-                  "min_correct": 8,
+                  "min_correct": 9,
                   "points": 2,
                   "stability_delta": 0,
                   "verdict_code": "PERFECT"
                 },
                 {
-                  "code": "PARTIAL",
-                  "min_correct": 6,
+                  "code": "GOOD",
+                  "min_correct": 5,
                   "points": 1,
                   "stability_delta": -10,
-                  "verdict_code": "PARTIAL"
+                  "verdict_code": "GOOD"
                 },
                 {
                   "code": "FAIL",
@@ -846,7 +561,6 @@
                 }
               ],
               "default_rule": {
-                "when": "EMPTY_CONFIRM",
                 "code": "EMPTY_CONFIRM",
                 "points": 0,
                 "stability_delta": -50,
@@ -860,1212 +574,432 @@
         "levels": [
           {
             "id": "CASE01_B_01",
-            "stage_max_points": 2,
-            "format": "SINGLE_CHOICE_CONTEXT",
-            "interaction_variant": "BIOS_TUNING",
-            "diegetic_mode": true,
-            "context": "Профиль восстановления рендеринга: настройте CPU/RAM/GPU и пройдите тест в рамках бюджета.",
-            "budget": 1000,
-            "tuning_model": {
-              "cpu": {
-                "LOW": {
-                  "price": 150,
-                  "perf": 1
-                },
-                "MID": {
-                  "price": 400,
-                  "perf": 2
-                },
-                "HIGH": {
-                  "price": 600,
-                  "perf": 3
-                }
-              },
-              "ram": {
-                "LOW": {
-                  "price": 50,
-                  "perf": 1
-                },
-                "GOOD": {
-                  "price": 300,
-                  "perf": 2
-                },
-                "TOP": {
-                  "price": 400,
-                  "perf": 3
-                }
-              },
-              "gpu": {
-                "NONE": {
-                  "price": 0,
-                  "perf": 0
-                },
-                "MID": {
-                  "price": 200,
-                  "perf": 2
-                },
-                "TOP": {
-                  "price": 300,
-                  "perf": 3
-                }
-              }
-            },
-            "classifier_thresholds": {
-              "gpu_low_max": 0,
-              "cpu_low_max": 1,
-              "ram_low_max": 1,
-              "cpu_mid_min": 2,
-              "cpu_high_min": 3,
-              "ram_good_min": 2,
-              "gpu_good_min": 2,
-              "lowpower_perf_max": 4
-            },
-            "benchmark_outputs": {
-              "OPTIMAL": [
-                "[BENCH] frame pacing stable",
-                "[BENCH] memory queue nominal",
-                "[BENCH] render context synchronized",
-                "[RESULT] OPTIMAL profile accepted"
-              ],
-              "BOTTLENECK_RAM": [
-                "[BENCH] paging pressure detected",
-                "[BENCH] CPU wait states rising",
-                "[BENCH] dataset spills beyond working set",
-                "[RESULT] BOTTLENECK_RAM"
-              ],
-              "BOTTLENECK_GPU": [
-                "[BENCH] render queue saturated",
-                "[BENCH] frame output stalls at raster stage",
-                "[BENCH] CPU feed remains above display throughput",
-                "[RESULT] BOTTLENECK_GPU"
-              ],
-              "BOTTLENECK_CPU": [
-                "[BENCH] scheduler load pinned high",
-                "[BENCH] RAM and GPU utilization stay below ceiling",
-                "[BENCH] command submission cannot keep pace",
-                "[RESULT] BOTTLENECK_CPU"
-              ],
-              "OVERBUDGET": [
-                "[BENCH] performance target reachable",
-                "[BENCH] procurement gate failed",
-                "[BENCH] spend exceeds approved envelope",
-                "[RESULT] OVERBUDGET"
-              ],
-              "LOWPOWER": [
-                "[BENCH] baseline throughput below target",
-                "[BENCH] no single subsystem dominates the slowdown",
-                "[BENCH] aggregate compute budget insufficient",
-                "[RESULT] LOWPOWER"
-              ]
-            },
-            "options": [
+            "format": "TOPOLOGY_MATCH",
+            "briefing_key": "resus.b01.briefing",
+            "briefing": "Identify network topology.",
+            "rounds": [
               {
-                "option_id": "BOTTLENECK",
-                "title": "Renderer boost with starved RAM",
-                "total_price": 850,
-                "parts": [
+                "round_id": "B01_R1",
+                "type": "identify",
+                "prompt_key": "resus.b01.r1.prompt",
+                "prompt": "Identify topology by diagram.",
+                "topology_visual": "star",
+                "options": [
                   {
-                    "k": "CPU",
-                    "v": "HIGH",
-                    "price": 600
+                    "id": "star",
+                    "label_key": "resus.b.topo.star",
+                    "is_correct": true
                   },
                   {
-                    "k": "RAM",
-                    "v": "LOW",
-                    "price": 50
+                    "id": "bus",
+                    "label_key": "resus.b.topo.bus",
+                    "is_correct": false
                   },
                   {
-                    "k": "GPU",
-                    "v": "MID",
-                    "price": 200
+                    "id": "ring",
+                    "label_key": "resus.b.topo.ring",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "mesh",
+                    "label_key": "resus.b.topo.mesh",
+                    "is_correct": false
                   }
                 ],
-                "tags": [
-                  "preset",
-                  "memory-starved"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "BOTTLENECK_RAM",
-                  "cpu_load": 86,
-                  "ram_usage": 92,
-                  "fps": 44,
-                  "total_price": 850
-                },
-                "feedback": {
-                  "error_code": "BOTTLENECK_RAM",
-                  "headline": "Memory pressure is the limiting factor",
-                  "details": [
-                    "Raise RAM before confirming the rig.",
-                    "CPU headroom is wasted while the workload waits on memory."
-                  ]
-                }
+                "explain_key": "resus.b01.r1.explain"
               },
               {
-                "option_id": "OPTIMAL",
-                "title": "Balanced workstation preset",
-                "total_price": 900,
-                "parts": [
+                "round_id": "B01_R2",
+                "type": "choose_for_scenario",
+                "prompt_key": "resus.b01.r2.prompt",
+                "prompt": "School network with one server and 20 PCs.",
+                "options": [
                   {
-                    "k": "CPU",
-                    "v": "MID",
-                    "price": 400
+                    "id": "star",
+                    "label_key": "resus.b.topo.star",
+                    "is_correct": true
                   },
                   {
-                    "k": "RAM",
-                    "v": "GOOD",
-                    "price": 300
+                    "id": "bus",
+                    "label_key": "resus.b.topo.bus",
+                    "is_correct": false
                   },
                   {
-                    "k": "GPU",
-                    "v": "MID",
-                    "price": 200
+                    "id": "ring",
+                    "label_key": "resus.b.topo.ring",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "mesh",
+                    "label_key": "resus.b.topo.mesh",
+                    "is_correct": false
                   }
                 ],
-                "tags": [
-                  "preset",
-                  "balanced"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "OPTIMAL",
-                  "cpu_load": 56,
-                  "ram_usage": 61,
-                  "fps": 73,
-                  "total_price": 900
-                },
-                "feedback": {
-                  "error_code": "OK",
-                  "headline": "Balanced profile confirmed",
-                  "details": [
-                    "Budget stays inside the cap.",
-                    "No dominant subsystem stalls the workload."
-                  ]
-                }
+                "explain_key": "resus.b01.r2.explain"
               },
               {
-                "option_id": "OVERBUDGET",
-                "title": "Top-tier overspend preset",
-                "total_price": 1300,
-                "parts": [
+                "round_id": "B01_R3",
+                "type": "identify",
+                "prompt_key": "resus.b01.r3.prompt",
+                "prompt": "Identify topology by diagram.",
+                "topology_visual": "ring",
+                "options": [
                   {
-                    "k": "CPU",
-                    "v": "HIGH",
-                    "price": 600
+                    "id": "star",
+                    "label_key": "resus.b.topo.star",
+                    "is_correct": false
                   },
                   {
-                    "k": "RAM",
-                    "v": "TOP",
-                    "price": 400
+                    "id": "bus",
+                    "label_key": "resus.b.topo.bus",
+                    "is_correct": false
                   },
                   {
-                    "k": "GPU",
-                    "v": "TOP",
-                    "price": 300
+                    "id": "ring",
+                    "label_key": "resus.b.topo.ring",
+                    "is_correct": true
+                  },
+                  {
+                    "id": "mesh",
+                    "label_key": "resus.b.topo.mesh",
+                    "is_correct": false
                   }
                 ],
-                "tags": [
-                  "preset",
-                  "policy-fail"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "OVERBUDGET",
-                  "cpu_load": 52,
-                  "ram_usage": 59,
-                  "fps": 79,
-                  "total_price": 1300
-                },
-                "feedback": {
-                  "error_code": "OVER_BUDGET",
-                  "headline": "Target profile breaks the budget policy",
-                  "details": [
-                    "Drop at least one component tier before confirmation.",
-                    "Performance is acceptable, but procurement rejects the spend."
-                  ]
-                }
-              },
-              {
-                "option_id": "LOWPOWER",
-                "title": "Minimal-power baseline preset",
-                "total_price": 200,
-                "parts": [
-                  {
-                    "k": "CPU",
-                    "v": "LOW",
-                    "price": 150
-                  },
-                  {
-                    "k": "RAM",
-                    "v": "LOW",
-                    "price": 50
-                  },
-                  {
-                    "k": "GPU",
-                    "v": "NONE",
-                    "price": 0
-                  }
-                ],
-                "tags": [
-                  "preset",
-                  "underpowered"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "LOWPOWER",
-                  "cpu_load": 84,
-                  "ram_usage": 75,
-                  "fps": 24,
-                  "total_price": 200
-                },
-                "feedback": {
-                  "error_code": "LOW_POWER",
-                  "headline": "Overall compute envelope is too weak",
-                  "details": [
-                    "The build is underpowered across the board.",
-                    "Increase at least one core subsystem before benchmarking again."
-                  ]
-                }
+                "explain_key": "resus.b01.r3.explain"
               }
-            ],
-            "correct_option_id": "OPTIMAL",
-            "scoring_model": {
-              "correct_points": 2,
-              "wrong_points": 0,
-              "stability_delta_correct": 0,
-              "stability_delta_wrong": -10,
-              "default_rule": {
-                "when": "EMPTY_CONFIRM",
-                "points": 0,
-                "stability_delta": -50,
-                "verdict_code": "EMPTY"
-              }
-            },
-            "feedback_rules": {
-              "OPTIMAL": {
-                "error_code": "OK",
-                "headline": "Balanced profile confirmed",
-                "details": [
-                  "Budget stays inside the cap.",
-                  "No dominant subsystem stalls the workload."
-                ]
-              },
-              "BOTTLENECK_RAM": {
-                "error_code": "BOTTLENECK_RAM",
-                "headline": "Memory pressure is the limiting factor",
-                "details": [
-                  "Raise RAM before confirming the rig.",
-                  "CPU headroom is wasted while the workload waits on memory."
-                ]
-              },
-              "BOTTLENECK_GPU": {
-                "error_code": "BOTTLENECK_GPU",
-                "headline": "Render path is blocked by the graphics layer",
-                "details": [
-                  "Add or upgrade the GPU tier.",
-                  "The rest of the rig can feed more frames than the renderer can output."
-                ]
-              },
-              "BOTTLENECK_CPU": {
-                "error_code": "BOTTLENECK_CPU",
-                "headline": "Processor throughput is below the rest of the stack",
-                "details": [
-                  "CPU class is the next upgrade point.",
-                  "RAM and GPU remain underused because the host cannot schedule fast enough."
-                ]
-              },
-              "OVERBUDGET": {
-                "error_code": "OVER_BUDGET",
-                "headline": "Target profile breaks the budget policy",
-                "details": [
-                  "Drop at least one component tier before confirmation.",
-                  "Performance is acceptable, but procurement rejects the spend."
-                ]
-              },
-              "LOWPOWER": {
-                "error_code": "LOW_POWER",
-                "headline": "Overall compute envelope is too weak",
-                "details": [
-                  "The build is underpowered across the board.",
-                  "Increase at least one core subsystem before benchmarking again."
-                ]
-              }
-            },
-            "default_tuning": {
-              "gpu": "NONE",
-              "cpu": "MID",
-              "ram": "GOOD"
-            },
-            "preview_profiles": {
-              "BOTTLENECK": {
-                "bottleneck": "BOTTLENECK_RAM",
-                "cpu_load": 86,
-                "ram_usage": 92,
-                "fps": 44,
-                "total_price": 850
-              },
-              "OPTIMAL": {
-                "bottleneck": "OPTIMAL",
-                "cpu_load": 56,
-                "ram_usage": 61,
-                "fps": 73,
-                "total_price": 900
-              },
-              "OVERBUDGET": {
-                "bottleneck": "OVERBUDGET",
-                "cpu_load": 52,
-                "ram_usage": 59,
-                "fps": 79,
-                "total_price": 1300
-              },
-              "LOWPOWER": {
-                "bottleneck": "LOWPOWER",
-                "cpu_load": 84,
-                "ram_usage": 75,
-                "fps": 24,
-                "total_price": 200
-              }
-            },
-            "benchmark_lines": {
-              "OPTIMAL": [
-                "[BENCH] frame pacing stable",
-                "[BENCH] memory queue nominal",
-                "[BENCH] render context synchronized",
-                "[RESULT] OPTIMAL profile accepted"
-              ],
-              "BOTTLENECK_RAM": [
-                "[BENCH] paging pressure detected",
-                "[BENCH] CPU wait states rising",
-                "[BENCH] dataset spills beyond working set",
-                "[RESULT] BOTTLENECK_RAM"
-              ],
-              "BOTTLENECK_GPU": [
-                "[BENCH] render queue saturated",
-                "[BENCH] frame output stalls at raster stage",
-                "[BENCH] CPU feed remains above display throughput",
-                "[RESULT] BOTTLENECK_GPU"
-              ],
-              "BOTTLENECK_CPU": [
-                "[BENCH] scheduler load pinned high",
-                "[BENCH] RAM and GPU utilization stay below ceiling",
-                "[BENCH] command submission cannot keep pace",
-                "[RESULT] BOTTLENECK_CPU"
-              ],
-              "OVERBUDGET": [
-                "[BENCH] performance target reachable",
-                "[BENCH] procurement gate failed",
-                "[BENCH] spend exceeds approved envelope",
-                "[RESULT] OVERBUDGET"
-              ],
-              "LOWPOWER": [
-                "[BENCH] baseline throughput below target",
-                "[BENCH] no single subsystem dominates the slowdown",
-                "[BENCH] aggregate compute budget insufficient",
-                "[RESULT] LOWPOWER"
-              ]
-            }
+            ]
           },
           {
             "id": "CASE01_B_02",
-            "stage_max_points": 2,
-            "format": "SINGLE_CHOICE_CONTEXT",
-            "interaction_variant": "BIOS_TUNING",
-            "diegetic_mode": true,
-            "context": "Профиль срочной компиляции: поддерживайте стабильную задержку при многозадачности и не выходите за рамки бюджета.",
-            "budget": 950,
-            "tuning_model": {
-              "cpu": {
-                "LOW": {
-                  "price": 150,
-                  "perf": 1
-                },
-                "MID": {
-                  "price": 400,
-                  "perf": 2
-                },
-                "HIGH": {
-                  "price": 600,
-                  "perf": 3
-                }
-              },
-              "ram": {
-                "LOW": {
-                  "price": 50,
-                  "perf": 1
-                },
-                "GOOD": {
-                  "price": 300,
-                  "perf": 2
-                },
-                "TOP": {
-                  "price": 400,
-                  "perf": 3
-                }
-              },
-              "gpu": {
-                "NONE": {
-                  "price": 0,
-                  "perf": 0
-                },
-                "MID": {
-                  "price": 200,
-                  "perf": 2
-                },
-                "TOP": {
-                  "price": 300,
-                  "perf": 3
-                }
-              }
-            },
-            "classifier_thresholds": {
-              "gpu_low_max": 0,
-              "cpu_low_max": 1,
-              "ram_low_max": 1,
-              "cpu_mid_min": 2,
-              "cpu_high_min": 3,
-              "ram_good_min": 2,
-              "gpu_good_min": 2,
-              "lowpower_perf_max": 5
-            },
-            "benchmark_outputs": {
-              "OPTIMAL": [
-                "[BENCH] frame pacing stable",
-                "[BENCH] memory queue nominal",
-                "[BENCH] render context synchronized",
-                "[RESULT] OPTIMAL profile accepted"
-              ],
-              "BOTTLENECK_RAM": [
-                "[BENCH] paging pressure detected",
-                "[BENCH] CPU wait states rising",
-                "[BENCH] dataset spills beyond working set",
-                "[RESULT] BOTTLENECK_RAM"
-              ],
-              "BOTTLENECK_GPU": [
-                "[BENCH] render queue saturated",
-                "[BENCH] frame output stalls at raster stage",
-                "[BENCH] CPU feed remains above display throughput",
-                "[RESULT] BOTTLENECK_GPU"
-              ],
-              "BOTTLENECK_CPU": [
-                "[BENCH] scheduler load pinned high",
-                "[BENCH] RAM and GPU utilization stay below ceiling",
-                "[BENCH] command submission cannot keep pace",
-                "[RESULT] BOTTLENECK_CPU"
-              ],
-              "OVERBUDGET": [
-                "[BENCH] performance target reachable",
-                "[BENCH] procurement gate failed",
-                "[BENCH] spend exceeds approved envelope",
-                "[RESULT] OVERBUDGET"
-              ],
-              "LOWPOWER": [
-                "[BENCH] baseline throughput below target",
-                "[BENCH] no single subsystem dominates the slowdown",
-                "[BENCH] aggregate compute budget insufficient",
-                "[RESULT] LOWPOWER"
-              ]
-            },
-            "options": [
+            "format": "MATCHING",
+            "briefing_key": "resus.b02.briefing",
+            "briefing": "Map network devices to layers.",
+            "buckets": [
               {
-                "option_id": "BOTTLENECK",
-                "title": "Renderer boost with starved RAM",
-                "total_price": 850,
-                "parts": [
-                  {
-                    "k": "CPU",
-                    "v": "HIGH",
-                    "price": 600
-                  },
-                  {
-                    "k": "RAM",
-                    "v": "LOW",
-                    "price": 50
-                  },
-                  {
-                    "k": "GPU",
-                    "v": "MID",
-                    "price": 200
-                  }
-                ],
-                "tags": [
-                  "preset",
-                  "memory-starved"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "BOTTLENECK_RAM",
-                  "cpu_load": 86,
-                  "ram_usage": 92,
-                  "fps": 44,
-                  "total_price": 850
-                },
-                "feedback": {
-                  "error_code": "BOTTLENECK_RAM",
-                  "headline": "Memory pressure is the limiting factor",
-                  "details": [
-                    "Raise RAM before confirming the rig.",
-                    "CPU headroom is wasted while the workload waits on memory."
-                  ]
-                }
+                "bucket_id": "L1_PHYSICAL",
+                "label_key": "resus.b02.bucket.l1",
+                "label": "PHYSICAL LAYER"
               },
               {
-                "option_id": "OPTIMAL",
-                "title": "Balanced workstation preset",
-                "total_price": 900,
-                "parts": [
-                  {
-                    "k": "CPU",
-                    "v": "MID",
-                    "price": 400
-                  },
-                  {
-                    "k": "RAM",
-                    "v": "GOOD",
-                    "price": 300
-                  },
-                  {
-                    "k": "GPU",
-                    "v": "MID",
-                    "price": 200
-                  }
-                ],
-                "tags": [
-                  "preset",
-                  "balanced"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "OPTIMAL",
-                  "cpu_load": 56,
-                  "ram_usage": 61,
-                  "fps": 73,
-                  "total_price": 900
-                },
-                "feedback": {
-                  "error_code": "OK",
-                  "headline": "Balanced profile confirmed",
-                  "details": [
-                    "Budget stays inside the cap.",
-                    "No dominant subsystem stalls the workload."
-                  ]
-                }
+                "bucket_id": "L2_DATA_LINK",
+                "label_key": "resus.b02.bucket.l2",
+                "label": "DATA LINK LAYER"
               },
               {
-                "option_id": "OVERBUDGET",
-                "title": "Top-tier overspend preset",
-                "total_price": 1300,
-                "parts": [
-                  {
-                    "k": "CPU",
-                    "v": "HIGH",
-                    "price": 600
-                  },
-                  {
-                    "k": "RAM",
-                    "v": "TOP",
-                    "price": 400
-                  },
-                  {
-                    "k": "GPU",
-                    "v": "TOP",
-                    "price": 300
-                  }
-                ],
-                "tags": [
-                  "preset",
-                  "policy-fail"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "OVERBUDGET",
-                  "cpu_load": 52,
-                  "ram_usage": 59,
-                  "fps": 79,
-                  "total_price": 1300
-                },
-                "feedback": {
-                  "error_code": "OVER_BUDGET",
-                  "headline": "Target profile breaks the budget policy",
-                  "details": [
-                    "Drop at least one component tier before confirmation.",
-                    "Performance is acceptable, but procurement rejects the spend."
-                  ]
-                }
-              },
-              {
-                "option_id": "LOWPOWER",
-                "title": "Minimal-power baseline preset",
-                "total_price": 200,
-                "parts": [
-                  {
-                    "k": "CPU",
-                    "v": "LOW",
-                    "price": 150
-                  },
-                  {
-                    "k": "RAM",
-                    "v": "LOW",
-                    "price": 50
-                  },
-                  {
-                    "k": "GPU",
-                    "v": "NONE",
-                    "price": 0
-                  }
-                ],
-                "tags": [
-                  "preset",
-                  "underpowered"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "LOWPOWER",
-                  "cpu_load": 84,
-                  "ram_usage": 75,
-                  "fps": 24,
-                  "total_price": 200
-                },
-                "feedback": {
-                  "error_code": "LOW_POWER",
-                  "headline": "Overall compute envelope is too weak",
-                  "details": [
-                    "The build is underpowered across the board.",
-                    "Increase at least one core subsystem before benchmarking again."
-                  ]
-                }
+                "bucket_id": "L3_NETWORK",
+                "label_key": "resus.b02.bucket.l3",
+                "label": "NETWORK LAYER"
               }
             ],
-            "correct_option_id": "OPTIMAL",
+            "items": [
+              {
+                "item_id": "hub",
+                "label_key": "resus.b02.item.hub",
+                "label": "HUB",
+                "correct_bucket_id": "L1_PHYSICAL",
+                "explain_short_key": "resus.b02.explain.hub"
+              },
+              {
+                "item_id": "repeater",
+                "label_key": "resus.b02.item.repeater",
+                "label": "REPEATER",
+                "correct_bucket_id": "L1_PHYSICAL",
+                "explain_short_key": "resus.b02.explain.repeater"
+              },
+              {
+                "item_id": "modem",
+                "label_key": "resus.b02.item.modem",
+                "label": "MODEM",
+                "correct_bucket_id": "L1_PHYSICAL",
+                "explain_short_key": "resus.b02.explain.modem"
+              },
+              {
+                "item_id": "switch_dev",
+                "label_key": "resus.b02.item.switch_dev",
+                "label": "SWITCH",
+                "correct_bucket_id": "L2_DATA_LINK",
+                "explain_short_key": "resus.b02.explain.switch_dev"
+              },
+              {
+                "item_id": "bridge",
+                "label_key": "resus.b02.item.bridge",
+                "label": "BRIDGE",
+                "correct_bucket_id": "L2_DATA_LINK",
+                "explain_short_key": "resus.b02.explain.bridge"
+              },
+              {
+                "item_id": "access_point",
+                "label_key": "resus.b02.item.access_point",
+                "label": "ACCESS POINT",
+                "correct_bucket_id": "L2_DATA_LINK",
+                "explain_short_key": "resus.b02.explain.access_point"
+              },
+              {
+                "item_id": "router",
+                "label_key": "resus.b02.item.router",
+                "label": "ROUTER",
+                "correct_bucket_id": "L3_NETWORK",
+                "explain_short_key": "resus.b02.explain.router"
+              },
+              {
+                "item_id": "l3_switch",
+                "label_key": "resus.b02.item.l3_switch",
+                "label": "L3 SWITCH",
+                "correct_bucket_id": "L3_NETWORK",
+                "explain_short_key": "resus.b02.explain.l3_switch"
+              },
+              {
+                "item_id": "firewall_hw",
+                "label_key": "resus.b02.item.firewall_hw",
+                "label": "HARDWARE FIREWALL",
+                "correct_bucket_id": "L3_NETWORK",
+                "explain_short_key": "resus.b02.explain.firewall_hw"
+              }
+            ],
             "scoring_model": {
-              "correct_points": 2,
-              "wrong_points": 0,
-              "stability_delta_correct": 0,
-              "stability_delta_wrong": -10,
+              "rules": [
+                {
+                  "code": "PERFECT",
+                  "min_correct": 9,
+                  "points": 2,
+                  "stability_delta": 0,
+                  "verdict_code": "PERFECT"
+                },
+                {
+                  "code": "GOOD",
+                  "min_correct": 5,
+                  "points": 1,
+                  "stability_delta": -10,
+                  "verdict_code": "GOOD"
+                },
+                {
+                  "code": "FAIL",
+                  "min_correct": 0,
+                  "points": 0,
+                  "stability_delta": -30,
+                  "verdict_code": "FAIL"
+                }
+              ],
               "default_rule": {
-                "when": "EMPTY_CONFIRM",
+                "code": "EMPTY_CONFIRM",
                 "points": 0,
                 "stability_delta": -50,
                 "verdict_code": "EMPTY"
               }
-            },
-            "feedback_rules": {
-              "OPTIMAL": {
-                "error_code": "OK",
-                "headline": "Balanced profile confirmed",
-                "details": [
-                  "Budget stays inside the cap.",
-                  "No dominant subsystem stalls the workload."
-                ]
-              },
-              "BOTTLENECK_RAM": {
-                "error_code": "BOTTLENECK_RAM",
-                "headline": "Memory pressure is the limiting factor",
-                "details": [
-                  "Raise RAM before confirming the rig.",
-                  "CPU headroom is wasted while the workload waits on memory."
-                ]
-              },
-              "BOTTLENECK_GPU": {
-                "error_code": "BOTTLENECK_GPU",
-                "headline": "Render path is blocked by the graphics layer",
-                "details": [
-                  "Add or upgrade the GPU tier.",
-                  "The rest of the rig can feed more frames than the renderer can output."
-                ]
-              },
-              "BOTTLENECK_CPU": {
-                "error_code": "BOTTLENECK_CPU",
-                "headline": "Processor throughput is below the rest of the stack",
-                "details": [
-                  "CPU class is the next upgrade point.",
-                  "RAM and GPU remain underused because the host cannot schedule fast enough."
-                ]
-              },
-              "OVERBUDGET": {
-                "error_code": "OVER_BUDGET",
-                "headline": "Target profile breaks the budget policy",
-                "details": [
-                  "Drop at least one component tier before confirmation.",
-                  "Performance is acceptable, but procurement rejects the spend."
-                ]
-              },
-              "LOWPOWER": {
-                "error_code": "LOW_POWER",
-                "headline": "Overall compute envelope is too weak",
-                "details": [
-                  "The build is underpowered across the board.",
-                  "Increase at least one core subsystem before benchmarking again."
-                ]
-              }
-            },
-            "default_tuning": {
-              "gpu": "NONE",
-              "cpu": "MID",
-              "ram": "GOOD"
-            },
-            "preview_profiles": {
-              "BOTTLENECK": {
-                "bottleneck": "BOTTLENECK_RAM",
-                "cpu_load": 86,
-                "ram_usage": 92,
-                "fps": 44,
-                "total_price": 850
-              },
-              "OPTIMAL": {
-                "bottleneck": "OPTIMAL",
-                "cpu_load": 56,
-                "ram_usage": 61,
-                "fps": 73,
-                "total_price": 900
-              },
-              "OVERBUDGET": {
-                "bottleneck": "OVERBUDGET",
-                "cpu_load": 52,
-                "ram_usage": 59,
-                "fps": 79,
-                "total_price": 1300
-              },
-              "LOWPOWER": {
-                "bottleneck": "LOWPOWER",
-                "cpu_load": 84,
-                "ram_usage": 75,
-                "fps": 24,
-                "total_price": 200
-              }
-            },
-            "benchmark_lines": {
-              "OPTIMAL": [
-                "[BENCH] frame pacing stable",
-                "[BENCH] memory queue nominal",
-                "[BENCH] render context synchronized",
-                "[RESULT] OPTIMAL profile accepted"
-              ],
-              "BOTTLENECK_RAM": [
-                "[BENCH] paging pressure detected",
-                "[BENCH] CPU wait states rising",
-                "[BENCH] dataset spills beyond working set",
-                "[RESULT] BOTTLENECK_RAM"
-              ],
-              "BOTTLENECK_GPU": [
-                "[BENCH] render queue saturated",
-                "[BENCH] frame output stalls at raster stage",
-                "[BENCH] CPU feed remains above display throughput",
-                "[RESULT] BOTTLENECK_GPU"
-              ],
-              "BOTTLENECK_CPU": [
-                "[BENCH] scheduler load pinned high",
-                "[BENCH] RAM and GPU utilization stay below ceiling",
-                "[BENCH] command submission cannot keep pace",
-                "[RESULT] BOTTLENECK_CPU"
-              ],
-              "OVERBUDGET": [
-                "[BENCH] performance target reachable",
-                "[BENCH] procurement gate failed",
-                "[BENCH] spend exceeds approved envelope",
-                "[RESULT] OVERBUDGET"
-              ],
-              "LOWPOWER": [
-                "[BENCH] baseline throughput below target",
-                "[BENCH] no single subsystem dominates the slowdown",
-                "[BENCH] aggregate compute budget insufficient",
-                "[RESULT] LOWPOWER"
-              ]
             }
           },
           {
             "id": "CASE01_B_03",
-            "stage_max_points": 2,
-            "format": "SINGLE_CHOICE_CONTEXT",
-            "interaction_variant": "BIOS_TUNING",
-            "diegetic_mode": true,
-            "context": "Профиль виртуализации: поддерживайте стабильную плотность виртуальных машин, не нарушая политику расходов.",
-            "budget": 1100,
-            "tuning_model": {
-              "cpu": {
-                "LOW": {
-                  "price": 150,
-                  "perf": 1
-                },
-                "MID": {
-                  "price": 400,
-                  "perf": 2
-                },
-                "HIGH": {
-                  "price": 600,
-                  "perf": 3
-                }
-              },
-              "ram": {
-                "LOW": {
-                  "price": 50,
-                  "perf": 1
-                },
-                "GOOD": {
-                  "price": 300,
-                  "perf": 2
-                },
-                "TOP": {
-                  "price": 400,
-                  "perf": 3
-                }
-              },
-              "gpu": {
-                "NONE": {
-                  "price": 0,
-                  "perf": 0
-                },
-                "MID": {
-                  "price": 200,
-                  "perf": 2
-                },
-                "TOP": {
-                  "price": 300,
-                  "perf": 3
-                }
-              }
-            },
-            "classifier_thresholds": {
-              "gpu_low_max": 0,
-              "cpu_low_max": 1,
-              "ram_low_max": 1,
-              "cpu_mid_min": 2,
-              "cpu_high_min": 3,
-              "ram_good_min": 2,
-              "gpu_good_min": 2,
-              "lowpower_perf_max": 5
-            },
-            "benchmark_outputs": {
-              "OPTIMAL": [
-                "[BENCH] frame pacing stable",
-                "[BENCH] memory queue nominal",
-                "[BENCH] render context synchronized",
-                "[RESULT] OPTIMAL profile accepted"
-              ],
-              "BOTTLENECK_RAM": [
-                "[BENCH] paging pressure detected",
-                "[BENCH] CPU wait states rising",
-                "[BENCH] dataset spills beyond working set",
-                "[RESULT] BOTTLENECK_RAM"
-              ],
-              "BOTTLENECK_GPU": [
-                "[BENCH] render queue saturated",
-                "[BENCH] frame output stalls at raster stage",
-                "[BENCH] CPU feed remains above display throughput",
-                "[RESULT] BOTTLENECK_GPU"
-              ],
-              "BOTTLENECK_CPU": [
-                "[BENCH] scheduler load pinned high",
-                "[BENCH] RAM and GPU utilization stay below ceiling",
-                "[BENCH] command submission cannot keep pace",
-                "[RESULT] BOTTLENECK_CPU"
-              ],
-              "OVERBUDGET": [
-                "[BENCH] performance target reachable",
-                "[BENCH] procurement gate failed",
-                "[BENCH] spend exceeds approved envelope",
-                "[RESULT] OVERBUDGET"
-              ],
-              "LOWPOWER": [
-                "[BENCH] baseline throughput below target",
-                "[BENCH] no single subsystem dominates the slowdown",
-                "[BENCH] aggregate compute budget insufficient",
-                "[RESULT] LOWPOWER"
-              ]
-            },
-            "options": [
+            "format": "MATCHING",
+            "briefing_key": "resus.b03.briefing",
+            "briefing": "Map protocols to categories.",
+            "buckets": [
               {
-                "option_id": "BOTTLENECK",
-                "title": "Renderer boost with starved RAM",
-                "total_price": 850,
-                "parts": [
-                  {
-                    "k": "CPU",
-                    "v": "HIGH",
-                    "price": 600
-                  },
-                  {
-                    "k": "RAM",
-                    "v": "LOW",
-                    "price": 50
-                  },
-                  {
-                    "k": "GPU",
-                    "v": "MID",
-                    "price": 200
-                  }
-                ],
-                "tags": [
-                  "preset",
-                  "memory-starved"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "BOTTLENECK_RAM",
-                  "cpu_load": 86,
-                  "ram_usage": 92,
-                  "fps": 44,
-                  "total_price": 850
-                },
-                "feedback": {
-                  "error_code": "BOTTLENECK_RAM",
-                  "headline": "Memory pressure is the limiting factor",
-                  "details": [
-                    "Raise RAM before confirming the rig.",
-                    "CPU headroom is wasted while the workload waits on memory."
-                  ]
-                }
+                "bucket_id": "WEB",
+                "label_key": "resus.b03.bucket.web",
+                "label": "WEB"
               },
               {
-                "option_id": "OPTIMAL",
-                "title": "Balanced workstation preset",
-                "total_price": 900,
-                "parts": [
-                  {
-                    "k": "CPU",
-                    "v": "MID",
-                    "price": 400
-                  },
-                  {
-                    "k": "RAM",
-                    "v": "GOOD",
-                    "price": 300
-                  },
-                  {
-                    "k": "GPU",
-                    "v": "MID",
-                    "price": 200
-                  }
-                ],
-                "tags": [
-                  "preset",
-                  "balanced"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "OPTIMAL",
-                  "cpu_load": 56,
-                  "ram_usage": 61,
-                  "fps": 73,
-                  "total_price": 900
-                },
-                "feedback": {
-                  "error_code": "OK",
-                  "headline": "Balanced profile confirmed",
-                  "details": [
-                    "Budget stays inside the cap.",
-                    "No dominant subsystem stalls the workload."
-                  ]
-                }
+                "bucket_id": "EMAIL",
+                "label_key": "resus.b03.bucket.email",
+                "label": "EMAIL"
               },
               {
-                "option_id": "OVERBUDGET",
-                "title": "Top-tier overspend preset",
-                "total_price": 1300,
-                "parts": [
-                  {
-                    "k": "CPU",
-                    "v": "HIGH",
-                    "price": 600
-                  },
-                  {
-                    "k": "RAM",
-                    "v": "TOP",
-                    "price": 400
-                  },
-                  {
-                    "k": "GPU",
-                    "v": "TOP",
-                    "price": 300
-                  }
-                ],
-                "tags": [
-                  "preset",
-                  "policy-fail"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "OVERBUDGET",
-                  "cpu_load": 52,
-                  "ram_usage": 59,
-                  "fps": 79,
-                  "total_price": 1300
-                },
-                "feedback": {
-                  "error_code": "OVER_BUDGET",
-                  "headline": "Target profile breaks the budget policy",
-                  "details": [
-                    "Drop at least one component tier before confirmation.",
-                    "Performance is acceptable, but procurement rejects the spend."
-                  ]
-                }
+                "bucket_id": "FILE_TRANSFER",
+                "label_key": "resus.b03.bucket.file",
+                "label": "FILE TRANSFER"
               },
               {
-                "option_id": "LOWPOWER",
-                "title": "Minimal-power baseline preset",
-                "total_price": 200,
-                "parts": [
-                  {
-                    "k": "CPU",
-                    "v": "LOW",
-                    "price": 150
-                  },
-                  {
-                    "k": "RAM",
-                    "v": "LOW",
-                    "price": 50
-                  },
-                  {
-                    "k": "GPU",
-                    "v": "NONE",
-                    "price": 0
-                  }
-                ],
-                "tags": [
-                  "preset",
-                  "underpowered"
-                ],
-                "preview_metrics": {
-                  "bottleneck": "LOWPOWER",
-                  "cpu_load": 84,
-                  "ram_usage": 75,
-                  "fps": 24,
-                  "total_price": 200
-                },
-                "feedback": {
-                  "error_code": "LOW_POWER",
-                  "headline": "Overall compute envelope is too weak",
-                  "details": [
-                    "The build is underpowered across the board.",
-                    "Increase at least one core subsystem before benchmarking again."
-                  ]
-                }
+                "bucket_id": "NETWORK_SERVICE",
+                "label_key": "resus.b03.bucket.service",
+                "label": "NETWORK SERVICE"
               }
             ],
-            "correct_option_id": "OPTIMAL",
+            "items": [
+              {
+                "item_id": "http",
+                "label_key": "resus.b03.item.http",
+                "label": "HTTP",
+                "correct_bucket_id": "WEB",
+                "explain_short_key": "resus.b03.explain.http"
+              },
+              {
+                "item_id": "https",
+                "label_key": "resus.b03.item.https",
+                "label": "HTTPS",
+                "correct_bucket_id": "WEB",
+                "explain_short_key": "resus.b03.explain.https"
+              },
+              {
+                "item_id": "smtp",
+                "label_key": "resus.b03.item.smtp",
+                "label": "SMTP",
+                "correct_bucket_id": "EMAIL",
+                "explain_short_key": "resus.b03.explain.smtp"
+              },
+              {
+                "item_id": "pop3",
+                "label_key": "resus.b03.item.pop3",
+                "label": "POP3",
+                "correct_bucket_id": "EMAIL",
+                "explain_short_key": "resus.b03.explain.pop3"
+              },
+              {
+                "item_id": "ftp",
+                "label_key": "resus.b03.item.ftp",
+                "label": "FTP",
+                "correct_bucket_id": "FILE_TRANSFER",
+                "explain_short_key": "resus.b03.explain.ftp"
+              },
+              {
+                "item_id": "sftp",
+                "label_key": "resus.b03.item.sftp",
+                "label": "SFTP",
+                "correct_bucket_id": "FILE_TRANSFER",
+                "explain_short_key": "resus.b03.explain.sftp"
+              },
+              {
+                "item_id": "dns",
+                "label_key": "resus.b03.item.dns",
+                "label": "DNS",
+                "correct_bucket_id": "NETWORK_SERVICE",
+                "explain_short_key": "resus.b03.explain.dns"
+              },
+              {
+                "item_id": "dhcp",
+                "label_key": "resus.b03.item.dhcp",
+                "label": "DHCP",
+                "correct_bucket_id": "NETWORK_SERVICE",
+                "explain_short_key": "resus.b03.explain.dhcp"
+              }
+            ],
             "scoring_model": {
-              "correct_points": 2,
-              "wrong_points": 0,
-              "stability_delta_correct": 0,
-              "stability_delta_wrong": -10,
+              "rules": [
+                {
+                  "code": "PERFECT",
+                  "min_correct": 8,
+                  "points": 2,
+                  "stability_delta": 0,
+                  "verdict_code": "PERFECT"
+                },
+                {
+                  "code": "GOOD",
+                  "min_correct": 5,
+                  "points": 1,
+                  "stability_delta": -10,
+                  "verdict_code": "GOOD"
+                },
+                {
+                  "code": "FAIL",
+                  "min_correct": 0,
+                  "points": 0,
+                  "stability_delta": -30,
+                  "verdict_code": "FAIL"
+                }
+              ],
               "default_rule": {
-                "when": "EMPTY_CONFIRM",
+                "code": "EMPTY_CONFIRM",
                 "points": 0,
                 "stability_delta": -50,
                 "verdict_code": "EMPTY"
               }
-            },
-            "feedback_rules": {
-              "OPTIMAL": {
-                "error_code": "OK",
-                "headline": "Balanced profile confirmed",
-                "details": [
-                  "Budget stays inside the cap.",
-                  "No dominant subsystem stalls the workload."
-                ]
-              },
-              "BOTTLENECK_RAM": {
-                "error_code": "BOTTLENECK_RAM",
-                "headline": "Memory pressure is the limiting factor",
-                "details": [
-                  "Raise RAM before confirming the rig.",
-                  "CPU headroom is wasted while the workload waits on memory."
-                ]
-              },
-              "BOTTLENECK_GPU": {
-                "error_code": "BOTTLENECK_GPU",
-                "headline": "Render path is blocked by the graphics layer",
-                "details": [
-                  "Add or upgrade the GPU tier.",
-                  "The rest of the rig can feed more frames than the renderer can output."
-                ]
-              },
-              "BOTTLENECK_CPU": {
-                "error_code": "BOTTLENECK_CPU",
-                "headline": "Processor throughput is below the rest of the stack",
-                "details": [
-                  "CPU class is the next upgrade point.",
-                  "RAM and GPU remain underused because the host cannot schedule fast enough."
-                ]
-              },
-              "OVERBUDGET": {
-                "error_code": "OVER_BUDGET",
-                "headline": "Target profile breaks the budget policy",
-                "details": [
-                  "Drop at least one component tier before confirmation.",
-                  "Performance is acceptable, but procurement rejects the spend."
-                ]
-              },
-              "LOWPOWER": {
-                "error_code": "LOW_POWER",
-                "headline": "Overall compute envelope is too weak",
-                "details": [
-                  "The build is underpowered across the board.",
-                  "Increase at least one core subsystem before benchmarking again."
-                ]
-              }
-            },
-            "default_tuning": {
-              "gpu": "NONE",
-              "cpu": "MID",
-              "ram": "GOOD"
-            },
-            "preview_profiles": {
-              "BOTTLENECK": {
-                "bottleneck": "BOTTLENECK_RAM",
-                "cpu_load": 86,
-                "ram_usage": 92,
-                "fps": 44,
-                "total_price": 850
-              },
-              "OPTIMAL": {
-                "bottleneck": "OPTIMAL",
-                "cpu_load": 56,
-                "ram_usage": 61,
-                "fps": 73,
-                "total_price": 900
-              },
-              "OVERBUDGET": {
-                "bottleneck": "OVERBUDGET",
-                "cpu_load": 52,
-                "ram_usage": 59,
-                "fps": 79,
-                "total_price": 1300
-              },
-              "LOWPOWER": {
-                "bottleneck": "LOWPOWER",
-                "cpu_load": 84,
-                "ram_usage": 75,
-                "fps": 24,
-                "total_price": 200
-              }
-            },
-            "benchmark_lines": {
-              "OPTIMAL": [
-                "[BENCH] frame pacing stable",
-                "[BENCH] memory queue nominal",
-                "[BENCH] render context synchronized",
-                "[RESULT] OPTIMAL profile accepted"
-              ],
-              "BOTTLENECK_RAM": [
-                "[BENCH] paging pressure detected",
-                "[BENCH] CPU wait states rising",
-                "[BENCH] dataset spills beyond working set",
-                "[RESULT] BOTTLENECK_RAM"
-              ],
-              "BOTTLENECK_GPU": [
-                "[BENCH] render queue saturated",
-                "[BENCH] frame output stalls at raster stage",
-                "[BENCH] CPU feed remains above display throughput",
-                "[RESULT] BOTTLENECK_GPU"
-              ],
-              "BOTTLENECK_CPU": [
-                "[BENCH] scheduler load pinned high",
-                "[BENCH] RAM and GPU utilization stay below ceiling",
-                "[BENCH] command submission cannot keep pace",
-                "[RESULT] BOTTLENECK_CPU"
-              ],
-              "OVERBUDGET": [
-                "[BENCH] performance target reachable",
-                "[BENCH] procurement gate failed",
-                "[BENCH] spend exceeds approved envelope",
-                "[RESULT] OVERBUDGET"
-              ],
-              "LOWPOWER": [
-                "[BENCH] baseline throughput below target",
-                "[BENCH] no single subsystem dominates the slowdown",
-                "[BENCH] aggregate compute budget insufficient",
-                "[RESULT] LOWPOWER"
-              ]
             }
+          },
+          {
+            "id": "CASE01_B_04",
+            "format": "IP_QUIZ",
+            "briefing_key": "resus.b04.briefing",
+            "briefing": "Solve IP addressing questions.",
+            "rounds": [
+              {
+                "round_id": "B04_R1",
+                "type": "classify_ip",
+                "prompt_key": "resus.b04.r1.prompt",
+                "prompt": "Which class for IP 172.16.0.1?",
+                "ip": "172.16.0.1",
+                "options": [
+                  {
+                    "id": "A",
+                    "label": "Class A (1-126)",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "B",
+                    "label": "Class B (128-191)",
+                    "is_correct": true
+                  },
+                  {
+                    "id": "C",
+                    "label": "Class C (192-223)",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "D",
+                    "label": "Class D (224-239)",
+                    "is_correct": false
+                  }
+                ],
+                "explain_key": "resus.b04.r1.explain"
+              },
+              {
+                "round_id": "B04_R2",
+                "type": "private_or_public",
+                "prompt_key": "resus.b04.r2.prompt",
+                "prompt": "Which IP is private?",
+                "options": [
+                  {
+                    "id": "8.8.8.8",
+                    "label": "8.8.8.8",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "192.168.1.1",
+                    "label": "192.168.1.1",
+                    "is_correct": true
+                  },
+                  {
+                    "id": "200.100.50.25",
+                    "label": "200.100.50.25",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "100.200.30.40",
+                    "label": "100.200.30.40",
+                    "is_correct": false
+                  }
+                ],
+                "explain_key": "resus.b04.r2.explain"
+              },
+              {
+                "round_id": "B04_R3",
+                "type": "host_count",
+                "prompt_key": "resus.b04.r3.prompt",
+                "prompt": "Hosts in /24 network?",
+                "options": [
+                  {
+                    "id": "254",
+                    "label": "254",
+                    "is_correct": true
+                  },
+                  {
+                    "id": "256",
+                    "label": "256",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "255",
+                    "label": "255",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "128",
+                    "label": "128",
+                    "is_correct": false
+                  }
+                ],
+                "explain_key": "resus.b04.r3.explain"
+              }
+            ]
           }
         ]
       },
@@ -2073,70 +1007,21 @@
         "levels": [
           {
             "id": "CASE01_C_01",
-            "stage_max_points": 2,
             "format": "MULTI_CHOICE_SLOTS",
-            "interaction_variant": "MODULE_SLOTS",
-            "diegetic_mode": true,
-            "prompt": "Установите ровно три сетевых модуля, чтобы защитить ссылку на архив.",
+            "briefing_key": "resus.c01.briefing",
+            "briefing": "Build secure link with 3 modules.",
+            "prompt_key": "resus.c01.prompt",
+            "prompt": "Install three security modules into the link.",
             "max_slots": 3,
-            "modules": [
-              {
-                "module_id": "SWITCH",
-                "is_correct": true,
-                "effects": {
-                  "collisions": "LOW",
-                  "filtering": "OFF",
-                  "eavesdrop": "MID",
-                  "media": "NEUTRAL"
-                }
-              },
-              {
-                "module_id": "FIREWALL",
-                "is_correct": true,
-                "effects": {
-                  "collisions": "NEUTRAL",
-                  "filtering": "ON",
-                  "eavesdrop": "MID",
-                  "media": "NEUTRAL"
-                }
-              },
-              {
-                "module_id": "FIBER",
-                "is_correct": true,
-                "effects": {
-                  "collisions": "NEUTRAL",
-                  "filtering": "OFF",
-                  "eavesdrop": "LOW",
-                  "media": "FIBER"
-                }
-              },
-              {
-                "module_id": "HUB",
-                "is_correct": false,
-                "effects": {
-                  "collisions": "HIGH",
-                  "filtering": "OFF",
-                  "eavesdrop": "HIGH",
-                  "media": "NEUTRAL"
-                }
-              },
-              {
-                "module_id": "COAX",
-                "is_correct": false,
-                "effects": {
-                  "collisions": "MID",
-                  "filtering": "OFF",
-                  "eavesdrop": "HIGH",
-                  "media": "COAX"
-                }
-              }
-            ],
+            "stage_max_points": 2,
             "options": [
               {
                 "option_id": "SWITCH",
+                "label_key": "resus.c01.module.switch",
                 "label": "SWITCH",
+                "desc_key": "resus.c01.module.switch.desc",
                 "is_correct": true,
-                "why": "Сегментирует трафик и снижает шум столкновений.",
+                "why": "Switch forwards frames by MAC.",
                 "effects": {
                   "collisions": "LOW",
                   "filtering": "OFF",
@@ -2146,21 +1031,25 @@
               },
               {
                 "option_id": "FIREWALL",
+                "label_key": "resus.c01.module.firewall",
                 "label": "FIREWALL",
+                "desc_key": "resus.c01.module.firewall.desc",
                 "is_correct": true,
-                "why": "Добавляет фильтрующий барьер против враждебного трафика.",
+                "why": "Firewall filters traffic by rules.",
                 "effects": {
                   "collisions": "NEUTRAL",
                   "filtering": "ON",
-                  "eavesdrop": "MID",
+                  "eavesdrop": "LOW",
                   "media": "NEUTRAL"
                 }
               },
               {
                 "option_id": "FIBER",
+                "label_key": "resus.c01.module.fiber",
                 "label": "FIBER",
+                "desc_key": "resus.c01.module.fiber.desc",
                 "is_correct": true,
-                "why": "Снижает риск перехвата и повышает пропускную способность.",
+                "why": "Fiber lowers tapping risk.",
                 "effects": {
                   "collisions": "NEUTRAL",
                   "filtering": "OFF",
@@ -2170,9 +1059,11 @@
               },
               {
                 "option_id": "HUB",
+                "label_key": "resus.c01.module.hub",
                 "label": "HUB",
+                "desc_key": "resus.c01.module.hub.desc",
                 "is_correct": false,
-                "why": "Широковещательное поведение увеличивает количество коллизий и перехватов.",
+                "why": "Hub broadcasts to all ports.",
                 "effects": {
                   "collisions": "HIGH",
                   "filtering": "OFF",
@@ -2182,9 +1073,11 @@
               },
               {
                 "option_id": "COAX",
+                "label_key": "resus.c01.module.coax",
                 "label": "COAX",
+                "desc_key": "resus.c01.module.coax.desc",
                 "is_correct": false,
-                "why": "Устаревшая среда протекает больше и добавляет шума.",
+                "why": "Coax is easier to tap.",
                 "effects": {
                   "collisions": "MID",
                   "filtering": "OFF",
@@ -2199,7 +1092,7 @@
                 "speed": 0.62,
                 "scatter": 0.24,
                 "steal_rate": 0.12,
-                "attacker_alpha": 0.38,
+                "attacker_alpha": 0.35,
                 "packet_tint": "#bfcfe0",
                 "attacker_tint": "#ff7a7a"
               },
@@ -2217,7 +1110,7 @@
                 "speed": 1.12,
                 "scatter": 0.1,
                 "steal_rate": 0.0,
-                "attacker_alpha": 0.22,
+                "attacker_alpha": 0.25,
                 "packet_tint": "#d9f5ff",
                 "attacker_tint": "#ff8d8d"
               },
@@ -2226,7 +1119,7 @@
                 "speed": 0.94,
                 "scatter": 0.18,
                 "steal_rate": 0.08,
-                "attacker_alpha": 0.42,
+                "attacker_alpha": 0.55,
                 "packet_tint": "#ffe6c8",
                 "attacker_tint": "#ff7676"
               },
@@ -2247,6 +1140,44 @@
                 "attacker_alpha": 1.0,
                 "packet_tint": "#ffc8b6",
                 "attacker_tint": "#ff4747"
+              }
+            },
+            "feedback_rules": {
+              "PERFECT": {
+                "headline": "resus.c01.feedback.perfect",
+                "details": [
+                  "resus.c01.feedback.perfect.d1"
+                ]
+              },
+              "GOOD": {
+                "headline": "resus.c01.feedback.good",
+                "details": [
+                  "resus.c01.feedback.good.d1"
+                ]
+              },
+              "NOISY": {
+                "headline": "resus.c01.feedback.noisy",
+                "details": [
+                  "resus.c01.feedback.noisy.d1"
+                ]
+              },
+              "FAIL": {
+                "headline": "resus.c01.feedback.fail",
+                "details": [
+                  "resus.c01.feedback.fail.d1"
+                ]
+              },
+              "EMPTY": {
+                "headline": "resus.c01.feedback.empty",
+                "details": [
+                  "resus.c01.feedback.empty.d1"
+                ]
+              },
+              "SELECT_ALL": {
+                "headline": "resus.c01.feedback.select_all",
+                "details": [
+                  "resus.c01.feedback.select_all.d1"
+                ]
               }
             },
             "scoring_model": {
@@ -2273,7 +1204,7 @@
               },
               "default_rule": {
                 "points": 0,
-                "stability_delta": -50,
+                "stability_delta": -30,
                 "verdict_code": "FAIL"
               },
               "empty_rule": {
@@ -2285,1049 +1216,242 @@
                 "points": 0,
                 "stability_delta": -50,
                 "verdict_code": "SELECT_ALL"
-              }
-            },
-            "feedback_rules": {
-              "PERFECT": {
-                "headline": "Ссылка усилена",
-                "details": [
-                  "Профиль столкновения сведен к минимуму.",
-                  "Фильтрация активна.",
-                  "Поверхность перехвата уменьшена."
-                ]
-              },
-              "GOOD": {
-                "headline": "Ссылка приемлема",
-                "details": [
-                  "Большинство критически важных средств защиты активны.",
-                  "Один необходимый модуль все еще отсутствует."
-                ]
-              },
-              "NOISY": {
-                "headline": "Защита, смешанная с шумом",
-                "details": [
-                  "Присутствуют правильные основные модули, но добавлен один вредоносный модуль."
-                ]
-              },
-              "FAIL": {
-                "headline": "Ссылка остается открытой",
-                "details": [
-                  "Текущий набор модулей не соответствует безопасному профилю."
-                ]
-              },
-              "EMPTY": {
-                "headline": "Модули не установлены",
-                "details": [
-                  "Ð£ÑÑÐ°Ð½Ð°Ð²Ð»Ð¸Ð²Ð°Ð¹ÑÐµ Ð¼Ð¾Ð´ÑÐ»Ð¸ Ð¿ÐµÑÐµÐ´ ÐÐÐÐ£Ð¡ÐÐÐ Ð¡ÐÐ¯ÐÐ."
-                ]
-              },
-              "SELECT_ALL": {
-                "headline": "Обнаружен подбор методом грубой силы",
-                "details": [
-                  "Выбор каждого модуля не является правильной стратегией."
-                ]
               }
             }
           },
           {
             "id": "CASE01_C_02",
-            "stage_max_points": 2,
-            "format": "MULTI_CHOICE_SLOTS",
-            "interaction_variant": "MODULE_SLOTS",
-            "diegetic_mode": true,
-            "prompt": "Профиль контроля столкновений: избегайте хаоса при трансляции и защищайте модули периметра.",
-            "max_slots": 3,
-            "modules": [
+            "format": "ATTACK_MATCH",
+            "briefing_key": "resus.c02.briefing",
+            "briefing": "Identify attacks and best defenses.",
+            "rounds": [
               {
-                "is_correct": true,
-                "module_id": "SWITCH",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "MID",
-                  "filtering": "OFF",
-                  "collisions": "LOW"
-                }
+                "round_id": "C02_R1",
+                "scenario_key": "resus.c02.r1.scenario",
+                "scenario": "Server receives millions of requests from many IPs.",
+                "question1_key": "resus.c02.r1.q1",
+                "question1": "What attack type is this?",
+                "attack_options": [
+                  {
+                    "id": "ddos",
+                    "label_key": "resus.c.attack.ddos",
+                    "is_correct": true
+                  },
+                  {
+                    "id": "phishing",
+                    "label_key": "resus.c.attack.phishing",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "mitm",
+                    "label_key": "resus.c.attack.mitm",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "bruteforce",
+                    "label_key": "resus.c.attack.bruteforce",
+                    "is_correct": false
+                  }
+                ],
+                "question2_key": "resus.c02.r1.q2",
+                "question2": "Most effective defense?",
+                "defense_options": [
+                  {
+                    "id": "ratelimit",
+                    "label_key": "resus.c.defense.ratelimit",
+                    "is_correct": true
+                  },
+                  {
+                    "id": "antivirus",
+                    "label_key": "resus.c.defense.antivirus",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "password",
+                    "label_key": "resus.c.defense.password",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "backup",
+                    "label_key": "resus.c.defense.backup",
+                    "is_correct": false
+                  }
+                ],
+                "explain_key": "resus.c02.r1.explain"
               },
               {
-                "is_correct": true,
-                "module_id": "VLAN",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "MID",
-                  "filtering": "ON",
-                  "collisions": "LOW"
-                }
+                "round_id": "C02_R2",
+                "scenario_key": "resus.c02.r2.scenario",
+                "scenario": "Fake bank email asks user to enter password on fake page.",
+                "question1_key": "resus.c02.r2.q1",
+                "question1": "What attack type is this?",
+                "attack_options": [
+                  {
+                    "id": "ddos",
+                    "label_key": "resus.c.attack.ddos",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "phishing",
+                    "label_key": "resus.c.attack.phishing",
+                    "is_correct": true
+                  },
+                  {
+                    "id": "sql_injection",
+                    "label_key": "resus.c.attack.sql_injection",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "virus",
+                    "label_key": "resus.c.attack.virus",
+                    "is_correct": false
+                  }
+                ],
+                "question2_key": "resus.c02.r2.q2",
+                "question2": "Most effective defense?",
+                "defense_options": [
+                  {
+                    "id": "awareness",
+                    "label_key": "resus.c.defense.awareness",
+                    "is_correct": true
+                  },
+                  {
+                    "id": "firewall",
+                    "label_key": "resus.c.defense.firewall",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "encryption",
+                    "label_key": "resus.c.defense.encryption",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "raid",
+                    "label_key": "resus.c.defense.raid",
+                    "is_correct": false
+                  }
+                ],
+                "explain_key": "resus.c02.r2.explain"
               },
               {
-                "is_correct": true,
-                "module_id": "FIREWALL",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "LOW",
-                  "filtering": "ON",
-                  "collisions": "NEUTRAL"
-                }
-              },
-              {
-                "is_correct": false,
-                "module_id": "HUB",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "HIGH",
-                  "filtering": "OFF",
-                  "collisions": "HIGH"
-                }
-              },
-              {
-                "is_correct": false,
-                "module_id": "COAX",
-                "effects": {
-                  "media": "COAX",
-                  "eavesdrop": "HIGH",
-                  "filtering": "OFF",
-                  "collisions": "MID"
-                }
+                "round_id": "C02_R3",
+                "scenario_key": "resus.c02.r3.scenario",
+                "scenario": "Attacker in open Wi-Fi intercepts traffic between users and server.",
+                "question1_key": "resus.c02.r3.q1",
+                "question1": "What attack type is this?",
+                "attack_options": [
+                  {
+                    "id": "mitm",
+                    "label_key": "resus.c.attack.mitm",
+                    "is_correct": true
+                  },
+                  {
+                    "id": "ddos",
+                    "label_key": "resus.c.attack.ddos",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "phishing",
+                    "label_key": "resus.c.attack.phishing",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "worm",
+                    "label_key": "resus.c.attack.worm",
+                    "is_correct": false
+                  }
+                ],
+                "question2_key": "resus.c02.r3.q2",
+                "question2": "Most effective defense?",
+                "defense_options": [
+                  {
+                    "id": "vpn",
+                    "label_key": "resus.c.defense.vpn",
+                    "is_correct": true
+                  },
+                  {
+                    "id": "antivirus",
+                    "label_key": "resus.c.defense.antivirus",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "backup",
+                    "label_key": "resus.c.defense.backup",
+                    "is_correct": false
+                  },
+                  {
+                    "id": "password",
+                    "label_key": "resus.c.defense.password",
+                    "is_correct": false
+                  }
+                ],
+                "explain_key": "resus.c02.r3.explain"
               }
-            ],
-            "options": [
-              {
-                "label": "SWITCH",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "MID",
-                  "filtering": "OFF",
-                  "collisions": "LOW"
-                },
-                "is_correct": true,
-                "why": "Уменьшает размер домена коллизий.",
-                "option_id": "SWITCH"
-              },
-              {
-                "label": "VLAN",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "MID",
-                  "filtering": "ON",
-                  "collisions": "LOW"
-                },
-                "is_correct": true,
-                "why": "Добавляет сегментацию и фильтрацию политик.",
-                "option_id": "VLAN"
-              },
-              {
-                "label": "FIREWALL",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "LOW",
-                  "filtering": "ON",
-                  "collisions": "NEUTRAL"
-                },
-                "is_correct": true,
-                "why": "Блокирует враждебный трафик по периметру.",
-                "option_id": "FIREWALL"
-              },
-              {
-                "label": "HUB",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "HIGH",
-                  "filtering": "OFF",
-                  "collisions": "HIGH"
-                },
-                "is_correct": false,
-                "why": "Широковещательное поведение усиливает коллизии.",
-                "option_id": "HUB"
-              },
-              {
-                "label": "COAX",
-                "effects": {
-                  "media": "COAX",
-                  "eavesdrop": "HIGH",
-                  "filtering": "OFF",
-                  "collisions": "MID"
-                },
-                "is_correct": false,
-                "why": "Устаревшая среда сохраняет высокий риск перехвата.",
-                "option_id": "COAX"
-              }
-            ],
-            "visual_sim": {
-              "EMPTY": {
-                "packet_count": 10,
-                "speed": 0.62,
-                "scatter": 0.24,
-                "steal_rate": 0.12,
-                "attacker_alpha": 0.38,
-                "packet_tint": "#bfcfe0",
-                "attacker_tint": "#ff7a7a"
-              },
-              "FAIL": {
-                "packet_count": 14,
-                "speed": 0.82,
-                "scatter": 0.35,
-                "steal_rate": 0.45,
-                "attacker_alpha": 0.9,
-                "packet_tint": "#ffd0bf",
-                "attacker_tint": "#ff5c5c"
-              },
-              "GOOD": {
-                "packet_count": 18,
-                "speed": 1.12,
-                "scatter": 0.1,
-                "steal_rate": 0.0,
-                "attacker_alpha": 0.22,
-                "packet_tint": "#d9f5ff",
-                "attacker_tint": "#ff8d8d"
-              },
-              "NOISY": {
-                "packet_count": 16,
-                "speed": 0.94,
-                "scatter": 0.18,
-                "steal_rate": 0.08,
-                "attacker_alpha": 0.42,
-                "packet_tint": "#ffe6c8",
-                "attacker_tint": "#ff7676"
-              },
-              "PERFECT": {
-                "packet_count": 20,
-                "speed": 1.34,
-                "scatter": 0.06,
-                "steal_rate": 0.0,
-                "attacker_alpha": 0.12,
-                "packet_tint": "#e6fbff",
-                "attacker_tint": "#ffaaaa"
-              },
-              "SELECT_ALL": {
-                "packet_count": 12,
-                "speed": 0.76,
-                "scatter": 0.42,
-                "steal_rate": 0.6,
-                "attacker_alpha": 1.0,
-                "packet_tint": "#ffc8b6",
-                "attacker_tint": "#ff4747"
-              }
-            },
-            "scoring_model": {
-              "rule_2": {
-                "need_correct": 3,
-                "max_wrong": 0,
-                "points": 2,
-                "stability_delta": 0,
-                "verdict_code": "PERFECT"
-              },
-              "rule_1a": {
-                "need_correct": 2,
-                "max_wrong": 0,
-                "points": 1,
-                "stability_delta": 0,
-                "verdict_code": "GOOD"
-              },
-              "rule_1b": {
-                "need_correct": 3,
-                "max_wrong": 1,
-                "points": 1,
-                "stability_delta": -10,
-                "verdict_code": "NOISY"
-              },
-              "default_rule": {
-                "points": 0,
-                "stability_delta": -50,
-                "verdict_code": "FAIL"
-              },
-              "empty_rule": {
-                "points": 0,
-                "stability_delta": -50,
-                "verdict_code": "EMPTY"
-              },
-              "select_all_rule": {
-                "points": 0,
-                "stability_delta": -50,
-                "verdict_code": "SELECT_ALL"
-              }
-            },
-            "feedback_rules": {
-              "PERFECT": {
-                "headline": "Периметр стабилизирован",
-                "details": [
-                  "Профиль столкновения сведен к минимуму.",
-                  "Фильтрация активна.",
-                  "Поверхность перехвата уменьшена."
-                ]
-              },
-              "GOOD": {
-                "headline": "Периметр в основном стабилен",
-                "details": [
-                  "Большинство критически важных средств защиты активны.",
-                  "Один необходимый модуль все еще отсутствует."
-                ]
-              },
-              "NOISY": {
-                "headline": "Частичная защита с шумом",
-                "details": [
-                  "Присутствуют правильные основные модули, но добавлен один вредоносный модуль."
-                ]
-              },
-              "FAIL": {
-                "headline": "Открытый периметр",
-                "details": [
-                  "Текущий набор модулей не соответствует безопасному профилю."
-                ]
-              },
-              "EMPTY": {
-                "headline": "Модули не установлены",
-                "details": [
-                  "Ð£ÑÑÐ°Ð½Ð°Ð²Ð»Ð¸Ð²Ð°Ð¹ÑÐµ Ð¼Ð¾Ð´ÑÐ»Ð¸ Ð¿ÐµÑÐµÐ´ ÐÐÐÐ£Ð¡ÐÐÐ Ð¡ÐÐ¯ÐÐ."
-                ]
-              },
-              "SELECT_ALL": {
-                "headline": "Обнаружен подбор методом грубой силы",
-                "details": [
-                  "Выбор каждого модуля не является правильной стратегией."
-                ]
-              }
-            }
+            ]
           },
           {
             "id": "CASE01_C_03",
-            "stage_max_points": 2,
-            "format": "MULTI_CHOICE_SLOTS",
-            "interaction_variant": "MODULE_SLOTS",
-            "diegetic_mode": true,
-            "prompt": "Профиль фильтрации: приоритет проверки пакетов и низкая поверхность перехвата.",
-            "max_slots": 3,
-            "modules": [
+            "format": "SUBNET_CALC",
+            "briefing_key": "resus.c03.briefing",
+            "briefing": "Calculate network, broadcast and host count.",
+            "rounds": [
               {
-                "is_correct": true,
-                "module_id": "FIREWALL",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "MID",
-                  "filtering": "ON",
-                  "collisions": "NEUTRAL"
-                }
-              },
-              {
-                "is_correct": true,
-                "module_id": "IDS",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "LOW",
-                  "filtering": "ON",
-                  "collisions": "LOW"
-                }
-              },
-              {
-                "is_correct": true,
-                "module_id": "FIBER",
-                "effects": {
-                  "media": "FIBER",
-                  "eavesdrop": "LOW",
-                  "filtering": "OFF",
-                  "collisions": "NEUTRAL"
-                }
-              },
-              {
-                "is_correct": false,
-                "module_id": "HUB",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "HIGH",
-                  "filtering": "OFF",
-                  "collisions": "HIGH"
-                }
-              },
-              {
-                "is_correct": false,
-                "module_id": "OPEN_PROXY",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "HIGH",
-                  "filtering": "OFF",
-                  "collisions": "MID"
-                }
-              }
-            ],
-            "options": [
-              {
-                "label": "FIREWALL",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "MID",
-                  "filtering": "ON",
-                  "collisions": "NEUTRAL"
-                },
-                "is_correct": true,
-                "why": "Первичный шлюз фильтрации пакетов.",
-                "option_id": "FIREWALL"
-              },
-              {
-                "label": "IDS",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "LOW",
-                  "filtering": "ON",
-                  "collisions": "LOW"
-                },
-                "is_correct": true,
-                "why": "Обнаруживает враждебные сигнатуры и снижает вероятность утечки.",
-                "option_id": "IDS"
-              },
-              {
-                "label": "FIBER",
-                "effects": {
-                  "media": "FIBER",
-                  "eavesdrop": "LOW",
-                  "filtering": "OFF",
-                  "collisions": "NEUTRAL"
-                },
-                "is_correct": true,
-                "why": "Поверхность перехвата остается ниже, чем у медных звеньев.",
-                "option_id": "FIBER"
-              },
-              {
-                "label": "HUB",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "HIGH",
-                  "filtering": "OFF",
-                  "collisions": "HIGH"
-                },
-                "is_correct": false,
-                "why": "Широковещательная пересылка увеличивает поверхность утечек.",
-                "option_id": "HUB"
-              },
-              {
-                "label": "ОТКРЫТЬ ПРОКСИ",
-                "effects": {
-                  "media": "NEUTRAL",
-                  "eavesdrop": "HIGH",
-                  "filtering": "OFF",
-                  "collisions": "MID"
-                },
-                "is_correct": false,
-                "why": "Создает риск неуправляемого проникновения и подслушивания.",
-                "option_id": "OPEN_PROXY"
-              }
-            ],
-            "visual_sim": {
-              "EMPTY": {
-                "packet_count": 10,
-                "speed": 0.62,
-                "scatter": 0.24,
-                "steal_rate": 0.12,
-                "attacker_alpha": 0.38,
-                "packet_tint": "#bfcfe0",
-                "attacker_tint": "#ff7a7a"
-              },
-              "FAIL": {
-                "packet_count": 14,
-                "speed": 0.82,
-                "scatter": 0.35,
-                "steal_rate": 0.45,
-                "attacker_alpha": 0.9,
-                "packet_tint": "#ffd0bf",
-                "attacker_tint": "#ff5c5c"
-              },
-              "GOOD": {
-                "packet_count": 18,
-                "speed": 1.12,
-                "scatter": 0.1,
-                "steal_rate": 0.0,
-                "attacker_alpha": 0.22,
-                "packet_tint": "#d9f5ff",
-                "attacker_tint": "#ff8d8d"
-              },
-              "NOISY": {
-                "packet_count": 16,
-                "speed": 0.94,
-                "scatter": 0.18,
-                "steal_rate": 0.08,
-                "attacker_alpha": 0.42,
-                "packet_tint": "#ffe6c8",
-                "attacker_tint": "#ff7676"
-              },
-              "PERFECT": {
-                "packet_count": 20,
-                "speed": 1.34,
-                "scatter": 0.06,
-                "steal_rate": 0.0,
-                "attacker_alpha": 0.12,
-                "packet_tint": "#e6fbff",
-                "attacker_tint": "#ffaaaa"
-              },
-              "SELECT_ALL": {
-                "packet_count": 12,
-                "speed": 0.76,
-                "scatter": 0.42,
-                "steal_rate": 0.6,
-                "attacker_alpha": 1.0,
-                "packet_tint": "#ffc8b6",
-                "attacker_tint": "#ff4747"
-              }
-            },
-            "scoring_model": {
-              "rule_2": {
-                "need_correct": 3,
-                "max_wrong": 0,
-                "points": 2,
-                "stability_delta": 0,
-                "verdict_code": "PERFECT"
-              },
-              "rule_1a": {
-                "need_correct": 2,
-                "max_wrong": 0,
-                "points": 1,
-                "stability_delta": 0,
-                "verdict_code": "GOOD"
-              },
-              "rule_1b": {
-                "need_correct": 3,
-                "max_wrong": 1,
-                "points": 1,
-                "stability_delta": -10,
-                "verdict_code": "NOISY"
-              },
-              "default_rule": {
-                "points": 0,
-                "stability_delta": -50,
-                "verdict_code": "FAIL"
-              },
-              "empty_rule": {
-                "points": 0,
-                "stability_delta": -50,
-                "verdict_code": "EMPTY"
-              },
-              "select_all_rule": {
-                "points": 0,
-                "stability_delta": -50,
-                "verdict_code": "SELECT_ALL"
-              }
-            },
-            "feedback_rules": {
-              "PERFECT": {
-                "headline": "Фильтрующий стек герметичный",
-                "details": [
-                  "Профиль столкновения сведен к минимуму.",
-                  "Фильтрация активна.",
-                  "Поверхность перехвата уменьшена."
+                "round_id": "C03_R1",
+                "ip": "192.168.10.45",
+                "mask": "255.255.255.0",
+                "prefix": 24,
+                "explain_key": "resus.c03.r1.explain",
+                "questions": [
+                  {
+                    "type": "network",
+                    "prompt_key": "resus.c03.q.network",
+                    "prompt": "Network address",
+                    "correct": "192.168.10.0"
+                  },
+                  {
+                    "type": "broadcast",
+                    "prompt_key": "resus.c03.q.broadcast",
+                    "prompt": "Broadcast",
+                    "correct": "192.168.10.255"
+                  },
+                  {
+                    "type": "hosts",
+                    "prompt_key": "resus.c03.q.hosts",
+                    "prompt": "Host count",
+                    "correct": "254"
+                  }
                 ]
               },
-              "GOOD": {
-                "headline": "Фильтрация в основном активна",
-                "details": [
-                  "Большинство критически важных средств защиты активны.",
-                  "Один необходимый модуль все еще отсутствует."
-                ]
-              },
-              "NOISY": {
-                "headline": "Смешанный профиль безопасности",
-                "details": [
-                  "Присутствуют правильные основные модули, но добавлен один вредоносный модуль."
-                ]
-              },
-              "FAIL": {
-                "headline": "Фильтрация профиля не удалась",
-                "details": [
-                  "Текущий набор модулей не соответствует безопасному профилю."
-                ]
-              },
-              "EMPTY": {
-                "headline": "Модули не установлены",
-                "details": [
-                  "Ð£ÑÑÐ°Ð½Ð°Ð²Ð»Ð¸Ð²Ð°Ð¹ÑÐµ Ð¼Ð¾Ð´ÑÐ»Ð¸ Ð¿ÐµÑÐµÐ´ ÐÐÐÐ£Ð¡ÐÐÐ Ð¡ÐÐ¯ÐÐ."
-                ]
-              },
-              "SELECT_ALL": {
-                "headline": "Обнаружен подбор методом грубой силы",
-                "details": [
-                  "Выбор каждого модуля не является правильной стратегией."
+              {
+                "round_id": "C03_R2",
+                "ip": "10.0.5.130",
+                "mask": "255.255.255.128",
+                "prefix": 25,
+                "explain_key": "resus.c03.r2.explain",
+                "questions": [
+                  {
+                    "type": "network",
+                    "prompt_key": "resus.c03.q.network",
+                    "prompt": "Network address",
+                    "correct": "10.0.5.128"
+                  },
+                  {
+                    "type": "broadcast",
+                    "prompt_key": "resus.c03.q.broadcast",
+                    "prompt": "Broadcast",
+                    "correct": "10.0.5.255"
+                  },
+                  {
+                    "type": "hosts",
+                    "prompt_key": "resus.c03.q.hosts",
+                    "prompt": "Host count",
+                    "correct": "126"
+                  }
                 ]
               }
-            }
+            ]
           }
         ]
-      }
-    }
-  },
-  {
-    "quest_id": "CASE_01_DIGITAL_RESUS",
-    "schema_version": "3.0.0",
-    "id": "RESUS-A-02",
-    "bucket": "newbie",
-    "briefing": "Уровень ловушки: идентифицируйте ложные периферийные устройства и подключайте только действительные части рабочей станции.",
-    "format": "MATCHING",
-    "diegetic_mode": true,
-    "buckets": [
-      {
-        "bucket_id": "INPUT",
-        "label": "ВХОДНОЕ РАЗЪЕМ"
-      },
-      {
-        "bucket_id": "OUTPUT",
-        "label": "ВЫХОДНОЕ РАЗЪЕМ"
-      },
-      {
-        "bucket_id": "MEMORY",
-        "label": "ШИНА ПАМЯТИ"
-      }
-    ],
-    "items": [
-      {
-        "label": "KBD",
-        "item_id": "keyboard",
-        "correct_bucket_id": "INPUT"
-      },
-      {
-        "label": "SCAN",
-        "item_id": "scanner",
-        "correct_bucket_id": "INPUT"
-      },
-      {
-        "label": "CAM",
-        "item_id": "camera",
-        "correct_bucket_id": "INPUT"
-      },
-      {
-        "label": "GPU",
-        "item_id": "gpu",
-        "correct_bucket_id": "OUTPUT"
-      },
-      {
-        "label": "MON",
-        "item_id": "monitor",
-        "correct_bucket_id": "OUTPUT"
-      },
-      {
-        "label": "SPK",
-        "item_id": "speaker",
-        "correct_bucket_id": "OUTPUT"
-      },
-      {
-        "label": "RAM",
-        "item_id": "ram",
-        "correct_bucket_id": "MEMORY"
-      },
-      {
-        "label": "CACHE",
-        "item_id": "cache",
-        "correct_bucket_id": "MEMORY"
-      }
-    ],
-    "socket_map": {
-      "INPUT": [
-        "клавиатура",
-        "сканер",
-        "камера"
-      ],
-      "MEMORY": [
-        "баран",
-        "кэш"
-      ],
-      "OUTPUT": [
-        "графический процессор",
-        "монитор",
-        "оратор"
-      ]
-    },
-    "diag_panel": {
-      "GPU": {
-        "ok": "ВИДЕО: ОК",
-        "bad": "ВИДЕО: НЕТ СИГНАЛА"
-      },
-      "RAM": {
-        "ok": "ПАМЯТЬ: ОК",
-        "bad": "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"
-      },
-      "CACHE": {
-        "ok": "БУФЕР: БЫСТРЫЙ",
-        "bad": "БУФЕР: МЕДЛЕННЫЙ"
-      }
-    },
-    "fx_rules": {
-      "gpu_on": {
-        "item_id": "gpu",
-        "bucket_id": "OUTPUT"
-      },
-      "ram_ok": {
-        "item_id": "ram",
-        "bucket_id": "MEMORY"
-      },
-      "cache_ok": {
-        "item_id": "cache",
-        "bucket_id": "MEMORY"
-      },
-      "hid_lines_on_input": [
-        "ВХОДНАЯ ШИНА ПРОВЕРЕНА",
-        "СКРЫТАЯ МАРШРУТИЗАЦИЯ СТАБИЛЬНАЯ"
-      ]
-    },
-    "scoring_rules": [],
-    "scoring_model": {
-      "rules": [
-        {
-          "code": "PERFECT",
-          "min_correct": 8,
-          "points": 2,
-          "stability_delta": 0,
-          "verdict_code": "PERFECT"
-        },
-        {
-          "code": "PARTIAL",
-          "min_correct": 6,
-          "points": 1,
-          "stability_delta": -10,
-          "verdict_code": "PARTIAL"
-        },
-        {
-          "code": "FAIL",
-          "min_correct": 0,
-          "points": 0,
-          "stability_delta": -30,
-          "verdict_code": "FAIL"
-        }
-      ],
-      "default_rule": {
-        "code": "EMPTY_CONFIRM",
-        "points": 0,
-        "stability_delta": -50,
-        "verdict_code": "EMPTY"
-      }
-    },
-    "feedback_rules": {
-      "NO_GPU": {
-        "status": "Графический процессор отсутствует на ВЫХОДЕ. Сигнал монитора недоступен."
-      },
-      "NO_RAM": {
-        "status": "В MEMORY отсутствует ОЗУ. Ошибка загрузки во время проверки памяти.",
-        "console_lines": [
-          "[BOOT] проверка памяти запущена",
-          "[ALERT] модуль оперативной памяти не обнаружен",
-          "[BOOT] повторить проверку памяти",
-          "[ALERT] прерывает запуск"
-        ]
-      },
-      "NO_CACHE": {
-        "status": "КЭШ отсутствует. Диагностический поток ухудшился."
-      },
-      "HEALTHY": {
-        "status": "Все критические узлы онлайн. Продолжаем настройку производительности."
-      }
-    },
-    "system_state_rules": {
-      "monitor_on_if": {
-        "item_id": "gpu",
-        "zone_id": "OUTPUT"
-      },
-      "ram_ok_if": {
-        "item_id": "ram",
-        "zone_id": "MEMORY"
-      },
-      "fast_type_if": {
-        "item_id": "cache",
-        "zone_id": "MEMORY"
-      },
-      "boot_ok_lines": [
-        "[BOOT] профиль ловушки загружен",
-        "[BOOT] целостность периферийных устройств проверена",
-        "[BOOT] проверка памяти завершена",
-        "[BOOT] безопасная консоль онлайн"
-      ]
-    }
-  },
-  {
-    "quest_id": "CASE_01_DIGITAL_RESUS",
-    "schema_version": "3.0.0",
-    "id": "RESUS-A-03",
-    "bucket": "newbie",
-    "briefing": "Продвинутый этап: перестроить рабочую станцию ​​с альтернативной топологией вывода в рамках диагностики.",
-    "format": "MATCHING",
-    "diegetic_mode": true,
-    "buckets": [
-      {
-        "bucket_id": "INPUT",
-        "label": "ВХОДНОЕ РАЗЪЕМ"
-      },
-      {
-        "bucket_id": "OUTPUT",
-        "label": "ВЫХОДНОЕ РАЗЪЕМ"
-      },
-      {
-        "bucket_id": "MEMORY",
-        "label": "ШИНА ПАМЯТИ"
-      }
-    ],
-    "items": [
-      {
-        "label": "KBD",
-        "item_id": "keyboard",
-        "correct_bucket_id": "INPUT"
-      },
-      {
-        "label": "MOUSE",
-        "item_id": "mouse",
-        "correct_bucket_id": "INPUT"
-      },
-      {
-        "label": "MIC",
-        "item_id": "microphone",
-        "correct_bucket_id": "INPUT"
-      },
-      {
-        "label": "GPU",
-        "item_id": "gpu",
-        "correct_bucket_id": "OUTPUT"
-      },
-      {
-        "label": "PROJ",
-        "item_id": "projector",
-        "correct_bucket_id": "OUTPUT"
-      },
-      {
-        "label": "SPK",
-        "item_id": "speaker",
-        "correct_bucket_id": "OUTPUT"
-      },
-      {
-        "label": "RAM",
-        "item_id": "ram",
-        "correct_bucket_id": "MEMORY"
-      },
-      {
-        "label": "CACHE",
-        "item_id": "cache",
-        "correct_bucket_id": "MEMORY"
-      }
-    ],
-    "socket_map": {
-      "INPUT": [
-        "клавиатура",
-        "мышь",
-        "микрофон"
-      ],
-      "MEMORY": [
-        "баран",
-        "кэш"
-      ],
-      "OUTPUT": [
-        "графический процессор",
-        "проектор",
-        "оратор"
-      ]
-    },
-    "diag_panel": {
-      "GPU": {
-        "ok": "ВИДЕО: ОК",
-        "bad": "ВИДЕО: НЕТ СИГНАЛА"
-      },
-      "RAM": {
-        "ok": "ПАМЯТЬ: ОК",
-        "bad": "ПАМЯТЬ: ОШИБКА ЧТЕНИЯ"
-      },
-      "CACHE": {
-        "ok": "БУФЕР: БЫСТРЫЙ",
-        "bad": "БУФЕР: МЕДЛЕННЫЙ"
-      }
-    },
-    "fx_rules": {
-      "gpu_on": {
-        "item_id": "gpu",
-        "bucket_id": "OUTPUT"
-      },
-      "ram_ok": {
-        "item_id": "ram",
-        "bucket_id": "MEMORY"
-      },
-      "cache_ok": {
-        "item_id": "cache",
-        "bucket_id": "MEMORY"
-      },
-      "hid_lines_on_input": [
-        "СКРЫТО ПОДКЛЮЧЕНО",
-        "ВХОДНОЙ ДРАЙВЕР ОК"
-      ]
-    },
-    "scoring_rules": [],
-    "scoring_model": {
-      "rules": [
-        {
-          "code": "PERFECT",
-          "min_correct": 8,
-          "points": 2,
-          "stability_delta": 0,
-          "verdict_code": "PERFECT"
-        },
-        {
-          "code": "PARTIAL",
-          "min_correct": 6,
-          "points": 1,
-          "stability_delta": -10,
-          "verdict_code": "PARTIAL"
-        },
-        {
-          "code": "FAIL",
-          "min_correct": 0,
-          "points": 0,
-          "stability_delta": -30,
-          "verdict_code": "FAIL"
-        }
-      ],
-      "default_rule": {
-        "code": "EMPTY_CONFIRM",
-        "points": 0,
-        "stability_delta": -50,
-        "verdict_code": "EMPTY"
-      }
-    },
-    "feedback_rules": {
-      "NO_GPU": {
-        "status": "Графический процессор отсутствует на ВЫХОДЕ. Сигнал монитора недоступен."
-      },
-      "NO_RAM": {
-        "status": "В MEMORY отсутствует ОЗУ. Ошибка загрузки во время проверки памяти.",
-        "console_lines": [
-          "[BOOT] проверка памяти запущена",
-          "[ALERT] модуль оперативной памяти не обнаружен",
-          "[BOOT] повторить проверку памяти",
-          "[ALERT] прерывает запуск"
-        ]
-      },
-      "NO_CACHE": {
-        "status": "КЭШ отсутствует. Диагностический поток ухудшился."
-      },
-      "HEALTHY": {
-        "status": "Все критические узлы онлайн. Продолжаем настройку производительности."
-      }
-    },
-    "system_state_rules": {
-      "monitor_on_if": {
-        "item_id": "gpu",
-        "zone_id": "OUTPUT"
-      },
-      "ram_ok_if": {
-        "item_id": "ram",
-        "zone_id": "MEMORY"
-      },
-      "fast_type_if": {
-        "item_id": "cache",
-        "zone_id": "MEMORY"
-      },
-      "boot_ok_lines": [
-        "[BOOT] выходной мультиплексор инициализирован",
-        "[BOOT] проверка памяти завершена",
-        "Подключена шина [BOOT] PCI",
-        "[BOOT] диагностическая трансляция онлайн"
-      ]
-    }
-  },
-  {
-    "quest_id": "CASE_01_DIGITAL_RESUS",
-    "schema_version": "3.1.0",
-    "id": "A_CIA_01",
-    "bucket": "infosec",
-    "briefing": "Разложите улики по свойствам информации (CIA): Конфиденциальность, Целостность, Доступность. Часть улик — атаки, часть — меры защиты.",
-    "format": "MATCHING_CIA",
-    "buckets": [
-      {
-        "bucket_id": "CONF",
-        "label": "КОНФИДЕНЦИАЛЬНОСТЬ"
-      },
-      {
-        "bucket_id": "INTE",
-        "label": "ЦЕЛОСТНОСТЬ"
-      },
-      {
-        "bucket_id": "AVAI",
-        "label": "ДОСТУПНОСТЬ"
-      }
-    ],
-    "items": [
-      {
-        "item_id": "LEAK",
-        "type": "INC",
-        "label": "[INC] Слив паролей в сеть",
-        "correct_bucket_id": "CONF",
-        "explain_short": "Данные становятся доступны посторонним."
-      },
-      {
-        "item_id": "VIRUS",
-        "type": "INC",
-        "label": "[INC] Искажение файла вирусом",
-        "correct_bucket_id": "INTE",
-        "explain_short": "Данные изменены, теряют достоверность."
-      },
-      {
-        "item_id": "DDOS",
-        "type": "INC",
-        "label": "[INC] DDoS атака на сервер",
-        "correct_bucket_id": "AVAI",
-        "explain_short": "Сервис недоступен пользователям."
-      },
-      {
-        "item_id": "DNS",
-        "type": "INC",
-        "label": "[INC] Подмена DNS записи",
-        "correct_bucket_id": "INTE",
-        "explain_short": "Адрес подменён, целостность информации нарушена."
-      },
-      {
-        "item_id": "ENC",
-        "type": "CTRL",
-        "label": "[CTRL] Шифрование данных",
-        "correct_bucket_id": "CONF",
-        "explain_short": "Скрывает содержимое от посторонних."
-      },
-      {
-        "item_id": "HASH",
-        "type": "CTRL",
-        "label": "[CTRL] Хэш-сумма файла",
-        "correct_bucket_id": "INTE",
-        "explain_short": "Позволяет проверить, что файл не изменили."
-      },
-      {
-        "item_id": "BACKUP",
-        "type": "CTRL",
-        "label": "[CTRL] Резервное копирование",
-        "correct_bucket_id": "AVAI",
-        "explain_short": "Восстановление после сбоя повышает доступность."
-      },
-      {
-        "item_id": "ACL",
-        "type": "CTRL",
-        "label": "[CTRL] Контроль доступа (ACL)",
-        "correct_bucket_id": "CONF",
-        "explain_short": "Ограничивает доступ к данным."
-      }
-    ],
-    "scoring_model": {
-      "rules": [
-        {
-          "code": "PERFECT",
-          "min_correct": 8,
-          "points": 2,
-          "stability_delta": 0,
-          "verdict_code": "PERFECT"
-        },
-        {
-          "code": "PARTIAL",
-          "min_correct": 6,
-          "points": 1,
-          "stability_delta": -10,
-          "verdict_code": "PARTIAL"
-        },
-        {
-          "code": "FAIL",
-          "min_correct": 0,
-          "points": 0,
-          "stability_delta": -30,
-          "verdict_code": "FAIL"
-        }
-      ],
-      "default_rule": {
-        "when": "EMPTY_CONFIRM",
-        "code": "EMPTY_CONFIRM",
-        "points": 0,
-        "stability_delta": -50,
-        "verdict_code": "EMPTY"
       }
     }
   }

@@ -40,11 +40,14 @@ var level_solved: bool = false
 var has_confirmed_once: bool = false
 var trace: Array = []
 var dependency_lines: Array = []
+var stage_run_history_start: int = 0
+var stage_level_ids: Dictionary = {}
 
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
 @onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
 @onready var title_label: Label = $SafeArea/MainLayout/Header/TitleLabel
 @onready var level_label: Label = $SafeArea/MainLayout/Header/LevelLabel
+@onready var level_progress_bar: ProgressBar = $SafeArea/MainLayout/Header/LevelProgressBar
 @onready var stability_bar: ProgressBar = $SafeArea/MainLayout/Header/StabilityBar
 @onready var briefing_label: RichTextLabel = $SafeArea/MainLayout/BriefingCard/BriefingLabel
 @onready var axis_left_label: Label = $SafeArea/MainLayout/TimelineCard/CardVBox/AxisRow/AxisLeft
@@ -71,6 +74,7 @@ func _ready() -> void:
 	if levels.is_empty():
 		_show_error(_tr("case08.fr8b.load_error", "Не удалось загрузить уровни финального отчёта B."))
 		return
+	stage_run_history_start = GlobalMetrics.session_history.size()
 
 	_apply_i18n()
 
@@ -103,6 +107,8 @@ func _apply_i18n() -> void:
 	axis_right_label.text = _tr("case08.fr8b.axis.future", "БУДУЩЕЕ")
 	if levels.is_empty():
 		btn_next.text = _tr("case08.common.next", TEXT_NEXT)
+	elif trial_locked and level_solved and btn_confirm.disabled and btn_reset.disabled and _is_last_level():
+		btn_next.text = _tr("case08.common.exit", "ВЫХОД")
 	else:
 		btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
 
@@ -140,6 +146,14 @@ func _load_levels() -> void:
 		for i in range(SESSION_LEVEL_COUNT):
 			limited.append(levels[i])
 		levels = limited
+	stage_level_ids.clear()
+	for level_var in levels:
+		if typeof(level_var) != TYPE_DICTIONARY:
+			continue
+		var id_value: String = str((level_var as Dictionary).get("id", "")).strip_edges()
+		if id_value.is_empty():
+			continue
+		stage_level_ids[id_value] = true
 
 func _start_level(index: int) -> void:
 	if levels.is_empty():
@@ -179,6 +193,7 @@ func _start_level(index: int) -> void:
 	trace.clear()
 
 	level_label.text = _build_level_label()
+	_update_progress_ui()
 	briefing_label.text = I18n.resolve_field(level_data, "briefing")
 
 	_log_event("LEVEL_START", {
@@ -190,11 +205,19 @@ func _start_level(index: int) -> void:
 	_apply_layout_mode()
 
 func _build_level_label() -> String:
-	return "B | %s (%d/%d)" % [
+	var progress_pct: int = int((float(current_level_index + 1) / maxf(1.0, float(levels.size()))) * 100.0)
+	return "B | %s (%d/%d) — %d%%" % [
 		str(level_data.get("id", "FR8-B")),
 		current_level_index + 1,
-		levels.size()
+		levels.size(),
+		progress_pct
 	]
+
+func _update_progress_ui() -> void:
+	if level_progress_bar == null:
+		return
+	var progress_pct: float = (float(current_level_index + 1) / maxf(1.0, float(levels.size()))) * 100.0
+	level_progress_bar.value = progress_pct
 
 func _expected_order() -> Array[String]:
 	var out: Array[String] = []
@@ -269,6 +292,7 @@ func _on_card_move_requested(stage_id: String, dir: int) -> void:
 	current_order[target_index] = stage_id
 	current_order[index] = other_stage
 	swap_count += 1
+	_queue_dependency_overlay_redraw()
 
 	_log_event("MOVE_CARD", {
 		"stage_id": stage_id,
@@ -378,18 +402,16 @@ func _on_next_pressed() -> void:
 		_set_status(_tr("case08.fr8b.status.solve_first", STATUS_SOLVE_FIRST), COLOR_WARN)
 		return
 
-	var from_level_id: String = str(level_data.get("id", "FR8-B-00"))
-	var from_index: int = current_level_index
 	if _is_last_level():
-		_log_event("NEXT_PRESSED", {
-			"from_level_id": from_level_id,
-			"from_index": from_index,
-			"to_index": -1
-		})
-		GlobalMetrics.current_level_index = 0
-		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+		if btn_next.text == _tr("case08.common.exit", "ВЫХОД"):
+			GlobalMetrics.current_level_index = 0
+			get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+			return
+		_show_session_summary()
 		return
 
+	var from_level_id: String = str(level_data.get("id", "FR8-B-00"))
+	var from_index: int = current_level_index
 	var to_index: int = current_level_index + 1
 	_log_event("NEXT_PRESSED", {
 		"from_level_id": from_level_id,
@@ -397,6 +419,73 @@ func _on_next_pressed() -> void:
 		"to_index": to_index
 	})
 	_start_level(to_index)
+
+func _show_session_summary() -> void:
+	trial_locked = true
+	level_solved = true
+	btn_confirm.disabled = true
+	btn_reset.disabled = true
+	btn_next.text = _tr("case08.common.exit", "ВЫХОД")
+	btn_next.disabled = false
+	level_label.text = "B | ИТОГИ"
+	_update_progress_ui()
+
+	var latest_by_level: Dictionary = {}
+	for idx in range(stage_run_history_start, GlobalMetrics.session_history.size()):
+		var entry_var: Variant = GlobalMetrics.session_history[idx]
+		if typeof(entry_var) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_var as Dictionary
+		if str(entry.get("quest_id", "")) != "CASE_08_FINAL_REPORT":
+			continue
+		if str(entry.get("stage", "")) != "B":
+			continue
+		var level_id: String = str(entry.get("level_id", "")).strip_edges()
+		if level_id.is_empty() or not stage_level_ids.has(level_id):
+			continue
+		latest_by_level[level_id] = entry
+
+	var total: int = levels.size()
+	var correct: int = 0
+	var total_ms: int = 0
+	for level_var in levels:
+		if typeof(level_var) != TYPE_DICTIONARY:
+			continue
+		var level_id: String = str((level_var as Dictionary).get("id", "")).strip_edges()
+		if level_id.is_empty():
+			continue
+		if not latest_by_level.has(level_id):
+			continue
+		var row: Dictionary = latest_by_level[level_id] as Dictionary
+		if bool(row.get("is_correct", false)):
+			correct += 1
+		total_ms += int(row.get("elapsed_ms", 0))
+
+	var pct: int = int((float(correct) / maxf(1.0, float(total))) * 100.0)
+	var avg_sec: float = (float(total_ms) / 1000.0) / maxf(1.0, float(total))
+	if level_progress_bar != null:
+		level_progress_bar.value = 100.0
+
+	briefing_label.text = ""
+	for child in cards_row.get_children():
+		child.queue_free()
+	_clear_dependency_overlay()
+
+	var summary: String = "СЕССИЯ ЗАВЕРШЕНА\n\n"
+	summary += "Правильно: %d / %d (%d%%)\n" % [correct, total, pct]
+	summary += "Среднее время: %.1f с\n\n" % avg_sec
+
+	if pct >= 90:
+		summary += "Отличный результат. План утверждён."
+		_set_status("Сессия пройдена успешно.", COLOR_OK)
+	elif pct >= 60:
+		summary += "Неплохо, но есть пробелы."
+		_set_status("Рекомендуется повторить.", COLOR_WARN)
+	else:
+		summary += "Требуется доработка."
+		_set_status("Нужно повторить материал.", COLOR_ERR)
+
+	briefing_label.text = summary
 
 func _on_back_pressed() -> void:
 	GlobalMetrics.current_level_index = 0

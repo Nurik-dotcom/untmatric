@@ -1,6 +1,7 @@
 extends PanelContainer
 
 signal item_placed(fragment_id: String, to_zone: String, from_zone: String)
+signal slot_tapped(zone_id: String)
 
 @export var title_path: NodePath = NodePath("VBox/SlotTitle")
 @export var items_container_path: NodePath = NodePath("VBox/Center/Items")
@@ -90,6 +91,16 @@ func set_feedback_state(state: String) -> void:
 	_feedback_state = state
 	_apply_visual_state()
 
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			slot_tapped.emit(zone_id)
+	elif event is InputEventScreenTouch:
+		var touch_event: InputEventScreenTouch = event as InputEventScreenTouch
+		if touch_event.pressed:
+			slot_tapped.emit(zone_id)
+
 func flash_wrong() -> void:
 	if _empty_overlay == null:
 		return
@@ -158,6 +169,8 @@ func _apply_visual_state() -> void:
 			tone = Color(0.78, 1.05, 0.82, 1.0)
 		"bad":
 			tone = Color(1.08, 0.78, 0.78, 1.0)
+		"filled":
+			tone = Color(0.84, 0.94, 1.06, 1.0)
 		_:
 			tone = Color(1.0, 1.0, 1.0, 1.0)
 

@@ -7,6 +7,17 @@ const BREAKPOINT_PX := 800
 const SESSION_CASE_COUNT := 6
 const LONG_PRESS_MS := 350
 const LONG_PRESS_MOVE_PX := 10.0
+const HEADER_ROW_ID := "header"
+const LAYOUT_MOBILE := "mobile"
+const LAYOUT_DESKTOP := "desktop"
+
+enum TrialState {
+	IDLE,
+	INSPECT_MODE,
+	TARGET_SELECTED,
+	ANSWER_LOCKED,
+	CASE_RESOLVED
+}
 
 var session_cases: Array = []
 var current_case_index := -1
@@ -16,6 +27,8 @@ var first_action_ts := -1
 var trial_locked := false
 var scroll_used := false
 var table_has_scroll := false
+var table_width_overflow := false
+var current_layout_mode := LAYOUT_DESKTOP
 var exit_btn: Button
 
 var inspect_count := 0
@@ -25,10 +38,42 @@ var last_inspected_row_id := ""
 var time_to_first_inspect_ms := -1
 var miss_click_count := 0
 
+var selected_before_submit := false
+var selection_changes_count := 0
+var confirm_submit_used := false
+var submit_via_double_click := false
+var inspect_via_long_press_count := 0
+var inspect_via_button_count := 0
+var invalid_tap_count := 0
+var invalid_header_tap_count := 0
+var invalid_cell_tap_count := 0
+var invalid_row_tap_count := 0
+var tap_on_non_answerable_area_count := 0
+var tap_cancelled_by_scroll_count := 0
+var selected_target_changed_before_submit := false
+var answered_after_inspection := false
+var inspected_same_target_before_submit := false
+var submit_latency_after_selection_ms := -1
+var mobile_layout_used := false
+
+var tutorial_seen_once := false
+var tutorial_shown := false
+var tutorial_dismissed := false
+var tutorial_completed := false
+
 var row_item_by_id: Dictionary = {}
 var col_index_by_id: Dictionary = {}
 var col_id_by_index: Dictionary = {}
 var row_data_by_id: Dictionary = {}
+
+var trial_state := TrialState.IDLE
+var selected_target: Dictionary = {}
+var selected_clicked_kind := ""
+var selected_row_id := ""
+var selected_col_id := ""
+var selected_signature := ""
+var selected_target_ts := -1
+var inspected_target_signatures: Dictionary = {}
 
 var _press_active := false
 var _press_start_ms := 0
@@ -46,8 +91,13 @@ var _transition_token := 0
 @onready var data_tree: Tree = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/DataTree
 @onready var table_title: Label = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/TableTitle
 @onready var scanner_overlay: Control = get_node_or_null("SafeArea/RootLayout/Body/DesktopLayout/TableSection/ScannerOverlay") as Control
+@onready var btn_inspect: Button = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectToolbar/BtnInspect
+@onready var inspect_mode_label: Label = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectToolbar/InspectModeLabel
 @onready var inspect_label: RichTextLabel = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectLabel
 @onready var scan_label: Label = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/ScanLabel
+@onready var selected_label: RichTextLabel = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/ActionPanel/ActionMargin/ActionVBox/SelectedLabel
+@onready var status_label: Label = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/ActionPanel/ActionMargin/ActionVBox/StatusLabel
+@onready var btn_confirm_answer: Button = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/ActionPanel/ActionMargin/ActionVBox/BtnConfirmAnswer
 @onready var case_title_label: Label = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/CaseTitleLabel
 @onready var briefing_label: RichTextLabel = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/BriefingLabel
 @onready var objective_label: Label = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection/DossierPanel/DossierMargin/DossierVBox/ObjectiveLabel
@@ -56,6 +106,12 @@ var _transition_token := 0
 @onready var explain_line: RichTextLabel = $SafeArea/RootLayout/Body/DesktopLayout/TaskSection/ExplainLine
 @onready var stability_label: Label = $SafeArea/RootLayout/Footer/StabilityLabel
 @onready var stability_bar: ProgressBar = $SafeArea/RootLayout/Footer/StabilityBar
+@onready var tutorial_overlay: ColorRect = $TutorialOverlay
+@onready var tutorial_title_label: Label = $TutorialOverlay/Center/TutorialPanel/TutorialMargin/TutorialVBox/TutorialTitle
+@onready var tutorial_step_1: Label = $TutorialOverlay/Center/TutorialPanel/TutorialMargin/TutorialVBox/TutorialStep1
+@onready var tutorial_step_2: Label = $TutorialOverlay/Center/TutorialPanel/TutorialMargin/TutorialVBox/TutorialStep2
+@onready var tutorial_step_3: Label = $TutorialOverlay/Center/TutorialPanel/TutorialMargin/TutorialVBox/TutorialStep3
+@onready var tutorial_close_btn: Button = $TutorialOverlay/Center/TutorialPanel/TutorialMargin/TutorialVBox/BtnTutorialClose
 @onready var sfx_click: AudioStreamPlayer = $Runtime/Audio/SfxClick
 @onready var sfx_error: AudioStreamPlayer = $Runtime/Audio/SfxError
 @onready var sfx_relay: AudioStreamPlayer = $Runtime/Audio/SfxRelay
@@ -69,6 +125,12 @@ func _exit_tree() -> void:
 		GlobalMetrics.stability_changed.disconnect(_on_stability_changed)
 	if btn_back.pressed.is_connected(_on_back_pressed):
 		btn_back.pressed.disconnect(_on_back_pressed)
+	if btn_inspect.pressed.is_connected(_on_inspect_button_pressed):
+		btn_inspect.pressed.disconnect(_on_inspect_button_pressed)
+	if btn_confirm_answer.pressed.is_connected(_on_confirm_answer_pressed):
+		btn_confirm_answer.pressed.disconnect(_on_confirm_answer_pressed)
+	if tutorial_close_btn.pressed.is_connected(_on_tutorial_close_pressed):
+		tutorial_close_btn.pressed.disconnect(_on_tutorial_close_pressed)
 	if data_tree.gui_input.is_connected(_on_data_tree_gui_input):
 		data_tree.gui_input.disconnect(_on_data_tree_gui_input)
 	if data_tree.has_signal("column_title_clicked") and data_tree.column_title_clicked.is_connected(_on_column_title_clicked):
@@ -89,11 +151,30 @@ func _on_language_changed(_code: String) -> void:
 
 func _apply_i18n() -> void:
 	btn_back.text = _tr("da7.common.back", "BACK")
+	btn_inspect.text = _tr("archive_a.btn.inspect", "INSPECT")
+	btn_confirm_answer.text = _tr("archive_a.btn.confirm_answer", "CONFIRM ANSWER")
+	if is_instance_valid(exit_btn):
+		exit_btn.text = _tr("da7.common.exit", "EXIT")
 	if is_instance_valid(table_title):
 		table_title.text = _tr("da7.a.ui.data_mode_title", "DATA MODE // READ-ONLY")
+	if is_instance_valid(tutorial_title_label):
+		tutorial_title_label.text = _tr("archive_a.tutorial.title", "ARCHIVE BRIEFING")
+	if is_instance_valid(tutorial_step_1):
+		tutorial_step_1.text = _tr("archive_a.tutorial.step1", "Tap a table element to select an answer target.")
+	if is_instance_valid(tutorial_step_2):
+		tutorial_step_2.text = _tr("archive_a.tutorial.step2", "Long-press or press Inspect to examine evidence.")
+	if is_instance_valid(tutorial_step_3):
+		tutorial_step_3.text = _tr("archive_a.tutorial.step3", "Column headers can also be correct answers.")
+	if is_instance_valid(tutorial_close_btn):
+		tutorial_close_btn.text = _tr("archive_a.tutorial.close", "START INVESTIGATION")
 	_update_stability_ui()
+	_update_inspect_mode_label()
 	if not current_case.is_empty():
 		_refresh_case_ui_i18n()
+	else:
+		_set_idle_inspect_hint()
+		scan_label.text = _tr("da7.a.ui.scan", "SCAN: {count}", {"count": inspect_count})
+	_update_selection_ui()
 
 func _refresh_case_ui_i18n() -> void:
 	var case_id: String = str(current_case.get("id", ""))
@@ -105,8 +186,13 @@ func _refresh_case_ui_i18n() -> void:
 	objective_label.text = _tr("da7.a.ui.objective_label", "OBJECTIVE: {value}",
 		{"value": _case_text(case_id, "objective")})
 	prompt_label.text = _case_text(case_id, "prompt")
-	inspect_label.text = _tr("da7.a.ui.inspect_hint", "Long-press a row or cell to inspect.")
+	if inspect_count <= 0:
+		_set_idle_inspect_hint()
 	scan_label.text = _tr("da7.a.ui.scan", "SCAN: {count}", {"count": inspect_count})
+	_update_selection_ui()
+
+func _set_idle_inspect_hint() -> void:
+	inspect_label.text = _tr("da7.a.ui.inspect_hint", "Long-press a row/cell or press Inspect to examine evidence.")
 
 func _case_text(case_id: String, field: String) -> String:
 	var raw: String = str(current_case.get(field, ""))
@@ -132,6 +218,12 @@ func _ready() -> void:
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 	if not btn_back.pressed.is_connected(_on_back_pressed):
 		btn_back.pressed.connect(_on_back_pressed)
+	if not btn_inspect.pressed.is_connected(_on_inspect_button_pressed):
+		btn_inspect.pressed.connect(_on_inspect_button_pressed)
+	if not btn_confirm_answer.pressed.is_connected(_on_confirm_answer_pressed):
+		btn_confirm_answer.pressed.connect(_on_confirm_answer_pressed)
+	if not tutorial_close_btn.pressed.is_connected(_on_tutorial_close_pressed):
+		tutorial_close_btn.pressed.connect(_on_tutorial_close_pressed)
 	if not data_tree.gui_input.is_connected(_on_data_tree_gui_input):
 		data_tree.gui_input.connect(_on_data_tree_gui_input)
 	if data_tree.has_signal("column_title_clicked") and not data_tree.column_title_clicked.is_connected(_on_column_title_clicked):
@@ -147,6 +239,8 @@ func _ready() -> void:
 		scanner_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	options_grid.visible = false
+	if is_instance_valid(tutorial_overlay):
+		tutorial_overlay.visible = false
 	_init_session()
 	_apply_i18n()
 	call_deferred("_on_viewport_size_changed")
@@ -162,7 +256,7 @@ func _init_session() -> void:
 		if CasesA.validate_case_a(case_data):
 			valid_cases.append(case_data)
 	if valid_cases.is_empty():
-		_show_fatal("В файле scripts/case_07/da7_cases_a.gd не обнаружено действительных случаев DA7 A.")
+		_show_fatal("No valid DA7 A cases found in scripts/case_07/da7_cases_a.gd")
 		return
 
 	valid_cases.shuffle()
@@ -187,20 +281,52 @@ func _load_next_case() -> void:
 	trial_locked = false
 	scroll_used = false
 	table_has_scroll = false
+	table_width_overflow = false
 	inspect_count = 0
 	unique_rows_inspected.clear()
 	answered_without_inspection = false
 	last_inspected_row_id = ""
 	time_to_first_inspect_ms = -1
 	miss_click_count = 0
+	selected_before_submit = false
+	selection_changes_count = 0
+	confirm_submit_used = false
+	submit_via_double_click = false
+	inspect_via_long_press_count = 0
+	inspect_via_button_count = 0
+	invalid_tap_count = 0
+	invalid_header_tap_count = 0
+	invalid_cell_tap_count = 0
+	invalid_row_tap_count = 0
+	tap_on_non_answerable_area_count = 0
+	tap_cancelled_by_scroll_count = 0
+	selected_target_changed_before_submit = false
+	answered_after_inspection = false
+	inspected_same_target_before_submit = false
+	submit_latency_after_selection_ms = -1
+	mobile_layout_used = current_layout_mode == LAYOUT_MOBILE
+	tutorial_shown = false
+	tutorial_dismissed = false
+	tutorial_completed = false
 	row_item_by_id.clear()
 	col_index_by_id.clear()
 	col_id_by_index.clear()
 	row_data_by_id.clear()
+	inspected_target_signatures.clear()
+	selected_target.clear()
+	selected_clicked_kind = ""
+	selected_row_id = ""
+	selected_col_id = ""
+	selected_signature = ""
+	selected_target_ts = -1
+	trial_state = TrialState.IDLE
 	_press_active = false
 	_press_moved = false
 	_press_hit.clear()
 	_set_tree_locked(false)
+	_clear_selection_visual()
+	if is_instance_valid(tutorial_overlay):
+		tutorial_overlay.visible = false
 
 	_render_case()
 
@@ -221,14 +347,45 @@ func _render_case() -> void:
 	explain_line.bbcode_enabled = false
 	explain_line.text = ""
 	inspect_label.bbcode_enabled = false
-	inspect_label.text = _tr("da7.a.ui.inspect_hint", "Long-press a row or cell to inspect.")
+	_set_idle_inspect_hint()
 	scan_label.text = _tr("da7.a.ui.scan", "SCAN: {count}", {"count": 0})
+	status_label.text = ""
 	options_grid.visible = false
 	for child in options_grid.get_children():
 		child.queue_free()
+	_update_selection_ui()
+	_update_inspect_mode_label()
 
 	_render_table(current_case.get("table", {}) as Dictionary)
-	call_deferred("_update_silent_reading_possible_flag")
+	call_deferred("_post_render_setup")
+
+func _post_render_setup() -> void:
+	_update_silent_reading_possible_flag()
+	_show_tutorial_once_if_needed()
+
+func _show_tutorial_once_if_needed() -> void:
+	if tutorial_seen_once:
+		return
+	if not is_instance_valid(tutorial_overlay):
+		return
+	tutorial_seen_once = true
+	tutorial_shown = true
+	tutorial_dismissed = false
+	tutorial_completed = false
+	tutorial_overlay.visible = true
+
+func _on_tutorial_close_pressed() -> void:
+	_dismiss_tutorial(true)
+
+func _dismiss_tutorial(dismissed_by_user: bool) -> void:
+	if not is_instance_valid(tutorial_overlay):
+		return
+	if not tutorial_overlay.visible:
+		return
+	tutorial_overlay.visible = false
+	tutorial_completed = true
+	if dismissed_by_user:
+		tutorial_dismissed = true
 
 func _render_table(table_def: Dictionary) -> void:
 	data_tree.clear()
@@ -288,6 +445,7 @@ func _render_table(table_def: Dictionary) -> void:
 		scanner_overlay.call("clear_highlight")
 	if is_instance_valid(scanner_overlay) and scanner_overlay.has_method("clear_cursor"):
 		scanner_overlay.call("clear_cursor")
+	_clear_selection_visual()
 
 func _on_data_tree_gui_input(event: InputEvent) -> void:
 	if trial_locked:
@@ -323,11 +481,16 @@ func _on_data_tree_gui_input(event: InputEvent) -> void:
 			return
 		var hold_ms := Time.get_ticks_msec() - _press_start_ms
 		var release_hit: Dictionary = _resolve_hit_data(mouse_event.position)
+		var moved := _press_moved
+		var is_double_click := mouse_event.double_click
 		_press_active = false
-		if hold_ms >= LONG_PRESS_MS and not _press_moved:
+		if moved:
+			_handle_invalid_interaction("tap_cancelled_by_scroll", "", "", "")
+			return
+		if hold_ms >= LONG_PRESS_MS:
 			_handle_long_press(release_hit if not release_hit.is_empty() else _press_hit)
 		else:
-			_handle_tree_click(release_hit)
+			_handle_tree_click(release_hit, is_double_click)
 		return
 	if event is InputEventScreenTouch:
 		var touch: InputEventScreenTouch = event
@@ -342,11 +505,15 @@ func _on_data_tree_gui_input(event: InputEvent) -> void:
 				return
 			var touch_hold_ms := Time.get_ticks_msec() - _press_start_ms
 			var touch_hit: Dictionary = _resolve_hit_data(touch.position)
+			var touch_moved := _press_moved
 			_press_active = false
-			if touch_hold_ms >= LONG_PRESS_MS and not _press_moved:
+			if touch_moved:
+				_handle_invalid_interaction("tap_cancelled_by_scroll", "", "", "")
+				return
+			if touch_hold_ms >= LONG_PRESS_MS:
 				_handle_long_press(touch_hit if not touch_hit.is_empty() else _press_hit)
 			else:
-				_handle_tree_click(touch_hit)
+				_handle_tree_click(touch_hit, false)
 
 func _on_column_title_clicked(column: int, mouse_button_index: int = MOUSE_BUTTON_LEFT) -> void:
 	if trial_locked:
@@ -356,14 +523,18 @@ func _on_column_title_clicked(column: int, mouse_button_index: int = MOUSE_BUTTO
 	_register_first_action()
 	var col_id := str(col_id_by_index.get(column, ""))
 	if col_id.is_empty():
-		miss_click_count += 1
+		_handle_invalid_interaction("invalid_target", "HEADER", HEADER_ROW_ID, "")
 		return
-	var target := _find_target("COLUMN_HEADER", "header", col_id)
+	var header_hit := _build_header_hit(column, col_id)
+	if trial_state == TrialState.INSPECT_MODE:
+		_handle_inspect_request(header_hit, "button")
+		_restore_state_after_inspect_mode()
+		return
+	var target := _find_target("COLUMN_HEADER", HEADER_ROW_ID, col_id)
 	if target.is_empty():
-		miss_click_count += 1
+		_handle_invalid_interaction("invalid_target", "HEADER", HEADER_ROW_ID, col_id)
 		return
-	answered_without_inspection = inspect_count == 0
-	_submit_target(target, "COLUMN_HEADER", "header", col_id)
+	_handle_target_select(target, "COLUMN_HEADER", HEADER_ROW_ID, col_id, header_hit)
 
 func _update_scanner_hover(local_pos: Vector2) -> void:
 	if not is_instance_valid(scanner_overlay):
@@ -381,35 +552,215 @@ func _update_scanner_hover(local_pos: Vector2) -> void:
 		scanner_overlay.call("set_highlight_rect", _tree_rect_to_overlay(rect))
 
 func _handle_long_press(hit: Dictionary) -> void:
-	if hit.is_empty():
+	_handle_inspect_request(hit, "long_press")
+
+func _on_inspect_button_pressed() -> void:
+	if trial_locked:
 		return
 	_register_first_action()
+	if trial_state == TrialState.INSPECT_MODE:
+		_restore_state_after_inspect_mode()
+		status_label.text = _tr("archive_a.inspect_mode_off", "Inspect mode: OFF")
+		return
+	trial_state = TrialState.INSPECT_MODE
+	_update_inspect_mode_label()
+	status_label.text = _tr("archive_a.inspect_mode_on", "Inspect mode: ON. Tap a target to inspect.")
+	_play_sound("click", sfx_click)
+
+func _on_confirm_answer_pressed() -> void:
+	_submit_selected_target(true, false)
+
+func _handle_tree_click(hit: Dictionary, is_double_click: bool = false) -> void:
+	_register_first_action()
+	if hit.is_empty():
+		_handle_invalid_interaction("non_answerable_area", "", "", "")
+		return
+	if trial_state == TrialState.INSPECT_MODE:
+		_handle_inspect_request(hit, "button")
+		_restore_state_after_inspect_mode()
+		return
+
+	var target_pick := _resolve_target_from_hit(hit)
+	if target_pick.is_empty():
+		_handle_invalid_interaction("invalid_target", _infer_invalid_zone_for_tree_tap(), str(hit.get("row_id", "")), str(hit.get("col_id", "")))
+		return
+
+	var target: Dictionary = target_pick.get("target", {}) as Dictionary
+	var clicked_kind := str(target_pick.get("clicked_kind", "CELL"))
+	var row_id := str(target_pick.get("row_id", ""))
+	var col_id := str(target_pick.get("col_id", ""))
+	var candidate_signature := _build_target_signature(clicked_kind, row_id, col_id)
+	var was_already_selected := (selected_signature == candidate_signature and not selected_signature.is_empty())
+	_handle_target_select(target, clicked_kind, row_id, col_id, hit)
+	if is_double_click and was_already_selected:
+		_submit_selected_target(false, true)
+
+func _resolve_target_from_hit(hit: Dictionary) -> Dictionary:
 	var row_id := str(hit.get("row_id", ""))
 	var col_id := str(hit.get("col_id", ""))
+	var cell_target := _find_target("CELL", row_id, col_id)
+	if not cell_target.is_empty():
+		return {
+			"target": cell_target,
+			"clicked_kind": "CELL",
+			"row_id": row_id,
+			"col_id": col_id
+		}
+	var row_target := _find_target("ROW", row_id, "")
+	if not row_target.is_empty():
+		return {
+			"target": row_target,
+			"clicked_kind": "ROW",
+			"row_id": row_id,
+			"col_id": ""
+		}
+	return {}
+
+func _handle_inspect_request(hit: Dictionary, source: String) -> void:
+	_register_first_action()
+	if hit.is_empty():
+		_handle_invalid_interaction("non_answerable_area", "", "", "")
+		return
+	var row_id := str(hit.get("row_id", ""))
+	var col_id := str(hit.get("col_id", ""))
+	var kind := str(hit.get("kind", "CELL")).to_upper()
+	if kind.is_empty():
+		kind = "CELL"
+	if source == "long_press":
+		inspect_via_long_press_count += 1
+	else:
+		inspect_via_button_count += 1
 	_register_inspection(row_id)
-	inspect_label.text = _build_inspect_line(row_id, col_id)
+	inspected_target_signatures[_build_target_signature(kind, row_id, col_id)] = true
+	inspect_label.text = _build_inspect_text(kind, row_id, col_id)
 	_play_sound("click", sfx_click)
 	if is_instance_valid(scanner_overlay) and scanner_overlay.has_method("pulse"):
 		scanner_overlay.call("pulse", hit.get("overlay_center", Vector2.ZERO))
+	if is_instance_valid(scanner_overlay) and scanner_overlay.has_method("set_highlight_rect") and hit.has("rect"):
+		var hit_rect: Rect2 = hit.get("rect", Rect2())
+		scanner_overlay.call("set_highlight_rect", _tree_rect_to_overlay(hit_rect))
 
-func _handle_tree_click(hit: Dictionary) -> void:
+func _build_inspect_text(kind: String, row_id: String, col_id: String) -> String:
+	if kind == "COLUMN_HEADER":
+		return _build_column_inspect_line(col_id)
+	return _build_inspect_line(row_id, col_id)
+
+func _build_column_inspect_line(col_id: String) -> String:
+	if col_id.is_empty():
+		return _tr("da7.a.ui.inspect_missing", "INSPECT: row={row} col={col}", {"row": HEADER_ROW_ID, "col": col_id})
+	var title := _get_column_title(col_id)
+	var samples: Array[String] = []
+	for row_id_v in row_data_by_id.keys():
+		var row_id := str(row_id_v)
+		var row_data: Dictionary = row_data_by_id.get(row_id, {}) as Dictionary
+		var cells: Dictionary = row_data.get("cells", {}) as Dictionary
+		samples.append(str(cells.get(col_id, "")))
+		if samples.size() >= 3:
+			break
+	return "INSPECT COLUMN %s: %s" % [title, ", ".join(samples)]
+
+func _handle_target_select(target: Dictionary, clicked_kind: String, row_id: String, col_id: String, hit: Dictionary) -> void:
+	if trial_locked:
+		return
+	var new_signature := _build_target_signature(clicked_kind, row_id, col_id)
+	if not selected_signature.is_empty() and selected_signature != new_signature:
+		selection_changes_count += 1
+		selected_target_changed_before_submit = true
+	selected_target = target.duplicate(true)
+	selected_clicked_kind = clicked_kind
+	selected_row_id = row_id
+	selected_col_id = col_id
+	selected_signature = new_signature
+	selected_target_ts = Time.get_ticks_msec()
+	_update_selection_visual(clicked_kind, row_id, col_id, hit)
+	_update_selection_ui()
+	trial_state = TrialState.TARGET_SELECTED
+	_update_inspect_mode_label()
+	status_label.text = _tr("archive_a.status.selected", "Target selected. Press Confirm Answer.")
+	if is_instance_valid(scanner_overlay) and scanner_overlay.has_method("pulse"):
+		scanner_overlay.call("pulse", hit.get("overlay_center", Vector2.ZERO))
+	_play_sound("click", sfx_click)
+
+func _submit_selected_target(submit_from_confirm: bool, submit_from_double_click: bool) -> void:
+	if trial_locked:
+		return
+	if selected_target.is_empty():
+		_handle_invalid_interaction("invalid_target", "", "", "")
+		return
+	selected_before_submit = true
+	confirm_submit_used = submit_from_confirm
+	submit_via_double_click = submit_from_double_click
+	if selected_target_ts > 0:
+		submit_latency_after_selection_ms = maxi(0, Time.get_ticks_msec() - selected_target_ts)
+	else:
+		submit_latency_after_selection_ms = -1
+	answered_without_inspection = _compute_answered_without_inspection()
+	answered_after_inspection = not answered_without_inspection
+	inspected_same_target_before_submit = inspected_target_signatures.has(selected_signature)
+	mobile_layout_used = current_layout_mode == LAYOUT_MOBILE
+	_submit_target(selected_target, selected_clicked_kind, selected_row_id, selected_col_id)
+
+func _handle_invalid_interaction(reason: String, zone: String, _row_id: String, _col_id: String) -> void:
 	_register_first_action()
-	if hit.is_empty():
-		miss_click_count += 1
+	var toast := _tr("archive_a.toast.invalid_target", "This is not an answer target.")
+	match reason:
+		"invalid_target":
+			invalid_tap_count += 1
+			match zone:
+				"HEADER":
+					invalid_header_tap_count += 1
+				"ROW":
+					invalid_row_tap_count += 1
+				"CELL":
+					invalid_cell_tap_count += 1
+		"non_answerable_area":
+			tap_on_non_answerable_area_count += 1
+		"tap_cancelled_by_scroll":
+			tap_cancelled_by_scroll_count += 1
+			toast = _tr("archive_a.toast.scroll_cancel", "Tap canceled by scroll.")
+		_:
+			invalid_tap_count += 1
+	_recompute_miss_click_count()
+	var expected_kind := _expected_kind_label()
+	status_label.text = "%s %s" % [toast, _tr("archive_a.toast.try_inspect", "Try Inspect. This case expects {kind}.", {"kind": expected_kind})]
+	_play_sound("error", sfx_error)
+
+func _expected_kind_label() -> String:
+	var kind := _correct_target_kind()
+	match kind:
+		"ROW":
+			return _tr("archive_a.kind.row", "row")
+		"CELL":
+			return _tr("archive_a.kind.cell", "cell")
+		"COLUMN_HEADER":
+			return _tr("archive_a.kind.column", "column")
+	return _tr("archive_a.kind.target", "target")
+
+func _correct_target_kind() -> String:
+	var targets: Array = current_case.get("targets", []) as Array
+	for target_v in targets:
+		if typeof(target_v) != TYPE_DICTIONARY:
+			continue
+		var target: Dictionary = target_v as Dictionary
+		if bool(target.get("is_correct", false)):
+			return str(target.get("kind", ""))
+	return ""
+
+func _infer_invalid_zone_for_tree_tap() -> String:
+	var kind := _correct_target_kind()
+	if kind == "ROW":
+		return "ROW"
+	return "CELL"
+
+func _restore_state_after_inspect_mode() -> void:
+	if trial_state != TrialState.INSPECT_MODE:
 		return
-	var row_id := str(hit.get("row_id", ""))
-	var col_id := str(hit.get("col_id", ""))
-	var target := _find_target("CELL", row_id, col_id)
-	if target.is_empty():
-		target = _find_target("ROW", row_id, "")
-	if target.is_empty():
-		miss_click_count += 1
-		_register_inspection(row_id)
-		inspect_label.text = _build_inspect_line(row_id, col_id)
-		_play_sound("click", sfx_click)
-		return
-	answered_without_inspection = inspect_count == 0
-	_submit_target(target, str(target.get("kind", "CELL")), row_id, col_id)
+	if selected_target.is_empty():
+		trial_state = TrialState.IDLE
+	else:
+		trial_state = TrialState.TARGET_SELECTED
+	_update_inspect_mode_label()
+	status_label.text = _tr("archive_a.inspect_mode_off", "Inspect mode: OFF")
 
 func _resolve_hit_data(local_pos: Vector2) -> Dictionary:
 	var item: TreeItem = data_tree.get_item_at_position(local_pos)
@@ -422,9 +773,24 @@ func _resolve_hit_data(local_pos: Vector2) -> Dictionary:
 	var row_id := str(item.get_metadata(0))
 	var col_id := str(col_id_by_index.get(col_idx, ""))
 	return {
+		"kind": "CELL",
 		"item": item,
 		"row_id": row_id,
 		"col_idx": col_idx,
+		"col_id": col_id,
+		"rect": rect,
+		"overlay_center": _tree_local_to_overlay(rect.get_center())
+	}
+
+func _build_header_hit(column: int, col_id: String) -> Dictionary:
+	var rect := _build_column_rect(column)
+	if rect.size != Vector2.ZERO:
+		rect.position.y = maxf(0.0, rect.position.y - 24.0)
+		rect.size.y += 24.0
+	return {
+		"kind": "COLUMN_HEADER",
+		"row_id": HEADER_ROW_ID,
+		"col_idx": column,
 		"col_id": col_id,
 		"rect": rect,
 		"overlay_center": _tree_local_to_overlay(rect.get_center())
@@ -457,7 +823,10 @@ func _submit_target(target: Dictionary, clicked_kind: String, row_id: String, co
 	if trial_locked:
 		return
 	trial_locked = true
+	trial_state = TrialState.ANSWER_LOCKED
+	_update_inspect_mode_label()
 	_set_tree_locked(true)
+	_dismiss_tutorial(false)
 
 	var is_correct := bool(target.get("is_correct", false))
 	var f_reason: Variant = null
@@ -473,7 +842,10 @@ func _submit_target(target: Dictionary, clicked_kind: String, row_id: String, co
 	if is_instance_valid(result_stamp) and result_stamp.has_method("show_result"):
 		result_stamp.call("show_result", is_correct)
 	if is_instance_valid(scanner_overlay) and scanner_overlay.has_method("pulse"):
-		scanner_overlay.call("pulse", _tree_local_to_overlay(_press_start_pos))
+		var pulse_point := _tree_local_to_overlay(_press_start_pos)
+		if selected_signature != "":
+			pulse_point = _selection_overlay_center()
+		scanner_overlay.call("pulse", pulse_point)
 
 	_log_trial(is_correct, f_reason, target, clicked_kind, row_id, col_id)
 	_update_stability_ui()
@@ -486,6 +858,8 @@ func _submit_target(target: Dictionary, clicked_kind: String, row_id: String, co
 		return
 	if current_case_index >= session_cases.size():
 		return
+	trial_state = TrialState.CASE_RESOLVED
+	_update_inspect_mode_label()
 	if GlobalMetrics.stability <= 0.0:
 		_game_over()
 	else:
@@ -541,6 +915,119 @@ func _highlight_cell(item: TreeItem, col_idx: int, bg: Color, fg: Color) -> void
 func _set_tree_locked(locked: bool) -> void:
 	data_tree.mouse_filter = Control.MOUSE_FILTER_IGNORE if locked else Control.MOUSE_FILTER_STOP
 
+func _update_inspect_mode_label() -> void:
+	if not is_instance_valid(inspect_mode_label):
+		return
+	if trial_state == TrialState.INSPECT_MODE:
+		inspect_mode_label.text = _tr("archive_a.inspect_mode_on", "Inspect mode: ON. Tap a target to inspect.")
+	else:
+		inspect_mode_label.text = _tr("archive_a.inspect_mode_off", "Inspect mode: OFF")
+
+func _update_selection_ui() -> void:
+	if not is_instance_valid(selected_label):
+		return
+	if selected_target.is_empty():
+		selected_label.text = _tr("archive_a.selected.none", "No target selected.")
+		if is_instance_valid(btn_confirm_answer):
+			btn_confirm_answer.disabled = true
+		return
+	var row_title := selected_row_id
+	var col_title := _get_column_title(selected_col_id)
+	match selected_clicked_kind:
+		"ROW":
+			selected_label.text = _tr("archive_a.selected.row", "Selected: row {row_id}", {"row_id": row_title})
+		"COLUMN_HEADER":
+			selected_label.text = _tr("archive_a.selected.column", "Selected: column {col_id}", {"col_id": col_title})
+		_:
+			selected_label.text = _tr("archive_a.selected.cell", "Selected: cell {col_id} / row {row_id}",
+				{"col_id": col_title, "row_id": row_title})
+	if is_instance_valid(btn_confirm_answer):
+		btn_confirm_answer.disabled = false
+
+func _update_selection_visual(clicked_kind: String, row_id: String, _col_id: String, hit: Dictionary) -> void:
+	if not is_instance_valid(scanner_overlay) or not scanner_overlay.has_method("set_selection_rect"):
+		return
+	var rect := Rect2()
+	match clicked_kind:
+		"ROW":
+			var row_item: TreeItem = row_item_by_id.get(row_id, null) as TreeItem
+			rect = _build_row_rect(row_item)
+		"COLUMN_HEADER":
+			var col_idx := int(hit.get("col_idx", -1))
+			rect = _build_column_rect(col_idx)
+		_:
+			rect = hit.get("rect", Rect2())
+	if rect.size == Vector2.ZERO:
+		scanner_overlay.call("clear_selection")
+		return
+	scanner_overlay.call("set_selection_rect", _tree_rect_to_overlay(rect))
+
+func _build_row_rect(item: TreeItem) -> Rect2:
+	if item == null:
+		return Rect2()
+	var union_rect := Rect2()
+	var has_any := false
+	for col_idx in range(data_tree.columns):
+		var rect := data_tree.get_item_area_rect(item, col_idx)
+		if rect.size == Vector2.ZERO:
+			continue
+		if not has_any:
+			union_rect = rect
+			has_any = true
+		else:
+			union_rect = union_rect.merge(rect)
+	return union_rect if has_any else Rect2()
+
+func _build_column_rect(col_idx: int) -> Rect2:
+	if col_idx < 0:
+		return Rect2()
+	var union_rect := Rect2()
+	var has_any := false
+	for row_id_v in row_item_by_id.keys():
+		var item: TreeItem = row_item_by_id[row_id_v] as TreeItem
+		if item == null:
+			continue
+		var rect := data_tree.get_item_area_rect(item, col_idx)
+		if rect.size == Vector2.ZERO:
+			continue
+		if not has_any:
+			union_rect = rect
+			has_any = true
+		else:
+			union_rect = union_rect.merge(rect)
+	return union_rect if has_any else Rect2()
+func _selection_overlay_center() -> Vector2:
+	var center := _tree_local_to_overlay(_press_start_pos)
+	if selected_target.is_empty():
+		return center
+	var rect := Rect2()
+	match selected_clicked_kind:
+		"ROW":
+			rect = _build_row_rect(row_item_by_id.get(selected_row_id, null) as TreeItem)
+		"COLUMN_HEADER":
+			var col_idx := int(col_index_by_id.get(selected_col_id, -1))
+			rect = _build_column_rect(col_idx)
+		_:
+			var item: TreeItem = row_item_by_id.get(selected_row_id, null) as TreeItem
+			var col_idx := int(col_index_by_id.get(selected_col_id, -1))
+			if item != null and col_idx >= 0:
+				rect = data_tree.get_item_area_rect(item, col_idx)
+	if rect.size == Vector2.ZERO:
+		return center
+	return _tree_local_to_overlay(rect.get_center())
+
+func _clear_selection_visual() -> void:
+	if is_instance_valid(scanner_overlay) and scanner_overlay.has_method("clear_selection"):
+		scanner_overlay.call("clear_selection")
+
+func _get_column_title(col_id: String) -> String:
+	if col_id.is_empty():
+		return ""
+	if not col_index_by_id.has(col_id):
+		return col_id
+	var col_idx := int(col_index_by_id[col_id])
+	return data_tree.get_column_title(col_idx)
+
 func _register_first_action() -> void:
 	if first_action_ts < 0:
 		first_action_ts = Time.get_ticks_msec()
@@ -549,7 +1036,7 @@ func _register_inspection(row_id: String) -> void:
 	inspect_count += 1
 	if time_to_first_inspect_ms < 0:
 		time_to_first_inspect_ms = Time.get_ticks_msec() - case_started_ts
-	if not row_id.is_empty():
+	if not row_id.is_empty() and row_id != HEADER_ROW_ID:
 		unique_rows_inspected[row_id] = true
 		last_inspected_row_id = row_id
 	scan_label.text = _tr("da7.a.ui.scan", "SCAN: {count}", {"count": inspect_count})
@@ -568,7 +1055,16 @@ func _build_inspect_line(row_id: String, col_id: String) -> String:
 		var col_def: Dictionary = col_v as Dictionary
 		var id := str(col_def.get("col_id", ""))
 		parts.append("%s=%s" % [str(col_def.get("title", id)), str(cells.get(id, ""))])
-	return "Осмотрите %s [%s]: %s" % [row_id, col_id, " | ".join(parts)]
+	return "INSPECT %s [%s]: %s" % [row_id, col_id, " | ".join(parts)]
+
+func _compute_answered_without_inspection() -> bool:
+	return inspect_count == 0 and inspect_via_button_count == 0 and inspect_via_long_press_count == 0
+
+func _build_target_signature(kind: String, row_id: String, col_id: String) -> String:
+	return "%s|%s|%s" % [kind, row_id, col_id]
+
+func _recompute_miss_click_count() -> void:
+	miss_click_count = invalid_tap_count + tap_on_non_answerable_area_count + tap_cancelled_by_scroll_count
 
 func _log_trial(is_correct: bool, f_reason: Variant, target: Dictionary, clicked_kind: String, row_id: String, col_id: String) -> void:
 	var now_ms := Time.get_ticks_msec()
@@ -619,11 +1115,32 @@ func _log_trial(is_correct: bool, f_reason: Variant, target: Dictionary, clicked
 			"answered_without_inspection": answered_without_inspection,
 			"clicked_target_kind": clicked_kind,
 			"miss_click_count": miss_click_count,
-			"last_inspected_row_id": last_inspected_row_id
+			"last_inspected_row_id": last_inspected_row_id,
+			"selected_before_submit": selected_before_submit,
+			"selection_changes_count": selection_changes_count,
+			"confirm_submit_used": confirm_submit_used,
+			"submit_via_double_click": submit_via_double_click,
+			"inspect_via_long_press_count": inspect_via_long_press_count,
+			"inspect_via_button_count": inspect_via_button_count,
+			"invalid_tap_count": invalid_tap_count,
+			"invalid_header_tap_count": invalid_header_tap_count,
+			"invalid_cell_tap_count": invalid_cell_tap_count,
+			"invalid_row_tap_count": invalid_row_tap_count,
+			"tap_on_non_answerable_area_count": tap_on_non_answerable_area_count,
+			"tap_cancelled_by_scroll_count": tap_cancelled_by_scroll_count,
+			"tutorial_shown": tutorial_shown,
+			"tutorial_dismissed": tutorial_dismissed,
+			"tutorial_completed": tutorial_completed,
+			"mobile_layout_used": mobile_layout_used,
+			"table_width_overflow": table_width_overflow,
+			"selected_target_kind": clicked_kind,
+			"selected_target_changed_before_submit": selected_target_changed_before_submit,
+			"answered_after_inspection": answered_after_inspection,
+			"inspected_same_target_before_submit": inspected_same_target_before_submit,
+			"submit_latency_after_selection_ms": submit_latency_after_selection_ms
 		}
 	}
 	GlobalMetrics.register_trial(payload)
-
 func _tree_local_to_overlay(tree_local: Vector2) -> Vector2:
 	if not is_instance_valid(scanner_overlay):
 		return tree_local
@@ -641,6 +1158,7 @@ func _tree_rect_to_overlay(tree_rect: Rect2) -> Rect2:
 
 func _update_silent_reading_possible_flag() -> void:
 	table_has_scroll = _tree_has_vertical_scroll(data_tree)
+	table_width_overflow = _tree_has_horizontal_scroll(data_tree)
 
 func _tree_has_vertical_scroll(tree: Tree) -> bool:
 	if not is_instance_valid(tree):
@@ -650,6 +1168,19 @@ func _tree_has_vertical_scroll(tree: Tree) -> bool:
 		var node: Node = stack.pop_back() as Node
 		if node is VScrollBar:
 			var bar: VScrollBar = node as VScrollBar
+			return bar.max_value > 0.0 and bar.page < bar.max_value
+		for child in node.get_children():
+			stack.append(child)
+	return false
+
+func _tree_has_horizontal_scroll(tree: Tree) -> bool:
+	if not is_instance_valid(tree):
+		return false
+	var stack: Array = [tree]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back() as Node
+		if node is HScrollBar:
+			var bar: HScrollBar = node as HScrollBar
 			return bar.max_value > 0.0 and bar.page < bar.max_value
 		for child in node.get_children():
 			stack.append(child)
@@ -666,6 +1197,8 @@ func _on_scroll_input(event: InputEvent) -> void:
 func _finish_session() -> void:
 	_bump_transition_token()
 	trial_locked = true
+	trial_state = TrialState.CASE_RESOLVED
+	_update_inspect_mode_label()
 	_set_tree_locked(true)
 	title_label.text = _tr("da7.a.ui.title_complete", "DATA ARCHIVE // SESSION COMPLETE [A]")
 	prompt_label.bbcode_enabled = true
@@ -676,6 +1209,8 @@ func _finish_session() -> void:
 func _game_over() -> void:
 	_bump_transition_token()
 	trial_locked = true
+	trial_state = TrialState.CASE_RESOLVED
+	_update_inspect_mode_label()
 	_set_tree_locked(true)
 	title_label.text = _tr("da7.a.ui.title_locked", "DATA ARCHIVE // SYSTEM LOCK [A]")
 	prompt_label.bbcode_enabled = true
@@ -699,6 +1234,8 @@ func _show_fatal(text: String) -> void:
 	prompt_label.bbcode_enabled = false
 	prompt_label.text = text
 	trial_locked = true
+	trial_state = TrialState.CASE_RESOLVED
+	_update_inspect_mode_label()
 	_set_tree_locked(true)
 
 func _play_sound(sound_name: String, fallback: AudioStreamPlayer) -> void:
@@ -721,10 +1258,11 @@ func _update_stability_ui() -> void:
 		stability_bar.value = GlobalMetrics.stability
 	if is_instance_valid(stability_label):
 		stability_label.text = _tr("da7.common.stability", "STABILITY: {value}%", {"value": int(GlobalMetrics.stability)})
-
 func _on_viewport_size_changed() -> void:
 	var viewport_size := get_viewport_rect().size
 	var is_mobile := viewport_size.x < BREAKPOINT_PX
+	current_layout_mode = LAYOUT_MOBILE if is_mobile else LAYOUT_DESKTOP
+	mobile_layout_used = is_mobile
 	desktop_layout.split_offset = int(viewport_size.x * 0.48)
 
 	if is_mobile:
@@ -736,6 +1274,9 @@ func _on_viewport_size_changed() -> void:
 		mobile_layout.move_child(task_section, 1)
 		mobile_layout.visible = true
 		desktop_layout.visible = false
+		data_tree.custom_minimum_size = Vector2(0, 360)
+		data_tree.add_theme_constant_override("v_separation", 7)
+		data_tree.add_theme_font_size_override("font_size", 18)
 	else:
 		if table_section.get_parent() != desktop_layout:
 			table_section.reparent(desktop_layout)
@@ -745,6 +1286,10 @@ func _on_viewport_size_changed() -> void:
 		desktop_layout.move_child(task_section, 1)
 		desktop_layout.visible = true
 		mobile_layout.visible = false
+		data_tree.custom_minimum_size = Vector2.ZERO
+		data_tree.add_theme_constant_override("v_separation", 4)
+		data_tree.add_theme_font_size_override("font_size", 16)
+	call_deferred("_update_silent_reading_possible_flag")
 
 func _bump_transition_token() -> void:
 	_transition_token += 1

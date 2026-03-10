@@ -1,6 +1,8 @@
 extends Control
 
 const THEME_NOIR: Theme = preload("res://ui/theme_noir_detective.tres")
+const THEME_GREEN: Theme = preload("res://ui/theme_terminal_green.tres")
+const THEME_AMBER: Theme = preload("res://ui/theme_terminal_amber.tres")
 const ERROR_MAP = preload("res://scripts/ssot/network_trace_errors.gd")
 
 const DATA_PATHS: Dictionary = {
@@ -86,6 +88,8 @@ var hint_used := false
 var level_finished := false
 var last_error_code := ""
 var current_layout := "landscape"
+var topology_board: Node = null
+var analyze_used := false
 
 func _ready() -> void:
 	
@@ -107,6 +111,9 @@ func _ready() -> void:
 	if not _load_levels_for_complexity(complexity_name):
 		_show_boot_error("Данные уровней недоступны для сложности %s." % complexity_name)
 		return
+
+	if complexity_name == "A":
+		_setup_optional_topology_board()
 
 	_load_level(0)
 
@@ -174,6 +181,17 @@ func _connect_runtime_signals() -> void:
 
 	for idx in range(action_buttons.size()):
 		action_buttons[idx].pressed.connect(_on_action_pressed.bind(idx))
+
+func _setup_optional_topology_board() -> void:
+	topology_board = get_node_or_null("MainMargin/MainLayout/BodyLandscape/TerminalPane/TopologyBoard")
+	if topology_board == null:
+		for node in get_tree().get_nodes_in_group("topology_board"):
+			topology_board = node
+			break
+	if topology_board != null and topology_board.has_signal("device_installed"):
+		var callback := Callable(self, "_on_topology_device_installed")
+		if not topology_board.is_connected("device_installed", callback):
+			topology_board.connect("device_installed", callback)
 
 func _load_levels_for_complexity(level_key: String) -> bool:
 	var path: String = str(DATA_PATHS[level_key])
@@ -275,12 +293,15 @@ func _show_boot_error(message: String) -> void:
 	btn_next.disabled = true
 	timer_running = false
 
+
+
 func _load_level(index: int) -> void:
 	if levels.is_empty():
 		return
 
 	if index >= levels.size():
-		index = 0
+		_show_session_summary()
+		return
 	current_level_index = index
 	current_level = (levels[index] as Dictionary).duplicate(true)
 	variant_hash = str(hash(_build_variant_key(current_level)))
@@ -290,6 +311,7 @@ func _load_level(index: int) -> void:
 	wrong_count = 0
 	safe_mode = false
 	hint_used = false
+	analyze_used = false
 	level_finished = false
 	last_error_code = ""
 	attempts = []
@@ -310,11 +332,12 @@ func _load_level(index: int) -> void:
 		"events": []
 	}
 
-	lbl_case.text = "СЕТЕВОЙ СЛЕД | %s" % complexity_name
-	lbl_session.text = "СЕСС %04d" % (randi() % 10000)
-	lbl_attempts.text = "ОШ 0/%d" % MAX_ATTEMPTS
+	lbl_case.text = "\u0421\u0415\u0422\u0415\u0412\u041e\u0419 \u0421\u041b\u0415\u0414 | %s" % complexity_name
+	lbl_session.text = "\u0414\u0415\u041b\u041e %04d" % (randi() % 10000)
+	lbl_attempts.text = "\u041e\u0428 0/%d" % MAX_ATTEMPTS
 	btn_next.visible = false
 	btn_next.disabled = false
+	btn_next.text = "\u0414\u0410\u041b\u0415\u0415"
 	btn_analyze.disabled = true
 	btn_hint.disabled = false
 	diagnostics_panel.visible = false
@@ -328,9 +351,15 @@ func _load_level(index: int) -> void:
 	_update_stability_bar()
 	_render_terminal_content()
 	_setup_option_buttons()
+	if topology_board != null and topology_board.has_method("setup_topology"):
+		var topology_data: Variant = current_level.get("topology", {})
+		if typeof(topology_data) == TYPE_DICTIONARY:
+			topology_board.call("setup_topology", topology_data)
+			if topology_board.has_method("set_tools_locked"):
+				topology_board.call("set_tools_locked", false)
 	_set_option_buttons_enabled(true)
 
-	lbl_status.text = "Выберите действие." 
+	lbl_status.text = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u043e."
 	lbl_status.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
 	state = QuestState.SOLVING
@@ -340,35 +369,128 @@ func _load_level(index: int) -> void:
 	})
 
 func _render_terminal_content() -> void:
-	var briefing: String = str(current_level.get("briefing", ""))
-	var prompt: String = str(current_level.get("prompt", ""))
-	var explain_short: String = str(current_level.get("explain_short", ""))
+	var briefing: String = _tr_level("briefing")
+	var prompt: String = _tr_level("prompt")
 	var tags_arr: Array = current_level.get("tags", [])
-	var tag_line := ""
+	var tag_line: String = ""
 	if not tags_arr.is_empty():
-		tag_line = "\n[color=#6f8f6f]ТЕГИ:[/color] %s" % ", ".join(_stringify_array(tags_arr))
+		tag_line = "\n[color=#6f8f6f]\u0422\u0415\u0413\u0418[/color] %s" % ", ".join(_stringify_array(tags_arr))
 
 	terminal_text.clear()
-	terminal_text.append_text("[color=#7a7a7a]ИНСТРУКТАЖ[/color]\n")
+	terminal_text.append_text("[color=#7a7a7a]\u041e\u0411\u042a\u0415\u041a\u0422\u0418\u0412[/color]\n")
 	terminal_text.append_text("%s\n\n" % briefing)
-	terminal_text.append_text("[color=#9de6b3]ЗАДАНИЕ[/color]\n")
+	terminal_text.append_text("[color=#9de6b3]\u0417\u0410\u0414\u0410\u041d\u0418\u0415[/color]\n")
 	terminal_text.append_text("%s\n" % prompt)
-	if not explain_short.is_empty():
-		terminal_text.append_text("\n[color=#a1a1a1]ПРИМЕЧАНИЕ[/color]\n%s\n" % explain_short)
+
+	if complexity_name == "A":
+		var pois_variant: Variant = current_level.get("pois", [])
+		if typeof(pois_variant) == TYPE_ARRAY:
+			var pois: Array = pois_variant
+			if not pois.is_empty():
+				terminal_text.append_text("\n[color=#7a7a7a]\u0416\u0423\u0420\u041d\u0410\u041b \u0421\u041e\u0411\u042b\u0422\u0418\u0419[/color]\n")
+				for poi_var in pois:
+					if typeof(poi_var) != TYPE_DICTIONARY:
+						continue
+					var poi: Dictionary = poi_var
+					var log_line: String = str(poi.get("log_line", ""))
+					if log_line.is_empty():
+						continue
+					var hint_layer: String = str(poi.get("hint_layer", ""))
+					var tag: String = str(poi.get("tag", ""))
+					var layer_color: String = "#ff9999"
+					if hint_layer == "L1":
+						layer_color = "#ffcc66"
+					elif hint_layer == "L2":
+						layer_color = "#66ccff"
+					elif hint_layer == "L3":
+						layer_color = "#66ff99"
+					terminal_text.append_text("[color=%s][%s][/color] %s [color=#6f6f6f][%s][/color]\n" % [
+						layer_color, hint_layer, log_line, tag
+					])
+
+	if complexity_name == "B":
+		var logs_variant: Variant = current_level.get("logs", [])
+		if typeof(logs_variant) == TYPE_ARRAY:
+			var logs: Array = logs_variant
+			if not logs.is_empty():
+				terminal_text.append_text("\n[color=#7a7a7a]\u041b\u041e\u0413\u0418 \u0421\u0418\u0421\u0422\u0415\u041c\u042b[/color]\n")
+				for log_line_var in logs:
+					terminal_text.append_text("> %s\n" % str(log_line_var))
+
+		var modules_variant: Variant = current_level.get("modules_pool", [])
+		if typeof(modules_variant) == TYPE_ARRAY:
+			var modules: Array = modules_variant
+			if not modules.is_empty():
+				terminal_text.append_text("\n[color=#7a7a7a]\u0414\u041e\u0421\u0422\u0423\u041f\u041d\u042b\u0415 \u041c\u041e\u0414\u0423\u041b\u0418[/color]\n")
+				for module_var in modules:
+					if typeof(module_var) != TYPE_DICTIONARY:
+						continue
+					var module: Dictionary = module_var
+					var display: String = str(module.get("display", ""))
+					var slot: String = str(module.get("slot_type", ""))
+					var is_trap: bool = bool(module.get("is_trap", false))
+					var meaning: String = str(module.get("meaning", ""))
+					var details: String = meaning if (not is_trap and not meaning.is_empty()) else "\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u0432\u0440\u0443\u0447\u043d\u0443\u044e."
+					var color: String = "#9de6b3" if not is_trap else "#e6c89d"
+					terminal_text.append_text("[color=%s][%s][/color] \u0441\u043b\u043e\u0442: %s - %s\n" % [color, display, slot, details])
+				terminal_text.append_text("\n[color=#6f8f6f]\u041a\u043e\u043d\u0432\u0435\u0439\u0435\u0440: payload -> [kilo] -> [bit] -> [time] -> [out][/color]\n")
+
+		var benchmark_variant: Variant = current_level.get("benchmark_lines", [])
+		if typeof(benchmark_variant) == TYPE_ARRAY:
+			var benchmark: Array = benchmark_variant
+			if not benchmark.is_empty():
+				terminal_text.append_text("\n[color=#7a7a7a]\u0424\u041e\u0420\u041c\u0423\u041b\u0410[/color]\n")
+				for line_var in benchmark:
+					terminal_text.append_text("%s\n" % str(line_var))
+
+		var metrics_variant: Variant = current_level.get("preview_metrics", {})
+		if typeof(metrics_variant) == TYPE_DICTIONARY:
+			var metrics: Dictionary = metrics_variant
+			if not metrics.is_empty():
+				terminal_text.append_text("\n[color=#7a7a7a]\u0421\u0418\u0421\u0422\u0415\u041c\u041d\u042b\u0419 \u041c\u041e\u041d\u0418\u0422\u041e\u0420[/color]\n")
+				terminal_text.append_text("CPU: %d%% | RAM: %d%% | FPS: %d\n" % [
+					int(metrics.get("cpu_load", 0)),
+					int(metrics.get("ram_usage", 0)),
+					int(metrics.get("fps", 0))
+				])
+
+	if complexity_name == "C":
+		var ip_last: int = int(current_level.get("ip_last", 0))
+		var mask_last: int = int(current_level.get("mask_last", 0))
+		var cidr: int = int(current_level.get("cidr", 24))
+		var step: int = int(current_level.get("step", 0))
+		var target_ip: String = str(current_level.get("target_ip", ""))
+		terminal_text.append_text("\n[color=#7a7a7a]\u0414\u0410\u041d\u041d\u042b\u0415 \u0414\u041b\u042f \u0420\u0410\u0421\u0427\u0401\u0422\u0410[/color]\n")
+		terminal_text.append_text("IP: %s\n" % target_ip)
+		terminal_text.append_text("CIDR: /%d\n" % cidr)
+		terminal_text.append_text("\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u043e\u043a\u0442\u0435\u0442 IP: %s (\u0434\u0432\u043e\u0438\u0447\u043d\u044b\u0439: %s)\n" % [str(ip_last), _to_binary_8bit(ip_last)])
+		terminal_text.append_text("\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u043e\u043a\u0442\u0435\u0442 \u043c\u0430\u0441\u043a\u0438: %s (\u0434\u0432\u043e\u0438\u0447\u043d\u044b\u0439: %s)\n" % [str(mask_last), _to_binary_8bit(mask_last)])
+		terminal_text.append_text("\u0428\u0430\u0433 \u0441\u0435\u0433\u043c\u0435\u043d\u0442\u0430: %d\n" % step)
+		terminal_text.append_text("\n[color=#6f8f6f]\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0430: ID \u0441\u0435\u0442\u0438 = IP_last AND mask_last[/color]\n")
+
+	if level_finished:
+		var explain_short: String = _tr_level("explain_short")
+		if not explain_short.is_empty():
+			terminal_text.append_text("\n[color=#a1a1a1]\u0420\u0410\u0417\u0411\u041e\u0420[/color]\n%s\n" % explain_short)
+
 	if not tag_line.is_empty():
 		terminal_text.append_text(tag_line)
 	terminal_scroll.scroll_vertical = 0
-
 func _setup_option_buttons() -> void:
 	ordered_options = _ordered_options_for_level(current_level)
+	for reset_btn in action_buttons:
+		reset_btn.remove_theme_color_override("font_color")
+		reset_btn.remove_theme_color_override("font_hover_color")
+
 	for idx in range(action_buttons.size()):
 		var btn: Button = action_buttons[idx]
 		if idx < ordered_options.size():
 			var option: Dictionary = ordered_options[idx]
+			var option_id: String = str(option.get("id", ""))
 			btn.visible = true
 			btn.disabled = false
-			btn.text = str(option.get("label", ""))
-			btn.set_meta("option_id", str(option.get("id", "")))
+			btn.text = _tr_level_option(option_id, str(option.get("label", "")))
+			btn.set_meta("option_id", option_id)
 			btn.set_meta("option_error", str(option.get("error_code", "")))
 		else:
 			btn.visible = false
@@ -399,6 +521,7 @@ func _ordered_options_for_level(level: Dictionary) -> Array:
 	else:
 		for option_var in options:
 			ordered.append(option_var)
+		ordered.shuffle()
 
 	return ordered
 
@@ -421,6 +544,12 @@ func _on_action_pressed(button_index: int) -> void:
 
 	var option: Dictionary = _find_option(option_id)
 	var is_correct: bool = option_id == str(current_level.get("correct_id", ""))
+	if is_correct:
+		btn.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
+		btn.add_theme_color_override("font_hover_color", Color(0.2, 1.0, 0.3))
+	else:
+		btn.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+		btn.add_theme_color_override("font_hover_color", Color(1.0, 0.3, 0.3))
 	var error_code: String = "" if is_correct else str(option.get("error_code", "UNKNOWN"))
 	last_error_code = error_code
 
@@ -447,7 +576,6 @@ func _on_action_pressed(button_index: int) -> void:
 		_handle_success()
 	else:
 		_handle_failure(error_code)
-
 func _handle_success() -> void:
 	state = QuestState.FEEDBACK_SUCCESS
 	lbl_status.text = "Верно. Путь связи подтверждён."
@@ -459,18 +587,30 @@ func _handle_success() -> void:
 	_play_audio("relay")
 	_finish_level(true, "success")
 
+
 func _handle_failure(error_code: String) -> void:
 	wrong_count += 1
-	lbl_attempts.text = "ОШ %d/%d" % [wrong_count, MAX_ATTEMPTS]
+	lbl_attempts.text = "?? %d/%d" % [wrong_count, MAX_ATTEMPTS]
 	state = QuestState.FEEDBACK_FAIL
 
 	var short_message: String = ERROR_MAP.short_message(error_code)
-	lbl_status.text = "Ошибка: %s" % short_message
+	lbl_status.text = "\u041e\u0448\u0438\u0431\u043a\u0430: %s" % short_message
+	if complexity_name == "B" and current_level.has("feedback"):
+		var fb_variant: Variant = current_level.get("feedback", {})
+		if typeof(fb_variant) == TYPE_DICTIONARY:
+			var fb: Dictionary = fb_variant
+			var fb_headline: String = str(fb.get("headline", ""))
+			if not fb_headline.is_empty():
+				lbl_status.text = fb_headline
 	lbl_status.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 
 	_play_audio("error")
 	_trigger_glitch()
 	_shake_main_layout()
+
+	if _is_train_mode():
+		_finish_level(false, "train_error")
+		return
 
 	if wrong_count >= 2 and not safe_mode:
 		_enter_safe_mode()
@@ -486,15 +626,21 @@ func _enter_safe_mode() -> void:
 	safe_mode = true
 	state = QuestState.SAFE_MODE
 	btn_analyze.disabled = false
-	lbl_status.text = "Безопасный режим разблокирован. Доступен анализ."
+	var required_poi: int = int(current_level.get("required_poi", 0))
+	if required_poi > 0 and not analyze_used:
+		lbl_status.text = "\u041f\u0435\u0440\u0435\u0434 \u043e\u0442\u0432\u0435\u0442\u043e\u043c \u0440\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u0435\u0442\u0441\u044f ANALYZE: \u043f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0436\u0443\u0440\u043d\u0430\u043b \u0443\u043b\u0438\u043a."
+	else:
+		lbl_status.text = "\u0411\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u044b\u0439 \u0440\u0435\u0436\u0438\u043c \u0432\u043a\u043b\u044e\u0447\u0451\u043d. \u041d\u0430\u0436\u043c\u0438\u0442\u0435 ANALYZE."
 	lbl_status.add_theme_color_override("font_color", Color(1.0, 0.7, 0.35))
-	_log_event("safe_mode_enabled", {"wrong_count": wrong_count})
+	_log_event("safe_mode_enabled", {"wrong_count": wrong_count, "required_poi": required_poi})
 
 func _on_analyze_pressed() -> void:
 	if level_finished:
 		return
+	analyze_used = true
+
 	if not safe_mode:
-		lbl_status.text = "Анализ открывается после 2 ошибок."
+		lbl_status.text = "ANALYZE \u043e\u0442\u043a\u0440\u043e\u0435\u0442\u0441\u044f \u043f\u043e\u0441\u043b\u0435 2 \u043e\u0448\u0438\u0431\u043e\u043a."
 		lbl_status.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4))
 		return
 
@@ -504,14 +650,20 @@ func _on_analyze_pressed() -> void:
 		_log_event("hint_used", {"source": "analyze"})
 
 	var lines: Array[String] = []
-	lines.append("Уровень: %s" % str(current_level.get("id", "UNKNOWN")))
+	lines.append("\u0423\u0440\u043e\u0432\u0435\u043d\u044c: %s" % str(current_level.get("id", "UNKNOWN")))
 	if not last_error_code.is_empty():
-		lines.append("Последняя ошибка: %s" % last_error_code)
+		lines.append("\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u043a\u043e\u0434 \u043e\u0448\u0438\u0431\u043a\u0438: %s" % last_error_code)
 		lines.append(ERROR_MAP.short_message(last_error_code))
 		for detail_line in ERROR_MAP.detail_messages(last_error_code):
 			lines.append(detail_line)
 
-	var full_explain: String = str(current_level.get("explain_full", ""))
+	if complexity_name == "B":
+		var analyze_variant: Variant = current_level.get("analyze_lines", [])
+		if typeof(analyze_variant) == TYPE_ARRAY:
+			for al_var in analyze_variant:
+				lines.append(str(al_var))
+
+	var full_explain: String = _tr_level("explain_full")
 	if not full_explain.is_empty():
 		for explain_line in full_explain.split("\n"):
 			var trimmed: String = explain_line.strip_edges()
@@ -531,16 +683,118 @@ func _on_hint_pressed() -> void:
 		hint_used = true
 		_log_event("hint_used", {"source": "hint_button"})
 
-	var hint_text: String = str(current_level.get("explain_short", "Подсказка недоступна."))
-	lbl_status.text = "Подсказка: %s" % hint_text
+	var hint_text: String = str(current_level.get("hint", current_level.get("explain_short", "\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0430 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u0430.")))
+	hint_text = _tr_level("hint", hint_text)
+	lbl_status.text = "\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0430: %s" % hint_text
 	lbl_status.add_theme_color_override("font_color", Color(0.8, 0.9, 1.0))
+
 
 func _on_next_pressed() -> void:
 	if not level_finished:
 		return
+	if btn_next.text == "\u0412\u042b\u0425\u041e\u0414":
+		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+		return
 	_log_event("next_pressed", {"from": str(current_level.get("id", "UNKNOWN"))})
 	_load_level(current_level_index + 1)
 
+func _show_session_summary() -> void:
+	state = QuestState.FEEDBACK_SUCCESS
+	timer_running = false
+	level_finished = true
+	_set_option_buttons_enabled(false)
+	btn_analyze.disabled = true
+	btn_hint.disabled = true
+	btn_next.visible = true
+	btn_next.text = "\u0412\u042b\u0425\u041e\u0414"
+	if topology_board != null and topology_board.has_method("set_tools_locked"):
+		topology_board.call("set_tools_locked", true)
+
+	var total: int = levels.size()
+	var correct_count: int = 0
+	var total_time_ms: int = 0
+	var hints_count: int = 0
+
+	var history_variant: Variant = []
+	if GlobalMetrics != null:
+		history_variant = GlobalMetrics.get("session_history")
+	if typeof(history_variant) == TYPE_ARRAY:
+		var history: Array = history_variant
+		for entry_var in history:
+			if typeof(entry_var) != TYPE_DICTIONARY:
+				continue
+			var entry: Dictionary = entry_var
+			if str(entry.get("quest", "")) != "network_trace":
+				continue
+			if str(entry.get("stage", "")) != complexity_name:
+				continue
+			if bool(entry.get("is_correct", false)):
+				correct_count += 1
+			total_time_ms += int(entry.get("elapsed_ms", 0))
+			if bool(entry.get("hint_used", false)):
+				hints_count += 1
+
+	var avg_time_sec: float = (float(total_time_ms) / 1000.0) / maxf(1.0, float(total))
+	var pct: int = int((float(correct_count) / maxf(1.0, float(total))) * 100.0)
+
+	terminal_text.clear()
+	terminal_text.append_text("[color=#9de6b3]\u0421\u0415\u0421\u0421\u0418\u042f \u0417\u0410\u0412\u0415\u0420\u0428\u0415\u041d\u0410[/color]\n\n")
+	terminal_text.append_text("\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c: %s\n" % complexity_name)
+	terminal_text.append_text("\u041f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u043e: %d / %d (%d%%)\n" % [correct_count, total, pct])
+	terminal_text.append_text("\u0421\u0440\u0435\u0434\u043d\u0435\u0435 \u0432\u0440\u0435\u043c\u044f: %.1f \u0441\n" % avg_time_sec)
+	terminal_text.append_text("\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0438 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u044b: %d\n\n" % hints_count)
+
+	if pct >= 90:
+		terminal_text.append_text("[color=#4eff6a]\u041e\u0442\u043b\u0438\u0447\u043d\u044b\u0439 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442. \u0422\u0440\u0430\u0441\u0441\u0438\u0440\u043e\u0432\u043a\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0430.[/color]\n")
+		lbl_status.text = "\u0421\u0435\u0441\u0441\u0438\u044f \u043f\u0440\u043e\u0439\u0434\u0435\u043d\u0430 \u0443\u0441\u043f\u0435\u0448\u043d\u043e."
+		lbl_status.add_theme_color_override("font_color", Color(0.35, 1.0, 0.45))
+	elif pct >= 60:
+		terminal_text.append_text("[color=#f0c040]\u041d\u0435\u043f\u043b\u043e\u0445\u043e, \u043d\u043e \u0435\u0441\u0442\u044c \u043f\u0440\u043e\u0431\u0435\u043b\u044b. \u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u0435\u0442\u0441\u044f \u043f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u044c.[/color]\n")
+		lbl_status.text = "\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0443\u0435\u0442\u0441\u044f \u043f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u044c \u0441\u0435\u0441\u0441\u0438\u044e."
+		lbl_status.add_theme_color_override("font_color", Color(0.95, 0.75, 0.2))
+	else:
+		terminal_text.append_text("[color=#ff5555]\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u0434\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u0430\u044f \u043f\u043e\u0434\u0433\u043e\u0442\u043e\u0432\u043a\u0430.[/color]\n")
+		lbl_status.text = "\u041d\u0443\u0436\u043d\u043e \u043f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u044c \u043c\u0430\u0442\u0435\u0440\u0438\u0430\u043b."
+		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35))
+
+	lbl_case.text = "\u0421\u0415\u0422\u0415\u0412\u041e\u0419 \u0421\u041b\u0415\u0414 | %s | \u0418\u0422\u041e\u0413\u0418" % complexity_name
+	progress_bar.value = 100.0
+
+func _on_topology_device_installed(device_id: String, _label_text: String, _error_code: String) -> void:
+	for idx in range(action_buttons.size()):
+		if idx >= ordered_options.size():
+			continue
+		var option: Dictionary = ordered_options[idx]
+		if str(option.get("id", "")) == device_id:
+			_on_action_pressed(idx)
+			return
+
+func _is_train_mode() -> bool:
+	if complexity_name != "C":
+		return false
+	return str(current_level.get("mode", "EXAM")).to_upper() == "TRAIN"
+
+func _tr_level(field: String, fallback: String = "") -> String:
+	var level_id: String = str(current_level.get("id", "UNKNOWN"))
+	var key: String = "quest.network_trace.%s.%s" % [level_id, field]
+	var raw: String = str(current_level.get(field, fallback))
+	if _i18n_has_key(key):
+		return I18n.get_text(key, {"default": raw})
+	return raw
+
+func _tr_level_option(option_id: String, fallback: String) -> String:
+	var level_id: String = str(current_level.get("id", "UNKNOWN"))
+	var key: String = "quest.network_trace.%s.option.%s" % [level_id, option_id]
+	if _i18n_has_key(key):
+		return I18n.get_text(key, {"default": fallback})
+	return fallback
+
+func _i18n_has_key(key: String) -> bool:
+	if I18n == null:
+		return false
+	var marker: String = "__MISSING_%s__" % key
+	var resolved: String = I18n.get_text(key, {"default": marker})
+	return resolved != marker
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
@@ -612,6 +866,8 @@ func _register_first_action() -> void:
 	if first_action_ms < 0:
 		first_action_ms = Time.get_ticks_msec() - level_started_ms
 
+
+
 func _finish_level(is_correct: bool, end_reason: String) -> void:
 	if level_finished and task_session.get("ended_at_ticks", 0) != 0:
 		return
@@ -622,16 +878,25 @@ func _finish_level(is_correct: bool, end_reason: String) -> void:
 	btn_analyze.disabled = not safe_mode
 	btn_hint.disabled = true
 	btn_next.visible = true
+	if topology_board != null and topology_board.has_method("set_tools_locked"):
+		topology_board.call("set_tools_locked", true)
 
 	if not is_correct:
-		var explain_short: String = str(current_level.get("explain_short", ""))
+		var correct_id: String = str(current_level.get("correct_id", ""))
+		for action_btn in action_buttons:
+			if str(action_btn.get_meta("option_id", "")) == correct_id:
+				action_btn.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
+				action_btn.add_theme_color_override("font_hover_color", Color(0.2, 1.0, 0.3))
+		var explain_short: String = _tr_level("explain_short")
 		if not explain_short.is_empty():
 			lbl_status.text = explain_short
 			lbl_status.add_theme_color_override("font_color", Color(1.0, 0.6, 0.45))
 
 	if end_reason == "timeout":
-		lbl_status.text = "Время вышло. Окно трассировки закрыто."
+		lbl_status.text = "\u0412\u0440\u0435\u043c\u044f \u0432\u044b\u0448\u043b\u043e. \u041f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u0435 \u0443\u0440\u043e\u0432\u0435\u043d\u044c."
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+
+	_render_terminal_content()
 
 	var end_tick: int = Time.get_ticks_msec()
 	task_session["ended_at_ticks"] = end_tick
@@ -643,15 +908,17 @@ func _finish_level(is_correct: bool, end_reason: String) -> void:
 
 	var elapsed_ms: int = end_tick - level_started_ms
 	var stability_delta: float = 0.0
-	if not is_correct:
-		stability_delta += FAIL_STABILITY_PENALTY
-	if hint_used:
-		stability_delta += HINT_STABILITY_PENALTY
+	if not _is_train_mode():
+		if not is_correct:
+			stability_delta += FAIL_STABILITY_PENALTY
+		if hint_used:
+			stability_delta += HINT_STABILITY_PENALTY
 
 	var level_id: String = str(current_level.get("id", "NT_UNKNOWN"))
 	var payload: Dictionary = {
 		"quest": "network_trace",
 		"stage": complexity_name,
+		"mode": str(current_level.get("mode", "EXAM")),
 		"match_key": "NETTRACE_%s|%s" % [complexity_name, level_id],
 		"task_id": level_id,
 		"variant_hash": variant_hash,
@@ -672,7 +939,6 @@ func _finish_level(is_correct: bool, end_reason: String) -> void:
 		"ui_vh": int(size.y)
 	}
 	GlobalMetrics.register_trial(payload)
-
 func _on_timeout() -> void:
 	if level_finished:
 		return
@@ -695,9 +961,8 @@ func _on_timeout() -> void:
 
 func _show_diagnostics(lines: Array[String]) -> void:
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", "ДИАГНОСТИКА", lines)
+		diagnostics_panel.call("setup", "\u0414\u0418\u0410\u0413\u041d\u041e\u0421\u0422\u0418\u041a\u0410", lines)
 	diagnostics_panel.visible = true
-
 func _trigger_glitch() -> void:
 	var shader_material: ShaderMaterial = crt_overlay.material as ShaderMaterial
 	if shader_material == null:
@@ -740,12 +1005,19 @@ func _build_variant_key(level: Dictionary) -> String:
 		",".join(ids)
 	]
 
+
 func _stringify_array(input: Array) -> Array[String]:
 	var out: Array[String] = []
 	for value in input:
 		out.append(str(value))
 	return out
 
+func _to_binary_8bit(value: int) -> String:
+	var result: String = ""
+	var safe_value: int = clampi(value, 0, 255)
+	for i in range(7, -1, -1):
+		result += "1" if ((safe_value >> i) & 1) == 1 else "0"
+	return result
 func _apply_layout_mode() -> void:
 	if terminal_pane == null or actions_pane == null:
 		return

@@ -15,6 +15,18 @@
 		{
 			"id": "6_3_03",
 			"path": "res://data/city_map/level_6_3_03.json"
+		},
+		{
+			"id": "6_3_04",
+			"path": "res://data/city_map/level_6_3_04.json"
+		},
+		{
+			"id": "6_3_05",
+			"path": "res://data/city_map/level_6_3_05.json"
+		},
+		{
+			"id": "6_3_06",
+			"path": "res://data/city_map/level_6_3_06.json"
 		}
 	]
 }

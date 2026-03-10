@@ -44,246 +44,283 @@ theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 12
 
-[node name="MainLayout" type="VBoxContainer" parent="SafeArea"]
+[node name="MainVBox" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
-alignment = 0
 
-[node name="Header" type="HBoxContainer" parent="SafeArea/MainLayout"]
+[node name="HeaderBar" type="HBoxContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BtnQuestBack" type="Button" parent="SafeArea/MainLayout/Header"]
-custom_minimum_size = Vector2(120, 56)
+[node name="BtnQuestBack" type="Button" parent="SafeArea/MainVBox/HeaderBar"]
+custom_minimum_size = Vector2(120, 52)
 layout_mode = 2
-text = "НАЗАД"
+text = "BACK"
 
-[node name="LblClueTitle" type="Label" parent="SafeArea/MainLayout/Header"]
+[node name="LblClueTitle" type="Label" parent="SafeArea/MainVBox/HeaderBar"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "УЛИКА #A-01"
+text = "CLUE #A-01"
 horizontal_alignment = 1
 
-[node name="LblSessionId" type="Label" parent="SafeArea/MainLayout/Header"]
-custom_minimum_size = Vector2(160, 0)
+[node name="LblSessionId" type="Label" parent="SafeArea/MainVBox/HeaderBar"]
+custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
-size_flags_horizontal = 1
-text = "СЕССИЯ 0000"
+text = "SESSION 0000"
 horizontal_alignment = 2
 
-[node name="BtnSettings" type="Button" parent="SafeArea/MainLayout/Header"]
-custom_minimum_size = Vector2(56, 56)
+[node name="BtnSettings" type="Button" parent="SafeArea/MainVBox/HeaderBar"]
+custom_minimum_size = Vector2(64, 52)
 layout_mode = 2
-text = "НАСТР"
+text = "SET"
 
-[node name="BarsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
-layout_mode = 2
-alignment = 1
-
-[node name="DecryptBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
-custom_minimum_size = Vector2(0, 8)
-layout_mode = 2
-size_flags_horizontal = 3
-show_percentage = false
-
-[node name="EnergyBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
-custom_minimum_size = Vector2(0, 8)
-layout_mode = 2
-size_flags_horizontal = 3
-value = 100.0
-show_percentage = false
-
-[node name="BriefingCard" type="PanelContainer" parent="SafeArea/MainLayout"]
-custom_minimum_size = Vector2(0, 84)
+[node name="CaseBriefPanel" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
 
-[node name="BriefingMargin" type="MarginContainer" parent="SafeArea/MainLayout/BriefingCard"]
+[node name="BriefMargin" type="MarginContainer" parent="SafeArea/MainVBox/CaseBriefPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 8
 
-[node name="BriefingVBox" type="VBoxContainer" parent="SafeArea/MainLayout/BriefingCard/BriefingMargin"]
+[node name="BriefVBox" type="VBoxContainer" parent="SafeArea/MainVBox/CaseBriefPanel/BriefMargin"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="LblGoal" type="Label" parent="SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox"]
+[node name="ClueLabel" type="Label" parent="SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Trace focus"
+
+[node name="BriefingTitle" type="Label" parent="SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Цель: найти итоговое значение s"
+text = "Decrypt the execution log"
 autowrap_mode = 2
 
-[node name="LblHint" type="Label" parent="SafeArea/MainLayout/BriefingCard/BriefingMargin/BriefingVBox"]
+[node name="BriefingText" type="Label" parent="SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Подсказка: stop в range не включается"
+text = "Read the code and reconstruct the final value of s."
 autowrap_mode = 2
 
-[node name="TerminalFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
-custom_minimum_size = Vector2(0, 230)
+[node name="TopicHintBadge" type="Label" parent="SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox"]
 layout_mode = 2
-size_flags_vertical = 3
-size_flags_stretch_ratio = 2.2
+theme_override_font_sizes/font_size = 15
+text = "Watch loop boundary conditions."
+autowrap_mode = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="SafeArea/MainLayout/TerminalFrame"]
+[node name="WorkspaceContainer" type="BoxContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.25
+theme_override_constants/separation = 10
+vertical = true
+
+[node name="CodePanel" type="PanelContainer" parent="SafeArea/MainVBox/WorkspaceContainer"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.35
+
+[node name="CodeMargin" type="MarginContainer" parent="SafeArea/MainVBox/WorkspaceContainer/CodePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="CodeVBox" type="VBoxContainer" parent="SafeArea/MainVBox/WorkspaceContainer/CodePanel/CodeMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="CodeHeader" type="HBoxContainer" parent="SafeArea/MainVBox/WorkspaceContainer/CodePanel/CodeMargin/CodeVBox"]
+layout_mode = 2
+
+[node name="CodeTitle" type="Label" parent="SafeArea/MainVBox/WorkspaceContainer/CodePanel/CodeMargin/CodeVBox/CodeHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "CODE"
+
+[node name="CodeScroll" type="ScrollContainer" parent="SafeArea/MainVBox/WorkspaceContainer/CodePanel/CodeMargin/CodeVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="CodeLabel" type="RichTextLabel" parent="SafeArea/MainLayout/TerminalFrame/ScrollContainer"]
+[node name="CodeLines" type="VBoxContainer" parent="SafeArea/MainVBox/WorkspaceContainer/CodePanel/CodeMargin/CodeVBox/CodeScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/normal_font_size = 28
-theme_override_font_sizes/mono_font_size = 34
-bbcode_enabled = true
-text = "[code]loading...[/code]"
+theme_override_constants/separation = 2
 
-[node name="StatusRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
-layout_mode = 2
-alignment = 1
-
-[node name="LblStatus" type="Label" parent="SafeArea/MainLayout/StatusRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "ГОТОВНОСТЬ"
-
-[node name="LblAttempts" type="Label" parent="SafeArea/MainLayout/StatusRow"]
-layout_mode = 2
-text = "ПОПЫТКИ: 0/3"
-
-[node name="InputFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
-layout_mode = 2
-
-[node name="InputDisplay" type="Label" parent="SafeArea/MainLayout/InputFrame"]
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "----"
-horizontal_alignment = 1
-
-[node name="Numpad" type="GridContainer" parent="SafeArea/MainLayout"]
-layout_mode = 2
-size_flags_vertical = 3
-size_flags_stretch_ratio = 0.72
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
-columns = 3
-
-[node name="Btn7" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="TracePanel" type="PanelContainer" parent="SafeArea/MainVBox/WorkspaceContainer"]
+custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "7"
+size_flags_stretch_ratio = 1.0
 
-[node name="Btn8" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="TraceMargin" type="MarginContainer" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="TraceVBox" type="VBoxContainer" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "8"
+theme_override_constants/separation = 6
 
-[node name="Btn9" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="TraceHeader" type="HBoxContainer" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TraceTitle" type="Label" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "EXECUTION LOG"
+
+[node name="TraceModeBadge" type="Label" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceHeader"]
+layout_mode = 2
+text = "Collapsed"
+
+[node name="ToggleTraceButton" type="Button" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceHeader"]
+layout_mode = 2
+text = "Open"
+
+[node name="TraceBody" type="VBoxContainer" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "9"
 
-[node name="Btn4" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="TraceScroll" type="ScrollContainer" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceBody"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "4"
 
-[node name="Btn5" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="TraceRowsContainer" type="VBoxContainer" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceBody/TraceScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "5"
+theme_override_constants/separation = 4
 
-[node name="Btn6" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="TraceControls" type="HBoxContainer" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="StepPrevButton" type="Button" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "6"
+text = "Prev"
 
-[node name="Btn1" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="StepNextButton" type="Button" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "1"
+text = "Next"
 
-[node name="Btn2" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="ShowAllButton" type="Button" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "2"
+text = "Show all"
 
-[node name="Btn3" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="ResetTraceButton" type="Button" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "3"
+text = "Reset"
 
-[node name="BtnClr" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="SolvePanel" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+
+[node name="SolveMargin" type="MarginContainer" parent="SafeArea/MainVBox/SolvePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="SolveVBox" type="VBoxContainer" parent="SafeArea/MainVBox/SolvePanel/SolveMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="AnswerLabel" type="Label" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Final answer (s)"
+
+[node name="AnswerRow" type="HBoxContainer" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AnswerInput" type="LineEdit" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "CLR"
+placeholder_text = "Enter integer"
+virtual_keyboard_type = 2
 
-[node name="Btn0" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
+[node name="PrimaryCheckButton" type="Button" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow"]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "0"
-
-[node name="BtnBack" type="Button" parent="SafeArea/MainLayout/Numpad"]
-custom_minimum_size = Vector2(64, 64)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-text = "<-"
-
-[node name="Actions" type="HBoxContainer" parent="SafeArea/MainLayout"]
-layout_mode = 2
-size_flags_vertical = 3
-size_flags_stretch_ratio = 0.36
-theme_override_constants/separation = 16
-alignment = 1
-
-[node name="BtnAnalyze" type="Button" parent="SafeArea/MainLayout/Actions"]
-custom_minimum_size = Vector2(0, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "АНАЛИЗ"
-
-[node name="BtnEnter" type="Button" parent="SafeArea/MainLayout/Actions"]
-custom_minimum_size = Vector2(0, 56)
-layout_mode = 2
-size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "ВВОД"
+text = "Check"
 
-[node name="BtnNext" type="Button" parent="SafeArea/MainLayout/Actions"]
+[node name="BtnNext" type="Button" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow"]
 visible = false
-custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_type_variation = &"PrimaryButton"
+text = "Next"
+
+[node name="SolveActions" type="HBoxContainer" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StepAnalysisButton" type="Button" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"PrimaryButton"
-text = "ДАЛЕЕ"
+text = "Open Execution Log"
+
+[node name="HintButton" type="Button" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Hint"
+
+[node name="WhyButton" type="Button" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Why"
+
+[node name="StatusBar" type="PanelContainer" parent="SafeArea/MainVBox"]
+layout_mode = 2
+
+[node name="StatusMargin" type="MarginContainer" parent="SafeArea/MainVBox/StatusBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="StatusRow" type="HBoxContainer" parent="SafeArea/MainVBox/StatusBar/StatusMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LblStatus" type="Label" parent="SafeArea/MainVBox/StatusBar/StatusMargin/StatusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Read the code and trace."
+autowrap_mode = 2
+
+[node name="LblAttempts" type="Label" parent="SafeArea/MainVBox/StatusBar/StatusMargin/StatusRow"]
+layout_mode = 2
+text = "Attempts: 0"
 
 [node name="InspectorPopup" type="PopupPanel" parent="."]
 initial_position = 1
@@ -297,7 +334,7 @@ theme_override_constants/separation = 10
 [node name="LblTitle" type="Label" parent="InspectorPopup/Root"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "НАСТРОЙКИ"
+text = "SETTINGS"
 horizontal_alignment = 1
 
 [node name="SettingsGrid" type="GridContainer" parent="InspectorPopup/Root"]
@@ -308,7 +345,7 @@ columns = 2
 
 [node name="LblFx" type="Label" parent="InspectorPopup/Root/SettingsGrid"]
 layout_mode = 2
-text = "ЭФФЕКТЫ"
+text = "Effects"
 
 [node name="FxSelect" type="OptionButton" parent="InspectorPopup/Root/SettingsGrid"]
 custom_minimum_size = Vector2(220, 48)
@@ -316,7 +353,7 @@ layout_mode = 2
 
 [node name="LblOverlay" type="Label" parent="InspectorPopup/Root/SettingsGrid"]
 layout_mode = 2
-text = "НАЛОЖЕНИЕ"
+text = "Overlay"
 
 [node name="OverlaySelect" type="OptionButton" parent="InspectorPopup/Root/SettingsGrid"]
 custom_minimum_size = Vector2(220, 48)
@@ -325,9 +362,9 @@ layout_mode = 2
 [node name="BtnClose" type="Button" parent="InspectorPopup/Root"]
 custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
-text = "ЗАКРЫТЬ"
+text = "Close"
 
-[node name="DiagnosticsPanel" type="PanelContainer" parent="."]
+[node name="ExplanationOverlay" type="PanelContainer" parent="."]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -336,25 +373,71 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="DiagnosticsPanel"]
+[node name="OverlayMargin" type="MarginContainer" parent="ExplanationOverlay"]
 layout_mode = 2
-theme_override_constants/separation = 16
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
 
-[node name="Label" type="Label" parent="DiagnosticsPanel/VBoxContainer"]
+[node name="OverlayCenter" type="CenterContainer" parent="ExplanationOverlay/OverlayMargin"]
 layout_mode = 2
-text = "ДИАГНОСТИКА"
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="OverlayCard" type="PanelContainer" parent="ExplanationOverlay/OverlayMargin/OverlayCenter"]
+custom_minimum_size = Vector2(540, 360)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="OverlayCardMargin" type="MarginContainer" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="OverlayVBox" type="VBoxContainer" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="ExplanationTitle" type="Label" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Why this result"
 horizontal_alignment = 1
 
-[node name="ExplainList" type="RichTextLabel" parent="DiagnosticsPanel/VBoxContainer"]
+[node name="ExplanationText" type="RichTextLabel" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox"]
 layout_mode = 2
-
-[node name="TraceList" type="RichTextLabel" parent="DiagnosticsPanel/VBoxContainer"]
-layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "Ожидание..."
+text = "Explanation is ready."
 
-[node name="BtnCloseDiag" type="Button" parent="DiagnosticsPanel/VBoxContainer"]
-custom_minimum_size = Vector2(0, 56)
+[node name="OverlayButtons" type="HBoxContainer" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox"]
 layout_mode = 2
-text = "ЗАКРЫТЬ"
+theme_override_constants/separation = 8
+
+[node name="BtnCloseOverlay" type="Button" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/OverlayButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Close"
+
+[node name="BtnOpenSteps" type="Button" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/OverlayButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Open steps"
+
+[node name="BtnOverlayNext" type="Button" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/OverlayButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+text = "Next"

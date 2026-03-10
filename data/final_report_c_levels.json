@@ -13,25 +13,25 @@
     "rules": [
       {
         "source_id": "R1",
-        "selector": ".С‚СЂРµРІРѕРіР°",
-        "kind": "СЃРѕСЂС‚",
+        "selector": ".alert",
+        "kind": "class",
         "weight": 10,
         "important": false,
         "order": 1,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#ff0000"
         }
       },
       {
         "source_id": "R2",
         "selector": "#x",
-        "kind": "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
+        "kind": "id",
         "weight": 100,
         "important": false,
         "order": 2,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#00ff00"
         }
       }
@@ -85,25 +85,25 @@
     "rules": [
       {
         "source_id": "R1",
-        "selector": ".С‚СЂРµРІРѕРіР°",
-        "kind": "СЃРѕСЂС‚",
+        "selector": ".alert",
+        "kind": "class",
         "weight": 10,
         "important": false,
         "order": 1,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#ff0000"
         }
       },
       {
         "source_id": "R2",
-        "selector": ".СЃС‚РµР»СЃ",
-        "kind": "СЃРѕСЂС‚",
+        "selector": ".stealth",
+        "kind": "class",
         "weight": 10,
         "important": false,
         "order": 2,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#0000ff"
         }
       }
@@ -158,24 +158,24 @@
       {
         "source_id": "R1",
         "selector": "#x",
-        "kind": "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
+        "kind": "id",
         "weight": 100,
         "important": false,
         "order": 2,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#00ff00"
         }
       },
       {
         "source_id": "R2",
-        "selector": ".С‚СЂРµРІРѕРіР°",
-        "kind": "СЃРѕСЂС‚",
+        "selector": ".alert",
+        "kind": "class",
         "weight": 10,
         "important": true,
         "order": 3,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#ff0000"
         }
       }
@@ -239,24 +239,24 @@
       {
         "source_id": "R1",
         "selector": "#x",
-        "kind": "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
+        "kind": "id",
         "weight": 100,
         "important": false,
         "order": 2,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#00ff00"
         }
       },
       {
         "source_id": "R2",
-        "selector": ".С‚СЂРµРІРѕРіР°",
-        "kind": "СЃРѕСЂС‚",
+        "selector": ".alert",
+        "kind": "class",
         "weight": 10,
         "important": false,
         "order": 3,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#ff0000"
         }
       }
@@ -310,25 +310,25 @@
     "rules": [
       {
         "source_id": "R1",
-        "selector": ".С‚СЂРµРІРѕРіР°",
-        "kind": "СЃРѕСЂС‚",
+        "selector": ".alert",
+        "kind": "class",
         "weight": 10,
         "important": false,
         "order": 1,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#ff0000"
         }
       },
       {
         "source_id": "R2",
         "selector": "p#x",
-        "kind": "СЃРјРµС€Р°РЅРЅС‹Р№",
+        "kind": "combined",
         "weight": 101,
         "important": false,
         "order": 2,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#0000ff"
         }
       }
@@ -383,24 +383,24 @@
       {
         "source_id": "R1",
         "selector": "#x",
-        "kind": "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
+        "kind": "id",
         "weight": 100,
         "important": true,
         "order": 1,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#ff0000"
         }
       },
       {
         "source_id": "R2",
         "selector": "#x",
-        "kind": "РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ",
+        "kind": "id",
         "weight": 100,
         "important": true,
         "order": 2,
         "decl": {
-          "prop": "С†РІРµС‚",
+          "prop": "color",
           "value": "#00ff00"
         }
       }

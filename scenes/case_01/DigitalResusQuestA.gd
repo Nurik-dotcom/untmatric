@@ -3,6 +3,7 @@ extends Control
 const LEVELS_PATH: String = "res://data/clues_levels.json"
 const FLOW_SCENE_PATH: String = "res://scenes/case_01/Case01Flow.tscn"
 const ITEM_SCENE: PackedScene = preload("res://scenes/ui/ResusPartItem.tscn")
+const TABLE_RENDERER_SCENE_PATH: String = "res://scenes/case_01/renderers/TableMatchRenderer.tscn"
 const ResusData = preload("res://scripts/case_01/ResusData.gd")
 const ResusScoring = preload("res://scripts/case_01/ResusScoring.gd")
 const TrialV2 = preload("res://scripts/TrialV2.gd")
@@ -34,6 +35,9 @@ var _briefing_collapsed: bool = true
 var _briefing_toggle_button: Button = null
 var _last_result: Dictionary = {}
 var _last_payload: Dictionary = {}
+var _confirm_requires_force: bool = false
+var _table_renderer: Node = null
+var _table_renderer_scene: PackedScene = null
 
 @onready var noir_overlay: Node = $NoirOverlay
 @onready var safe_area: MarginContainer = $SafeArea
@@ -44,6 +48,10 @@ var _last_payload: Dictionary = {}
 @onready var bottom_bar: VBoxContainer = $SafeArea/MainVBox/BottomBar
 @onready var briefing_card: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/BriefingCard
 @onready var briefing_label: Label = $SafeArea/MainVBox/ContentScroll/Content/BriefingCard/BriefingLabel
+@onready var system_card: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/SystemCard
+@onready var zones_card: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/ZonesCard
+@onready var parts_card: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/PartsPileCard
+@onready var renderer_host: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/RendererHost
 @onready var parts_grid: GridContainer = $SafeArea/MainVBox/ContentScroll/Content/PartsPileCard/VBox/Scroll/PartsGrid
 @onready var title_label: Label = $SafeArea/MainVBox/Header/TitleLabel
 @onready var stage_label: Label = $SafeArea/MainVBox/Header/StageLabel
@@ -130,12 +138,32 @@ func _connect_zone_signals() -> void:
 
 func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
+	if _is_table_level() and _table_renderer != null and _table_renderer.has_method("apply_i18n"):
+		_table_renderer.call("apply_i18n")
+	if level_data.is_empty():
+		return
+	briefing_label.text = _resolve_briefing_text(level_data)
+	if not _is_table_level():
+		_configure_zones()
+		_refresh_spawned_item_localization()
+	_reset_confirm_warning_state()
+	_last_state_key = ""
+	if not _is_table_level():
+		_refresh_system_state(_build_placements_snapshot())
+	if result_popup.visible:
+		if _is_table_level():
+			result_details_label.text = _build_table_result_text(_last_result.get("details", []) as Array)
+		else:
+			result_details_label.text = _build_result_error_text(_last_payload.get("errors", []) as Array)
 
 func _apply_i18n() -> void:
 	title_label.text = _tr("resus.title", "Case 01: Digital Resus")
 	_update_stage_label()
 	btn_reset.text = _tr("resus.a.btn.reset", "RESET")
-	btn_confirm.text = _tr("resus.a.btn.confirm", "CONFIRM")
+	if _confirm_requires_force:
+		btn_confirm.text = _tr("resus.a.btn.force_confirm", "CONFIRM ANYWAY")
+	else:
+		btn_confirm.text = _tr("resus.a.btn.confirm", "CONFIRM")
 	result_retry_button.text = _tr("resus.a.btn.retry", "RETRY")
 	result_back_button.text = _tr("resus.a.btn.back", "BACK")
 	if result_next_level_button != null:
@@ -152,10 +180,70 @@ func _start_level(index: int) -> void:
 	current_level_index = clamp(index, 0, max(0, levels.size() - 1))
 	level_data = (levels[current_level_index] as Dictionary).duplicate(true)
 	item_contracts = _item_contract_map(level_data.get("items", []) as Array)
-	briefing_label.text = str(level_data.get("briefing", ""))
+	briefing_label.text = _resolve_briefing_text(level_data)
 	_apply_i18n()
-	_configure_zones()
+	if _is_table_level():
+		_enable_table_mode()
+	else:
+		_enable_matching_mode()
+		_configure_zones()
 	_reset_attempt()
+
+func _enable_table_mode() -> void:
+	system_card.visible = false
+	zones_card.visible = false
+	parts_card.visible = false
+	renderer_host.visible = true
+	if _table_renderer == null:
+		var table_scene: PackedScene = _load_table_renderer_scene()
+		if table_scene == null:
+			renderer_host.visible = false
+			push_error("DigitalResusQuestA: missing renderer scene at %s" % TABLE_RENDERER_SCENE_PATH)
+			return
+		_table_renderer = table_scene.instantiate()
+		renderer_host.add_child(_table_renderer)
+	if _table_renderer.has_method("setup"):
+		_table_renderer.call("setup", level_data, self)
+
+func _load_table_renderer_scene() -> PackedScene:
+	if _table_renderer_scene != null:
+		return _table_renderer_scene
+	var loaded: Variant = load(TABLE_RENDERER_SCENE_PATH)
+	if loaded is PackedScene:
+		_table_renderer_scene = loaded as PackedScene
+		return _table_renderer_scene
+	return null
+
+func _enable_matching_mode() -> void:
+	system_card.visible = true
+	zones_card.visible = true
+	parts_card.visible = true
+	renderer_host.visible = false
+	if _table_renderer != null:
+		_table_renderer.queue_free()
+		_table_renderer = null
+
+func _resolve_briefing_text(level: Dictionary) -> String:
+	return I18n.resolve_field(level, "briefing", {
+		"default": str(level.get("briefing", ""))
+	})
+
+func _refresh_spawned_item_localization() -> void:
+	for item_id_v in item_nodes.keys():
+		var item_id: String = str(item_id_v)
+		var node_v: Variant = item_nodes.get(item_id, null)
+		if not (node_v is Node):
+			continue
+		var contract_v: Variant = item_contracts.get(item_id, null)
+		if not (contract_v is Dictionary):
+			continue
+		var node: Node = node_v as Node
+		if node.has_method("refresh_localized_text"):
+			node.call("refresh_localized_text", (contract_v as Dictionary).duplicate(true))
+
+func _reset_confirm_warning_state() -> void:
+	_confirm_requires_force = false
+	btn_confirm.text = _tr("resus.a.btn.confirm", "CONFIRM")
 
 func _configure_zones() -> void:
 	var buckets: Array = level_data.get("buckets", []) as Array
@@ -179,6 +267,9 @@ func _configure_zones() -> void:
 			zone_node.call("setup", bucket_id, bucket_label, _accepted_item_ids_for_bucket(bucket_id))
 
 func _reset_attempt() -> void:
+	if _is_table_level():
+		_reset_attempt_table()
+		return
 	attempt_index += 1
 	start_time_ms = Time.get_ticks_msec()
 	drag_count = 0
@@ -186,6 +277,7 @@ func _reset_attempt() -> void:
 	item_nodes.clear()
 	input_locked = false
 	btn_confirm.disabled = false
+	_reset_confirm_warning_state()
 	dimmer.visible = false
 	result_popup.visible = false
 	result_next_level_button.visible = false
@@ -202,6 +294,26 @@ func _reset_attempt() -> void:
 
 	_spawn_items()
 	_refresh_system_state(_build_placements_snapshot())
+	_update_stability_ui()
+
+func _reset_attempt_table() -> void:
+	attempt_index += 1
+	start_time_ms = Time.get_ticks_msec()
+	drag_count = 0
+	trace.clear()
+	item_nodes.clear()
+	input_locked = false
+	btn_confirm.disabled = false
+	_reset_confirm_warning_state()
+	dimmer.visible = false
+	result_popup.visible = false
+	result_next_level_button.visible = false
+	_last_result.clear()
+	_last_payload.clear()
+	status_label.text = _tr("resus.a04.status.ready", "Assign each task to a PC, then confirm.")
+	status_label.modulate = COLOR_OK
+	if _table_renderer != null and _table_renderer.has_method("reset"):
+		_table_renderer.call("reset")
 	_update_stability_ui()
 
 func _spawn_items() -> void:
@@ -275,12 +387,14 @@ func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> v
 			"to_bucket": socket_id.to_upper(),
 			"from_bucket": str(payload.get("from_zone", "PILE")).to_upper()
 		})
+		_reset_confirm_warning_state()
 		_refresh_system_state(_build_placements_snapshot())
 		_play_sfx("click")
 		_clear_socket_feedback()
 		return
 
 	_restore_item_to_source(item_control, str(payload.get("from_zone", "PILE")))
+	_reset_confirm_warning_state()
 	_refresh_system_state(_build_placements_snapshot())
 	_bounce_node(item_control)
 	_flash_rejected_socket(socket_id)
@@ -309,6 +423,7 @@ func _on_pile_item_placed(item_id: String, _to_bucket: String, from_bucket: Stri
 		"to_bucket": "PILE",
 		"from_bucket": from_bucket.to_upper()
 	})
+	_reset_confirm_warning_state()
 	_refresh_system_state(_build_placements_snapshot())
 	_clear_socket_feedback()
 
@@ -387,7 +502,10 @@ func _refresh_system_state(placements: Dictionary) -> void:
 	_set_console_target(console_text)
 
 	if _is_cia_level():
-		status_label.text = _tr("resus.a.status.cia_placed", "CIA folders placed: {n}/8", {"n": cia_progress})
+		status_label.text = _tr("resus.a.status.cia_placed", "CIA folders placed: {n}/{total}", {
+			"n": cia_progress,
+			"total": max(1, item_nodes.size())
+		})
 		status_label.modulate = COLOR_OK
 	else:
 		status_label.text = _tr("resus.a.status.hw_state", "VIDEO {gpu} | MEMORY {ram} | BUFFER {buf}", {
@@ -396,6 +514,7 @@ func _refresh_system_state(placements: Dictionary) -> void:
 			"buf": "FAST" if cache_ok else "SLOW"
 		})
 		status_label.modulate = COLOR_OK if gpu_ok and ram_ok and cache_ok else (COLOR_ERR if not gpu_ok or not ram_ok else COLOR_WARN)
+		_update_diagnostic_hints(state, placements)
 
 	_log_event("DIAG_STATE", {
 		"gpu_ok": gpu_ok,
@@ -403,6 +522,25 @@ func _refresh_system_state(placements: Dictionary) -> void:
 		"cache_ok": cache_ok,
 		"hid_connected": hid_connected
 	})
+
+func _update_diagnostic_hints(state: Dictionary, placements: Dictionary) -> void:
+	var gpu_ok: bool = bool(state.get("gpu_ok", false))
+	var ram_ok: bool = bool(state.get("ram_ok", false))
+	var cache_ok: bool = bool(state.get("cache_ok", false))
+	var placed_count: int = _count_placed(placements)
+
+	if placed_count == 0:
+		status_label.text = _tr("resus.a.hint.start", "Drag parts into sockets. Watch diagnostics.")
+		status_label.modulate = COLOR_OK
+	elif not gpu_ok and placed_count >= 2:
+		status_label.text = _tr("resus.a.hint.no_video", "DIAGNOSTICS: No video signal. Is the video card misplaced?")
+		status_label.modulate = COLOR_WARN
+	elif not ram_ok and placed_count >= 4:
+		status_label.text = _tr("resus.a.hint.no_ram", "DIAGNOSTICS: Memory read error. Is RAM disconnected?")
+		status_label.modulate = COLOR_WARN
+	elif gpu_ok and ram_ok and cache_ok:
+		status_label.text = _tr("resus.a.hint.all_ok", "All critical systems online. Finish sorting.")
+		status_label.modulate = COLOR_OK
 
 func _update_monitor(monitor_on: bool) -> void:
 	if _is_cia_level():
@@ -486,8 +624,29 @@ func _update_console(delta: float) -> void:
 func _on_confirm_pressed() -> void:
 	if input_locked:
 		return
+	if _is_table_level():
+		_confirm_table()
+		return
 	var placements: Dictionary = _build_placements_snapshot()
 	var placed_count: int = _count_placed(placements)
+	var total_items: int = item_nodes.size()
+	if placed_count < total_items and not _confirm_requires_force:
+		_show_incomplete_warning(placed_count, total_items)
+		return
+
+	_reset_confirm_warning_state()
+	_execute_confirm(placements, placed_count)
+
+func _show_incomplete_warning(placed: int, total: int) -> void:
+	status_label.text = _tr("resus.a.status.not_all_placed",
+		"Placed {placed} of {total} parts. Press confirm again to continue.",
+		{"placed": placed, "total": total})
+	status_label.modulate = COLOR_WARN
+	_play_sfx("error")
+	_confirm_requires_force = true
+	btn_confirm.text = _tr("resus.a.btn.force_confirm", "CONFIRM ANYWAY")
+
+func _execute_confirm(placements: Dictionary, placed_count: int) -> void:
 	_log_event("CONFIRM_PRESSED", {"placed_count": placed_count})
 	input_locked = true
 	btn_confirm.disabled = true
@@ -546,21 +705,84 @@ func _on_confirm_pressed() -> void:
 	else:
 		_play_sfx("error")
 
+func _confirm_table() -> void:
+	if _table_renderer == null or not _table_renderer.has_method("get_answers"):
+		return
+	var answers: Dictionary = _table_renderer.call("get_answers") as Dictionary
+	var total_tasks: int = (level_data.get("tasks", []) as Array).size()
+	var assigned_count: int = 0
+	for chosen_v in answers.values():
+		if str(chosen_v).strip_edges() != "":
+			assigned_count += 1
+	if assigned_count < total_tasks and not _confirm_requires_force:
+		_show_incomplete_warning(assigned_count, total_tasks)
+		return
+	_reset_confirm_warning_state()
+	input_locked = true
+	btn_confirm.disabled = true
+
+	var result: Dictionary = ResusScoring.calculate_matching_table_result(level_data, answers)
+	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
+	var payload: Dictionary = TrialV2.build(
+		"CASE_01_DIGITAL_RESUS",
+		"A",
+		str(level_data.get("id", "RESUS-A-04")),
+		"MATCHING_TABLE",
+		str(attempt_index)
+	)
+	payload.merge({
+		"case_run_id": _case_run_id(),
+		"level_id": str(level_data.get("id", "RESUS-A-04")),
+		"format": str(level_data.get("format", "MATCHING_TABLE")),
+		"snapshot": answers.duplicate(true),
+		"trace": trace.duplicate(true),
+		"elapsed_ms": elapsed_ms,
+		"drag_count": drag_count,
+		"correct_count": int(result.get("correct_count", 0)),
+		"total_items": int(result.get("total", 0)),
+		"points": int(result.get("points", 0)),
+		"max_points": int(result.get("max_points", 2)),
+		"is_fit": bool(result.get("is_fit", false)),
+		"is_correct": bool(result.get("is_correct", false)),
+		"stability_delta": int(result.get("stability_delta", 0)),
+		"verdict_code": str(result.get("verdict_code", "FAIL")),
+		"details": (result.get("details", []) as Array).duplicate(true)
+	}, true)
+	GlobalMetrics.register_trial(payload)
+	_last_result = result.duplicate(true)
+	_last_payload = payload.duplicate(true)
+	_update_stability_ui()
+	if _table_renderer.has_method("show_result"):
+		_table_renderer.call("show_result", result)
+	_show_result(result, [])
+	_play_sfx("relay" if bool(result.get("is_correct", false)) else "error")
+
 func _show_result(result: Dictionary, errors: Array) -> void:
 	var verdict_code: String = str(result.get("verdict_code", "FAIL"))
 	result_verdict_label.text = verdict_code
 	result_score_label.text = "%d/%d | %d/%d" % [
 		int(result.get("correct_count", 0)),
-		int(result.get("total_items", 8)),
+		int(result.get("total_items", result.get("total", item_nodes.size()))),
 		int(result.get("points", 0)),
 		int(result.get("max_points", 2))
 	]
 	result_stability_label.text = _tr("resus.a.result.stability", "Stability delta {n}", {"n": int(result.get("stability_delta", 0))})
-	result_details_label.text = _build_result_error_text(errors)
+	if _is_table_level():
+		result_details_label.text = _build_table_result_text(result.get("details", []) as Array)
+	else:
+		result_details_label.text = _build_result_error_text(errors)
+	for error_v in errors:
+		if typeof(error_v) != TYPE_DICTIONARY:
+			continue
+		var error_data: Dictionary = error_v as Dictionary
+		var item_id: String = str(error_data.get("item_id", ""))
+		var item_node_v: Variant = item_nodes.get(item_id, null)
+		if item_node_v is Node and (item_node_v as Node).has_method("reveal_correct_color"):
+			(item_node_v as Node).call("reveal_correct_color")
 
 	if verdict_code == "PERFECT":
 		result_verdict_label.modulate = COLOR_OK
-	elif verdict_code == "PARTIAL":
+	elif verdict_code == "PARTIAL" or verdict_code == "GOOD":
 		result_verdict_label.modulate = COLOR_WARN
 	else:
 		result_verdict_label.modulate = COLOR_ERR
@@ -578,11 +800,19 @@ func _next_level_button_text() -> String:
 
 func _on_reset_pressed() -> void:
 	_log_event("RESET_PRESSED", {"placed_count": _count_placed(_build_placements_snapshot())})
+	_apply_retry_floor()
 	_reset_attempt()
 	_play_sfx("click")
 
 func _on_retry_pressed() -> void:
+	_apply_retry_floor()
 	_reset_attempt()
+
+func _apply_retry_floor() -> void:
+	if GlobalMetrics.stability < 20.0:
+		var previous_stability: float = float(GlobalMetrics.stability)
+		GlobalMetrics.stability = 20.0
+		GlobalMetrics.emit_signal("stability_changed", GlobalMetrics.stability, GlobalMetrics.stability - previous_stability)
 
 func _on_next_level_pressed() -> void:
 	if _last_result.is_empty() or not bool(_last_result.get("is_correct", false)):
@@ -694,7 +924,7 @@ func _bucket_label_map(buckets: Array) -> Dictionary:
 		var bucket: Dictionary = bucket_v as Dictionary
 		var bucket_id: String = str(bucket.get("bucket_id", "")).to_upper()
 		if bucket_id != "":
-			out[bucket_id] = str(bucket.get("label", bucket_id))
+			out[bucket_id] = I18n.resolve_field(bucket, "label", {"default": bucket_id})
 	return out
 
 func _bucket_ids(buckets: Array) -> Array[String]:
@@ -748,6 +978,9 @@ func _bucket_label(bucket_id: String) -> String:
 func _is_cia_level() -> bool:
 	return str(level_data.get("format", "")).to_upper() == "MATCHING_CIA"
 
+func _is_table_level() -> bool:
+	return str(level_data.get("format", "")).to_upper() == "MATCHING_TABLE"
+
 func _build_errors(placements: Dictionary) -> Array:
 	var errors: Array = []
 	for item_v in level_data.get("items", []) as Array:
@@ -765,7 +998,8 @@ func _build_errors(placements: Dictionary) -> Array:
 			"item_id": item_id,
 			"chosen": chosen_bucket,
 			"correct": correct_bucket,
-			"explain_short": str(item.get("explain_short", ""))
+			"explain_short": str(item.get("explain_short", "")),
+			"explain_short_key": str(item.get("explain_short_key", ""))
 		})
 	return errors
 
@@ -777,15 +1011,76 @@ func _build_result_error_text(errors: Array) -> String:
 		if typeof(error_v) != TYPE_DICTIONARY:
 			continue
 		var error_data: Dictionary = error_v as Dictionary
+		var item_id: String = str(error_data.get("item_id", ""))
 		lines.append(_tr("resus.a.result.error_line", "{item} -> chose {chosen}, expected {correct}", {
-			"item": str(error_data.get("item_id", "")),
+			"item": _item_display_name(item_id),
 			"chosen": _bucket_label(str(error_data.get("chosen", "PILE"))),
 			"correct": _bucket_label(str(error_data.get("correct", "")))
 		}))
-		var explain_short: String = str(error_data.get("explain_short", "")).strip_edges()
-		if explain_short != "":
-			lines.append(explain_short)
+		var explain_key: String = str(error_data.get("explain_short_key", ""))
+		var explain_fallback: String = str(error_data.get("explain_short", ""))
+		var explain_text: String = ""
+		if explain_key != "":
+			explain_text = I18n.tr_key(explain_key, {"default": explain_fallback})
+		elif explain_fallback != "":
+			explain_text = explain_fallback
+		explain_text = explain_text.strip_edges()
+		if explain_text != "":
+			lines.append("  -> " + explain_text)
+		lines.append("")
 	return "\n".join(lines)
+
+func _build_table_result_text(details: Array) -> String:
+	if details.is_empty():
+		return _tr("resus.a.result.no_errors", "No placement errors detected.")
+	var lines: Array[String] = []
+	for detail_v in details:
+		if typeof(detail_v) != TYPE_DICTIONARY:
+			continue
+		var detail: Dictionary = detail_v as Dictionary
+		var task_id: String = str(detail.get("task_id", "")).strip_edges()
+		if task_id == "":
+			continue
+		var expected: String = str(detail.get("expected", "")).strip_edges()
+		var given: String = str(detail.get("given", "")).strip_edges()
+		var task_text: String = task_id
+		for task_v in level_data.get("tasks", []) as Array:
+			if typeof(task_v) != TYPE_DICTIONARY:
+				continue
+			var task_data: Dictionary = task_v as Dictionary
+			if str(task_data.get("task_id", "")).strip_edges() != task_id:
+				continue
+			task_text = I18n.resolve_field(task_data, "label", {"default": task_id})
+			break
+		var ok: bool = bool(detail.get("correct", false))
+		if ok:
+			lines.append(_tr("resus.a04.result.line_ok", "{task}: OK ({cfg})", {
+				"task": task_text,
+				"cfg": expected
+			}))
+		else:
+			lines.append(_tr("resus.a04.result.line_fail", "{task}: chose {given}, expected {expected}", {
+				"task": task_text,
+				"given": given if given != "" else _tr("resus.ui.unassigned", "UNASSIGNED"),
+				"expected": expected
+			}))
+			var explain_key: String = str(detail.get("explain_key", "")).strip_edges()
+			if explain_key != "":
+				var explain_text: String = I18n.tr_key(explain_key, {"default": ""}).strip_edges()
+				if explain_text != "":
+					lines.append("  -> " + explain_text)
+	return "\n".join(lines)
+
+func _item_display_name(item_id: String) -> String:
+	var contract: Variant = item_contracts.get(item_id, null)
+	if contract is Dictionary:
+		var contract_data: Dictionary = contract as Dictionary
+		var label_key: String = str(contract_data.get("label_key", ""))
+		var label_fallback: String = str(contract_data.get("label", item_id))
+		if label_key != "":
+			return I18n.tr_key(label_key, {"default": label_fallback})
+		return label_fallback
+	return item_id
 
 func _string_array(values: Variant) -> Array[String]:
 	var out: Array[String] = []

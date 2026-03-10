@@ -10,6 +10,9 @@ const SUITES: Array[Dictionary] = [
 	{"name": "Shields", "path": "res://tests/test_shields.gd"},
 	{"name": "DA7CasesBContract", "path": "res://tests/test_da7_cases_b_contract.gd"},
 	{"name": "Case08DataContract", "path": "res://tests/test_case08_data_contract.gd"},
+	{"name": "Case01DataContract", "path": "res://tests/test_case01_data_contract.gd"},
+	{"name": "Case01Scoring", "path": "res://tests/test_case01_scoring.gd"},
+	{"name": "Case01I18n", "path": "res://tests/test_case01_i18n.gd"},
 	{"name": "I18n", "path": "res://tests/test_i18n.gd"}
 ]
 

@@ -1,11 +1,15 @@
 extends Button
 
 signal drag_started(fragment_id: String, from_zone: String)
+signal tapped(fragment_id: String)
 
 var fragment_id: String = ""
 var fragment_label: String = ""
 var fragment_kind: String = ""
 var fragment_token: String = ""
+
+func _ready() -> void:
+	pressed.connect(_on_pressed)
 
 func setup(fragment_data: Dictionary) -> void:
 	fragment_id = str(fragment_data.get("fragment_id", ""))
@@ -26,6 +30,9 @@ func get_zone_id() -> String:
 
 func get_fragment_id() -> String:
 	return fragment_id
+
+func _on_pressed() -> void:
+	tapped.emit(fragment_id)
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
 	var from_zone: String = get_zone_id()

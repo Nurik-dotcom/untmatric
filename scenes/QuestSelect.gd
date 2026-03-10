@@ -34,27 +34,28 @@ const COLOR_LOCKED := Color(0.92, 0.36, 0.4, 1.0)
 
 enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO, SUSPECT, CITY_MAP, DATA_ARCHIVE, FINAL_REPORT, NETWORK_TRACE, CLUES }
 var selected_quest_type := QuestType.DECRYPTOR
+var _scene_transition_in_progress := false
 
-const TITLE_TEXT := "ВЫБОР КВЕСТА"
-const STATUS_READY := "Выберите квест"
-const STATUS_LOCKED := "Этот квест пока не готов"
+const TITLE_TEXT := "Выбор квеста"
+const STATUS_READY := "Выберите модуль и уровень сложности."
+const STATUS_LOCKED := "Режим недоступен"
 
-const BTN_CLUES_TEXT := "Цифровая реанимация"
+const BTN_CLUES_TEXT := "Сбор улик"
 const BTN_RADIO_TEXT := "Радиоперехват"
-const BTN_DECRYPTOR_TEXT := "Дешифрование"
+const BTN_DECRYPTOR_TEXT := "Дешифратор"
 const BTN_LIE_TEXT := "Детектор лжи"
-const BTN_SCRIPT_TEXT := "Скрипт подозреваемого"
+const BTN_SCRIPT_TEXT := "Сценарий подозреваемого"
 const BTN_CITY_TEXT := "Карта города"
 const BTN_ARCHIVE_TEXT := "Архив данных"
 const BTN_REPORT_TEXT := "Финальный отчет"
 const BTN_NETWORK_TRACE_TEXT := "Сетевой след"
 const BTN_BACK_TO_MENU_TEXT := "BACK TO MENU"
 
-const MODAL_TITLE_TEXT := "ВЫБОР СЛОЖНОСТИ"
-const COMPLEXITY_A_TEXT := "СЛОЖНОСТЬ A"
-const COMPLEXITY_B_TEXT := "СЛОЖНОСТЬ B"
-const COMPLEXITY_C_TEXT := "СЛОЖНОСТЬ C"
-const BTN_CLOSE_TEXT := "НАЗАД"
+const MODAL_TITLE_TEXT := "Выбор сложности"
+const COMPLEXITY_A_TEXT := "Сложность A"
+const COMPLEXITY_B_TEXT := "Сложность B"
+const COMPLEXITY_C_TEXT := "Сложность C"
+const BTN_CLOSE_TEXT := "Закрыть"
 
 func _ready() -> void:
 	modal.visible = false
@@ -225,7 +226,7 @@ func _on_complexity_c_pressed() -> void:
 	if selected_quest_type == QuestType.DECRYPTOR:
 		get_tree().change_scene_to_file("res://scenes/MatrixDecryptor.tscn")
 	elif selected_quest_type == QuestType.LOGIC_GATE:
-		get_tree().change_scene_to_file("res://scenes/LogicQuestC.tscn")
+		call_deferred("_change_scene_safe", "res://scenes/LogicQuestC.tscn")
 	elif selected_quest_type == QuestType.RADIO:
 		get_tree().change_scene_to_file("res://scenes/RadioQuestC.tscn")
 	elif selected_quest_type == QuestType.SUSPECT:
@@ -238,6 +239,18 @@ func _on_complexity_c_pressed() -> void:
 		get_tree().change_scene_to_file("res://scenes/NetworkTraceQuestC.tscn")
 	elif selected_quest_type == QuestType.CLUES:
 		get_tree().change_scene_to_file("res://scenes/case_01/DigitalResusQuestC.tscn")
+
+func _change_scene_safe(path: String) -> void:
+	if _scene_transition_in_progress:
+		return
+	_scene_transition_in_progress = true
+	modal.visible = false
+	var err: int = get_tree().change_scene_to_file(path)
+	if err != OK:
+		_scene_transition_in_progress = false
+		status_label.modulate = COLOR_LOCKED
+		status_label.text = "Transition error (%d). Try again." % err
+		push_warning("Scene change failed for %s with err=%d" % [path, err])
 
 func _on_close_modal_pressed() -> void:
 	modal.visible = false

@@ -97,7 +97,7 @@ theme_override_constants/separation = 10
 
 [node name="MissionCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
 clip_contents = true
-custom_minimum_size = Vector2(0, 130)
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 
 [node name="MissionMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard"]
@@ -118,6 +118,8 @@ text = "       "
 
 [node name="TargetLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.93, 0.93, 0.95, 1)
 theme_override_font_sizes/font_size = 26
 text = "N = 128"
 autowrap_mode = 2
@@ -125,13 +127,59 @@ text_overrun_behavior = 3
 
 [node name="RuleLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox"]
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.84, 0.84, 0.87, 1)
 theme_override_font_sizes/font_size = 18
 text = "                    i,     2^i >= N"
 autowrap_mode = 2
 text_overrun_behavior = 3
 
+[node name="StepsLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.78, 0.78, 0.82, 1)
+theme_override_font_sizes/font_size = 17
+text = "     : 1) i  2)       3)      "
+autowrap_mode = 2
+text_overrun_behavior = 3
+
+[node name="ReadoutCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
+custom_minimum_size = Vector2(0, 74)
+layout_mode = 2
+
+[node name="ReadoutMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="ReadoutRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutCard/ReadoutMargin"]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BitsValueLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutCard/ReadoutMargin/ReadoutRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.95, 0.97, 1)
+theme_override_font_sizes/font_size = 32
+text = "i = 1"
+autowrap_mode = 2
+text_overrun_behavior = 3
+
+[node name="FitValueLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutCard/ReadoutMargin/ReadoutRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.86, 0.86, 0.89, 1)
+theme_override_font_sizes/font_size = 22
+text = "      :            "
+autowrap_mode = 2
+text_overrun_behavior = 3
+
 [node name="ScopeCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
 clip_contents = true
+custom_minimum_size = Vector2(0, 168)
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -150,22 +198,6 @@ size_flags_vertical = 3
 [node name="WaveLine" type="Line2D" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ScopeCard/ScopeMargin/ScopeLayer"]
 width = 3.0
 default_color = Color(0.2, 1, 0.2, 1)
-
-[node name="ReadoutRow" type="HBoxContainer" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox"]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="BitsValueLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 34
-text = "i = 1"
-
-[node name="FitValueLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutRow"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "      :            "
 
 [node name="RightPane" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit"]
 clip_contents = true
@@ -191,7 +223,7 @@ theme_override_font_sizes/font_size = 22
 text = "       "
 
 [node name="BitKnob" type="Control" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
-custom_minimum_size = Vector2(220, 220)
+custom_minimum_size = Vector2(236, 236)
 layout_mode = 2
 size_flags_horizontal = 4
 script = ExtResource("4_knob_script")
@@ -209,16 +241,20 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
 [node name="BtnHint" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowTop"]
-custom_minimum_size = Vector2(0, 58)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.85
+theme_override_font_sizes/font_size = 18
 text = "         "
 autowrap_mode = 2
 
 [node name="BtnAnalyze" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowTop"]
-custom_minimum_size = Vector2(0, 58)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.45
+theme_override_font_sizes/font_size = 22
 text = "      "
 autowrap_mode = 2
 
@@ -437,17 +473,31 @@ text = " "
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="StatusLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
-custom_minimum_size = Vector2(0, 88)
+[node name="StatusCard" type="PanelContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 108)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+
+[node name="StatusMargin" type="MarginContainer" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="StatusLabel" type="Label" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusCard/StatusMargin"]
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.97, 0.97, 0.97, 1)
+theme_override_font_sizes/font_size = 19
 text = "      "
 autowrap_mode = 2
-text_overrun_behavior = 3
+text_overrun_behavior = 2
 
 [node name="BtnDetails" type="Button" parent="SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox"]
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "           "
 autowrap_mode = 2
 

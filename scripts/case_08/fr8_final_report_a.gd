@@ -40,6 +40,9 @@ var start_time_ms: int = 0
 var drag_count: int = 0
 var swap_count: int = 0
 var trace: Array = []
+var confirm_attempt_count: int = 0
+var skip_unlocked: bool = false
+var selected_fragment_id: String = ""
 
 var level_solved: bool = false
 var confirm_locked: bool = false
@@ -226,6 +229,8 @@ func _build_slot_nodes() -> void:
 		if slot_node.has_method("setup"):
 			slot_node.call("setup", slot_id, slot_id)
 		_connect_zone_signal(slot_node)
+		if slot_node.has_signal("slot_tapped"):
+			slot_node.connect("slot_tapped", Callable(self, "_on_slot_tapped"))
 		slot_nodes[slot_id] = slot_node
 
 func _connect_zone_signal(zone_node: Node) -> void:
@@ -251,6 +256,9 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 	start_time_ms = Time.get_ticks_msec()
 	drag_count = 0
 	swap_count = 0
+	confirm_attempt_count = 0
+	skip_unlocked = false
+	selected_fragment_id = ""
 	trace.clear()
 	_log_event("ATTEMPT_START", {"level_start": is_level_start})
 
@@ -258,6 +266,7 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 	confirm_locked = false
 	has_confirmed_once = false
 	last_render_state = ""
+	_clear_fragment_highlights()
 	btn_confirm.disabled = false
 	btn_next.disabled = true
 	btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
@@ -285,6 +294,10 @@ func _spawn_fragments_into_pile() -> void:
 		item_node.set_meta("fragment_id", str(fragment_data.get("fragment_id", "")))
 		if item_node.has_signal("drag_started"):
 			item_node.connect("drag_started", Callable(self, "_on_drag_started"))
+		if item_node.has_signal("tapped"):
+			item_node.connect("tapped", Callable(self, "_on_fragment_tapped"))
+		elif item_node is Button:
+			(item_node as Button).pressed.connect(_on_fragment_tapped.bind(str(fragment_data.get("fragment_id", ""))))
 
 		if pile_zone.has_method("add_item_control"):
 			pile_zone.call("add_item_control", item_node)
@@ -306,9 +319,36 @@ func _on_item_placed(fragment_id: String, to_zone: String, from_zone: String) ->
 		"from_zone": from_zone,
 		"to_zone": to_zone
 	})
+	selected_fragment_id = ""
+	_clear_fragment_highlights()
 	_update_code_preview()
 	_update_slot_feedback()
 	_set_status(_tr("case08.fr8a.status.hint", STATUS_HINT), COLOR_INFO)
+
+func _on_fragment_tapped(fragment_id: String) -> void:
+	if confirm_locked:
+		return
+	if fragment_id.is_empty():
+		return
+	selected_fragment_id = fragment_id
+	_highlight_selected_fragment(fragment_id)
+	_set_status(
+		_tr("case08.fr8a.status.tap_slot", "Теперь нажмите на слот для размещения."),
+		COLOR_INFO
+	)
+
+func _on_slot_tapped(slot_id: String) -> void:
+	if confirm_locked or selected_fragment_id.is_empty():
+		return
+	var result: Dictionary = handle_drop_to_slot(slot_id, {
+		"kind": "TAG_FRAGMENT",
+		"fragment_id": selected_fragment_id,
+		"from_zone": _fragment_zone(selected_fragment_id)
+	})
+	if bool(result.get("success", false)):
+		_on_item_placed(selected_fragment_id, slot_id, str(result.get("from_zone", "PILE")))
+	selected_fragment_id = ""
+	_clear_fragment_highlights()
 
 func handle_drop_to_slot(target_zone_id: String, payload: Dictionary) -> Dictionary:
 	if confirm_locked:
@@ -440,6 +480,7 @@ func _on_confirm_pressed() -> void:
 		return
 
 	has_confirmed_once = true
+	confirm_attempt_count += 1
 	var sequence: Array[String] = _collect_sequence()
 	var snapshot_zones: Dictionary = _build_snapshot_zones()
 	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
@@ -496,7 +537,9 @@ func _on_confirm_pressed() -> void:
 	_update_stability_ui()
 
 	var feedback_text: String = FR8Scoring.feedback_text(level_data, evaluation)
+	_clear_fragment_highlights()
 	if verdict_code == "PERFECT":
+		skip_unlocked = false
 		level_solved = true
 		confirm_locked = true
 		btn_confirm.disabled = true
@@ -506,17 +549,37 @@ func _on_confirm_pressed() -> void:
 	elif verdict_code == "PARTIAL":
 		level_solved = false
 		confirm_locked = false
-		btn_next.disabled = true
-		_set_status(feedback_text, COLOR_WARN)
+		skip_unlocked = confirm_attempt_count >= 2
+		btn_next.disabled = not skip_unlocked
+		if skip_unlocked:
+			_set_status(
+				"%s\n%s" % [
+					feedback_text,
+					_tr("case08.fr8a.status.skip_available", "Можно пропустить (ДАЛЕЕ) или попробовать ещё раз.")
+				],
+				COLOR_WARN
+			)
+		else:
+			_set_status(feedback_text, COLOR_WARN)
 	else:
 		level_solved = false
 		confirm_locked = false
-		btn_next.disabled = true
-		if error_code == "INCOMPLETE":
-			_set_status(_tr("case08.fr8a.status.incomplete", STATUS_INCOMPLETE), COLOR_ERR)
+		skip_unlocked = confirm_attempt_count >= 3
+		btn_next.disabled = not skip_unlocked
+		var fail_text: String = _tr("case08.fr8a.status.incomplete", STATUS_INCOMPLETE) if error_code == "INCOMPLETE" else feedback_text
+		if skip_unlocked:
+			_set_status(
+				"%s\n%s" % [
+					fail_text,
+					_tr("case08.fr8a.status.skip_available", "Можно пропустить (ДАЛЕЕ) или сбросить.")
+				],
+				COLOR_ERR
+			)
 		else:
-			_set_status(feedback_text, COLOR_ERR)
+			_set_status(fail_text, COLOR_ERR)
 		_flash_wrong_slots()
+		if error_code == "HIERARCHY_VIOLATION":
+			_highlight_foreign_fragments_in_slots()
 
 	_play_confirm_audio(verdict_code)
 	if verdict_code in ["FAIL", "EMPTY"]:
@@ -524,7 +587,7 @@ func _on_confirm_pressed() -> void:
 		_shake_main_layout()
 
 func _on_next_pressed() -> void:
-	if not level_solved:
+	if not level_solved and not skip_unlocked:
 		_set_status(_tr("case08.fr8a.status.solve_first", STATUS_SOLVE_FIRST), COLOR_WARN)
 		return
 
@@ -562,9 +625,21 @@ func _play_confirm_audio(verdict_code: String) -> void:
 func _count_filled_slots(sequence: Array[String]) -> int:
 	var filled: int = 0
 	for fragment_id in sequence:
-		if not str(fragment_id).is_empty():
+		var value: String = str(fragment_id).strip_edges()
+		if not value.is_empty() and value != "(EMPTY)":
 			filled += 1
 	return filled
+
+func _count_required_missing_slots(sequence: Array[String]) -> int:
+	var missing: int = 0
+	for i in range(slot_ids.size()):
+		var expected_fragment_id: String = expected_sequence[i] if i < expected_sequence.size() else ""
+		if expected_fragment_id.is_empty() or expected_fragment_id == "(EMPTY)":
+			continue
+		var actual_fragment_id: String = sequence[i] if i < sequence.size() else ""
+		if actual_fragment_id.is_empty():
+			missing += 1
+	return missing
 
 func _update_code_preview() -> void:
 	var sequence: Array[String] = _collect_sequence()
@@ -572,8 +647,23 @@ func _update_code_preview() -> void:
 	for i in range(slot_ids.size()):
 		var slot_id: String = slot_ids[i]
 		var fragment_id: String = sequence[i] if i < sequence.size() else ""
-		var token: String = "____" if fragment_id.is_empty() else _token_for_fragment(fragment_id)
-		var token_color: String = "#7fffb4" if token != "____" else "#ffd07f"
+		var token: String = ""
+		var token_color: String = "#7fffb4"
+		var expected_fragment_id: String = expected_sequence[i] if i < expected_sequence.size() else ""
+		var expects_empty_slot: bool = expected_fragment_id.is_empty() or expected_fragment_id == "(EMPTY)"
+		if fragment_id.is_empty():
+			if expects_empty_slot:
+				token = "—"
+				token_color = "#555555"
+			else:
+				token = "____"
+				token_color = "#ffd07f"
+		elif fragment_id == "(EMPTY)":
+			token = "—"
+			token_color = "#555555"
+		else:
+			token = _token_for_fragment(fragment_id)
+			token_color = "#7fffb4"
 		raw_lines.append("[color=#7f7f7f]%s[/color] [color=%s]%s[/color]" % [slot_id, token_color, _escape_bbcode(token)])
 
 	var profile: String = str(level_data.get("validator_profile", FR8Scoring.PROFILE_LIST_BASIC)).to_upper()
@@ -597,8 +687,11 @@ func _update_render_preview(sequence: Array[String], evaluation_override: Dictio
 	var render_state: String = "error"
 	if bool(checks.get("container_ok", false)) and bool(checks.get("hierarchy_ok", false)):
 		render_state = "ok" if bool(checks.get("order_ok", false)) else "warn"
+	var required_missing_slots: int = _count_required_missing_slots(sequence)
+	if not has_confirmed_once and required_missing_slots > 0:
+		render_state = "warn"
 
-	if render_state == "error" and last_render_state != "error" and _count_filled_slots(sequence) > 0:
+	if has_confirmed_once and render_state == "error" and last_render_state != "error" and _count_filled_slots(sequence) > 0:
 		_trigger_glitch()
 	last_render_state = render_state
 
@@ -616,7 +709,18 @@ func _update_render_preview(sequence: Array[String], evaluation_override: Dictio
 		_:
 			render_status.text = _tr("case08.fr8a.render.error", RENDER_ERROR)
 			render_status.modulate = COLOR_ERR
-			header_line = "[shake rate=15.0 level=5 connected=1][b][color=#ff6363]%s[/color][/b][/shake]" % _tr("case08.fr8a.render.error", RENDER_ERROR)
+			var use_shake: bool = render_preview.get_v_scroll_bar() != null
+			if use_shake:
+				header_line = "[shake rate=15.0 level=5 connected=1][b][color=#ff6363]%s[/color][/b][/shake]" % _tr("case08.fr8a.render.error", RENDER_ERROR)
+			else:
+				header_line = "[b][color=#ff6363]%s[/color][/b]" % _tr("case08.fr8a.render.error", RENDER_ERROR)
+
+	if required_missing_slots > 0 and not has_confirmed_once:
+		mock_lines.append(
+			"[color=#7d7d7d]%s[/color]" % _escape_bbcode(
+				_tr("case08.fr8a.preview.empty_hint", "Заполните обязательные слоты: %d." % required_missing_slots)
+			)
+		)
 
 	render_preview.text = "\n".join([
 		header_line,
@@ -770,6 +874,12 @@ func _update_slot_feedback() -> void:
 		if slot_node == null or not slot_node.has_method("set_feedback_state"):
 			continue
 		var actual_fragment_id: String = _fragment_in_slot(slot_id)
+		if not has_confirmed_once:
+			if actual_fragment_id.is_empty():
+				slot_node.call("set_feedback_state", "neutral")
+			else:
+				slot_node.call("set_feedback_state", "filled")
+			continue
 		var expected_fragment_id: String = expected_sequence[i] if i < expected_sequence.size() else ""
 		if actual_fragment_id.is_empty():
 			slot_node.call("set_feedback_state", "neutral")
@@ -777,6 +887,30 @@ func _update_slot_feedback() -> void:
 			slot_node.call("set_feedback_state", "ok")
 		else:
 			slot_node.call("set_feedback_state", "bad")
+
+func _highlight_selected_fragment(fragment_id: String) -> void:
+	_clear_fragment_highlights()
+	var node: Node = fragment_nodes.get(fragment_id, null) as Node
+	if node is Button:
+		(node as Button).add_theme_color_override("font_color", Color(0.55, 0.86, 1.0))
+
+func _clear_fragment_highlights() -> void:
+	for frag_node_var in fragment_nodes.values():
+		if frag_node_var is Button:
+			var button_node: Button = frag_node_var as Button
+			button_node.remove_theme_color_override("font_color")
+
+func _highlight_foreign_fragments_in_slots() -> void:
+	for slot_id in slot_ids:
+		var frag_id: String = _fragment_in_slot(slot_id)
+		if frag_id.is_empty():
+			continue
+		var frag_data: Dictionary = fragment_by_id.get(frag_id, {}) as Dictionary
+		var kind: String = str(frag_data.get("kind", "")).to_upper()
+		if kind == "FOREIGN":
+			var frag_node: Node = fragment_nodes.get(frag_id, null) as Node
+			if frag_node is Button:
+				(frag_node as Button).add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 
 func _set_status(text_value: String, color_value: Color) -> void:
 	status_label.text = text_value

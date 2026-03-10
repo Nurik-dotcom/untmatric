@@ -74,11 +74,19 @@ horizontal_alignment = 2
 layout_mode = 2
 alignment = 1
 
+[node name="FactsBarLabel" type="Label" parent="SafeArea/MainLayout/BarsRow"]
+layout_mode = 2
+text = "FACTS"
+
 [node name="FactsBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_horizontal = 3
 show_percentage = false
+
+[node name="EnergyBarLabel" type="Label" parent="SafeArea/MainLayout/BarsRow"]
+layout_mode = 2
+text = "STAB"
 
 [node name="EnergyBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
 custom_minimum_size = Vector2(0, 8)
@@ -131,11 +139,12 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="InteractionRow" type="HBoxContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane"]
+[node name="InteractionRow" type="GridContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 12
-alignment = 1
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 4
 
 [node name="InputAFrame" type="PanelContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InteractionRow"]
 layout_mode = 2
@@ -240,12 +249,13 @@ theme_override_constants/margin_bottom = 8
 [node name="InventoryScroll" type="ScrollContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin"]
 layout_mode = 2
 
-[node name="GatesContainer" type="HBoxContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll"]
+[node name="GatesContainer" type="GridContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 14
-alignment = 1
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 14
+columns = 6
 
 [node name="GateAndBtn" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/InventoryFrame/InventoryMargin/InventoryScroll/GatesContainer"]
 custom_minimum_size = Vector2(128, 64)
@@ -300,10 +310,11 @@ size_flags_horizontal = 3
 text = "..."
 horizontal_alignment = 2
 
-[node name="Actions" type="HBoxContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane"]
+[node name="Actions" type="BoxContainer" parent="SafeArea/MainLayout/ContentHSplit/RightPane"]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
+vertical = false
 
 [node name="BtnHint" type="Button" parent="SafeArea/MainLayout/ContentHSplit/RightPane/Actions"]
 custom_minimum_size = Vector2(0, 56)

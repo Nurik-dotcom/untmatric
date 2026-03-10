@@ -7,6 +7,10 @@ const ARROW_ANGLE_RAD := 0.52
 const ARROW_LEN := 16.0
 const AUTO_FIT_MARGIN_PX := 24.0
 const TRAFFIC_BASE_SPEED := 2.4
+const PHASE_BUILD := 1
+const PHASE_RULES := 2
+const PHASE_INPUT := 3
+const PHASE_REVIEW := 4
 
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
@@ -89,6 +93,8 @@ var input_locked: bool = false
 var first_attempt_edge: String = ""
 var level_started_ms: int = 0
 var first_action_ms: int = -1
+var round_phase: int = PHASE_BUILD
+var phase_time_ms: Dictionary = {"1": 0, "2": 0, "3": 0, "4": 0}
 
 var backtrack_count: int = 0
 var cycle_events: int = 0
@@ -135,6 +141,14 @@ var _status_i18n_key: String = ""
 var _status_i18n_default: String = ""
 var _status_i18n_params: Dictionary = {}
 var _status_i18n_color: Color = Color(1, 1, 1, 1)
+var _phase_started_ms: int = 0
+var _hint_count: int = 0
+var _last_reveal: Dictionary = {}
+var _phase_label: Label
+var _reveal_label: Label
+var _solver = preload("res://scripts/city_map/GraphSolver.gd").new()
+var _pack_summary_ready: bool = false
+var _pack_summary_data: Dictionary = {}
 
 func _ready() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -172,15 +186,17 @@ func _apply_i18n() -> void:
 	if is_instance_valid(_btn_help):
 		_btn_help.tooltip_text = _tr("city_map.common.tooltip.dossier", "DOSSIER")
 	if is_instance_valid(_btn_undo):
-		_btn_undo.text = _tr("city_map.common.btn.undo", "UNDO")
-	btn_reset.text = _tr("city_map.common.btn.reset", "RESET")
-	btn_submit.text = _tr("city_map.common.btn.submit", "SUBMIT")
-	input_label.text = _tr("city_map.common.input.enter_sum", "ENTER FINAL SUM")
+		_btn_undo.text = _tr("city_map.common.btn.undo_step", "UNDO STEP")
+	btn_reset.text = _tr("city_map.common.btn.reset_route", "RESET ROUTE")
+	btn_submit.text = _tr("city_map.common.btn.check", "CHECK")
+	input_label.text = _tr("city_map.common.input.enter_sum", "Enter route sum")
 	footer_meta.text = _tr("city_map.b.footer.meta", "CITY MAP / B")
 	_set_progress_ui()
 	_set_briefing()
 	_update_visuals()
 	_update_timer_display()
+	if is_instance_valid(_phase_label):
+		_phase_label.text = _phase_text()
 	if not _status_i18n_key.is_empty():
 		_set_status_i18n(_status_i18n_key, _status_i18n_default, _status_i18n_color, _status_i18n_params)
 
@@ -196,7 +212,7 @@ func _clear_status_i18n() -> void:
 	_status_i18n_key = ""
 	_status_i18n_default = ""
 	_status_i18n_params = {}
-	_clear_status_i18n()
+	status_label.text = ""
 
 func _setup_noir_ui() -> void:
 	_ensure_info_scroll_container()
@@ -204,17 +220,25 @@ func _setup_noir_ui() -> void:
 	_btn_help = Button.new()
 	_btn_help.text = "?"
 	_btn_help.custom_minimum_size = Vector2(44, 44)
-	_btn_help.tooltip_text = "Р”РћРЎР¬Р•"
+	_btn_help.tooltip_text = "DOSSIER"
 	_btn_help.pressed.connect(_on_help_pressed)
 	header.add_child(_btn_help)
 
 	_btn_undo = Button.new()
-	_btn_undo.text = "РћРўРљРђРў"
+	_btn_undo.text = "UNDO STEP"
 	_btn_undo.custom_minimum_size = Vector2(0, 44)
 	_btn_undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_undo.pressed.connect(_on_undo_pressed)
 	buttons_row.add_child(_btn_undo)
 	buttons_row.move_child(_btn_undo, 0)
+
+	_phase_label = Label.new()
+	_phase_label.name = "PhaseLabelRuntime"
+	_phase_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_phase_label.add_theme_font_size_override("font_size", 14)
+	_phase_label.add_theme_color_override("font_color", Color(0.90, 0.94, 1.0, 0.95))
+	info_vbox.add_child(_phase_label)
+	info_vbox.move_child(_phase_label, 0)
 
 	_numpad_panel = PanelContainer.new()
 	_numpad_panel.name = "NumpadPanel"
@@ -236,6 +260,14 @@ func _setup_noir_ui() -> void:
 		_numpad_buttons.append(btn)
 	info_vbox.move_child(_numpad_panel, info_vbox.get_child_count() - 2)
 
+	_reveal_label = Label.new()
+	_reveal_label.name = "RevealLabelRuntime"
+	_reveal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_reveal_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_reveal_label.add_theme_color_override("font_color", Color(0.90, 0.86, 0.70, 1.0))
+	info_vbox.add_child(_reveal_label)
+	info_vbox.move_child(_reveal_label, info_vbox.get_child_count() - 2)
+
 	_traffic_layer = Control.new()
 	_traffic_layer.name = "TrafficLayer"
 	_traffic_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -244,6 +276,7 @@ func _setup_noir_ui() -> void:
 	graph_container.move_child(_traffic_layer, nodes_layer.get_index())
 
 	briefing_card.visible = false
+	_phase_started_ms = Time.get_ticks_msec()
 
 func _ensure_info_scroll_container() -> void:
 	var parent: Node = info_vbox.get_parent()
@@ -272,6 +305,130 @@ func _configure_sum_input_display() -> void:
 	sum_input.focus_mode = Control.FOCUS_CLICK
 	sum_input.set("virtual_keyboard_enabled", false)
 	sum_input.set("virtual_keyboard_show_on_focus", false)
+
+func _phase_text() -> String:
+	match round_phase:
+		PHASE_BUILD:
+			return _tr("city_map.common.phase.build", "STEP 1/4: Build route")
+		PHASE_RULES:
+			return _tr("city_map.common.phase.rules", "STEP 2/4: Check rules")
+		PHASE_INPUT:
+			return _tr("city_map.common.phase.input", "STEP 3/4: Enter total")
+		_:
+			return _tr("city_map.common.phase.review", "STEP 4/4: Review")
+
+func _set_phase(next_phase: int, force: bool = false) -> void:
+	var clamped_phase := clampi(next_phase, PHASE_BUILD, PHASE_REVIEW)
+	if not force and round_phase == clamped_phase:
+		if is_instance_valid(_phase_label):
+			_phase_label.text = _phase_text()
+		return
+	var now_ms := Time.get_ticks_msec()
+	if _phase_started_ms > 0:
+		var key := str(round_phase)
+		phase_time_ms[key] = int(phase_time_ms.get(key, 0)) + maxi(0, now_ms - _phase_started_ms)
+	round_phase = clamped_phase
+	_phase_started_ms = now_ms
+	if is_instance_valid(_phase_label):
+		_phase_label.text = _phase_text()
+
+func _phase_snapshot_ms() -> Dictionary:
+	var snapshot: Dictionary = phase_time_ms.duplicate(true)
+	var now_ms := Time.get_ticks_msec()
+	if _phase_started_ms > 0:
+		var key := str(round_phase)
+		snapshot[key] = int(snapshot.get(key, 0)) + maxi(0, now_ms - _phase_started_ms)
+	return snapshot
+
+func _route_display_text() -> String:
+	var tokens: Array[String] = []
+	for i in range(path.size()):
+		var node_id := str(path[i])
+		if i == path.size() - 1:
+			tokens.append("[%s]" % node_id)
+		else:
+			tokens.append(node_id)
+	return " -> ".join(tokens)
+
+func _best_known_path_preview() -> Array[String]:
+	return _solver.build_best_path_preview(level_data.get("min_path_examples", []))
+
+func _soft_hint_text(result_code: String) -> String:
+	if attempt_in_sublevel < 2:
+		return ""
+	match result_code:
+		"ERR_MISSING_TRANSIT":
+			return _tr("city_map.b.hint.must_visit", "Hint: pass through every required node before reaching finish.")
+		"ERR_CYCLE":
+			return _tr("city_map.b.hint.cycle", "Hint: avoid returning to already visited branches in this mode.")
+		"ERR_NOT_OPT":
+			return _tr("city_map.b.hint.opt", "Hint: compare only valid routes that satisfy constraints.")
+		_:
+			return _tr("city_map.b.hint.generic", "Hint: keep route valid first, then optimize its total cost.")
+
+func _build_review_text(verdict: Dictionary) -> String:
+	var result_code := str(verdict.get("result_code", "ERR_UNKNOWN"))
+	var step_idx := int(verdict.get("player_error_step_idx", -1))
+	var player_cost := int(verdict.get("player_cost", int(verdict.get("sum_actual", -1))))
+	var best_cost := int(verdict.get("best_known_cost", min_sum))
+	var must_ok := bool(verdict.get("must_visit_ok", false))
+	var cycle_ok := bool(verdict.get("cycle_ok", true))
+	var route_valid := bool(verdict.get("route_valid", false))
+	var finish_reached := bool(verdict.get("finish_reached", false))
+	var optimal_ok := bool(verdict.get("optimal_ok", false))
+
+	var happened := ""
+	var where := ""
+	var revisit := ""
+	var keep := ""
+	match result_code:
+		"OK":
+			happened = _tr("city_map.common.review.ok.happened", "What happened: your route is valid and optimal.")
+			where = _tr("city_map.common.review.ok.where", "Where: all constraints are satisfied.")
+			revisit = _tr("city_map.common.review.ok.revisit", "Review: continue comparing only valid constrained routes.")
+			keep = _tr("city_map.common.review.ok.keep", "Still correct: transit rule and shortest cost are both satisfied.")
+		"ERR_MISSING_TRANSIT":
+			happened = _tr("city_map.b.review.transit.happened", "What happened: required node condition is not satisfied.")
+			where = _tr("city_map.b.review.transit.where", "Where: at least one required node was skipped.")
+			revisit = _tr("city_map.b.review.transit.revisit", "Review: reroute through required nodes first.")
+			keep = _tr("city_map.b.review.transit.keep", "Still correct: keep valid direction choices.")
+		"ERR_CYCLE":
+			happened = _tr("city_map.b.review.cycle.happened", "What happened: the route contains a cycle.")
+			where = _tr("city_map.b.review.cycle.where", "Where: repeated node around step #{step}.", {"step": step_idx if step_idx > 0 else 1})
+			revisit = _tr("city_map.b.review.cycle.revisit", "Review: avoid loops in this mode.")
+			keep = _tr("city_map.b.review.cycle.keep", "Still correct: useful non-cyclic segment can be reused.")
+		"ERR_NOT_OPT":
+			happened = _tr("city_map.common.review.not_opt.happened", "What happened: route is valid, but not the minimum.")
+			where = _tr("city_map.common.review.not_opt.where", "Where: a cheaper continuation exists.")
+			revisit = _tr("city_map.common.review.not_opt.revisit", "Review: compare cumulative totals among valid routes.")
+			keep = _tr("city_map.common.review.not_opt.keep", "Still correct: constraints can remain satisfied.")
+		_:
+			happened = _tr("city_map.common.review.generic.happened", "What happened: route check failed.")
+			where = _tr("city_map.common.review.generic.where", "Where: inspect transitions and constraints.")
+			revisit = _tr("city_map.common.review.generic.revisit", "Review: rebuild route and verify each rule.")
+			keep = _tr("city_map.common.review.generic.keep", "Still correct: retain valid segment choices.")
+
+	var status_line := _tr(
+		"city_map.b.review.status",
+		"Status: valid={valid}, finish={finish}, must_visit={must}, cycle_free={cycle}, optimal={opt}",
+		{
+			"valid": "yes" if route_valid else "no",
+			"finish": "yes" if finish_reached else "no",
+			"must": "yes" if must_ok else "no",
+			"cycle": "yes" if cycle_ok else "no",
+			"opt": "yes" if optimal_ok else "no"
+		}
+	)
+	var cost_line := _tr(
+		"city_map.b.review.cost",
+		"Cost: yours={player}, best_valid={best}",
+		{"player": player_cost, "best": best_cost}
+	)
+	var hint_text := _soft_hint_text(result_code)
+	if not hint_text.is_empty():
+		_hint_count += 1
+		return "%s\n%s\n%s\n%s\n%s\n%s\n%s" % [happened, where, revisit, keep, status_line, cost_line, hint_text]
+	return "%s\n%s\n%s\n%s\n%s\n%s" % [happened, where, revisit, keep, status_line, cost_line]
 
 func _on_help_pressed() -> void:
 	_set_dossier_open(not briefing_card.visible)
@@ -421,6 +578,13 @@ func _load_sublevel(index: int) -> void:
 	wait_total_sim_sec = 0
 	warnings_shown_count = 0
 	must_visit_warning_time_ms = 0
+	_hint_count = 0
+	_last_reveal = {}
+	_pack_summary_ready = false
+	_pack_summary_data = {}
+	round_phase = PHASE_BUILD
+	phase_time_ms = {"1": 0, "2": 0, "3": 0, "4": 0}
+	_phase_started_ms = Time.get_ticks_msec()
 	think_time_before_move_ms.clear()
 	_last_move_ms = Time.get_ticks_msec()
 	_dossier_open_started_ms = -1
@@ -459,7 +623,7 @@ func _set_progress_ui() -> void:
 		{
 			"current": shown_index,
 			"total": total,
-			"suffix": ("" if sub_id.is_empty() else " вЂў " + sub_id)
+			"suffix": ("" if sub_id.is_empty() else " | " + sub_id)
 		}
 	)
 	if level_index >= total - 1:
@@ -482,13 +646,16 @@ func _lock_input(locked: bool) -> void:
 func _on_next_pressed() -> void:
 	if not stage_completed:
 		return
-	if level_index + 1 >= level_total:
-		_finalize_pack_run()
+	if _pack_summary_ready:
 		get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+		return
+	if level_index + 1 >= level_total:
+		var summary := _finalize_pack_run()
+		_show_pack_summary(summary)
 		return
 	_load_sublevel(level_index + 1)
 
-func _finalize_pack_run() -> void:
+func _finalize_pack_run() -> Dictionary:
 	var summary := {
 		"schema_version": "city_map.run.v1",
 		"quest_id": "CITY_MAP",
@@ -508,6 +675,54 @@ func _finalize_pack_run() -> void:
 		"finished_at_unix": int(Time.get_unix_time_from_system())
 	}
 	_save_json_log(summary, true)
+	return summary
+
+func _show_pack_summary(summary: Dictionary) -> void:
+	_pack_summary_ready = true
+	_pack_summary_data = summary.duplicate(true)
+	var solved := int(summary.get("levels_completed", levels_completed))
+	var total := int(summary.get("levels_total", level_total))
+	var perfect := int(summary.get("levels_perfect", levels_perfect))
+	var route_err := int(summary.get("total_cycle_errors", run_total_cycle_errors))
+	var cond_err := int(summary.get("total_transit_errors", run_total_transit_errors))
+	var calc_err := int(summary.get("total_calc_errors", run_total_calc_errors))
+	var opt_err := int(summary.get("total_opt_errors", run_total_opt_errors))
+	var avg_time := 0.0 if solved <= 0 else float(int(summary.get("total_time_seconds", run_total_time_seconds))) / float(solved)
+	var recommendation := _pack_recommendation_text(route_err, cond_err, calc_err, opt_err)
+
+	briefing_title.text = _tr("city_map.common.summary.title", "PACK SUMMARY")
+	briefing_text.text = _tr(
+		"city_map.b.summary.body",
+		"Solved: {solved}/{total}\nFirst try: {perfect}\nErrors:\n- Route: {route}\n- Conditions: {cond}\n- Arithmetic: {calc}\n- Optimality: {opt}\nAverage time: {avg}s",
+		{
+			"solved": solved,
+			"total": total,
+			"perfect": perfect,
+			"route": route_err,
+			"cond": cond_err,
+			"calc": calc_err,
+			"opt": opt_err,
+			"avg": int(round(avg_time))
+		}
+	)
+	footer_label.text = _tr("city_map.common.summary.recommendation", "Recommendation: {text}", {"text": recommendation})
+	_set_dossier_open(true)
+	_set_status_i18n("city_map.common.summary.ready", "Pack summary is ready. Press FINISH to exit.", Color(0.82, 0.92, 1.0))
+	_lock_input(true)
+	btn_next.visible = true
+	btn_next.disabled = false
+	btn_next.text = _tr("city_map.common.btn.finish", "FINISH")
+
+func _pack_recommendation_text(route_err: int, cond_err: int, calc_err: int, opt_err: int) -> String:
+	if cond_err >= route_err and cond_err >= calc_err and cond_err >= opt_err and cond_err > 0:
+		return _tr("city_map.b.summary.reco.conditions", "Train must-visit coverage before finishing the route.")
+	if opt_err >= route_err and opt_err >= calc_err and opt_err > 0:
+		return _tr("city_map.b.summary.reco.opt", "Compare valid constrained branches to find the cheapest one.")
+	if calc_err >= route_err and calc_err > 0:
+		return _tr("city_map.b.summary.reco.calc", "Recalculate edge weights carefully on chosen route.")
+	if route_err > 0:
+		return _tr("city_map.b.summary.reco.route", "Avoid cycles and keep route progression forward.")
+	return _tr("city_map.b.summary.reco.good", "Good balance of constraint checks and optimization.")
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
@@ -529,10 +744,10 @@ func _apply_content_layout_mode() -> void:
 	content_split.vertical = not is_landscape
 	var compact_landscape: bool = is_landscape and viewport.y <= 640.0
 	if content_split.vertical:
-		graph_panel.size_flags_stretch_ratio = 3.2
-		info_panel.size_flags_stretch_ratio = 1.8
+		graph_panel.size_flags_stretch_ratio = 3.8
+		info_panel.size_flags_stretch_ratio = 1.2
 	else:
-		graph_panel.size_flags_stretch_ratio = 2.5 if compact_landscape else 2.9
+		graph_panel.size_flags_stretch_ratio = 3.6 if compact_landscape else 4.0
 		info_panel.size_flags_stretch_ratio = 1.0
 	_apply_compact_phone_layout(compact_landscape)
 
@@ -555,7 +770,7 @@ func _apply_compact_phone_layout(compact: bool) -> void:
 	footer_row.visible = not compact
 	graph_panel.custom_minimum_size = Vector2.ZERO
 	graph_container.custom_minimum_size = Vector2.ZERO
-	info_panel.custom_minimum_size = Vector2(208.0 if compact else 280.0, 0.0)
+	info_panel.custom_minimum_size = Vector2(188.0 if compact else 248.0, 0.0)
 	sum_input.custom_minimum_size.y = 36.0 if compact else 44.0
 	status_label.custom_minimum_size.y = 44.0 if compact else 64.0
 	if is_instance_valid(_btn_help):
@@ -674,12 +889,13 @@ func _set_briefing() -> void:
 	briefing_title.text = _tr("city_map.b.briefing.title", "TRANSIT CHECK")
 	briefing_text.text = _tr(
 		"city_map.b.briefing.text",
-		"Reach node E, enter the exact route sum, and prove optimality in a directed graph."
+		"Goal: reach {end}. Include every required node and keep the route minimal.",
+		{"end": str(level_data.get("end_node", "E"))}
 	)
 	update_conditions_panel()
 	footer_label.text = _tr(
 		"city_map.b.briefing.footer",
-		"Two-way roads are active only where reverse edge exists in data."
+		"Two-way roads are shown directly on the map with double arrows."
 	)
 
 func _calculate_min_sum_with_constraints() -> int:
@@ -687,45 +903,7 @@ func _calculate_min_sum_with_constraints() -> int:
 	var end_node := str(level_data.get("end_node", ""))
 	if start_node.is_empty() or end_node.is_empty():
 		return 0
-
-	var frontier: Array[Dictionary] = [{
-		"node": start_node,
-		"cost": 0,
-		"path": [start_node]
-	}]
-	var best := 1_000_000_000
-
-	while not frontier.is_empty():
-		var best_index := 0
-		for i in range(1, frontier.size()):
-			if int(frontier[i].cost) < int(frontier[best_index].cost):
-				best_index = i
-		var state: Dictionary = frontier.pop_at(best_index)
-
-		var node_id := str(state.node)
-		var cost := int(state.cost)
-		var path_local: Array = state.path
-		if cost >= best:
-			continue
-
-		if node_id == end_node and _path_has_all_transit(path_local):
-			best = min(best, cost)
-			continue
-
-		for next_id in adjacency.get(node_id, {}).keys():
-			var local_visits := 0
-			for p in path_local:
-				if str(p) == str(next_id):
-					local_visits += 1
-			if local_visits >= 2:
-				continue
-			frontier.append({
-				"node": str(next_id),
-				"cost": cost + int(adjacency[node_id][next_id]),
-				"path": path_local + [str(next_id)]
-			})
-
-	return 0 if best >= 1_000_000_000 else best
+	return _solver.compute_min_sum_with_constraints(adjacency, start_node, end_node, must_visit_nodes, 2)
 
 func _path_has_all_transit(path_local: Array) -> bool:
 	for must_node in must_visit_nodes:
@@ -795,7 +973,8 @@ func _rebuild_graph_ui() -> void:
 			keys.append(_edge_key(to_id, from_id))
 
 		var label := Label.new()
-		label.text = str(edge.get("w", 0))
+		var two_way_edge := bool(edge.get("two_way", false))
+		label.text = "%s%s" % [str(edge.get("w", 0)), " <->" if two_way_edge else ""]
 		label.add_theme_font_size_override("font_size", 15)
 		label.position = _renderer.edge_label_position(baked, 14.0)
 		label.add_theme_color_override("font_color", Color(0.62, 0.74, 0.90))
@@ -818,7 +997,8 @@ func _rebuild_graph_ui() -> void:
 	for node_id in node_defs.keys():
 		var node: Dictionary = node_defs[node_id]
 		var btn := Button.new()
-		btn.text = str(node.get("label", node_id))
+		var base_label := str(node.get("label", node_id))
+		btn.text = "★%s" % base_label if must_visit_nodes.has(node_id) else base_label
 		btn.flat = false
 		var diameter := hit_radius * 2.0
 		btn.size = Vector2(diameter, diameter)
@@ -998,7 +1178,10 @@ func _reset_round_state(full_reset: bool) -> void:
 	first_attempt_edge = ""
 	first_action_ms = -1
 	sum_input.clear()
-	status_label.text = ""
+	_clear_status_i18n()
+	_last_reveal = {}
+	if is_instance_valid(_reveal_label):
+		_reveal_label.text = ""
 	_undo_stack.clear()
 	_last_move_ms = Time.get_ticks_msec()
 	_last_warning_signature = ""
@@ -1006,13 +1189,38 @@ func _reset_round_state(full_reset: bool) -> void:
 
 	if full_reset:
 		level_started_ms = Time.get_ticks_msec()
+		phase_time_ms = {"1": 0, "2": 0, "3": 0, "4": 0}
+		_phase_started_ms = Time.get_ticks_msec()
+	_set_phase(PHASE_BUILD, true)
 
 	update_conditions_panel()
 	_update_visuals()
 
 func _update_visuals() -> void:
-	path_display.text = _tr("city_map.common.input.path", "PATH: {path}", {"path": " -> ".join(path)})
-	sum_live_label.text = _tr("city_map.common.input.sum", "SUM: {value}", {"value": path_sum})
+	var end_node := str(level_data.get("end_node", "E"))
+	var at_finish := current_node == end_node
+	if stage_completed:
+		_set_phase(PHASE_REVIEW)
+	elif at_finish and sum_input.text.strip_edges().is_empty():
+		_set_phase(PHASE_RULES)
+	elif at_finish:
+		_set_phase(PHASE_INPUT)
+	else:
+		_set_phase(PHASE_BUILD)
+
+	path_display.text = _tr("city_map.common.input.path", "PATH: {path}", {"path": _route_display_text()})
+	var step_count := maxi(0, path.size() - 1)
+	if round_phase == PHASE_REVIEW and not _last_reveal.is_empty():
+		sum_live_label.text = _tr(
+			"city_map.b.input.sum_after",
+			"Route cost: {player} | Best valid: {best}",
+			{
+				"player": int(_last_reveal.get("player_cost", path_sum)),
+				"best": int(_last_reveal.get("best_known_cost", min_sum))
+			}
+		)
+	else:
+		sum_live_label.text = _tr("city_map.b.input.steps", "Steps: {count}", {"count": step_count})
 	backtrack_label.text = _tr("city_map.b.constraints.backtrack", "UNDO: {count}", {"count": backtrack_count})
 	cycle_label.text = _tr("city_map.b.constraints.cycles", "CYCLES: {count}", {"count": cycle_events})
 	update_warnings_panel()
@@ -1021,9 +1229,11 @@ func _update_visuals() -> void:
 		var btn: Button = node_buttons[node_id]
 		var is_current: bool = node_id == current_node
 		var is_available: bool = adjacency.has(current_node) and adjacency[current_node].has(node_id)
-		btn.disabled = is_current or not is_available or _is_round_locked()
+		btn.disabled = is_current or _is_round_locked()
 		if is_current:
 			btn.modulate = Color(0.95, 0.86, 0.45)
+		elif must_visit_nodes.has(node_id) and not path.has(node_id):
+			btn.modulate = Color(0.92, 0.86, 0.32)
 		elif is_available:
 			btn.modulate = Color(1, 1, 1)
 		else:
@@ -1038,10 +1248,25 @@ func _update_visuals() -> void:
 
 	for i in range(path.size() - 1):
 		_set_edge_style_by_key(_edge_key(path[i], path[i + 1]), "traversed")
+	if cycle_events > 0:
+		var first_seen: Dictionary = {}
+		var cycle_start := -1
+		for i in range(path.size()):
+			var node_id := str(path[i])
+			if first_seen.has(node_id):
+				cycle_start = int(first_seen[node_id])
+				break
+			first_seen[node_id] = i
+		if cycle_start >= 0:
+			for i in range(cycle_start, path.size() - 1):
+				_set_edge_style_by_key(_edge_key(path[i], path[i + 1]), "cycle")
 
 	_sync_traffic_visuals()
 	if is_instance_valid(_btn_undo):
 		_btn_undo.disabled = _is_round_locked() or _undo_stack.is_empty()
+	btn_submit.disabled = _is_round_locked() or not at_finish
+	btn_next.visible = stage_completed
+	btn_next.disabled = not stage_completed
 
 func _set_edge_style_by_key(key: String, state: String) -> void:
 	if not edge_key_to_visuals.has(key):
@@ -1067,6 +1292,9 @@ func _apply_style_to_visual(visual_id: String, state: String) -> void:
 		start_color = accent_color.lightened(0.10)
 		start_color.a = 0.80
 		end_color = Color(0.92, 0.97, 1.0, 1.0)
+	elif state == "cycle":
+		start_color = Color(0.72, 0.26, 0.22, 0.70)
+		end_color = Color(1.0, 0.44, 0.30, 1.0)
 
 	line.gradient = _build_gradient(start_color, end_color)
 	for arrow in arrows:
@@ -1080,6 +1308,11 @@ func _on_node_pressed(node_id: String) -> void:
 	if _is_round_locked():
 		return
 	if not adjacency.has(current_node) or not adjacency[current_node].has(node_id):
+		_set_status_i18n(
+			"city_map.b.status.wrong_direction",
+			"Cannot move: this edge is not outgoing from the current node.",
+			Color(1.0, 0.65, 0.35)
+		)
 		return
 
 	var now_ms := Time.get_ticks_msec()
@@ -1104,6 +1337,9 @@ func _on_node_pressed(node_id: String) -> void:
 	path_sum += int(adjacency[current_node][node_id])
 	path.append(node_id)
 	current_node = node_id
+	_last_reveal = {}
+	if is_instance_valid(_reveal_label):
+		_reveal_label.text = ""
 	if path.size() == 2:
 		_set_dossier_open(false)
 	_update_visuals()
@@ -1126,16 +1362,30 @@ func _on_sum_input_changed(new_text: String) -> void:
 	if digits != new_text:
 		sum_input.text = digits
 		sum_input.caret_column = digits.length()
+	if current_node == str(level_data.get("end_node", "E")) and not digits.is_empty():
+		_set_phase(PHASE_INPUT)
 
 func _on_submit_pressed() -> void:
 	if _is_round_locked():
 		return
+	if current_node != str(level_data.get("end_node", "E")):
+		_set_status_i18n(
+			"city_map.common.result.err_incomplete",
+			"Reach the target node before check.",
+			Color(1.0, 0.62, 0.28)
+		)
+		_set_phase(PHASE_BUILD)
+		return
 	_set_dossier_open(false)
+	_set_phase(PHASE_REVIEW)
 
 	attempt_in_sublevel += 1
 	attempt_in_run += 1
 	var verdict := _judge_solution(sum_input.text.strip_edges())
+	_last_reveal = verdict
 	_log_attempt(verdict)
+	if is_instance_valid(_reveal_label):
+		_reveal_label.text = _build_review_text(verdict)
 
 	if verdict.result_code == "OK":
 		_set_status_i18n(
@@ -1208,19 +1458,30 @@ func _judge_solution(input_text: String) -> Dictionary:
 	var sum_actual := _compute_path_sum()
 	var sum_input_value: Variant = null
 	var result_code := "OK"
+	var player_error_step_idx := -1
+	var must_visit_ok := _path_has_all_transit(path)
+	var cycle_ok := cycle_events <= 0
 
 	if sum_actual < 0:
 		result_code = "ERR_PATH_INVALID"
+		player_error_step_idx = _solver.first_invalid_step_index(path, adjacency)
 	elif current_node != str(level_data.get("end_node", "E")):
 		result_code = "ERR_INCOMPLETE"
-	elif not _path_has_all_transit(path):
+	elif not must_visit_ok:
 		n_transit += 1
 		constraint_violations += 1
 		result_code = "ERR_MISSING_TRANSIT"
-	elif cycle_events > 0:
+	elif not cycle_ok:
 		n_cycle += 1
 		constraint_violations += 1
 		result_code = "ERR_CYCLE"
+		var seen: Dictionary = {}
+		for i in range(path.size()):
+			var node_id := str(path[i])
+			if seen.has(node_id):
+				player_error_step_idx = i
+				break
+			seen[node_id] = true
 	elif input_regex.search(input_text) == null:
 		n_parse += 1
 		result_code = "ERR_PARSE"
@@ -1233,12 +1494,25 @@ func _judge_solution(input_text: String) -> Dictionary:
 			n_opt += 1
 			result_code = "ERR_NOT_OPT"
 
-	return {
-		"result_code": result_code,
-		"sum_actual": sum_actual,
-		"sum_input": sum_input_value,
-		"must_visit_ok": _path_has_all_transit(path)
-	}
+	var reveal := _solver.build_reveal_payload(
+		path,
+		result_code,
+		sum_actual,
+		min_sum,
+		str(level_data.get("end_node", "E")),
+		sum_input_value,
+		must_visit_ok,
+		cycle_ok,
+		true,
+		true,
+		true,
+		player_error_step_idx,
+		_best_known_path_preview(),
+		min_sum
+	)
+	reveal["sum_actual"] = sum_actual
+	reveal["sum_input"] = sum_input_value
+	return reveal
 
 func _compute_path_sum() -> int:
 	var total := 0
@@ -1261,11 +1535,10 @@ func _recalculate_stability() -> void:
 		n_calc * int(trust_cfg.get("penalty_calc", 25))
 		+ n_opt * int(trust_cfg.get("penalty_opt", 25))
 		+ n_parse * int(trust_cfg.get("penalty_parse", 5))
-		+ n_reset * int(trust_cfg.get("penalty_reset", 5))
+		+ n_reset * maxi(1, int(trust_cfg.get("penalty_reset", 5)) / 2)
 		+ n_transit * int(trust_cfg.get("penalty_transit", 25))
 		+ n_cycle * int(trust_cfg.get("penalty_cycle", 10))
 		+ maxi(0, undo_count - 1) * 5
-		+ wait_count
 		+ overtime_penalty
 	)
 
@@ -1300,6 +1573,7 @@ func _log_attempt(verdict: Dictionary) -> void:
 	var sum_input_value: Variant = verdict.get("sum_input", null)
 	var result_code := str(verdict.get("result_code", "ERR_UNKNOWN"))
 	var must_visit_ok := bool(verdict.get("must_visit_ok", false))
+	var phase_snapshot: Dictionary = _phase_snapshot_ms()
 	var level_entry := _current_level_entry()
 	var sublevel_id := str(level_entry.get("id", "6_2_%02d" % (level_index + 1)))
 	var sublevel_path := str(level_entry.get("path", ""))
@@ -1328,9 +1602,12 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"contract_version": str(level_data.get("contract_version", "city_map.v2.1.0")),
 		"attempt_no": attempt_no,
 		"result_code": result_code,
+		"route_valid": bool(verdict.get("route_valid", false)),
+		"finish_reached": bool(verdict.get("finish_reached", false)),
 		"calc_ok": sum_input_value != null and int(sum_input_value) == sum_actual,
 		"optimal_ok": sum_actual == min_sum and result_code == "OK" and must_visit_ok,
 		"must_visit_ok": must_visit_ok,
+		"cycle_ok": bool(verdict.get("cycle_ok", true)),
 		"first_attempt_edge": first_attempt_edge_value,
 		"t_elapsed_seconds": t_elapsed_seconds,
 		"path": path.duplicate(),
@@ -1355,8 +1632,14 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"closed_edge_attempts": 0,
 		"dossier_open_count": dossier_open_count,
 		"time_dossier_open_ms": time_dossier_open_ms,
+		"help_open_count": dossier_open_count,
 		"numpad_input_count": numpad_input_count,
 		"backspace_count": backspace_count,
+		"hint_count": _hint_count,
+		"phase_build_ms": int(phase_snapshot.get("1", 0)),
+		"phase_rules_ms": int(phase_snapshot.get("2", 0)),
+		"phase_input_ms": int(phase_snapshot.get("3", 0)),
+		"phase_review_ms": int(phase_snapshot.get("4", 0)),
 		"think_time_before_move_ms": think_time_before_move_ms.duplicate(),
 		"is_correct": result_code == "OK",
 		"is_fit": result_code == "OK",
@@ -1373,10 +1656,9 @@ func _log_attempt(verdict: Dictionary) -> void:
 func update_conditions_panel() -> void:
 	var must_visit_text: String = "-" if must_visit_nodes.is_empty() else ",".join(must_visit_nodes)
 	var lines: Array[String] = [
-		_tr("city_map.b.constraints.header", "CONSTRAINTS:"),
-		_tr("city_map.b.constraints.must_visit", "MUST VISIT: {nodes}", {"nodes": must_visit_text}),
-		_tr("city_map.b.constraints.cycles_rule", "CYCLES: forbidden"),
-		_tr("city_map.b.constraints.undo_rule", "UNDO: counted")
+		_tr("city_map.b.constraints.must_visit", "Required node: {nodes}", {"nodes": must_visit_text}),
+		_tr("city_map.b.constraints.cycles_rule", "Cycles: forbidden"),
+		_tr("city_map.b.constraints.two_way", "Two-way roads: marked as TWO-WAY")
 	]
 	var conditions_text: String = "\n".join(lines)
 	constraint_info_label.text = conditions_text
@@ -1394,14 +1676,14 @@ func update_warnings_panel() -> void:
 		warnings.append(
 			_tr(
 				"city_map.b.warning.missing_must",
-				"Required nodes not visited: {nodes}",
+				"You still need to pass required node(s): {nodes}",
 				{"nodes": ",".join(missing_must)}
 			)
 		)
 	if cycle_events > 0:
-		warnings.append(_tr("city_map.b.warning.cycle", "Cycle detected"))
+		warnings.append(_tr("city_map.b.warning.cycle", "Route loops back into an already visited branch"))
 	if backtrack_count > 0:
-		warnings.append(_tr("city_map.b.warning.undo", "Undo used"))
+		warnings.append(_tr("city_map.b.warning.undo", "Undo is fine for exploration; first undo is free"))
 
 	_must_visit_warning_active = not missing_must.is_empty()
 	var signature: String = "|".join(warnings)
@@ -1411,11 +1693,11 @@ func update_warnings_panel() -> void:
 		_last_warning_signature = signature
 
 	if warnings.is_empty():
-		warning_label.text = _tr("city_map.common.warning.none", "WARNINGS:\n-")
+		warning_label.text = _tr("city_map.common.warning.none", "Warnings:\n-")
 	else:
 		warning_label.text = _tr(
 			"city_map.common.warning.list",
-			"WARNINGS:\n{items}",
+			"Warnings:\n{items}",
 			{"items": "\n".join(warnings)}
 		)
 

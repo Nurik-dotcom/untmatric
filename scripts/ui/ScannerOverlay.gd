@@ -3,12 +3,16 @@
 @export var cursor_color: Color = Color(0.35, 0.95, 0.75, 0.8)
 @export var highlight_color: Color = Color(1.0, 0.85, 0.28, 0.22)
 @export var border_color: Color = Color(1.0, 0.9, 0.4, 0.85)
+@export var selection_color: Color = Color(1.0, 0.92, 0.56, 0.16)
+@export var selection_border_color: Color = Color(1.0, 0.95, 0.72, 0.95)
 @export var cursor_radius: float = 18.0
 
 var _cursor_visible := false
 var _cursor_pos := Vector2.ZERO
 var _highlight_visible := false
 var _highlight_rect := Rect2()
+var _selection_visible := false
+var _selection_rect := Rect2()
 var _pulse_visible := false
 var _pulse_pos := Vector2.ZERO
 var _pulse_t := 0.0
@@ -41,6 +45,15 @@ func clear_highlight() -> void:
 	_highlight_visible = false
 	queue_redraw()
 
+func set_selection_rect(rect: Rect2) -> void:
+	_selection_visible = true
+	_selection_rect = rect
+	queue_redraw()
+
+func clear_selection() -> void:
+	_selection_visible = false
+	queue_redraw()
+
 func pulse(pos: Vector2) -> void:
 	_pulse_visible = true
 	_pulse_pos = pos
@@ -51,6 +64,9 @@ func _draw() -> void:
 	if _highlight_visible:
 		draw_rect(_highlight_rect, highlight_color, true)
 		draw_rect(_highlight_rect, border_color, false, 1.5)
+	if _selection_visible:
+		draw_rect(_selection_rect, selection_color, true)
+		draw_rect(_selection_rect, selection_border_color, false, 2.2)
 	if _cursor_visible:
 		draw_arc(_cursor_pos, cursor_radius, 0.0, TAU, 32, cursor_color, 1.8, true)
 		draw_line(_cursor_pos + Vector2(-6, 0), _cursor_pos + Vector2(6, 0), cursor_color, 1.0, true)

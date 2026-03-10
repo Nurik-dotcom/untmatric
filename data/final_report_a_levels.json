@@ -32,7 +32,7 @@
         "token_key": "case08.fr8a.FR8-A-L01.fragment.01.token"
       },
       {
-        "fragment_id": "Р»Рё_Р°",
+        "fragment_id": "li_a",
         "label": "<li>Журнал A</li>",
         "kind": "LI_ITEM",
         "token": "<li>Лог A</li>",
@@ -40,7 +40,7 @@
         "token_key": "case08.fr8a.FR8-A-L01.fragment.02.token"
       },
       {
-        "fragment_id": "Р»Рё_Р±",
+        "fragment_id": "li_b",
         "label": "<li>Журнал Б</li>",
         "kind": "LI_ITEM",
         "token": "<li>Лог B</li>",
@@ -64,7 +64,7 @@
         "token_key": "case08.fr8a.FR8-A-L01.fragment.05.token"
       },
       {
-        "fragment_id": "С€СѓРј_РґРёРІ",
+        "fragment_id": "noise_div",
         "label": "<div>шум</div>",
         "kind": "FOREIGN",
         "token": "<div>шум</div>",
@@ -74,8 +74,8 @@
     ],
     "expected_sequence": [
       "open_ul",
-      "Р»Рё_Р°",
-      "Р»Рё_Р±",
+      "li_a",
+      "li_b",
       "li_c",
       "close_ul",
       "(EMPTY)"
@@ -192,7 +192,7 @@
         "token_key": "case08.fr8a.FR8-A-L02.fragment.05.token"
       },
       {
-        "fragment_id": "С€СѓРј_Рї",
+        "fragment_id": "noise_p",
         "label": "<p>шум</p>",
         "kind": "FOREIGN",
         "token": "<p>шум</p>",
@@ -299,7 +299,7 @@
         "token_key": "case08.fr8a.FR8-A-N01.fragment.02.token"
       },
       {
-        "fragment_id": "Р°_РњР’Рџ",
+        "fragment_id": "a_mvp",
         "label": "<a href=\"#mvp\">MVP</a>",
         "kind": "LINK",
         "token": "<a href=\"#mvp\">MVP</a>",
@@ -323,7 +323,7 @@
         "token_key": "case08.fr8a.FR8-A-N01.fragment.05.token"
       },
       {
-        "fragment_id": "С€СѓРј_РґРёР°РїР°Р·РѕРЅ",
+        "fragment_id": "noise_span",
         "label": "<span>реклама</span>",
         "kind": "FOREIGN",
         "token": "<span>реклама</span>",
@@ -334,7 +334,7 @@
     "expected_sequence": [
       "open_nav",
       "a_home",
-      "Р°_РњР’Рџ",
+      "a_mvp",
       "a_team",
       "close_nav",
       "(EMPTY)"
@@ -446,7 +446,7 @@
         "token_key": "case08.fr8a.FR8-A-N02.fragment.04.token"
       },
       {
-        "fragment_id": "С€СѓРј_РґРёРІ",
+        "fragment_id": "noise_div",
         "label": "<div>баннер</div>",
         "kind": "FOREIGN",
         "token": "<div>баннер</div>",
@@ -513,7 +513,7 @@
     "quest_id": "CASE_08_FINAL_REPORT",
     "schema_version": "1.2.0",
     "id": "FR8-A-T01",
-    "bucket": "newbie",
+    "bucket": "intermediate",
     "briefing": "Соберите протокол входов в таблице.",
     "format": "TAG_ORDERING",
     "validator_profile": "TABLE_LOG",
@@ -573,7 +573,7 @@
         "token_key": "case08.fr8a.FR8-A-T01.fragment.05.token"
       },
       {
-        "fragment_id": "С€СѓРј_РґРёРІ",
+        "fragment_id": "noise_div",
         "label": "<div>строка</div>",
         "kind": "FOREIGN",
         "token": "<div>строка</div>",
@@ -640,7 +640,7 @@
     "quest_id": "CASE_08_FINAL_REPORT",
     "schema_version": "1.2.0",
     "id": "FR8-A-T02",
-    "bucket": "newbie",
+    "bucket": "intermediate",
     "briefing": "Ловушка: Столик-контейнер должен закрываться правильно.",
     "format": "TAG_ORDERING",
     "validator_profile": "TABLE_LOG",
@@ -668,7 +668,7 @@
         "token_key": "case08.fr8a.FR8-A-T02.fragment.01.token"
       },
       {
-        "fragment_id": "СЃС‚СЂРѕРєР°_1",
+        "fragment_id": "row_1",
         "label": "<tr><td>Хост-1</td><td>ОК</td></tr>",
         "kind": "TR_ROW",
         "token": "<tr><td>Хост-1</td><td>ОК</td></tr>",
@@ -676,7 +676,7 @@
         "token_key": "case08.fr8a.FR8-A-T02.fragment.02.token"
       },
       {
-        "fragment_id": "СЃС‚СЂРѕРєР°_2",
+        "fragment_id": "row_2",
         "label": "<tr><td>Хост-2</td><td>ПРЕДУПРЕЖДЕНИЕ</td></tr>",
         "kind": "TR_ROW",
         "token": "<tr><td>Хост-2</td><td>ПРЕДУПРЕЖДЕНИЕ</td></tr>",
@@ -684,7 +684,7 @@
         "token_key": "case08.fr8a.FR8-A-T02.fragment.03.token"
       },
       {
-        "fragment_id": "СЃС‚СЂРѕРєР°_3",
+        "fragment_id": "row_3",
         "label": "<tr><td>Хост-3</td><td>ОК</td></tr>",
         "kind": "TR_ROW",
         "token": "<tr><td>Хост-3</td><td>ОК</td></tr>",
@@ -710,9 +710,9 @@
     ],
     "expected_sequence": [
       "open_table",
-      "СЃС‚СЂРѕРєР°_1",
-      "СЃС‚СЂРѕРєР°_2",
-      "СЃС‚СЂРѕРєР°_3",
+      "row_1",
+      "row_2",
+      "row_3",
       "close_table",
       "(EMPTY)"
     ],
@@ -767,7 +767,7 @@
     "quest_id": "CASE_08_FINAL_REPORT",
     "schema_version": "1.2.0",
     "id": "FR8-A-F01",
-    "bucket": "newbie",
+    "bucket": "intermediate",
     "briefing": "Соберите простую форму допроса: надпись + поле ввода + кнопка.",
     "format": "TAG_ORDERING",
     "validator_profile": "FORM_SIMPLE",
@@ -877,11 +877,11 @@
       }
     },
     "feedback_rules": {
-      "UNBALANCED_TAG": "Container is broken: start and end of structure do not match.",
-      "HIERARCHY_VIOLATION": "Foreign element inside container.",
-      "REQUIRED_TAG_MISSING": "Required element is missing inside container.",
-      "ORDER_MISMATCH": "Syntax is alive, but order of evidence is broken.",
-      "OK": "Evidence restored. File is readable."
+      "UNBALANCED_TAG": "Контейнер разорван: начало и конец структуры не совпадают.",
+      "HIERARCHY_VIOLATION": "Чужеродный элемент внутри контейнера.",
+      "REQUIRED_TAG_MISSING": "Обязательный элемент отсутствует внутри контейнера.",
+      "ORDER_MISMATCH": "Синтаксис жив, но порядок улик нарушен.",
+      "OK": "Улики восстановлены. Файл читаем."
     },
     "briefing_key": "case08.fr8a.FR8-A-F01.briefing",
     "feedback_rules_keys": {
@@ -896,8 +896,8 @@
     "quest_id": "CASE_08_FINAL_REPORT",
     "schema_version": "1.2.0",
     "id": "FR8-A-F02",
-    "bucket": "newbie",
-    "briefing": "Form with two fields, but without complicating the mechanics.",
+    "bucket": "intermediate",
+    "briefing": "Форма с двумя полями. Соберите без лишних элементов.",
     "format": "TAG_ORDERING",
     "validator_profile": "FORM_SIMPLE",
     "allowed_containers": [
@@ -927,7 +927,7 @@
         "token_key": "case08.fr8a.FR8-A-F02.fragment.01.token"
       },
       {
-        "fragment_id": "РёРјСЏ_Р»РµР№Р±Р»Р°",
+        "fragment_id": "name_label",
         "label": "<label for=\"n\">Имя</label>",
         "kind": "FORM_FIELD",
         "token": "<label for=\"n\">Имя</label>",
@@ -935,7 +935,7 @@
         "token_key": "case08.fr8a.FR8-A-F02.fragment.02.token"
       },
       {
-        "fragment_id": "РёРјСЏ_РІС…РѕРґР°",
+        "fragment_id": "name_input",
         "label": "<input id=\"n\" />",
         "kind": "FORM_FIELD",
         "token": "<input id=\"n\" />",
@@ -943,7 +943,7 @@
         "token_key": "case08.fr8a.FR8-A-F02.fragment.03.token"
       },
       {
-        "fragment_id": "РєРѕРґ_РјРµС‚РєРё",
+        "fragment_id": "code_label",
         "label": "<label for=\"c\">Код</label>",
         "kind": "FORM_FIELD",
         "token": "<label for=\"c\">Код</label>",
@@ -951,7 +951,7 @@
         "token_key": "case08.fr8a.FR8-A-F02.fragment.04.token"
       },
       {
-        "fragment_id": "РІС…РѕРґРЅРѕР№_РєРѕРґ",
+        "fragment_id": "code_input",
         "label": "<input id=\"c\" />",
         "kind": "FORM_FIELD",
         "token": "<input id=\"c\" />",
@@ -975,7 +975,7 @@
         "token_key": "case08.fr8a.FR8-A-F02.fragment.07.token"
       },
       {
-        "fragment_id": "С€СѓРј_РґРёРІ",
+        "fragment_id": "noise_div",
         "label": "<div>реклама</div>",
         "kind": "FOREIGN",
         "token": "<div>реклама</div>",
@@ -985,10 +985,10 @@
     ],
     "expected_sequence": [
       "open_form",
-      "РёРјСЏ_Р»РµР№Р±Р»Р°",
-      "РёРјСЏ_РІС…РѕРґР°",
-      "РєРѕРґ_РјРµС‚РєРё",
-      "РІС…РѕРґРЅРѕР№_РєРѕРґ",
+      "name_label",
+      "name_input",
+      "code_label",
+      "code_input",
       "button_send",
       "close_form"
     ],
@@ -1043,7 +1043,7 @@
     "quest_id": "CASE_08_FINAL_REPORT",
     "schema_version": "1.2.0",
     "id": "FR8-A-A01",
-    "bucket": "newbie",
+    "bucket": "advanced",
     "briefing": "Соберите служебную заметку отчета.",
     "format": "TAG_ORDERING",
     "validator_profile": "ARTICLE_NOTE",
@@ -1174,7 +1174,7 @@
     "quest_id": "CASE_08_FINAL_REPORT",
     "schema_version": "1.2.0",
     "id": "FR8-A-A02",
-    "bucket": "newbie",
+    "bucket": "advanced",
     "briefing": "Ловушка: в отчете отсутствует обязательный заголовок.",
     "format": "TAG_ORDERING",
     "validator_profile": "ARTICLE_NOTE",
@@ -1234,7 +1234,7 @@
         "token_key": "case08.fr8a.FR8-A-A02.fragment.05.token"
       },
       {
-        "fragment_id": "РЁСѓРј_РЅР°РІ",
+        "fragment_id": "noise_nav",
         "label": "<nav>меню</nav>",
         "kind": "FOREIGN",
         "token": "<nav>меню</nav>",
@@ -1304,7 +1304,7 @@
     "quest_id": "CASE_08_FINAL_REPORT",
     "schema_version": "1.2.0",
     "id": "FR8-A-M01",
-    "bucket": "newbie",
+    "bucket": "advanced",
     "briefing": "Соберите фото-улику: изображение + подпись.",
     "format": "TAG_ORDERING",
     "validator_profile": "FIGURE_MEDIA",
@@ -1424,7 +1424,7 @@
     "quest_id": "CASE_08_FINAL_REPORT",
     "schema_version": "1.2.0",
     "id": "FR8-A-M02",
-    "bucket": "newbie",
+    "bucket": "advanced",
     "briefing": "Ловушка: подпись должна находиться внутри фигуры.",
     "format": "TAG_ORDERING",
     "validator_profile": "FIGURE_MEDIA",
@@ -1461,7 +1461,7 @@
         "token_key": "case08.fr8a.FR8-A-M02.fragment.02.token"
       },
       {
-        "fragment_id": "РїРѕРґРїРёСЃСЊ_РєР°РјРµСЂР°",
+        "fragment_id": "caption_camera",
         "label": "<figcaption>Камера 12</figcaption>",
         "kind": "TEXT_BLOCK",
         "token": "<figcaption>Камера 12</figcaption>",
@@ -1496,7 +1496,7 @@
     "expected_sequence": [
       "open_figure",
       "img_cam",
-      "РїРѕРґРїРёСЃСЊ_РєР°РјРµСЂР°",
+      "caption_camera",
       "close_figure",
       "(EMPTY)",
       "(EMPTY)"

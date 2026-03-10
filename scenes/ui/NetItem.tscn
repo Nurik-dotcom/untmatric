@@ -3,9 +3,26 @@
 [ext_resource type="Script" path="res://scripts/ui/NetItem.gd" id="1_script"]
 
 [node name="NetItem" type="Button"]
-custom_minimum_size = Vector2(0, 92)
+custom_minimum_size = Vector2(0, 108)
 size_flags_horizontal = 3
 theme_type_variation = &"FlatButton"
 theme_override_font_sizes/font_size = 18
 text = "MODULE"
 script = ExtResource("1_script")
+
+[node name="DescLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -26.0
+offset_right = -10.0
+offset_bottom = -6.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+autowrap_mode = 2
+mouse_filter = 2
+text = ""

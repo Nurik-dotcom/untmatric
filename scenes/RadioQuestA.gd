@@ -20,6 +20,7 @@ const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 @onready var root_vbox: VBoxContainer = $SafeArea/RootVBox
 @onready var body_split: HSplitContainer = $SafeArea/RootVBox/BodyHSplit
 @onready var mission_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard
+@onready var readout_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutCard
 @onready var scope_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ScopeCard
 @onready var right_vbox: VBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox
 
@@ -30,11 +31,12 @@ const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 @onready var mission_title: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox/MissionTitle
 @onready var target_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox/TargetLabel
 @onready var rule_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox/RuleLabel
+@onready var steps_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox/StepsLabel
 @onready var wave_layer: Control = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ScopeCard/ScopeMargin/ScopeLayer
 @onready var wave_line: Line2D = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ScopeCard/ScopeMargin/ScopeLayer/WaveLine
 @onready var noir_overlay: CanvasLayer = $NoirOverlay
-@onready var bits_value_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutRow/BitsValueLabel
-@onready var fit_value_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutRow/FitValueLabel
+@onready var bits_value_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutCard/ReadoutMargin/ReadoutRow/BitsValueLabel
+@onready var fit_value_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutCard/ReadoutMargin/ReadoutRow/FitValueLabel
 
 @onready var decoder_title: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/DecoderTitle
 @onready var bit_knob: Control = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/BitKnob
@@ -44,7 +46,8 @@ const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 @onready var btn_capture: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowBottom/BtnCapture
 @onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/ActionsRowBottom/BtnNext
 @onready var sample_strip: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/SampleStrip
-@onready var status_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusLabel
+@onready var status_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusCard
+@onready var status_label: Label = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/StatusCard/StatusMargin/StatusLabel
 @onready var btn_details: Button = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox/BtnDetails
 
 @onready var dimmer: ColorRect = $Dimmer
@@ -116,6 +119,7 @@ func _ready() -> void:
 	_configure_text_overflow()
 	_install_body_scroll()
 	_collect_sample_refs()
+	sample_strip.visible = false
 	_ensure_target_wave_line()
 	_reset_sample_strip()
 	_set_details_visible(false)
@@ -150,7 +154,7 @@ func _process(delta: float) -> void:
 		var remaining: float = maxf(0.0, analyze_reveal_until - now_sec)
 		_set_status_i18n(
 			"quest.radio.a.status.analyze_progress",
-			"STATUS: analyzing channel... {left}s",
+			"STEP 2/3: channel analysis in progress... {left}s",
 			COLOR_WARN,
 			{"left": "%.1f" % remaining}
 		)
@@ -166,7 +170,7 @@ func _process(delta: float) -> void:
 			_update_details_text()
 			_set_status_i18n(
 				"quest.radio.a.status.analyze_done",
-				"STATUS: analysis complete. Press CAPTURE.",
+				"STEP 3/3: result ready, press CAPTURE.",
 				COLOR_GOOD
 			)
 	_update_header_meta()
@@ -177,9 +181,10 @@ func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 	return I18n.get_text(key, merged)
 
 func _configure_text_overflow() -> void:
-	for lbl in [target_label, rule_label, knob_hint, status_label]:
+	for lbl in [target_label, rule_label, steps_label, knob_hint, bits_value_label, fit_value_label, status_label]:
 		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	status_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	for btn in [btn_hint, btn_analyze, btn_capture, btn_next, btn_details]:
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
@@ -187,7 +192,8 @@ func _apply_i18n() -> void:
 	title_label.text = _tr("quest.radio.a.ui.title", "RADIO INTERCEPT | A")
 	btn_back.text = _tr("quest.radio.common.btn.back", "BACK")
 	mission_title.text = _tr("quest.radio.a.ui.mission", "MISSION")
-	rule_label.text = _tr("quest.radio.a.ui.rule", "Find minimum i where 2^i >= N")
+	rule_label.text = _tr("quest.radio.a.ui.rule", "Find minimal i where 2^i >= N")
+	steps_label.text = _tr("quest.radio.a.ui.steps", "Steps: 1) set i  2) ANALYZE  3) CAPTURE")
 	decoder_title.text = _tr("quest.radio.a.ui.decoder", "DECODER")
 	knob_hint.text = _tr("quest.radio.a.ui.knob_hint", "Rotate the knob, then press ANALYZE")
 	btn_hint.text = _tr("quest.radio.a.ui.btn_hint", "HINT")
@@ -203,10 +209,16 @@ func _apply_i18n() -> void:
 	_update_details_text()
 
 func _update_dynamic_texts() -> void:
-	if target_n > 0:
-		target_label.text = _tr("quest.radio.a.task", "Signal detected. Alphabet size: %d chars. Set decoding depth.") % target_n
-	if current_bits > 0:
-		bits_value_label.text = _tr("quest.radio.a.bits", "%d BIT") % current_bits
+	rule_label.text = _tr("quest.radio.a.ui.rule", "Find minimal i where 2^i >= N")
+	steps_label.text = _tr("quest.radio.a.ui.steps", "Steps: 1) set i  2) ANALYZE  3) CAPTURE")
+
+	var n_text: Variant = target_n if target_n > 0 else "?"
+	target_label.text = _tr("quest.radio.a.ui.given", "Given: N = {n}", {"n": n_text})
+
+	var bits_value: int = current_bits
+	if bits_value <= 0:
+		bits_value = _i_min
+	bits_value_label.text = _tr("quest.radio.a.bits_current", "CURRENT i: {bits} BIT", {"bits": bits_value})
 
 func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
@@ -304,11 +316,12 @@ func _start_trial() -> void:
 		target_n = pool.pick_random()
 
 	target_bits = int(ceil(log(float(target_n)) / log(2.0)))
-	target_label.text = _tr("quest.radio.a.task", "Signal detected. Alphabet size: %d chars. Set decoding depth.") % target_n
+	_update_dynamic_texts()
 
 	current_bits = _i_min
 	bit_knob.set("value", _i_min)
 	_apply_user_bits(_i_min, false)
+	_update_dynamic_texts()
 	_set_fit_label_unknown()
 	if _target_wave_line != null:
 		_target_wave_line.visible = false
@@ -316,7 +329,7 @@ func _start_trial() -> void:
 
 	_set_status_i18n(
 		"quest.radio.a.status.plan",
-		"STATUS: set i, then press ANALYZE.",
+		"STEP 1/3: set i and press ANALYZE.",
 		Color(0.85, 0.85, 0.85, 1.0)
 	)
 	_update_header_meta()
@@ -349,13 +362,14 @@ func _apply_user_bits(i_value: int, from_user: bool) -> void:
 			analysis_committed = false
 			last_analyzed_bits = -1
 			btn_capture.disabled = true
+			_set_fit_label_unknown()
 			_set_status_i18n(
-				"quest.radio.a.status.plan",
-				"STATUS: set i, then press ANALYZE.",
+				"quest.radio.a.status.changed_after_analysis",
+				"i changed. Run ANALYZE again.",
 				Color(0.85, 0.85, 0.85, 1.0)
 			)
 
-	bits_value_label.text = _tr("quest.radio.a.bits", "%d BIT") % current_bits
+	_update_dynamic_texts()
 	if analysis_committed and current_bits == last_analyzed_bits:
 		_set_fit_label_from_analysis()
 	else:
@@ -369,7 +383,7 @@ func _on_hint_pressed() -> void:
 	hint_used = true
 	_set_status_i18n(
 		"quest.radio.a.status.hint",
-		"STATUS: use rule 2^i >= N and choose minimal i.",
+		"Hint: use rule 2^i >= N and choose minimal i.",
 		Color(0.55, 0.85, 1.0, 1.0)
 	)
 	_update_details_text()
@@ -391,24 +405,12 @@ func _on_analyze_pressed() -> void:
 	last_analysis_fit = capacity >= target_n
 	last_analysis_minimal = current_bits == target_bits
 	last_analysis_overkill = last_analysis_fit and not last_analysis_minimal
-	if not last_analysis_fit:
-		_set_status_i18n(
-			"quest.radio.a.status.analyze_underfit",
-			"STATUS: not enough capacity. Increase i.",
-			COLOR_WARN
-		)
-	elif last_analysis_overkill:
-		_set_status_i18n(
-			"quest.radio.a.status.analyze_overkill",
-			"STATUS: fits, but with bit overhead.",
-			COLOR_WARN
-		)
-	else:
-		_set_status_i18n(
-			"quest.radio.a.status.analyze_ok",
-			"STATUS: minimal solution confirmed.",
-			COLOR_GOOD
-		)
+	_set_status_i18n(
+		"quest.radio.a.status.analyze_progress",
+		"STEP 2/3: channel analysis in progress... {left}s",
+		COLOR_WARN,
+		{"left": "%.1f" % ANALYZE_REVEAL_SECONDS}
+	)
 	_set_fit_label_from_analysis()
 	analyze_reveal_until = now_sec + ANALYZE_REVEAL_SECONDS
 	_update_details_text()
@@ -446,11 +448,11 @@ func _finish_trial(is_timeout: bool) -> void:
 		is_overkill = false
 
 	if not is_fit:
-		_set_status_i18n("quest.radio.a.result.bad", "STATUS: incorrect. Packet did not fit.", COLOR_BAD)
+		_set_status_i18n("quest.radio.a.result.bad", "Result: packet does not fit.", COLOR_BAD)
 	elif is_minimal:
-		_set_status_i18n("quest.radio.a.result.good", "STATUS: excellent. Minimal coding depth.", COLOR_GOOD)
+		_set_status_i18n("quest.radio.a.result.good", "Result: exact minimal i, excellent.", COLOR_GOOD)
 	else:
-		_set_status_i18n("quest.radio.a.result.warn", "STATUS: correct, but overprovisioned.", COLOR_WARN)
+		_set_status_i18n("quest.radio.a.result.warn", "Result: valid, but i is overprovisioned.", COLOR_WARN)
 
 	_update_sample_slot(is_fit, is_minimal)
 
@@ -529,24 +531,45 @@ func _on_dimmer_gui_input(event: InputEvent) -> void:
 func _set_details_visible(visible: bool) -> void:
 	details_sheet.visible = visible
 	dimmer.visible = visible
-	btn_details.text = _tr("quest.radio.common.btn.details_close", "CLOSE ^") if visible else _tr("quest.radio.common.btn.details_open", "DETAILS v")
 
 func _set_fit_label_unknown() -> void:
-	fit_value_label.text = _tr("quest.radio.a.fit.unknown", "SIGNAL: NOT VERIFIED")
+	fit_value_label.text = _tr("quest.radio.a.fit.unknown", "CHECK: NOT RUN")
 	fit_value_label.add_theme_color_override("font_color", Color(0.80, 0.80, 0.80, 1.0))
 
 func _set_fit_label_from_analysis() -> void:
-	fit_value_label.text = _tr("quest.radio.a.fit.yes", "FIT: YES") if last_analysis_fit else _tr("quest.radio.a.fit.no", "FIT: NO")
-	fit_value_label.add_theme_color_override("font_color", COLOR_GOOD if last_analysis_fit else COLOR_BAD)
+	if not last_analysis_fit:
+		fit_value_label.text = _tr("quest.radio.a.fit.underfit", "CHECK: UNDER CAPACITY")
+		fit_value_label.add_theme_color_override("font_color", COLOR_BAD)
+	elif last_analysis_overkill:
+		fit_value_label.text = _tr("quest.radio.a.fit.overkill", "CHECK: OVERKILL")
+		fit_value_label.add_theme_color_override("font_color", COLOR_WARN)
+	elif last_analysis_minimal:
+		fit_value_label.text = _tr("quest.radio.a.fit.minimal", "CHECK: MINIMAL")
+		fit_value_label.add_theme_color_override("font_color", COLOR_GOOD)
+	else:
+		fit_value_label.text = _tr("quest.radio.a.fit.yes", "FIT: YES")
+		fit_value_label.add_theme_color_override("font_color", COLOR_GOOD)
 
 func _update_details_text() -> void:
 	var lines: Array[String] = []
 	if trial_active:
-		lines.append(_tr("quest.radio.a.details.rule", "Rule: find minimum i where 2^i >= N."))
-		lines.append(_tr("quest.radio.a.details.steps_title", "Steps:"))
-		lines.append(_tr("quest.radio.a.details.step1", "1) Select i with the knob."))
-		lines.append(_tr("quest.radio.a.details.step2", "2) Press ANALYZE and wait for scan."))
-		lines.append(_tr("quest.radio.a.details.step3", "3) Press CAPTURE to lock answer."))
+		lines.append(_tr("quest.radio.a.details.given", "Given: N = {n}", {"n": target_n}))
+		lines.append(_tr("quest.radio.a.details.rule", "Rule: find minimal i where 2^i >= N."))
+		lines.append(_tr("quest.radio.a.ui.steps", "Steps: 1) set i  2) ANALYZE  3) CAPTURE"))
+		if hint_used or analysis_committed:
+			var lower_i_live: int = maxi(0, target_bits - 1)
+			var lower_capacity_live: int = int(pow(2.0, lower_i_live))
+			var minimal_capacity_live: int = int(pow(2.0, target_bits))
+			lines.append(_tr("quest.radio.a.details.lower", "2^{li} = {lc} < {n} (insufficient)", {
+				"li": lower_i_live,
+				"lc": lower_capacity_live,
+				"n": target_n
+			}))
+			lines.append(_tr("quest.radio.a.details.minimal", "2^{ti} = {tc} >= {n} (minimal fit)", {
+				"ti": target_bits,
+				"tc": minimal_capacity_live,
+				"n": target_n
+			}))
 		if analysis_revealing:
 			lines.append(_tr("quest.radio.a.details.analyzing", "Channel analysis in progress. Please wait."))
 		elif analysis_committed:
@@ -646,43 +669,94 @@ func _apply_safe_area_padding() -> void:
 func _configure_layout() -> void:
 	var size: Vector2 = get_viewport_rect().size
 	var phone_landscape: bool = size.x > size.y and size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
+	sample_strip.visible = false
+
+	mission_card.size_flags_vertical = 0
+	readout_card.size_flags_vertical = 0
+	scope_card.size_flags_vertical = 3
+	status_card.size_flags_vertical = 0
+
+	btn_hint.size_flags_stretch_ratio = 0.85
+	btn_analyze.size_flags_stretch_ratio = 1.45
+	btn_capture.size_flags_stretch_ratio = 1.0
+	btn_next.size_flags_stretch_ratio = 1.0
+	btn_details.modulate = Color(0.86, 0.86, 0.90, 0.95)
 
 	if phone_landscape:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 380, 360)
 		root_vbox.add_theme_constant_override("separation", 8)
-		bit_knob.custom_minimum_size = Vector2(180, 180)
-		mission_card.custom_minimum_size.y = 110
-		scope_card.custom_minimum_size.y = 170
-		bits_value_label.add_theme_font_size_override("font_size", 28)
-		fit_value_label.add_theme_font_size_override("font_size", 20)
-		status_label.add_theme_font_size_override("font_size", 16)
+		bit_knob.custom_minimum_size = Vector2(200, 200)
+		mission_card.custom_minimum_size.y = 150
+		readout_card.custom_minimum_size.y = 72
+		scope_card.custom_minimum_size.y = 132
+		status_card.custom_minimum_size.y = 108
+		target_label.add_theme_font_size_override("font_size", 22)
+		rule_label.add_theme_font_size_override("font_size", 17)
+		steps_label.add_theme_font_size_override("font_size", 15)
+		bits_value_label.add_theme_font_size_override("font_size", 26)
+		fit_value_label.add_theme_font_size_override("font_size", 18)
+		status_label.add_theme_font_size_override("font_size", 18)
+		btn_details.add_theme_font_size_override("font_size", 14)
+		btn_hint.add_theme_font_size_override("font_size", 17)
+		btn_analyze.add_theme_font_size_override("font_size", 21)
 		meta_label.add_theme_font_size_override("font_size", 16)
-		for btn in [btn_back, btn_hint, btn_analyze, btn_capture, btn_next, btn_details, btn_close_details]:
-			btn.custom_minimum_size.y = 56
+		btn_back.custom_minimum_size.y = 52
+		btn_hint.custom_minimum_size.y = 46
+		btn_analyze.custom_minimum_size.y = 60
+		btn_capture.custom_minimum_size.y = 54
+		btn_next.custom_minimum_size.y = 54
+		btn_details.custom_minimum_size.y = 40
+		btn_close_details.custom_minimum_size.y = 52
 	elif size.x < 1280.0:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 420, 380)
 		root_vbox.add_theme_constant_override("separation", 10)
-		bit_knob.custom_minimum_size = Vector2(200, 200)
-		mission_card.custom_minimum_size.y = 122
-		scope_card.custom_minimum_size.y = 220
-		bits_value_label.add_theme_font_size_override("font_size", 32)
-		fit_value_label.add_theme_font_size_override("font_size", 22)
-		status_label.add_theme_font_size_override("font_size", 18)
+		bit_knob.custom_minimum_size = Vector2(220, 220)
+		mission_card.custom_minimum_size.y = 166
+		readout_card.custom_minimum_size.y = 80
+		scope_card.custom_minimum_size.y = 162
+		status_card.custom_minimum_size.y = 114
+		target_label.add_theme_font_size_override("font_size", 24)
+		rule_label.add_theme_font_size_override("font_size", 18)
+		steps_label.add_theme_font_size_override("font_size", 16)
+		bits_value_label.add_theme_font_size_override("font_size", 30)
+		fit_value_label.add_theme_font_size_override("font_size", 21)
+		status_label.add_theme_font_size_override("font_size", 19)
+		btn_details.add_theme_font_size_override("font_size", 15)
+		btn_hint.add_theme_font_size_override("font_size", 18)
+		btn_analyze.add_theme_font_size_override("font_size", 22)
 		meta_label.add_theme_font_size_override("font_size", 17)
-		for btn in [btn_back, btn_hint, btn_analyze, btn_capture, btn_next, btn_details, btn_close_details]:
-			btn.custom_minimum_size.y = 58
+		btn_back.custom_minimum_size.y = 56
+		btn_hint.custom_minimum_size.y = 48
+		btn_analyze.custom_minimum_size.y = 62
+		btn_capture.custom_minimum_size.y = 56
+		btn_next.custom_minimum_size.y = 56
+		btn_details.custom_minimum_size.y = 42
+		btn_close_details.custom_minimum_size.y = 56
 	else:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.57), 460, 420)
 		root_vbox.add_theme_constant_override("separation", 10)
-		bit_knob.custom_minimum_size = Vector2(220, 220)
-		mission_card.custom_minimum_size.y = 130
-		scope_card.custom_minimum_size.y = 260
-		bits_value_label.add_theme_font_size_override("font_size", 34)
-		fit_value_label.add_theme_font_size_override("font_size", 24)
-		status_label.add_theme_font_size_override("font_size", 18)
+		bit_knob.custom_minimum_size = Vector2(252, 252)
+		mission_card.custom_minimum_size.y = 182
+		readout_card.custom_minimum_size.y = 86
+		scope_card.custom_minimum_size.y = 172
+		status_card.custom_minimum_size.y = 122
+		target_label.add_theme_font_size_override("font_size", 26)
+		rule_label.add_theme_font_size_override("font_size", 18)
+		steps_label.add_theme_font_size_override("font_size", 17)
+		bits_value_label.add_theme_font_size_override("font_size", 32)
+		fit_value_label.add_theme_font_size_override("font_size", 22)
+		status_label.add_theme_font_size_override("font_size", 20)
+		btn_details.add_theme_font_size_override("font_size", 16)
+		btn_hint.add_theme_font_size_override("font_size", 18)
+		btn_analyze.add_theme_font_size_override("font_size", 23)
 		meta_label.add_theme_font_size_override("font_size", 18)
-		for btn in [btn_back, btn_hint, btn_analyze, btn_capture, btn_next, btn_details, btn_close_details]:
-			btn.custom_minimum_size.y = 58
+		btn_back.custom_minimum_size.y = 58
+		btn_hint.custom_minimum_size.y = 50
+		btn_analyze.custom_minimum_size.y = 64
+		btn_capture.custom_minimum_size.y = 58
+		btn_next.custom_minimum_size.y = 58
+		btn_details.custom_minimum_size.y = 44
+		btn_close_details.custom_minimum_size.y = 56
 
 func _clamp_split_offset(target_offset: int, min_left: int, min_right: int) -> int:
 	var viewport_width: int = int(get_viewport_rect().size.x)
@@ -701,17 +775,16 @@ func _update_waveform() -> void:
 func _draw_idle_wave(draw_size: Vector2) -> void:
 	var points: PackedVector2Array = PackedVector2Array()
 	var center_y: float = draw_size.y * 0.5
-	var main_amp: float = draw_size.y * 0.12
-	var noise_amp: float = draw_size.y * 0.08
+	var main_amp: float = draw_size.y * 0.07
+	var noise_amp: float = draw_size.y * 0.035
 	var seed_phase: float = float(noise_seed % 100000) * 0.001
 	for x in range(0, int(draw_size.x) + 1, 6):
 		var t: float = float(x) / maxf(1.0, draw_size.x)
-		var y: float = center_y + sin((t * TAU * 2.2) + osc_phase * 0.8 + seed_phase) * main_amp
-		y += sin((t * TAU * 9.0) + osc_phase * 1.2 + seed_phase * 1.7) * noise_amp * 0.60
-		y += cos((t * TAU * 17.0) + osc_phase * 0.7 - seed_phase * 0.9) * noise_amp * 0.50
-		y += sin((t * TAU * 31.0) + seed_phase * 0.37) * noise_amp * 0.35
+		var y: float = center_y + sin((t * TAU * 1.8) + osc_phase * 0.7 + seed_phase) * main_amp
+		y += sin((t * TAU * 6.0) + osc_phase * 0.9 + seed_phase * 1.3) * noise_amp * 0.40
+		y += cos((t * TAU * 11.0) + osc_phase * 0.5 - seed_phase * 0.7) * noise_amp * 0.28
 		points.append(Vector2(x, y))
-	wave_line.default_color = Color(0.20, 1.0, 0.20, 1.0)
+	wave_line.default_color = Color(0.24, 0.72, 0.32, 0.70)
 	wave_line.points = points
 
 func _draw_analysis_wave(draw_size: Vector2) -> void:
@@ -720,13 +793,13 @@ func _draw_analysis_wave(draw_size: Vector2) -> void:
 	var points: PackedVector2Array = PackedVector2Array()
 	var center_y: float = draw_size.y * 0.5
 	var normalized: float = float(target_bits - _i_min) / maxf(1.0, float(_i_max - _i_min))
-	var amp: float = draw_size.y * (0.10 + normalized * 0.14)
+	var amp: float = draw_size.y * (0.08 + normalized * 0.10)
 	for x in range(0, int(draw_size.x) + 1, 6):
 		var t: float = float(x) / maxf(1.0, draw_size.x)
 		var y: float = center_y + sin((t * TAU * 2.0) + 0.15) * amp
 		points.append(Vector2(x, y))
 	_target_wave_line.visible = true
-	_target_wave_line.default_color = Color(0.95, 0.25, 0.25, 0.95)
+	_target_wave_line.default_color = Color(0.88, 0.33, 0.33, 0.88)
 	_target_wave_line.points = points
 
 func _load_level_config() -> void:
@@ -784,6 +857,6 @@ func _ensure_target_wave_line() -> void:
 		_target_wave_line = Line2D.new()
 		_target_wave_line.name = "TargetWaveLine"
 		_target_wave_line.width = 2.0
-		_target_wave_line.default_color = Color(0.95, 0.25, 0.25, 0.95)
+		_target_wave_line.default_color = Color(0.88, 0.33, 0.33, 0.88)
 		wave_layer.add_child(_target_wave_line)
 	_target_wave_line.visible = false

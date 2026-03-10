@@ -81,6 +81,7 @@ const COLOR_SAMPLE_WARN: Color = Color(0.95, 0.75, 0.20, 1.0)
 @onready var task_line_2: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox/TaskLine2
 @onready var task_line_3: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox/TaskLine3
 @onready var micro_hint: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox/MicroHint
+@onready var decision_rule_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard/MissionMargin/MissionVBox/DecisionRuleLabel
 
 @onready var step_1_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/Step1Label
 @onready var estimate_value_label: Label = $SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/EstimateValue
@@ -100,11 +101,16 @@ const COLOR_SAMPLE_WARN: Color = Color(0.95, 0.75, 0.20, 1.0)
 @onready var transfer_title: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/TransferTitle
 @onready var transfer_bar: ProgressBar = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/TransferBar
 @onready var transfer_countdown: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/TransferCountdown
+@onready var compare_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/CompareCard
+@onready var compare_title: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/CompareCard/CompareMargin/CompareVBox/CompareTitle
+@onready var compare_line_1: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/CompareCard/CompareMargin/CompareVBox/CompareLine1
+@onready var compare_line_2: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/CompareCard/CompareMargin/CompareVBox/CompareLine2
 @onready var risk_label: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/RiskCard/RiskMargin/RiskVBox/RiskLabel
 
 @onready var step_3_label: Label = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/Step3Label
-@onready var btn_units: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow/BtnUnits
-@onready var btn_details: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/SecondaryActionsRow/BtnDetails
+@onready var helper_row: HBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/HelperRow
+@onready var btn_units: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/HelperRow/BtnUnits
+@onready var btn_details: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/HelperRow/BtnDetails
 @onready var btn_risk: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow/BtnRisk
 @onready var btn_abort: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/PrimaryActionsRow/BtnAbort
 @onready var btn_next: Button = $SafeArea/RootVBox/BodyHSplit/RightCol/ActionsCard/ActionsMargin/ActionsVBox/NextRow/BtnNext
@@ -194,6 +200,7 @@ func _ready() -> void:
 	_configure_text_overflow()
 	_collect_sample_refs()
 	_reset_sample_strip()
+	sample_strip.visible = false
 	_apply_safe_area_padding()
 	_configure_layout()
 	_set_details_visible(false)
@@ -252,7 +259,7 @@ func _process(delta: float) -> void:
 		var left: float = maxf(0.0, analyze_lock_until - now_sec)
 		_set_status_i18n(
 			"quest.radio.c.status.analyze_lock_progress",
-			"STATUS: channel scan in progress... {left}s",
+			"STEP 2/3: channel scan in progress... {left}s",
 			Color(0.85, 0.85, 0.85, 1.0),
 			{"left": "%.1f" % left}
 		)
@@ -280,12 +287,16 @@ func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 func _apply_i18n() -> void:
 	title_label.text = _tr("quest.radio.c.ui.title", "RADIO INTERCEPT | C")
 	mission_title.text = _tr("quest.radio.c.ui.mission", "URGENT TRANSMISSION")
-	micro_hint.text = _tr("quest.radio.c.ui.hint", "First estimate t. Then ANALYZE. Then decide.")
+	micro_hint.text = _tr("quest.radio.c.ui.hint", "First estimate t. Then ANALYZE. Then compare with the intercept window.")
+	decision_rule_label.text = _tr(
+		"quest.radio.c.ui.decision_rule",
+		"Rule: if transfer estimate fits the intercept window, RISK is acceptable. If it does not fit, ABORT."
+	)
 	step_1_label.text = _tr("quest.radio.c.ui.step1", "STEP 1: Set time estimate")
-	step_2_label.text = _tr("quest.radio.c.ui.step2", "STEP 2: Risk control")
-	step_3_label.text = _tr("quest.radio.c.ui.step3", "STEP 3: Make decision")
+	step_2_label.text = _tr("quest.radio.c.ui.step2", "STEP 2: Compare forecast with the window")
+	step_3_label.text = _tr("quest.radio.c.ui.step3", "STEP 3: Choose action based on comparison")
 	detection_title.text = _tr("quest.radio.c.ui.detection_title", "DETECTION")
-	transfer_title.text = _tr("quest.radio.c.ui.transfer_title", "TRANSFER")
+	compare_title.text = _tr("quest.radio.c.ui.compare_title", "DECISION BASIS")
 	btn_back.text = _tr("quest.radio.common.btn.back", "BACK")
 	btn_units.text = _tr("quest.radio.c.ui.btn_units", "UNITS HELP")
 	btn_details.text = _tr("quest.radio.common.btn.details_open", "DETAILS v")
@@ -298,18 +309,31 @@ func _apply_i18n() -> void:
 	_update_mode_chip()
 	_refresh_task_labels()
 	_apply_status_i18n()
+	_update_decision_basis_ui()
 	_update_runtime_ui()
 	_update_details_text()
 
 func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
+	_update_decision_basis_ui()
 
 func _update_mode_chip() -> void:
 	var mode_name: String = _tr("quest.radio.c.ui.mode_live", "LIVE") if live_mode else _tr("quest.radio.c.ui.mode_training", "TRAINING")
 	mode_chip.text = _tr("quest.radio.c.ui.mode_template", "MODE: {mode}", {"mode": mode_name})
 
 func _configure_text_overflow() -> void:
-	for lbl in [task_line_1, task_line_2, task_line_3, micro_hint, status_label, risk_label]:
+	for lbl in [
+		task_line_1,
+		task_line_2,
+		task_line_3,
+		micro_hint,
+		decision_rule_label,
+		compare_title,
+		compare_line_1,
+		compare_line_2,
+		status_label,
+		risk_label
+	]:
 		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	for btn in [btn_analyze, btn_units, btn_details, btn_risk, btn_abort, btn_next]:
@@ -388,18 +412,25 @@ func _configure_layout() -> void:
 	if is_tight_landscape:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.58), 420, 420)
 		top_bar.custom_minimum_size.y = 52.0
-		mission_card.custom_minimum_size.y = 116.0
-		status_card.custom_minimum_size.y = 72.0
-		actions_card.custom_minimum_size.y = 176.0
+		mission_card.custom_minimum_size.y = 156.0
+		status_card.custom_minimum_size.y = 84.0
+		compare_card.custom_minimum_size.y = 78.0
+		actions_card.custom_minimum_size.y = 196.0
 		time_knob.custom_minimum_size = Vector2(260, 260)
 		title_label.add_theme_font_size_override("font_size", 22)
 		mode_chip.add_theme_font_size_override("font_size", 13)
 		stability_label.add_theme_font_size_override("font_size", 13)
 		estimate_value_label.add_theme_font_size_override("font_size", 26)
-		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
-			btn.custom_minimum_size.y = 56.0
-		for btn in [btn_analyze, btn_risk, btn_abort]:
-			btn.custom_minimum_size.y = 80.0
+		status_label.add_theme_font_size_override("font_size", 19)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1]:
+			btn.custom_minimum_size.y = 54.0
+		btn_analyze.custom_minimum_size.y = 78.0
+		btn_risk.custom_minimum_size.y = 76.0
+		btn_abort.custom_minimum_size.y = 76.0
+		btn_units.custom_minimum_size.y = 50.0
+		btn_details.custom_minimum_size.y = 44.0
+		btn_next.custom_minimum_size.y = 54.0
+		btn_close_details.custom_minimum_size.y = 52.0
 		sample_strip.visible = false
 		risk_card.size_flags_vertical = Control.SIZE_FILL
 		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -408,19 +439,26 @@ func _configure_layout() -> void:
 	elif is_landscape and size.x < 1500.0:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.58), 460, 460)
 		top_bar.custom_minimum_size.y = 56.0
-		mission_card.custom_minimum_size.y = 128.0
-		status_card.custom_minimum_size.y = 84.0
-		actions_card.custom_minimum_size.y = 188.0
+		mission_card.custom_minimum_size.y = 168.0
+		status_card.custom_minimum_size.y = 90.0
+		compare_card.custom_minimum_size.y = 86.0
+		actions_card.custom_minimum_size.y = 206.0
 		time_knob.custom_minimum_size = Vector2(knob_min_side, knob_min_side)
 		title_label.add_theme_font_size_override("font_size", 24)
 		mode_chip.add_theme_font_size_override("font_size", 14)
 		stability_label.add_theme_font_size_override("font_size", 14)
 		estimate_value_label.add_theme_font_size_override("font_size", 28)
-		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
-			btn.custom_minimum_size.y = 64.0
-		for btn in [btn_analyze, btn_risk, btn_abort]:
-			btn.custom_minimum_size.y = 88.0
-		sample_strip.visible = true
+		status_label.add_theme_font_size_override("font_size", 20)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1]:
+			btn.custom_minimum_size.y = 60.0
+		btn_analyze.custom_minimum_size.y = 88.0
+		btn_risk.custom_minimum_size.y = 88.0
+		btn_abort.custom_minimum_size.y = 88.0
+		btn_units.custom_minimum_size.y = 52.0
+		btn_details.custom_minimum_size.y = 46.0
+		btn_next.custom_minimum_size.y = 56.0
+		btn_close_details.custom_minimum_size.y = 56.0
+		sample_strip.visible = false
 		risk_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		risk_card.size_flags_stretch_ratio = 1.0
@@ -428,19 +466,26 @@ func _configure_layout() -> void:
 	elif is_landscape:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.58), 500, 500)
 		top_bar.custom_minimum_size.y = 62.0
-		mission_card.custom_minimum_size.y = 144.0
-		status_card.custom_minimum_size.y = 92.0
-		actions_card.custom_minimum_size.y = 206.0
+		mission_card.custom_minimum_size.y = 182.0
+		status_card.custom_minimum_size.y = 96.0
+		compare_card.custom_minimum_size.y = 92.0
+		actions_card.custom_minimum_size.y = 214.0
 		time_knob.custom_minimum_size = Vector2(knob_min_side, knob_min_side)
 		title_label.add_theme_font_size_override("font_size", 28)
 		mode_chip.add_theme_font_size_override("font_size", 17)
 		stability_label.add_theme_font_size_override("font_size", 17)
 		estimate_value_label.add_theme_font_size_override("font_size", 32)
-		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
+		status_label.add_theme_font_size_override("font_size", 21)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1]:
 			btn.custom_minimum_size.y = 64.0
-		for btn in [btn_analyze, btn_risk, btn_abort]:
-			btn.custom_minimum_size.y = 96.0
-		sample_strip.visible = true
+		btn_analyze.custom_minimum_size.y = 96.0
+		btn_risk.custom_minimum_size.y = 92.0
+		btn_abort.custom_minimum_size.y = 92.0
+		btn_units.custom_minimum_size.y = 54.0
+		btn_details.custom_minimum_size.y = 48.0
+		btn_next.custom_minimum_size.y = 58.0
+		btn_close_details.custom_minimum_size.y = 56.0
+		sample_strip.visible = false
 		risk_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		risk_card.size_flags_stretch_ratio = 1.0
@@ -448,23 +493,33 @@ func _configure_layout() -> void:
 	else:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 520, 460)
 		top_bar.custom_minimum_size.y = 62.0
-		mission_card.custom_minimum_size.y = 154.0
-		status_card.custom_minimum_size.y = 96.0
-		actions_card.custom_minimum_size.y = 220.0
+		mission_card.custom_minimum_size.y = 176.0
+		status_card.custom_minimum_size.y = 92.0
+		compare_card.custom_minimum_size.y = 88.0
+		actions_card.custom_minimum_size.y = 208.0
 		time_knob.custom_minimum_size = Vector2(knob_min_side, knob_min_side)
 		title_label.add_theme_font_size_override("font_size", 30)
 		mode_chip.add_theme_font_size_override("font_size", 18)
 		stability_label.add_theme_font_size_override("font_size", 18)
 		estimate_value_label.add_theme_font_size_override("font_size", 36)
-		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1, btn_units, btn_details, btn_next, btn_close_details]:
-			btn.custom_minimum_size.y = 64.0
-		for btn in [btn_analyze, btn_risk, btn_abort]:
-			btn.custom_minimum_size.y = 96.0
-		sample_strip.visible = true
+		status_label.add_theme_font_size_override("font_size", 20)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1]:
+			btn.custom_minimum_size.y = 60.0
+		btn_analyze.custom_minimum_size.y = 92.0
+		btn_risk.custom_minimum_size.y = 88.0
+		btn_abort.custom_minimum_size.y = 88.0
+		btn_units.custom_minimum_size.y = 52.0
+		btn_details.custom_minimum_size.y = 46.0
+		btn_next.custom_minimum_size.y = 56.0
+		btn_close_details.custom_minimum_size.y = 56.0
+		sample_strip.visible = false
 		risk_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		risk_card.size_flags_stretch_ratio = 1.0
 		actions_card.size_flags_stretch_ratio = 1.0
+
+	btn_units.add_theme_font_size_override("font_size", 18)
+	btn_details.add_theme_font_size_override("font_size", 16)
 
 func _clamp_split_offset(target_offset: int, min_left: int, min_right: int) -> int:
 	var viewport_width: int = int(get_viewport_rect().size.x)
@@ -527,6 +582,7 @@ func _start_trial() -> void:
 	time_knob.call("set_knob_value", 0.0, false)
 	_set_estimate(0.0)
 	btn_details.disabled = false
+	_update_decision_basis_ui()
 	_update_details_text()
 
 func _generate_trial() -> void:
@@ -688,19 +744,21 @@ func _compute_true_time(size_value: float, size_unit: String, speed: float) -> f
 	return i_mbit / speed
 
 func _refresh_task_labels() -> void:
-	var file_size_mb: float = file_size_value if file_size_unit == UNIT_MB else file_size_value * 1024.0
-	task_line_1.text = _tr("quest.radio.c.task", "Size: %s MB | Link: %s Mbps") % [_format_num(file_size_mb), _format_num(speed_mbit)]
+	task_line_1.text = _tr("quest.radio.c.task", "Given: file size = {size} {unit}", {
+		"size": _format_num(file_size_value),
+		"unit": file_size_unit
+	})
 	task_line_2.text = _tr("quest.radio.c.ui.task_speed", "Channel speed: {speed} {unit}", {
 		"speed": _format_num(speed_mbit),
 		"unit": _tr("quest.radio.common.unit.mbps", "Mbps")
 	})
-	var detect_time_label: String = "--"
 	if live_mode and is_finite(t_detect):
-		detect_time_label = _format_num(t_detect)
-	task_line_3.text = _tr("quest.radio.c.ui.task_detect", "Intercept in: {time} {unit}", {
-		"time": detect_time_label,
-		"unit": _tr("quest.radio.common.unit.sec", "s")
-	})
+		task_line_3.text = _tr("quest.radio.c.ui.task_detect", "Intercept window = {time} {unit}", {
+			"time": _format_num(t_detect),
+			"unit": _tr("quest.radio.common.unit.sec", "s")
+		})
+	else:
+		task_line_3.text = _tr("quest.radio.c.ui.task_detect_training", "Intercept window: training mode (hidden)")
 
 func _reset_runtime_ui() -> void:
 	detection_bar.value = 0.0
@@ -722,8 +780,8 @@ func _set_tune_state_ui() -> void:
 	btn_details.disabled = false
 	btn_next.visible = false
 	_set_status_i18n(
-		"quest.radio.c.status.plan",
-		"STATUS: set forecast and press ANALYZE.",
+		"quest.radio.c.status.step1",
+		"STEP 1/3: estimate transfer time t and press ANALYZE.",
 		Color(0.85, 0.85, 0.85, 1.0)
 	)
 	if live_mode:
@@ -733,6 +791,7 @@ func _set_tune_state_ui() -> void:
 	else:
 		risk_label.text = _tr("quest.radio.c.ui.mode_training", "TRAINING")
 	_apply_phantom_preview()
+	_update_decision_basis_ui()
 
 func _set_analyze_lock_state_ui() -> void:
 	state = State.ANALYZE_LOCK
@@ -744,8 +803,8 @@ func _set_analyze_lock_state_ui() -> void:
 	btn_details.disabled = true
 	btn_next.visible = false
 	_set_status_i18n(
-		"quest.radio.c.status.analyze_lock",
-		"STATUS: channel scan in progress...",
+		"quest.radio.c.status.step2",
+		"STEP 2/3: channel scan in progress...",
 		Color(0.85, 0.85, 0.85, 1.0)
 	)
 	if live_mode and is_finite(t_detect):
@@ -755,6 +814,7 @@ func _set_analyze_lock_state_ui() -> void:
 	else:
 		risk_label.text = _tr("quest.radio.c.ui.mode_training", "TRAINING")
 	_apply_phantom_preview()
+	_update_decision_basis_ui()
 
 func _set_decide_state_ui() -> void:
 	state = State.DECIDE
@@ -766,8 +826,8 @@ func _set_decide_state_ui() -> void:
 	btn_details.disabled = false
 	btn_next.visible = false
 	_set_status_i18n(
-		"quest.radio.c.status.decide",
-		"STATUS: forecast locked. Choose action.",
+		"quest.radio.c.status.step3",
+		"STEP 3/3: compare forecast with intercept window, then choose action.",
 		Color(0.85, 0.85, 0.85, 1.0)
 	)
 	if live_mode and is_finite(t_detect):
@@ -777,6 +837,7 @@ func _set_decide_state_ui() -> void:
 	else:
 		risk_label.text = _tr("quest.radio.c.ui.mode_training", "TRAINING")
 	_apply_phantom_preview()
+	_update_decision_basis_ui()
 
 func _set_exec_state_ui() -> void:
 	state = State.EXEC
@@ -787,6 +848,7 @@ func _set_exec_state_ui() -> void:
 	btn_units.disabled = true
 	btn_details.disabled = false
 	btn_next.visible = false
+	_update_decision_basis_ui()
 
 func _set_done_state_ui() -> void:
 	state = State.DONE
@@ -797,6 +859,7 @@ func _set_done_state_ui() -> void:
 	btn_units.disabled = true
 	btn_details.disabled = false
 	btn_next.visible = true
+	_update_decision_basis_ui()
 
 func _set_knob_interactive(is_enabled: bool) -> void:
 	time_knob.mouse_filter = Control.MOUSE_FILTER_STOP if is_enabled else Control.MOUSE_FILTER_IGNORE
@@ -848,6 +911,7 @@ func _set_estimate(value_sec: float) -> void:
 	t_est = clampf(value_sec, MIN_ESTIMATE, MAX_ESTIMATE)
 	estimate_value_label.text = _tr("quest.radio.c.ui.estimate", "t = {value} s", {"value": _format_num(t_est)})
 	_apply_phantom_preview()
+	_update_decision_basis_ui()
 	_update_details_text()
 
 func _register_first_action() -> void:
@@ -930,10 +994,11 @@ func _on_units_pressed() -> void:
 	used_units = true
 	_set_status_i18n(
 		"quest.radio.c.status.units_hint",
-		"STATUS: MB -> Mbit: x8, GB -> MB: x1024, t = I / v.",
+		"Hint: MB -> Mbit = x8, GB -> MB = x1024, then t = I / v.",
 		Color(0.55, 0.85, 1.0, 1.0)
 	)
 	_update_details_text()
+	_update_decision_basis_ui()
 
 func _on_details_pressed() -> void:
 	_set_details_visible(true)
@@ -957,7 +1022,6 @@ func _on_dimmer_gui_input(event: InputEvent) -> void:
 
 func _set_details_visible(is_visible: bool) -> void:
 	details_overlay.visible = is_visible
-	btn_details.text = _tr("quest.radio.common.btn.details_close", "CLOSE ^") if is_visible else _tr("quest.radio.common.btn.details_open", "DETAILS v")
 
 func _on_next_pressed() -> void:
 	_start_trial()
@@ -983,10 +1047,6 @@ func _update_runtime_ui() -> void:
 		if detection_active and live_mode and is_finite(t_detect):
 			detection_bar.value = clampf(detection_elapsed / maxf(t_detect, 0.01), 0.0, 1.0) * 100.0
 			detect_countdown.text = "%s %s" % [_format_num(detect_left), _tr("quest.radio.common.unit.sec", "s")]
-			task_line_3.text = _tr("quest.radio.c.ui.task_detect", "Window: {time} {unit}", {
-				"time": _format_num(detect_left),
-				"unit": _tr("quest.radio.common.unit.sec", "s")
-			})
 			if state != State.DONE:
 				risk_label.text = _tr("quest.radio.c.ui.detect_left", "Detection in: {time} s", {
 					"time": _format_num(detect_left)
@@ -1007,11 +1067,76 @@ func _update_runtime_ui() -> void:
 		else:
 			transfer_bar.value = 0.0
 			transfer_countdown.text = _tr("quest.radio.c.ui.waiting", "waiting")
+	_update_decision_basis_ui()
 
 func _apply_phantom_preview() -> void:
 	var phantom_ratio: float = clampf(t_est / maxf(_t_true_max, 0.1), 0.0, 1.0)
 	transfer_bar.value = phantom_ratio * 100.0
 	transfer_countdown.text = _tr("quest.radio.c.ui.estimate_short", "estimate: {value} s", {"value": _format_num(t_est)})
+
+func _update_decision_basis_ui() -> void:
+	if compare_line_1 == null or compare_line_2 == null:
+		return
+
+	compare_title.text = _tr("quest.radio.c.ui.compare_title", "DECISION BASIS")
+
+	var est_text: String = _format_num(t_est)
+	var detect_value_text: String = "--"
+	var detect_for_compare: float = INF
+	if live_mode and is_finite(t_detect):
+		detect_for_compare = t_detect
+		if state != State.TUNE:
+			detect_for_compare = maxf(0.0, t_detect - detection_elapsed)
+		detect_value_text = _format_num(detect_for_compare)
+
+	if state == State.TUNE or state == State.ANALYZE_LOCK or state == State.DECIDE:
+		transfer_title.text = _tr("quest.radio.c.ui.transfer_estimated_title", "ESTIMATED TRANSFER")
+	else:
+		transfer_title.text = _tr("quest.radio.c.ui.transfer_actual_title", "TRANSFER")
+
+	match state:
+		State.TUNE:
+			compare_line_1.text = _tr("quest.radio.c.ui.compare_tune", "Estimate: t_est = {est} s | Intercept window: {detect} s", {
+				"est": est_text,
+				"detect": detect_value_text
+			})
+			compare_line_2.text = _tr(
+				"quest.radio.c.details.compare_now",
+				"This is only a forecast. After ANALYZE, compare it against the intercept window."
+			)
+		State.ANALYZE_LOCK:
+			compare_line_1.text = _tr("quest.radio.c.ui.compare_lock", "Forecast locked: t_est = {est} s", {"est": est_text})
+			compare_line_2.text = _tr(
+				"quest.radio.c.details.compare_now",
+				"Channel scan in progress. Decision basis is being prepared."
+			)
+		State.DECIDE:
+			compare_line_1.text = _tr("quest.radio.c.ui.compare_tune", "Estimate: t_est = {est} s | Intercept window: {detect} s", {
+				"est": est_text,
+				"detect": detect_value_text
+			})
+			if not (live_mode and is_finite(t_detect)):
+				compare_line_2.text = _tr(
+					"quest.radio.c.details.compare_now",
+					"Training mode: use the estimate and choose the action with best justification."
+				)
+			else:
+				var diff: float = t_est - detect_for_compare
+				if absf(diff) <= EPS:
+					compare_line_2.text = _tr("quest.radio.c.ui.compare_border", "Borderline case: high risk, compare very carefully.")
+				elif diff < -EPS:
+					compare_line_2.text = _tr("quest.radio.c.ui.compare_fit", "By current forecast, transfer fits the intercept window.")
+				else:
+					compare_line_2.text = _tr("quest.radio.c.ui.compare_exceed", "By current forecast, transfer does not fit the intercept window.")
+		State.EXEC:
+			if decision == Decision.RISK:
+				compare_line_1.text = _tr("quest.radio.c.ui.compare_exec_risk", "Decision made: transmission started.")
+			else:
+				compare_line_1.text = _tr("quest.radio.c.ui.compare_exec_abort", "Decision made: transmission cancelled.")
+			compare_line_2.text = _tr("quest.radio.c.ui.compare_lock", "Runtime in progress.")
+		State.DONE:
+			compare_line_1.text = _tr("quest.radio.c.ui.compare_done", "Result recorded.")
+			compare_line_2.text = _tr("quest.radio.c.details.after_finish", "Detailed analysis is available in DETAILS.")
 
 func _finalize_trial(result: Outcome, decision_label: String) -> void:
 	if state == State.DONE:
@@ -1086,6 +1211,7 @@ func _finalize_trial(result: Outcome, decision_label: String) -> void:
 
 	_update_sample_slot(sample_color)
 	_send_trial_payload(is_success, decision_label)
+	_update_decision_basis_ui()
 	_update_details_text()
 
 func _update_sample_slot(color: Color) -> void:
@@ -1208,6 +1334,33 @@ func _outcome_to_text(current_outcome: Outcome) -> String:
 
 func _update_details_text() -> void:
 	var lines: Array[String] = []
+	if state != State.DONE:
+		lines.append(_tr("quest.radio.c.details.formula", "Formula: t = I / v"))
+		lines.append(_tr("quest.radio.c.details.given", "Given: size {size} {unit}, speed {speed} {speed_unit}", {
+			"size": _format_num(file_size_value),
+			"unit": file_size_unit,
+			"speed": _format_num(speed_mbit),
+			"speed_unit": _tr("quest.radio.common.unit.mbps", "Mbps")
+		}))
+		lines.append(_tr("quest.radio.c.details.estimate", "Your estimate: t_est = {time} s", {"time": _format_num(t_est)}))
+		if live_mode and is_finite(t_detect):
+			lines.append(_tr("quest.radio.c.details.detect", "Intercept in: {time} s", {"time": _format_num(t_detect)}))
+		lines.append(_tr(
+			"quest.radio.c.details.route",
+			"Route: 1) Estimate t  2) Press ANALYZE  3) Compare with intercept window  4) Choose RISK or ABORT"
+		))
+		if state == State.DECIDE:
+			lines.append(_tr(
+				"quest.radio.c.details.compare_now",
+				"Compare now: use your current estimate and the intercept window before choosing action."
+			))
+		if used_units:
+			lines.append(_tr("quest.radio.c.details.used_units", "Units hint used."))
+		details_sheet_text.text = "\n".join(lines)
+		return
+
+	var size_mb: float = file_size_value if file_size_unit == UNIT_MB else file_size_value * 1024.0
+	var i_mbit: float = size_mb * 8.0
 	lines.append(_tr("quest.radio.c.details.formula", "Formula: t = I / v"))
 	lines.append(_tr("quest.radio.c.details.given", "Given: size {size} {unit}, speed {speed} {speed_unit}", {
 		"size": _format_num(file_size_value),
@@ -1215,43 +1368,32 @@ func _update_details_text() -> void:
 		"speed": _format_num(speed_mbit),
 		"speed_unit": _tr("quest.radio.common.unit.mbps", "Mbps")
 	}))
-	lines.append(_tr("quest.radio.c.details.detect", "Intercept in: {time} s", {
-		"time": "--" if not live_mode else _format_num(t_detect)
+	if file_size_unit == UNIT_GB:
+		lines.append(_tr("quest.radio.c.details.conv_gb", "Conversion: {gb} GB x 1024 = {mb} MB", {
+			"gb": _format_num(file_size_value),
+			"mb": _format_num(size_mb)
+		}))
+	lines.append(_tr("quest.radio.c.details.conv_mb", "Conversion: {mb} MB x 8 = {mbit} Mbit", {
+		"mb": _format_num(size_mb),
+		"mbit": _format_num(i_mbit)
+	}))
+	lines.append(_tr("quest.radio.c.details.t_true", "t_true = {i} / {v} = {t} s", {
+		"i": _format_num(i_mbit),
+		"v": _format_num(speed_mbit),
+		"t": _format_num(t_true)
 	}))
 	lines.append(_tr("quest.radio.c.details.estimate", "Your estimate: t_est = {time} s", {"time": _format_num(t_est)}))
-	if used_units:
-		lines.append(_tr("quest.radio.c.details.used_units", "Units hint used."))
-	if state == State.DONE:
-		var size_mb: float = file_size_value if file_size_unit == UNIT_MB else file_size_value * 1024.0
-		var i_mbit: float = size_mb * 8.0
-		if file_size_unit == UNIT_GB:
-			lines.append(_tr("quest.radio.c.details.conv_gb", "Conversion: {gb} GB x 1024 = {mb} MB", {
-				"gb": _format_num(file_size_value),
-				"mb": _format_num(size_mb)
-			}))
-		lines.append(_tr("quest.radio.c.details.conv_mb", "Conversion: {mb} MB x 8 = {mbit} Mbit", {
-			"mb": _format_num(size_mb),
-			"mbit": _format_num(i_mbit)
-		}))
-		lines.append(_tr("quest.radio.c.details.t_true", "t_true = {i} / {v} = {t} s", {
-			"i": _format_num(i_mbit),
-			"v": _format_num(speed_mbit),
-			"t": _format_num(t_true)
-		}))
-		var decision_text: String = _tr("quest.radio.c.details.decision_none", "NO DECISION")
-		if decision == Decision.RISK:
-			decision_text = _tr("quest.radio.c.details.decision_risk", "RISK")
-		elif decision == Decision.ABORT:
-			decision_text = _tr("quest.radio.c.details.decision_abort", "ABORT")
-		lines.append(_tr("quest.radio.c.details.decision", "Decision: {decision}", {"decision": decision_text}))
-		lines.append(_tr("quest.radio.c.details.outcome", "Outcome: {outcome}", {"outcome": _outcome_to_text(outcome)}))
-		var decision_elapsed_ms: int = (Time.get_ticks_msec() - start_ms) if decision_ms < 0 else (decision_ms - start_ms)
-		lines.append(_tr("quest.radio.c.details.analysis", "Analysis: {text}", {
-			"text": _describe_error_type(_classify_error_type(decision_elapsed_ms))
-		}))
-	else:
-		lines.append(_tr("quest.radio.c.details.hidden", "t_true is hidden until finish."))
-		lines.append(_tr("quest.radio.c.details.after_finish", "Error analysis appears here after result."))
+	var decision_text: String = _tr("quest.radio.c.details.decision_none", "NO DECISION")
+	if decision == Decision.RISK:
+		decision_text = _tr("quest.radio.c.details.decision_risk", "RISK")
+	elif decision == Decision.ABORT:
+		decision_text = _tr("quest.radio.c.details.decision_abort", "ABORT")
+	lines.append(_tr("quest.radio.c.details.decision", "Decision: {decision}", {"decision": decision_text}))
+	lines.append(_tr("quest.radio.c.details.outcome", "Outcome: {outcome}", {"outcome": _outcome_to_text(outcome)}))
+	var decision_elapsed_ms: int = (Time.get_ticks_msec() - start_ms) if decision_ms < 0 else (decision_ms - start_ms)
+	lines.append(_tr("quest.radio.c.details.analysis", "Analysis: {text}", {
+		"text": _describe_error_type(_classify_error_type(decision_elapsed_ms))
+	}))
 	details_sheet_text.text = "\n".join(lines)
 
 func _describe_error_type(error_type: String) -> String:

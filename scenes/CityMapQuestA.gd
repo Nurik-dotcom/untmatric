@@ -7,6 +7,10 @@ const ARROW_ANGLE_RAD := 0.52
 const ARROW_LEN := 16.0
 const AUTO_FIT_MARGIN_PX := 24.0
 const TRAFFIC_BASE_SPEED := 2.4
+const PHASE_BUILD := 1
+const PHASE_RULES := 2
+const PHASE_INPUT := 3
+const PHASE_REVIEW := 4
 
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
@@ -80,6 +84,8 @@ var input_locked: bool = false
 var first_attempt_edge: String = ""
 var level_started_ms: int = 0
 var first_action_ms: int = -1
+var round_phase: int = PHASE_BUILD
+var phase_time_ms: Dictionary = {"1": 0, "2": 0, "3": 0, "4": 0}
 
 var n_calc: int = 0
 var n_opt: int = 0
@@ -116,6 +122,14 @@ var _status_i18n_key: String = ""
 var _status_i18n_default: String = ""
 var _status_i18n_params: Dictionary = {}
 var _status_i18n_color: Color = Color(1, 1, 1, 1)
+var _phase_started_ms: int = 0
+var _hint_count: int = 0
+var _last_reveal: Dictionary = {}
+var _phase_label: Label
+var _reveal_label: Label
+var _solver = preload("res://scripts/city_map/GraphSolver.gd").new()
+var _pack_summary_ready: bool = false
+var _pack_summary_data: Dictionary = {}
 
 func _ready() -> void:
 	if not btn_back.pressed.is_connected(_on_back_pressed):
@@ -158,20 +172,22 @@ func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
 
 func _apply_i18n() -> void:
-	label_case.text = _tr("city_map.common.header.case", "Р”Р•Р›Рћ 6: РљРђР РўРђ Р“РћР РћР”Рђ")
-	label_mode.text = _tr("city_map.a.header.mode", "Р Р•Р–РРњ: A")
+	label_case.text = _tr("city_map.common.header.case", "CASE 6: CITY MAP")
+	label_mode.text = _tr("city_map.a.header.mode", "MODE: A")
 	if is_instance_valid(_btn_help):
-		_btn_help.tooltip_text = _tr("city_map.common.tooltip.dossier", "Р”РћРЎР¬Р•")
+		_btn_help.tooltip_text = _tr("city_map.common.tooltip.dossier", "DOSSIER")
 	if is_instance_valid(_btn_undo):
-		_btn_undo.text = _tr("city_map.common.btn.undo", "РћРўРљРђРў")
-	btn_reset.text = _tr("city_map.common.btn.reset", "РЎР‘Р РћРЎ")
-	btn_submit.text = _tr("city_map.common.btn.submit", "РћРўРџР РђР’РРўР¬")
-	input_label.text = _tr("city_map.common.input.enter_sum", "ENTER FINAL SUM")
+		_btn_undo.text = _tr("city_map.common.btn.undo_step", "UNDO STEP")
+	btn_reset.text = _tr("city_map.common.btn.reset_route", "RESET ROUTE")
+	btn_submit.text = _tr("city_map.common.btn.check", "CHECK")
+	input_label.text = _tr("city_map.common.input.enter_sum", "Enter route sum")
 	footer_meta.text = _tr("city_map.a.footer.meta", "CITY MAP / A")
 	_set_progress_ui()
 	_set_briefing()
 	_update_visuals()
 	_update_timer_display()
+	if is_instance_valid(_phase_label):
+		_phase_label.text = _phase_text()
 	if not _status_i18n_key.is_empty():
 		_set_status_i18n(_status_i18n_key, _status_i18n_default, _status_i18n_color, _status_i18n_params)
 
@@ -195,17 +211,25 @@ func _setup_noir_ui() -> void:
 	_btn_help = Button.new()
 	_btn_help.text = "?"
 	_btn_help.custom_minimum_size = Vector2(44, 44)
-	_btn_help.tooltip_text = "Р”РћРЎР¬Р•"
+	_btn_help.tooltip_text = "DOSSIER"
 	_btn_help.pressed.connect(_on_help_pressed)
 	header.add_child(_btn_help)
 
 	_btn_undo = Button.new()
-	_btn_undo.text = "РћРўРљРђРў"
+	_btn_undo.text = "UNDO STEP"
 	_btn_undo.custom_minimum_size = Vector2(0, 44)
 	_btn_undo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn_undo.pressed.connect(_on_undo_pressed)
 	buttons_row.add_child(_btn_undo)
 	buttons_row.move_child(_btn_undo, 0)
+
+	_phase_label = Label.new()
+	_phase_label.name = "PhaseLabelRuntime"
+	_phase_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_phase_label.add_theme_font_size_override("font_size", 14)
+	_phase_label.add_theme_color_override("font_color", Color(0.90, 0.94, 1.0, 0.95))
+	info_vbox.add_child(_phase_label)
+	info_vbox.move_child(_phase_label, 0)
 
 	_numpad_panel = PanelContainer.new()
 	_numpad_panel.name = "NumpadPanel"
@@ -227,6 +251,14 @@ func _setup_noir_ui() -> void:
 		_numpad_buttons.append(btn)
 	info_vbox.move_child(_numpad_panel, info_vbox.get_child_count() - 2)
 
+	_reveal_label = Label.new()
+	_reveal_label.name = "RevealLabelRuntime"
+	_reveal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_reveal_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_reveal_label.add_theme_color_override("font_color", Color(0.90, 0.86, 0.70, 1.0))
+	info_vbox.add_child(_reveal_label)
+	info_vbox.move_child(_reveal_label, info_vbox.get_child_count() - 2)
+
 	_traffic_layer = Control.new()
 	_traffic_layer.name = "TrafficLayer"
 	_traffic_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -236,6 +268,7 @@ func _setup_noir_ui() -> void:
 
 	briefing_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	briefing_card.visible = false
+	_phase_started_ms = Time.get_ticks_msec()
 
 func _ensure_info_scroll_container() -> void:
 	var parent: Node = info_vbox.get_parent()
@@ -264,6 +297,131 @@ func _configure_sum_input_display() -> void:
 	sum_input.focus_mode = Control.FOCUS_CLICK
 	sum_input.set("virtual_keyboard_enabled", false)
 	sum_input.set("virtual_keyboard_show_on_focus", false)
+
+func _phase_text() -> String:
+	match round_phase:
+		PHASE_BUILD:
+			return _tr("city_map.common.phase.build", "STEP 1/4: Build route")
+		PHASE_RULES:
+			return _tr("city_map.common.phase.rules", "STEP 2/4: Check rules")
+		PHASE_INPUT:
+			return _tr("city_map.common.phase.input", "STEP 3/4: Enter total")
+		_:
+			return _tr("city_map.common.phase.review", "STEP 4/4: Review")
+
+func _set_phase(next_phase: int, force: bool = false) -> void:
+	var clamped_phase := clampi(next_phase, PHASE_BUILD, PHASE_REVIEW)
+	if not force and round_phase == clamped_phase:
+		if is_instance_valid(_phase_label):
+			_phase_label.text = _phase_text()
+		return
+	var now_ms := Time.get_ticks_msec()
+	if _phase_started_ms > 0:
+		var current_key := str(round_phase)
+		phase_time_ms[current_key] = int(phase_time_ms.get(current_key, 0)) + maxi(0, now_ms - _phase_started_ms)
+	round_phase = clamped_phase
+	_phase_started_ms = now_ms
+	if is_instance_valid(_phase_label):
+		_phase_label.text = _phase_text()
+
+func _phase_snapshot_ms() -> Dictionary:
+	var snapshot: Dictionary = phase_time_ms.duplicate(true)
+	var now_ms := Time.get_ticks_msec()
+	if _phase_started_ms > 0:
+		var key := str(round_phase)
+		snapshot[key] = int(snapshot.get(key, 0)) + maxi(0, now_ms - _phase_started_ms)
+	return snapshot
+
+func _route_display_text() -> String:
+	var tokens: Array[String] = []
+	for i in range(path.size()):
+		var node_id := str(path[i])
+		if i == path.size() - 1:
+			tokens.append("[%s]" % node_id)
+		else:
+			tokens.append(node_id)
+	return " -> ".join(tokens)
+
+func _best_known_path_preview() -> Array[String]:
+	return _solver.build_best_path_preview(level_data.get("min_path_examples", []))
+
+func _soft_hint_text(result_code: String) -> String:
+	if attempt_in_sublevel < 2:
+		return ""
+	match result_code:
+		"ERR_NOT_OPT":
+			return _tr("city_map.a.hint.not_opt", "Hint: compare total costs of both branches from the last fork.")
+		"ERR_CALC":
+			return _tr("city_map.a.hint.calc", "Hint: recalculate the selected edge weights one by one.")
+		"ERR_INCOMPLETE":
+			return _tr("city_map.a.hint.incomplete", "Hint: the check button unlocks only after you reach the target node.")
+		_:
+			return _tr("city_map.a.hint.generic", "Hint: shortest path means minimum total weight, not minimum number of steps.")
+
+func _build_review_text(verdict: Dictionary) -> String:
+	var result_code := str(verdict.get("result_code", "ERR_UNKNOWN"))
+	var step_idx := int(verdict.get("player_error_step_idx", -1))
+	var player_cost := int(verdict.get("player_cost", int(verdict.get("sum_actual", -1))))
+	var best_cost := int(verdict.get("best_known_cost", min_sum))
+	var route_valid := bool(verdict.get("route_valid", false))
+	var finish_reached := bool(verdict.get("finish_reached", false))
+	var optimal_ok := bool(verdict.get("optimal_ok", false))
+
+	var happened := ""
+	var where := ""
+	var revisit := ""
+	var keep := ""
+	match result_code:
+		"OK":
+			happened = _tr("city_map.common.review.ok.happened", "What happened: your route is valid and optimal.")
+			where = _tr("city_map.common.review.ok.where", "Where: all transitions are valid and the target is reached.")
+			revisit = _tr("city_map.common.review.ok.revisit", "Review: keep comparing route sums, not just number of steps.")
+			keep = _tr("city_map.common.review.ok.keep", "Still correct: direction, finish, arithmetic, and optimality.")
+		"ERR_NOT_OPT":
+			happened = _tr("city_map.common.review.not_opt.happened", "What happened: route is valid, but not the minimum.")
+			where = _tr("city_map.common.review.not_opt.where", "Where: after the fork, a cheaper continuation exists.")
+			revisit = _tr("city_map.common.review.not_opt.revisit", "Review: compare cumulative totals for each branch.")
+			keep = _tr("city_map.common.review.not_opt.keep", "Still correct: direction rules are followed and finish is reached.")
+		"ERR_CALC":
+			happened = _tr("city_map.common.review.calc.happened", "What happened: route is valid, but entered sum is wrong.")
+			where = _tr("city_map.common.review.calc.where", "Where: arithmetic stage after route construction.")
+			revisit = _tr("city_map.common.review.calc.revisit", "Review: add edge weights in the selected order.")
+			keep = _tr("city_map.common.review.calc.keep", "Still correct: route itself is valid.")
+		"ERR_INCOMPLETE":
+			happened = _tr("city_map.common.review.incomplete.happened", "What happened: target node is not reached yet.")
+			where = _tr("city_map.common.review.incomplete.where", "Where: route ended before the finish node.")
+			revisit = _tr("city_map.common.review.incomplete.revisit", "Review: continue from the current node to the finish.")
+			keep = _tr("city_map.common.review.incomplete.keep", "Still correct: current transitions remain usable.")
+		"ERR_PATH_INVALID":
+			happened = _tr("city_map.common.review.invalid.happened", "What happened: route has a forbidden transition.")
+			where = _tr("city_map.common.review.invalid.where", "Where: invalid step #{step}.", {"step": step_idx if step_idx > 0 else 1})
+			revisit = _tr("city_map.common.review.invalid.revisit", "Review: follow only outgoing directed edges.")
+			keep = _tr("city_map.common.review.invalid.keep", "Still correct: selected valid parts of the route can be reused.")
+		_:
+			happened = _tr("city_map.common.review.generic.happened", "What happened: route check failed.")
+			where = _tr("city_map.common.review.generic.where", "Where: inspect transitions and total cost.")
+			revisit = _tr("city_map.common.review.generic.revisit", "Review: rebuild route and compare total weight.")
+			keep = _tr("city_map.common.review.generic.keep", "Still correct: continue from your current idea.")
+
+	var status_line := _tr(
+		"city_map.a.review.status",
+		"Status: valid={valid}, finish={finish}, optimal={opt}",
+		{
+			"valid": "yes" if route_valid else "no",
+			"finish": "yes" if finish_reached else "no",
+			"opt": "yes" if optimal_ok else "no"
+		}
+	)
+	var cost_line := _tr(
+		"city_map.a.review.cost",
+		"Cost: yours={player}, best={best}",
+		{"player": player_cost, "best": best_cost}
+	)
+	var hint_text := _soft_hint_text(result_code)
+	if not hint_text.is_empty():
+		_hint_count += 1
+		return "%s\n%s\n%s\n%s\n%s\n%s\n%s" % [happened, where, revisit, keep, status_line, cost_line, hint_text]
+	return "%s\n%s\n%s\n%s\n%s\n%s" % [happened, where, revisit, keep, status_line, cost_line]
 
 func _on_help_pressed() -> void:
 	_set_dossier_open(not briefing_card.visible)
@@ -397,6 +555,13 @@ func _load_sublevel(index: int) -> void:
 	time_dossier_open_ms = 0
 	wait_count = 0
 	wait_total_sim_sec = 0
+	_hint_count = 0
+	_last_reveal = {}
+	_pack_summary_ready = false
+	_pack_summary_data = {}
+	round_phase = PHASE_BUILD
+	phase_time_ms = {"1": 0, "2": 0, "3": 0, "4": 0}
+	_phase_started_ms = Time.get_ticks_msec()
 	think_time_before_move_ms.clear()
 	_last_move_ms = Time.get_ticks_msec()
 	_dossier_open_started_ms = -1
@@ -434,7 +599,7 @@ func _set_progress_ui() -> void:
 		{
 			"current": shown_index,
 			"total": total,
-			"suffix": "" if sub_id.is_empty() else " вЂў " + sub_id
+			"suffix": "" if sub_id.is_empty() else " | " + sub_id
 		}
 	)
 	if level_index >= total - 1:
@@ -457,13 +622,16 @@ func _lock_input(locked: bool) -> void:
 func _on_next_pressed() -> void:
 	if not stage_completed:
 		return
-	if level_index + 1 >= level_total:
-		_finalize_pack_run()
+	if _pack_summary_ready:
 		_request_back_navigation("pack_complete")
+		return
+	if level_index + 1 >= level_total:
+		var summary := _finalize_pack_run()
+		_show_pack_summary(summary)
 		return
 	_load_sublevel(level_index + 1)
 
-func _finalize_pack_run() -> void:
+func _finalize_pack_run() -> Dictionary:
 	var summary := {
 		"schema_version": "city_map.run.v1",
 		"quest_id": "CITY_MAP",
@@ -481,6 +649,50 @@ func _finalize_pack_run() -> void:
 		"finished_at_unix": int(Time.get_unix_time_from_system())
 	}
 	_save_json_log(summary, true)
+	return summary
+
+func _show_pack_summary(summary: Dictionary) -> void:
+	_pack_summary_ready = true
+	_pack_summary_data = summary.duplicate(true)
+	var solved := int(summary.get("levels_completed", levels_completed))
+	var total := int(summary.get("levels_total", level_total))
+	var perfect := int(summary.get("levels_perfect", levels_perfect))
+	var calc_err := int(summary.get("total_calc_errors", run_total_calc_errors))
+	var opt_err := int(summary.get("total_opt_errors", run_total_opt_errors))
+	var parse_err := int(summary.get("total_parse_errors", run_total_parse_errors))
+	var avg_time := 0.0 if solved <= 0 else float(int(summary.get("total_time_seconds", run_total_time_seconds))) / float(solved)
+	var recommendation := _pack_recommendation_text(calc_err, opt_err, parse_err)
+
+	briefing_title.text = _tr("city_map.common.summary.title", "PACK SUMMARY")
+	briefing_text.text = _tr(
+		"city_map.a.summary.body",
+		"Solved: {solved}/{total}\nFirst try: {perfect}\nErrors:\n- Arithmetic: {calc}\n- Optimality: {opt}\n- Input: {parse}\nAverage time: {avg}s",
+		{
+			"solved": solved,
+			"total": total,
+			"perfect": perfect,
+			"calc": calc_err,
+			"opt": opt_err,
+			"parse": parse_err,
+			"avg": int(round(avg_time))
+		}
+	)
+	footer_label.text = _tr("city_map.common.summary.recommendation", "Recommendation: {text}", {"text": recommendation})
+	_set_dossier_open(true)
+	_set_status_i18n("city_map.common.summary.ready", "Pack summary is ready. Press FINISH to exit.", Color(0.82, 0.92, 1.0))
+	_lock_input(true)
+	btn_next.visible = true
+	btn_next.disabled = false
+	btn_next.text = _tr("city_map.common.btn.finish", "FINISH")
+
+func _pack_recommendation_text(calc_err: int, opt_err: int, parse_err: int) -> String:
+	if opt_err >= calc_err and opt_err >= parse_err and opt_err > 0:
+		return _tr("city_map.a.summary.reco.opt", "Train branch comparison for shortest path.")
+	if calc_err >= parse_err and calc_err > 0:
+		return _tr("city_map.a.summary.reco.calc", "Train edge-weight arithmetic on your route.")
+	if parse_err > 0:
+		return _tr("city_map.a.summary.reco.parse", "Check numeric input format before submit.")
+	return _tr("city_map.a.summary.reco.good", "Maintain the same route-check discipline on harder maps.")
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
@@ -518,7 +730,7 @@ func _apply_content_layout_mode() -> void:
 	if content_split.vertical:
 		content_split.split_offset = int(viewport.y * 0.64)
 	else:
-		var graph_ratio: float = 0.72 if compact_landscape else 0.68
+		var graph_ratio: float = 0.80 if compact_landscape else 0.76
 		content_split.split_offset = int(viewport.x * graph_ratio)
 	_apply_compact_phone_layout(compact_landscape)
 
@@ -541,7 +753,7 @@ func _apply_compact_phone_layout(compact: bool) -> void:
 	footer_row.visible = not compact
 	graph_panel.custom_minimum_size = Vector2.ZERO
 	graph_container.custom_minimum_size = Vector2.ZERO
-	info_panel.custom_minimum_size = Vector2(208.0 if compact else 280.0, 0.0)
+	info_panel.custom_minimum_size = Vector2(188.0 if compact else 248.0, 0.0)
 	sum_input.custom_minimum_size.y = 36.0 if compact else 44.0
 	status_label.custom_minimum_size.y = 44.0 if compact else 64.0
 	if is_instance_valid(_btn_help):
@@ -648,11 +860,15 @@ func _set_briefing() -> void:
 	briefing_title.text = _tr("city_map.a.briefing.title", "ROUTE AUDIT")
 	briefing_text.text = _tr(
 		"city_map.a.briefing.text",
-		"Reach node E on directed roads. Enter final route sum and submit. Only minimum route passes."
+		"Goal: reach {end} from {start}. Rule: move only along arrows. Task: find the shortest route.",
+		{
+			"start": str(level_data.get("start_node", "A")),
+			"end": str(level_data.get("end_node", "E"))
+		}
 	)
 	footer_label.text = _tr(
 		"city_map.a.briefing.footer",
-		"Directed graph: only outgoing roads from current node are allowed."
+		"Shortest route is the minimum total weight, not the minimum number of steps."
 	)
 
 func _calculate_min_sum() -> int:
@@ -660,35 +876,7 @@ func _calculate_min_sum() -> int:
 	var end_node := str(level_data.get("end_node", ""))
 	if start_node.is_empty() or end_node.is_empty():
 		return 0
-
-	var dist: Dictionary = {}
-	var unvisited: Array[String] = []
-	for node_id in node_defs.keys():
-		dist[node_id] = 1_000_000_000
-		unvisited.append(node_id)
-	dist[start_node] = 0
-
-	while not unvisited.is_empty():
-		var current := ""
-		var best := 1_000_000_000
-		for node_id in unvisited:
-			var value := int(dist.get(node_id, 1_000_000_000))
-			if value < best:
-				best = value
-				current = node_id
-
-		if current.is_empty() or current == end_node:
-			break
-		unvisited.erase(current)
-
-		var neighbors: Dictionary = adjacency.get(current, {})
-		for next_id in neighbors.keys():
-			var alt := best + int(neighbors[next_id])
-			if alt < int(dist.get(next_id, 1_000_000_000)):
-				dist[next_id] = alt
-
-	var result := int(dist.get(end_node, 1_000_000_000))
-	return 0 if result >= 1_000_000_000 else result
+	return _solver.compute_min_sum_basic(node_defs.keys(), adjacency, start_node, end_node)
 
 func _on_graph_resized() -> void:
 	if graph_container.size.x <= 0.0 or graph_container.size.y <= 0.0:
@@ -924,6 +1112,9 @@ func _reset_round_state(full_reset: bool) -> void:
 	path_sum = 0
 	sum_input.clear()
 	_clear_status_i18n()
+	_last_reveal = {}
+	if is_instance_valid(_reveal_label):
+		_reveal_label.text = ""
 	first_action_ms = -1
 	first_attempt_edge = ""
 	_undo_stack.clear()
@@ -931,18 +1122,43 @@ func _reset_round_state(full_reset: bool) -> void:
 
 	if full_reset:
 		level_started_ms = Time.get_ticks_msec()
+		phase_time_ms = {"1": 0, "2": 0, "3": 0, "4": 0}
+		_phase_started_ms = Time.get_ticks_msec()
+	_set_phase(PHASE_BUILD, true)
 
 	_update_visuals()
 
 func _update_visuals() -> void:
-	path_display.text = _tr("city_map.common.input.path", "PATH: {path}", {"path": " -> ".join(path)})
-	sum_live_label.text = _tr("city_map.common.input.sum", "SUM: {value}", {"value": path_sum})
+	var end_node := str(level_data.get("end_node", "E"))
+	var at_finish := current_node == end_node
+	if stage_completed:
+		_set_phase(PHASE_REVIEW)
+	elif at_finish and sum_input.text.strip_edges().is_empty():
+		_set_phase(PHASE_RULES)
+	elif at_finish:
+		_set_phase(PHASE_INPUT)
+	else:
+		_set_phase(PHASE_BUILD)
+
+	path_display.text = _tr("city_map.common.input.path", "PATH: {path}", {"path": _route_display_text()})
+	var step_count := maxi(0, path.size() - 1)
+	if round_phase == PHASE_REVIEW and not _last_reveal.is_empty():
+		sum_live_label.text = _tr(
+			"city_map.a.input.sum_after",
+			"Route cost: {player} | Best: {best}",
+			{
+				"player": int(_last_reveal.get("player_cost", path_sum)),
+				"best": int(_last_reveal.get("best_known_cost", min_sum))
+			}
+		)
+	else:
+		sum_live_label.text = _tr("city_map.a.input.steps", "Steps: {count}", {"count": step_count})
 
 	for node_id in node_buttons.keys():
 		var btn: Button = node_buttons[node_id]
 		var is_current: bool = node_id == current_node
 		var is_available: bool = adjacency.has(current_node) and adjacency[current_node].has(node_id)
-		btn.disabled = is_current or not is_available or _is_round_locked()
+		btn.disabled = is_current or _is_round_locked()
 		if is_current:
 			btn.modulate = Color(0.95, 0.86, 0.45)
 		elif is_available:
@@ -963,6 +1179,9 @@ func _update_visuals() -> void:
 	_sync_traffic_visuals()
 	if is_instance_valid(_btn_undo):
 		_btn_undo.disabled = _is_round_locked() or _undo_stack.is_empty()
+	btn_submit.disabled = _is_round_locked() or not at_finish
+	btn_next.visible = stage_completed
+	btn_next.disabled = not stage_completed
 
 func _set_edge_style(key: String, state: String) -> void:
 	if not edge_visuals.has(key):
@@ -996,6 +1215,13 @@ func _on_node_pressed(node_id: String) -> void:
 	if _is_round_locked():
 		return
 	if not adjacency.has(current_node) or not adjacency[current_node].has(node_id):
+		var attempted := _edge_key(current_node, node_id)
+		_set_status_i18n(
+			"city_map.a.status.wrong_direction",
+			"Cannot move: road goes in another direction ({edge}).",
+			Color(1.0, 0.65, 0.35),
+			{"edge": attempted}
+		)
 		return
 
 	var now_ms := Time.get_ticks_msec()
@@ -1011,6 +1237,9 @@ func _on_node_pressed(node_id: String) -> void:
 	path_sum += int(adjacency[current_node][node_id])
 	path.append(node_id)
 	current_node = node_id
+	_last_reveal = {}
+	if is_instance_valid(_reveal_label):
+		_reveal_label.text = ""
 	if path.size() == 2:
 		_set_dossier_open(false)
 	_update_visuals()
@@ -1060,16 +1289,30 @@ func _on_sum_input_changed(new_text: String) -> void:
 	if digits != new_text:
 		sum_input.text = digits
 		sum_input.caret_column = digits.length()
+	if current_node == str(level_data.get("end_node", "E")) and not digits.is_empty():
+		_set_phase(PHASE_INPUT)
 
 func _on_submit_pressed() -> void:
 	if _is_round_locked():
 		return
+	if current_node != str(level_data.get("end_node", "E")):
+		_set_status_i18n(
+			"city_map.common.result.err_incomplete",
+			"Reach the target node before check.",
+			Color(1.0, 0.62, 0.28)
+		)
+		_set_phase(PHASE_BUILD)
+		return
 	_set_dossier_open(false)
+	_set_phase(PHASE_REVIEW)
 
 	attempt_in_sublevel += 1
 	attempt_in_run += 1
 	var verdict := _judge_solution(sum_input.text.strip_edges())
+	_last_reveal = verdict
 	_log_attempt(verdict)
+	if is_instance_valid(_reveal_label):
+		_reveal_label.text = _build_review_text(verdict)
 
 	if verdict.result_code == "OK":
 		_set_status_i18n(
@@ -1143,9 +1386,11 @@ func _judge_solution(input_text: String) -> Dictionary:
 	var sum_actual := _compute_path_sum()
 	var sum_input_value: Variant = null
 	var result_code := "OK"
+	var player_error_step_idx := -1
 
 	if sum_actual < 0:
 		result_code = "ERR_PATH_INVALID"
+		player_error_step_idx = _solver.first_invalid_step_index(path, adjacency)
 	elif current_node != str(level_data.get("end_node", "E")):
 		result_code = "ERR_INCOMPLETE"
 	elif input_regex.search(input_text) == null:
@@ -1160,11 +1405,26 @@ func _judge_solution(input_text: String) -> Dictionary:
 			n_opt += 1
 			result_code = "ERR_NOT_OPT"
 
-	return {
-		"result_code": result_code,
-		"sum_actual": sum_actual,
-		"sum_input": sum_input_value
-	}
+	var best_preview := _best_known_path_preview()
+	var reveal := _solver.build_reveal_payload(
+		path,
+		result_code,
+		sum_actual,
+		min_sum,
+		str(level_data.get("end_node", "E")),
+		sum_input_value,
+		true,
+		true,
+		true,
+		true,
+		true,
+		player_error_step_idx,
+		best_preview,
+		min_sum
+	)
+	reveal["sum_actual"] = sum_actual
+	reveal["sum_input"] = sum_input_value
+	return reveal
 
 func _compute_path_sum() -> int:
 	var total := 0
@@ -1235,6 +1495,7 @@ func _log_attempt(verdict: Dictionary) -> void:
 	var sum_actual := int(verdict.get("sum_actual", -1))
 	var sum_input_value: Variant = verdict.get("sum_input", null)
 	var result_code := str(verdict.get("result_code", "ERR_UNKNOWN"))
+	var phase_snapshot: Dictionary = _phase_snapshot_ms()
 	var level_entry := _current_level_entry()
 	var sublevel_id := str(level_entry.get("id", "6_1_%02d" % (level_index + 1)))
 	var sublevel_path := str(level_entry.get("path", ""))
@@ -1263,7 +1524,14 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"contract_version": str(level_data.get("contract_version", "city_map.v2.1.0")),
 		"attempt_no": attempt_no,
 		"result_code": result_code,
+		"route_valid": bool(verdict.get("route_valid", false)),
+		"finish_reached": bool(verdict.get("finish_reached", false)),
 		"calc_ok": sum_input_value != null and int(sum_input_value) == sum_actual,
+		"dynamic_ok": bool(verdict.get("dynamic_ok", true)),
+		"must_visit_ok": bool(verdict.get("must_visit_ok", true)),
+		"cycle_ok": bool(verdict.get("cycle_ok", true)),
+		"xor_ok": bool(verdict.get("xor_ok", true)),
+		"blacklist_ok": bool(verdict.get("blacklist_ok", true)),
 		"optimal_ok": sum_actual == min_sum and result_code == "OK",
 		"first_attempt_edge": first_attempt_edge_value,
 		"t_elapsed_seconds": t_elapsed_seconds,
@@ -1282,8 +1550,14 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"closed_edge_attempts": 0,
 		"dossier_open_count": dossier_open_count,
 		"time_dossier_open_ms": time_dossier_open_ms,
+		"help_open_count": dossier_open_count,
 		"numpad_input_count": numpad_input_count,
 		"backspace_count": backspace_count,
+		"hint_count": _hint_count,
+		"phase_build_ms": int(phase_snapshot.get("1", 0)),
+		"phase_rules_ms": int(phase_snapshot.get("2", 0)),
+		"phase_input_ms": int(phase_snapshot.get("3", 0)),
+		"phase_review_ms": int(phase_snapshot.get("4", 0)),
 		"think_time_before_move_ms": think_time_before_move_ms.duplicate(),
 		"is_correct": result_code == "OK",
 		"is_fit": result_code == "OK",

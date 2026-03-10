@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/case_01/renderers/SubnetRenderer.gd" id="1"]
+
+[node name="SubnetRenderer" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="ProgressLabel" type="Label" parent="VBox"]
+text = "0/0"
+
+[node name="InfoLabel" type="Label" parent="VBox"]
+autowrap_mode = 2
+
+[node name="BinaryLabel" type="RichTextLabel" parent="VBox"]
+custom_minimum_size = Vector2(0, 92)
+fit_content = true
+bbcode_enabled = true
+scroll_active = false
+
+[node name="NetworkRow" type="HBoxContainer" parent="VBox"]
+
+[node name="NetworkLabel" type="Label" parent="VBox/NetworkRow"]
+text = "Network"
+
+[node name="BroadcastRow" type="HBoxContainer" parent="VBox"]
+
+[node name="BroadcastLabel" type="Label" parent="VBox/BroadcastRow"]
+text = "Broadcast"
+
+[node name="HostsRow" type="HBoxContainer" parent="VBox"]
+
+[node name="HostsLabel" type="Label" parent="VBox/HostsRow"]
+text = "Hosts"
+
+[node name="HostsEdit" type="LineEdit" parent="VBox/HostsRow"]
+size_flags_horizontal = 3
+
+[node name="BtnCheck" type="Button" parent="VBox"]
+text = "CHECK"
+custom_minimum_size = Vector2(0, 52)
+
+[node name="ExplainLabel" type="RichTextLabel" parent="VBox"]
+custom_minimum_size = Vector2(0, 90)
+fit_content = true
+bbcode_enabled = true
+scroll_active = false

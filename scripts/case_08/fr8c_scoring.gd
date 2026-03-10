@@ -45,6 +45,7 @@ static func evaluate(level: Dictionary, selected_option_id: String) -> Dictionar
 		"verdict_code": verdict_code,
 		"correct_option_id": correct_option_id,
 		"winner_source_id": str(winner.get("source_id", "")),
+		"winning_source_id": str(winner.get("source_id", "")),
 		"winner": {
 			"source_id": str(winner.get("source_id", "")),
 			"selector": str(winner.get("selector", "")),
