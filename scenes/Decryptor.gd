@@ -83,6 +83,42 @@ var level_started_ms: int = 0
 var first_action_ms: int = -1
 var check_attempt_count: int = 0
 var hint_used: bool = false
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+var bit_toggle_count: int = 0
+var bit_toggle_unique: Dictionary = {}
+var bit_retoggle_count: int = 0
+var reset_count: int = 0
+var retry_count: int = 0
+var continue_count: int = 0
+var details_open_count: int = 0
+var details_open_before_check: bool = false
+var details_close_count: int = 0
+var hint_open_count: int = 0
+var safe_mode_open_count: int = 0
+
+var first_check_ms: int = -1
+var last_check_ms: int = -1
+var time_to_hint_ms: int = -1
+var time_to_details_ms: int = -1
+var time_to_reset_ms: int = -1
+
+var min_hamming_seen: int = 999
+var last_hamming_seen: int = -1
+var hamming_improved_before_success: bool = false
+
+var current_streak_without_change: int = 0
+var check_without_change_count: int = 0
+var changed_after_hint: bool = false
+var changed_after_details: bool = false
+
+var used_reset_before_success: bool = false
+var used_retry_after_fail: bool = false
+
+var _input_changed_since_last_check: bool = false
+var _last_check_failed: bool = false
+var _last_shield_code: String = "NONE"
+var _safe_mode_used: bool = false
 
 var bit_buttons: Array[Button] = []
 var weight_labels: Array[Label] = []
@@ -310,6 +346,40 @@ func start_level(level_idx: int) -> void:
 	first_action_ms = -1
 	check_attempt_count = 0
 	hint_used = false
+	trial_seq += 1
+	task_session = {
+		"events": [],
+		"trial_seq": trial_seq
+	}
+	bit_toggle_count = 0
+	bit_toggle_unique.clear()
+	bit_retoggle_count = 0
+	reset_count = 0
+	retry_count = 0
+	continue_count = 0
+	details_open_count = 0
+	details_open_before_check = false
+	details_close_count = 0
+	hint_open_count = 0
+	safe_mode_open_count = 0
+	first_check_ms = -1
+	last_check_ms = -1
+	time_to_hint_ms = -1
+	time_to_details_ms = -1
+	time_to_reset_ms = -1
+	last_hamming_seen = _calc_hamming(current_input, current_target)
+	min_hamming_seen = last_hamming_seen
+	hamming_improved_before_success = false
+	current_streak_without_change = 0
+	check_without_change_count = 0
+	changed_after_hint = false
+	changed_after_details = false
+	used_reset_before_success = false
+	used_retry_after_fail = false
+	_input_changed_since_last_check = false
+	_last_check_failed = false
+	_last_shield_code = "NONE"
+	_safe_mode_used = false
 
 	var mode = GlobalMetrics.current_mode
 	mode_label.text = mode
@@ -323,6 +393,13 @@ func start_level(level_idx: int) -> void:
 	_update_input_display()
 	_log_message(_tr("decryptor.ab.log.system_ready", "System initialized. Target locked."), COLOR_OK)
 	_on_stability_changed(100.0, 0.0)
+	_log_event("trial_started", {
+		"trial_seq": trial_seq,
+		"stage_id": "A" if level_idx < 15 else "B",
+		"level_index": level_idx,
+		"mode": mode,
+		"target_value": current_target
+	})
 
 func _update_level_label(level_idx: int) -> void:
 	var protocol = "A" if level_idx < 15 else "B"
@@ -413,15 +490,27 @@ func _update_input_display() -> void:
 func _on_bit_toggled(pressed: bool, bit_index: int) -> void:
 	_mark_first_action()
 	AudioManager.play("click")
+	bit_toggle_count += 1
+	if bit_toggle_unique.has(bit_index):
+		bit_retoggle_count += 1
+	else:
+		bit_toggle_unique[bit_index] = true
 	if pressed:
 		current_input |= (1 << bit_index)
 		bit_buttons[bit_index].text = "1"
 	else:
 		current_input &= ~(1 << bit_index)
 		bit_buttons[bit_index].text = "0"
+	var hamming_to_target: int = _register_input_change()
 	_clear_error_highlights()
 	_animate_toggle(bit_buttons[bit_index])
 	_update_input_display()
+	_log_event("bit_toggled", {
+		"bit_index": bit_index,
+		"pressed": pressed,
+		"input_value": current_input,
+		"hamming_to_target": hamming_to_target
+	})
 
 func _on_check_pressed() -> void:
 	if not is_level_active:
@@ -429,10 +518,36 @@ func _on_check_pressed() -> void:
 
 	_mark_first_action()
 	check_attempt_count += 1
+	var check_ms: int = _elapsed_level_ms()
+	if first_check_ms < 0:
+		first_check_ms = check_ms
+	last_check_ms = check_ms
+	if _input_changed_since_last_check:
+		current_streak_without_change = 0
+	else:
+		current_streak_without_change += 1
+		check_without_change_count += 1
+	_input_changed_since_last_check = false
 	var submitted_input := current_input
+	var hamming_to_target: int = _calc_hamming(submitted_input, current_target)
+	_update_hamming_metrics(hamming_to_target)
+	_log_event("check_pressed", {
+		"attempt": check_attempt_count,
+		"submitted_input": submitted_input,
+		"hamming_to_target": hamming_to_target
+	})
 	var result: Dictionary = GlobalMetrics.check_solution(current_target, current_input)
-	_register_trial(result, submitted_input)
 	var error_code := str(result.get("error", ""))
+	var is_success: bool = bool(result.get("success", false))
+	_last_check_failed = not is_success
+	if error_code.begins_with("SHIELD"):
+		_last_shield_code = error_code
+	_log_event("check_result", {
+		"success": is_success,
+		"error_code": error_code,
+		"penalty": float(result.get("penalty", 0.0)),
+		"hamming": int(result.get("hamming", -1))
+	})
 
 	if error_code.begins_with("SHIELD"):
 		if error_code == "SHIELD_ACTIVE":
@@ -447,15 +562,22 @@ func _on_check_pressed() -> void:
 			_log_message(_tr("decryptor.ab.log.shield_cooldown", "Shield cooldown {seconds}s.", {
 				"seconds": "%.1f" % cooldown_left
 			}), COLOR_WARN)
+			_log_event("shield_triggered", {
+				"shield_code": "SHIELD_ACTIVE",
+				"cooldown_left_sec": cooldown_left
+			})
 		elif error_code == "SHIELD_FREQ":
 			_set_hint_key("decryptor.ab.hint.shield_freq", "Frequency shield triggered: too many checks.")
 		elif error_code == "SHIELD_LAZY":
 			_set_hint_key("decryptor.ab.hint.shield_lazy", "Lazy search detected. Change input in larger steps.")
 		else:
 			_set_hint_key("decryptor.ab.hint.shield_active", "Shield is active. Wait for recharge.")
+		_register_trial(result, submitted_input)
 		return
 
-	if result.success:
+	_register_trial(result, submitted_input)
+
+	if is_success:
 		AudioManager.play("relay")
 		_show_toast_key("decryptor.ab.toast.success", "SUCCESS", COLOR_OK)
 		_pulse_panel(input_panel, COLOR_OK)
@@ -484,7 +606,20 @@ func _on_check_pressed() -> void:
 		_apply_error_highlight(current_input ^ current_target)
 
 func _on_hint_pressed() -> void:
+	_mark_first_action()
 	hint_used = true
+	hint_open_count += 1
+	if time_to_hint_ms < 0:
+		time_to_hint_ms = _elapsed_level_ms()
+	_log_event("hint_opened", {
+		"hint_open_count": hint_open_count,
+		"input_value": current_input,
+		"hamming_to_target": _calc_hamming(current_input, current_target),
+		"hint_available": _has_last_hint,
+		"diagnosis_code": _hint_diag_code,
+		"zone_code": _hint_zone_code,
+		"hint_hd": _hint_hd
+	})
 	if not _has_last_hint:
 		_set_hint_key("decryptor.ab.hint.unavailable", "Diagnostics unavailable. Run a check first.")
 		_show_toast_key("decryptor.ab.toast.hint_unavailable", "HINT UNAVAILABLE", COLOR_WARN)
@@ -494,11 +629,23 @@ func _on_hint_pressed() -> void:
 	_show_toast_key("decryptor.ab.toast.hint_shown", "HINT SHOWN", COLOR_WARN)
 
 func _on_reset_pressed() -> void:
+	_mark_first_action()
+	reset_count += 1
+	if time_to_reset_ms < 0:
+		time_to_reset_ms = _elapsed_level_ms()
+	var prev_input: int = current_input
 	current_input = 0
 	_reset_bit_buttons()
 	_update_input_display()
+	var hamming_to_target: int = _register_input_change()
 	_clear_error_highlights()
 	_set_shift_status_i18n("decryptor.ab.shift.waiting", "SHIFT: waiting", Color(0.65, 0.65, 0.65, 1.0), false)
+	_log_event("reset_pressed", {
+		"reset_count": reset_count,
+		"input_before": prev_input,
+		"input_after": current_input,
+		"hamming_to_target": hamming_to_target
+	})
 
 func _apply_error_highlight(xor_val: int) -> void:
 	for bit in range(8):
@@ -519,10 +666,19 @@ func _on_stability_changed(new_val: float, _change: float) -> void:
 		_show_safe_mode()
 
 func _on_shield_triggered(shield_name: String, duration: float) -> void:
+	var shield_code: String = "SHIELD_ACTIVE"
 	if shield_name == "FREQUENCY":
 		_flash_shield(shield_freq)
+		shield_code = "SHIELD_FREQ"
 	elif shield_name == "LAZY":
 		_flash_shield(shield_lazy)
+		shield_code = "SHIELD_LAZY"
+	_last_shield_code = shield_code
+	_log_event("shield_triggered", {
+		"shield_name": shield_name,
+		"shield_code": shield_code,
+		"duration_sec": duration
+	})
 
 	btn_check.disabled = true
 	_overlay_glitch(0.6, 0.2)
@@ -540,10 +696,24 @@ func _reset_shield_state() -> void:
 	shield_lazy.modulate = Color(1, 1, 1, 0.25)
 
 func _show_safe_mode() -> void:
+	var was_visible: bool = safe_overlay.visible
 	safe_overlay.visible = true
 	btn_check.disabled = true
 	btn_hint.disabled = true
 	_update_safe_summary()
+	if not was_visible:
+		safe_mode_open_count += 1
+		_safe_mode_used = true
+		var hamming_to_target: int = _calc_hamming(current_input, current_target)
+		_log_event("safe_mode_enabled", {
+			"safe_mode_open_count": safe_mode_open_count,
+			"hamming_to_target": hamming_to_target
+		})
+		_log_event("safe_mode_summary_opened", {
+			"target_value": current_target,
+			"input_value": current_input,
+			"hamming_to_target": hamming_to_target
+		})
 
 	var xor_val = current_input ^ current_target
 	for i in range(8):
@@ -555,12 +725,19 @@ func _show_safe_mode() -> void:
 			lbl.modulate = Color(0.7, 0.7, 0.7, 1)
 
 func _on_retry_pressed() -> void:
+	var had_failed_before_retry: bool = _last_check_failed
 	GlobalMetrics.stability = 100.0
 	GlobalMetrics.stability_changed.emit(100.0, 0.0)
 	safe_overlay.visible = false
 	btn_check.disabled = false
 	btn_hint.disabled = false
 	start_level(GlobalMetrics.current_level_index)
+	retry_count += 1
+	used_retry_after_fail = had_failed_before_retry
+	_log_event("retry_pressed", {
+		"retry_count": retry_count,
+		"used_retry_after_fail": used_retry_after_fail
+	})
 
 func _on_continue_pressed() -> void:
 	GlobalMetrics.stability = 30.0
@@ -568,15 +745,39 @@ func _on_continue_pressed() -> void:
 	safe_overlay.visible = false
 	btn_check.disabled = false
 	btn_hint.disabled = false
+	continue_count += 1
+	_log_event("continue_pressed", {
+		"continue_count": continue_count,
+		"stability_after_continue": GlobalMetrics.stability
+	})
 
 func _on_menu_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _on_details_pressed() -> void:
+	_mark_first_action()
 	_set_details_open(not details_open, false)
 
 func _set_details_open(open: bool, immediate: bool) -> void:
+	var was_open: bool = details_open
+	var state_changed: bool = was_open != open
 	details_open = open
+	if state_changed:
+		if open:
+			details_open_count += 1
+			if first_check_ms < 0:
+				details_open_before_check = true
+			if time_to_details_ms < 0:
+				time_to_details_ms = _elapsed_level_ms()
+			_log_event("details_opened", {
+				"details_open_count": details_open_count,
+				"before_first_check": first_check_ms < 0
+			})
+		else:
+			details_close_count += 1
+			_log_event("details_closed", {
+				"details_close_count": details_close_count
+			})
 	if open:
 		details_sheet.visible = true
 
@@ -732,10 +933,15 @@ func _apply_shift_left() -> void:
 		return
 	_mark_first_action()
 	current_input = (current_input << 1) & 0xFF
+	var hamming_to_target: int = _register_input_change()
 	_sync_switches_to_input()
 	_update_input_display()
 	_set_shift_status_i18n("decryptor.ab.shift.applied", "SHIFT: applied", COLOR_OK, true)
 	_log_message(_tr("decryptor.ab.log.shift_applied", "Left shift gesture applied."), COLOR_OK)
+	_log_event("shift_left_applied", {
+		"input_value": current_input,
+		"hamming_to_target": hamming_to_target
+	})
 
 func _on_viewport_size_changed() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
@@ -826,6 +1032,68 @@ func _mark_first_action() -> void:
 	if first_action_ms < 0:
 		first_action_ms = Time.get_ticks_msec() - level_started_ms
 
+func _elapsed_level_ms() -> int:
+	return maxi(0, Time.get_ticks_msec() - level_started_ms)
+
+func _calc_hamming(a: int, b: int) -> int:
+	var x: int = a ^ b
+	var count: int = 0
+	for i in range(8):
+		if (x & (1 << i)) != 0:
+			count += 1
+	return count
+
+func _update_hamming_metrics(hamming_to_target: int) -> void:
+	last_hamming_seen = hamming_to_target
+	if hamming_to_target < min_hamming_seen:
+		min_hamming_seen = hamming_to_target
+		hamming_improved_before_success = true
+
+func _register_input_change() -> int:
+	_input_changed_since_last_check = true
+	if hint_open_count > 0:
+		changed_after_hint = true
+	if details_open_count > 0:
+		changed_after_details = true
+	var hamming_to_target: int = _calc_hamming(current_input, current_target)
+	_update_hamming_metrics(hamming_to_target)
+	return hamming_to_target
+
+func _log_event(event_name: String, data: Dictionary = {}) -> void:
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": event_name,
+		"t_ms": _elapsed_level_ms(),
+		"payload": data.duplicate(true)
+	})
+	task_session["events"] = events
+
+func _derive_outcome_code(is_success: bool, error_code: String) -> String:
+	if is_success:
+		return "SUCCESS"
+	if error_code == "INCORRECT":
+		return "WRONG_VALUE"
+	if error_code == "SHIELD_ACTIVE" or error_code == "SHIELD_FREQ" or error_code == "SHIELD_LAZY":
+		return error_code
+	if error_code == "TIMEOUT":
+		return "TIMEOUT"
+	if not error_code.is_empty():
+		return error_code
+	return "WRONG_VALUE"
+
+func _derive_mastery_block_reason(outcome_code: String) -> String:
+	if outcome_code.begins_with("SHIELD"):
+		return "SHIELD_TRIGGERED"
+	if hint_used or hint_open_count > 0:
+		return "USED_HINT"
+	if check_attempt_count > 1:
+		return "MULTI_CHECK"
+	if reset_count > 0:
+		return "RESET_USED"
+	if details_open_before_check or changed_after_details:
+		return "DETAILS_DEPENDENCY"
+	return "NONE"
+
 func _register_trial(result: Dictionary, submitted_input: int) -> void:
 	var level_number := GlobalMetrics.current_level_index + 1
 	var stage_id := "A" if GlobalMetrics.current_level_index < 15 else "B"
@@ -841,6 +1109,20 @@ func _register_trial(result: Dictionary, submitted_input: int) -> void:
 	var elapsed_ms: int = maxi(0, Time.get_ticks_msec() - level_started_ms)
 	var is_success := bool(result.get("success", false))
 	var error_code := str(result.get("error", "NONE"))
+	if is_success and reset_count > 0:
+		used_reset_before_success = true
+	var outcome_code: String = _derive_outcome_code(is_success, error_code)
+	var mastery_block_reason: String = _derive_mastery_block_reason(outcome_code)
+	var min_hamming_value: int = min_hamming_seen
+	if min_hamming_value >= 999:
+		min_hamming_value = _calc_hamming(submitted_input, current_target)
+	_log_event("trial_finished", {
+		"attempt": check_attempt_count,
+		"is_success": is_success,
+		"error_code": error_code,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason
+	})
 	payload["elapsed_ms"] = elapsed_ms
 	payload["duration"] = float(elapsed_ms) / 1000.0
 	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms
@@ -855,6 +1137,41 @@ func _register_trial(result: Dictionary, submitted_input: int) -> void:
 	payload["hint_used"] = hint_used
 	payload["error_type"] = error_code
 	payload["penalty_reported"] = float(result.get("penalty", 0.0))
+	payload["trial_seq"] = trial_seq
+	payload["bit_toggle_count"] = bit_toggle_count
+	payload["bit_toggle_unique_count"] = bit_toggle_unique.size()
+	payload["bit_retoggle_count"] = bit_retoggle_count
+	payload["reset_count"] = reset_count
+	payload["retry_count"] = retry_count
+	payload["continue_count"] = continue_count
+	payload["details_open_count"] = details_open_count
+	payload["details_open_before_check"] = details_open_before_check
+	payload["details_close_count"] = details_close_count
+	payload["hint_open_count"] = hint_open_count
+	payload["safe_mode_open_count"] = safe_mode_open_count
+	payload["safe_mode_used"] = _safe_mode_used
+	payload["shield_event"] = _last_shield_code != "NONE"
+	payload["shield_code"] = _last_shield_code
+	payload["first_check_ms"] = first_check_ms
+	payload["last_check_ms"] = last_check_ms
+	payload["time_to_hint_ms"] = time_to_hint_ms
+	payload["time_to_details_ms"] = time_to_details_ms
+	payload["time_to_reset_ms"] = time_to_reset_ms
+	payload["last_hamming_seen"] = last_hamming_seen
+	payload["min_hamming_seen"] = min_hamming_value
+	payload["hamming_improved_before_success"] = hamming_improved_before_success
+	payload["current_streak_without_change"] = current_streak_without_change
+	payload["check_without_change_count"] = check_without_change_count
+	payload["changed_after_hint"] = changed_after_hint
+	payload["changed_after_details"] = changed_after_details
+	payload["used_reset_before_success"] = used_reset_before_success
+	payload["used_retry_after_fail"] = used_retry_after_fail
+	payload["outcome_code"] = outcome_code
+	payload["mastery_block_reason"] = mastery_block_reason
+	payload["hint_diag_code"] = _hint_diag_code
+	payload["hint_zone_code"] = _hint_zone_code
+	payload["hint_hd"] = _hint_hd
+	payload["task_session"] = task_session.duplicate(true)
 	if result.has("hamming"):
 		payload["hamming"] = int(result.get("hamming", 0))
 	GlobalMetrics.register_trial(payload)

@@ -38,6 +38,28 @@ var inspect_count: int = 0
 var reset_count: int = 0
 var attempts: int = 0
 var start_time_ms: int = 0
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+
+var inspect_open_count: int = 0
+var unique_inspected_source_ids: Dictionary = {}
+var inspect_same_source_repeat_count: int = 0
+var option_select_count: int = 0
+var option_change_count: int = 0
+var confirm_attempt_count: int = 0
+var reset_count_local: int = 0
+var highlight_winner_count: int = 0
+var diagnostics_open_count: int = 0
+var changed_after_inspect: bool = false
+var changed_after_fail: bool = false
+var time_to_first_action_ms: int = -1
+var time_to_first_inspect_ms: int = -1
+var time_to_first_option_ms: int = -1
+var time_to_first_confirm_ms: int = -1
+var time_from_last_inspect_to_confirm_ms: int = -1
+var last_inspect_ms: int = -1
+var last_option_change_ms: int = -1
+var awaiting_change_after_fail: bool = false
 
 var level_solved: bool = false
 var trial_locked: bool = false
@@ -196,11 +218,7 @@ func _start_level(index: int) -> void:
 	selected_option_id = ""
 	option_buttons.clear()
 	option_by_id.clear()
-	inspect_count = 0
-	reset_count = 0
-	attempts = 0
-	trace.clear()
-	start_time_ms = Time.get_ticks_msec()
+	_begin_trial_session()
 
 	level_label.text = _build_level_label()
 	_update_progress_ui()
@@ -210,10 +228,6 @@ func _start_level(index: int) -> void:
 
 	_build_option_buttons()
 	_render_code_window()
-	_log_event("LEVEL_START", {
-		"level_id": str(level_data.get("id", "FR8-C")),
-		"index": current_level_index
-	})
 	_reset_attempt(true)
 	_update_stability_ui()
 	_apply_layout_mode()
@@ -235,6 +249,62 @@ func _update_progress_ui() -> void:
 
 func _is_last_level() -> bool:
 	return current_level_index >= levels.size() - 1
+
+func _begin_trial_session() -> void:
+	trial_seq += 1
+	start_time_ms = Time.get_ticks_msec()
+	trace.clear()
+
+	inspect_count = 0
+	reset_count = 0
+	attempts = 0
+	inspect_open_count = 0
+	unique_inspected_source_ids.clear()
+	inspect_same_source_repeat_count = 0
+	option_select_count = 0
+	option_change_count = 0
+	confirm_attempt_count = 0
+	reset_count_local = 0
+	highlight_winner_count = 0
+	diagnostics_open_count = 0
+	changed_after_inspect = false
+	changed_after_fail = false
+	time_to_first_action_ms = -1
+	time_to_first_inspect_ms = -1
+	time_to_first_option_ms = -1
+	time_to_first_confirm_ms = -1
+	time_from_last_inspect_to_confirm_ms = -1
+	last_inspect_ms = -1
+	last_option_change_ms = -1
+	awaiting_change_after_fail = false
+
+	var level_id: String = str(level_data.get("id", "FR8-C-00"))
+	task_session = {
+		"trial_seq": trial_seq,
+		"quest_id": "CASE_08_FINAL_REPORT",
+		"stage_id": "C",
+		"task_id": level_id,
+		"started_at_ticks": start_time_ms,
+		"ended_at_ticks": 0,
+		"events": []
+	}
+	_log_event("trial_started", {
+		"trial_seq": trial_seq,
+		"level_id": level_id,
+		"target_default": str(I18n.resolve_field(level_data, "target_text", {"default": ""})),
+		"rule_count": (level_data.get("rules", []) as Array).size(),
+		"candidate_count": (level_data.get("options", []) as Array).size()
+	})
+
+func _elapsed_ms_now() -> int:
+	if start_time_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - start_time_ms)
+
+func _mark_first_action() -> void:
+	if time_to_first_action_ms >= 0:
+		return
+	time_to_first_action_ms = _elapsed_ms_now()
 
 func _build_option_buttons() -> void:
 	for child in options_vbox.get_children():
@@ -304,12 +374,17 @@ func _render_code_window() -> void:
 
 func _reset_attempt(is_level_start: bool = false) -> void:
 	if not is_level_start:
-		reset_count += 1
+		_mark_first_action()
+		reset_count_local += 1
+		reset_count = reset_count_local
+		_log_event("reset_pressed", {"reset_count": reset_count_local})
+	_log_event("attempt_reset", {"level_start": is_level_start})
 	_log_event("СБРОС", {"level_start": is_level_start})
 
 	selected_option_id = ""
 	level_solved = false
 	trial_locked = false
+	awaiting_change_after_fail = false
 
 	attack_bar.value = 0
 	defense_bar.value = 0
@@ -328,7 +403,20 @@ func _on_option_pressed(option_id: String) -> void:
 	if not option_buttons.has(option_id):
 		return
 
+	_mark_first_action()
+	option_select_count += 1
+	var previous_option_id: String = selected_option_id
+	if previous_option_id != option_id and not previous_option_id.is_empty():
+		option_change_count += 1
+	if time_to_first_option_ms < 0:
+		time_to_first_option_ms = _elapsed_ms_now()
 	selected_option_id = option_id
+	last_option_change_ms = _elapsed_ms_now()
+	if inspect_open_count > 0 and previous_option_id != option_id:
+		changed_after_inspect = true
+	if awaiting_change_after_fail and previous_option_id != option_id:
+		changed_after_fail = true
+		awaiting_change_after_fail = false
 	var projected_attack: int = FR8CScoring.preview_attack_strength(level_data, selected_option_id)
 	var attack_tween: Tween = create_tween()
 	attack_tween.tween_property(attack_bar, "value", projected_attack, 0.4).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
@@ -342,7 +430,12 @@ func _on_option_pressed(option_id: String) -> void:
 
 	_refresh_option_state()
 	_set_status(_tr("case08.fr8c.status.option_selected", STATUS_OPTION_SELECTED), COLOR_INFO)
-	_log_event("OPTION_SELECTED", {"option_id": option_id})
+	var option_data: Dictionary = option_by_id.get(option_id, {}) as Dictionary
+	_log_event("option_selected", {
+		"option_id": option_id,
+		"color_value": str(option_data.get("value", "")),
+		"change_count": option_change_count
+	})
 	if AudioManager != null:
 		AudioManager.play("click")
 
@@ -366,6 +459,7 @@ func _on_meta_clicked(meta: Variant) -> void:
 	var meta_value: String = str(meta).strip_edges()
 	if not meta_value.begins_with("inspect:"):
 		return
+	_mark_first_action()
 
 	var source_id: String = meta_value.substr("inspect:".length())
 	if source_id.is_empty():
@@ -376,8 +470,22 @@ func _on_meta_clicked(meta: Variant) -> void:
 		_set_status(_tr("case08.fr8c.status.inspect_unavailable", STATUS_INSPECT_UNAVAILABLE), COLOR_WARN)
 		return
 
-	inspect_count += 1
-	_log_event("INSPECT", {"source_id": source_id})
+	inspect_open_count += 1
+	inspect_count = inspect_open_count
+	if unique_inspected_source_ids.has(source_id):
+		inspect_same_source_repeat_count += 1
+	unique_inspected_source_ids[source_id] = true
+	if time_to_first_inspect_ms < 0:
+		time_to_first_inspect_ms = _elapsed_ms_now()
+	last_inspect_ms = _elapsed_ms_now()
+	_log_event("source_inspected", {
+		"source_id": source_id,
+		"selector": str(source_data.get("selector", "")),
+		"weight": int(source_data.get("weight", 0)),
+		"order": int(source_data.get("order", 0)),
+		"important": bool(source_data.get("important", false)),
+		"color": str(source_data.get("color", ""))
+	})
 	_show_inspector(source_data, get_viewport().get_mouse_position())
 	_set_status(_tr("case08.fr8c.status.inspected", STATUS_INSPECTED), COLOR_INFO)
 	if AudioManager != null:
@@ -386,6 +494,8 @@ func _on_meta_clicked(meta: Variant) -> void:
 func _show_inspector(source_data: Dictionary, at_position: Vector2) -> void:
 	if inspector_popup == null or not inspector_popup.has_method("show_inspection"):
 		return
+	diagnostics_open_count += 1
+	_log_event("diagnostics_opened", {"source_id": str(source_data.get("source_id", ""))})
 	inspector_popup.call("show_inspection", source_data)
 	var vp_size: Vector2 = get_viewport_rect().size
 	inspector_popup.max_size = Vector2i(
@@ -410,6 +520,7 @@ func _position_inspector_popup(at_position: Vector2) -> void:
 func _on_confirm_pressed() -> void:
 	if trial_locked:
 		return
+	_mark_first_action()
 
 	if selected_option_id.is_empty():
 		_set_status(FR8CScoring.feedback_text(level_data, {"error_code": FR8CScoring.ERROR_EMPTY_CHOICE}), COLOR_WARN)
@@ -417,19 +528,45 @@ func _on_confirm_pressed() -> void:
 
 	trial_locked = true
 	btn_confirm.disabled = true
-	attempts += 1
-	_log_event("CONFIRM_PRESSED", {
+	confirm_attempt_count += 1
+	attempts = confirm_attempt_count
+	if time_to_first_confirm_ms < 0:
+		time_to_first_confirm_ms = _elapsed_ms_now()
+	if last_inspect_ms >= 0:
+		time_from_last_inspect_to_confirm_ms = maxi(0, _elapsed_ms_now() - last_inspect_ms)
+	else:
+		time_from_last_inspect_to_confirm_ms = -1
+	_log_event("confirm_pressed", {
 		"selected_option_id": selected_option_id,
-		"attempt": attempts
+		"attempt": confirm_attempt_count,
+		"time_from_last_inspect_to_confirm_ms": time_from_last_inspect_to_confirm_ms
 	})
 
 	var evaluation: Dictionary = FR8CScoring.evaluate(level_data, selected_option_id)
 	var feedback_text: String = FR8CScoring.feedback_text(level_data, evaluation)
 	var cascade_explanation: String = str(evaluation.get("cascade_explanation", "")).strip_edges()
 	_highlight_winning_rule(evaluation)
-	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
+	var winning_source_id: String = str(evaluation.get("winner_source_id", evaluation.get("winning_source_id", ""))).strip_edges()
+	if not winning_source_id.is_empty():
+		highlight_winner_count += 1
+	var elapsed_ms: int = _elapsed_ms_now()
+	var tffa_ms: int = elapsed_ms if time_to_first_action_ms < 0 else time_to_first_action_ms
 	var level_id: String = str(level_data.get("id", "FR8-C-00"))
 	var match_key: String = "FR8_C|%s|%d" % [level_id, GlobalMetrics.session_history.size()]
+	var is_correct: bool = bool(evaluation.get("is_correct", false))
+	var error_code: String = str(evaluation.get("error_code", FR8CScoring.ERROR_SPECIFICITY))
+	var outcome_code: String = _outcome_code_for_c(is_correct, error_code)
+	var mastery_block_reason: String = _mastery_block_reason_for_c(is_correct, outcome_code)
+
+	_log_event("confirm_result", {
+		"is_correct": is_correct,
+		"error_type": error_code,
+		"winning_source_id": winning_source_id,
+		"winner_reason": cascade_explanation,
+		"selected_option": selected_option_id,
+		"outcome_code": outcome_code
+	})
+	task_session["ended_at_ticks"] = Time.get_ticks_msec()
 
 	var payload: Dictionary = {
 		"quest_id": "CASE_08_FINAL_REPORT",
@@ -437,25 +574,47 @@ func _on_confirm_pressed() -> void:
 		"level_id": level_id,
 		"format": "CSS_CASCADE",
 		"match_key": match_key,
+		"trial_seq": trial_seq,
 		"selected": (evaluation.get("selected", {}) as Dictionary).duplicate(true),
 		"selected_option_id": selected_option_id,
 		"correct_option_id": str(evaluation.get("correct_option_id", "")),
-		"winner_source_id": str(evaluation.get("winner_source_id", "")),
+		"winner_source_id": winning_source_id,
 		"winner": (evaluation.get("winner", {}) as Dictionary).duplicate(true),
-		"winner_source": str(evaluation.get("winner_source_id", "")),
+		"winner_source": winning_source_id,
+		"winner_reason": cascade_explanation,
 		"cascade_explanation": cascade_explanation,
 		"elapsed_ms": elapsed_ms,
-		"inspect_count": inspect_count,
-		"reset_count": reset_count,
-		"attempts": attempts,
+		"time_to_first_action_ms": tffa_ms,
+		"inspect_count": inspect_open_count,
+		"reset_count": reset_count_local,
+		"attempts": confirm_attempt_count,
+		"confirm_attempt_count": confirm_attempt_count,
+		"inspect_open_count": inspect_open_count,
+		"unique_inspected_source_count": unique_inspected_source_ids.size(),
+		"inspect_same_source_repeat_count": inspect_same_source_repeat_count,
+		"option_select_count": option_select_count,
+		"option_change_count": option_change_count,
+		"highlight_winner_count": highlight_winner_count,
+		"diagnostics_open_count": diagnostics_open_count,
+		"changed_after_inspect": changed_after_inspect,
+		"changed_after_fail": changed_after_fail,
+		"time_to_first_inspect_ms": time_to_first_inspect_ms,
+		"time_to_first_option_ms": time_to_first_option_ms,
+		"time_to_first_confirm_ms": time_to_first_confirm_ms,
+		"time_from_last_inspect_to_confirm_ms": time_from_last_inspect_to_confirm_ms,
+		"winning_source_id": winning_source_id,
+		"selected_option": selected_option_id,
 		"points": int(evaluation.get("points", 0)),
 		"max_points": int(evaluation.get("max_points", 2)),
 		"is_fit": bool(evaluation.get("is_fit", false)),
-		"is_correct": bool(evaluation.get("is_correct", false)),
+		"is_correct": is_correct,
 		"stability_delta": int(evaluation.get("stability_delta", -25)),
 		"verdict_code": str(evaluation.get("verdict_code", "FAIL")),
-		"error_code": str(evaluation.get("error_code", FR8CScoring.ERROR_SPECIFICITY)),
-		"trace": trace.duplicate(true)
+		"error_code": error_code,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"trace": trace.duplicate(true),
+		"task_session": task_session.duplicate(true)
 	}
 
 	var actual_attack: int = int(evaluation.get("attack_strength", 0))
@@ -465,7 +624,7 @@ func _on_confirm_pressed() -> void:
 	bars_tween.tween_property(attack_bar, "value", actual_attack, 0.6).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 	bars_tween.tween_property(defense_bar, "value", actual_defense, 0.6).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 	if AudioManager != null:
-		AudioManager.play("relay" if bool(evaluation.get("is_correct", false)) else "click")
+		AudioManager.play("relay" if is_correct else "click")
 	await get_tree().create_timer(0.6).timeout
 
 	GlobalMetrics.register_trial(payload)
@@ -473,9 +632,10 @@ func _on_confirm_pressed() -> void:
 
 	explain_label.text = cascade_explanation if not cascade_explanation.is_empty() else feedback_text
 
-	if bool(evaluation.get("is_correct", false)):
+	if is_correct:
 		level_solved = true
 		trial_locked = true
+		awaiting_change_after_fail = false
 		btn_confirm.disabled = true
 		btn_next.disabled = false
 		btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
@@ -489,6 +649,7 @@ func _on_confirm_pressed() -> void:
 	else:
 		level_solved = false
 		trial_locked = false
+		awaiting_change_after_fail = true
 		btn_next.disabled = true
 		btn_confirm.disabled = false
 		_set_status(
@@ -647,12 +808,58 @@ func _shake_main_layout() -> void:
 		tween.tween_property(main_layout, "position", origin + Vector2(randf_range(-4.0, 4.0), randf_range(-4.0, 4.0)), 0.03)
 	tween.tween_property(main_layout, "position", origin, 0.04)
 
+func _outcome_code_for_c(is_correct: bool, error_code: String) -> String:
+	if is_correct:
+		return "SUCCESS"
+	var normalized_error: String = error_code.strip_edges().to_upper()
+	match normalized_error:
+		"SPECIFICITY_ERROR":
+			return "SPECIFICITY_ERROR"
+		"ORDER_TIE":
+			return "ORDER_TIE_ERROR"
+		"IMPORTANT_MISSED":
+			return "IMPORTANT_ERROR"
+		"INLINE_OVERRIDE":
+			return "INLINE_ERROR"
+		"EMPTY_CHOICE":
+			return "EMPTY_CHOICE"
+		_:
+			return "CASCADE_CONFUSION"
+
+func _mastery_block_reason_for_c(is_correct: bool, outcome_code: String) -> String:
+	if reset_count_local >= 3:
+		return "RESET_OVERUSE"
+	if confirm_attempt_count >= 3:
+		return "MULTI_CONFIRM_GUESSING"
+	if not is_correct:
+		if inspect_open_count > 0 and not changed_after_inspect:
+			return "INSPECT_DEPENDENCY"
+		if outcome_code in ["SPECIFICITY_ERROR", "ORDER_TIE_ERROR", "IMPORTANT_ERROR", "INLINE_ERROR", "CASCADE_CONFUSION"]:
+			if option_change_count >= 2:
+				return "SPECIFICITY_UNSTABLE"
+			return "CASCADE_RULE_CONFUSION"
+	return "NONE"
+
 func _log_event(event_name: String, data: Dictionary = {}) -> void:
-	trace.append({
-		"t_ms": Time.get_ticks_msec() - start_time_ms,
+	var t_ms: int = _elapsed_ms_now()
+	var event_payload: Dictionary = data.duplicate(true)
+	var event_row: Dictionary = {
+		"name": event_name,
 		"event": event_name,
-		"data": data.duplicate(true)
+		"t_ms": t_ms,
+		"payload": event_payload.duplicate(true),
+		"data": event_payload.duplicate(true)
+	}
+	trace.append(event_row)
+	if task_session.is_empty():
+		return
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": event_name,
+		"t_ms": t_ms,
+		"payload": event_payload.duplicate(true)
 	})
+	task_session["events"] = events
 
 func _show_error(message: String) -> void:
 	_set_status(message, COLOR_ERR)

@@ -31,6 +31,25 @@ var table_width_overflow := false
 var current_layout_mode := LAYOUT_DESKTOP
 var exit_btn: Button
 
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+var check_attempt_count: int = 0
+var details_open_count: int = 0
+var hint_open_count: int = 0
+
+var inspect_open_count: int = 0
+var inspect_cell_count: int = 0
+var inspect_header_count: int = 0
+var scan_action_count: int = 0
+var selection_change_count: int = 0
+var row_click_count: int = 0
+var cell_click_count: int = 0
+var header_click_count: int = 0
+var misclick_count: int = 0
+var time_to_first_selection_ms: int = -1
+var time_to_submit_ms: int = -1
+var changed_after_inspect: bool = false
+
 var inspect_count := 0
 var unique_rows_inspected: Dictionary = {}
 var answered_without_inspection := false
@@ -282,6 +301,21 @@ func _load_next_case() -> void:
 	scroll_used = false
 	table_has_scroll = false
 	table_width_overflow = false
+	check_attempt_count = 0
+	details_open_count = 0
+	hint_open_count = 0
+	inspect_open_count = 0
+	inspect_cell_count = 0
+	inspect_header_count = 0
+	scan_action_count = 0
+	selection_change_count = 0
+	row_click_count = 0
+	cell_click_count = 0
+	header_click_count = 0
+	misclick_count = 0
+	time_to_first_selection_ms = -1
+	time_to_submit_ms = -1
+	changed_after_inspect = false
 	inspect_count = 0
 	unique_rows_inspected.clear()
 	answered_without_inspection = false
@@ -325,6 +359,7 @@ func _load_next_case() -> void:
 	_press_hit.clear()
 	_set_tree_locked(false)
 	_clear_selection_visual()
+	_begin_trial_session()
 	if is_instance_valid(tutorial_overlay):
 		tutorial_overlay.visible = false
 
@@ -373,6 +408,8 @@ func _show_tutorial_once_if_needed() -> void:
 	tutorial_dismissed = false
 	tutorial_completed = false
 	tutorial_overlay.visible = true
+	details_open_count += 1
+	_log_event("details_opened", {"source": "tutorial_overlay"})
 
 func _on_tutorial_close_pressed() -> void:
 	_dismiss_tutorial(true)
@@ -630,9 +667,22 @@ func _handle_inspect_request(hit: Dictionary, source: String) -> void:
 		inspect_via_long_press_count += 1
 	else:
 		inspect_via_button_count += 1
+	inspect_open_count += 1
+	scan_action_count += 1
+	if kind == "COLUMN_HEADER":
+		inspect_header_count += 1
+	else:
+		inspect_cell_count += 1
 	_register_inspection(row_id)
 	inspected_target_signatures[_build_target_signature(kind, row_id, col_id)] = true
 	inspect_label.text = _build_inspect_text(kind, row_id, col_id)
+	_log_event("inspect_opened", {
+		"kind": kind,
+		"row": row_id,
+		"col": col_id,
+		"source": source,
+		"value": inspect_label.text
+	})
 	_play_sound("click", sfx_click)
 	if is_instance_valid(scanner_overlay) and scanner_overlay.has_method("pulse"):
 		scanner_overlay.call("pulse", hit.get("overlay_center", Vector2.ZERO))
@@ -663,9 +713,21 @@ func _handle_target_select(target: Dictionary, clicked_kind: String, row_id: Str
 	if trial_locked:
 		return
 	var new_signature := _build_target_signature(clicked_kind, row_id, col_id)
+	if time_to_first_selection_ms < 0:
+		time_to_first_selection_ms = Time.get_ticks_msec() - case_started_ts
+	selection_change_count += 1
+	match clicked_kind:
+		"ROW":
+			row_click_count += 1
+		"COLUMN_HEADER":
+			header_click_count += 1
+		_:
+			cell_click_count += 1
 	if not selected_signature.is_empty() and selected_signature != new_signature:
 		selection_changes_count += 1
 		selected_target_changed_before_submit = true
+		if inspect_open_count > 0:
+			changed_after_inspect = true
 	selected_target = target.duplicate(true)
 	selected_clicked_kind = clicked_kind
 	selected_row_id = row_id
@@ -677,6 +739,11 @@ func _handle_target_select(target: Dictionary, clicked_kind: String, row_id: Str
 	trial_state = TrialState.TARGET_SELECTED
 	_update_inspect_mode_label()
 	status_label.text = _tr("archive_a.status.selected", "Target selected. Press Confirm Answer.")
+	_log_event("selection_changed", {
+		"kind": clicked_kind,
+		"row": row_id,
+		"col": col_id
+	})
 	if is_instance_valid(scanner_overlay) and scanner_overlay.has_method("pulse"):
 		scanner_overlay.call("pulse", hit.get("overlay_center", Vector2.ZERO))
 	_play_sound("click", sfx_click)
@@ -687,9 +754,12 @@ func _submit_selected_target(submit_from_confirm: bool, submit_from_double_click
 	if selected_target.is_empty():
 		_handle_invalid_interaction("invalid_target", "", "", "")
 		return
+	check_attempt_count += 1
 	selected_before_submit = true
 	confirm_submit_used = submit_from_confirm
 	submit_via_double_click = submit_from_double_click
+	if time_to_submit_ms < 0:
+		time_to_submit_ms = Time.get_ticks_msec() - case_started_ts
 	if selected_target_ts > 0:
 		submit_latency_after_selection_ms = maxi(0, Time.get_ticks_msec() - selected_target_ts)
 	else:
@@ -698,6 +768,14 @@ func _submit_selected_target(submit_from_confirm: bool, submit_from_double_click
 	answered_after_inspection = not answered_without_inspection
 	inspected_same_target_before_submit = inspected_target_signatures.has(selected_signature)
 	mobile_layout_used = current_layout_mode == LAYOUT_MOBILE
+	_log_event("submit_pressed", {
+		"attempt": check_attempt_count,
+		"from_confirm": submit_from_confirm,
+		"from_double_click": submit_from_double_click,
+		"selected_kind": selected_clicked_kind,
+		"selected_row": selected_row_id,
+		"selected_col": selected_col_id
+	})
 	_submit_target(selected_target, selected_clicked_kind, selected_row_id, selected_col_id)
 
 func _handle_invalid_interaction(reason: String, zone: String, _row_id: String, _col_id: String) -> void:
@@ -723,6 +801,15 @@ func _handle_invalid_interaction(reason: String, zone: String, _row_id: String, 
 	_recompute_miss_click_count()
 	var expected_kind := _expected_kind_label()
 	status_label.text = "%s %s" % [toast, _tr("archive_a.toast.try_inspect", "Try Inspect. This case expects {kind}.", {"kind": expected_kind})]
+	hint_open_count += 1
+	_log_event("hint_opened", {
+		"source": "invalid_interaction",
+		"reason": reason
+	})
+	_log_event("selection_invalid", {
+		"reason": reason,
+		"zone": zone
+	})
 	_play_sound("error", sfx_error)
 
 func _expected_kind_label() -> String:
@@ -847,6 +934,19 @@ func _submit_target(target: Dictionary, clicked_kind: String, row_id: String, co
 			pulse_point = _selection_overlay_center()
 		scanner_overlay.call("pulse", pulse_point)
 
+	var error_type: String = "NONE" if is_correct else str(f_reason)
+	_log_event("submit_result", {
+		"is_correct": is_correct,
+		"error_type": error_type,
+		"selected_kind": clicked_kind,
+		"selected_row": row_id,
+		"selected_col": col_id
+	})
+	task_session["ended_at_ticks"] = Time.get_ticks_msec()
+	_log_event("trial_finished", {
+		"is_correct": is_correct,
+		"error_type": error_type
+	})
 	_log_trial(is_correct, f_reason, target, clicked_kind, row_id, col_id)
 	_update_stability_ui()
 
@@ -1032,6 +1132,25 @@ func _register_first_action() -> void:
 	if first_action_ts < 0:
 		first_action_ts = Time.get_ticks_msec()
 
+func _begin_trial_session() -> void:
+	trial_seq += 1
+	var case_id := str(current_case.get("id", "DA7-A-00"))
+	task_session = {
+		"trial_seq": trial_seq,
+		"quest_id": "DATA_ARCHIVE",
+		"stage_id": "A",
+		"task_id": case_id,
+		"started_at_ticks": case_started_ts,
+		"ended_at_ticks": 0,
+		"events": []
+	}
+	_log_event("trial_started", {
+		"trial_seq": trial_seq,
+		"case_id": case_id,
+		"objective": str(current_case.get("objective", "")),
+		"mode": "READ_ONLY"
+	})
+
 func _register_inspection(row_id: String) -> void:
 	inspect_count += 1
 	if time_to_first_inspect_ms < 0:
@@ -1065,6 +1184,7 @@ func _build_target_signature(kind: String, row_id: String, col_id: String) -> St
 
 func _recompute_miss_click_count() -> void:
 	miss_click_count = invalid_tap_count + tap_on_non_answerable_area_count + tap_cancelled_by_scroll_count
+	misclick_count = miss_click_count
 
 func _log_trial(is_correct: bool, f_reason: Variant, target: Dictionary, clicked_kind: String, row_id: String, col_id: String) -> void:
 	var now_ms := Time.get_ticks_msec()
@@ -1072,30 +1192,70 @@ func _log_trial(is_correct: bool, f_reason: Variant, target: Dictionary, clicked
 	var first_action_ms := elapsed_ms
 	if first_action_ts >= case_started_ts:
 		first_action_ms = first_action_ts - case_started_ts
-	var silent_reading_possible := (not table_has_scroll and not scroll_used and first_action_ms >= 30000)
 	var case_id := str(current_case.get("id", "DA7-A-00"))
-	var payload: Dictionary = {
+	var interaction_type := str(current_case.get("interaction_type", "SINGLE_CHOICE"))
+	var interaction_variant := str(current_case.get("interaction_variant", "CLICK_TARGET"))
+	var schema_version := str(current_case.get("schema_version", "DA7.A.v4"))
+	var timing_policy: Dictionary = current_case.get("timing_policy", {}) as Dictionary
+	var variant_hash := str(hash("%s|%s|%s|%s" % [case_id, interaction_type, interaction_variant, schema_version]))
+	var payload: Dictionary = TrialV2.build("DATA_ARCHIVE", "A", case_id, interaction_type, variant_hash)
+	var error_type: String = "NONE" if is_correct else str(f_reason)
+	var outcome_code: String = _outcome_code_for_a(is_correct, f_reason)
+	var mastery_block_reason: String = _mastery_block_reason_for_a(is_correct, outcome_code)
+	var valid_for_mastery: bool = mastery_block_reason == "NONE"
+	var silent_reading_possible := (not table_has_scroll and not scroll_used and first_action_ms >= 30000)
+	var effective_submit_ms := time_to_submit_ms
+	if effective_submit_ms < 0:
+		effective_submit_ms = elapsed_ms
+
+	payload.merge({
 		"question_id": case_id,
 		"case_id": case_id,
-		"quest_id": "DA7",
 		"quest": "data_archive",
-		"stage": "A",
+		"stage_id": "A",
 		"level": "A",
 		"topic": str(current_case.get("topic", "DB_BASICS")),
-		"interaction_type": str(current_case.get("interaction_type", "SINGLE_CHOICE")),
-		"interaction_variant": str(current_case.get("interaction_variant", "CLICK_TARGET")),
-		"schema_version": str(current_case.get("schema_version", "DA7.A.v4")),
-		"match_key": "DA7_A|%s" % case_id,
-		"is_correct": is_correct,
+		"interaction_variant": interaction_variant,
+		"schema_version": schema_version,
 		"f_reason": f_reason,
+		"is_correct": is_correct,
+		"is_fit": is_correct,
 		"elapsed_ms": elapsed_ms,
 		"duration": float(elapsed_ms) / 1000.0,
+		"time_to_first_action_ms": first_action_ms,
+		"time_to_first_inspect_ms": time_to_first_inspect_ms,
+		"time_to_first_selection_ms": time_to_first_selection_ms,
+		"time_to_submit_ms": effective_submit_ms,
+		"check_attempt_count": check_attempt_count,
+		"hint_used": hint_open_count > 0,
+		"details_used": details_open_count > 0,
+		"inspect_used": inspect_open_count > 0,
+		"valid_for_diagnostics": true,
+		"valid_for_mastery": valid_for_mastery,
+		"error_type": error_type,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"selected_kind": clicked_kind,
+		"selected_row": row_id,
+		"selected_col": col_id,
+		"inspect_open_count": inspect_open_count,
+		"inspect_cell_count": inspect_cell_count,
+		"inspect_header_count": inspect_header_count,
+		"scan_action_count": scan_action_count,
+		"selection_change_count": selection_change_count,
+		"row_click_count": row_click_count,
+		"cell_click_count": cell_click_count,
+		"header_click_count": header_click_count,
+		"misclick_count": misclick_count,
+		"changed_after_inspect": changed_after_inspect,
 		"timing": {
 			"effective_elapsed_ms": elapsed_ms,
 			"time_to_first_action_ms": first_action_ms,
 			"time_to_first_inspect_ms": time_to_first_inspect_ms,
-			"policy_mode": str((current_case.get("timing_policy", {}) as Dictionary).get("mode", "LEARNING")),
-			"limit_sec": int((current_case.get("timing_policy", {}) as Dictionary).get("limit_sec", 120))
+			"time_to_first_selection_ms": time_to_first_selection_ms,
+			"time_to_submit_ms": effective_submit_ms,
+			"policy_mode": str(timing_policy.get("mode", "LEARNING")),
+			"limit_sec": int(timing_policy.get("limit_sec", 120))
 		},
 		"answer": {
 			"clicked_target_id": str(target.get("id", "")),
@@ -1110,13 +1270,21 @@ func _log_trial(is_correct: bool, f_reason: Variant, target: Dictionary, clicked
 		},
 		"telemetry": {
 			"inspect_count": inspect_count,
+			"inspect_open_count": inspect_open_count,
+			"inspect_cell_count": inspect_cell_count,
+			"inspect_header_count": inspect_header_count,
+			"scan_action_count": scan_action_count,
 			"unique_rows_inspected": unique_rows_inspected.size(),
 			"time_to_first_inspect_ms": time_to_first_inspect_ms,
+			"time_to_first_selection_ms": time_to_first_selection_ms,
+			"time_to_submit_ms": effective_submit_ms,
 			"answered_without_inspection": answered_without_inspection,
 			"clicked_target_kind": clicked_kind,
 			"miss_click_count": miss_click_count,
+			"misclick_count": misclick_count,
 			"last_inspected_row_id": last_inspected_row_id,
 			"selected_before_submit": selected_before_submit,
+			"selection_change_count": selection_change_count,
 			"selection_changes_count": selection_changes_count,
 			"confirm_submit_used": confirm_submit_used,
 			"submit_via_double_click": submit_via_double_click,
@@ -1137,10 +1305,68 @@ func _log_trial(is_correct: bool, f_reason: Variant, target: Dictionary, clicked
 			"selected_target_changed_before_submit": selected_target_changed_before_submit,
 			"answered_after_inspection": answered_after_inspection,
 			"inspected_same_target_before_submit": inspected_same_target_before_submit,
-			"submit_latency_after_selection_ms": submit_latency_after_selection_ms
-		}
-	}
+			"submit_latency_after_selection_ms": submit_latency_after_selection_ms,
+			"changed_after_inspect": changed_after_inspect,
+			"details_open_count": details_open_count,
+			"hint_open_count": hint_open_count
+		},
+		"task_session": task_session.duplicate(true)
+	}, true)
 	GlobalMetrics.register_trial(payload)
+
+func _outcome_code_for_a(is_correct: bool, f_reason: Variant) -> String:
+	if is_correct:
+		return "SUCCESS"
+	var reason := str(f_reason)
+	match reason:
+		"CONFUSED_ROW_COLUMN":
+			return "CONFUSED_ROW_COLUMN"
+		"COUNT_HEADER_AS_RECORD":
+			return "COUNT_HEADER_AS_RECORD"
+		"MISSED_ROW":
+			return "MISSED_ROW"
+		"MISSED_COLUMN":
+			return "MISSED_COLUMN"
+		"WRONG_FIELD_TYPE", "TYPE_MISMATCH":
+			return "WRONG_FIELD_TYPE"
+		_:
+			if reason.find("ROW_COLUMN") >= 0:
+				return "CONFUSED_ROW_COLUMN"
+			if reason.find("HEADER") >= 0:
+				return "COUNT_HEADER_AS_RECORD"
+			if reason.find("ROW") >= 0:
+				return "MISSED_ROW"
+			if reason.find("COLUMN") >= 0:
+				return "MISSED_COLUMN"
+	return "OTHER_WRONG"
+
+func _mastery_block_reason_for_a(is_correct: bool, outcome_code: String) -> String:
+	if hint_open_count > 0:
+		return "USED_HINT"
+	if inspect_open_count >= 5:
+		return "USED_INSPECT_TOO_HEAVILY"
+	if selection_change_count >= 4 or selection_changes_count >= 2:
+		return "MULTI_SELECTION_GUESSING"
+	if not is_correct and outcome_code != "SUCCESS":
+		return "WRONG_CONCEPT"
+	return "NONE"
+
+func _log_event(name: String, payload: Dictionary = {}) -> void:
+	if task_session.is_empty():
+		return
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": name,
+		"t_ms": _trial_elapsed_ms(Time.get_ticks_msec()),
+		"payload": payload
+	})
+	task_session["events"] = events
+
+func _trial_elapsed_ms(now_ms: int) -> int:
+	if case_started_ts <= 0:
+		return 0
+	return maxi(0, now_ms - case_started_ts)
+
 func _tree_local_to_overlay(tree_local: Vector2) -> Vector2:
 	if not is_instance_valid(scanner_overlay):
 		return tree_local

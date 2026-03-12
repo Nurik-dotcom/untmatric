@@ -20,6 +20,8 @@ const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 @onready var root_vbox: VBoxContainer = $SafeArea/RootVBox
 @onready var body_split: HSplitContainer = $SafeArea/RootVBox/BodyHSplit
 @onready var mission_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard
+@onready var mission_margin: MarginContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin
+@onready var mission_vbox: VBoxContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox
 @onready var readout_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ReadoutCard
 @onready var scope_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/ScopeCard
 @onready var right_vbox: VBoxContainer = $SafeArea/RootVBox/BodyHSplit/RightPane/RightMargin/RightVBox
@@ -77,10 +79,13 @@ var knob_change_count: int = 0
 var direction_change_count: int = 0
 var cross_target_count: int = 0
 var last_diff_sign: int = 0
+var overshoot_count: int = 0
 
 var current_trial_idx: int = 0
 var anchor_countdown: int = 0
 var sample_refs: Array[Dictionary] = []
+var trial_seq: int = 0
+var trial_event_log: Array = []
 
 var analysis_committed: bool = false
 var analysis_revealing: bool = false
@@ -89,6 +94,16 @@ var last_analysis_fit: bool = false
 var last_analysis_minimal: bool = false
 var last_analysis_overkill: bool = false
 var last_analyzed_bits: int = -1
+var time_to_analyze_ms: float = -1.0
+var time_to_hint_ms: float = -1.0
+var time_from_analyze_to_capture_ms: float = -1.0
+var first_knob_value: int = -1
+var last_knob_value: int = -1
+var max_distance_from_target: int = 0
+var hint_before_analyze: bool = false
+var changed_after_analysis_count: int = 0
+var capture_without_analyze: bool = false
+var last_outcome_code: String = ""
 
 var _normal_pool: Array[int] = []
 var _trap_pool: Array[int] = []
@@ -108,6 +123,7 @@ var _status_i18n_key: String = ""
 var _status_i18n_default: String = ""
 var _status_i18n_params: Dictionary = {}
 var _status_i18n_color: Color = Color(0.85, 0.85, 0.85, 1.0)
+var _mission_card_base_min_height: float = 160.0
 
 func _ready() -> void:
 	randomize()
@@ -162,6 +178,12 @@ func _process(delta: float) -> void:
 			analysis_revealing = false
 			analysis_committed = true
 			last_analyzed_bits = current_bits
+			_log_trial_event("analyze_completed", {
+				"analyzed_bits": last_analyzed_bits,
+				"analysis_fit": last_analysis_fit,
+				"analysis_minimal": last_analysis_minimal,
+				"analysis_overkill": last_analysis_overkill
+			})
 			bit_knob.mouse_filter = Control.MOUSE_FILTER_STOP
 			btn_hint.disabled = false
 			btn_capture.disabled = false
@@ -181,9 +203,12 @@ func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 	return I18n.get_text(key, merged)
 
 func _configure_text_overflow() -> void:
-	for lbl in [target_label, rule_label, steps_label, knob_hint, bits_value_label, fit_value_label, status_label]:
+	for lbl in [knob_hint, bits_value_label, fit_value_label, status_label]:
 		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	for lbl in [target_label, rule_label, steps_label]:
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	status_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	for btn in [btn_hint, btn_analyze, btn_capture, btn_next, btn_details]:
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -204,6 +229,7 @@ func _apply_i18n() -> void:
 	details_title.text = _tr("quest.radio.a.ui.details_title", "EXPLANATION")
 	btn_close_details.text = _tr("quest.radio.common.btn.details_close", "CLOSE")
 	_update_dynamic_texts()
+	_request_mission_card_refresh()
 	_apply_status_i18n()
 	_update_header_meta()
 	_update_details_text()
@@ -219,6 +245,34 @@ func _update_dynamic_texts() -> void:
 	if bits_value <= 0:
 		bits_value = _i_min
 	bits_value_label.text = _tr("quest.radio.a.bits_current", "CURRENT i: {bits} BIT", {"bits": bits_value})
+	_request_mission_card_refresh()
+
+func _request_mission_card_refresh() -> void:
+	call_deferred("_refresh_mission_card_min_height")
+
+func _label_required_height(label: Label) -> float:
+	if label == null:
+		return 0.0
+	var font: Font = label.get_theme_font("font")
+	if font == null:
+		return label.get_combined_minimum_size().y
+	var font_size: int = label.get_theme_font_size("font_size")
+	var line_count: int = maxi(1, label.get_line_count())
+	return font.get_height(font_size) * float(line_count)
+
+func _refresh_mission_card_min_height() -> void:
+	if mission_card == null or mission_margin == null or mission_vbox == null:
+		return
+	var content_height: float = 0.0
+	content_height += _label_required_height(mission_title)
+	content_height += _label_required_height(target_label)
+	content_height += _label_required_height(rule_label)
+	content_height += _label_required_height(steps_label)
+	content_height += float(mission_vbox.get_theme_constant("separation")) * 3.0
+	content_height += float(mission_margin.get_theme_constant("margin_top"))
+	content_height += float(mission_margin.get_theme_constant("margin_bottom"))
+	var min_height: float = maxf(_mission_card_base_min_height, mission_margin.get_combined_minimum_size().y)
+	mission_card.custom_minimum_size.y = maxf(min_height, content_height + 8.0)
 
 func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
@@ -268,9 +322,25 @@ func _reset_sample_strip() -> void:
 		mark.visible = false
 	current_trial_idx = 0
 
+func _elapsed_trial_ms() -> float:
+	return maxf(0.0, (Time.get_ticks_msec() / 1000.0 - start_time) * 1000.0)
+
+func _log_trial_event(event_type: String, meta: Dictionary = {}) -> void:
+	var t_ms: float = _elapsed_trial_ms()
+	trial_event_log.append({
+		"t_ms": t_ms,
+		"type": event_type,
+		"bits": current_bits,
+		"target_bits": target_bits,
+		"meta": meta.duplicate(true)
+	})
+
 func _start_trial() -> void:
+	trial_seq += 1
 	trial_active = true
 	hint_used = false
+	capture_without_analyze = false
+	hint_before_analyze = false
 	start_time = Time.get_ticks_msec() / 1000.0
 	first_action_timestamp = -1.0
 
@@ -279,6 +349,9 @@ func _start_trial() -> void:
 	direction_change_count = 0
 	cross_target_count = 0
 	last_diff_sign = 0
+	overshoot_count = 0
+	changed_after_analysis_count = 0
+	trial_event_log = []
 
 	analysis_committed = false
 	analysis_revealing = false
@@ -287,6 +360,13 @@ func _start_trial() -> void:
 	last_analysis_minimal = false
 	last_analysis_overkill = false
 	last_analyzed_bits = -1
+	time_to_analyze_ms = -1.0
+	time_to_hint_ms = -1.0
+	time_from_analyze_to_capture_ms = -1.0
+	first_knob_value = -1
+	last_knob_value = -1
+	max_distance_from_target = 0
+	last_outcome_code = ""
 	noise_seed = randi()
 
 	btn_capture.visible = true
@@ -326,6 +406,14 @@ func _start_trial() -> void:
 	if _target_wave_line != null:
 		_target_wave_line.visible = false
 		_target_wave_line.points = PackedVector2Array()
+	_log_trial_event("trial_started", {
+		"trial_seq": trial_seq,
+		"target_n": target_n,
+		"target_bits": target_bits,
+		"pool_type": pool_type,
+		"forced_sampling": forced_sampling,
+		"is_timed_mode": is_timed_mode
+	})
 
 	_set_status_i18n(
 		"quest.radio.a.status.plan",
@@ -334,6 +422,7 @@ func _start_trial() -> void:
 	)
 	_update_header_meta()
 	_update_details_text()
+	_request_mission_card_refresh()
 
 func _mark_first_action() -> void:
 	if first_action_timestamp < 0.0:
@@ -345,20 +434,56 @@ func _on_knob_value_changed(new_value: int) -> void:
 	_apply_user_bits(new_value, true)
 
 func _apply_user_bits(i_value: int, from_user: bool) -> void:
+	var prev_bits: int = current_bits
+	var analysis_committed_before: bool = analysis_committed
+	var was_first_action: bool = false
 	if from_user:
+		was_first_action = first_action_timestamp < 0.0
 		_mark_first_action()
 
 	current_bits = clampi(i_value, _i_min, _i_max)
 
 	if from_user:
+		if was_first_action:
+			_log_trial_event("first_action", {
+				"source": "knob",
+				"from_bits": prev_bits,
+				"to_bits": current_bits
+			})
+		if first_knob_value < 0:
+			first_knob_value = current_bits
+		last_knob_value = current_bits
 		knob_change_count += 1
 		var diff_sign: int = signi(target_bits - current_bits)
+		var direction_changed: bool = false
+		var crossed_target: bool = false
 		if last_diff_sign != 0 and diff_sign != 0 and diff_sign != last_diff_sign:
 			direction_change_count += 1
 			cross_target_count += 1
+			direction_changed = true
+			crossed_target = true
+		if (prev_bits - target_bits) * (current_bits - target_bits) < 0:
+			overshoot_count += 1
+			crossed_target = true
 		last_diff_sign = diff_sign
+		var distance_to_target: int = abs(current_bits - target_bits)
+		max_distance_from_target = maxi(max_distance_from_target, distance_to_target)
 		noise_seed = int((noise_seed * 1103515245 + 12345 + current_bits * 17) & 0x7fffffff)
-		if analysis_committed:
+		_log_trial_event("knob_change", {
+			"from_bits": prev_bits,
+			"to_bits": current_bits,
+			"distance_to_target": distance_to_target,
+			"crossed_target": crossed_target,
+			"direction_changed": direction_changed,
+			"analysis_committed_before": analysis_committed_before
+		})
+		if analysis_committed_before:
+			changed_after_analysis_count += 1
+			_log_trial_event("changed_after_analysis", {
+				"changed_after_analysis_count": changed_after_analysis_count,
+				"from_bits": prev_bits,
+				"to_bits": current_bits
+			})
 			analysis_committed = false
 			last_analyzed_bits = -1
 			btn_capture.disabled = true
@@ -379,8 +504,20 @@ func _apply_user_bits(i_value: int, from_user: bool) -> void:
 func _on_hint_pressed() -> void:
 	if not trial_active:
 		return
+	var was_first_action: bool = first_action_timestamp < 0.0
 	_mark_first_action()
+	if was_first_action:
+		_log_trial_event("first_action", {"source": "hint"})
 	hint_used = true
+	if time_to_hint_ms < 0.0:
+		time_to_hint_ms = _elapsed_trial_ms()
+	if analyze_count == 0:
+		hint_before_analyze = true
+	_log_trial_event("hint_opened", {
+		"hint_before_analyze": analyze_count == 0,
+		"distance_to_target": abs(current_bits - target_bits),
+		"knob_change_count": knob_change_count
+	})
 	_set_status_i18n(
 		"quest.radio.a.status.hint",
 		"Hint: use rule 2^i >= N and choose minimal i.",
@@ -392,8 +529,13 @@ func _on_analyze_pressed() -> void:
 	if not trial_active or analysis_revealing:
 		return
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	var was_first_action: bool = first_action_timestamp < 0.0
 	_mark_first_action()
+	if was_first_action:
+		_log_trial_event("first_action", {"source": "analyze"})
 	analyze_count += 1
+	if time_to_analyze_ms < 0.0:
+		time_to_analyze_ms = maxf(0.0, (now_sec - start_time) * 1000.0)
 	analysis_committed = false
 	last_analyzed_bits = -1
 	analysis_revealing = true
@@ -405,6 +547,14 @@ func _on_analyze_pressed() -> void:
 	last_analysis_fit = capacity >= target_n
 	last_analysis_minimal = current_bits == target_bits
 	last_analysis_overkill = last_analysis_fit and not last_analysis_minimal
+	_log_trial_event("analyze_pressed", {
+		"capacity": capacity,
+		"analysis_fit": last_analysis_fit,
+		"analysis_minimal": last_analysis_minimal,
+		"analysis_overkill": last_analysis_overkill,
+		"distance_to_target": abs(current_bits - target_bits),
+		"analyze_count": analyze_count
+	})
 	_set_status_i18n(
 		"quest.radio.a.status.analyze_progress",
 		"STEP 2/3: channel analysis in progress... {left}s",
@@ -417,7 +567,18 @@ func _on_analyze_pressed() -> void:
 func _on_capture_pressed() -> void:
 	if not trial_active or btn_capture.disabled:
 		return
+	var was_first_action: bool = first_action_timestamp < 0.0
 	_mark_first_action()
+	if was_first_action:
+		_log_trial_event("first_action", {"source": "capture"})
+	capture_without_analyze = analyze_count == 0
+	if analysis_committed and time_to_analyze_ms >= 0.0:
+		time_from_analyze_to_capture_ms = maxf(0.0, _elapsed_trial_ms() - time_to_analyze_ms)
+	_log_trial_event("capture_pressed", {
+		"capture_without_analyze": capture_without_analyze,
+		"analysis_committed": analysis_committed,
+		"distance_to_target": abs(current_bits - target_bits)
+	})
 	_finish_trial(false)
 
 func _finish_trial(is_timeout: bool) -> void:
@@ -463,30 +624,69 @@ func _finish_trial(is_timeout: bool) -> void:
 
 	var scrubbed_guessing: bool = direction_change_count >= 2 or cross_target_count >= 2
 	var valid_for_mastery: bool = is_fit and is_minimal and (not hint_used) and analyze_count <= 1 and (not scrubbed_guessing)
+	var mastery_block_reason: String = "NONE"
+	if is_timeout:
+		mastery_block_reason = "TIMEOUT"
+	elif not is_fit:
+		mastery_block_reason = "NOT_FIT"
+	elif not is_minimal:
+		mastery_block_reason = "OVERKILL"
+	elif hint_used:
+		mastery_block_reason = "USED_HINT"
+	elif analyze_count > 1:
+		mastery_block_reason = "TOO_MANY_ANALYZE"
+	elif scrubbed_guessing:
+		mastery_block_reason = "SCRUBBED_GUESSING"
+
+	if is_timeout:
+		last_outcome_code = "TIMEOUT_UNDERFIT"
+	elif not is_fit:
+		last_outcome_code = "UNDERFIT"
+	elif is_minimal:
+		last_outcome_code = "MINIMAL_FIT"
+	else:
+		last_outcome_code = "OVERKILL_FIT"
 
 	var payload: Dictionary = {
 		"quest_id": "radio_intercept",
 		"stage_id": "A",
 		"match_key": "RI_A_%s_%s_N%d" % ["TIMED" if is_timed_mode else "UNTIMED", pool_type, target_n],
+		"trial_seq": trial_seq,
 		"pool_type": pool_type,
 		"N": target_n,
 		"i_min": target_bits,
 		"chosen_i": current_bits,
 		"capacity": capacity,
+		"final_gap_bits": current_bits - target_bits,
 		"is_fit": is_fit,
 		"is_correct": is_fit,
 		"is_minimal": is_minimal,
 		"is_overkill": is_overkill,
+		"outcome_code": last_outcome_code,
 		"used_analyze": used_analyze,
 		"used_hint": hint_used,
+		"hint_before_analyze": hint_before_analyze,
+		"capture_without_analyze": capture_without_analyze,
 		"valid_for_mastery": valid_for_mastery,
+		"mastery_block_reason": mastery_block_reason,
 		"valid_for_diagnostics": true,
 		"forced_sampling": forced_sampling,
 		"analyze_count": analyze_count,
 		"knob_change_count": knob_change_count,
 		"direction_change_count": direction_change_count,
 		"cross_target_count": cross_target_count,
-		"elapsed_ms": duration * 1000.0
+		"overshoot_count": overshoot_count,
+		"changed_after_analysis_count": changed_after_analysis_count,
+		"max_distance_from_target": max_distance_from_target,
+		"first_knob_value": first_knob_value,
+		"last_knob_value": last_knob_value,
+		"time_to_first_action_ms": prev_time_to_first_action * 1000.0,
+		"time_to_hint_ms": time_to_hint_ms,
+		"time_to_analyze_ms": time_to_analyze_ms,
+		"time_from_analyze_to_capture_ms": time_from_analyze_to_capture_ms,
+		"scrubbed_guessing": scrubbed_guessing,
+		"elapsed_ms": duration * 1000.0,
+		"event_log": trial_event_log.duplicate(true)
 	}
 	var stability_delta: float = 0.0
 	if not is_fit:
@@ -686,7 +886,8 @@ func _configure_layout() -> void:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 380, 360)
 		root_vbox.add_theme_constant_override("separation", 8)
 		bit_knob.custom_minimum_size = Vector2(200, 200)
-		mission_card.custom_minimum_size.y = 150
+		_mission_card_base_min_height = 172.0
+		mission_card.custom_minimum_size.y = _mission_card_base_min_height
 		readout_card.custom_minimum_size.y = 72
 		scope_card.custom_minimum_size.y = 132
 		status_card.custom_minimum_size.y = 108
@@ -711,7 +912,8 @@ func _configure_layout() -> void:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 420, 380)
 		root_vbox.add_theme_constant_override("separation", 10)
 		bit_knob.custom_minimum_size = Vector2(220, 220)
-		mission_card.custom_minimum_size.y = 166
+		_mission_card_base_min_height = 188.0
+		mission_card.custom_minimum_size.y = _mission_card_base_min_height
 		readout_card.custom_minimum_size.y = 80
 		scope_card.custom_minimum_size.y = 162
 		status_card.custom_minimum_size.y = 114
@@ -736,7 +938,8 @@ func _configure_layout() -> void:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.57), 460, 420)
 		root_vbox.add_theme_constant_override("separation", 10)
 		bit_knob.custom_minimum_size = Vector2(252, 252)
-		mission_card.custom_minimum_size.y = 182
+		_mission_card_base_min_height = 204.0
+		mission_card.custom_minimum_size.y = _mission_card_base_min_height
 		readout_card.custom_minimum_size.y = 86
 		scope_card.custom_minimum_size.y = 172
 		status_card.custom_minimum_size.y = 122
@@ -757,6 +960,7 @@ func _configure_layout() -> void:
 		btn_next.custom_minimum_size.y = 58
 		btn_details.custom_minimum_size.y = 44
 		btn_close_details.custom_minimum_size.y = 56
+	_request_mission_card_refresh()
 
 func _clamp_split_offset(target_offset: int, min_left: int, min_right: int) -> int:
 	var viewport_width: int = int(get_viewport_rect().size.x)

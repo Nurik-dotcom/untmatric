@@ -8,6 +8,8 @@ const SUITES: Array[Dictionary] = [
 	{"name": "GlobalMetrics", "path": "res://tests/test_global_metrics.gd"},
 	{"name": "MatrixSolver", "path": "res://tests/test_matrix_solver.gd"},
 	{"name": "Shields", "path": "res://tests/test_shields.gd"},
+	{"name": "RestoreQuestBSemantics", "path": "res://tests/test_restore_quest_b_semantics.gd"},
+	{"name": "DisarmQuestCSemantics", "path": "res://tests/test_disarm_quest_c_semantics.gd"},
 	{"name": "DA7CasesBContract", "path": "res://tests/test_da7_cases_b_contract.gd"},
 	{"name": "Case08DataContract", "path": "res://tests/test_case08_data_contract.gd"},
 	{"name": "Case01DataContract", "path": "res://tests/test_case01_data_contract.gd"},

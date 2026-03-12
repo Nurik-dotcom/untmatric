@@ -578,7 +578,7 @@
       "fix_options": [
         {
           "option_id": "A",
-          "replace_line": "проходить",
+          "replace_line": "        pass",
           "result_s": 45
         },
         {
@@ -588,7 +588,7 @@
         },
         {
           "option_id": "C",
-          "replace_line": "        s += 0",
+          "replace_line": "        s -= i",
           "result_s": 39
         }
       ],

@@ -140,6 +140,22 @@ var analyze_count: int = 0
 var start_time_msec: int = 0
 var first_action_ms: int = -1
 var verdict_count: int = 0
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+
+var probe_count: int = 0
+var input_toggle_count: int = 0
+var verdict_change_count: int = 0
+var contradiction_seen_count: int = 0
+var unique_input_patterns: Dictionary = {}
+
+var time_to_first_probe_ms: int = -1
+var time_to_first_analyze_ms: int = -1
+var time_to_first_verdict_ms: int = -1
+
+var changed_gate_after_analyze: bool = false
+var changed_gate_after_contradiction: bool = false
+var selected_gate_before_analyze: String = ""
 
 var last_verdict_time: float = 0.0
 var verdict_timer: Timer = null
@@ -314,6 +330,19 @@ func load_case(idx: int) -> void:
 	start_time_msec = Time.get_ticks_msec()
 	first_action_ms = -1
 	verdict_count = 0
+	trial_seq += 1
+	task_session = {"events": [], "trial_seq": trial_seq}
+	probe_count = 0
+	input_toggle_count = 0
+	verdict_change_count = 0
+	contradiction_seen_count = 0
+	unique_input_patterns.clear()
+	time_to_first_probe_ms = -1
+	time_to_first_analyze_ms = -1
+	time_to_first_verdict_ms = -1
+	changed_gate_after_analyze = false
+	changed_gate_after_contradiction = false
+	selected_gate_before_analyze = ""
 	last_verdict_time = 0.0
 	is_safe_mode = false
 	is_case_complete = false
@@ -345,6 +374,12 @@ func load_case(idx: int) -> void:
 	_update_input_labels()
 	_update_circuit()
 	_update_ui_state()
+	_log_event("trial_started", {
+		"case_id": str(current_case.get("id", "A_00")),
+		"phase": str(current_case.get("phase", "")),
+		"correct_gate_id": str(current_case.get("gate", "")),
+		"min_seen": int(current_case.get("min_seen", 2))
+	})
 	GlobalMetrics.start_quest(str(current_case.get("id", "LogicQuestA")))
 
 func _is_not_case() -> bool:
@@ -360,6 +395,16 @@ func _on_input_a_toggled(pressed: bool) -> void:
 		return
 	_mark_first_action()
 	input_a = pressed
+	input_toggle_count += 1
+	var pattern := _combo_key_for_inputs(input_a, input_b)
+	unique_input_patterns[pattern] = true
+	_log_event("input_toggled", {
+		"input": "A",
+		"a": 1 if input_a else 0,
+		"has_b": not _is_not_case(),
+		"b": -1 if _is_not_case() else (1 if input_b else 0),
+		"pattern": pattern
+	})
 	_play_click()
 	_update_input_labels()
 	_update_circuit()
@@ -370,6 +415,16 @@ func _on_input_b_toggled(pressed: bool) -> void:
 		return
 	_mark_first_action()
 	input_b = pressed
+	input_toggle_count += 1
+	var pattern := _combo_key_for_inputs(input_a, input_b)
+	unique_input_patterns[pattern] = true
+	_log_event("input_toggled", {
+		"input": "B",
+		"a": 1 if input_a else 0,
+		"has_b": not _is_not_case(),
+		"b": -1 if _is_not_case() else (1 if input_b else 0),
+		"pattern": pattern
+	})
 	_play_click()
 	_update_input_labels()
 	_update_circuit()
@@ -378,6 +433,16 @@ func _on_probe_pressed() -> void:
 	if is_safe_mode or is_case_complete:
 		return
 	_mark_first_action()
+	probe_count += 1
+	if time_to_first_probe_ms < 0:
+		time_to_first_probe_ms = _elapsed_ms_now()
+	_log_event("probe_pressed", {
+		"probe_count": probe_count,
+		"pattern": _combo_key_for_inputs(input_a, input_b),
+		"a": 1 if input_a else 0,
+		"has_b": not _is_not_case(),
+		"b": -1 if _is_not_case() else (1 if input_b else 0)
+	})
 
 	var out_val := _calculate_gate_output(input_a, input_b, str(current_case.get("gate", "")))
 	observed_output = out_val
@@ -385,8 +450,10 @@ func _on_probe_pressed() -> void:
 	contradiction_index = -1
 
 	var combo_key := _combo_key_for_inputs(input_a, input_b)
+	var is_new_fact := false
 	if not seen_combinations.has(combo_key):
 		seen_combinations[combo_key] = out_val
+		is_new_fact = true
 		var entry: Dictionary = {
 			"index": seen_trace_entries.size(),
 			"a": 1 if input_a else 0,
@@ -400,6 +467,13 @@ func _on_probe_pressed() -> void:
 	else:
 		_show_feedback(_tr("logic.a.ui.fact_duplicate", "ЭТА КОМБИНАЦИЯ УЖЕ ПРОВЕРЕНА"), COLOR_TEXT_MUTED)
 
+	_log_event("fact_recorded", {
+		"combo": combo_key,
+		"observed_value": 1 if out_val else 0,
+		"is_new_fact": is_new_fact,
+		"observation_count": seen_trace_entries.size(),
+		"seen_combinations": seen_combinations.size()
+	})
 	_update_stats_ui()
 	_update_circuit()
 	_play_click()
@@ -415,20 +489,44 @@ func _on_gate_button_toggled(pressed: bool, gate_id: String) -> void:
 
 	if not pressed:
 		if selected_gate_guess == gate_id:
+			var previous_gate := selected_gate_guess
 			selected_gate_guess = ""
+			verdict_change_count += 1
+			if analyze_count > 0:
+				changed_gate_after_analyze = true
+			if contradiction_seen_count > 0:
+				changed_gate_after_contradiction = true
+			_log_event("gate_selected", {
+				"selected_gate_guess": selected_gate_guess,
+				"previous_gate": previous_gate,
+				"change_index": verdict_change_count
+			})
 			_update_gate_slot_label()
 			_update_ui_state()
 		return
 
 	_mark_first_action()
+	var previous_gate := selected_gate_guess
 	for key in gate_buttons.keys():
 		if key != gate_id:
 			var btn_other: Button = gate_buttons[key]
 			btn_other.set_pressed_no_signal(false)
 
 	selected_gate_guess = gate_id
+	if previous_gate != selected_gate_guess:
+		verdict_change_count += 1
+		if analyze_count > 0 and selected_gate_before_analyze != selected_gate_guess:
+			changed_gate_after_analyze = true
+		if contradiction_seen_count > 0:
+			changed_gate_after_contradiction = true
+	_log_event("gate_selected", {
+		"selected_gate_guess": selected_gate_guess,
+		"previous_gate": previous_gate,
+		"change_index": verdict_change_count
+	})
 	_play_click()
 	_update_gate_slot_label()
+	_update_ui_state()
 	_update_circuit()
 
 func _update_circuit() -> void:
@@ -812,8 +910,17 @@ func _on_hint_pressed() -> void:
 		_show_feedback(_tr("logic.a.ui.analyze_cooldown", "АНАЛИЗ НЕДОСТУПЕН: ПЕРЕГРЕВ {left}с", {"left": "%.1f" % analyze_timer.time_left}), Color(1.0, 0.78, 0.32))
 		return
 
+	if time_to_first_analyze_ms < 0:
+		time_to_first_analyze_ms = _elapsed_ms_now()
+	selected_gate_before_analyze = selected_gate_guess
 	analyze_count += 1
 	hints_used += 1
+	_log_event("analyze_pressed", {
+		"observations": seen_trace_entries.size(),
+		"seen_combinations": seen_combinations.size(),
+		"confidence_ratio": _confidence_ratio(),
+		"selected_gate_guess": selected_gate_guess
+	})
 
 	if seen_trace_entries.is_empty():
 		_show_feedback(_tr("logic.a.ui.analyze_no_facts", "НЕТ ФАКТОВ ДЛЯ АНАЛИЗА"), Color(0.56, 0.78, 0.96))
@@ -825,6 +932,12 @@ func _on_hint_pressed() -> void:
 			_show_feedback(_tr("logic.a.ui.analyze_no_contradiction", "ПРОТИВОРЕЧИЙ НЕ НАЙДЕНО"), Color(0.45, 0.92, 0.62))
 		else:
 			contradiction_index = int(contradiction.get("index", -1))
+			contradiction_seen_count += 1
+			_log_event("contradiction_seen", {
+				"source": "analyze",
+				"index": contradiction_index,
+				"text": str(contradiction.get("text", ""))
+			})
 			_show_feedback(_tr("logic.a.ui.analyze_counterexample", "КОНТРПРИМЕР: {line}", {"line": str(contradiction.get("text", ""))}), Color(1.0, 0.78, 0.32))
 
 	_update_circuit()
@@ -834,10 +947,49 @@ func _mark_first_action() -> void:
 	if first_action_ms < 0:
 		first_action_ms = Time.get_ticks_msec() - start_time_msec
 
+func _elapsed_ms_now() -> int:
+	if start_time_msec <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - start_time_msec)
+
+func _log_event(event_name: String, data: Dictionary = {}) -> void:
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": event_name,
+		"t_ms": _elapsed_ms_now(),
+		"payload": data.duplicate(true)
+	})
+	task_session["events"] = events
+
+func _log_verdict_result(verdict_code: String, is_correct: bool) -> void:
+	_log_event("verdict_result", {
+		"verdict_code": verdict_code,
+		"is_correct": is_correct,
+		"attempts": case_attempts,
+		"selected_gate_guess": selected_gate_guess,
+		"correct_gate": str(current_case.get("gate", "")),
+		"contradiction_seen_count": contradiction_seen_count
+	})
+
+func _mastery_block_reason(verdict_code: String, is_correct: bool) -> String:
+	if verdict_code == "SAFE_MODE_TRIGGERED":
+		return "SAFE_MODE_TRIGGERED"
+	if verdict_code == "RATE_LIMITED":
+		return "RATE_LIMITED"
+	if contradiction_seen_count > 0 and not changed_gate_after_contradiction and not is_correct:
+		return "CONTRADICTION_IGNORED"
+	if verdict_count > 1 and is_correct:
+		return "MULTI_VERDICT_GUESSING"
+	if is_correct and seen_combinations.size() < _total_unique_combinations():
+		return "LOW_OBSERVATION_COVERAGE"
+	if analyze_count > 0:
+		return "USED_ANALYZE"
+	return "NONE"
+
 func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	var case_id := str(current_case.get("id", "A_00"))
 	var payload := TrialV2.build("LOGIC_QUEST", "A", case_id, "GATE_IDENTIFY")
-	var elapsed_ms: int = maxi(0, Time.get_ticks_msec() - start_time_msec)
+	var elapsed_ms: int = _elapsed_ms_now()
 	payload["elapsed_ms"] = elapsed_ms
 	payload["duration"] = float(elapsed_ms) / 1000.0
 	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms
@@ -855,6 +1007,20 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	payload["confidence_ratio"] = _confidence_ratio()
 	payload["observation_count"] = seen_trace_entries.size()
 	payload["has_observation"] = has_observation
+	payload["trial_seq"] = trial_seq
+	payload["probe_count"] = probe_count
+	payload["input_toggle_count"] = input_toggle_count
+	payload["unique_input_patterns_seen"] = unique_input_patterns.size()
+	payload["verdict_change_count"] = verdict_change_count
+	payload["contradiction_seen_count"] = contradiction_seen_count
+	payload["time_to_first_probe_ms"] = time_to_first_probe_ms
+	payload["time_to_first_analyze_ms"] = time_to_first_analyze_ms
+	payload["time_to_first_verdict_ms"] = time_to_first_verdict_ms
+	payload["changed_gate_after_analyze"] = changed_gate_after_analyze
+	payload["changed_gate_after_contradiction"] = changed_gate_after_contradiction
+	payload["task_session"] = task_session.duplicate(true)
+	payload["outcome_code"] = verdict_code
+	payload["mastery_block_reason"] = _mastery_block_reason(verdict_code, is_correct)
 	GlobalMetrics.register_trial(payload)
 
 func _play_click() -> void:
@@ -875,6 +1041,14 @@ func _on_verdict_pressed() -> void:
 		return
 	_mark_first_action()
 	verdict_count += 1
+	if time_to_first_verdict_ms < 0:
+		time_to_first_verdict_ms = _elapsed_ms_now()
+	_log_event("verdict_pressed", {
+		"verdict_count": verdict_count,
+		"attempts": case_attempts,
+		"selected_gate_guess": selected_gate_guess,
+		"seen_combinations": seen_combinations.size()
+	})
 
 	var current_time: float = Time.get_ticks_msec() / 1000.0
 	if current_time - last_verdict_time < 0.8:
@@ -885,6 +1059,7 @@ func _on_verdict_pressed() -> void:
 			current_time - last_verdict_time
 		])
 		_lock_verdict(3.0)
+		_log_verdict_result("RATE_LIMITED", false)
 		_register_trial("RATE_LIMITED", false)
 		return
 	last_verdict_time = current_time
@@ -895,6 +1070,7 @@ func _on_verdict_pressed() -> void:
 			str(current_case.get("id", "LogicQuestA")),
 			seen_combinations.size()
 		])
+		_log_verdict_result("EMPTY_SELECTION", false)
 		_register_trial("EMPTY_SELECTION", false)
 		return
 
@@ -912,6 +1088,7 @@ func _on_verdict_pressed() -> void:
 		])
 		_apply_penalty(2.0)
 		_lock_verdict(VERDICT_LOCK_TIME)
+		_log_verdict_result("INSUFFICIENT_DATA", false)
 		_register_trial("INSUFFICIENT_DATA", false)
 		return
 
@@ -929,6 +1106,7 @@ func _on_verdict_pressed() -> void:
 		else:
 			_show_feedback(_tr("logic.a.ui.verdict_success", "ВЕРДИКТ ПРИНЯТ. Уверенность: {conf}", {"conf": confidence_bucket}), Color(0.45, 0.92, 0.62))
 
+		_log_verdict_result("SUCCESS", true)
 		_register_trial("SUCCESS", true)
 		GlobalMetrics.finish_quest(str(current_case.get("id", "LogicQuestA")), 100, true)
 		is_case_complete = true
@@ -955,7 +1133,13 @@ func _on_verdict_pressed() -> void:
 		]
 		if not contradiction.is_empty():
 			contradiction_index = int(contradiction.get("index", -1))
+			contradiction_seen_count += 1
 			var details := str(contradiction.get("text", ""))
+			_log_event("contradiction_seen", {
+				"source": "verdict",
+				"index": contradiction_index,
+				"text": details
+			})
 			_show_feedback(_tr("logic.a.ui.verdict_counterexample", "ПРОТИВОРЕЧИЕ: {details} (-{penalty})", {
 				"details": details,
 				"penalty": int(penalty)
@@ -970,6 +1154,7 @@ func _on_verdict_pressed() -> void:
 			GlobalMetrics.finish_quest(str(current_case.get("id", "LogicQuestA")), 0, false)
 			_enter_safe_mode()
 			verdict_code = "SAFE_MODE_TRIGGERED"
+		_log_verdict_result(verdict_code, false)
 		_register_trial(verdict_code, false)
 
 	_update_circuit()

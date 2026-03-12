@@ -24,11 +24,15 @@ func _on_request_completed(result, response_code, headers, body, http_node):
 	var response = JSON.parse_string(body.get_string_from_utf8())
 	if response_code == 200:
 		GlobalMetrics.user_id = response.localId 
+		GlobalMetrics.current_session_id = ""
 		
 		if response.has("email"):
 			GlobalMetrics.user_nickname = response.email.split("@")[0]
 			GlobalMetrics.user_email = response.email # <---- ДОБАВЛЯЕМ ЭТУ СТРОЧКУ
 		
+		if response.has("idToken"):
+			GlobalMetrics.auth_token = response.idToken
+
 		if GlobalMetrics.has_method("record_login_session"):
 			GlobalMetrics.record_login_session()
 			

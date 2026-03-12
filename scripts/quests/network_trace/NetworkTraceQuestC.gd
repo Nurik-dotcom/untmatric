@@ -100,6 +100,36 @@ var task_session: Dictionary = {}
 var variant_hash: String = ""
 var level_mode: String = "EXAM"
 var level_mask_editable: bool = false
+var trial_seq: int = 0
+
+var mask_select_count: int = 0
+var mask_place_count: int = 0
+var mask_replace_count: int = 0
+var apply_and_count: int = 0
+var answer_select_count: int = 0
+var board_reset_count: int = 0
+
+var bit_toggle_count: int = 0
+var bit_diff_seen_count: int = 0
+var cidr_fixed_mode: bool = false
+
+var diagnostics_open_count: int = 0
+var safe_mode_open_count: int = 0
+var changed_after_bit_diff: bool = false
+var changed_after_safe_mode: bool = false
+
+var time_to_first_mask_ms: int = -1
+var time_to_first_apply_ms: int = -1
+var time_to_first_answer_ms: int = -1
+var time_from_mask_to_apply_ms: int = -1
+var time_from_apply_to_answer_ms: int = -1
+
+var last_mask_edit_ms: int = -1
+var last_apply_ms: int = -1
+var selected_mask_value: int = -1
+
+var _pending_change_after_bit_diff: bool = false
+var _pending_change_after_safe_mode: bool = false
 
 func _ready() -> void:
 	_setup_runtime_controls()
@@ -305,6 +335,7 @@ func _show_boot_error(message: String) -> void:
 func _start_level(index: int) -> void:
 	if levels.is_empty():
 		return
+	trial_seq += 1
 	if index >= levels.size():
 		index = 0
 
@@ -313,6 +344,7 @@ func _start_level(index: int) -> void:
 	variant_hash = str(hash(_build_variant_key(current_level)))
 	level_mode = str(current_level.get("mode", "EXAM")).to_upper()
 	level_mask_editable = bool(current_level.get("mask_editable", level_mode == "TRAIN"))
+	cidr_fixed_mode = not level_mask_editable
 
 	level_started_ms = Time.get_ticks_msec()
 	first_action_ms = -1
@@ -339,8 +371,31 @@ func _start_level(index: int) -> void:
 	selected_option_id = ""
 	last_error_code = ""
 	attempts.clear()
+	mask_select_count = 0
+	mask_place_count = 0
+	mask_replace_count = 0
+	apply_and_count = 0
+	answer_select_count = 0
+	board_reset_count = 0
+	bit_toggle_count = 0
+	bit_diff_seen_count = 0
+	diagnostics_open_count = 0
+	safe_mode_open_count = 0
+	changed_after_bit_diff = false
+	changed_after_safe_mode = false
+	time_to_first_mask_ms = -1
+	time_to_first_apply_ms = -1
+	time_to_first_answer_ms = -1
+	time_from_mask_to_apply_ms = -1
+	time_from_apply_to_answer_ms = -1
+	last_mask_edit_ms = -1
+	last_apply_ms = -1
+	selected_mask_value = -1
+	_pending_change_after_bit_diff = false
+	_pending_change_after_safe_mode = false
 
 	task_session = {
+		"trial_seq": trial_seq,
 		"task_id": str(current_level.get("id", "NT_C_UNKNOWN")),
 		"variant_hash": variant_hash,
 		"started_at_ticks": level_started_ms,
@@ -364,6 +419,8 @@ func _start_level(index: int) -> void:
 	else:
 		_set_row_bits(row_mask_cells, int(current_level.get("mask_last", 0)))
 		mask_placed = true
+		selected_mask_value = int(current_level.get("mask_last", 0))
+		last_mask_edit_ms = 0
 	_clear_row(row_res_cells)
 
 	btn_next.visible = false
@@ -386,6 +443,12 @@ func _start_level(index: int) -> void:
 		lbl_status.text = _tr("nt.c.ui.status_mask_cidr", "Mask is CIDR-preset. Press APPLY AND.")
 		lbl_status.add_theme_color_override("font_color", Color(0.72, 0.9, 0.82))
 	_update_meta_label()
+	_log_event("trial_started", {
+		"level_id": str(current_level.get("id", "")),
+		"target_ip": str(current_level.get("target_ip", "")),
+		"target_cidr": int(current_level.get("cidr", 0)),
+		"cidr_fixed_mode": cidr_fixed_mode
+	})
 	_log_event("task_start", {"level": str(current_level.get("id", ""))})
 
 func _render_terminal() -> void:
@@ -455,6 +518,10 @@ func _on_mask_selected(mask_data: Dictionary, sender: Node) -> void:
 	if not level_mask_editable:
 		return
 	_register_first_action()
+	mask_select_count += 1
+	if time_to_first_mask_ms < 0:
+		time_to_first_mask_ms = _elapsed_ms_now()
+	last_mask_edit_ms = _elapsed_ms_now()
 	pending_mask_data = mask_data.duplicate(true)
 	mask_overlay.set_selected(sender == mask_overlay)
 	_play_audio("click")
@@ -468,6 +535,7 @@ func _on_mask_drag_started(mask_data: Dictionary) -> void:
 	if not level_mask_editable:
 		return
 	_register_first_action()
+	last_mask_edit_ms = _elapsed_ms_now()
 	pending_mask_data = mask_data.duplicate(true)
 	mask_overlay.set_selected(false)
 	_log_event("mask_drag_started", {"cidr": int(mask_data.get("cidr", 0))})
@@ -512,10 +580,23 @@ func _apply_mask_placement(mask_data: Dictionary, source: String) -> void:
 		_on_mask_bad_drop({})
 		return
 
+	var had_mask_before: bool = mask_placed
+	var previous_mask_value: int = selected_mask_value
 	mask_placed = true
 	and_applied = false
 	and_result_last = -1
 	mask_moves_count += 1
+	if had_mask_before:
+		mask_replace_count += 1
+	else:
+		mask_place_count += 1
+	if time_to_first_mask_ms < 0:
+		time_to_first_mask_ms = _elapsed_ms_now()
+	last_mask_edit_ms = _elapsed_ms_now()
+	if had_mask_before and previous_mask_value >= 0:
+		bit_toggle_count += _count_bit_flips(previous_mask_value, mask_last_value)
+	selected_mask_value = mask_last_value
+	_mark_post_feedback_adjustment("mask_placed")
 	pending_mask_data.clear()
 	mask_overlay.set_selected(false)
 	_set_row_bits(row_mask_cells, mask_last_value)
@@ -529,12 +610,25 @@ func _apply_mask_placement(mask_data: Dictionary, source: String) -> void:
 	_play_audio("click")
 	lbl_status.text = _tr("nt.c.ui.status_mask_placed", "Mask placed. Press APPLY AND.")
 	lbl_status.add_theme_color_override("font_color", Color(0.72, 0.95, 0.86))
-	_log_event("mask_placed", {"source": source, "mask_last": mask_last_value})
+	_log_event("mask_placed", {
+		"source": source,
+		"mask_last": mask_last_value,
+		"replaced": had_mask_before
+	})
 
 func _on_apply_and_pressed() -> void:
 	if level_finished:
 		return
 	var now_ms: int = Time.get_ticks_msec()
+	apply_and_count += 1
+	if time_to_first_apply_ms < 0:
+		time_to_first_apply_ms = _elapsed_ms_now()
+	time_from_mask_to_apply_ms = -1 if last_mask_edit_ms < 0 else maxi(0, _elapsed_ms_now() - last_mask_edit_ms)
+	last_apply_ms = _elapsed_ms_now()
+	_log_event("apply_and_pressed", {
+		"mask_placed": mask_placed,
+		"time_from_mask_to_apply_ms": time_from_mask_to_apply_ms
+	})
 	if now_ms < apply_cooldown_until_ms:
 		spam_clicks += 1
 		return
@@ -544,6 +638,13 @@ func _on_apply_and_pressed() -> void:
 		last_error_code = "C_NOT_APPLIED"
 		lbl_status.text = ERROR_MAP.get_error_tip("C_NOT_APPLIED")
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.56, 0.46))
+		_log_event("and_result", {
+			"mask_value": selected_mask_value,
+			"ip_bits": _byte_to_binary(int(current_level.get("ip_last", 0))),
+			"result_bits": "",
+			"candidate_count": int(current_level.get("options", []).size()),
+			"error_code": "C_NOT_APPLIED"
+		})
 		return
 
 	apply_count += 1
@@ -561,6 +662,13 @@ func _on_apply_and_pressed() -> void:
 	lbl_status.text = _tr("nt.c.ui.status_and_done", "AND done. Now select the network ID.")
 	lbl_status.add_theme_color_override("font_color", Color(0.66, 0.95, 0.74))
 	_log_event("and_applied", {"result": and_result_last})
+	_log_event("and_result", {
+		"mask_value": int(current_level.get("mask_last", 0)),
+		"ip_bits": _byte_to_binary(int(current_level.get("ip_last", 0))),
+		"result_bits": _byte_to_binary(and_result_last),
+		"candidate_count": int(current_level.get("options", []).size()),
+		"error_code": ""
+	})
 
 func _play_and_animation() -> void:
 	var ip_bits: Array[int] = _byte_to_bits(int(current_level.get("ip_last", 0)))
@@ -592,9 +700,16 @@ func _on_answer_pressed(index: int) -> void:
 
 	_register_first_action()
 	var btn: Button = action_buttons[index]
+	var previous_option_id: String = selected_option_id
 	selected_option_id = str(btn.get_meta("option_id", ""))
 	if selected_option_id.is_empty():
 		return
+	answer_select_count += 1
+	if time_to_first_answer_ms < 0:
+		time_to_first_answer_ms = _elapsed_ms_now()
+	time_from_apply_to_answer_ms = -1 if last_apply_ms < 0 else maxi(0, _elapsed_ms_now() - last_apply_ms)
+	if previous_option_id != selected_option_id:
+		_mark_post_feedback_adjustment("answer_changed")
 
 	_play_audio("click")
 	var is_correct: bool = selected_option_id == str(current_level.get("correct_id", ""))
@@ -616,6 +731,10 @@ func _on_answer_pressed(index: int) -> void:
 	session_attempts.append(attempt)
 	task_session["attempts"] = session_attempts
 	_log_event("answer_selected", attempt)
+	_log_event("network_id_selected", {
+		"answer_id": selected_option_id,
+		"time_from_apply_to_answer_ms": time_from_apply_to_answer_ms
+	})
 
 	if is_correct:
 		_handle_success()
@@ -646,7 +765,10 @@ func _handle_failure(error_code: String) -> void:
 	if selected_last >= 0 and expected_last >= 0:
 		var diff_bit: int = _first_diff_bit(expected_last, selected_last)
 		if diff_bit >= 0:
+			bit_diff_seen_count += 1
+			_pending_change_after_bit_diff = true
 			status_line += _tr("nt.c.ui.status_bit_diff", "DIFFERENCE DETECTED: BIT {bit}.", {"bit": diff_bit})
+			_log_event("bit_difference_shown", {"bit": diff_bit, "expected_last": expected_last, "selected_last": selected_last})
 	lbl_status.text = status_line
 	lbl_status.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 	_update_meta_label()
@@ -656,6 +778,7 @@ func _handle_failure(error_code: String) -> void:
 		btn_analyze.disabled = false
 	if wrong_count >= 2 and not safe_mode_used:
 		safe_mode_used = true
+		_pending_change_after_safe_mode = true
 		state = QuestState.SAFE_MODE
 		btn_analyze.text = _tr("nt.common.safe_mode", "Safe Diagnostics")
 		lbl_status.text = _tr("nt.c.ui.status_safe_unlocked", "Safe mode unlocked. Open diagnostics for guided review.")
@@ -683,6 +806,10 @@ func _on_analyze_pressed() -> void:
 	state = QuestState.DIAGNOSTIC
 
 func _show_diagnostics(reason: String) -> void:
+	diagnostics_open_count += 1
+	if safe_mode_used:
+		safe_mode_open_count += 1
+		_pending_change_after_safe_mode = true
 	var ip_last: int = int(current_level.get("ip_last", 0))
 	var mask_last: int = int(current_level.get("mask_last", 0))
 	var and_value: int = ip_last & mask_last
@@ -713,7 +840,11 @@ func _show_diagnostics(reason: String) -> void:
 				lines.append(line_text)
 
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", _tr("nt.common.safe_mode", "Safe Diagnostics"), lines)
+		diagnostics_panel.call("setup", {
+			"mode": "text_only",
+			"title": _tr("nt.common.safe_mode", "Safe Diagnostics"),
+			"reasoning_lines": lines
+		})
 	diagnostics_panel.visible = true
 	_log_event("diagnostics_open", {"reason": reason})
 
@@ -722,15 +853,22 @@ func _on_reset_pressed() -> void:
 		return
 	_register_first_action()
 	reset_count += 1
+	board_reset_count += 1
 	mask_placed = not level_mask_editable
 	and_applied = false
 	and_result_last = -1
 	pending_mask_data.clear()
+	selected_mask_value = -1
+	last_apply_ms = -1
+	time_from_apply_to_answer_ms = -1
 	mask_overlay.set_selected(false)
 	if level_mask_editable:
 		_clear_row(row_mask_cells)
+		last_mask_edit_ms = -1
 	else:
 		_set_row_bits(row_mask_cells, int(current_level.get("mask_last", 0)))
+		selected_mask_value = int(current_level.get("mask_last", 0))
+		last_mask_edit_ms = 0
 	_clear_row(row_res_cells)
 	row_res_line.visible = false
 	btn_apply_and.disabled = level_mask_editable
@@ -748,6 +886,8 @@ func _on_reset_pressed() -> void:
 	else:
 		lbl_status.text = _tr("nt.c.ui.status_board_reset_cidr", "Board reset. Mask is CIDR-fixed, press APPLY AND.")
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.86, 0.95))
+	_mark_post_feedback_adjustment("board_reset")
+	_log_event("board_reset", {"cidr_fixed_mode": cidr_fixed_mode})
 	_log_event("reset_pressed", {})
 
 func _on_next_pressed() -> void:
@@ -850,6 +990,16 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		stability_delta += HINT_STABILITY_DELTA
 	if spam_clicks >= 4:
 		stability_delta += SPAM_STABILITY_DELTA
+	var outcome_code: String = _outcome_code_for_c(is_correct, reason)
+	var mastery_block_reason: String = _mastery_block_reason_for_c(is_correct, outcome_code)
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var layout_mode: String = "portrait" if viewport_size.x < viewport_size.y else "landscape"
+	var and_result_payload: Dictionary = {
+		"value": and_result_last,
+		"ip_bits": _byte_to_binary(int(current_level.get("ip_last", 0))),
+		"mask_bits": _byte_to_binary(int(current_level.get("mask_last", 0))),
+		"result_bits": _byte_to_binary(and_result_last if and_result_last >= 0 else 0)
+	}
 
 	var payload: Dictionary = {
 		"quest": "network_trace",
@@ -860,6 +1010,10 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"variant_hash": variant_hash,
 		"target_ip": str(current_level.get("target_ip", "")),
 		"mode": level_mode,
+		"trial_seq": trial_seq,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"error_code": "" if is_correct else last_error_code,
 		"mask_editable": level_mask_editable,
 		"cidr": int(current_level.get("cidr", 0)),
 		"ip_last": int(current_level.get("ip_last", 0)),
@@ -869,6 +1023,27 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"mask_placed": mask_placed,
 		"and_applied": and_applied,
 		"and_result_last": and_result_last,
+		"mask_select_count": mask_select_count,
+		"mask_place_count": mask_place_count,
+		"mask_replace_count": mask_replace_count,
+		"apply_and_count": apply_and_count,
+		"answer_select_count": answer_select_count,
+		"board_reset_count": board_reset_count,
+		"bit_toggle_count": bit_toggle_count,
+		"bit_diff_seen_count": bit_diff_seen_count,
+		"cidr_fixed_mode": cidr_fixed_mode,
+		"diagnostics_open_count": diagnostics_open_count,
+		"safe_mode_open_count": safe_mode_open_count,
+		"changed_after_bit_diff": changed_after_bit_diff,
+		"changed_after_safe_mode": changed_after_safe_mode,
+		"time_to_first_mask_ms": time_to_first_mask_ms,
+		"time_to_first_apply_ms": time_to_first_apply_ms,
+		"time_to_first_answer_ms": time_to_first_answer_ms,
+		"time_from_mask_to_apply_ms": time_from_mask_to_apply_ms,
+		"time_from_apply_to_answer_ms": time_from_apply_to_answer_ms,
+		"selected_mask": selected_mask_value,
+		"and_result": and_result_payload,
+		"selected_network_id": selected_option_id,
 		"board_actions": {
 			"mask_moves_count": mask_moves_count,
 			"apply_count": apply_count,
@@ -884,12 +1059,16 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"attempts_count": attempts.size(),
 		"elapsed_ms": elapsed_ms,
 		"duration": float(elapsed_ms) / 1000.0,
+		"safe_mode": safe_mode_used,
 		"safe_mode_used": safe_mode_used,
 		"time_to_first_action_ms": first_action_ms,
 		"hint_used": hint_used,
 		"timed_out": reason == "timeout",
 		"spam_clicks": spam_clicks,
 		"stability_delta": stability_delta,
+		"layout": layout_mode,
+		"ui_vw": int(viewport_size.x),
+		"ui_vh": int(viewport_size.y),
 		"task_session": task_session
 	}
 	GlobalMetrics.register_trial(payload)
@@ -899,12 +1078,59 @@ func _enable_answer_buttons(enabled: bool) -> void:
 		if btn.visible:
 			btn.disabled = not enabled or level_finished
 
-func _log_event(event_name: String, payload: Dictionary) -> void:
+func _outcome_code_for_c(is_correct: bool, finish_reason: String) -> String:
+	if is_correct:
+		return "SUCCESS"
+	if finish_reason == "timeout" or last_error_code == "TIMEOUT":
+		return "TIMEOUT"
+	if safe_mode_used and not is_correct and finish_reason == "attempt_limit":
+		return "SAFE_MODE"
+	if not mask_placed:
+		return "MASK_NOT_PLACED"
+	if not and_applied or last_error_code == "C_NOT_APPLIED":
+		return "AND_NOT_APPLIED"
+	if bit_diff_seen_count > 0 and not is_correct:
+		return "BIT_DIFF_MISMATCH"
+	return "WRONG_NETWORK_ID"
+
+func _mastery_block_reason_for_c(is_correct: bool, outcome_code: String) -> String:
+	if outcome_code == "SAFE_MODE":
+		return "SAFE_MODE_TRIGGERED"
+	if board_reset_count >= 3:
+		return "RESET_OVERUSE"
+	if answer_select_count >= 3:
+		return "MULTI_ANSWER_GUESSING"
+	if outcome_code == "AND_NOT_APPLIED":
+		return "AND_STEP_SKIPPED"
+	if bit_diff_seen_count > 0 and not changed_after_bit_diff:
+		return "BIT_DIFF_IGNORED"
+	if mask_replace_count > 0 or mask_select_count >= 3:
+		return "MASK_SELECTION_UNSTABLE"
+	if not is_correct:
+		return "MASK_SELECTION_UNSTABLE"
+	return "NONE"
+
+func _mark_post_feedback_adjustment(_source: String) -> void:
+	if _pending_change_after_bit_diff:
+		changed_after_bit_diff = true
+		_pending_change_after_bit_diff = false
+	if _pending_change_after_safe_mode:
+		changed_after_safe_mode = true
+		_pending_change_after_safe_mode = false
+
+func _elapsed_ms_now() -> int:
+	if level_started_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - level_started_ms)
+
+func _log_event(event_name: String, payload: Dictionary = {}) -> void:
+	if task_session.is_empty():
+		return
 	var events: Array = task_session.get("events", [])
 	events.append({
 		"name": event_name,
-		"t_ms": Time.get_ticks_msec() - level_started_ms,
-		"payload": payload
+		"t_ms": _elapsed_ms_now(),
+		"payload": payload.duplicate(true)
 	})
 	task_session["events"] = events
 
@@ -950,6 +1176,14 @@ func _byte_to_bits(value: int) -> Array[int]:
 	for shift in range(7, -1, -1):
 		bits.append((safe_value >> shift) & 1)
 	return bits
+
+func _count_bit_flips(previous_value: int, next_value: int) -> int:
+	var diff: int = clampi(previous_value, 0, 255) ^ clampi(next_value, 0, 255)
+	var count: int = 0
+	for _bit in range(8):
+		count += diff & 1
+		diff >>= 1
+	return count
 
 func _first_diff_bit(expected_value: int, selected_value: int) -> int:
 	var diff: int = clampi(expected_value, 0, 255) ^ clampi(selected_value, 0, 255)

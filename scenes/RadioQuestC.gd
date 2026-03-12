@@ -161,6 +161,39 @@ var _last_move_sign: int = 0
 var analyze_lock_active: bool = false
 var analyze_lock_until: float = 0.0
 var analyze_cooldown_until: float = 0.0
+var trial_seq: int = 0
+var trial_event_log: Array = []
+
+var details_open_count: int = 0
+var details_open_before_decision: bool = false
+var details_close_count: int = 0
+var first_details_open_ms: int = -1
+var first_units_hint_ms: int = -1
+var first_risk_or_abort_ms: int = -1
+
+var analyze_cooldown_hit_count: int = 0
+var analyze_after_units: bool = false
+var units_before_analyze: bool = false
+var units_before_decision: bool = false
+
+var estimate_at_first_analyze: float = -1.0
+var estimate_at_last_analyze: float = -1.0
+var estimate_at_decision: float = -1.0
+var estimate_delta_after_analyze: float = 0.0
+
+var first_margin_vs_detect: float = INF
+var final_margin_vs_detect: float = INF
+var true_margin_vs_detect: float = INF
+var remaining_detect_at_decision: float = INF
+
+var borderline_case: bool = false
+var decision_quality: String = "unknown"
+var mastery_block_reason: String = "NONE"
+
+var knob_value_at_first_action: float = 0.0
+var peak_estimate_error_abs: float = 0.0
+var estimate_cross_count: int = 0
+var _last_estimate_sign_vs_true: int = 0
 
 var _pool_mb_normal: Array[float] = []
 var _pool_gb_normal: Array[float] = []
@@ -232,6 +265,11 @@ func _process(delta: float) -> void:
 			if plan_elapsed >= t_plan:
 				plan_elapsed = t_plan
 				_plan_timeout_triggered = true
+				_log_trial_event("plan_timeout", {
+					"plan_elapsed": plan_elapsed,
+					"t_plan": t_plan,
+					"analyze_count": analyze_count
+				})
 				if decision_ms < 0:
 					decision_ms = Time.get_ticks_msec()
 				_play_alarm_flash()
@@ -248,6 +286,11 @@ func _process(delta: float) -> void:
 	_update_runtime_ui()
 
 	if detection_active and live_mode and decision == Decision.NONE and detection_elapsed >= t_detect:
+		_log_trial_event("decision_window_missed", {
+			"detection_elapsed": detection_elapsed,
+			"t_detect": t_detect,
+			"decision": _decision_to_text(decision)
+		})
 		if decision_ms < 0:
 			decision_ms = Time.get_ticks_msec()
 		_play_alarm_flash()
@@ -266,6 +309,12 @@ func _process(delta: float) -> void:
 		if now_sec < analyze_lock_until:
 			return
 		analyze_lock_active = false
+		borderline_case = live_mode and is_finite(t_detect) and absf(_current_margin_vs_detect()) <= _borderline_eps()
+		_log_trial_event("analyze_completed", {
+			"t_est_after_lock": t_est,
+			"remaining_detect": _current_detect_value(),
+			"borderline_case": borderline_case
+		})
 		_set_decide_state_ui()
 		_update_details_text()
 		return
@@ -545,7 +594,62 @@ func _reset_sample_strip() -> void:
 		bg.color = COLOR_SAMPLE_IDLE
 		mark.visible = false
 
+func _elapsed_trial_ms() -> int:
+	if start_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - start_ms)
+
+func _state_to_text(current_state: State) -> String:
+	match current_state:
+		State.TUNE:
+			return "TUNE"
+		State.ANALYZE_LOCK:
+			return "ANALYZE_LOCK"
+		State.DECIDE:
+			return "DECIDE"
+		State.EXEC:
+			return "EXEC"
+		_:
+			return "DONE"
+
+func _decision_to_text(current_decision: Decision) -> String:
+	match current_decision:
+		Decision.RISK:
+			return "RISK"
+		Decision.ABORT:
+			return "ABORT"
+		_:
+			return "NONE"
+
+func _current_detect_value() -> float:
+	if live_mode and is_finite(t_detect):
+		return maxf(0.0, t_detect - detection_elapsed)
+	return t_detect
+
+func _current_margin_vs_detect() -> float:
+	if live_mode and is_finite(t_detect):
+		return _current_detect_value() - t_est
+	return INF
+
+func _borderline_eps() -> float:
+	if not (live_mode and is_finite(t_detect)):
+		return EPS
+	return maxf(EPS, minf(0.5, t_detect * 0.03))
+
+func _log_trial_event(event_type: String, meta: Dictionary = {}) -> void:
+	trial_event_log.append({
+		"t_ms": _elapsed_trial_ms(),
+		"type": event_type,
+		"state": _state_to_text(state),
+		"decision": _decision_to_text(decision),
+		"t_est": t_est,
+		"t_true": t_true,
+		"t_detect_current": _current_detect_value(),
+		"meta": meta.duplicate(true)
+	})
+
 func _start_trial() -> void:
+	trial_seq += 1
 	state = State.TUNE
 	decision = Decision.NONE
 	outcome = Outcome.NONE
@@ -565,6 +669,32 @@ func _start_trial() -> void:
 	analyze_lock_active = false
 	analyze_lock_until = 0.0
 	analyze_cooldown_until = 0.0
+	analyze_cooldown_hit_count = 0
+	analyze_after_units = false
+	units_before_analyze = false
+	units_before_decision = false
+	estimate_at_first_analyze = -1.0
+	estimate_at_last_analyze = -1.0
+	estimate_at_decision = -1.0
+	estimate_delta_after_analyze = 0.0
+	first_margin_vs_detect = INF
+	final_margin_vs_detect = INF
+	true_margin_vs_detect = INF
+	remaining_detect_at_decision = INF
+	borderline_case = false
+	decision_quality = "unknown"
+	mastery_block_reason = "NONE"
+	knob_value_at_first_action = 0.0
+	peak_estimate_error_abs = 0.0
+	estimate_cross_count = 0
+	_last_estimate_sign_vs_true = 0
+	details_open_count = 0
+	details_open_before_decision = false
+	details_close_count = 0
+	first_details_open_ms = -1
+	first_units_hint_ms = -1
+	first_risk_or_abort_ms = -1
+	trial_event_log = []
 
 	start_ms = Time.get_ticks_msec()
 	first_action_ms = -1
@@ -581,9 +711,28 @@ func _start_trial() -> void:
 
 	time_knob.call("set_knob_value", 0.0, false)
 	_set_estimate(0.0)
+	peak_estimate_error_abs = absf(t_est - t_true)
+	if live_mode and is_finite(t_detect):
+		first_margin_vs_detect = t_detect - t_est
+		true_margin_vs_detect = t_detect - t_true
+	else:
+		first_margin_vs_detect = INF
+		true_margin_vs_detect = INF
 	btn_details.disabled = false
 	_update_decision_basis_ui()
 	_update_details_text()
+	_log_trial_event("trial_started", {
+		"trial_seq": trial_seq,
+		"pool_type": pool_type,
+		"anchor_type": anchor_type,
+		"file_size_value": file_size_value,
+		"file_size_unit": file_size_unit,
+		"speed_mbit": speed_mbit,
+		"t_true": t_true,
+		"t_detect": t_detect,
+		"live_mode": live_mode,
+		"plan_budget": t_plan
+	})
 
 func _generate_trial() -> void:
 	var generated: Dictionary = {}
@@ -921,11 +1070,31 @@ func _register_first_action() -> void:
 func _register_knob_move(delta: float) -> void:
 	if is_zero_approx(delta):
 		return
+	if knob_moves_count == 0:
+		knob_value_at_first_action = t_est
 	knob_moves_count += 1
 	var sign: int = 1 if delta > 0.0 else -1
 	if _last_move_sign != 0 and sign != _last_move_sign:
 		direction_changes += 1
 	_last_move_sign = sign
+	var est_error_abs: float = absf(t_est - t_true)
+	peak_estimate_error_abs = maxf(peak_estimate_error_abs, est_error_abs)
+	var error_sign: int = 0
+	if t_est > t_true + EPS:
+		error_sign = 1
+	elif t_est < t_true - EPS:
+		error_sign = -1
+	if _last_estimate_sign_vs_true != 0 and error_sign != 0 and error_sign != _last_estimate_sign_vs_true:
+		estimate_cross_count += 1
+	if error_sign != 0:
+		_last_estimate_sign_vs_true = error_sign
+	_log_trial_event("knob_move", {
+		"delta": delta,
+		"knob_moves_count": knob_moves_count,
+		"direction_changes": direction_changes,
+		"est_error_abs": est_error_abs,
+		"margin_vs_detect": _current_margin_vs_detect()
+	})
 
 func _on_analyze_pressed() -> void:
 	if state != State.TUNE or analyze_lock_active:
@@ -934,6 +1103,10 @@ func _on_analyze_pressed() -> void:
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec < analyze_cooldown_until:
 		var left: float = analyze_cooldown_until - now_sec
+		analyze_cooldown_hit_count += 1
+		_log_trial_event("analyze_cooldown_blocked", {
+			"cooldown_left_sec": left
+		})
 		_set_status_i18n(
 			"quest.radio.c.status.analyze_cooldown",
 			"STATUS: ANALYZE available in {left}s.",
@@ -941,9 +1114,23 @@ func _on_analyze_pressed() -> void:
 			{"left": "%.1f" % left}
 		)
 		return
+	var used_units_before_analyze: bool = used_units
+	if estimate_at_first_analyze < 0.0:
+		estimate_at_first_analyze = t_est
+	estimate_at_last_analyze = t_est
+	if used_units_before_analyze:
+		analyze_after_units = true
+		if analyze_count == 0:
+			units_before_analyze = true
 	analyze_count += 1
 	if check_ms < 0:
 		check_ms = Time.get_ticks_msec()
+	_log_trial_event("analyze_pressed", {
+		"analyze_count": analyze_count,
+		"t_est_at_analyze": t_est,
+		"margin_vs_detect": _current_margin_vs_detect(),
+		"used_units_before_analyze": used_units_before_analyze
+	})
 	analyze_lock_active = true
 	analyze_lock_until = now_sec + _analyze_lock_seconds
 	analyze_cooldown_until = now_sec + ANALYZE_COOLDOWN_SECONDS
@@ -962,6 +1149,20 @@ func _on_risk_pressed() -> void:
 
 	if decision_ms < 0:
 		decision_ms = Time.get_ticks_msec()
+	estimate_at_decision = t_est
+	remaining_detect_at_decision = _current_detect_value() if (live_mode and is_finite(t_detect)) else INF
+	final_margin_vs_detect = (remaining_detect_at_decision - t_est) if (live_mode and is_finite(t_detect)) else INF
+	borderline_case = live_mode and is_finite(t_detect) and absf(final_margin_vs_detect) <= _borderline_eps()
+	if first_risk_or_abort_ms < 0:
+		first_risk_or_abort_ms = _elapsed_trial_ms()
+	if estimate_at_last_analyze >= 0.0:
+		estimate_delta_after_analyze = estimate_at_decision - estimate_at_last_analyze
+	_log_trial_event("risk_pressed", {
+		"t_est_at_decision": t_est,
+		"remaining_detect": remaining_detect_at_decision,
+		"margin_vs_detect": final_margin_vs_detect,
+		"borderline_case": borderline_case
+	})
 	decision = Decision.RISK
 	transfer_started = true
 	transfer_elapsed = 0.0
@@ -979,6 +1180,20 @@ func _on_abort_pressed() -> void:
 	_register_first_action()
 	if decision_ms < 0:
 		decision_ms = Time.get_ticks_msec()
+	estimate_at_decision = t_est
+	remaining_detect_at_decision = _current_detect_value() if (live_mode and is_finite(t_detect)) else INF
+	final_margin_vs_detect = (remaining_detect_at_decision - t_est) if (live_mode and is_finite(t_detect)) else INF
+	borderline_case = live_mode and is_finite(t_detect) and absf(final_margin_vs_detect) <= _borderline_eps()
+	if first_risk_or_abort_ms < 0:
+		first_risk_or_abort_ms = _elapsed_trial_ms()
+	if estimate_at_last_analyze >= 0.0:
+		estimate_delta_after_analyze = estimate_at_decision - estimate_at_last_analyze
+	_log_trial_event("abort_pressed", {
+		"t_est_at_decision": t_est,
+		"remaining_detect": remaining_detect_at_decision,
+		"margin_vs_detect": final_margin_vs_detect,
+		"borderline_case": borderline_case
+	})
 	decision = Decision.ABORT
 
 	var remaining_detect: float = INF if (not live_mode) else maxf(0.0, t_detect - detection_elapsed)
@@ -991,7 +1206,18 @@ func _on_units_pressed() -> void:
 	if state == State.DONE or state == State.EXEC or analyze_lock_active:
 		return
 	_register_first_action()
+	if first_units_hint_ms < 0:
+		first_units_hint_ms = _elapsed_trial_ms()
+	if analyze_count == 0:
+		units_before_analyze = true
+	if decision == Decision.NONE:
+		units_before_decision = true
 	used_units = true
+	_log_trial_event("units_hint_opened", {
+		"before_analyze": analyze_count == 0,
+		"before_decision": decision == Decision.NONE,
+		"t_est": t_est
+	})
 	_set_status_i18n(
 		"quest.radio.c.status.units_hint",
 		"Hint: MB -> Mbit = x8, GB -> MB = x1024, then t = I / v.",
@@ -1001,9 +1227,27 @@ func _on_units_pressed() -> void:
 	_update_decision_basis_ui()
 
 func _on_details_pressed() -> void:
+	if details_overlay.visible:
+		return
+	details_open_count += 1
+	if first_details_open_ms < 0:
+		first_details_open_ms = _elapsed_trial_ms()
+	if decision == Decision.NONE:
+		details_open_before_decision = true
+	_log_trial_event("details_opened", {
+		"open_count": details_open_count,
+		"before_decision": decision == Decision.NONE,
+		"state": _state_to_text(state)
+	})
 	_set_details_visible(true)
 
 func _on_details_close_pressed() -> void:
+	if not details_overlay.visible:
+		return
+	details_close_count += 1
+	_log_trial_event("details_closed", {
+		"close_count": details_close_count
+	})
 	_set_details_visible(false)
 
 func _on_dimmer_gui_input(event: InputEvent) -> void:
@@ -1013,12 +1257,12 @@ func _on_dimmer_gui_input(event: InputEvent) -> void:
 		var mouse_event: InputEventMouseButton = event
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
 			details_dimmer.accept_event()
-			_set_details_visible(false)
+			_on_details_close_pressed()
 	elif event is InputEventScreenTouch:
 		var touch_event: InputEventScreenTouch = event
 		if touch_event.pressed:
 			details_dimmer.accept_event()
-			_set_details_visible(false)
+			_on_details_close_pressed()
 
 func _set_details_visible(is_visible: bool) -> void:
 	details_overlay.visible = is_visible
@@ -1143,9 +1387,61 @@ func _finalize_trial(result: Outcome, decision_label: String) -> void:
 		return
 
 	outcome = result
+	if estimate_at_decision < 0.0:
+		estimate_at_decision = t_est
+	if live_mode and is_finite(t_detect):
+		if not is_finite(remaining_detect_at_decision):
+			remaining_detect_at_decision = _current_detect_value()
+		if not is_finite(final_margin_vs_detect):
+			final_margin_vs_detect = remaining_detect_at_decision - estimate_at_decision
+		borderline_case = borderline_case or (absf(final_margin_vs_detect) <= _borderline_eps())
+	if estimate_at_last_analyze >= 0.0:
+		estimate_delta_after_analyze = estimate_at_decision - estimate_at_last_analyze
+	else:
+		estimate_delta_after_analyze = 0.0
 	_set_done_state_ui()
 
 	var is_success: bool = (outcome == Outcome.SUCCESS_SEND or outcome == Outcome.SAFE_ABORT)
+	var low_certainty: bool = (knob_moves_count >= 6 or direction_changes >= 2)
+	var valid_for_mastery: bool = (not used_units) and (outcome == Outcome.SUCCESS_SEND or outcome == Outcome.SAFE_ABORT)
+	if _plan_timeout_triggered or decision_label == "TIMEOUT":
+		decision_quality = "no_decision"
+	elif decision == Decision.NONE:
+		decision_quality = "no_decision"
+	elif decision == Decision.RISK:
+		if outcome == Outcome.SUCCESS_SEND:
+			decision_quality = "borderline_risk" if borderline_case else "safe_risk"
+		else:
+			decision_quality = "bad_risk"
+	elif decision == Decision.ABORT:
+		if outcome == Outcome.SAFE_ABORT:
+			decision_quality = "safe_abort"
+		elif outcome == Outcome.MISSED_WINDOW:
+			decision_quality = "missed_opportunity"
+		else:
+			decision_quality = "no_decision"
+	else:
+		decision_quality = "unknown"
+
+	if valid_for_mastery:
+		mastery_block_reason = "NONE"
+	elif _plan_timeout_triggered:
+		mastery_block_reason = "TIMEOUT"
+	elif decision == Decision.NONE:
+		mastery_block_reason = "NONE_DECISION"
+	elif used_units:
+		mastery_block_reason = "USED_UNITS"
+	elif low_certainty:
+		mastery_block_reason = "LOW_CERTAINTY"
+	elif borderline_case:
+		mastery_block_reason = "BORDERLINE_GUESS"
+	elif outcome == Outcome.INTERCEPTED:
+		mastery_block_reason = "INTERCEPTED"
+	elif outcome == Outcome.MISSED_WINDOW:
+		mastery_block_reason = "MISSED_WINDOW"
+	else:
+		mastery_block_reason = "NONE_DECISION"
+
 	var sample_color: Color = COLOR_SAMPLE_FAIL
 	var status_color: Color = COLOR_SAMPLE_FAIL
 	match outcome:
@@ -1210,6 +1506,14 @@ func _finalize_trial(result: Outcome, decision_label: String) -> void:
 	_apply_status_i18n()
 
 	_update_sample_slot(sample_color)
+	_log_trial_event("trial_finished", {
+		"decision_label": decision_label,
+		"decision_quality": decision_quality,
+		"outcome": _outcome_to_text(outcome),
+		"is_success": is_success,
+		"mastery_block_reason": mastery_block_reason,
+		"borderline_case": borderline_case
+	})
 	_send_trial_payload(is_success, decision_label)
 	_update_decision_basis_ui()
 	_update_details_text()
@@ -1238,6 +1542,12 @@ func _send_trial_payload(is_success: bool, decision_label: String) -> void:
 	var time_to_decision_ms: int = elapsed_ms
 	if decision_ms >= 0:
 		time_to_decision_ms = decision_ms - start_ms
+	var time_analyze_to_decision_ms: int = -1
+	if check_ms >= 0 and decision_ms >= 0:
+		time_analyze_to_decision_ms = maxi(0, time_to_decision_ms - time_to_check_ms)
+	var time_to_units_hint_ms: int = first_units_hint_ms
+	var time_to_details_open_ms: int = first_details_open_ms
+	var time_to_first_risk_or_abort_ms: int = first_risk_or_abort_ms
 
 	var error_abs: float = absf(t_est - t_true)
 	var error_rel: float = 0.0
@@ -1246,12 +1556,17 @@ func _send_trial_payload(is_success: bool, decision_label: String) -> void:
 
 	var low_certainty: bool = (knob_moves_count >= 6 or direction_changes >= 2)
 	var error_type: String = _classify_error_type(time_to_decision_ms)
+	var valid_for_mastery: bool = (not used_units) and (outcome == Outcome.SUCCESS_SEND or outcome == Outcome.SAFE_ABORT)
+	var detect_at_decision: float = remaining_detect_at_decision
+	if live_mode and is_finite(t_detect) and not is_finite(detect_at_decision):
+		detect_at_decision = _current_detect_value()
 
 	var payload: Dictionary = {
 		"quest_id": "radio_intercept",
 		"stage_id": "C",
 		"mode": "ARCADE" if ARCADE_MODE_ENABLED else "DIAGNOSTIC",
 		"match_key": _build_match_key(),
+		"trial_seq": trial_seq,
 		"pool_type": pool_type,
 		"anchor_type": anchor_type,
 		"anchor": (pool_type == "ANCHOR"),
@@ -1265,23 +1580,50 @@ func _send_trial_payload(is_success: bool, decision_label: String) -> void:
 		"true_sec": t_true,
 		"error_sec_abs": error_abs,
 		"error_sec_rel": error_rel,
+		"peak_estimate_error_abs": peak_estimate_error_abs,
+		"estimate_cross_count": estimate_cross_count,
 		"decision": decision_label,
 		"outcome": _outcome_to_text(outcome),
+		"decision_quality": decision_quality,
+		"mastery_block_reason": mastery_block_reason,
 		"used_units": used_units,
+		"units_before_analyze": units_before_analyze,
+		"units_before_decision": units_before_decision,
+		"analyze_after_units": analyze_after_units,
+		"details_open_count": details_open_count,
+		"details_open_before_decision": details_open_before_decision,
+		"details_close_count": details_close_count,
 		"error_type": error_type,
 		"knob_moves_count": knob_moves_count,
+		"knob_value_at_first_action": knob_value_at_first_action,
 		"direction_changes": direction_changes,
 		"analyze_count": analyze_count,
+		"analyze_cooldown_hit_count": analyze_cooldown_hit_count,
 		"low_certainty": low_certainty,
+		"borderline_case": borderline_case,
+		"plan_timeout_triggered": _plan_timeout_triggered,
+		"estimate_at_first_analyze": estimate_at_first_analyze,
+		"estimate_at_last_analyze": estimate_at_last_analyze,
+		"estimate_at_decision": estimate_at_decision,
+		"estimate_delta_after_analyze": estimate_delta_after_analyze,
+		"remaining_detect_at_decision": detect_at_decision,
+		"first_margin_vs_detect": first_margin_vs_detect,
+		"final_margin_vs_detect": final_margin_vs_detect,
+		"true_margin_vs_detect": true_margin_vs_detect,
 		"valid_for_diagnostics": true,
-		"valid_for_mastery": (not used_units) and (outcome == Outcome.SUCCESS_SEND or outcome == Outcome.SAFE_ABORT),
+		"valid_for_mastery": valid_for_mastery,
 		"is_correct": is_success,
 		"is_fit": is_success,
 		"elapsed_ms": elapsed_ms,
 		"time_to_first_action_ms": time_to_first_action_ms,
 		"time_to_check_ms": time_to_check_ms,
 		"time_to_analyze_ms": time_to_check_ms,
-		"time_to_decision_ms": time_to_decision_ms
+		"time_to_decision_ms": time_to_decision_ms,
+		"time_analyze_to_decision_ms": time_analyze_to_decision_ms,
+		"time_to_units_hint_ms": time_to_units_hint_ms,
+		"time_to_details_open_ms": time_to_details_open_ms,
+		"time_to_first_risk_or_abort_ms": time_to_first_risk_or_abort_ms,
+		"event_log": trial_event_log.duplicate(true)
 	}
 	GlobalMetrics.register_trial(payload)
 

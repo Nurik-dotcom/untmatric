@@ -30,6 +30,8 @@ var levels_completed: Array = []
 # Analysis History
 var session_history: Array = []
 var active_case_flow: Dictionary = {}
+var auth_token: String = ""
+var current_session_id: String = ""
 
 func start_case_flow(case_id: String, stages: Array[String] = ["A", "B", "C"]) -> String:
 	var case_run_id: String = "%s_%d" % [case_id, Time.get_ticks_usec()]
@@ -62,6 +64,58 @@ func get_case_flow() -> Dictionary:
 func clear_case_flow() -> void:
 	active_case_flow.clear()
 
+func _ensure_session_id() -> void:
+	if current_session_id != "":
+		return
+	current_session_id = "sess_%d_%d" % [Time.get_unix_time_from_system(), Time.get_ticks_msec()]
+
+func _build_db_url(path: String) -> String:
+	var url := str(DB_URL) + path
+	if auth_token != "":
+		url += "?auth=" + auth_token
+	return url
+
+func _send_trial_to_firebase(data: Dictionary) -> void:
+	if user_id == "":
+		return
+
+	_ensure_session_id()
+
+	var payload: Dictionary = data.duplicate(true)
+	payload["user_id"] = user_id
+	payload["user_email"] = user_email
+	payload["session_id"] = current_session_id
+	payload["client_time"] = Time.get_datetime_string_from_system()
+	payload["client_unix"] = Time.get_unix_time_from_system()
+
+	if not payload.has("quest_id"):
+		payload["quest_id"] = "unknown_quest"
+	if not payload.has("stage_id"):
+		payload["stage_id"] = "unknown_stage"
+
+	var url := _build_db_url("users/%s/trial_logs.json" % user_id)
+
+	var http := HTTPRequest.new()
+	add_child(http)
+
+	var err := http.request(
+		url,
+		["Content-Type: application/json"],
+		HTTPClient.METHOD_POST,
+		JSON.stringify(payload)
+	)
+
+	if err != OK:
+		push_warning("Trial upload request failed to start: %s" % str(err))
+		http.queue_free()
+		return
+
+	http.request_completed.connect(func(_result, response_code, _headers, body):
+		if response_code < 200 or response_code >= 300:
+			push_warning("Trial upload failed: HTTP %s | %s" % [str(response_code), body.get_string_from_utf8()])
+		http.queue_free()
+	)
+
 func register_trial(data: Dictionary):
 	session_history.append(data)
 
@@ -89,6 +143,8 @@ func register_trial(data: Dictionary):
 		if penalty_condition:
 			stability = max(0.0, stability - 10.0)
 			emit_signal("stability_changed", stability, -10.0)
+
+	_send_trial_to_firebase(data)
 
 const MATRIX_SIZE := 6
 const MATRIX_WEIGHTS := [32, 16, 8, 4, 2, 1]
@@ -660,7 +716,7 @@ func _combinations(items: Array, count: int) -> Array:
 func save_progress_to_firebase():
 	if user_id == "": return
 	
-	var url = "https://untma-f6333-default-rtdb.firebaseio.com/users/" + user_id + ".json"
+	var url = _build_db_url("users/%s.json" % user_id)
 	var data = {
 		"total_score": total_score,
 		"levels_completed": levels_completed,
@@ -675,12 +731,14 @@ func save_progress_to_firebase():
 func record_login_session():
 	if user_id == "":
 		return
+	_ensure_session_id()
 		
-	var url = str(DB_URL) + "users/" + str(user_id) + "/sessions.json"
+	var url = _build_db_url("users/%s/sessions.json" % user_id)
 	
 	# Добавляем email в данные для отправки
 	var data = {
 		"login_time": Time.get_datetime_string_from_system(),
+		"session_id": current_session_id,
 		"email": user_email   # <---- ДОБАВЛЯЕМ ЭТУ СТРОЧКУ
 	}
 	
@@ -714,7 +772,7 @@ func finish_quest(quest_name: String, score: int, is_success: bool):
 		return
 		
 	var time_spent = Time.get_unix_time_from_system() - current_quest_start_time
-	var url = str(DB_URL) + "users/" + str(user_id) + "/quest_logs.json"
+	var url = _build_db_url("users/%s/quest_logs.json" % user_id)
 	
 	var data = {
 		"email": user_email,

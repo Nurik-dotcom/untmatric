@@ -1,6 +1,11 @@
 extends Button
 
+signal block_tapped(block_data)
+
 var data: Dictionary = {}
+
+func _ready() -> void:
+	pressed.connect(_on_pressed)
 
 func setup(block_data: Dictionary):
 	data = block_data
@@ -28,6 +33,9 @@ func _get_drag_data(at_position: Vector2):
 	set_drag_preview(ctrl)
 
 	# Return data strictly as per spec
+	return _build_payload()
+
+func _build_payload() -> Dictionary:
 	return {
 		"kind": "CODE_BLOCK",
 		"block_id": data.get("block_id"),
@@ -36,3 +44,6 @@ func _get_drag_data(at_position: Vector2):
 		"insert": data.get("insert"),
 		"source_path": get_path()
 	}
+
+func _on_pressed() -> void:
+	block_tapped.emit(_build_payload())

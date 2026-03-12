@@ -1,13 +1,10 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=6 format=3 uid="uid://c3sbs4njua6rv"]
 
 [ext_resource type="Script" path="res://scripts/RestoreQuestB.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://scenes/ui/DiagnosticsPanelB.tscn" id="3_panel"]
-[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_0vmkb"]
-[ext_resource type="Script" path="res://scripts/ui/DropZone.gd" id="4_dropzone"]
-[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="5_noir"]
+[ext_resource type="Script" path="res://scripts/ui/DropZone.gd" id="5_dropzone_script"]
+[ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="6_overlay_scene"]
 [ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="7_mudek"]
-[ext_resource type="Script" path="res://scripts/ui/DiagnosticsPanelB.gd" id="8_6p63x"]
 
 [node name="RestoreQuestB" type="Control"]
 layout_mode = 3
@@ -16,7 +13,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("2_theme")
+theme = ExtResource("7_mudek")
 script = ExtResource("1_script")
 
 [node name="Background" type="ColorRect" parent="."]
@@ -28,12 +25,9 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("5_noir")]
-layer = 100
-script = ExtResource("4_0vmkb")
+[node name="NoirOverlay" parent="." instance=ExtResource("6_overlay_scene")]
 intensity = 0.18
 fx_quality = 1
-tint_color = Color(0.93, 0.93, 0.93, 1)
 
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -49,32 +43,31 @@ theme_override_constants/margin_bottom = 12
 
 [node name="MainLayout" type="VBoxContainer" parent="SafeArea"]
 layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
+theme_override_constants/separation = 10
 
 [node name="Header" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
-alignment = 1
+theme_override_constants/separation = 10
 
 [node name="BtnBack" type="Button" parent="SafeArea/MainLayout/Header"]
 custom_minimum_size = Vector2(120, 56)
 layout_mode = 2
-text = "НАЗАД"
+text = "BACK"
 
 [node name="LblClueTitle" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ВОССТАНОВЛЕНИЕ B-01"
+text = "RESTORE B-01"
 
 [node name="LblSessionId" type="Label" parent="SafeArea/MainLayout/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "СЕССИЯ ИНИЦ."
+text = "SESS 0000"
 horizontal_alignment = 2
 
 [node name="BarsRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
-alignment = 1
+theme_override_constants/separation = 10
 
 [node name="DecryptBar" type="ProgressBar" parent="SafeArea/MainLayout/BarsRow"]
 custom_minimum_size = Vector2(0, 8)
@@ -89,95 +82,208 @@ size_flags_horizontal = 3
 value = 100.0
 show_percentage = false
 
-[node name="TargetDisplay" type="PanelContainer" parent="SafeArea/MainLayout"]
+[node name="CaseBriefPanel" type="PanelContainer" parent="SafeArea/MainLayout"]
 layout_mode = 2
 
-[node name="LblTarget" type="Label" parent="SafeArea/MainLayout/TargetDisplay"]
+[node name="BriefMargin" type="MarginContainer" parent="SafeArea/MainLayout/CaseBriefPanel"]
 layout_mode = 2
-text = "ЦЕЛЬ: s = ?"
-horizontal_alignment = 1
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
 
-[node name="TerminalFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
+[node name="BriefVBox" type="VBoxContainer" parent="SafeArea/MainLayout/CaseBriefPanel/BriefMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="LblTarget" type="Label" parent="SafeArea/MainLayout/CaseBriefPanel/BriefMargin/BriefVBox"]
+layout_mode = 2
+text = "TARGET: s = ?"
+
+[node name="LblBriefing" type="Label" parent="SafeArea/MainLayout/CaseBriefPanel/BriefMargin/BriefVBox"]
+layout_mode = 2
+text = "Restore the missing fragment."
+autowrap_mode = 2
+
+[node name="LblFocus" type="Label" parent="SafeArea/MainLayout/CaseBriefPanel/BriefMargin/BriefVBox"]
+layout_mode = 2
+text = "Focus hint"
+autowrap_mode = 2
+
+[node name="BodySplit" type="BoxContainer" parent="SafeArea/MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+vertical = true
+
+[node name="LeftColumn" type="VBoxContainer" parent="SafeArea/MainLayout/BodySplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="TerminalFrame" type="PanelContainer" parent="SafeArea/MainLayout/BodySplit/LeftColumn"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CodeScroll" type="ScrollContainer" parent="SafeArea/MainLayout/TerminalFrame"]
+[node name="CodeScroll" type="ScrollContainer" parent="SafeArea/MainLayout/BodySplit/LeftColumn/TerminalFrame"]
 layout_mode = 2
 
-[node name="CodeDisplay" type="RichTextLabel" parent="SafeArea/MainLayout/TerminalFrame/CodeScroll"]
+[node name="CodeDisplay" type="RichTextLabel" parent="SafeArea/MainLayout/BodySplit/LeftColumn/TerminalFrame/CodeScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
-text = "Загрузка кода..."
+text = "Code will appear here"
 fit_content = true
 
-[node name="SlotRow" type="HBoxContainer" parent="SafeArea/MainLayout"]
+[node name="SlotRow" type="HBoxContainer" parent="SafeArea/MainLayout/BodySplit/LeftColumn"]
 layout_mode = 2
-alignment = 1
+theme_override_constants/separation = 12
 
-[node name="DropZone" type="PanelContainer" parent="SafeArea/MainLayout/SlotRow"]
+[node name="DropZone" type="PanelContainer" parent="SafeArea/MainLayout/BodySplit/LeftColumn/SlotRow"]
 custom_minimum_size = Vector2(240, 96)
 layout_mode = 2
-script = ExtResource("4_dropzone")
+script = ExtResource("5_dropzone_script")
 
-[node name="Label" type="Label" parent="SafeArea/MainLayout/SlotRow/DropZone"]
+[node name="Label" type="Label" parent="SafeArea/MainLayout/BodySplit/LeftColumn/SlotRow/DropZone"]
 layout_mode = 2
-text = "[СЛОТ]"
+text = "[SLOT]"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="LblSlotHint" type="Label" parent="SafeArea/MainLayout/SlotRow"]
+[node name="LblSlotHint" type="Label" parent="SafeArea/MainLayout/BodySplit/LeftColumn/SlotRow"]
 layout_mode = 2
-text = "<-- Перетащите блок сюда"
+size_flags_horizontal = 3
+text = "Drag block to slot or tap block then slot"
+autowrap_mode = 2
 
-[node name="InventoryFrame" type="PanelContainer" parent="SafeArea/MainLayout"]
+[node name="InventoryFrame" type="PanelContainer" parent="SafeArea/MainLayout/BodySplit/LeftColumn"]
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 0.5
+size_flags_stretch_ratio = 0.55
 
-[node name="InventoryMargin" type="MarginContainer" parent="SafeArea/MainLayout/InventoryFrame"]
+[node name="InventoryMargin" type="MarginContainer" parent="SafeArea/MainLayout/BodySplit/LeftColumn/InventoryFrame"]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="InventoryScroll" type="ScrollContainer" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin"]
+[node name="InventoryScroll" type="ScrollContainer" parent="SafeArea/MainLayout/BodySplit/LeftColumn/InventoryFrame/InventoryMargin"]
 layout_mode = 2
 
-[node name="BlocksContainer" type="HBoxContainer" parent="SafeArea/MainLayout/InventoryFrame/InventoryMargin/InventoryScroll"]
+[node name="BlocksContainer" type="HBoxContainer" parent="SafeArea/MainLayout/BodySplit/LeftColumn/InventoryFrame/InventoryMargin/InventoryScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 14
-alignment = 1
+theme_override_constants/separation = 12
 
-[node name="Actions" type="HBoxContainer" parent="SafeArea/MainLayout"]
+[node name="RightColumn" type="VBoxContainer" parent="SafeArea/MainLayout/BodySplit"]
 layout_mode = 2
-theme_override_constants/separation = 16
-alignment = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
 
-[node name="BtnAnalyze" type="Button" parent="SafeArea/MainLayout/Actions"]
+[node name="ReasoningPanel" type="PanelContainer" parent="SafeArea/MainLayout/BodySplit/RightColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ReasoningMargin" type="MarginContainer" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="ReasoningVBox" type="VBoxContainer" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ReasoningTitle" type="Label" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox"]
+layout_mode = 2
+text = "Variant reasoning"
+
+[node name="PredictedRow" type="HBoxContainer" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox"]
+layout_mode = 2
+
+[node name="LblPredictedTitle" type="Label" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox/PredictedRow"]
+layout_mode = 2
+text = "Predicted s:"
+
+[node name="LblPredictedValue" type="Label" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox/PredictedRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "?"
+horizontal_alignment = 2
+
+[node name="TargetRow" type="HBoxContainer" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox"]
+layout_mode = 2
+
+[node name="LblTargetTitle" type="Label" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox/TargetRow"]
+layout_mode = 2
+text = "Target s:"
+
+[node name="LblTargetValue" type="Label" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox/TargetRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "?"
+horizontal_alignment = 2
+
+[node name="DeltaRow" type="HBoxContainer" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox"]
+layout_mode = 2
+
+[node name="LblDeltaTitle" type="Label" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox/DeltaRow"]
+layout_mode = 2
+text = "Delta:"
+
+[node name="LblDeltaValue" type="Label" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox/DeltaRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "?"
+horizontal_alignment = 2
+
+[node name="LblWhyNot" type="Label" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox"]
+layout_mode = 2
+text = "Choose a block to preview behavior."
+autowrap_mode = 2
+
+[node name="MiniTrace" type="RichTextLabel" parent="SafeArea/MainLayout/BodySplit/RightColumn/ReasoningPanel/ReasoningMargin/ReasoningVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "Trace appears after block selection."
+
+[node name="Actions" type="HBoxContainer" parent="SafeArea/MainLayout/BodySplit/RightColumn"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BtnAnalyze" type="Button" parent="SafeArea/MainLayout/BodySplit/RightColumn/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "АНАЛИЗ"
+text = "Reasoning"
 
-[node name="BtnSubmit" type="Button" parent="SafeArea/MainLayout/Actions"]
+[node name="BtnReset" type="Button" parent="SafeArea/MainLayout/BodySplit/RightColumn/Actions"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Reset"
+
+[node name="BtnSubmit" type="Button" parent="SafeArea/MainLayout/BodySplit/RightColumn/Actions"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 disabled = true
-text = "ПРОВЕРИТЬ"
+text = "Check"
 
-[node name="BtnNext" type="Button" parent="SafeArea/MainLayout/Actions"]
+[node name="BtnNext" type="Button" parent="SafeArea/MainLayout/BodySplit/RightColumn/Actions"]
 visible = false
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ДАЛЕЕ"
+text = "Next"
 
 [node name="DiagnosticsBlocker" type="ColorRect" parent="."]
 visible = false
@@ -189,13 +295,5 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.45)
 
-[node name="DiagnosticsPanelB" type="PanelContainer" parent="." instance=ExtResource("3_panel")]
-visible = false
+[node name="DiagnosticsPanelB" parent="." instance=ExtResource("3_panel")]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = ExtResource("7_mudek")
-script = ExtResource("8_6p63x")

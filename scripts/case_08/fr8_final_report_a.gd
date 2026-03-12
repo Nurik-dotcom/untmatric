@@ -43,6 +43,30 @@ var trace: Array = []
 var confirm_attempt_count: int = 0
 var skip_unlocked: bool = false
 var selected_fragment_id: String = ""
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+
+var fragment_drag_start_count: int = 0
+var fragment_drop_count: int = 0
+var fragment_replace_count: int = 0
+var fragment_remove_count: int = 0
+var unique_fragment_ids: Dictionary = {}
+var slot_focus_count: int = 0
+var reset_count_local: int = 0
+var confirm_attempt_total_count: int = 0
+var incomplete_confirm_count: int = 0
+var render_preview_update_count: int = 0
+var render_ok_seen: bool = false
+var render_warn_seen: bool = false
+var render_error_seen: bool = false
+var changed_after_render_warn: bool = false
+var changed_after_render_error: bool = false
+var time_to_first_action_ms: int = -1
+var time_to_first_drag_ms: int = -1
+var time_to_first_drop_ms: int = -1
+var time_to_first_confirm_ms: int = -1
+var time_from_last_edit_to_confirm_ms: int = -1
+var last_edit_ms: int = -1
 
 var level_solved: bool = false
 var confirm_locked: bool = false
@@ -206,6 +230,7 @@ func _start_level(index: int) -> void:
 	_connect_zone_signal(pile_zone)
 
 	_build_slot_nodes()
+	_begin_trial_session()
 	_reset_attempt(true)
 
 func _build_level_label() -> String:
@@ -217,6 +242,76 @@ func _build_level_label() -> String:
 
 func _is_last_level() -> bool:
 	return current_level_index >= levels.size() - 1
+
+func _begin_trial_session() -> void:
+	trial_seq += 1
+	start_time_ms = Time.get_ticks_msec()
+	drag_count = 0
+	swap_count = 0
+	trace.clear()
+
+	fragment_drag_start_count = 0
+	fragment_drop_count = 0
+	fragment_replace_count = 0
+	fragment_remove_count = 0
+	unique_fragment_ids.clear()
+	slot_focus_count = 0
+	reset_count_local = 0
+	confirm_attempt_total_count = 0
+	incomplete_confirm_count = 0
+	render_preview_update_count = 0
+	render_ok_seen = false
+	render_warn_seen = false
+	render_error_seen = false
+	changed_after_render_warn = false
+	changed_after_render_error = false
+	time_to_first_action_ms = -1
+	time_to_first_drag_ms = -1
+	time_to_first_drop_ms = -1
+	time_to_first_confirm_ms = -1
+	time_from_last_edit_to_confirm_ms = -1
+	last_edit_ms = -1
+
+	var level_id: String = str(level_data.get("id", "FR8-A-00"))
+	task_session = {
+		"trial_seq": trial_seq,
+		"quest_id": "CASE_08_FINAL_REPORT",
+		"stage_id": "A",
+		"task_id": level_id,
+		"started_at_ticks": start_time_ms,
+		"ended_at_ticks": 0,
+		"events": []
+	}
+	_log_event("trial_started", {
+		"trial_seq": trial_seq,
+		"level_id": level_id,
+		"briefing": str(I18n.resolve_field(level_data, "briefing")),
+		"required_slot_count": expected_sequence.size(),
+		"profile": str(level_data.get("validator_profile", FR8Scoring.PROFILE_LIST_BASIC))
+	})
+
+func _elapsed_ms_now() -> int:
+	if start_time_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - start_time_ms)
+
+func _mark_first_action() -> void:
+	if time_to_first_action_ms >= 0:
+		return
+	time_to_first_action_ms = _elapsed_ms_now()
+
+func _mark_edit_action() -> void:
+	_mark_first_action()
+	last_edit_ms = _elapsed_ms_now()
+	if render_warn_seen and last_render_state == "warn":
+		changed_after_render_warn = true
+	if render_error_seen and last_render_state == "error":
+		changed_after_render_error = true
+
+func _fragment_tag_label(fragment_id: String) -> String:
+	if fragment_id.is_empty():
+		return ""
+	return _token_for_fragment(fragment_id)
 
 func _build_slot_nodes() -> void:
 	for child in slots_grid.get_children():
@@ -253,19 +348,18 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 
 	_spawn_fragments_into_pile()
 
-	start_time_ms = Time.get_ticks_msec()
-	drag_count = 0
-	swap_count = 0
 	confirm_attempt_count = 0
 	skip_unlocked = false
 	selected_fragment_id = ""
-	trace.clear()
-	_log_event("ATTEMPT_START", {"level_start": is_level_start})
+	last_render_state = ""
+	if not is_level_start:
+		reset_count_local += 1
+		_log_event("reset_pressed", {"reset_count": reset_count_local})
+	_log_event("attempt_reset", {"level_start": is_level_start})
 
 	level_solved = false
 	confirm_locked = false
 	has_confirmed_once = false
-	last_render_state = ""
 	_clear_fragment_highlights()
 	btn_confirm.disabled = false
 	btn_next.disabled = true
@@ -307,17 +401,22 @@ func _spawn_fragments_into_pile() -> void:
 			fragment_nodes[fragment_id] = item_node
 
 func _on_drag_started(fragment_id: String, from_zone: String) -> void:
-	drag_count += 1
-	_log_event("DRAG_START", {
+	_mark_first_action()
+	fragment_drag_start_count += 1
+	drag_count = fragment_drag_start_count
+	if time_to_first_drag_ms < 0:
+		time_to_first_drag_ms = _elapsed_ms_now()
+	_log_event("fragment_drag_started", {
 		"fragment_id": fragment_id,
 		"from_zone": from_zone
 	})
 
 func _on_item_placed(fragment_id: String, to_zone: String, from_zone: String) -> void:
-	_log_event("ITEM_PLACED", {
+	_log_event("item_placed", {
 		"fragment_id": fragment_id,
 		"from_zone": from_zone,
-		"to_zone": to_zone
+		"to_zone": to_zone,
+		"tag_label": _fragment_tag_label(fragment_id)
 	})
 	selected_fragment_id = ""
 	_clear_fragment_highlights()
@@ -330,7 +429,9 @@ func _on_fragment_tapped(fragment_id: String) -> void:
 		return
 	if fragment_id.is_empty():
 		return
+	_mark_first_action()
 	selected_fragment_id = fragment_id
+	_log_event("fragment_selected", {"fragment_id": fragment_id, "zone_id": _fragment_zone(fragment_id)})
 	_highlight_selected_fragment(fragment_id)
 	_set_status(
 		_tr("case08.fr8a.status.tap_slot", "Теперь нажмите на слот для размещения."),
@@ -338,7 +439,12 @@ func _on_fragment_tapped(fragment_id: String) -> void:
 	)
 
 func _on_slot_tapped(slot_id: String) -> void:
-	if confirm_locked or selected_fragment_id.is_empty():
+	if confirm_locked:
+		return
+	slot_focus_count += 1
+	_mark_first_action()
+	_log_event("slot_focused", {"slot_id": slot_id, "has_selected_fragment": not selected_fragment_id.is_empty()})
+	if selected_fragment_id.is_empty():
 		return
 	var result: Dictionary = handle_drop_to_slot(slot_id, {
 		"kind": "TAG_FRAGMENT",
@@ -355,6 +461,7 @@ func handle_drop_to_slot(target_zone_id: String, payload: Dictionary) -> Diction
 		return {"success": false}
 	if not slot_nodes.has(target_zone_id):
 		return {"success": false}
+	_mark_first_action()
 
 	var parsed: Dictionary = _parse_payload(payload)
 	if parsed.is_empty():
@@ -381,6 +488,22 @@ func handle_drop_to_slot(target_zone_id: String, payload: Dictionary) -> Diction
 
 	if swapped:
 		swap_count += 1
+		fragment_replace_count += 1
+	else:
+		fragment_drop_count += 1
+	if time_to_first_drop_ms < 0:
+		time_to_first_drop_ms = _elapsed_ms_now()
+	unique_fragment_ids[fragment_id] = true
+	_mark_edit_action()
+	_log_event("fragment_placed", {
+		"fragment_id": fragment_id,
+		"slot_id": target_zone_id,
+		"tag_label": _fragment_tag_label(fragment_id),
+		"from_zone": from_zone,
+		"replaced_fragment_id": target_existing_id,
+		"swapped": swapped,
+		"current_order": _collect_sequence().duplicate()
+	})
 
 	return {
 		"success": true,
@@ -393,6 +516,7 @@ func handle_drop_to_slot(target_zone_id: String, payload: Dictionary) -> Diction
 func handle_drop_to_pile(payload: Dictionary) -> Dictionary:
 	if confirm_locked:
 		return {"success": false}
+	_mark_first_action()
 	var parsed: Dictionary = _parse_payload(payload)
 	if parsed.is_empty():
 		return {"success": false}
@@ -404,6 +528,13 @@ func handle_drop_to_pile(payload: Dictionary) -> Dictionary:
 
 	if not _move_fragment_to_zone(fragment_id, "PILE"):
 		return {"success": false}
+	fragment_remove_count += 1
+	_mark_edit_action()
+	_log_event("fragment_removed", {
+		"fragment_id": fragment_id,
+		"from_zone": from_zone,
+		"current_order": _collect_sequence().duplicate()
+	})
 
 	return {
 		"success": true,
@@ -479,14 +610,28 @@ func _on_confirm_pressed() -> void:
 	if confirm_locked:
 		return
 
+	_mark_first_action()
 	has_confirmed_once = true
 	confirm_attempt_count += 1
+	confirm_attempt_total_count += 1
+	if time_to_first_confirm_ms < 0:
+		time_to_first_confirm_ms = _elapsed_ms_now()
 	var sequence: Array[String] = _collect_sequence()
 	var snapshot_zones: Dictionary = _build_snapshot_zones()
-	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
-	_log_event("CONFIRM_PRESSED", {
+	var required_missing_slots: int = _count_required_missing_slots(sequence)
+	if required_missing_slots > 0:
+		incomplete_confirm_count += 1
+	var elapsed_ms: int = _elapsed_ms_now()
+	if last_edit_ms >= 0:
+		time_from_last_edit_to_confirm_ms = maxi(0, elapsed_ms - last_edit_ms)
+	else:
+		time_from_last_edit_to_confirm_ms = -1
+	_log_event("confirm_pressed", {
 		"sequence": sequence.duplicate(),
-		"filled_slots": _count_filled_slots(sequence)
+		"filled_slots": _count_filled_slots(sequence),
+		"attempt": confirm_attempt_total_count,
+		"required_missing_slots": required_missing_slots,
+		"time_from_last_edit_to_confirm_ms": time_from_last_edit_to_confirm_ms
 	})
 
 	var evaluation: Dictionary = FR8Scoring.evaluate(level_data, sequence, fragment_by_id)
@@ -507,6 +652,18 @@ func _on_confirm_pressed() -> void:
 	var error_code: String = str(evaluation.get("error_code", "FAIL"))
 	var level_id: String = str(level_data.get("id", "FR8-A-00"))
 	var match_key: String = "FR8_A|%s|%d" % [level_id, GlobalMetrics.session_history.size()]
+	var outcome_code: String = _outcome_code_for_a(is_correct, error_code, last_render_state)
+	var mastery_block_reason: String = _mastery_block_reason_for_a(is_correct, outcome_code)
+	var tffa_ms: int = elapsed_ms if time_to_first_action_ms < 0 else time_to_first_action_ms
+
+	_log_event("confirm_result", {
+		"is_correct": is_correct,
+		"error_type": error_code,
+		"render_state": last_render_state,
+		"fragment_order": sequence.duplicate(),
+		"outcome_code": outcome_code
+	})
+	task_session["ended_at_ticks"] = Time.get_ticks_msec()
 
 	var payload: Dictionary = {
 		"quest_id": "CASE_08_FINAL_REPORT",
@@ -514,24 +671,48 @@ func _on_confirm_pressed() -> void:
 		"level_id": level_id,
 		"format": "TAG_ORDERING",
 		"match_key": match_key,
+		"trial_seq": trial_seq,
 		"sequence": sequence,
 		"snapshot_zones": snapshot_zones,
 		"error_code": error_code,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
 		"checks": {
 			"container_ok": bool(checks.get("container_ok", false)),
 			"hierarchy_ok": bool(checks.get("hierarchy_ok", false)),
 			"order_ok": bool(checks.get("order_ok", false))
 		},
 		"elapsed_ms": elapsed_ms,
+		"time_to_first_action_ms": tffa_ms,
 		"drag_count": drag_count,
 		"swap_count": swap_count,
+		"fragment_drag_start_count": fragment_drag_start_count,
+		"fragment_drop_count": fragment_drop_count,
+		"fragment_replace_count": fragment_replace_count,
+		"fragment_remove_count": fragment_remove_count,
+		"unique_fragment_count": unique_fragment_ids.size(),
+		"slot_focus_count": slot_focus_count,
+		"reset_count": reset_count_local,
+		"confirm_attempt_count": confirm_attempt_total_count,
+		"incomplete_confirm_count": incomplete_confirm_count,
+		"render_preview_update_count": render_preview_update_count,
+		"render_ok_seen": render_ok_seen,
+		"render_warn_seen": render_warn_seen,
+		"render_error_seen": render_error_seen,
+		"changed_after_render_warn": changed_after_render_warn,
+		"changed_after_render_error": changed_after_render_error,
+		"time_to_first_drag_ms": time_to_first_drag_ms,
+		"time_to_first_drop_ms": time_to_first_drop_ms,
+		"time_to_first_confirm_ms": time_to_first_confirm_ms,
+		"time_from_last_edit_to_confirm_ms": time_from_last_edit_to_confirm_ms,
 		"points": points,
 		"max_points": max_points,
 		"is_fit": is_fit,
 		"is_correct": is_correct,
 		"stability_delta": stability_delta,
 		"verdict_code": verdict_code,
-		"trace": trace.duplicate(true)
+		"trace": trace.duplicate(true),
+		"task_session": task_session.duplicate(true)
 	}
 	GlobalMetrics.register_trial(payload)
 	_update_stability_ui()
@@ -691,7 +872,24 @@ func _update_render_preview(sequence: Array[String], evaluation_override: Dictio
 	if not has_confirmed_once and required_missing_slots > 0:
 		render_state = "warn"
 
-	if has_confirmed_once and render_state == "error" and last_render_state != "error" and _count_filled_slots(sequence) > 0:
+	render_preview_update_count += 1
+	var previous_render_state: String = last_render_state
+	match render_state:
+		"ok":
+			render_ok_seen = true
+		"warn":
+			render_warn_seen = true
+		_:
+			render_error_seen = true
+	if render_state != previous_render_state:
+		_log_event("render_state_changed", {
+			"state": render_state,
+			"previous_state": previous_render_state,
+			"required_missing_slots": required_missing_slots,
+			"filled_slots": _count_filled_slots(sequence)
+		})
+
+	if has_confirmed_once and render_state == "error" and previous_render_state != "error" and _count_filled_slots(sequence) > 0:
 		_trigger_glitch()
 	last_render_state = render_state
 
@@ -963,6 +1161,39 @@ func _apply_layout_mode() -> void:
 		if pile_zone.has_method("set_grid_columns"):
 			pile_zone.call("set_grid_columns", 2)
 
+func _outcome_code_for_a(is_correct: bool, error_code: String, render_state: String) -> String:
+	if is_correct:
+		return "SUCCESS"
+	var normalized_error: String = error_code.strip_edges().to_upper()
+	match normalized_error:
+		"ORDER_MISMATCH":
+			return "ORDER_MISMATCH"
+		"UNBALANCED_TAG":
+			return "UNBALANCED_TAG"
+		"REQUIRED_TAG_MISSING":
+			return "REQUIRED_TAG_MISSING"
+		"HIERARCHY_VIOLATION":
+			return "HIERARCHY_VIOLATION"
+		"INCOMPLETE":
+			return "INCOMPLETE"
+	if render_state == "error":
+		return "RENDER_ERROR"
+	return "ORDER_MISMATCH"
+
+func _mastery_block_reason_for_a(is_correct: bool, outcome_code: String) -> String:
+	if reset_count_local >= 3:
+		return "RESET_OVERUSE"
+	if confirm_attempt_total_count >= 3:
+		return "MULTI_CONFIRM_GUESSING"
+	if not is_correct:
+		if outcome_code == "ORDER_MISMATCH":
+			return "ORDER_CONFUSION"
+		if outcome_code in ["UNBALANCED_TAG", "HIERARCHY_VIOLATION", "REQUIRED_TAG_MISSING", "RENDER_ERROR"]:
+			return "STRUCTURE_UNSTABLE"
+		if render_warn_seen and not changed_after_render_warn:
+			return "RENDER_DEPENDENCY"
+	return "NONE"
+
 func _show_error(message: String) -> void:
 	_set_status(message, COLOR_ERR)
 	btn_confirm.disabled = true
@@ -970,11 +1201,25 @@ func _show_error(message: String) -> void:
 	btn_next.disabled = true
 
 func _log_event(event_name: String, data: Dictionary = {}) -> void:
-	trace.append({
-		"t_ms": Time.get_ticks_msec() - start_time_ms,
+	var t_ms: int = _elapsed_ms_now()
+	var event_payload: Dictionary = data.duplicate(true)
+	var event_row: Dictionary = {
+		"name": event_name,
 		"event": event_name,
-		"data": data.duplicate(true)
+		"t_ms": t_ms,
+		"payload": event_payload.duplicate(true),
+		"data": event_payload.duplicate(true)
+	}
+	trace.append(event_row)
+	if task_session.is_empty():
+		return
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": event_name,
+		"t_ms": t_ms,
+		"payload": event_payload.duplicate(true)
 	})
+	task_session["events"] = events
 
 func _escape_bbcode(text_value: String) -> String:
 	return text_value.replace("[", "[lb]").replace("]", "[rb]")

@@ -167,58 +167,191 @@ theme_override_constants/margin_bottom = 12
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
-[node name="ConstraintInfoLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+[node name="PhaseCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "ОГРАНИЧЕНИЕ: ОБЯЗАТЕЛЬНО F"
 
-[node name="PathDisplay" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+[node name="PhaseMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/PhaseCard"]
 layout_mode = 2
-text = "ПУТЬ: A"
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="PhaseVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/PhaseCard/PhaseMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="PhaseLabelAnchor" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/PhaseCard/PhaseMargin/PhaseVBox"]
+layout_mode = 2
+text = "ШАГ 1/4: Построй маршрут"
 autowrap_mode = 2
 
-[node name="SimTimeLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+[node name="ObjectiveCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-text = "СИМ: 0"
 
-[node name="SumLiveLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+[node name="ObjectiveMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ObjectiveCard"]
 layout_mode = 2
-text = "СУММА: 0"
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
 
-[node name="WarningLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+[node name="ObjectiveVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ObjectiveCard/ObjectiveMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ConstraintInfoLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ObjectiveCard/ObjectiveMargin/ObjectiveVBox"]
+layout_mode = 2
+text = "ОГРАНИЧЕНИЕ: ОБЯЗАТЕЛЬНО F"
+autowrap_mode = 2
+
+[node name="WarningLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ObjectiveCard/ObjectiveMargin/ObjectiveVBox"]
 layout_mode = 2
 text = "ПРЕДУПРЕЖДЕНИЯ: -"
 autowrap_mode = 2
 
-[node name="InputLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ObjectiveCard/ObjectiveMargin/ObjectiveVBox"]
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-text = "ВВЕДИТЕ ИТОГОВУЮ СУММУ"
+autowrap_mode = 2
 
-[node name="SumInput" type="LineEdit" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
-custom_minimum_size = Vector2(0, 44)
+[node name="RouteCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 layout_mode = 2
-placeholder_text = "0"
-max_length = 6
 
-[node name="ButtonsRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+[node name="RouteMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/RouteCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="RouteVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/RouteCard/RouteMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="PathDisplay" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/RouteCard/RouteMargin/RouteVBox"]
+layout_mode = 2
+text = "ПУТЬ: A"
+autowrap_mode = 2
+
+[node name="SimTimeLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/RouteCard/RouteMargin/RouteVBox"]
+layout_mode = 2
+text = "СИМ: 0"
+
+[node name="SumLiveLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/RouteCard/RouteMargin/RouteVBox"]
+layout_mode = 2
+text = "СУММА: 0"
+
+[node name="ActionCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+layout_mode = 2
+
+[node name="ActionMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ActionCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ButtonsRow" type="HBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ActionCard/ActionMargin"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
+[node name="BtnReset" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ActionCard/ActionMargin/ButtonsRow"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "СБРОС"
 
-[node name="BtnSubmit" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
+[node name="BtnSubmit" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ActionCard/ActionMargin/ButtonsRow"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
 text = "ОТПРАВИТЬ"
 
-[node name="BtnNext" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ButtonsRow"]
+[node name="ScheduleCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="ScheduleMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ScheduleCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ScheduleVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ScheduleCard/ScheduleMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="ScheduleTitle" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ScheduleCard/ScheduleMargin/ScheduleVBox"]
+layout_mode = 2
+text = "РАСПИСАНИЕ"
+
+[node name="ScheduleSummaryLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ScheduleCard/ScheduleMargin/ScheduleVBox"]
+layout_mode = 2
+text = "Расписание: пока не влияет на текущий выбор"
+autowrap_mode = 2
+
+[node name="ScheduleScroll" type="ScrollContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ScheduleCard/ScheduleMargin/ScheduleVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ScheduleList" type="VBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ScheduleCard/ScheduleMargin/ScheduleVBox/ScheduleScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="InputCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+visible = false
+layout_mode = 2
+
+[node name="InputMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/InputCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="InputVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/InputCard/InputMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="InputLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/InputCard/InputMargin/InputVBox"]
+layout_mode = 2
+text = "ВВЕДИТЕ ИТОГОВУЮ СУММУ"
+
+[node name="SumInput" type="LineEdit" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/InputCard/InputMargin/InputVBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+placeholder_text = "0"
+max_length = 6
+
+[node name="ReviewCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
+visible = false
+layout_mode = 2
+
+[node name="ReviewMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ReviewCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ReviewVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ReviewCard/ReviewMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ReviewAnchorLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ReviewCard/ReviewMargin/ReviewVBox"]
+layout_mode = 2
+text = "Разбор будет показан после проверки."
+autowrap_mode = 2
+
+[node name="BtnNext" type="Button" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/ReviewCard/ReviewMargin/ReviewVBox"]
 visible = false
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
@@ -226,41 +359,6 @@ size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
 disabled = true
 text = "ДАЛЕЕ"
-
-[node name="SchedulePanel" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="ScheduleMargin" type="MarginContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
-
-[node name="ScheduleVBox" type="VBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel/ScheduleMargin"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 6
-
-[node name="ScheduleTitle" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel/ScheduleMargin/ScheduleVBox"]
-layout_mode = 2
-text = "РАСПИСАНИЕ"
-
-[node name="ScheduleScroll" type="ScrollContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel/ScheduleMargin/ScheduleVBox"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="ScheduleList" type="VBoxContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/SchedulePanel/ScheduleMargin/ScheduleVBox/ScheduleScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 4
-
-[node name="StatusLabel" type="Label" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
-custom_minimum_size = Vector2(0, 64)
-layout_mode = 2
-autowrap_mode = 2
 
 [node name="Footer" type="HBoxContainer" parent="SafeArea/MainVBox"]
 custom_minimum_size = Vector2(0, 36)

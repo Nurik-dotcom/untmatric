@@ -176,6 +176,26 @@ var is_complete: bool = false
 var is_safe_mode: bool = false
 var case_started_ms: int = 0
 var first_action_ms: int = -1
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+
+var slot_select_count: int = 0
+var slot_switch_count: int = 0
+var gate_place_count: int = 0
+var gate_replace_count: int = 0
+var gate_clear_count: int = 0
+var input_toggle_count: int = 0
+
+var counterexample_seen_count: int = 0
+var changed_after_counterexample: bool = false
+var changed_after_analyze: bool = false
+var test_without_full_assembly_count: int = 0
+
+var time_to_first_slot_select_ms: int = -1
+var time_to_first_test_ms: int = -1
+var time_from_last_edit_to_test_ms: int = -1
+var last_edit_ms: int = -1
+var first_test_was_incomplete: bool = false
 
 var trace_lines: Array[String] = []
 var vector_cache: Array[Dictionary] = []
@@ -357,6 +377,23 @@ func load_case(idx: int) -> void:
 	is_safe_mode = false
 	case_started_ms = Time.get_ticks_msec()
 	first_action_ms = -1
+	trial_seq += 1
+	task_session = {"events": [], "trial_seq": trial_seq}
+	slot_select_count = 0
+	slot_switch_count = 0
+	gate_place_count = 0
+	gate_replace_count = 0
+	gate_clear_count = 0
+	input_toggle_count = 0
+	counterexample_seen_count = 0
+	changed_after_counterexample = false
+	changed_after_analyze = false
+	test_without_full_assembly_count = 0
+	time_to_first_slot_select_ms = -1
+	time_to_first_test_ms = -1
+	time_from_last_edit_to_test_ms = -1
+	last_edit_ms = -1
+	first_test_was_incomplete = false
 
 	trace_lines.clear()
 	vector_cache = _build_control_vectors(current_case)
@@ -379,6 +416,11 @@ func load_case(idx: int) -> void:
 	_update_outputs()
 	_update_terminal()
 	_update_ui_state()
+	_log_event("trial_started", {
+		"case_id": str(current_case.get("id", "B_00")),
+		"layout": str(current_case.get("layout", "")),
+		"correct_gates": current_case.get("correct_gates", []).duplicate()
+	})
 	_play_click()
 
 func _refresh_case_labels() -> void:
@@ -408,6 +450,12 @@ func _on_input_a_toggled(pressed: bool) -> void:
 		return
 	_mark_first_action()
 	inputs[0] = pressed
+	input_toggle_count += 1
+	last_edit_ms = _elapsed_ms_now()
+	_log_event("input_toggled", {
+		"input": "A",
+		"inputs": [inputs[0], inputs[1], inputs[2]]
+	})
 	_refresh_case_labels()
 	_append_trace(_local_simulation_trace("A"))
 	_update_outputs()
@@ -421,6 +469,12 @@ func _on_input_b_toggled(pressed: bool) -> void:
 		return
 	_mark_first_action()
 	inputs[1] = pressed
+	input_toggle_count += 1
+	last_edit_ms = _elapsed_ms_now()
+	_log_event("input_toggled", {
+		"input": "B",
+		"inputs": [inputs[0], inputs[1], inputs[2]]
+	})
 	_refresh_case_labels()
 	_append_trace(_local_simulation_trace("B"))
 	_update_outputs()
@@ -434,6 +488,12 @@ func _on_input_c_toggled(pressed: bool) -> void:
 		return
 	_mark_first_action()
 	inputs[2] = pressed
+	input_toggle_count += 1
+	last_edit_ms = _elapsed_ms_now()
+	_log_event("input_toggled", {
+		"input": "C",
+		"inputs": [inputs[0], inputs[1], inputs[2]]
+	})
 	_refresh_case_labels()
 	_append_trace(_local_simulation_trace("C"))
 	_update_outputs()
@@ -445,7 +505,19 @@ func _on_slot1_pressed() -> void:
 	if is_complete or is_safe_mode:
 		return
 	_mark_first_action()
+	var previous_slot := selected_slot_idx
+	slot_select_count += 1
+	if time_to_first_slot_select_ms < 0:
+		time_to_first_slot_select_ms = _elapsed_ms_now()
+	if previous_slot >= 0 and previous_slot != 0:
+		slot_switch_count += 1
 	selected_slot_idx = 0
+	_log_event("slot_selected", {
+		"slot_idx": selected_slot_idx,
+		"previous_slot_idx": previous_slot,
+		"slot_select_count": slot_select_count,
+		"slot_switch_count": slot_switch_count
+	})
 	_append_trace(_tr("logic.b.trace.select_slot1", "Выбран SLOT 1 (этап 1)."))
 	_show_feedback(_tr("logic.b.feedback.select_slot1", "Выбран SLOT 1. Установите модуль из инвентаря."), COLOR_TEXT_INFO)
 	_update_ui_state()
@@ -455,7 +527,19 @@ func _on_slot2_pressed() -> void:
 	if is_complete or is_safe_mode:
 		return
 	_mark_first_action()
+	var previous_slot := selected_slot_idx
+	slot_select_count += 1
+	if time_to_first_slot_select_ms < 0:
+		time_to_first_slot_select_ms = _elapsed_ms_now()
+	if previous_slot >= 0 and previous_slot != 1:
+		slot_switch_count += 1
 	selected_slot_idx = 1
+	_log_event("slot_selected", {
+		"slot_idx": selected_slot_idx,
+		"previous_slot_idx": previous_slot,
+		"slot_select_count": slot_select_count,
+		"slot_switch_count": slot_switch_count
+	})
 	_append_trace(_tr("logic.b.trace.select_slot2", "Выбран SLOT 2 (этап 2)."))
 	_show_feedback(_tr("logic.b.feedback.select_slot2", "Выбран SLOT 2. Установите модуль из инвентаря."), COLOR_TEXT_INFO)
 	_update_ui_state()
@@ -475,7 +559,27 @@ func _on_gate_button_toggled(pressed: bool, gate_id: String) -> void:
 		return
 
 	_mark_first_action()
-	_set_slot_filled(selected_slot_idx, gate_id)
+	var slot_idx := selected_slot_idx
+	var previous_gate := placed_gates[slot_idx]
+	var gate_changed := previous_gate != gate_id
+	if gate_changed:
+		if previous_gate == GATE_NONE:
+			gate_place_count += 1
+		else:
+			gate_replace_count += 1
+		if analyze_count > 0:
+			changed_after_analyze = true
+		if not last_counterexample.is_empty():
+			changed_after_counterexample = true
+		last_edit_ms = _elapsed_ms_now()
+		_log_event("gate_placed" if previous_gate == GATE_NONE else "gate_replaced", {
+			"slot_idx": slot_idx,
+			"previous_gate": previous_gate,
+			"gate_id": gate_id,
+			"gate_place_count": gate_place_count,
+			"gate_replace_count": gate_replace_count
+		})
+	_set_slot_filled(slot_idx, gate_id)
 	_append_trace(_tr(
 		"logic.b.trace.slot_filled",
 		"SLOT {slot} <= {gate}",
@@ -501,7 +605,21 @@ func _set_slot_filled(slot_idx: int, gate_id: String) -> void:
 func _set_slot_empty(slot_idx: int) -> void:
 	if slot_idx < 0 or slot_idx >= placed_gates.size():
 		return
+	var previous_gate := placed_gates[slot_idx]
+	if previous_gate == GATE_NONE:
+		return
 	placed_gates[slot_idx] = GATE_NONE
+	gate_clear_count += 1
+	if analyze_count > 0:
+		changed_after_analyze = true
+	if not last_counterexample.is_empty():
+		changed_after_counterexample = true
+	last_edit_ms = _elapsed_ms_now()
+	_log_event("gate_cleared", {
+		"slot_idx": slot_idx,
+		"previous_gate": previous_gate,
+		"gate_clear_count": gate_clear_count
+	})
 	_update_slot_button_text(slot_idx)
 
 func _update_slot_button_text(slot_idx: int) -> void:
@@ -660,15 +778,36 @@ func _on_test_pressed() -> void:
 	if is_complete or is_safe_mode:
 		return
 
+	_mark_first_action()
+	if time_to_first_test_ms < 0:
+		time_to_first_test_ms = _elapsed_ms_now()
+	if last_edit_ms >= 0:
+		time_from_last_edit_to_test_ms = maxi(0, _elapsed_ms_now() - last_edit_ms)
+	else:
+		time_from_last_edit_to_test_ms = -1
+
 	var assembled := _filled_slots_count() == 2
+	_log_event("test_pressed", {
+		"assembled": assembled,
+		"test_count": test_count + 1 if assembled else test_count,
+		"time_from_last_edit_to_test_ms": time_from_last_edit_to_test_ms
+	})
 	if not assembled:
+		test_without_full_assembly_count += 1
+		if test_count == 0 and test_without_full_assembly_count == 1:
+			first_test_was_incomplete = true
 		_show_feedback(_tr("logic.b.feedback.incomplete", "Проверка недоступна: заполните оба слота."), COLOR_TEXT_WARNING)
 		_append_trace(_tr("logic.b.trace.incomplete_test", "ПРОВЕРИТЬ отклонено: схема собрана не полностью."))
+		_log_event("test_result", {
+			"is_correct": false,
+			"verdict_code": "INCOMPLETE_ASSEMBLY",
+			"test_count": test_count,
+			"counterexample_present": false
+		})
 		_update_terminal()
 		_update_ui_state()
 		return
 
-	_mark_first_action()
 	test_count += 1
 	_append_trace(_tr("logic.b.trace.test_start", "ПРОВЕРКА #{n}: запущена полная валидация по {count} векторам.", {"n": test_count, "count": vector_cache.size()}))
 
@@ -678,6 +817,12 @@ func _on_test_pressed() -> void:
 		is_complete = true
 		_append_trace(_tr("logic.b.trace.test_success", "ВАЛИДАЦИЯ УСПЕШНА: схема совпадает с эталоном на всех 8 векторах."))
 		_show_feedback(_tr("logic.b.feedback.test_success", "СХЕМА ПОДТВЕРЖДЕНА ПО ВСЕМ 8 ВЕКТОРАМ."), COLOR_TEXT_SUCCESS)
+		_log_event("test_result", {
+			"is_correct": true,
+			"verdict_code": "SUCCESS",
+			"test_count": test_count,
+			"counterexample_present": false
+		})
 		_register_trial("SUCCESS", true)
 		GlobalMetrics.finish_quest(str(current_case.get("id", "B_00")), 100, true)
 	else:
@@ -686,6 +831,11 @@ func _on_test_pressed() -> void:
 		_apply_penalty(penalty)
 
 		var mismatch_line := _format_counterexample(last_counterexample)
+		counterexample_seen_count += 1
+		_log_event("counterexample_shown", {
+			"counterexample": last_counterexample.duplicate(true),
+			"counterexample_seen_count": counterexample_seen_count
+		})
 		_append_trace("КОНТРПРИМЕР: %s" % mismatch_line)
 		_show_feedback(
 			"НАЙДЕНО РАСХОЖДЕНИЕ: %s (-%d)." % [mismatch_line, int(penalty)],
@@ -695,6 +845,12 @@ func _on_test_pressed() -> void:
 		var verdict_code := "COUNTEREXAMPLE_FAIL"
 		if attempts >= MAX_ATTEMPTS:
 			verdict_code = "SAFE_MODE_TRIGGERED"
+		_log_event("test_result", {
+			"is_correct": false,
+			"verdict_code": verdict_code,
+			"test_count": test_count,
+			"counterexample_present": not last_counterexample.is_empty()
+		})
 		_register_trial(verdict_code, false)
 
 		if attempts >= MAX_ATTEMPTS:
@@ -743,6 +899,11 @@ func _on_hint_pressed() -> void:
 	_mark_first_action()
 	analyze_count += 1
 	hints_used += 1
+	_log_event("analyze_pressed", {
+		"analyze_count": analyze_count,
+		"filled_slots": _filled_slots_count(),
+		"placed_gates": placed_gates.duplicate()
+	})
 
 	var analysis := _analysis_text()
 	_show_feedback(analysis, COLOR_TEXT_INFO)
@@ -1297,6 +1458,35 @@ func _mark_first_action() -> void:
 	if first_action_ms < 0:
 		first_action_ms = Time.get_ticks_msec() - case_started_ms
 
+func _elapsed_ms_now() -> int:
+	if case_started_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - case_started_ms)
+
+func _log_event(event_name: String, data: Dictionary = {}) -> void:
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": event_name,
+		"t_ms": _elapsed_ms_now(),
+		"payload": data.duplicate(true)
+	})
+	task_session["events"] = events
+
+func _mastery_block_reason(verdict_code: String, is_correct: bool) -> String:
+	if verdict_code == "SAFE_MODE_TRIGGERED":
+		return "SAFE_MODE_TRIGGERED"
+	if counterexample_seen_count > 0 and not changed_after_counterexample and not is_correct:
+		return "COUNTEREXAMPLE_IGNORED"
+	if first_test_was_incomplete:
+		return "INCOMPLETE_FIRST_TEST"
+	if gate_replace_count >= 4:
+		return "TOO_MANY_REPLACEMENTS"
+	if test_count > 1 and is_correct:
+		return "MULTI_TEST_GUESSING"
+	if analyze_count > 0:
+		return "USED_ANALYZE"
+	return "NONE"
+
 func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	var case_id := str(current_case.get("id", "B_00"))
 	var variant_hash := str(hash("%s|%s|%s" % [
@@ -1306,7 +1496,7 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	]))
 
 	var payload := TrialV2.build("LOGIC_QUEST", "B", case_id, "MODULE_ASSEMBLY", variant_hash)
-	var elapsed_ms := maxi(0, Time.get_ticks_msec() - case_started_ms)
+	var elapsed_ms := _elapsed_ms_now()
 
 	payload["elapsed_ms"] = elapsed_ms
 	payload["duration"] = float(elapsed_ms) / 1000.0
@@ -1325,6 +1515,23 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	payload["inputs"] = [inputs[0], inputs[1], inputs[2]]
 	payload["placed_gates"] = placed_gates.duplicate()
 	payload["correct_gates"] = current_case.get("correct_gates", []).duplicate()
+	payload["trial_seq"] = trial_seq
+	payload["slot_select_count"] = slot_select_count
+	payload["slot_switch_count"] = slot_switch_count
+	payload["gate_place_count"] = gate_place_count
+	payload["gate_replace_count"] = gate_replace_count
+	payload["gate_clear_count"] = gate_clear_count
+	payload["input_toggle_count"] = input_toggle_count
+	payload["counterexample_seen_count"] = counterexample_seen_count
+	payload["changed_after_counterexample"] = changed_after_counterexample
+	payload["changed_after_analyze"] = changed_after_analyze
+	payload["test_without_full_assembly_count"] = test_without_full_assembly_count
+	payload["time_to_first_slot_select_ms"] = time_to_first_slot_select_ms
+	payload["time_to_first_test_ms"] = time_to_first_test_ms
+	payload["time_from_last_edit_to_test_ms"] = time_from_last_edit_to_test_ms
+	payload["task_session"] = task_session.duplicate(true)
+	payload["outcome_code"] = verdict_code
+	payload["mastery_block_reason"] = _mastery_block_reason(verdict_code, is_correct)
 
 	if not last_counterexample.is_empty():
 		payload["counterexample"] = last_counterexample.duplicate(true)

@@ -46,24 +46,30 @@
       }
     },
     "explain_short": [
-      "range(1, 10, 4) дает 1, 5, 9",
-      "s = 1 + 5 + 9 = 15"
+      "Only block '4' reaches target s=15.",
+      "Outcomes: 2->25, 4->15, 9->1."
     ],
     "trace_correct": [
       {
+        "step": 1,
         "i": 1,
         "s_before": 0,
-        "s_after": 1
+        "s_after": 1,
+        "event": "s += i"
       },
       {
+        "step": 2,
         "i": 5,
         "s_before": 1,
-        "s_after": 6
+        "s_after": 6,
+        "event": "s += i"
       },
       {
+        "step": 3,
         "i": 9,
         "s_before": 6,
-        "s_after": 15
+        "s_after": 15,
+        "event": "s += i"
       }
     ],
     "economy": {
@@ -109,36 +115,45 @@
     ],
     "correct_block_id": "4",
     "explain_short": [
-      "range(4) дает 0, 1, 2, 3",
-      "s = 0 + 1 + 2 + 3 = 6"
+      "Only block '4' reaches target s=6.",
+      "Outcomes: 3->3, 4->6, 5->10."
     ],
     "trace_correct": [
       {
+        "step": 1,
         "i": 0,
         "s_before": 0,
-        "s_after": 0
+        "s_after": 0,
+        "event": "s += i"
       },
       {
+        "step": 2,
         "i": 1,
         "s_before": 0,
-        "s_after": 1
+        "s_after": 1,
+        "event": "s += i"
       },
       {
+        "step": 3,
         "i": 2,
         "s_before": 1,
-        "s_after": 3
+        "s_after": 3,
+        "event": "s += i"
       },
       {
+        "step": 4,
         "i": 3,
         "s_before": 3,
-        "s_after": 6
+        "s_after": 6,
+        "event": "s += i"
       }
     ],
     "economy": {
       "analyze_cost": 10,
       "wrong_penalty": 7,
       "reward": 12
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-03",
@@ -158,10 +173,10 @@
     },
     "blocks": [
       {
-        "block_id": ">",
+        "block_id": ">=",
         "slot_type": "OP",
-        "label": ">",
-        "insert": ">"
+        "label": ">=",
+        "insert": ">="
       },
       {
         "block_id": "<",
@@ -176,29 +191,54 @@
         "insert": "=="
       }
     ],
-    "correct_block_id": ">",
+    "correct_block_id": ">=",
     "explain_short": [
-      "я > 3 подходит только для 4",
-      "Стоп, > 3 даёт только 4 (одно значение). Цель = 2? Исправляем ожидание.",
-      "Если > 3: i=4 -> s=1. Если >= 3: i=3,4 -> s=2."
+      "Only block '>=' reaches target s=2.",
+      "Outcomes: >=->2, <->3, ==->1."
     ],
     "trace_correct": [
       {
-        "i": 3,
+        "step": 1,
+        "i": 0,
         "s_before": 0,
-        "s_after": 1
+        "s_after": 0,
+        "event": "condition skipped"
       },
       {
+        "step": 2,
+        "i": 1,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 0,
+        "s_after": 1,
+        "event": "s += 1"
+      },
+      {
+        "step": 5,
         "i": 4,
         "s_before": 1,
-        "s_after": 2
+        "s_after": 2,
+        "event": "s += 1"
       }
     ],
     "economy": {
       "analyze_cost": 10,
       "wrong_penalty": 7,
       "reward": 12
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-04",
@@ -238,15 +278,87 @@
     ],
     "correct_block_id": "3",
     "explain_short": [
-      "Кратные 3 в диапазоне 0..9: 0, 3, 6, 9",
-      "Количество = 4"
+      "Only block '3' reaches target s=4.",
+      "Outcomes: 2->5, 3->4, 5->2."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 1,
+        "event": "s += 1"
+      },
+      {
+        "step": 2,
+        "i": 1,
+        "s_before": 1,
+        "s_after": 1,
+        "event": "condition skipped"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 1,
+        "s_after": 1,
+        "event": "condition skipped"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 1,
+        "s_after": 2,
+        "event": "s += 1"
+      },
+      {
+        "step": 5,
+        "i": 4,
+        "s_before": 2,
+        "s_after": 2,
+        "event": "condition skipped"
+      },
+      {
+        "step": 6,
+        "i": 5,
+        "s_before": 2,
+        "s_after": 2,
+        "event": "condition skipped"
+      },
+      {
+        "step": 7,
+        "i": 6,
+        "s_before": 2,
+        "s_after": 3,
+        "event": "s += 1"
+      },
+      {
+        "step": 8,
+        "i": 7,
+        "s_before": 3,
+        "s_after": 3,
+        "event": "condition skipped"
+      },
+      {
+        "step": 9,
+        "i": 8,
+        "s_before": 3,
+        "s_after": 3,
+        "event": "condition skipped"
+      },
+      {
+        "step": 10,
+        "i": 9,
+        "s_before": 3,
+        "s_after": 4,
+        "event": "s += 1"
+      }
+    ],
     "economy": {
       "analyze_cost": 10,
       "wrong_penalty": 7,
       "reward": 12
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-05",
@@ -285,15 +397,38 @@
     ],
     "correct_block_id": "2",
     "explain_short": [
-      "диапазон (2, 5) -> 2, 3, 4",
-      "2+3+4 = 9"
+      "Only block '2' reaches target s=9.",
+      "Outcomes: 0->10, 2->9, 3->7."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 2,
+        "s_before": 0,
+        "s_after": 2,
+        "event": "s += i"
+      },
+      {
+        "step": 2,
+        "i": 3,
+        "s_before": 2,
+        "s_after": 5,
+        "event": "s += i"
+      },
+      {
+        "step": 3,
+        "i": 4,
+        "s_before": 5,
+        "s_after": 9,
+        "event": "s += i"
+      }
+    ],
     "economy": {
       "analyze_cost": 10,
       "wrong_penalty": 7,
       "reward": 12
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-06",
@@ -333,15 +468,52 @@
     ],
     "correct_block_id": "2",
     "explain_short": [
-      "i==2 встречается один раз в 0..4",
-      "s становится равным 1"
+      "Only block '2' reaches target s=1.",
+      "Outcomes: 2->1, 5->0, 10->0."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 2,
+        "i": 1,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 0,
+        "s_after": 1,
+        "event": "s += 1"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 1,
+        "s_after": 1,
+        "event": "condition skipped"
+      },
+      {
+        "step": 5,
+        "i": 4,
+        "s_before": 1,
+        "s_after": 1,
+        "event": "condition skipped"
+      }
+    ],
     "economy": {
       "analyze_cost": 10,
       "wrong_penalty": 7,
       "reward": 12
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-07",
@@ -350,7 +522,7 @@
     "target_s": 6,
     "code_template": [
       "s = 0",
-      "for i in range(0, 10, [SLOT]):",
+      "for i in range(0, 12, [SLOT]):",
       "    s += 1"
     ],
     "slot": {
@@ -380,17 +552,59 @@
     ],
     "correct_block_id": "2",
     "explain_short": [
-      "Шаг 2: 0, 2, 4, 6, 8",
-      "Количество равно 5? Подождите. range(10) с шагом 2: 0, 2, 4, 6, 8 -> 5 элементов.",
-      "Цель равна 6? Если шаг 1 -> 10 элементов. Если шаг 2 -> 5. Если шаг 5 -> 0, 5 (2 элемента).",
-      "Ни один вариант не даёт 6. Исправляем: если цель 5, правильный блок — 2."
+      "Only block '2' reaches target s=6.",
+      "Outcomes: 1->12, 2->6, 5->3."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 1,
+        "event": "s += 1"
+      },
+      {
+        "step": 2,
+        "i": 2,
+        "s_before": 1,
+        "s_after": 2,
+        "event": "s += 1"
+      },
+      {
+        "step": 3,
+        "i": 4,
+        "s_before": 2,
+        "s_after": 3,
+        "event": "s += 1"
+      },
+      {
+        "step": 4,
+        "i": 6,
+        "s_before": 3,
+        "s_after": 4,
+        "event": "s += 1"
+      },
+      {
+        "step": 5,
+        "i": 8,
+        "s_before": 4,
+        "s_after": 5,
+        "event": "s += 1"
+      },
+      {
+        "step": 6,
+        "i": 10,
+        "s_before": 5,
+        "s_after": 6,
+        "event": "s += 1"
+      }
+    ],
     "economy": {
       "analyze_cost": 15,
       "wrong_penalty": 10,
       "reward": 15
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-08",
@@ -401,7 +615,7 @@
       "s = 0",
       "for i in range(1, 9):",
       "    if i % 2 == 0:",
-      "s += [SLOT]"
+      "        s += [SLOT]"
     ],
     "slot": {
       "slot_id": "наш",
@@ -430,15 +644,73 @@
     ],
     "correct_block_id": "i",
     "explain_short": [
-      "Чётные: 2, 4, 6, 8",
-      "Сумма: 2+4+6+8 = 20"
+      "Only block 'i' reaches target s=20.",
+      "Outcomes: 1->4, i->20, 2->8."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 1,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 2,
+        "i": 2,
+        "s_before": 0,
+        "s_after": 2,
+        "event": "s += i"
+      },
+      {
+        "step": 3,
+        "i": 3,
+        "s_before": 2,
+        "s_after": 2,
+        "event": "condition skipped"
+      },
+      {
+        "step": 4,
+        "i": 4,
+        "s_before": 2,
+        "s_after": 6,
+        "event": "s += i"
+      },
+      {
+        "step": 5,
+        "i": 5,
+        "s_before": 6,
+        "s_after": 6,
+        "event": "condition skipped"
+      },
+      {
+        "step": 6,
+        "i": 6,
+        "s_before": 6,
+        "s_after": 12,
+        "event": "s += i"
+      },
+      {
+        "step": 7,
+        "i": 7,
+        "s_before": 12,
+        "s_after": 12,
+        "event": "condition skipped"
+      },
+      {
+        "step": 8,
+        "i": 8,
+        "s_before": 12,
+        "s_after": 20,
+        "event": "s += i"
+      }
+    ],
     "economy": {
       "analyze_cost": 15,
       "wrong_penalty": 10,
       "reward": 15
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-09",
@@ -448,7 +720,7 @@
     "code_template": [
       "s = 0",
       "for i in range(5):",
-      "    if i [SLOT] 2:",
+      "    if i [SLOT] 3:",
       "        s += 1"
     ],
     "slot": {
@@ -478,18 +750,52 @@
     ],
     "correct_block_id": "<",
     "explain_short": [
-      "я < 2 подходит для 0, 1",
-      "Подождите, цель равна 3. 0, 1 — это 2 элемента.",
-      "Если > 2, подходят 3, 4 (2 элемента).",
-      "Если != 2, подходят 0,1,3,4 (4 элемента).",
-      "Возможно, диапазон(6)? < 2 это 0,1. > 2 это 3,4,5 (3 значения)."
+      "Only block '<' reaches target s=3.",
+      "Outcomes: <->3, >->1, ==->1."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 1,
+        "event": "s += 1"
+      },
+      {
+        "step": 2,
+        "i": 1,
+        "s_before": 1,
+        "s_after": 2,
+        "event": "s += 1"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 2,
+        "s_after": 3,
+        "event": "s += 1"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 3,
+        "s_after": 3,
+        "event": "condition skipped"
+      },
+      {
+        "step": 5,
+        "i": 4,
+        "s_before": 3,
+        "s_after": 3,
+        "event": "condition skipped"
+      }
+    ],
     "economy": {
       "analyze_cost": 15,
       "wrong_penalty": 10,
       "reward": 15
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-10",
@@ -528,15 +834,38 @@
     ],
     "correct_block_id": "-2",
     "explain_short": [
-      "5, 3, 1 -> 3 элемента",
-      "Шаг -2 идёт в обратном порядке"
+      "Only block '-2' reaches target s=3.",
+      "Outcomes: -1->5, -2->3, 1->0."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 5,
+        "s_before": 0,
+        "s_after": 1,
+        "event": "s += 1"
+      },
+      {
+        "step": 2,
+        "i": 3,
+        "s_before": 1,
+        "s_after": 2,
+        "event": "s += 1"
+      },
+      {
+        "step": 3,
+        "i": 1,
+        "s_before": 2,
+        "s_after": 3,
+        "event": "s += 1"
+      }
+    ],
     "economy": {
       "analyze_cost": 15,
       "wrong_penalty": 10,
       "reward": 15
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-11",
@@ -576,15 +905,87 @@
     ],
     "correct_block_id": "5",
     "explain_short": [
-      "Кратные 5: 0, 5",
-      "Количество = 2"
+      "Only block '5' reaches target s=2.",
+      "Outcomes: 3->4, 4->3, 5->2."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 1,
+        "event": "s += 1"
+      },
+      {
+        "step": 2,
+        "i": 1,
+        "s_before": 1,
+        "s_after": 1,
+        "event": "condition skipped"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 1,
+        "s_after": 1,
+        "event": "condition skipped"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 1,
+        "s_after": 1,
+        "event": "condition skipped"
+      },
+      {
+        "step": 5,
+        "i": 4,
+        "s_before": 1,
+        "s_after": 1,
+        "event": "condition skipped"
+      },
+      {
+        "step": 6,
+        "i": 5,
+        "s_before": 1,
+        "s_after": 2,
+        "event": "s += 1"
+      },
+      {
+        "step": 7,
+        "i": 6,
+        "s_before": 2,
+        "s_after": 2,
+        "event": "condition skipped"
+      },
+      {
+        "step": 8,
+        "i": 7,
+        "s_before": 2,
+        "s_after": 2,
+        "event": "condition skipped"
+      },
+      {
+        "step": 9,
+        "i": 8,
+        "s_before": 2,
+        "s_after": 2,
+        "event": "condition skipped"
+      },
+      {
+        "step": 10,
+        "i": 9,
+        "s_before": 2,
+        "s_after": 2,
+        "event": "condition skipped"
+      }
+    ],
     "economy": {
       "analyze_cost": 15,
       "wrong_penalty": 10,
       "reward": 15
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-12",
@@ -594,7 +995,7 @@
     "code_template": [
       "s = 0",
       "for i in range(4):",
-      "s += [SLOT]"
+      "    s += [SLOT]"
     ],
     "slot": {
       "slot_id": "вал",
@@ -623,15 +1024,45 @@
     ],
     "correct_block_id": "2",
     "explain_short": [
-      "4 итерации",
-      "4 * 2 = 8"
+      "Only block '2' reaches target s=8.",
+      "Outcomes: 1->4, 2->8, i->6."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 2,
+        "event": "s += 2"
+      },
+      {
+        "step": 2,
+        "i": 1,
+        "s_before": 2,
+        "s_after": 4,
+        "event": "s += 2"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 4,
+        "s_after": 6,
+        "event": "s += 2"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 6,
+        "s_after": 8,
+        "event": "s += 2"
+      }
+    ],
     "economy": {
       "analyze_cost": 15,
       "wrong_penalty": 10,
       "reward": 15
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-13",
@@ -671,15 +1102,59 @@
     ],
     "correct_block_id": "<",
     "explain_short": [
-      "i > 1 и i < 4 подходят для 2, 3",
-      "Количество = 2"
+      "Only block '<' reaches target s=2.",
+      "Outcomes: <->2, >->1, ==->1."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 2,
+        "i": 1,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 0,
+        "s_after": 1,
+        "event": "s += 1"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 1,
+        "s_after": 2,
+        "event": "s += 1"
+      },
+      {
+        "step": 5,
+        "i": 4,
+        "s_before": 2,
+        "s_after": 2,
+        "event": "condition skipped"
+      },
+      {
+        "step": 6,
+        "i": 5,
+        "s_before": 2,
+        "s_after": 2,
+        "event": "condition skipped"
+      }
+    ],
     "economy": {
       "analyze_cost": 20,
       "wrong_penalty": 15,
       "reward": 20
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-14",
@@ -718,15 +1193,38 @@
     ],
     "correct_block_id": "4",
     "explain_short": [
-      "Шаг 4: 0, 4, 8",
-      "Сумма: 0+4+8 = 12"
+      "Only block '4' reaches target s=12.",
+      "Outcomes: 2->20, 3->18, 4->12."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "s += i"
+      },
+      {
+        "step": 2,
+        "i": 4,
+        "s_before": 0,
+        "s_after": 4,
+        "event": "s += i"
+      },
+      {
+        "step": 3,
+        "i": 8,
+        "s_before": 4,
+        "s_after": 12,
+        "event": "s += i"
+      }
+    ],
     "economy": {
       "analyze_cost": 20,
       "wrong_penalty": 15,
       "reward": 20
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-15",
@@ -746,10 +1244,10 @@
     },
     "blocks": [
       {
-        "block_id": "1",
+        "block_id": "4",
         "slot_type": "INT",
-        "label": "1",
-        "insert": "1"
+        "label": "4",
+        "insert": "4"
       },
       {
         "block_id": "2",
@@ -766,16 +1264,52 @@
     ],
     "correct_block_id": "3",
     "explain_short": [
-      "Чётные: 0, 2, 4 (3 элемента)",
-      "Или i==3 добавил ещё одно значение",
-      "Итого 4"
+      "Only block '3' reaches target s=4.",
+      "Outcomes: 4->3, 2->3, 3->4."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 1,
+        "event": "s += 1"
+      },
+      {
+        "step": 2,
+        "i": 1,
+        "s_before": 1,
+        "s_after": 1,
+        "event": "condition skipped"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 1,
+        "s_after": 2,
+        "event": "s += 1"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 2,
+        "s_after": 3,
+        "event": "s += 1"
+      },
+      {
+        "step": 5,
+        "i": 4,
+        "s_before": 3,
+        "s_after": 4,
+        "event": "s += 1"
+      }
+    ],
     "economy": {
       "analyze_cost": 20,
       "wrong_penalty": 15,
       "reward": 20
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-16",
@@ -786,7 +1320,7 @@
       "s = 0",
       "for i in range(6):",
       "    if i > 2:",
-      "s += [SLOT]"
+      "        s += [SLOT]"
     ],
     "slot": {
       "slot_id": "вал",
@@ -815,15 +1349,59 @@
     ],
     "correct_block_id": "5",
     "explain_short": [
-      "i > 2 подходит для 3, 4, 5 (3 элемента)",
-      "3 * 5 = 15"
+      "Only block '5' reaches target s=15.",
+      "Outcomes: 1->3, i->12, 5->15."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 2,
+        "i": 1,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 0,
+        "s_after": 5,
+        "event": "s += 5"
+      },
+      {
+        "step": 5,
+        "i": 4,
+        "s_before": 5,
+        "s_after": 10,
+        "event": "s += 5"
+      },
+      {
+        "step": 6,
+        "i": 5,
+        "s_before": 10,
+        "s_after": 15,
+        "event": "s += 5"
+      }
+    ],
     "economy": {
       "analyze_cost": 20,
       "wrong_penalty": 15,
       "reward": 20
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-17",
@@ -834,7 +1412,7 @@
       "s = 0",
       "for i in range([SLOT]):",
       "    if i % 2 != 0:",
-      "        s += i"
+      "        s += 2"
     ],
     "slot": {
       "slot_id": "останавливаться",
@@ -861,23 +1439,61 @@
         "insert": "6"
       }
     ],
-    "correct_block_id": "5",
+    "correct_block_id": "6",
     "explain_short": [
-      "диапазон(5): 0,1,2,3,4",
-      "Нечётные: 1, 3",
-      "Сумма: 4? Подождите, цель 6. 1+3=4.",
-      "Если диапазон(6): 0..5. Нечётные: 1,3,5. Сумма: 9.",
-      "Если диапазон(4): 1,3. Сумма 4.",
-      "Нужна сумма 6? 1+? Нет. 1+5=6.",
-      "Если нужно 6, может быть i+1? Нет.",
-      "Давайте изменим цель на 4 и правильный блок на 5."
+      "Only block '6' reaches target s=6.",
+      "Outcomes: 4->4, 5->4, 6->6."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 2,
+        "i": 1,
+        "s_before": 0,
+        "s_after": 2,
+        "event": "s += 2"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 2,
+        "s_after": 2,
+        "event": "condition skipped"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 2,
+        "s_after": 4,
+        "event": "s += 2"
+      },
+      {
+        "step": 5,
+        "i": 4,
+        "s_before": 4,
+        "s_after": 4,
+        "event": "condition skipped"
+      },
+      {
+        "step": 6,
+        "i": 5,
+        "s_before": 4,
+        "s_after": 6,
+        "event": "s += 2"
+      }
+    ],
     "economy": {
       "analyze_cost": 20,
       "wrong_penalty": 15,
       "reward": 20
-    }
+    },
+    "distractor_feedback": {}
   },
   {
     "id": "B-18",
@@ -917,14 +1533,51 @@
     ],
     "correct_block_id": "2",
     "explain_short": [
-      "Когда я достигнет 2, сбрасывается в 0",
-      "Результат = 0"
+      "Only block '2' reaches target s=0.",
+      "Outcomes: 2->0, 5->10, 10->10."
     ],
-    "trace_correct": [],
+    "trace_correct": [
+      {
+        "step": 1,
+        "i": 0,
+        "s_before": 10,
+        "s_after": 10,
+        "event": "condition skipped"
+      },
+      {
+        "step": 2,
+        "i": 1,
+        "s_before": 10,
+        "s_after": 10,
+        "event": "condition skipped"
+      },
+      {
+        "step": 3,
+        "i": 2,
+        "s_before": 10,
+        "s_after": 0,
+        "event": "s = 0"
+      },
+      {
+        "step": 4,
+        "i": 3,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      },
+      {
+        "step": 5,
+        "i": 4,
+        "s_before": 0,
+        "s_after": 0,
+        "event": "condition skipped"
+      }
+    ],
     "economy": {
       "analyze_cost": 20,
       "wrong_penalty": 15,
       "reward": 20
-    }
+    },
+    "distractor_feedback": {}
   }
 ]

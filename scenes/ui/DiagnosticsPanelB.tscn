@@ -14,26 +14,36 @@ theme = ExtResource("7_mudek")
 script = ExtResource("1_script")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
-layout_mode = 2
-theme_override_constants/separation = 16
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="VBoxContainer"]
 layout_mode = 2
-text = "ДИАГНОСТИЧЕСКИЙ ТРЕЙС"
+text = "Variant reasoning"
 horizontal_alignment = 1
 
 [node name="ExplainList" type="RichTextLabel" parent="VBoxContainer"]
 layout_mode = 2
-fit_content = true
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = false
 
 [node name="TraceList" type="RichTextLabel" parent="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "Журнал трассировки..."
+text = "Trace"
 
 [node name="BtnClose" type="Button" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-text = "ЗАКРЫТЬ"
-
+text = "Close"

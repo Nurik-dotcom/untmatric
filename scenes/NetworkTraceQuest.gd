@@ -961,7 +961,11 @@ func _on_timeout() -> void:
 
 func _show_diagnostics(lines: Array[String]) -> void:
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", "\u0414\u0418\u0410\u0413\u041d\u041e\u0421\u0422\u0418\u041a\u0410", lines)
+		diagnostics_panel.call("setup", {
+			"mode": "text_only",
+			"title": "\u0414\u0418\u0410\u0413\u041d\u041e\u0421\u0422\u0418\u041a\u0410",
+			"reasoning_lines": lines
+		})
 	diagnostics_panel.visible = true
 func _trigger_glitch() -> void:
 	var shader_material: ShaderMaterial = crt_overlay.material as ShaderMaterial

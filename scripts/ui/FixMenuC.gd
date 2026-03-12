@@ -33,8 +33,8 @@ func _ready() -> void:
 	btn_apply.disabled = true
 
 func setup(line_number_1_based: int, original_line: String, fix_options: Array, preselected_option_id: String = "") -> void:
-	lbl_title.text = "ИСПРАВИТЬ СТРОКУ %02d" % line_number_1_based
-	lbl_original.text = "оригинал: %s" % _short_line(original_line, 64)
+	lbl_title.text = "FIX LINE %02d" % line_number_1_based
+	lbl_original.text = "Original: %s" % _short_line(original_line, 64)
 
 	options_by_id.clear()
 	var option_buttons := {
@@ -59,11 +59,7 @@ func setup(line_number_1_based: int, original_line: String, fix_options: Array, 
 		options_by_id[option_id] = opt
 		var btn: Button = option_buttons[option_id]
 		btn.disabled = false
-		btn.text = "%s) %s  ->  s=%s" % [
-			option_id,
-			_short_line(str(opt.get("replace_line", ""))),
-			str(opt.get("result_s", "?"))
-		]
+		btn.text = "%s) %s" % [option_id, _short_line(str(opt.get("replace_line", "")))]
 
 	var normalized_preselected := _normalize_option_id(preselected_option_id)
 	selected_option_id = normalized_preselected if options_by_id.has(normalized_preselected) else ""
@@ -100,4 +96,3 @@ func _on_apply_pressed() -> void:
 func _on_close_pressed() -> void:
 	canceled.emit()
 	hide()
-

@@ -1,9 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=4 format=3 uid="uid://28drfgsf7i8h"]
 
 [ext_resource type="Script" path="res://scripts/SuspectQuestA.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
-[ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_noir_script"]
 
 [node name="SuspectQuestA" type="Control"]
 layout_mode = 3
@@ -24,12 +23,9 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.07, 0.08, 1)
 
-[node name="NoirOverlay" type="CanvasLayer" parent="." instance=ExtResource("3_noir")]
-layer = 100
-script = ExtResource("4_noir_script")
+[node name="NoirOverlay" parent="." instance=ExtResource("3_noir")]
 intensity = 0.18
 fx_quality = 1
-tint_color = Color(0.93, 0.93, 0.93, 1)
 overlay_mode = "PENCIL"
 
 [node name="SafeArea" type="MarginContainer" parent="."]
@@ -57,24 +53,24 @@ theme_override_constants/separation = 8
 [node name="BtnQuestBack" type="Button" parent="SafeArea/MainVBox/HeaderBar"]
 custom_minimum_size = Vector2(120, 52)
 layout_mode = 2
-text = "BACK"
+text = "НАЗАД"
 
 [node name="LblClueTitle" type="Label" parent="SafeArea/MainVBox/HeaderBar"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "CLUE #A-01"
+text = "УЛИКА #A-01"
 horizontal_alignment = 1
 
 [node name="LblSessionId" type="Label" parent="SafeArea/MainVBox/HeaderBar"]
 custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
-text = "SESSION 0000"
+text = "СЕССИЯ 0000"
 horizontal_alignment = 2
 
 [node name="BtnSettings" type="Button" parent="SafeArea/MainVBox/HeaderBar"]
 custom_minimum_size = Vector2(64, 52)
 layout_mode = 2
-text = "SET"
+text = "НАСТР"
 
 [node name="CaseBriefPanel" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
@@ -93,24 +89,24 @@ theme_override_constants/separation = 4
 [node name="ClueLabel" type="Label" parent="SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
-text = "Trace focus"
+text = "На что смотреть"
 
 [node name="BriefingTitle" type="Label" parent="SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Decrypt the execution log"
+text = "Шифрблок A"
 autowrap_mode = 2
 
 [node name="BriefingText" type="Label" parent="SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Read the code and reconstruct the final value of s."
+text = "Прочитайте код и восстановите итоговое значение s."
 autowrap_mode = 2
 
 [node name="TopicHintBadge" type="Label" parent="SafeArea/MainVBox/CaseBriefPanel/BriefMargin/BriefVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
-text = "Watch loop boundary conditions."
+text = "На что смотреть: stop в range не включается."
 autowrap_mode = 2
 
 [node name="WorkspaceContainer" type="BoxContainer" parent="SafeArea/MainVBox"]
@@ -148,7 +144,7 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 18
-text = "CODE"
+text = "КОД"
 
 [node name="CodeScroll" type="ScrollContainer" parent="SafeArea/MainVBox/WorkspaceContainer/CodePanel/CodeMargin/CodeVBox"]
 layout_mode = 2
@@ -166,7 +162,6 @@ custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.0
 
 [node name="TraceMargin" type="MarginContainer" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel"]
 layout_mode = 2
@@ -189,15 +184,35 @@ theme_override_constants/separation = 6
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 18
-text = "EXECUTION LOG"
+text = "ЖУРНАЛ ВЫПОЛНЕНИЯ"
 
 [node name="TraceModeBadge" type="Label" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceHeader"]
 layout_mode = 2
-text = "Collapsed"
+text = "Свернуто"
 
 [node name="ToggleTraceButton" type="Button" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceHeader"]
 layout_mode = 2
-text = "Open"
+text = "Открыть"
+
+[node name="TraceCollapsedState" type="VBoxContainer" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="CollapsedTitle" type="Label" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceCollapsedState"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Журнал выполнения скрыт."
+
+[node name="CollapsedHint" type="Label" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceCollapsedState"]
+layout_mode = 2
+text = "Откройте его, чтобы увидеть, как меняется s по шагам."
+autowrap_mode = 2
+
+[node name="CollapsedLegend" type="Label" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceCollapsedState"]
+layout_mode = 2
+text = "шаг | i | s до -> s после"
 
 [node name="TraceBody" type="VBoxContainer" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox"]
 layout_mode = 2
@@ -222,22 +237,22 @@ theme_override_constants/separation = 6
 [node name="StepPrevButton" type="Button" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Prev"
+text = "Назад"
 
 [node name="StepNextButton" type="Button" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Next"
+text = "Следующий шаг"
 
 [node name="ShowAllButton" type="Button" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Show all"
+text = "Показать всё"
 
 [node name="ResetTraceButton" type="Button" parent="SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Reset"
+text = "Сброс"
 
 [node name="SolvePanel" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
@@ -256,28 +271,33 @@ theme_override_constants/separation = 6
 [node name="AnswerLabel" type="Label" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Final answer (s)"
+text = "Итоговое значение s"
 
-[node name="AnswerRow" type="HBoxContainer" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox"]
+[node name="AnswerRow" type="BoxContainer" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="AnswerInput" type="LineEdit" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-placeholder_text = "Enter integer"
+placeholder_text = "Введите целое число"
 virtual_keyboard_type = 2
 
 [node name="PrimaryCheckButton" type="Button" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow"]
 layout_mode = 2
-theme_type_variation = &"PrimaryButton"
-text = "Check"
+text = "Проверить"
 
 [node name="BtnNext" type="Button" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow"]
 visible = false
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
-text = "Next"
+text = "ДАЛЕЕ"
+
+[node name="AnswerHintLabel" type="Label" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Сначала проследите ход выполнения, затем подтвердите итог."
+autowrap_mode = 2
 
 [node name="SolveActions" type="HBoxContainer" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox"]
 layout_mode = 2
@@ -286,17 +306,17 @@ theme_override_constants/separation = 8
 [node name="StepAnalysisButton" type="Button" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Open Execution Log"
+text = "Пошаговый разбор"
 
 [node name="HintButton" type="Button" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Hint"
+text = "Подсказка"
 
 [node name="WhyButton" type="Button" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Why"
+text = "Почему так?"
 
 [node name="StatusBar" type="PanelContainer" parent="SafeArea/MainVBox"]
 layout_mode = 2
@@ -315,12 +335,12 @@ theme_override_constants/separation = 8
 [node name="LblStatus" type="Label" parent="SafeArea/MainVBox/StatusBar/StatusMargin/StatusRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Read the code and trace."
+text = "Код готов. При необходимости откройте журнал выполнения и проследите изменение s."
 autowrap_mode = 2
 
 [node name="LblAttempts" type="Label" parent="SafeArea/MainVBox/StatusBar/StatusMargin/StatusRow"]
 layout_mode = 2
-text = "Attempts: 0"
+text = "ПОПЫТКИ: 0/3"
 
 [node name="InspectorPopup" type="PopupPanel" parent="."]
 initial_position = 1
@@ -328,13 +348,16 @@ size = Vector2i(520, 300)
 theme = ExtResource("2_theme")
 
 [node name="Root" type="VBoxContainer" parent="InspectorPopup"]
-layout_mode = 2
+offset_left = 16.0
+offset_top = 14.0
+offset_right = 504.0
+offset_bottom = 286.0
 theme_override_constants/separation = 10
 
 [node name="LblTitle" type="Label" parent="InspectorPopup/Root"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "SETTINGS"
+text = "НАСТРОЙКИ"
 horizontal_alignment = 1
 
 [node name="SettingsGrid" type="GridContainer" parent="InspectorPopup/Root"]
@@ -345,7 +368,7 @@ columns = 2
 
 [node name="LblFx" type="Label" parent="InspectorPopup/Root/SettingsGrid"]
 layout_mode = 2
-text = "Effects"
+text = "ЭФФЕКТЫ"
 
 [node name="FxSelect" type="OptionButton" parent="InspectorPopup/Root/SettingsGrid"]
 custom_minimum_size = Vector2(220, 48)
@@ -353,7 +376,7 @@ layout_mode = 2
 
 [node name="LblOverlay" type="Label" parent="InspectorPopup/Root/SettingsGrid"]
 layout_mode = 2
-text = "Overlay"
+text = "НАЛОЖЕНИЕ"
 
 [node name="OverlaySelect" type="OptionButton" parent="InspectorPopup/Root/SettingsGrid"]
 custom_minimum_size = Vector2(220, 48)
@@ -362,7 +385,7 @@ layout_mode = 2
 [node name="BtnClose" type="Button" parent="InspectorPopup/Root"]
 custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
-text = "Close"
+text = "ЗАКРЫТЬ"
 
 [node name="ExplanationOverlay" type="PanelContainer" parent="."]
 visible = false
@@ -375,11 +398,6 @@ grow_vertical = 2
 
 [node name="OverlayMargin" type="MarginContainer" parent="ExplanationOverlay"]
 layout_mode = 2
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 32
 theme_override_constants/margin_right = 32
@@ -412,7 +430,7 @@ theme_override_constants/separation = 8
 [node name="ExplanationTitle" type="Label" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Why this result"
+text = "Почему итог именно такой"
 horizontal_alignment = 1
 
 [node name="ExplanationText" type="RichTextLabel" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox"]
@@ -420,7 +438,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 bbcode_enabled = true
-text = "Explanation is ready."
+text = "Объяснение готово."
 
 [node name="OverlayButtons" type="HBoxContainer" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox"]
 layout_mode = 2
@@ -429,15 +447,15 @@ theme_override_constants/separation = 8
 [node name="BtnCloseOverlay" type="Button" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/OverlayButtons"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Close"
+text = "Закрыть"
 
 [node name="BtnOpenSteps" type="Button" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/OverlayButtons"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Open steps"
+text = "Открыть шаги"
 
 [node name="BtnOverlayNext" type="Button" parent="ExplanationOverlay/OverlayMargin/OverlayCenter/OverlayCard/OverlayCardMargin/OverlayVBox/OverlayButtons"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "Next"
+text = "ДАЛЕЕ"

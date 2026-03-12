@@ -194,6 +194,24 @@ var hints_used: int = 0
 var scan_count: int = 0
 var analyze_count: int = 0
 var patch_press_count: int = 0
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+
+var law_select_count: int = 0
+var patch_select_count: int = 0
+var patch_apply_count: int = 0
+var validation_count: int = 0
+var counterexample_seen_count: int = 0
+
+var changed_after_validation_fail: bool = false
+var changed_after_overload: bool = false
+
+var time_to_first_analyze_ms: int = -1
+var time_to_first_patch_ms: int = -1
+var time_to_first_validation_ms: int = -1
+var time_from_patch_to_validation_ms: int = -1
+
+var last_edit_ms: int = -1
 
 var selected_law_family: String = ""
 var selected_option_idx: int = -1
@@ -323,6 +341,20 @@ func load_case(idx: int) -> void:
 	scan_count = 0
 	analyze_count = 0
 	patch_press_count = 0
+	trial_seq += 1
+	task_session = {"events": [], "trial_seq": trial_seq}
+	law_select_count = 0
+	patch_select_count = 0
+	patch_apply_count = 0
+	validation_count = 0
+	counterexample_seen_count = 0
+	changed_after_validation_fail = false
+	changed_after_overload = false
+	time_to_first_analyze_ms = -1
+	time_to_first_patch_ms = -1
+	time_to_first_validation_ms = -1
+	time_from_patch_to_validation_ms = -1
+	last_edit_ms = -1
 	selected_law_family = ""
 	selected_option_idx = -1
 	applied_option_idx = -1
@@ -344,6 +376,12 @@ func load_case(idx: int) -> void:
 	_build_patch_buttons()
 	_append_trace("Case loaded. Inspect source formula.")
 	_show_feedback("Step 1: choose a law family.", Color(0.60, 0.80, 0.96, 1.0))
+	_log_event("trial_started", {
+		"case_id": str(current_case.get("id", "C_00")),
+		"source_expr": _format_expr(current_case.get("expr_start")),
+		"target_gates": int(current_case.get("target_gates", 0)),
+		"current_state": _state_name(current_state)
+	})
 	_refresh_ui()
 
 func _prepare_case_options() -> void:
@@ -408,6 +446,12 @@ func _on_law_selected(law_id: String) -> void:
 	if law_id.is_empty():
 		return
 
+	if validation_failed:
+		changed_after_validation_fail = true
+	if validation_overloaded:
+		changed_after_overload = true
+	law_select_count += 1
+	last_edit_ms = _elapsed_ms_now()
 	selected_law_family = law_id
 	if selected_option_idx >= 0:
 		selected_option_idx = -1
@@ -420,6 +464,11 @@ func _on_law_selected(law_id: String) -> void:
 	last_equivalence_result.clear()
 	last_validation_summary.clear()
 	current_state = QuestState.STATE_SELECT_PATCH
+	_log_event("law_selected", {
+		"law_id": law_id,
+		"law_select_count": law_select_count,
+		"state": _state_name(current_state)
+	})
 
 	_append_trace("Law selected: %s." % _law_name(law_id))
 	_show_feedback("Law selected. Choose patch proposal.", Color(0.60, 0.80, 0.96, 1.0))
@@ -439,8 +488,14 @@ func _on_patch_pressed(idx: int) -> void:
 		_show_feedback("This patch belongs to another law family.", Color(1.0, 0.74, 0.62, 1.0))
 		return
 
+	if validation_failed:
+		changed_after_validation_fail = true
+	if validation_overloaded:
+		changed_after_overload = true
 	selected_option_idx = idx
 	patch_press_count += 1
+	patch_select_count += 1
+	last_edit_ms = _elapsed_ms_now()
 	applied_option_idx = -1
 	applied_expr = null
 	applied_load = -1
@@ -450,6 +505,11 @@ func _on_patch_pressed(idx: int) -> void:
 	last_equivalence_result.clear()
 	last_validation_summary.clear()
 	current_state = QuestState.STATE_PATCH_READY
+	_log_event("patch_selected", {
+		"selected_option_idx": selected_option_idx,
+		"selected_law_family": selected_law_family,
+		"patch_select_count": patch_select_count
+	})
 
 	_append_trace("Patch selected: %s." % str(option.get("label", "")))
 	_show_feedback("Patch loaded. Apply patch next.", Color(0.60, 0.80, 0.96, 1.0))
@@ -466,16 +526,31 @@ func _on_apply_patch_pressed() -> void:
 		_show_feedback("Select patch first.", Color(1.0, 0.74, 0.62, 1.0))
 		return
 
+	if validation_failed:
+		changed_after_validation_fail = true
+	if validation_overloaded:
+		changed_after_overload = true
+	patch_apply_count += 1
+	if time_to_first_patch_ms < 0:
+		time_to_first_patch_ms = _elapsed_ms_now()
 	var option: Dictionary = _option(selected_option_idx)
 	applied_option_idx = selected_option_idx
 	applied_expr = option.get("expr")
 	applied_load = count_gates(applied_expr)
+	last_edit_ms = _elapsed_ms_now()
 	validation_passed = false
 	validation_failed = false
 	validation_overloaded = false
 	last_equivalence_result.clear()
 	last_validation_summary.clear()
 	current_state = QuestState.STATE_PATCH_APPLIED
+	_log_event("patch_applied", {
+		"selected_option_idx": selected_option_idx,
+		"selected_law_family": selected_law_family,
+		"applied_option_idx": applied_option_idx,
+		"applied_load": applied_load,
+		"patch_apply_count": patch_apply_count
+	})
 
 	_append_trace("Patch applied. Result expression assembled.")
 	_show_feedback("Result assembled. Run full validation.", Color(0.60, 0.80, 0.96, 1.0))
@@ -491,7 +566,19 @@ func _on_scan_pressed() -> void:
 
 	current_state = QuestState.STATE_VALIDATING
 	scan_count += 1
+	validation_count += 1
+	if time_to_first_validation_ms < 0:
+		time_to_first_validation_ms = _elapsed_ms_now()
+	if last_edit_ms >= 0:
+		time_from_patch_to_validation_ms = maxi(0, _elapsed_ms_now() - last_edit_ms)
+	else:
+		time_from_patch_to_validation_ms = -1
 	_append_trace("Full validation started on all vectors.")
+	_log_event("validation_started", {
+		"validation_count": validation_count,
+		"time_from_patch_to_validation_ms": time_from_patch_to_validation_ms,
+		"state": _state_name(current_state)
+	})
 
 	var source_expr: Variant = current_case.get("expr_start")
 	var vars: Array = current_case.get("vars", [])
@@ -522,6 +609,13 @@ func _on_scan_pressed() -> void:
 		current_state = QuestState.STATE_VALIDATION_PASSED
 		_append_trace("Node restored. Equivalence confirmed.")
 		_show_feedback("Node restored. Equivalence confirmed.", Color(0.45, 0.92, 0.62, 1.0))
+		_log_event("validation_result", {
+			"validation_passed": validation_passed,
+			"validation_failed": validation_failed,
+			"validation_overloaded": validation_overloaded,
+			"applied_load": applied_load,
+			"target_gates": target_load
+		})
 		_register_trial("SUCCESS", true)
 	elif is_equivalent:
 		validation_overloaded = true
@@ -531,6 +625,13 @@ func _on_scan_pressed() -> void:
 		_apply_penalty(8.0)
 		_append_trace("Equivalent patch, but load exceeds target.")
 		_show_feedback("Equivalent but overloaded. Pick a lighter patch.", Color(1.0, 0.78, 0.32, 1.0))
+		_log_event("validation_result", {
+			"validation_passed": validation_passed,
+			"validation_failed": validation_failed,
+			"validation_overloaded": validation_overloaded,
+			"applied_load": applied_load,
+			"target_gates": target_load
+		})
 		_register_trial("OVERLOAD", false)
 	else:
 		validation_failed = true
@@ -538,8 +639,22 @@ func _on_scan_pressed() -> void:
 		attempts += 1
 		session_total_attempts += 1
 		_apply_penalty(15.0)
-		_append_trace("Mismatch found: %s." % _format_counterexample(eq_result.get("counterexample", {})))
+		var counterexample: Dictionary = eq_result.get("counterexample", {})
+		counterexample_seen_count += 1
+		var counterexample_payload: Dictionary = counterexample.duplicate(true)
+		_append_trace("Mismatch found: %s." % _format_counterexample(counterexample))
+		_log_event("counterexample_shown", {
+			"counterexample": counterexample_payload,
+			"counterexample_seen_count": counterexample_seen_count
+		})
 		_show_feedback("Mismatch detected. Inspect counterexample.", Color(1.0, 0.35, 0.32, 1.0))
+		_log_event("validation_result", {
+			"validation_passed": validation_passed,
+			"validation_failed": validation_failed,
+			"validation_overloaded": validation_overloaded,
+			"applied_load": applied_load,
+			"target_gates": target_load
+		})
 		_register_trial("MISMATCH", false)
 
 	if not is_complete and attempts >= MAX_ATTEMPTS:
@@ -560,6 +675,13 @@ func _on_hint_pressed() -> void:
 	hints_used += 1
 	analyze_count += 1
 	session_total_analyzes += 1
+	if time_to_first_analyze_ms < 0:
+		time_to_first_analyze_ms = _elapsed_ms_now()
+	_log_event("analyze_pressed", {
+		"current_state": _state_name(current_state),
+		"selected_law_family": selected_law_family,
+		"analyze_count": analyze_count
+	})
 
 	var msg: String = ""
 	match current_state:
@@ -1049,6 +1171,35 @@ func _on_back_pressed() -> void:
 func _mark_first_action() -> void:
 	pass
 
+func _elapsed_ms_now() -> int:
+	if case_started_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - case_started_ms)
+
+func _log_event(event_name: String, data: Dictionary = {}) -> void:
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": event_name,
+		"t_ms": _elapsed_ms_now(),
+		"payload": data.duplicate(true)
+	})
+	task_session["events"] = events
+
+func _mastery_block_reason(verdict_code: String, is_correct: bool) -> String:
+	if verdict_code == SAFE_MODE_REVEAL_VERDICT or is_safe_mode:
+		return "USED_SAFE_MODE"
+	if validation_count <= 0:
+		return "NO_FINAL_VALIDATION"
+	if counterexample_seen_count > 0 and not changed_after_validation_fail and not is_correct:
+		return "MISMATCH_IGNORED"
+	if validation_overloaded and not changed_after_overload and not is_correct:
+		return "OVERLOAD_IGNORED"
+	if validation_count > 1 and is_correct:
+		return "MULTI_VALIDATION_GUESSING"
+	if analyze_count > 0:
+		return "ANALYZE_DEPENDENCY"
+	return "NONE"
+
 func _lock_controls(seconds: float) -> void:
 	is_locked = true
 	btn_apply_patch.disabled = true
@@ -1086,6 +1237,21 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	payload["safe_mode_used"] = safe_mode_used
 	payload["source_expr_formatted"] = _format_expr(current_case.get("expr_start"))
 	payload["result_expr_formatted"] = _format_expr(applied_expr) if applied_expr != null else ""
+	payload["trial_seq"] = trial_seq
+	payload["law_select_count"] = law_select_count
+	payload["patch_select_count"] = patch_select_count
+	payload["patch_apply_count"] = patch_apply_count
+	payload["validation_count"] = validation_count
+	payload["counterexample_seen_count"] = counterexample_seen_count
+	payload["changed_after_validation_fail"] = changed_after_validation_fail
+	payload["changed_after_overload"] = changed_after_overload
+	payload["time_to_first_analyze_ms"] = time_to_first_analyze_ms
+	payload["time_to_first_patch_ms"] = time_to_first_patch_ms
+	payload["time_to_first_validation_ms"] = time_to_first_validation_ms
+	payload["time_from_patch_to_validation_ms"] = time_from_patch_to_validation_ms
+	payload["task_session"] = task_session.duplicate(true)
+	payload["outcome_code"] = verdict_code
+	payload["mastery_block_reason"] = _mastery_block_reason(verdict_code, is_correct)
 	GlobalMetrics.register_trial(payload)
 
 func _format_counterexample(counterexample: Dictionary) -> String:

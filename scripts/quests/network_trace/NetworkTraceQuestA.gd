@@ -75,6 +75,35 @@ var selected_error_code: String = ""
 var attempts: Array[Dictionary] = []
 var task_session: Dictionary = {}
 var variant_hash: String = ""
+var trial_seq: int = 0
+
+var evidence_open_count: int = 0
+var evidence_inspect_count: int = 0
+var unique_evidence_ids: Dictionary = {}
+
+var device_drag_start_count: int = 0
+var device_drop_count: int = 0
+var device_replace_count: int = 0
+var device_remove_count: int = 0
+var wrong_device_try_count: int = 0
+
+var trace_run_count: int = 0
+var trace_run_before_min_evidence_count: int = 0
+var run_cooldown_hit_count: int = 0
+
+var details_open_count: int = 0
+var diagnostics_open_count: int = 0
+var changed_after_diagnostics: bool = false
+var changed_after_fail: bool = false
+
+var time_to_first_evidence_ms: int = -1
+var time_to_first_drop_ms: int = -1
+var time_to_first_run_ms: int = -1
+var time_from_last_edit_to_run_ms: int = -1
+
+var last_edit_ms: int = -1
+var _pending_change_after_diagnostics: bool = false
+var _pending_change_after_fail: bool = false
 
 var palette_cards: Array[NetworkTraceDeviceCard] = []
 
@@ -230,6 +259,8 @@ func _start_level(index: int) -> void:
 	if levels.is_empty():
 		return
 
+	trial_seq += 1
+
 	if index >= levels.size():
 		index = 0
 	current_level_index = index
@@ -250,6 +281,28 @@ func _start_level(index: int) -> void:
 	selected_evidence_indices.clear()
 	attempts.clear()
 	evidence_data = _extract_evidence_data(current_level)
+	evidence_open_count = 0
+	evidence_inspect_count = 0
+	unique_evidence_ids.clear()
+	device_drag_start_count = 0
+	device_drop_count = 0
+	device_replace_count = 0
+	device_remove_count = 0
+	wrong_device_try_count = 0
+	trace_run_count = 0
+	trace_run_before_min_evidence_count = 0
+	run_cooldown_hit_count = 0
+	details_open_count = 0
+	diagnostics_open_count = 0
+	changed_after_diagnostics = false
+	changed_after_fail = false
+	time_to_first_evidence_ms = -1
+	time_to_first_drop_ms = -1
+	time_to_first_run_ms = -1
+	time_from_last_edit_to_run_ms = -1
+	last_edit_ms = -1
+	_pending_change_after_diagnostics = false
+	_pending_change_after_fail = false
 
 	level_started_ms = Time.get_ticks_msec()
 	first_action_ms = -1
@@ -260,6 +313,7 @@ func _start_level(index: int) -> void:
 	required_evidence = clampi(int(current_level.get("required_poi", 2)), 1, evidence_data.size())
 
 	task_session = {
+		"trial_seq": trial_seq,
 		"task_id": str(current_level.get("id", "NT_A_UNKNOWN")),
 		"variant_hash": variant_hash,
 		"started_at_ticks": level_started_ms,
@@ -288,6 +342,12 @@ func _start_level(index: int) -> void:
 	lbl_status.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 
 	_update_meta_label()
+	_log_event("trial_started", {
+		"level_id": str(current_level.get("id", "")),
+		"mode": str(current_level.get("mode", "EXAM")),
+		"required_evidence": required_evidence,
+		"topology": _normalize_topology(current_level.get("topology", {}))
+	})
 	_log_event("task_start", {"level": str(current_level.get("id", ""))})
 	GlobalMetrics.start_quest(str(current_level.get("id", "NetworkTrace_A")))
 func _render_text_blocks() -> void:
@@ -387,6 +447,7 @@ func _build_palette() -> void:
 			card.setup(opt_id, opt_label, str(option.get("error_code", "")))
 			card.disabled = true
 			card.custom_minimum_size = Vector2(148, 72)
+			card.button_down.connect(_on_device_card_button_down.bind(opt_id))
 			palette_box.add_child(card)
 			palette_cards.append(card)
 
@@ -405,10 +466,33 @@ func _set_tools_unlocked(unlocked: bool) -> void:
 		btn_run_trace.disabled = selected_device_id.is_empty()
 		btn_reset.disabled = selected_device_id.is_empty()
 
+func _on_device_card_button_down(device_id: String) -> void:
+	if level_finished or state == QuestState.BRIEFING:
+		return
+	_register_first_action()
+	device_drag_start_count += 1
+	_log_event("device_drag_started", {"device_id": device_id})
+
 func _on_log_pressed(log_index: int) -> void:
 	if level_finished:
 		return
 	_register_first_action()
+	evidence_open_count += 1
+	details_open_count += 1
+	evidence_inspect_count += 1
+	if time_to_first_evidence_ms < 0:
+		time_to_first_evidence_ms = _elapsed_ms_now()
+	if log_index >= 0 and log_index < evidence_data.size():
+		var evidence_row_data: Dictionary = evidence_data[log_index]
+		var poi_id: String = str(evidence_row_data.get("id", ""))
+		if not poi_id.is_empty():
+			unique_evidence_ids[poi_id] = true
+		_log_event("evidence_opened", {
+			"poi_id": poi_id,
+			"category": str(evidence_row_data.get("hint_layer", "")),
+			"meaning_short": str(evidence_row_data.get("meaning_short", "")),
+			"selected_before_toggle": selected_evidence_indices.has(log_index)
+		})
 
 	if selected_evidence_indices.has(log_index):
 		selected_evidence_indices.erase(log_index)
@@ -453,40 +537,77 @@ func _update_evidence_visuals() -> void:
 		else:
 			slot_label.text = _tr("nt.a.ui.slot_label", "Evidence {n}", {"n": slot_index + 1})
 
-func _on_device_installed(device_id: String, _label_text: String, error_code: String) -> void:
+func _on_device_installed(device_id: String, label_text: String, error_code: String) -> void:
+	var had_device_before: bool = not selected_device_id.is_empty()
+	var previous_device_id: String = selected_device_id
 	selected_device_id = device_id
 	selected_error_code = error_code
+	if not had_device_before:
+		device_drop_count += 1
+		if time_to_first_drop_ms < 0:
+			time_to_first_drop_ms = _elapsed_ms_now()
+	else:
+		device_replace_count += 1
+	_mark_solution_edited()
 	btn_run_trace.disabled = selected_device_id.is_empty() or level_finished
 	btn_reset.disabled = selected_device_id.is_empty() or level_finished
 	lbl_status.text = _tr("nt.a.ui.status_device_set", "Device set. Run trace to check route.")
 	lbl_status.add_theme_color_override("font_color", Color(0.75, 0.95, 0.8))
-	_log_event("device_installed", {"device_id": device_id})
+	_log_event("device_installed", {
+		"device_id": device_id,
+		"label": label_text,
+		"error_code": error_code,
+		"replaced": had_device_before,
+		"previous_device_id": previous_device_id
+	})
 
 func _on_device_removed() -> void:
+	var removed_device_id: String = selected_device_id
+	var removed_error_code: String = selected_error_code
 	selected_device_id = ""
 	selected_error_code = ""
+	device_remove_count += 1
+	_mark_solution_edited()
 	btn_run_trace.disabled = true
 	btn_reset.disabled = true
-	_log_event("device_removed", {})
+	_log_event("device_removed", {
+		"device_id": removed_device_id,
+		"error_code": removed_error_code
+	})
 
 func _on_run_trace_pressed() -> void:
 	if level_finished:
 		return
+	var now_ms: int = Time.get_ticks_msec()
+	trace_run_count += 1
+	if time_to_first_run_ms < 0:
+		time_to_first_run_ms = _elapsed_ms_now()
+	time_from_last_edit_to_run_ms = -1 if last_edit_ms < 0 else maxi(0, _elapsed_ms_now() - last_edit_ms)
+	_log_event("trace_run_pressed", {
+		"has_device": not selected_device_id.is_empty(),
+		"evidence_selected_count": selected_evidence_indices.size(),
+		"required_evidence": required_evidence,
+		"run_in_progress": run_in_progress
+	})
 	if run_in_progress:
 		spam_clicks += 1
 		return
 	if selected_evidence_indices.size() < required_evidence:
+		trace_run_before_min_evidence_count += 1
 		lbl_status.text = ERROR_MAP.get_error_tip("A_WRONG_EVIDENCE")
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
+		_log_event("trace_run_blocked", {"reason": "not_enough_evidence"})
 		return
 	if selected_device_id.is_empty():
 		lbl_status.text = _tr("nt.a.ui.status_device_first", "Select and install a device first.")
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
+		_log_event("trace_run_blocked", {"reason": "device_missing"})
 		return
 
-	var now_ms: int = Time.get_ticks_msec()
 	if now_ms < run_cooldown_until_ms:
+		run_cooldown_hit_count += 1
 		spam_clicks += 1
+		_log_event("trace_run_blocked", {"reason": "cooldown"})
 		return
 	run_cooldown_until_ms = now_ms + RUN_COOLDOWN_MS
 
@@ -515,11 +636,20 @@ func _on_run_trace_pressed() -> void:
 		"correct": is_correct,
 		"error_code": error_code
 	})
+	if not is_correct:
+		wrong_device_try_count += 1
 
 	await topology_board.play_trace_animation(is_correct)
 	run_in_progress = false
 	if level_finished:
 		return
+	_log_event("trace_run_result", {
+		"is_correct": is_correct,
+		"installed_device_id": selected_device_id,
+		"installed_error_code": selected_error_code,
+		"trace_success": is_correct,
+		"error_code": error_code
+	})
 
 	if is_correct:
 		_handle_success()
@@ -559,6 +689,7 @@ func _handle_failure(error_code: String) -> void:
 	_update_meta_label()
 
 	_log_event("trace_fail", {"error_code": error_code, "wrong_count": wrong_count})
+	_pending_change_after_fail = true
 
 	if wrong_count >= 2 and not safe_mode_used:
 		safe_mode_used = true
@@ -588,6 +719,8 @@ func _on_analyze_pressed() -> void:
 	_show_safe_mode_diagnostics("manual")
 
 func _show_safe_mode_diagnostics(trigger_reason: String) -> void:
+	diagnostics_open_count += 1
+	_pending_change_after_diagnostics = true
 	var lines: Array[String] = []
 	lines.append("Уровень: %s" % str(current_level.get("id", "UNKNOWN")))
 	lines.append("Причина: %s" % trigger_reason)
@@ -610,7 +743,11 @@ func _show_safe_mode_diagnostics(trigger_reason: String) -> void:
 				lines.append(text_line)
 
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", _tr("nt.common.safe_mode", "Safe Diagnostics"), lines)
+		diagnostics_panel.call("setup", {
+			"mode": "text_only",
+			"title": _tr("nt.common.safe_mode", "Safe Diagnostics"),
+			"reasoning_lines": lines
+		})
 	diagnostics_panel.visible = true
 	state = QuestState.DIAGNOSTIC
 	_log_event("diagnostics_open", {"reason": trigger_reason})
@@ -724,6 +861,10 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		stability_delta += FAIL_STABILITY_DELTA
 	if hint_used:
 		stability_delta += HINT_STABILITY_DELTA
+	var outcome_code: String = _outcome_code_for_a(is_correct, reason)
+	var mastery_block_reason: String = _mastery_block_reason_for_a(is_correct, outcome_code)
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var layout_mode: String = "portrait" if viewport_size.x < viewport_size.y else "landscape"
 
 	var selected_evidence: Array[Dictionary] = _collect_selected_evidence()
 	var payload: Dictionary = {
@@ -735,19 +876,48 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"variant_hash": variant_hash,
 		"is_correct": is_correct,
 		"is_fit": is_correct,
+		"trial_seq": trial_seq,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"error_code": selected_error_code,
 		"error_code_last": selected_error_code,
 		"attempts_count": attempts.size(),
 		"attempts": attempts,
 		"evidence_selected": selected_evidence,
 		"required_evidence": required_evidence,
+		"evidence_open_count": evidence_open_count,
+		"evidence_inspect_count": evidence_inspect_count,
+		"unique_evidence_count": unique_evidence_ids.size(),
+		"device_drag_start_count": device_drag_start_count,
+		"device_drop_count": device_drop_count,
+		"device_replace_count": device_replace_count,
+		"device_remove_count": device_remove_count,
+		"wrong_device_try_count": wrong_device_try_count,
+		"trace_run_count": trace_run_count,
+		"trace_run_before_min_evidence_count": trace_run_before_min_evidence_count,
+		"run_cooldown_hit_count": run_cooldown_hit_count,
+		"details_open_count": details_open_count,
+		"diagnostics_open_count": diagnostics_open_count,
+		"changed_after_diagnostics": changed_after_diagnostics,
+		"changed_after_fail": changed_after_fail,
+		"time_to_first_evidence_ms": time_to_first_evidence_ms,
+		"time_to_first_drop_ms": time_to_first_drop_ms,
+		"time_to_first_run_ms": time_to_first_run_ms,
+		"time_from_last_edit_to_run_ms": time_from_last_edit_to_run_ms,
+		"installed_device_id": selected_device_id,
+		"installed_error_code": selected_error_code,
 		"elapsed_ms": elapsed_ms,
 		"duration": float(elapsed_ms) / 1000.0,
+		"safe_mode": safe_mode_used,
 		"safe_mode_used": safe_mode_used,
 		"spam_clicks": spam_clicks,
 		"time_to_first_action_ms": first_action_ms,
 		"hint_used": hint_used,
 		"timed_out": reason == "timeout",
 		"stability_delta": stability_delta,
+		"layout": layout_mode,
+		"ui_vw": int(viewport_size.x),
+		"ui_vh": int(viewport_size.y),
 		"task_session": task_session
 	}
 	if GlobalMetrics != null:
@@ -805,12 +975,54 @@ func _normalize_topology(topology: Dictionary) -> Dictionary:
 		normalized["edges"] = edges.duplicate(true)
 	return normalized
 
-func _log_event(event_name: String, payload: Dictionary) -> void:
+func _outcome_code_for_a(is_correct: bool, finish_reason: String) -> String:
+	if is_correct:
+		return "SUCCESS"
+	if finish_reason == "timeout" or selected_error_code == "TIMEOUT":
+		return "TIMEOUT"
+	if safe_mode_used and (finish_reason == "attempt_limit" or diagnostics_open_count > 0):
+		return "SAFE_MODE"
+	if trace_run_before_min_evidence_count > 0 and attempts.is_empty():
+		return "NOT_ENOUGH_EVIDENCE"
+	if run_cooldown_hit_count > 0 and attempts.is_empty():
+		return "RUN_COOLDOWN"
+	return "WRONG_DEVICE"
+
+func _mastery_block_reason_for_a(is_correct: bool, outcome_code: String) -> String:
+	if outcome_code == "SAFE_MODE":
+		return "SAFE_MODE_TRIGGERED"
+	if diagnostics_open_count > 0:
+		return "DIAGNOSTICS_DEPENDENCY"
+	if trace_run_count >= 3 or attempts.size() >= 3:
+		return "MULTI_RUN_GUESSING"
+	if unique_evidence_ids.size() < required_evidence:
+		return "LOW_EVIDENCE_COVERAGE"
+	if not is_correct:
+		return "WRONG_DEVICE_SELECTION"
+	return "NONE"
+
+func _mark_solution_edited() -> void:
+	last_edit_ms = _elapsed_ms_now()
+	if _pending_change_after_diagnostics:
+		changed_after_diagnostics = true
+		_pending_change_after_diagnostics = false
+	if _pending_change_after_fail:
+		changed_after_fail = true
+		_pending_change_after_fail = false
+
+func _elapsed_ms_now() -> int:
+	if level_started_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - level_started_ms)
+
+func _log_event(event_name: String, payload: Dictionary = {}) -> void:
+	if task_session.is_empty():
+		return
 	var events: Array = task_session.get("events", [])
 	events.append({
 		"name": event_name,
-		"t_ms": Time.get_ticks_msec() - level_started_ms,
-		"payload": payload
+		"t_ms": _elapsed_ms_now(),
+		"payload": payload.duplicate(true)
 	})
 	task_session["events"] = events
 

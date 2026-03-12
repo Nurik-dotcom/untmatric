@@ -8,6 +8,7 @@ const AUDIO_ERROR: AudioStream = preload("res://audio/error.wav")
 const AUDIO_RELAY: AudioStream = preload("res://audio/relay.wav")
 
 const LEVELS_PATH := "res://data/suspect_a_levels.json"
+const MAX_ATTEMPTS := 3
 const FX_ID_LOW := 0
 const FX_ID_HIGH := 1
 const OVERLAY_ID_PENCIL := 0
@@ -73,11 +74,17 @@ enum QuestState {
 @onready var step_next_button: Button = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls/StepNextButton
 @onready var show_all_button: Button = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls/ShowAllButton
 @onready var reset_trace_button: Button = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceControls/ResetTraceButton
+@onready var trace_collapsed_state: VBoxContainer = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceCollapsedState
+@onready var trace_collapsed_title: Label = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceCollapsedState/CollapsedTitle
+@onready var trace_collapsed_hint: Label = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceCollapsedState/CollapsedHint
+@onready var trace_collapsed_legend: Label = $SafeArea/MainVBox/WorkspaceContainer/TracePanel/TraceMargin/TraceVBox/TraceCollapsedState/CollapsedLegend
 
 @onready var answer_label: Label = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerLabel
+@onready var answer_row: BoxContainer = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow
 @onready var answer_input: LineEdit = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow/AnswerInput
 @onready var primary_check_button: Button = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow/PrimaryCheckButton
 @onready var btn_next: Button = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow/BtnNext
+@onready var answer_hint_label: Label = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerHintLabel
 @onready var step_analysis_button: Button = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions/StepAnalysisButton
 @onready var hint_button: Button = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions/HintButton
 @onready var why_button: Button = $SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/SolveActions/WhyButton
@@ -130,6 +137,41 @@ var task_finished: bool = false
 var task_result_sent: bool = false
 var variant_hash: String = ""
 var task_session: Dictionary = {}
+var trial_seq: int = 0
+
+var answer_change_count: int = 0
+var invalid_format_count: int = 0
+var enter_press_count: int = 0
+
+var analyze_press_count: int = 0
+var guided_trace_open_count: int = 0
+var full_trace_open_count: int = 0
+var trace_step_reveal_count_local: int = 0
+var trace_scroll_count: int = 0
+
+var topic_hint_open_count: int = 0
+var settings_open_count: int = 0
+var diagnostics_open_count: int = 0
+var overlay_toggle_count: int = 0
+var effects_toggle_count: int = 0
+
+var changed_after_guided_trace: bool = false
+var changed_after_full_trace: bool = false
+var changed_after_topic_hint: bool = false
+
+var time_to_first_answer_input_ms: int = -1
+var time_to_first_enter_ms: int = -1
+var time_to_first_analyze_ms: int = -1
+var time_to_first_topic_hint_ms: int = -1
+var time_from_last_analysis_to_enter_ms: int = -1
+
+var last_answer_edit_ms: int = -1
+var last_analysis_ms: int = -1
+
+var _await_answer_change_after_guided_trace: bool = false
+var _await_answer_change_after_full_trace: bool = false
+var _await_answer_change_after_topic_hint: bool = false
+var _suppress_answer_change_signal: bool = false
 
 var sfx_player: AudioStreamPlayer
 
@@ -145,7 +187,7 @@ func _ready() -> void:
 	_apply_layout_mode()
 
 	if not _load_levels_from_json():
-		_show_boot_error(_tr("suspect.a.status.boot_error", "Failed to load suspect quest levels."))
+		_show_boot_error(_tr("suspect.a.status.boot_error", "Не удалось загрузить уровни квеста подозреваемого."))
 		return
 
 	if levels.size() != 18:
@@ -177,49 +219,57 @@ func _setup_runtime_controls() -> void:
 	popup_overlay_select.select(OVERLAY_ID_PENCIL if overlay_mode == "pencil" else OVERLAY_ID_CRT)
 
 func _apply_i18n() -> void:
-	btn_quest_back.text = _tr("suspect.a.btn.back", "BACK")
-	btn_settings.text = _tr("suspect.a.btn.settings", "SET")
-	code_title.text = _tr("suspect.a.ui.code_title", "CODE")
-	trace_title.text = _tr("suspect.a.ui.trace_title", "EXECUTION LOG")
-	answer_label.text = _tr("suspect.a.ui.answer", "Final answer (s)")
-	answer_input.placeholder_text = _tr("suspect.a.ui.answer_placeholder", "Enter integer")
-	primary_check_button.text = _tr("suspect.a.btn.check", "Check")
-	btn_next.text = _tr("suspect.a.btn.next", "Next")
-	step_analysis_button.text = _tr("suspect.a.btn.step_analysis", "Open Execution Log")
-	hint_button.text = _tr("suspect.a.btn.hint", "Hint")
-	why_button.text = _tr("suspect.a.btn.why", "Why this?")
-	toggle_trace_button.text = _tr("suspect.a.btn.trace_open", "Open")
-	step_prev_button.text = _tr("suspect.a.btn.prev", "Prev")
-	step_next_button.text = _tr("suspect.a.btn.next_step", "Next")
-	show_all_button.text = _tr("suspect.a.btn.show_all", "Show all")
-	reset_trace_button.text = _tr("suspect.a.btn.reset_trace", "Reset")
-	trace_mode_badge.text = _tr("suspect.a.trace.collapsed", "Collapsed")
+	btn_quest_back.text = _tr("suspect.a.btn.back", "НАЗАД")
+	btn_settings.text = _tr("suspect.a.btn.settings", "НАСТР")
+	code_title.text = _tr("suspect.a.ui.code_title", "КОД")
+	trace_title.text = _tr("suspect.a.ui.trace_title", "ЖУРНАЛ ВЫПОЛНЕНИЯ")
+	answer_label.text = _tr("suspect.a.ui.answer", "Итоговое значение s")
+	answer_input.placeholder_text = _tr("suspect.a.ui.answer_placeholder", "Введите целое число")
+	answer_hint_label.text = _tr("suspect.a.ui.answer_hint", "Сначала проследите ход выполнения, затем подтвердите итог.")
+	primary_check_button.text = _tr("suspect.a.btn.check", "Проверить")
+	btn_next.text = _tr("suspect.a.btn.next", "ДАЛЕЕ")
+	step_analysis_button.text = _tr("suspect.a.btn.step_analysis", "Пошаговый разбор")
+	hint_button.text = _tr("suspect.a.btn.hint", "Подсказка")
+	why_button.text = _tr("suspect.a.btn.why", "Почему так?")
+	toggle_trace_button.text = _tr("suspect.a.btn.trace_open", "Открыть")
+	step_prev_button.text = _tr("suspect.a.btn.prev", "Назад")
+	step_next_button.text = _tr("suspect.a.btn.next_step", "Следующий шаг")
+	show_all_button.text = _tr("suspect.a.btn.show_all", "Показать всё")
+	reset_trace_button.text = _tr("suspect.a.btn.reset_trace", "Сброс")
+	trace_mode_badge.text = _tr("suspect.a.trace.collapsed", "Свернуто")
+	trace_collapsed_title.text = _tr("suspect.a.trace.collapsed_title", "Журнал выполнения скрыт.")
+	trace_collapsed_hint.text = _tr("suspect.a.trace.collapsed_hint", "Откройте его, чтобы увидеть, как меняется s по шагам.")
+	trace_collapsed_legend.text = _tr("suspect.a.trace.collapsed_legend", "шаг | i | s до -> s после")
 
-	explanation_title.text = _tr("suspect.a.overlay.title", "Why this final value")
-	btn_close_overlay.text = _tr("suspect.a.btn.close", "Close")
-	btn_open_steps.text = _tr("suspect.a.btn.open_steps", "Open steps")
-	btn_overlay_next.text = _tr("suspect.a.btn.next", "Next")
+	explanation_title.text = _tr("suspect.a.overlay.title", "Почему итог именно такой")
+	btn_close_overlay.text = _tr("suspect.a.btn.close", "Закрыть")
+	btn_open_steps.text = _tr("suspect.a.btn.open_steps", "Открыть шаги")
+	btn_overlay_next.text = _tr("suspect.a.btn.next", "ДАЛЕЕ")
 
-	popup_close.text = _tr("suspect.a.btn.close", "Close")
+	popup_close.text = _tr("suspect.a.btn.close", "Закрыть")
 	var popup_title: Label = inspector_popup.get_node_or_null("Root/LblTitle") as Label
 	if popup_title != null:
-		popup_title.text = _tr("suspect.a.ui.settings_title", "SETTINGS")
+		popup_title.text = _tr("suspect.a.ui.settings_title", "НАСТРОЙКИ")
 	var popup_fx_title: Label = inspector_popup.get_node_or_null("Root/SettingsGrid/LblFx") as Label
 	if popup_fx_title != null:
-		popup_fx_title.text = _tr("suspect.a.ui.effects", "Effects")
+		popup_fx_title.text = _tr("suspect.a.ui.effects", "ЭФФЕКТЫ")
 	var popup_overlay_title: Label = inspector_popup.get_node_or_null("Root/SettingsGrid/LblOverlay") as Label
 	if popup_overlay_title != null:
-		popup_overlay_title.text = _tr("suspect.a.ui.overlay", "Overlay")
+		popup_overlay_title.text = _tr("suspect.a.ui.overlay", "НАЛОЖЕНИЕ")
 
 	popup_fx_select.clear()
-	popup_fx_select.add_item(_tr("suspect.a.settings.fx_low", "Low"), FX_ID_LOW)
-	popup_fx_select.add_item(_tr("suspect.a.settings.fx_high", "High"), FX_ID_HIGH)
+	popup_fx_select.add_item(_tr("suspect.a.settings.fx_low", "Низко"), FX_ID_LOW)
+	popup_fx_select.add_item(_tr("suspect.a.settings.fx_high", "Высоко"), FX_ID_HIGH)
 	popup_fx_select.select(FX_ID_HIGH if fx_quality == "high" else FX_ID_LOW)
 
 	popup_overlay_select.clear()
-	popup_overlay_select.add_item(_tr("suspect.a.settings.overlay_pencil", "Pencil"), OVERLAY_ID_PENCIL)
+	popup_overlay_select.add_item(_tr("suspect.a.settings.overlay_pencil", "Карандаш"), OVERLAY_ID_PENCIL)
 	popup_overlay_select.add_item("CRT", OVERLAY_ID_CRT)
 	popup_overlay_select.select(OVERLAY_ID_PENCIL if overlay_mode == "pencil" else OVERLAY_ID_CRT)
+
+	if is_node_ready():
+		_set_trace_mode(trace_mode)
+		_update_attempts_label()
 
 func _configure_overlay_shader() -> void:
 	if noir_overlay != null and noir_overlay.has_method("set_overlay_mode"):
@@ -279,6 +329,7 @@ func _connect_signals() -> void:
 	primary_check_button.pressed.connect(_on_primary_check_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
 	answer_input.text_submitted.connect(_on_answer_submitted)
+	answer_input.text_changed.connect(_on_answer_text_changed)
 
 	step_analysis_button.pressed.connect(_on_step_analysis_pressed)
 	hint_button.pressed.connect(_on_hint_pressed)
@@ -295,6 +346,8 @@ func _connect_signals() -> void:
 	btn_overlay_next.pressed.connect(_on_overlay_next_pressed)
 
 func _on_settings_pressed() -> void:
+	settings_open_count += 1
+	_log_event("settings_opened", {"count": settings_open_count})
 	inspector_popup.popup_centered_ratio(0.38)
 
 func _on_settings_close_pressed() -> void:
@@ -303,11 +356,17 @@ func _on_settings_close_pressed() -> void:
 func _on_popup_fx_selected(index: int) -> void:
 	var item_id: int = popup_fx_select.get_item_id(index)
 	fx_quality = "high" if item_id == FX_ID_HIGH else "low"
+	if inspector_popup.visible:
+		effects_toggle_count += 1
+		_log_event("effects_toggled", {"count": effects_toggle_count, "mode": fx_quality})
 	_configure_overlay_shader()
 
 func _on_popup_overlay_selected(index: int) -> void:
 	var item_id: int = popup_overlay_select.get_item_id(index)
 	overlay_mode = "pencil" if item_id == OVERLAY_ID_PENCIL else "crt"
+	if inspector_popup.visible:
+		overlay_toggle_count += 1
+		_log_event("overlay_toggled", {"count": overlay_toggle_count, "mode": overlay_mode})
 	_configure_overlay_shader()
 
 func _apply_layout_mode() -> void:
@@ -346,6 +405,15 @@ func _apply_layout_mode() -> void:
 	briefing_text.add_theme_font_size_override("font_size", body_font)
 	topic_hint_badge.add_theme_font_size_override("font_size", body_font)
 	answer_label.add_theme_font_size_override("font_size", body_font)
+	answer_hint_label.add_theme_font_size_override("font_size", 13 if compact else 14)
+
+	# Keep answer row readable in compact mode when "Next" appears.
+	var compact_next_layout: bool = compact and portrait and btn_next.visible
+	answer_row.vertical = compact_next_layout
+	answer_row.add_theme_constant_override("separation", 6 if compact else 8)
+	primary_check_button.theme_type_variation = &""
+	primary_check_button.custom_minimum_size = Vector2(0, 42 if compact else 46)
+	btn_next.custom_minimum_size = Vector2(0, 42 if compact else 46)
 
 	for idx in range(code_line_rows.size()):
 		_apply_code_line_style(idx, current_highlight_line == idx + 1)
@@ -426,6 +494,7 @@ func _load_case(case_idx: int) -> void:
 	task_finished = false
 	task_result_sent = false
 	variant_hash = str(hash(JSON.stringify(current_level)))
+	var bucket: String = str(current_level.get("bucket", "unknown"))
 	task_session = {
 		"task_id": str(current_level.get("id", "A-00")),
 		"variant_hash": variant_hash,
@@ -434,9 +503,41 @@ func _load_case(case_idx: int) -> void:
 		"attempts": [],
 		"events": []
 	}
+	trial_seq += 1
+	task_session["trial_seq"] = trial_seq
+	task_session["bucket"] = bucket
+	task_session["topic_tags"] = (current_level.get("topic_tags", []) as Array).duplicate(true)
+	task_session["trace_steps_total"] = trace_steps.size()
 
-	lbl_clue_title.text = _tr("suspect.a.labels.clue_title", "CLUE #{id}", {"id": str(current_level.get("id", "A-00"))})
-	lbl_session.text = _tr("suspect.a.labels.session", "SESSION {n}", {"n": "%04d" % (randi() % 10000)})
+	answer_change_count = 0
+	invalid_format_count = 0
+	enter_press_count = 0
+	analyze_press_count = 0
+	guided_trace_open_count = 0
+	full_trace_open_count = 0
+	trace_step_reveal_count_local = 0
+	trace_scroll_count = 0
+	topic_hint_open_count = 0
+	settings_open_count = 0
+	diagnostics_open_count = 0
+	overlay_toggle_count = 0
+	effects_toggle_count = 0
+	changed_after_guided_trace = false
+	changed_after_full_trace = false
+	changed_after_topic_hint = false
+	time_to_first_answer_input_ms = -1
+	time_to_first_enter_ms = -1
+	time_to_first_analyze_ms = -1
+	time_to_first_topic_hint_ms = -1
+	time_from_last_analysis_to_enter_ms = -1
+	last_answer_edit_ms = -1
+	last_analysis_ms = -1
+	_await_answer_change_after_guided_trace = false
+	_await_answer_change_after_full_trace = false
+	_await_answer_change_after_topic_hint = false
+
+	lbl_clue_title.text = _tr("suspect.a.labels.clue_title", "УЛИКА #{id}", {"id": str(current_level.get("id", "A-00"))})
+	lbl_session.text = _tr("suspect.a.labels.session", "СЕССИЯ {n}", {"n": "%04d" % (randi() % 10000)})
 
 	explanation_overlay.visible = false
 	_render_case_brief()
@@ -446,7 +547,13 @@ func _load_case(case_idx: int) -> void:
 	_set_state(QuestState.READY)
 	_update_status_learning_focus()
 	_update_attempts_label()
-	_log_event("task_start", {"bucket": str(current_level.get("bucket", "unknown"))})
+	_apply_layout_mode()
+	_log_event("task_start", {
+		"level_id": str(current_level.get("id", "")),
+		"bucket": bucket,
+		"trace_len": trace_steps.size(),
+		"topic_tags": (current_level.get("topic_tags", []) as Array).duplicate(true)
+	})
 
 func _localized_briefing_text(level: Dictionary) -> String:
 	var source: String = str(level.get("briefing", "")).strip_edges()
@@ -455,51 +562,56 @@ func _localized_briefing_text(level: Dictionary) -> String:
 
 func _render_case_brief() -> void:
 	var case_id: String = str(current_level.get("id", "A-00"))
-	clue_label.text = _tr("suspect.a.brief.clue", "Case focus: loop tracing")
-	briefing_title.text = _tr("suspect.a.brief.title", "Cipher Block %s" % case_id)
+	clue_label.text = _tr("suspect.a.brief.clue", "На что смотреть: трассировка цикла")
+	briefing_title.text = _tr("suspect.a.brief.title", "Шифрблок %s" % case_id)
 	briefing_text.text = _localized_briefing_text(current_level)
 	topic_hint_badge.text = _build_topic_hint_badge(current_level.get("topic_tags", []))
 
 func _build_topic_hint_badge(tags_variant: Variant) -> String:
 	var tags: Array = tags_variant if typeof(tags_variant) == TYPE_ARRAY else []
-	return _tr("suspect.a.brief.topic_hint", "Analysis angle: {hint}", {"hint": _topic_hint_sentence(tags)})
+	return _tr("suspect.a.brief.topic_hint", "На что смотреть: {hint}", {"hint": _topic_hint_sentence(tags)})
 
 func _topic_hint_sentence(tags: Array) -> String:
 	if tags.is_empty():
-		return _tr("suspect.a.hint.general", "Check loop boundaries and accumulator updates.")
+		return _tr("suspect.a.hint.general", "Проверьте границы цикла и обновления аккумулятора.")
 
 	for tag_var in tags:
 		var tag: String = str(tag_var)
 		match tag:
 			"range_stop_exclusive":
-				return _tr("suspect.a.hint.range_stop", "Watch range stop: the stop value is excluded.")
+				return _tr("suspect.a.hint.range_stop", "Значение stop в range не включается.")
 			"while_boundary":
-				return _tr("suspect.a.hint.while_boundary", "Check the while boundary on every iteration.")
+				return _tr("suspect.a.hint.while_boundary", "Проверяйте границу while на каждой итерации.")
 			"break_flow":
-				return _tr("suspect.a.hint.break_flow", "Track where break exits the loop.")
+				return _tr("suspect.a.hint.break_flow", "Отследите, где break завершает цикл.")
 			"continue_flow":
-				return _tr("suspect.a.hint.continue_flow", "Track how continue skips accumulator updates.")
+				return _tr("suspect.a.hint.continue_flow", "Отследите, как continue пропускает обновление s.")
 			"list_iteration":
-				return _tr("suspect.a.hint.list_iteration", "List order is explicit and fixed.")
+				return _tr("suspect.a.hint.list_iteration", "Порядок списка задан явно и фиксирован.")
 			"step_trap":
-				return _tr("suspect.a.hint.step_trap", "Check the loop step value carefully.")
+				return _tr("suspect.a.hint.step_trap", "Внимательно проверьте шаг цикла.")
 			"condition_filter":
-				return _tr("suspect.a.hint.condition_filter", "Verify which iterations pass the condition.")
+				return _tr("suspect.a.hint.condition_filter", "Проверьте, какие итерации проходят условие.")
 			"boundary_count":
-				return _tr("suspect.a.hint.boundary_count", "Count iterations from start to stop correctly.")
+				return _tr("suspect.a.hint.boundary_count", "Корректно посчитайте итерации от start до stop.")
 			_:
 				continue
 
-	return _tr("suspect.a.hint.fallback", "Inspect each step where s changes.")
+	return _tr("suspect.a.hint.fallback", "Смотрите на шаги, где меняется s.")
 
 func _show_learning_hint() -> void:
 	var hint_text: String = _topic_hint_sentence(current_level.get("topic_tags", []))
 	topic_hint_used_count += 1
+	topic_hint_open_count += 1
+	_await_answer_change_after_topic_hint = true
+	if time_to_first_topic_hint_ms < 0:
+		time_to_first_topic_hint_ms = _elapsed_ms_now()
+	_log_event("topic_hint_opened", {"count": topic_hint_open_count})
 	_log_event("topic_hint_used", {"count": topic_hint_used_count, "hint": hint_text})
 	_update_status(hint_text, STATUS_COLOR_WARN)
 
 func _update_status_learning_focus() -> void:
-	_update_status(_tr("suspect.a.status.learning_focus", "Code is ready. Trace the execution if needed, then confirm final s."), STATUS_COLOR_READY)
+	_update_status(_tr("suspect.a.status.learning_focus", "Код готов. При необходимости откройте журнал выполнения и проследите изменение s."), STATUS_COLOR_READY)
 
 func _render_code_immediate() -> void:
 	for child in code_lines_container.get_children():
@@ -637,7 +749,7 @@ func _normalize_trace(raw_trace_variant: Variant) -> Array:
 		var cond_text: String = str(step_src.get("cond", step_src.get("event", "loop")))
 		var event_text: String = str(step_src.get("event", "")).strip_edges()
 		if event_text.is_empty():
-			event_text = "loop iteration" if cond_text == "loop" else cond_text
+			event_text = "итерация цикла" if cond_text == "loop" else cond_text
 
 		var step: Dictionary = {
 			"step": step_index,
@@ -695,16 +807,17 @@ func _set_trace_mode(mode: String) -> void:
 	trace_mode = mode
 	match trace_mode:
 		"guided":
-			trace_mode_badge.text = _tr("suspect.a.trace.guided", "Guided")
+			trace_mode_badge.text = _tr("suspect.a.trace.guided", "Пошагово")
 		"full":
-			trace_mode_badge.text = _tr("suspect.a.trace.full", "Full")
+			trace_mode_badge.text = _tr("suspect.a.trace.full", "Полный")
 		_:
-			trace_mode_badge.text = _tr("suspect.a.trace.collapsed", "Collapsed")
+			trace_mode_badge.text = _tr("suspect.a.trace.collapsed", "Свернуто")
 
 	var collapsed: bool = trace_mode == "collapsed"
+	trace_collapsed_state.visible = collapsed
 	trace_body.visible = not collapsed
 	trace_controls.visible = not collapsed
-	toggle_trace_button.text = _tr("suspect.a.btn.trace_collapse", "Collapse") if not collapsed else _tr("suspect.a.btn.trace_open", "Open")
+	toggle_trace_button.text = _tr("suspect.a.btn.trace_collapse", "Свернуть") if not collapsed else _tr("suspect.a.btn.trace_open", "Открыть")
 
 	if collapsed:
 		current_trace_index = -1
@@ -724,8 +837,16 @@ func _set_trace_row_mode(row: Control, mode: String) -> void:
 
 func _enter_guided_trace_mode() -> void:
 	if trace_steps.is_empty():
-		_update_status(_tr("suspect.a.trace.missing", "No trace data available for this case."), STATUS_COLOR_WARN)
+		_update_status(_tr("suspect.a.trace.missing", "Для этого кейса нет данных журнала выполнения."), STATUS_COLOR_WARN)
 		return
+
+	guided_trace_open_count += 1
+	analyze_press_count += 1
+	if time_to_first_analyze_ms < 0:
+		time_to_first_analyze_ms = _elapsed_ms_now()
+	last_analysis_ms = _elapsed_ms_now()
+	_await_answer_change_after_guided_trace = true
+	_log_event("analyze_pressed", {"mode": "guided", "count": analyze_press_count})
 
 	if trace_mode != "guided":
 		used_guided_trace = true
@@ -734,7 +855,7 @@ func _enter_guided_trace_mode() -> void:
 	_set_trace_mode("guided")
 	_set_state(QuestState.TRACE_GUIDED)
 	_reveal_guided_trace_index(0)
-	_update_status(_tr("suspect.a.trace.guided_intro", "Guided trace opened. Move step by step."), STATUS_COLOR_READY)
+	_update_status(_tr("suspect.a.trace.guided_intro", "Пошаговый разбор открыт. Переходите по шагам и следите, где меняется s."), STATUS_COLOR_READY)
 
 func _reveal_guided_trace_index(index: int) -> void:
 	if trace_steps.is_empty():
@@ -751,6 +872,7 @@ func _reveal_guided_trace_index(index: int) -> void:
 		_set_trace_row_mode(trace_row_nodes[row_idx], mode)
 
 	trace_steps_revealed_count = maxi(trace_steps_revealed_count, clamped + 1)
+	trace_step_reveal_count_local = maxi(trace_step_reveal_count_local, clamped + 1)
 	_log_event("trace_steps_revealed_count", {"count": trace_steps_revealed_count})
 
 	var step: Dictionary = trace_steps[clamped]
@@ -761,6 +883,7 @@ func _reveal_guided_trace_index(index: int) -> void:
 func _scroll_trace_to_index(index: int) -> void:
 	if index < 0 or index >= trace_row_nodes.size():
 		return
+	trace_scroll_count += 1
 	var row: Control = trace_row_nodes[index]
 	var target: int = int(maxf(0.0, row.position.y - 20.0))
 	var tw: Tween = create_tween()
@@ -777,9 +900,9 @@ func _show_next_trace_step() -> void:
 	if current_trace_index < trace_steps.size() - 1:
 		_reveal_guided_trace_index(current_trace_index + 1)
 		if current_trace_index == trace_steps.size() - 1:
-			_update_status(_tr("suspect.a.trace.guided_done", "Trace complete. Confirm final s."), STATUS_COLOR_READY)
+			_update_status(_tr("suspect.a.trace.guided_done", "Разбор завершен. Теперь подтвердите итоговое s."), STATUS_COLOR_READY)
 	else:
-		_update_status(_tr("suspect.a.trace.end", "Already at the final trace step."), STATUS_COLOR_NEUTRAL)
+		_update_status(_tr("suspect.a.trace.end", "Вы уже на последнем шаге журнала."), STATUS_COLOR_NEUTRAL)
 
 func _show_prev_trace_step() -> void:
 	if trace_mode != "guided":
@@ -787,12 +910,20 @@ func _show_prev_trace_step() -> void:
 	if current_trace_index > 0:
 		_reveal_guided_trace_index(current_trace_index - 1)
 	else:
-		_update_status(_tr("suspect.a.trace.start", "Already at the first trace step."), STATUS_COLOR_NEUTRAL)
+		_update_status(_tr("suspect.a.trace.start", "Вы уже на первом шаге журнала."), STATUS_COLOR_NEUTRAL)
 
 func _show_full_trace() -> void:
 	if trace_steps.is_empty():
-		_update_status(_tr("suspect.a.trace.missing", "No trace data available for this case."), STATUS_COLOR_WARN)
+		_update_status(_tr("suspect.a.trace.missing", "Для этого кейса нет данных журнала выполнения."), STATUS_COLOR_WARN)
 		return
+
+	full_trace_open_count += 1
+	analyze_press_count += 1
+	if time_to_first_analyze_ms < 0:
+		time_to_first_analyze_ms = _elapsed_ms_now()
+	last_analysis_ms = _elapsed_ms_now()
+	_await_answer_change_after_full_trace = true
+	_log_event("analyze_pressed", {"mode": "full", "count": analyze_press_count})
 
 	if trace_mode != "full":
 		used_full_trace = true
@@ -813,11 +944,12 @@ func _show_full_trace() -> void:
 
 	current_trace_index = trace_steps.size() - 1
 	trace_steps_revealed_count = maxi(trace_steps_revealed_count, trace_steps.size())
+	trace_step_reveal_count_local = maxi(trace_step_reveal_count_local, trace_steps.size())
 	_log_event("trace_steps_revealed_count", {"count": trace_steps_revealed_count})
 	_highlight_code_line(int(trace_steps[current_trace_index].get("line_ref", -1)))
 	call_deferred("_scroll_trace_to_index", current_trace_index)
 	_update_trace_controls()
-	_update_status(_tr("suspect.a.trace.full_opened", "Full execution log opened."), STATUS_COLOR_READY)
+	_update_status(_tr("suspect.a.trace.full_opened", "Полный журнал выполнения открыт."), STATUS_COLOR_READY)
 
 func _reset_trace_panel() -> void:
 	_set_trace_mode("collapsed")
@@ -834,12 +966,15 @@ func _update_trace_controls() -> void:
 	reset_trace_button.disabled = trace_mode == "collapsed"
 
 func _reset_answer_ui() -> void:
+	_suppress_answer_change_signal = true
 	answer_input.text = ""
+	_suppress_answer_change_signal = false
 	answer_input.editable = true
 	answer_input.grab_focus()
 	answer_locked = false
 	primary_check_button.disabled = false
 	btn_next.visible = false
+	_apply_layout_mode()
 
 func _parse_answer() -> Dictionary:
 	var stripped: String = answer_input.text.strip_edges().replace(" ", "")
@@ -849,27 +984,66 @@ func _parse_answer() -> Dictionary:
 		return {"ok": false, "error": "NAN"}
 	return {"ok": true, "value": int(stripped), "str": stripped}
 
+func _on_answer_text_changed(text: String) -> void:
+	if _suppress_answer_change_signal:
+		return
+	if task_started_at <= 0 or task_finished:
+		return
+
+	var elapsed_ms: int = _elapsed_ms_now()
+	if time_to_first_answer_input_ms < 0:
+		time_to_first_answer_input_ms = elapsed_ms
+	answer_change_count += 1
+	last_answer_edit_ms = elapsed_ms
+
+	if _await_answer_change_after_guided_trace:
+		changed_after_guided_trace = true
+		_await_answer_change_after_guided_trace = false
+	if _await_answer_change_after_full_trace:
+		changed_after_full_trace = true
+		_await_answer_change_after_full_trace = false
+	if _await_answer_change_after_topic_hint:
+		changed_after_topic_hint = true
+		_await_answer_change_after_topic_hint = false
+
+	_log_event("answer_changed", {"value": text, "length": text.length()})
+
 func _on_primary_check_pressed() -> void:
-	_check_answer()
+	_check_answer("button")
 
 func _on_answer_submitted(_text: String) -> void:
-	_check_answer()
+	_check_answer("enter")
 
-func _check_answer() -> void:
+func _check_answer(source: String = "unknown") -> void:
 	if answer_locked or task_finished or explanation_overlay.visible:
 		return
 
+	enter_press_count += 1
+	if time_to_first_enter_ms < 0:
+		time_to_first_enter_ms = _elapsed_ms_now()
+	if last_analysis_ms >= 0:
+		time_from_last_analysis_to_enter_ms = maxi(0, _elapsed_ms_now() - last_analysis_ms)
+	_log_event("enter_pressed", {"count": enter_press_count, "source": source})
+
 	var normalized: Dictionary = _parse_answer()
 	if not bool(normalized.get("ok", false)):
+		invalid_format_count += 1
 		_play_sfx(AUDIO_ERROR)
 		_trigger_glitch()
 		_shake_screen()
-		_update_status(_tr("suspect.a.status.invalid_format", "Invalid input format."), STATUS_COLOR_FAIL)
+		_log_event("invalid_format", {"value": answer_input.text})
+		_update_status(_tr("suspect.a.status.invalid_format", "Некорректный формат ввода."), STATUS_COLOR_FAIL)
 		return
 
 	var user_answer: int = int(normalized.get("value", 0))
 	var expected: int = int(current_level.get("expected", 0))
 	var is_correct: bool = user_answer == expected
+	_log_event("answer_result", {
+		"is_correct": is_correct,
+		"expected": expected,
+		"answer_value": user_answer,
+		"attempts_used": attempts_used
+	})
 
 	_record_attempt(user_answer, is_correct)
 	if is_correct:
@@ -907,13 +1081,13 @@ func _handle_wrong_answer() -> void:
 	_shake_screen()
 
 	if attempts_used == 1:
-		_update_status(_tr("suspect.a.status.wrong_soft", "Answer mismatch. Check how s changes step by step."), STATUS_COLOR_FAIL)
+		_update_status(_tr("suspect.a.status.wrong_soft", "Ответ не совпадает. Проверьте, как меняется s по шагам."), STATUS_COLOR_FAIL)
 	elif attempts_used == 2 and not shown_auto_help:
 		shown_auto_help = true
-		_update_status(_tr("suspect.a.status.wrong_guided", "Likely a loop trap. Guided trace has been opened."), STATUS_COLOR_WARN)
+		_update_status(_tr("suspect.a.status.wrong_guided", "Похоже, здесь ловушка цикла. Пошаговый разбор уже открыт."), STATUS_COLOR_WARN)
 		_offer_guided_trace()
 	else:
-		_update_status(_tr("suspect.a.status.wrong_explain", "Use full trace and explanation to pinpoint the divergence."), STATUS_COLOR_WARN)
+		_update_status(_tr("suspect.a.status.wrong_explain", "Откройте полный журнал и объяснение, чтобы найти расхождение."), STATUS_COLOR_WARN)
 		_offer_explanation_and_trace()
 
 	answer_input.select_all()
@@ -931,11 +1105,12 @@ func _offer_explanation_and_trace() -> void:
 func _handle_success() -> void:
 	answer_locked = true
 	_set_state(QuestState.SUCCESS)
-	_update_status(_tr("suspect.a.status.correct", "Correct. Final value confirmed."), STATUS_COLOR_SUCCESS)
+	_update_status(_tr("suspect.a.status.correct", "Верно. Итоговое значение подтверждено."), STATUS_COLOR_SUCCESS)
 	btn_next.visible = true
 	btn_overlay_next.visible = true
 	answer_input.editable = false
 	primary_check_button.disabled = true
+	_apply_layout_mode()
 	_play_sfx(AUDIO_RELAY)
 	_play_success_clean_effect()
 	_finalize_task_result(true, "SUCCESS")
@@ -943,17 +1118,19 @@ func _handle_success() -> void:
 func _open_explanation_overlay() -> void:
 	if explanation_overlay.visible:
 		return
+	diagnostics_open_count += 1
 	previous_state_before_overlay = current_state
 	explanation_overlay.visible = true
 	_set_state(QuestState.EXPLANATION)
 	_render_explanation_overlay()
+	_log_event("diagnostics_opened", {"count": diagnostics_open_count})
 	_log_event("explanation_opened", {"state_before": previous_state_before_overlay})
 
 func _render_explanation_overlay() -> void:
 	if current_level.is_empty():
 		return
 
-	explanation_title.text = _tr("suspect.a.overlay.title", "Why this final value")
+	explanation_title.text = _tr("suspect.a.overlay.title", "Почему итог именно такой")
 	var short_lines: Array = current_level.get("explain_short", [])
 	var full_lines: Array = current_level.get("explain", [])
 	if short_lines.is_empty():
@@ -970,9 +1147,9 @@ func _render_explanation_overlay() -> void:
 
 	var level_id: String = str(current_level.get("id", "A-00"))
 	var body: String = "[b]%s[/b]\n- %s\n\n[b]%s[/b]\n" % [
-		_tr("suspect.a.overlay.key_trap", "Key trap"),
+		_tr("suspect.a.overlay.key_trap", "Ключевая ловушка"),
 		trap_text,
-		_tr("suspect.a.overlay.reasoning", "Reasoning")
+		_tr("suspect.a.overlay.reasoning", "Ход рассуждения")
 	]
 
 	for line_idx in range(short_lines.size()):
@@ -981,9 +1158,9 @@ func _render_explanation_overlay() -> void:
 		body += "- %s\n" % _tr(key, default_line)
 
 	if not summary_line.is_empty():
-		body += "\n[b]%s[/b]\n- %s\n" % [_tr("suspect.a.overlay.trace_summary", "Trace summary"), summary_line]
+		body += "\n[b]%s[/b]\n- %s\n" % [_tr("suspect.a.overlay.trace_summary", "Сводка журнала"), summary_line]
 
-	body += "\n[b]%s[/b]\n- %d" % [_tr("suspect.a.overlay.final_s", "Final s"), final_value]
+	body += "\n[b]%s[/b]\n- %d" % [_tr("suspect.a.overlay.final_s", "Итоговое s"), final_value]
 	explanation_text.text = body
 
 func _close_explanation_overlay() -> void:
@@ -1078,7 +1255,8 @@ func _update_status(text: String, color: Color = STATUS_COLOR_NEUTRAL) -> void:
 	lbl_status.add_theme_color_override("font_color", color)
 
 func _update_attempts_label() -> void:
-	lbl_attempts.text = _tr("suspect.a.labels.attempts", "Attempts: {n}", {"n": attempts_used})
+	var shown_attempts: int = mini(attempts_used, MAX_ATTEMPTS)
+	lbl_attempts.text = _tr("suspect.a.labels.attempts", "ПОПЫТКИ: {n}/{max}", {"n": shown_attempts, "max": MAX_ATTEMPTS})
 
 func _finalize_task_result(is_correct: bool, reason: String) -> void:
 	if task_result_sent:
@@ -1111,6 +1289,32 @@ func _finalize_task_result(is_correct: bool, reason: String) -> void:
 		"trace_steps_revealed_count": trace_steps_revealed_count,
 		"topic_hint_used": topic_hint_used_count > 0,
 		"wrong_attempt_count": attempts_used,
+		"trial_seq": trial_seq,
+		"answer_change_count": answer_change_count,
+		"invalid_format_count": invalid_format_count,
+		"enter_press_count": enter_press_count,
+		"analyze_press_count": analyze_press_count,
+		"guided_trace_open_count": guided_trace_open_count,
+		"full_trace_open_count": full_trace_open_count,
+		"trace_step_reveal_count": trace_step_reveal_count_local,
+		"trace_steps_total": trace_steps.size(),
+		"topic_hint_open_count": topic_hint_open_count,
+		"settings_open_count": settings_open_count,
+		"diagnostics_open_count": diagnostics_open_count,
+		"overlay_toggle_count": overlay_toggle_count,
+		"effects_toggle_count": effects_toggle_count,
+		"changed_after_guided_trace": changed_after_guided_trace,
+		"changed_after_full_trace": changed_after_full_trace,
+		"changed_after_topic_hint": changed_after_topic_hint,
+		"time_to_first_answer_input_ms": time_to_first_answer_input_ms,
+		"time_to_first_enter_ms": time_to_first_enter_ms,
+		"time_to_first_analyze_ms": time_to_first_analyze_ms,
+		"time_to_first_topic_hint_ms": time_to_first_topic_hint_ms,
+		"time_from_last_analysis_to_enter_ms": time_from_last_analysis_to_enter_ms,
+		"topic_tags": (current_level.get("topic_tags", []) as Array).duplicate(true),
+		"concept_family": _concept_family_from_bucket(bucket),
+		"outcome_code": _build_outcome_code_for_a(is_correct),
+		"mastery_block_reason": _build_mastery_block_reason_for_a(is_correct),
 		"task_session": task_session
 	}
 
@@ -1161,7 +1365,7 @@ func _play_success_clean_effect() -> void:
 	tw.parallel().tween_method(func(v: float) -> void: _set_overlay_param(shader_mat, "hatch_strength", v), 0.10, 0.24, 0.28)
 
 func _log_event(name: String, payload: Dictionary) -> void:
-	var elapsed: int = Time.get_ticks_msec() - task_started_at
+	var elapsed: int = _elapsed_ms_now()
 	var events: Array = task_session.get("events", [])
 	events.append({
 		"name": name,
@@ -1169,3 +1373,38 @@ func _log_event(name: String, payload: Dictionary) -> void:
 		"payload": payload
 	})
 	task_session["events"] = events
+
+func _elapsed_ms_now() -> int:
+	return maxi(0, Time.get_ticks_msec() - task_started_at)
+
+func _concept_family_from_bucket(bucket_value: String) -> String:
+	var bucket_norm: String = bucket_value.strip_edges().to_lower()
+	if bucket_norm.find("loop") != -1:
+		return "loop_flow"
+	if bucket_norm.find("branch") != -1 or bucket_norm.find("cond") != -1:
+		return "branch_logic"
+	if bucket_norm.is_empty():
+		return "unknown"
+	return bucket_norm
+
+func _build_outcome_code_for_a(is_correct: bool) -> String:
+	if is_correct:
+		return "A_CORRECT"
+	if invalid_format_count > 0 and attempts_used == 0:
+		return "A_INVALID_FORMAT"
+	if attempts_used >= MAX_ATTEMPTS:
+		return "A_MAX_ATTEMPTS"
+	return "A_INCORRECT"
+
+func _build_mastery_block_reason_for_a(is_correct: bool) -> String:
+	if not is_correct:
+		if invalid_format_count > 0:
+			return "blocked_invalid_format"
+		return "incorrect_answer"
+	if used_full_trace:
+		return "solved_after_full_trace"
+	if used_guided_trace:
+		return "solved_after_guided_trace"
+	if topic_hint_open_count > 0:
+		return "solved_after_topic_hint"
+	return "solved_without_support"

@@ -178,9 +178,17 @@ theme_override_constants/separation = 12
 [node name="LblHint" type="Label" parent="SafeArea/MainLayout/BodyRow/SideInfo"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
+size_flags_vertical = 1
 theme_override_font_sizes/font_size = 22
 text = "EXPECTED is target X. ACTUAL is current Y. Fix code so Y = X."
+autowrap_mode = 2
+
+[node name="LblInspector" type="Label" parent="SafeArea/MainLayout/BodyRow/SideInfo"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 18
+text = "Select a suspicious line to begin forensic debug."
 autowrap_mode = 2
 
 [node name="MisclickCounter" type="Label" parent="SafeArea/MainLayout/BodyRow/SideInfo"]
@@ -197,6 +205,12 @@ custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "ANALYZE"
+
+[node name="BtnReset" type="Button" parent="SafeArea/MainLayout/ActionsRow"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "RESET PICK"
 
 [node name="BtnVerify" type="Button" parent="SafeArea/MainLayout/ActionsRow"]
 custom_minimum_size = Vector2(0, 60)
@@ -240,4 +254,3 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("6_1park")
 script = ExtResource("9_mc3vw")
-

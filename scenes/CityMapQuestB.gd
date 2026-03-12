@@ -96,6 +96,36 @@ var first_action_ms: int = -1
 var round_phase: int = PHASE_BUILD
 var phase_time_ms: Dictionary = {"1": 0, "2": 0, "3": 0, "4": 0}
 
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+
+var node_select_count: int = 0
+var edge_step_count: int = 0
+var undo_count_local: int = 0
+var reset_count_local: int = 0
+var submit_attempt_count: int = 0
+
+var must_visit_progress_peak: int = 0
+var must_visit_missed_submit_count: int = 0
+var cycle_detected_local_count: int = 0
+var two_way_usage_count: int = 0
+
+var route_change_count: int = 0
+var unique_nodes_visited: Dictionary = {}
+var revisit_count: int = 0
+
+var sum_input_edit_count: int = 0
+var details_open_count: int = 0
+var hint_open_count: int = 0
+var changed_after_review: bool = false
+var changed_after_hint: bool = false
+
+var time_to_first_step_ms: int = -1
+var time_to_first_submit_ms: int = -1
+var time_to_first_input_ms: int = -1
+var time_from_last_edit_to_submit_ms: int = -1
+var last_edit_ms: int = -1
+
 var backtrack_count: int = 0
 var cycle_events: int = 0
 var cycle_detected: bool = false
@@ -144,6 +174,9 @@ var _status_i18n_color: Color = Color(1, 1, 1, 1)
 var _phase_started_ms: int = 0
 var _hint_count: int = 0
 var _last_reveal: Dictionary = {}
+var _last_review_had_hint: bool = false
+var _suppress_sum_input_telemetry: bool = false
+var _two_way_edge_keys: Dictionary = {}
 var _phase_label: Label
 var _reveal_label: Label
 var _solver = preload("res://scripts/city_map/GraphSolver.gd").new()
@@ -340,6 +373,65 @@ func _phase_snapshot_ms() -> Dictionary:
 		snapshot[key] = int(snapshot.get(key, 0)) + maxi(0, now_ms - _phase_started_ms)
 	return snapshot
 
+func _elapsed_ms_now() -> int:
+	if level_started_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - level_started_ms)
+
+func _log_event(event_name: String, data: Dictionary = {}) -> void:
+	var events_value: Variant = task_session.get("events", [])
+	var events: Array = events_value if typeof(events_value) == TYPE_ARRAY else []
+	events.append({
+		"name": event_name,
+		"t_ms": _elapsed_ms_now(),
+		"payload": data.duplicate(true)
+	})
+	task_session["events"] = events
+
+func _must_visit_progress() -> int:
+	var reached := 0
+	for must_node in must_visit_nodes:
+		if path.has(must_node):
+			reached += 1
+	return reached
+
+func _mark_change_after_review_feedback() -> void:
+	if _last_reveal.is_empty():
+		return
+	changed_after_review = true
+	if _last_review_had_hint:
+		changed_after_hint = true
+
+func _reset_trial_telemetry() -> void:
+	task_session = {"events": [], "trial_seq": trial_seq}
+	node_select_count = 0
+	edge_step_count = 0
+	undo_count_local = 0
+	reset_count_local = 0
+	submit_attempt_count = 0
+	must_visit_progress_peak = 0
+	must_visit_missed_submit_count = 0
+	cycle_detected_local_count = 0
+	two_way_usage_count = 0
+	route_change_count = 0
+	unique_nodes_visited.clear()
+	revisit_count = 0
+	sum_input_edit_count = 0
+	details_open_count = 0
+	hint_open_count = 0
+	changed_after_review = false
+	changed_after_hint = false
+	time_to_first_step_ms = -1
+	time_to_first_submit_ms = -1
+	time_to_first_input_ms = -1
+	time_from_last_edit_to_submit_ms = -1
+	last_edit_ms = -1
+	_last_review_had_hint = false
+	var start_node := str(level_data.get("start_node", "A"))
+	if not start_node.is_empty():
+		unique_nodes_visited[start_node] = true
+	must_visit_progress_peak = _must_visit_progress()
+
 func _route_display_text() -> String:
 	var tokens: Array[String] = []
 	for i in range(path.size()):
@@ -425,8 +517,12 @@ func _build_review_text(verdict: Dictionary) -> String:
 		{"player": player_cost, "best": best_cost}
 	)
 	var hint_text := _soft_hint_text(result_code)
+	_last_review_had_hint = false
 	if not hint_text.is_empty():
 		_hint_count += 1
+		hint_open_count += 1
+		_last_review_had_hint = true
+		_log_event("hint_opened", {"result_code": result_code, "hint": hint_text})
 		return "%s\n%s\n%s\n%s\n%s\n%s\n%s" % [happened, where, revisit, keep, status_line, cost_line, hint_text]
 	return "%s\n%s\n%s\n%s\n%s\n%s" % [happened, where, revisit, keep, status_line, cost_line]
 
@@ -439,11 +535,14 @@ func _set_dossier_open(opened: bool) -> void:
 	briefing_card.visible = opened
 	if opened:
 		dossier_open_count += 1
+		details_open_count += 1
 		_dossier_open_started_ms = Time.get_ticks_msec()
+		_log_event("details_opened", {"opened": true, "count": details_open_count})
 	else:
 		if _dossier_open_started_ms >= 0:
 			time_dossier_open_ms += Time.get_ticks_msec() - _dossier_open_started_ms
 		_dossier_open_started_ms = -1
+		_log_event("details_opened", {"opened": false})
 
 func _on_numpad_button_pressed(key: String) -> void:
 	if _is_round_locked():
@@ -466,6 +565,7 @@ func _on_numpad_button_pressed(key: String) -> void:
 func _on_undo_pressed() -> void:
 	if _is_round_locked() or _undo_stack.is_empty():
 		return
+	_mark_change_after_review_feedback()
 	var snapshot: Dictionary = _undo_stack.pop_back()
 	current_node = str(snapshot.get("current_node", current_node))
 	path = snapshot.get("path", path).duplicate()
@@ -476,6 +576,11 @@ func _on_undo_pressed() -> void:
 	first_attempt_edge = str(snapshot.get("first_attempt_edge", first_attempt_edge))
 	first_action_ms = int(snapshot.get("first_action_ms", first_action_ms))
 	undo_count += 1
+	undo_count_local += 1
+	route_change_count += 1
+	edge_step_count = maxi(0, path.size() - 1)
+	last_edit_ms = _elapsed_ms_now()
+	_log_event("undo_pressed", {"path_len": path.size(), "current_node": current_node})
 	_last_move_ms = Time.get_ticks_msec()
 	_recalculate_stability()
 	_update_visuals()
@@ -595,6 +700,14 @@ func _load_sublevel(index: int) -> void:
 	_set_briefing()
 	_rebuild_graph_ui()
 	_reset_round_state(true)
+	trial_seq += 1
+	_reset_trial_telemetry()
+	_log_event("trial_started", {
+		"level_id": str(level_data.get("level_id", "")),
+		"must_visit": must_visit_nodes.duplicate(),
+		"cycle_forbidden": true,
+		"min_sum": int(min_sum)
+	})
 	_lock_input(false)
 	_update_timer_display()
 	_recalculate_stability()
@@ -835,6 +948,7 @@ func _load_level_data(path_to_file: String) -> void:
 	node_defs.clear()
 	adjacency.clear()
 	must_visit_nodes.clear()
+	_two_way_edge_keys.clear()
 
 	for node_var in level_data.get("nodes", []):
 		var node: Dictionary = node_var
@@ -853,6 +967,8 @@ func _load_level_data(path_to_file: String) -> void:
 		_add_adjacency(from_id, to_id, w)
 		if edge.get("two_way", false):
 			_add_adjacency(to_id, from_id, w)
+			_two_way_edge_keys[_edge_key(from_id, to_id)] = true
+			_two_way_edge_keys[_edge_key(to_id, from_id)] = true
 
 	input_regex = RegEx.new()
 	var regex_pattern := "^[0-9]+$"
@@ -1172,14 +1288,18 @@ func _reset_round_state(full_reset: bool) -> void:
 	current_node = str(level_data.get("start_node", "A"))
 	path = [current_node]
 	path_sum = 0
+	edge_step_count = 0
 	backtrack_count = 0
 	cycle_events = 0
 	cycle_detected = false
 	first_attempt_edge = ""
 	first_action_ms = -1
+	_suppress_sum_input_telemetry = true
 	sum_input.clear()
+	_suppress_sum_input_telemetry = false
 	_clear_status_i18n()
 	_last_reveal = {}
+	_last_review_had_hint = false
 	if is_instance_valid(_reveal_label):
 		_reveal_label.text = ""
 	_undo_stack.clear()
@@ -1308,6 +1428,7 @@ func _on_node_pressed(node_id: String) -> void:
 	if _is_round_locked():
 		return
 	if not adjacency.has(current_node) or not adjacency[current_node].has(node_id):
+		_log_event("invalid_step_attempt", {"from": current_node, "to": node_id, "path_len": path.size()})
 		_set_status_i18n(
 			"city_map.b.status.wrong_direction",
 			"Cannot move: this edge is not outgoing from the current node.",
@@ -1319,12 +1440,14 @@ func _on_node_pressed(node_id: String) -> void:
 	if _last_move_ms > 0:
 		think_time_before_move_ms.append(now_ms - _last_move_ms)
 	_last_move_ms = now_ms
+	_mark_change_after_review_feedback()
 	_push_undo_snapshot()
 
 	if first_attempt_edge.is_empty():
 		first_attempt_edge = _edge_key(current_node, node_id)
 		first_action_ms = now_ms - level_started_ms
 
+	var from_node := current_node
 	var is_backtrack: bool = path.size() >= 2 and path[path.size() - 2] == node_id
 	if is_backtrack:
 		backtrack_count += 1
@@ -1337,7 +1460,37 @@ func _on_node_pressed(node_id: String) -> void:
 	path_sum += int(adjacency[current_node][node_id])
 	path.append(node_id)
 	current_node = node_id
+	node_select_count += 1
+	edge_step_count = maxi(0, path.size() - 1)
+	if time_to_first_step_ms < 0:
+		time_to_first_step_ms = _elapsed_ms_now()
+	route_change_count += 1
+	last_edit_ms = _elapsed_ms_now()
+	if unique_nodes_visited.has(node_id):
+		revisit_count += 1
+	else:
+		unique_nodes_visited[node_id] = true
+	var must_progress := _must_visit_progress()
+	if must_progress > must_visit_progress_peak:
+		must_visit_progress_peak = must_progress
+		_log_event("constraint_progress_changed", {
+			"must_visit_progress": must_progress,
+			"must_visit_total": must_visit_nodes.size()
+		})
+	if _two_way_edge_keys.has(_edge_key(from_node, node_id)):
+		two_way_usage_count += 1
+		_log_event("two_way_edge_used", {"from": from_node, "to": node_id})
+	if _solver.path_has_cycle(path):
+		cycle_detected_local_count += 1
+		_log_event("cycle_detected", {"path": path.duplicate(), "count": cycle_detected_local_count})
+	_log_event("route_step_added", {
+		"from": from_node,
+		"to": node_id,
+		"path_len": path.size(),
+		"current_node": current_node
+	})
 	_last_reveal = {}
+	_last_review_had_hint = false
 	if is_instance_valid(_reveal_label):
 		_reveal_label.text = ""
 	if path.size() == 2:
@@ -1347,7 +1500,12 @@ func _on_node_pressed(node_id: String) -> void:
 func _on_reset_pressed() -> void:
 	if _is_round_locked():
 		return
+	_mark_change_after_review_feedback()
 	n_reset += 1
+	reset_count_local += 1
+	route_change_count += 1
+	last_edit_ms = _elapsed_ms_now()
+	_log_event("reset_pressed", {"path_before": path.duplicate(), "current_node_before": current_node})
 	_reset_round_state(false)
 	_recalculate_stability()
 
@@ -1362,12 +1520,30 @@ func _on_sum_input_changed(new_text: String) -> void:
 	if digits != new_text:
 		sum_input.text = digits
 		sum_input.caret_column = digits.length()
+		return
+	if _suppress_sum_input_telemetry:
+		return
+	sum_input_edit_count += 1
+	if time_to_first_input_ms < 0:
+		time_to_first_input_ms = _elapsed_ms_now()
+	last_edit_ms = _elapsed_ms_now()
+	_mark_change_after_review_feedback()
+	_log_event("sum_input_changed", {"value": digits, "len": digits.length()})
 	if current_node == str(level_data.get("end_node", "E")) and not digits.is_empty():
 		_set_phase(PHASE_INPUT)
 
 func _on_submit_pressed() -> void:
 	if _is_round_locked():
 		return
+	submit_attempt_count += 1
+	if time_to_first_submit_ms < 0:
+		time_to_first_submit_ms = _elapsed_ms_now()
+	time_from_last_edit_to_submit_ms = -1 if last_edit_ms < 0 else maxi(0, _elapsed_ms_now() - last_edit_ms)
+	_log_event("submit_pressed", {
+		"path": path.duplicate(),
+		"sum_input": sum_input.text.strip_edges(),
+		"current_node": current_node
+	})
 	if current_node != str(level_data.get("end_node", "E")):
 		_set_status_i18n(
 			"city_map.common.result.err_incomplete",
@@ -1382,7 +1558,19 @@ func _on_submit_pressed() -> void:
 	attempt_in_sublevel += 1
 	attempt_in_run += 1
 	var verdict := _judge_solution(sum_input.text.strip_edges())
+	if str(verdict.get("result_code", "")) == "ERR_MISSING_TRANSIT":
+		must_visit_missed_submit_count += 1
 	_last_reveal = verdict
+	_log_event("submit_result", {
+		"result_code": str(verdict.get("result_code", "ERR_UNKNOWN")),
+		"route_valid": bool(verdict.get("route_valid", false)),
+		"finish_reached": bool(verdict.get("finish_reached", false)),
+		"must_visit_ok": bool(verdict.get("must_visit_ok", false)),
+		"cycle_ok": bool(verdict.get("cycle_ok", false)),
+		"calc_ok": bool(verdict.get("calc_ok", false)),
+		"optimal_ok": bool(verdict.get("optimal_ok", false)),
+		"best_known_cost": int(verdict.get("best_known_cost", min_sum))
+	})
 	_log_attempt(verdict)
 	if is_instance_valid(_reveal_label):
 		_reveal_label.text = _build_review_text(verdict)
@@ -1453,6 +1641,27 @@ func _result_message_meta(result_code: String) -> Dictionary:
 				"default": "Unhandled result code: {code}",
 				"params": {"code": result_code}
 			}
+
+func _mastery_block_reason(result_code: String) -> String:
+	if submit_attempt_count >= 5:
+		return "MULTI_SUBMIT_GUESSING"
+	if undo_count_local >= 6:
+		return "EXCESSIVE_UNDO"
+	if route_change_count >= 10 and cycle_detected_local_count > 0:
+		return "CONSTRAINT_INSTABILITY"
+	match result_code:
+		"OK":
+			return "NONE"
+		"ERR_MISSING_TRANSIT":
+			return "MISSED_TRANSIT"
+		"ERR_CYCLE":
+			return "CYCLE_ROUTE"
+		"ERR_NOT_OPT":
+			return "NOT_OPTIMAL"
+		"ERR_CALC":
+			return "ARITHMETIC_ERROR"
+		_:
+			return "NONE"
 
 func _judge_solution(input_text: String) -> Dictionary:
 	var sum_actual := _compute_path_sum()
@@ -1583,11 +1792,16 @@ func _log_attempt(verdict: Dictionary) -> void:
 		first_attempt_edge_value = first_attempt_edge
 
 	var attempt_no := GlobalMetrics.session_history.size() + 1
+	var mastery_reason := _mastery_block_reason(result_code)
+	var solver_path_value: Variant = verdict.get("path", path.duplicate())
+	var solver_path: Array = solver_path_value if typeof(solver_path_value) == TYPE_ARRAY else path.duplicate()
 	var log_data := {
 		"schema_version": "city_map.v2.2.0",
 		"quest_id": "CITY_MAP",
 		"stage": "B",
 		"task_id": str(level_data.get("level_id", "6.2")),
+		"level_id": str(level_data.get("level_id", "")),
+		"trial_seq": trial_seq,
 		"run_id": run_id,
 		"pack_id": pack_id,
 		"sublevel_index": level_index + 1,
@@ -1602,21 +1816,47 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"contract_version": str(level_data.get("contract_version", "city_map.v2.1.0")),
 		"attempt_no": attempt_no,
 		"result_code": result_code,
+		"outcome_code": result_code,
+		"mastery_block_reason": mastery_reason,
 		"route_valid": bool(verdict.get("route_valid", false)),
 		"finish_reached": bool(verdict.get("finish_reached", false)),
-		"calc_ok": sum_input_value != null and int(sum_input_value) == sum_actual,
-		"optimal_ok": sum_actual == min_sum and result_code == "OK" and must_visit_ok,
+		"calc_ok": bool(verdict.get("calc_ok", sum_input_value != null and int(sum_input_value) == sum_actual)),
+		"optimal_ok": bool(verdict.get("optimal_ok", sum_actual == min_sum and result_code == "OK" and must_visit_ok)),
 		"must_visit_ok": must_visit_ok,
 		"cycle_ok": bool(verdict.get("cycle_ok", true)),
+		"best_known_cost": int(verdict.get("best_known_cost", min_sum)),
+		"player_error_step_idx": int(verdict.get("player_error_step_idx", -1)),
 		"first_attempt_edge": first_attempt_edge_value,
 		"t_elapsed_seconds": t_elapsed_seconds,
-		"path": path.duplicate(),
+		"path": solver_path.duplicate(),
 		"sum_actual": sum_actual,
 		"sum_input": sum_input_value,
 		"min_sum": min_sum,
 		"backtrack_count": backtrack_count,
 		"cycle_events": cycle_events,
 		"constraint_violations": constraint_violations,
+		"submit_attempt_count": submit_attempt_count,
+		"node_select_count": node_select_count,
+		"edge_step_count": edge_step_count,
+		"undo_count": undo_count_local,
+		"reset_count": reset_count_local,
+		"must_visit_progress_peak": must_visit_progress_peak,
+		"must_visit_missed_submit_count": must_visit_missed_submit_count,
+		"cycle_detected_count": cycle_detected_local_count,
+		"two_way_usage_count": two_way_usage_count,
+		"route_change_count": route_change_count,
+		"unique_nodes_count": unique_nodes_visited.size(),
+		"revisit_count": revisit_count,
+		"sum_input_edit_count": sum_input_edit_count,
+		"details_open_count": details_open_count,
+		"hint_open_count": hint_open_count,
+		"changed_after_review": changed_after_review,
+		"changed_after_hint": changed_after_hint,
+		"time_to_first_step_ms": time_to_first_step_ms,
+		"time_to_first_input_ms": time_to_first_input_ms,
+		"time_to_first_submit_ms": time_to_first_submit_ms,
+		"time_from_last_edit_to_submit_ms": time_from_last_edit_to_submit_ms,
+		"phase_time_ms": phase_snapshot.duplicate(true),
 		"stability_final": int(stability),
 		"n_calc": n_calc,
 		"n_opt": n_opt,
@@ -1624,7 +1864,6 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"n_reset": n_reset,
 		"n_transit": n_transit,
 		"n_cycle": n_cycle,
-		"undo_count": undo_count,
 		"wait_count": wait_count,
 		"wait_total_sim_sec": wait_total_sim_sec,
 		"warnings_shown_count": warnings_shown_count,
@@ -1641,6 +1880,7 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"phase_input_ms": int(phase_snapshot.get("3", 0)),
 		"phase_review_ms": int(phase_snapshot.get("4", 0)),
 		"think_time_before_move_ms": think_time_before_move_ms.duplicate(),
+		"task_session": task_session.duplicate(true),
 		"is_correct": result_code == "OK",
 		"is_fit": result_code == "OK",
 		"stability_delta": 0,

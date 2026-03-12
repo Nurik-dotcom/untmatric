@@ -18,6 +18,26 @@ var current_case: Dictionary = {}
 var mode := ""
 var is_trial_active := false
 
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+var mode_id: String = ""
+var selection_toggle_count: int = 0
+var selected_count_peak: int = 0
+var submit_attempt_count: int = 0
+var relation_drag_start_count: int = 0
+var relation_drag_complete_count: int = 0
+var relation_drag_fail_count: int = 0
+var relation_wrong_origin_count: int = 0
+var relation_duplicate_link_count: int = 0
+var inspected_before_submit: bool = false
+var changed_after_inspect: bool = false
+var changed_after_error: bool = false
+var time_to_first_toggle_ms: int = -1
+var time_to_first_drag_ms: int = -1
+var time_to_submit_ms: int = -1
+var details_open_count: int = 0
+var hint_open_count: int = 0
+
 var ui_ready_ts := 0
 var first_action_ts := -1
 var scroll_used := false
@@ -219,6 +239,23 @@ func _load_next_case() -> void:
 	first_action_ts = -1
 	scroll_used = false
 	table_has_scroll = false
+	mode_id = ""
+	selection_toggle_count = 0
+	selected_count_peak = 0
+	submit_attempt_count = 0
+	relation_drag_start_count = 0
+	relation_drag_complete_count = 0
+	relation_drag_fail_count = 0
+	relation_wrong_origin_count = 0
+	relation_duplicate_link_count = 0
+	inspected_before_submit = false
+	changed_after_inspect = false
+	changed_after_error = false
+	time_to_first_toggle_ms = -1
+	time_to_first_drag_ms = -1
+	time_to_submit_ms = -1
+	details_open_count = 0
+	hint_open_count = 0
 	row_item_by_id.clear()
 	row_crossed.clear()
 	cross_out_count = 0
@@ -245,13 +282,36 @@ func _load_next_case() -> void:
 
 	if str(current_case.get("case_kind", "")) == "FILTER_ROWS":
 		mode = MODE_FILTER
+		mode_id = MODE_FILTER
 		_render_filter_ui()
 	else:
 		mode = MODE_RELATION
+		mode_id = MODE_RELATION
 		_render_relation_ui()
+	_begin_trial_session()
 
 	_on_viewport_size_changed()
 	_update_stability_ui()
+
+func _begin_trial_session() -> void:
+	trial_seq += 1
+	var case_id := str(current_case.get("id", "DA7-B-00"))
+	task_session = {
+		"trial_seq": trial_seq,
+		"quest_id": "DATA_ARCHIVE",
+		"stage_id": "B",
+		"task_id": case_id,
+		"mode_id": mode_id,
+		"started_at_ticks": ui_ready_ts,
+		"ended_at_ticks": 0,
+		"events": []
+	}
+	_log_event("trial_started", {
+		"trial_seq": trial_seq,
+		"case_id": case_id,
+		"mode_id": mode_id,
+		"prompt": str(current_case.get("prompt", ""))
+	})
 
 func _render_filter_ui() -> void:
 	filter_mode_root.visible = true
@@ -412,6 +472,8 @@ func _toggle_redaction(item: TreeItem) -> void:
 	var row_id := str(item.get_metadata(0))
 	if row_id.is_empty():
 		return
+	if time_to_first_toggle_ms < 0:
+		time_to_first_toggle_ms = Time.get_ticks_msec() - ui_ready_ts
 	var crossed := not bool(item.get_metadata(1))
 	item.set_metadata(1, crossed)
 	row_crossed[row_id] = crossed
@@ -420,8 +482,22 @@ func _toggle_redaction(item: TreeItem) -> void:
 		unique_rows_crossed[row_id] = true
 	else:
 		uncross_count += 1
+	selection_toggle_count += 1
+	var selected_count := _selected_crossed_count()
+	selected_count_peak = maxi(selected_count_peak, selected_count)
 	_apply_redaction_style(item, crossed)
 	_refresh_submit_enabled()
+	_log_event("selection_changed", {
+		"mode_id": MODE_FILTER,
+		"row_id": row_id,
+		"is_selected": crossed,
+		"selected_count": selected_count
+	})
+	_log_event("filter_toggle", {
+		"row_id": row_id,
+		"is_selected": crossed,
+		"selected_count": selected_count
+	})
 
 func _apply_redaction_style(item: TreeItem, crossed: bool) -> void:
 	for col_idx in range(data_tree.columns):
@@ -445,11 +521,23 @@ func _on_clear_pressed() -> void:
 		row_crossed[row_id] = false
 		_apply_redaction_style(item, false)
 	_refresh_submit_enabled()
+	_log_event("clear_pressed", {
+		"mode_id": MODE_FILTER,
+		"clear_count": clear_count
+	})
 
 func _on_submit_pressed() -> void:
 	if mode != MODE_FILTER or not is_trial_active:
 		return
 	_register_first_action()
+	submit_attempt_count += 1
+	if time_to_submit_ms < 0:
+		time_to_submit_ms = Time.get_ticks_msec() - ui_ready_ts
+	_log_event("submit_pressed", {
+		"mode_id": MODE_FILTER,
+		"attempt": submit_attempt_count,
+		"selected_count": _selected_crossed_count()
+	})
 	is_trial_active = false
 
 	var crossed_ids: Array = []
@@ -542,10 +630,13 @@ func _on_relation_tree_r_gui_input(event: InputEvent) -> void:
 
 func _try_start_relation_drag(tree: Tree, local_pos: Vector2) -> void:
 	_register_first_action()
+	relation_drag_start_count += 1
 	connect_attempts += 1
 	var hit := _resolve_tree_hit(tree, local_pos, rel_left_col_ids)
 	if hit.is_empty():
 		miss_connects += 1
+		relation_drag_fail_count += 1
+		_log_event("relation_drag_failed", {"reason": "no_pk_hit"})
 		return
 	var hit_col := str(hit.get("col_id", ""))
 	var allowed_pk: Dictionary = {}
@@ -558,14 +649,29 @@ func _try_start_relation_drag(tree: Tree, local_pos: Vector2) -> void:
 			allowed_pk[pk_col] = true
 	if not allowed_pk.has(hit_col):
 		miss_connects += 1
+		relation_wrong_origin_count += 1
+		relation_drag_fail_count += 1
 		_set_relation_hint_i18n("da7.b.ui.rel.start_from_pk", "Start cable from PK column")
+		hint_open_count += 1
+		_log_event("hint_opened", {
+			"context": "relation",
+			"reason": "start_from_pk"
+		})
+		_log_event("relation_wrong_origin", {"col_id": hit_col})
 		return
 
 	rel_drag_active = true
+	if time_to_first_drag_ms < 0:
+		time_to_first_drag_ms = Time.get_ticks_msec() - ui_ready_ts
 	rel_drag_started_ts = Time.get_ticks_msec()
 	rel_drag_start_global = hit.get("center_global", Vector2.ZERO)
 	rel_connected_pk = hit_col
 	rel_connected_fk = ""
+	_log_event("selection_changed", {
+		"mode_id": MODE_RELATION,
+		"pk_col_id": rel_connected_pk
+	})
+	_log_event("relation_drag_started", {"pk_col_id": rel_connected_pk})
 	if is_instance_valid(connector_overlay) and connector_overlay.has_method("start_drag"):
 		connector_overlay.call("start_drag", _global_to_overlay(rel_drag_start_global))
 	_play_sound("click", sfx_click)
@@ -586,12 +692,23 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 	if not hit.is_empty() and _is_valid_relation_pair(rel_connected_pk, fk_col):
 		if _is_pair_already_committed(rel_connected_pk, fk_col):
 			rel_duplicate_pair_count += 1
+			relation_duplicate_link_count += 1
 			_clear_relation_drag_overlay()
 			_set_relation_hint_i18n("da7.b.ui.rel.pair_already_linked", "Pair already linked")
 			_set_relation_options_enabled(_is_relation_ready_to_submit())
+			hint_open_count += 1
+			_log_event("hint_opened", {
+				"context": "relation",
+				"reason": "pair_already_linked"
+			})
+			_log_event("relation_duplicate", {
+				"pk_col_id": rel_connected_pk,
+				"fk_col_id": fk_col
+			})
 			return
 
 		rel_cable_committed = true
+		relation_drag_complete_count += 1
 		rel_connected_fk = fk_col
 		var to_overlay := _global_to_overlay(hit.get("center_global", global_pos))
 		if is_instance_valid(connector_overlay):
@@ -608,10 +725,26 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 
 		var needed := _get_required_connections().size()
 		var linked := rel_committed.size()
+		if relation_drag_fail_count > 0 or relation_wrong_origin_count > 0:
+			changed_after_error = true
 		_set_relation_hint_i18n("da7.b.ui.rel.pair_linked", "Cable linked ({done}/{total})", {"done": linked, "total": maxi(1, needed)})
 		var ready := _is_relation_ready_to_submit()
+		_log_event("relation_linked", {
+			"pk_col_id": rel_connected_pk,
+			"fk_col_id": rel_connected_fk,
+			"done": linked,
+			"total": maxi(1, needed)
+		})
 		_set_relation_options_enabled(ready)
 		if (current_case.get("options", []) as Array).is_empty() and ready:
+			submit_attempt_count += 1
+			if time_to_submit_ms < 0:
+				time_to_submit_ms = Time.get_ticks_msec() - ui_ready_ts
+			_log_event("submit_pressed", {
+				"mode_id": MODE_RELATION,
+				"attempt": submit_attempt_count,
+				"source": "auto_ready"
+			})
 			_handle_result(true, null, {
 				"connected_pk": rel_connected_pk,
 				"connected_fk": rel_connected_fk,
@@ -621,18 +754,37 @@ func _finish_relation_drag(global_pos: Vector2) -> void:
 	else:
 		miss_connects += 1
 		rel_invalid_pair_count += 1
+		relation_drag_fail_count += 1
 		rel_last_invalid_fk_col_id = fk_col
 		_clear_relation_drag_overlay()
 		_set_relation_hint_i18n("da7.b.ui.rel.missed_fk", "Missed FK target")
 		_set_relation_options_enabled(_is_relation_ready_to_submit())
+		hint_open_count += 1
+		_log_event("hint_opened", {
+			"context": "relation",
+			"reason": "missed_fk"
+		})
+		_log_event("relation_drag_failed", {
+			"reason": "missed_fk",
+			"pk_col_id": rel_connected_pk,
+			"fk_col_id": fk_col
+		})
 
 func _on_relation_option_selected(opt: Dictionary) -> void:
 	if mode != MODE_RELATION or not is_trial_active:
 		return
 	_register_first_action()
+	submit_attempt_count += 1
+	if time_to_submit_ms < 0:
+		time_to_submit_ms = Time.get_ticks_msec() - ui_ready_ts
 	is_trial_active = false
 	var selected_id := str(opt.get("id", ""))
 	relation_choice_id = selected_id
+	_log_event("submit_pressed", {
+		"mode_id": MODE_RELATION,
+		"attempt": submit_attempt_count,
+		"selected_option_id": selected_id
+	})
 	var relation_ready := _is_relation_ready_to_submit()
 	var is_correct := relation_ready and selected_id == str(current_case.get("answer_id", ""))
 	var reason: Variant = null
@@ -716,6 +868,17 @@ func _handle_result(is_correct: bool, reason: Variant, extra_data: Dictionary) -
 		_play_sound("error", sfx_error)
 	else:
 		_play_sound("relay", sfx_relay)
+	var error_type: String = "NONE" if is_correct else str(reason)
+	_log_event("submit_result", {
+		"is_correct": is_correct,
+		"error_type": error_type,
+		"mode_id": mode_id
+	})
+	task_session["ended_at_ticks"] = Time.get_ticks_msec()
+	_log_event("trial_finished", {
+		"is_correct": is_correct,
+		"error_type": error_type
+	})
 	_log_trial(is_correct, reason, extra_data)
 	_update_stability_ui()
 	var transition_token := _transition_token
@@ -739,26 +902,66 @@ func _log_trial(is_correct: bool, f_reason: Variant, extra_data: Dictionary) -> 
 		first_action_ms = first_action_ts - ui_ready_ts
 	var case_id := str(current_case.get("id", "DA7-B-00"))
 	var timing_policy: Dictionary = current_case.get("timing_policy", {}) as Dictionary
-	var payload: Dictionary = {
+	var interaction_type := str(current_case.get("interaction_type", ""))
+	var interaction_variant := str(current_case.get("interaction_variant", ""))
+	var schema_version := str(current_case.get("schema_version", "DA7.B.v2"))
+	var variant_hash := str(hash("%s|%s|%s|%s|%s" % [case_id, mode_id, interaction_type, interaction_variant, schema_version]))
+	var payload: Dictionary = TrialV2.build("DATA_ARCHIVE", "B", case_id, interaction_type, variant_hash)
+	var error_type: String = "NONE" if is_correct else str(f_reason)
+	var outcome_code: String = _outcome_code_for_b(is_correct, f_reason)
+	var mastery_block_reason: String = _mastery_block_reason_for_b(is_correct, outcome_code)
+	var valid_for_mastery: bool = mastery_block_reason == "NONE"
+	var effective_submit_ms := time_to_submit_ms
+	if effective_submit_ms < 0:
+		effective_submit_ms = elapsed_ms
+
+	payload.merge({
 		"question_id": case_id,
 		"case_id": case_id,
-		"quest_id": "DA7",
 		"quest": "data_archive",
-		"stage": "B",
+		"stage_id": "B",
 		"level": "B",
 		"topic": str(current_case.get("topic", "DB_FILTERING")),
 		"case_kind": str(current_case.get("case_kind", "")),
-		"interaction_type": str(current_case.get("interaction_type", "")),
-		"interaction_variant": str(current_case.get("interaction_variant", "")),
-		"schema_version": str(current_case.get("schema_version", "DA7.B.v2")),
-		"match_key": "DA7_B|%s|%s" % [case_id, mode],
+		"mode_id": mode_id,
+		"interaction_variant": interaction_variant,
+		"schema_version": schema_version,
 		"is_correct": is_correct,
+		"is_fit": is_correct,
 		"f_reason": f_reason,
+		"error_type": error_type,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"valid_for_diagnostics": true,
+		"valid_for_mastery": valid_for_mastery,
 		"elapsed_ms": elapsed_ms,
 		"duration": float(elapsed_ms) / 1000.0,
+		"time_to_first_action_ms": first_action_ms,
+		"time_to_first_toggle_ms": time_to_first_toggle_ms,
+		"time_to_first_drag_ms": time_to_first_drag_ms,
+		"time_to_submit_ms": effective_submit_ms,
+		"check_attempt_count": submit_attempt_count,
+		"hint_used": hint_open_count > 0,
+		"details_used": details_open_count > 0,
+		"inspect_used": inspected_before_submit,
+		"selection_toggle_count": selection_toggle_count,
+		"selected_count_peak": selected_count_peak,
+		"clear_count": clear_count,
+		"submit_attempt_count": submit_attempt_count,
+		"relation_drag_start_count": relation_drag_start_count,
+		"relation_drag_complete_count": relation_drag_complete_count,
+		"relation_drag_fail_count": relation_drag_fail_count,
+		"relation_wrong_origin_count": relation_wrong_origin_count,
+		"relation_duplicate_link_count": relation_duplicate_link_count,
+		"inspected_before_submit": inspected_before_submit,
+		"changed_after_inspect": changed_after_inspect,
+		"changed_after_error": changed_after_error,
 		"timing": {
 			"effective_elapsed_ms": elapsed_ms,
 			"time_to_first_action_ms": first_action_ms,
+			"time_to_first_toggle_ms": time_to_first_toggle_ms,
+			"time_to_first_drag_ms": time_to_first_drag_ms,
+			"time_to_submit_ms": effective_submit_ms,
 			"policy_mode": str(timing_policy.get("mode", "LEARNING")),
 			"limit_sec": int(timing_policy.get("limit_sec", 120))
 		},
@@ -768,8 +971,9 @@ func _log_trial(is_correct: bool, f_reason: Variant, extra_data: Dictionary) -> 
 			"table_has_scroll": table_has_scroll
 		},
 		"answer": {},
-		"telemetry": {}
-	}
+		"telemetry": {},
+		"task_session": task_session.duplicate(true)
+	}, true)
 
 	if mode == MODE_FILTER:
 		var sets: Dictionary = extra_data.get("sets", {}) as Dictionary
@@ -789,8 +993,11 @@ func _log_trial(is_correct: bool, f_reason: Variant, extra_data: Dictionary) -> 
 			"cross_out_count": cross_out_count,
 			"uncross_count": uncross_count,
 			"unique_rows_crossed": unique_rows_crossed.size(),
+			"selection_toggle_count": selection_toggle_count,
+			"selected_count_peak": selected_count_peak,
 			"clear_used": clear_used,
-			"clear_count": clear_count
+			"clear_count": clear_count,
+			"time_to_first_toggle_ms": time_to_first_toggle_ms
 		}
 	else:
 		payload["answer"] = {
@@ -814,10 +1021,81 @@ func _log_trial(is_correct: bool, f_reason: Variant, extra_data: Dictionary) -> 
 			"required_connection_count": _get_required_connections().size(),
 			"invalid_pair_count": rel_invalid_pair_count,
 			"duplicate_pair_count": rel_duplicate_pair_count,
-			"last_invalid_fk_col_id": rel_last_invalid_fk_col_id
+			"last_invalid_fk_col_id": rel_last_invalid_fk_col_id,
+			"relation_drag_start_count": relation_drag_start_count,
+			"relation_drag_complete_count": relation_drag_complete_count,
+			"relation_drag_fail_count": relation_drag_fail_count,
+			"relation_wrong_origin_count": relation_wrong_origin_count,
+			"relation_duplicate_link_count": relation_duplicate_link_count,
+			"time_to_first_drag_ms": time_to_first_drag_ms
 		}
 
 	GlobalMetrics.register_trial(payload)
+
+func _outcome_code_for_b(is_correct: bool, f_reason: Variant) -> String:
+	var reason := str(f_reason)
+	if mode_id == MODE_FILTER:
+		if is_correct:
+			return "FILTER_SUCCESS"
+		match reason:
+			"OVERSELECT_DECOY", "FALSE_POSITIVE":
+				return "FILTER_OVERSELECT"
+			"OMISSION", "EMPTY_SELECTION":
+				return "FILTER_UNDERSELECT"
+			"PURE_OPPOSITE":
+				return "FILTER_NEGATION_CONFUSION"
+			"INCLUDED_BOUNDARY":
+				return "FILTER_WRONG_BOUNDARY"
+		if reason.find("OPPOSITE") >= 0 or reason.find("NEGATION") >= 0:
+			return "FILTER_NEGATION_CONFUSION"
+		if reason.find("OMISSION") >= 0 or reason.find("EMPTY") >= 0:
+			return "FILTER_UNDERSELECT"
+		if reason.find("BOUNDARY") >= 0:
+			return "FILTER_WRONG_BOUNDARY"
+		return "FILTER_OVERSELECT"
+
+	if is_correct:
+		return "REL_SUCCESS"
+	if relation_duplicate_link_count > 0:
+		return "REL_DUPLICATE_LINK"
+	if relation_wrong_origin_count > 0 or reason == "FK_DIRECTION_SWAP":
+		return "REL_WRONG_PK_START"
+	if relation_drag_fail_count > 0 or rel_invalid_pair_count > 0:
+		return "REL_MISSED_FK"
+	return "REL_WRONG_MAPPING"
+
+func _mastery_block_reason_for_b(is_correct: bool, outcome_code: String) -> String:
+	if hint_open_count > 0:
+		return "USED_HINT"
+	if clear_count >= 2:
+		return "USED_CLEAR_TOO_MUCH"
+	if inspected_before_submit:
+		return "USED_INSPECT_HEAVILY"
+	if submit_attempt_count >= 2:
+		return "MULTI_SUBMIT_GUESSING"
+	if outcome_code == "FILTER_NEGATION_CONFUSION":
+		return "NEGATION_CONFUSION"
+	if mode_id == MODE_RELATION and (relation_drag_fail_count + relation_wrong_origin_count + relation_duplicate_link_count) >= 2:
+		return "RELATION_MAPPING_UNSTABLE"
+	if not is_correct:
+		return "RELATION_MAPPING_UNSTABLE" if mode_id == MODE_RELATION else "NEGATION_CONFUSION"
+	return "NONE"
+
+func _log_event(event_name: String, payload: Dictionary = {}) -> void:
+	if task_session.is_empty():
+		return
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": event_name,
+		"t_ms": _trial_elapsed_ms(Time.get_ticks_msec()),
+		"payload": payload
+	})
+	task_session["events"] = events
+
+func _trial_elapsed_ms(now_ms: int) -> int:
+	if ui_ready_ts <= 0:
+		return 0
+	return maxi(0, now_ms - ui_ready_ts)
 
 func _register_first_action() -> void:
 	if first_action_ts < 0:

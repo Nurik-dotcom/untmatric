@@ -32,7 +32,7 @@ func _apply_step_data() -> void:
 	var event_text: String = str(_step_data.get("event", "")).strip_edges()
 	var line_ref: int = int(_step_data.get("line_ref", -1))
 
-	step_label.text = "Step %d" % max(1, step_index)
+	step_label.text = "Шаг %d" % max(1, step_index)
 	context_label.text = "i=%s | %s" % [i_value, cond_text]
 	before_label.text = "s:%s" % s_before
 	arrow_label.text = "->"

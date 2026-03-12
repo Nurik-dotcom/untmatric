@@ -15,6 +15,9 @@ var current_case: Dictionary = {}
 var current_layout: String = LAYOUT_DESKTOP
 var session_finished: bool = false
 
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+
 var case_started_ts: int = 0
 var time_to_first_action_ms: int = -1
 var is_trial_active: bool = false
@@ -36,6 +39,22 @@ var undo_count: int = 0
 var block_pick_count: int = 0
 var clear_used: bool = false
 var unique_blocks_used: Dictionary = {}
+var token_pick_count: int = 0
+var placement_count: int = 0
+var clear_count: int = 0
+var submit_attempt_count: int = 0
+var duplicate_role_attempt_count: int = 0
+var syntax_error_seen_count: int = 0
+var semantic_error_seen_count: int = 0
+var time_to_first_pick_ms: int = -1
+var time_to_first_submit_ms: int = -1
+var time_after_last_edit_to_submit_ms: int = -1
+var sequence_length_peak: int = 0
+var changed_after_error: bool = false
+var error_feedback_seen: bool = false
+var last_edit_ts: int = -1
+var details_open_count: int = 0
+var hint_open_count: int = 0
 
 var _status_i18n_key: String = ""
 var _status_i18n_default: String = ""
@@ -138,6 +157,16 @@ func _process(delta: float) -> void:
 	_update_timer_ui()
 	if time_left_sec <= 0.0 and not timed_out:
 		timed_out = true
+		submit_attempt_count += 1
+		if time_to_first_submit_ms < 0:
+			time_to_first_submit_ms = Time.get_ticks_msec() - case_started_ts
+		if last_edit_ts > 0:
+			time_after_last_edit_to_submit_ms = maxi(0, Time.get_ticks_msec() - last_edit_ts)
+		_log_event("submit_pressed", {
+			"attempt": submit_attempt_count,
+			"sequence_size": selected_sequence_ids.size(),
+			"source": "timeout"
+		})
 		var timeout_eval: Dictionary = _evaluate_sequence(selected_sequence_ids, true)
 		_finish_trial(false, "TIMEOUT", timeout_eval, "TIMEOUT")
 
@@ -171,12 +200,47 @@ func _load_next_case() -> void:
 	reorder_count = 0
 	undo_count = 0
 	block_pick_count = 0
+	token_pick_count = 0
+	placement_count = 0
 	clear_used = false
+	clear_count = 0
+	submit_attempt_count = 0
+	duplicate_role_attempt_count = 0
+	syntax_error_seen_count = 0
+	semantic_error_seen_count = 0
+	time_to_first_pick_ms = -1
+	time_to_first_submit_ms = -1
+	time_after_last_edit_to_submit_ms = -1
+	sequence_length_peak = 0
+	changed_after_error = false
+	error_feedback_seen = false
+	last_edit_ts = -1
+	details_open_count = 0
+	hint_open_count = 0
 	unique_blocks_used.clear()
 	selected_sequence_ids.clear()
 	repo_button_by_id.clear()
 	block_by_id.clear()
+	_begin_trial_session()
 	_render_case()
+
+func _begin_trial_session() -> void:
+	trial_seq += 1
+	var case_id := str(current_case.get("id", "DA7-C-00"))
+	task_session = {
+		"trial_seq": trial_seq,
+		"quest_id": "DATA_ARCHIVE",
+		"stage_id": "C",
+		"task_id": case_id,
+		"started_at_ticks": case_started_ts,
+		"ended_at_ticks": 0,
+		"events": []
+	}
+	_log_event("trial_started", {
+		"trial_seq": trial_seq,
+		"case_id": case_id,
+		"mode": "SQL_MASTER"
+	})
 
 func _render_case() -> void:
 	var case_id: String = str(current_case.get("id", "DA7-C-00"))
@@ -241,16 +305,37 @@ func _on_block_pressed(block_id: String) -> void:
 	_register_interaction()
 	var role: String = str((block_by_id.get(block_id, {}) as Dictionary).get("role", ""))
 	if _role_is_single_use(role) and _sequence_has_role(role):
+		duplicate_role_attempt_count += 1
+		error_feedback_seen = true
+		hint_open_count += 1
+		_log_event("hint_opened", {"source": "duplicate_role", "role": role})
+		_log_event("duplicate_role_attempt", {"role": role, "block_id": block_id})
 		_set_status_i18n("da7.c.ui.status_role_used", "Role {role} already used.", {"role": role})
 		return
+	if time_to_first_pick_ms < 0:
+		time_to_first_pick_ms = Time.get_ticks_msec() - case_started_ts
 	selected_sequence_ids.append(block_id)
+	token_pick_count += 1
 	block_pick_count += 1
+	placement_count += 1
 	unique_blocks_used[block_id] = true
+	sequence_length_peak = maxi(sequence_length_peak, selected_sequence_ids.size())
+	_mark_sequence_edited()
 	var btn: Button = repo_button_by_id.get(block_id, null) as Button
 	if is_instance_valid(btn):
 		btn.disabled = true
 	if is_instance_valid(sfx_click):
 		sfx_click.play()
+	_log_event("token_added", {
+		"token_id": block_id,
+		"token_label": str((block_by_id.get(block_id, {}) as Dictionary).get("text", block_id)),
+		"sequence_size": selected_sequence_ids.size()
+	})
+	_log_event("selection_changed", {
+		"action": "add",
+		"token_id": block_id,
+		"sequence_size": selected_sequence_ids.size()
+	})
 	_rebuild_code_area()
 
 func _rebuild_code_area() -> void:
@@ -306,8 +391,15 @@ func _on_move_token(index: int, direction: int) -> void:
 	selected_sequence_ids[index] = selected_sequence_ids[new_index]
 	selected_sequence_ids[new_index] = token
 	reorder_count += 1
+	_mark_sequence_edited()
 	if is_instance_valid(sfx_click):
 		sfx_click.play()
+	_log_event("selection_changed", {
+		"action": "reorder",
+		"from_index": index,
+		"to_index": new_index,
+		"sequence_size": selected_sequence_ids.size()
+	})
 	_rebuild_code_area()
 
 func _on_remove_token(index: int) -> void:
@@ -318,11 +410,17 @@ func _on_remove_token(index: int) -> void:
 	_register_interaction()
 	var block_id: String = selected_sequence_ids[index]
 	selected_sequence_ids.remove_at(index)
+	_mark_sequence_edited()
 	var btn: Button = repo_button_by_id.get(block_id, null) as Button
 	if is_instance_valid(btn):
 		btn.disabled = false
 	if is_instance_valid(sfx_click):
 		sfx_click.play()
+	_log_event("selection_changed", {
+		"action": "remove",
+		"token_id": block_id,
+		"sequence_size": selected_sequence_ids.size()
+	})
 	_rebuild_code_area()
 
 func _on_undo_pressed() -> void:
@@ -331,6 +429,7 @@ func _on_undo_pressed() -> void:
 	if selected_sequence_ids.is_empty():
 		return
 	undo_count += 1
+	_log_event("undo_pressed", {"undo_count": undo_count})
 	_on_remove_token(selected_sequence_ids.size() - 1)
 
 func _on_clear_pressed() -> void:
@@ -338,8 +437,16 @@ func _on_clear_pressed() -> void:
 		return
 	if selected_sequence_ids.is_empty():
 		return
+	_register_interaction()
 	clear_used = true
+	clear_count += 1
+	_log_event("clear_pressed", {
+		"clear_count": clear_count,
+		"sequence_size_before": selected_sequence_ids.size()
+	})
 	selected_sequence_ids.clear()
+	_mark_sequence_edited()
+	_log_event("selection_changed", {"action": "clear", "sequence_size": 0})
 	for block_id in repo_button_by_id.keys():
 		var btn: Button = repo_button_by_id.get(block_id, null) as Button
 		if is_instance_valid(btn):
@@ -351,6 +458,16 @@ func _on_submit_pressed() -> void:
 	if trial_locked or not is_trial_active:
 		return
 	_register_interaction()
+	submit_attempt_count += 1
+	if time_to_first_submit_ms < 0:
+		time_to_first_submit_ms = Time.get_ticks_msec() - case_started_ts
+	if last_edit_ts > 0:
+		time_after_last_edit_to_submit_ms = maxi(0, Time.get_ticks_msec() - last_edit_ts)
+	_log_event("submit_pressed", {
+		"attempt": submit_attempt_count,
+		"sequence_size": selected_sequence_ids.size(),
+		"source": "button"
+	})
 	var eval_result: Dictionary = _evaluate_sequence(selected_sequence_ids)
 	var is_correct: bool = bool(eval_result.get("is_correct", false))
 	var f_reason: Variant = eval_result.get("f_reason", null)
@@ -371,6 +488,24 @@ func _finish_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary,
 		_set_status_i18n("da7.c.ui.status_error", "ERROR: {reason}", {"reason": str(f_reason)})
 		if is_instance_valid(sfx_error):
 			sfx_error.play()
+		if str(f_reason) == "SQL_SYNTAX_ERROR":
+			syntax_error_seen_count += 1
+		elif str(f_reason) != "TIMEOUT" and str(f_reason) != "INCOMPLETE_QUERY":
+			semantic_error_seen_count += 1
+		error_feedback_seen = true
+	var error_type: String = "NONE" if is_correct else str(f_reason)
+	_log_event("submit_result", {
+		"is_correct": is_correct,
+		"error_type": error_type,
+		"end_state": end_state,
+		"sequence_size": selected_sequence_ids.size()
+	})
+	task_session["ended_at_ticks"] = Time.get_ticks_msec()
+	_log_event("trial_finished", {
+		"is_correct": is_correct,
+		"error_type": error_type,
+		"end_state": end_state
+	})
 	_log_trial(is_correct, f_reason, eval_result, end_state)
 	_update_stability_ui()
 	btn_next.visible = true
@@ -551,6 +686,12 @@ func _register_interaction() -> void:
 	if time_to_first_action_ms < 0:
 		time_to_first_action_ms = Time.get_ticks_msec() - case_started_ts
 
+func _mark_sequence_edited() -> void:
+	last_edit_ts = Time.get_ticks_msec()
+	if error_feedback_seen:
+		changed_after_error = true
+		error_feedback_seen = false
+
 func _log_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary, end_state: String) -> void:
 	var now_ms: int = Time.get_ticks_msec()
 	var elapsed_ms: int = now_ms - case_started_ts
@@ -558,29 +699,72 @@ func _log_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary, en
 	if time_to_first_action_ms < 0:
 		effective_first_action_ms = elapsed_ms
 
+	var case_id := str(current_case.get("id", "DA7-C-00"))
+	var interaction_type := str(current_case.get("interaction_type", "ASSEMBLE_BLOCKS"))
+	var schema_version := str(current_case.get("schema_version", "DA7.C.v1"))
+	var variant_hash := str(hash("%s|%s|%s|%s" % [case_id, interaction_type, schema_version, str(current_case.get("topic", "DB_SQL"))]))
+	var payload: Dictionary = TrialV2.build("DATA_ARCHIVE", "C", case_id, interaction_type, variant_hash)
 	var timing_policy: Dictionary = current_case.get("timing_policy", {}) as Dictionary
 	var rules: Dictionary = _active_rules()
 	var diff: Dictionary = eval_result.get("diff", {}) as Dictionary
-	var payload: Dictionary = {
-		"quest_id": "DA7",
+	var error_type: String = "NONE" if is_correct else str(f_reason)
+	var outcome_code: String = _outcome_code_for_c(is_correct, f_reason, end_state)
+	var mastery_block_reason: String = _mastery_block_reason_for_c(is_correct, outcome_code)
+	var valid_for_mastery: bool = is_correct and mastery_block_reason == "NONE"
+	var effective_first_submit_ms := time_to_first_submit_ms
+	if effective_first_submit_ms < 0:
+		effective_first_submit_ms = elapsed_ms
+	var effective_edit_to_submit_ms := time_after_last_edit_to_submit_ms
+	if effective_edit_to_submit_ms < 0 and last_edit_ts > 0:
+		effective_edit_to_submit_ms = maxi(0, now_ms - last_edit_ts)
+
+	payload.merge({
+		"quest": "data_archive",
 		"level": "C",
-		"stage": "C",
-		"case_id": str(current_case.get("id", "DA7-C-00")),
-		"question_id": str(current_case.get("id", "DA7-C-00")),
-		"interaction_type": str(current_case.get("interaction_type", "ASSEMBLE_BLOCKS")),
+		"stage_id": "C",
+		"case_id": case_id,
+		"question_id": case_id,
 		"topic": str(current_case.get("topic", "DB_SQL")),
-		"schema_version": str(current_case.get("schema_version", "DA7.C.v1")),
-		"match_key": "DA7_C|%s" % str(current_case.get("id", "DA7-C-00")),
+		"schema_version": schema_version,
 		"is_correct": is_correct,
+		"is_fit": is_correct,
 		"f_reason": f_reason,
+		"error_type": error_type,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"valid_for_diagnostics": true,
+		"valid_for_mastery": valid_for_mastery,
 		"end_state": end_state,
 		"elapsed_ms": elapsed_ms,
 		"duration": float(elapsed_ms) / 1000.0,
+		"time_to_first_action_ms": effective_first_action_ms,
+		"time_to_first_pick_ms": time_to_first_pick_ms,
+		"time_to_first_submit_ms": effective_first_submit_ms,
+		"time_after_last_edit_to_submit_ms": effective_edit_to_submit_ms,
+		"check_attempt_count": submit_attempt_count,
+		"hint_used": hint_open_count > 0,
+		"details_used": details_open_count > 0,
+		"inspect_used": false,
+		"token_pick_count": token_pick_count,
+		"unique_token_count": unique_blocks_used.size(),
+		"placement_count": placement_count,
+		"reorder_count": reorder_count,
+		"undo_count": undo_count,
+		"clear_count": clear_count,
+		"submit_attempt_count": submit_attempt_count,
+		"duplicate_role_attempt_count": duplicate_role_attempt_count,
+		"syntax_error_seen_count": syntax_error_seen_count,
+		"semantic_error_seen_count": semantic_error_seen_count,
+		"sequence_length_peak": sequence_length_peak,
+		"changed_after_error": changed_after_error,
 		"timing": {
 			"policy_mode": str(timing_policy.get("mode", "EXAM")),
 			"limit_sec": int(timing_policy.get("limit_sec", limit_sec)),
 			"effective_elapsed_ms": elapsed_ms,
-			"time_to_first_action_ms": effective_first_action_ms
+			"time_to_first_action_ms": effective_first_action_ms,
+			"time_to_first_pick_ms": time_to_first_pick_ms,
+			"time_to_first_submit_ms": effective_first_submit_ms,
+			"time_after_last_edit_to_submit_ms": effective_edit_to_submit_ms
 		},
 		"answer": {
 			"user_sequence_ids": selected_sequence_ids.duplicate(),
@@ -599,13 +783,25 @@ func _log_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary, en
 		},
 		"telemetry": {
 			"time_to_first_action_ms": effective_first_action_ms,
+			"time_to_first_pick_ms": time_to_first_pick_ms,
+			"time_to_first_submit_ms": effective_first_submit_ms,
+			"time_after_last_edit_to_submit_ms": effective_edit_to_submit_ms,
 			"pick_count": block_pick_count,
 			"block_pick_count": block_pick_count,
+			"token_pick_count": token_pick_count,
+			"placement_count": placement_count,
 			"unique_blocks_used": unique_blocks_used.size(),
 			"unique_blocks_used_ids": unique_blocks_used.keys(),
 			"reorder_count": reorder_count,
 			"undo_count": undo_count,
-			"clear_used": clear_used
+			"clear_used": clear_used,
+			"clear_count": clear_count,
+			"submit_attempt_count": submit_attempt_count,
+			"duplicate_role_attempt_count": duplicate_role_attempt_count,
+			"syntax_error_seen_count": syntax_error_seen_count,
+			"semantic_error_seen_count": semantic_error_seen_count,
+			"sequence_length_peak": sequence_length_peak,
+			"changed_after_error": changed_after_error
 		},
 		"flags": {
 			"timed_out": timed_out
@@ -615,9 +811,61 @@ func _log_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary, en
 			"vw": int(get_viewport_rect().size.x),
 			"vh": int(get_viewport_rect().size.y)
 		},
-		"anti_cheat": current_case.get("anti_cheat", {}) as Dictionary
-	}
+		"anti_cheat": current_case.get("anti_cheat", {}) as Dictionary,
+		"task_session": task_session.duplicate(true)
+	}, true)
 	GlobalMetrics.register_trial(payload)
+
+func _outcome_code_for_c(is_correct: bool, f_reason: Variant, end_state: String) -> String:
+	if is_correct:
+		return "SQL_SUCCESS"
+	var reason := str(f_reason)
+	if end_state == "TIMEOUT" or reason == "TIMEOUT":
+		return "SQL_TIMEOUT"
+	if reason == "SQL_SYNTAX_ERROR":
+		return "SQL_SYNTAX_ERROR"
+	if reason == "INCOMPLETE_QUERY":
+		if duplicate_role_attempt_count > 0:
+			return "SQL_DUPLICATE_ROLE"
+		return "SQL_INCOMPLETE_SEQUENCE"
+	if duplicate_role_attempt_count > 0:
+		return "SQL_DUPLICATE_ROLE"
+	return "SQL_SEMANTIC_ERROR"
+
+func _mastery_block_reason_for_c(is_correct: bool, outcome_code: String) -> String:
+	if undo_count >= 4:
+		return "UNDO_OVERUSE"
+	if clear_count >= 2:
+		return "CLEAR_OVERUSE"
+	if submit_attempt_count >= 2:
+		return "MULTI_SUBMIT_GUESSING"
+	if duplicate_role_attempt_count > 0:
+		return "ROLE_DUPLICATION"
+	if syntax_error_seen_count > 0:
+		return "SYNTAX_UNSTABLE"
+	if semantic_error_seen_count > 0:
+		return "SEMANTIC_UNSTABLE"
+	if not is_correct and outcome_code == "SQL_INCOMPLETE_SEQUENCE":
+		return "SEMANTIC_UNSTABLE"
+	if not is_correct:
+		return "SEMANTIC_UNSTABLE"
+	return "NONE"
+
+func _log_event(event_name: String, payload: Dictionary = {}) -> void:
+	if task_session.is_empty():
+		return
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": event_name,
+		"t_ms": _trial_elapsed_ms(Time.get_ticks_msec()),
+		"payload": payload
+	})
+	task_session["events"] = events
+
+func _trial_elapsed_ms(now_ms: int) -> int:
+	if case_started_ts <= 0:
+		return 0
+	return maxi(0, now_ms - case_started_ts)
 
 func _set_input_locked(locked: bool) -> void:
 	btn_undo.disabled = locked

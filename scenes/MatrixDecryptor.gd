@@ -94,8 +94,19 @@ var _details_open: bool = false
 
 var _task_started_ms: int = 0
 var _first_action_ms: int = -1
+var _first_check_ms: int = -1
+var _last_check_ms: int = -1
 var _check_count: int = 0
 var _changed: Dictionary = {}
+var _trial_seq: int = 0
+var _task_session: Dictionary = {}
+var _moves_count: int = 0
+var _cell_toggle_count: int = 0
+var _cell_toggle_unique: Dictionary = {}
+var _retoggle_count: int = 0
+var _details_open_count: int = 0
+var _details_close_count: int = 0
+var _safe_mode_open_count: int = 0
 var _logs: Array[String] = []
 var _content_mobile_layout: VBoxContainer = null
 var _details_sheet_height: float = DETAILS_SHEET_H
@@ -619,11 +630,25 @@ func _on_cell_pressed(r: int, c: int) -> void:
 
 	AudioManager.play("click")
 	grid_values[r][c] = 1 - int(grid_values[r][c])
+	_moves_count += 1
+	_cell_toggle_count += 1
+	var cell_key: String = "%d,%d" % [r, c]
+	if _cell_toggle_unique.has(cell_key):
+		_retoggle_count += 1
+	else:
+		_cell_toggle_unique[cell_key] = true
 	_changed["%d,%d" % [r, c]] = true
 	_draw_cell(r, c)
 	_clear_target_highlights()
 	last_wrong_rows = -1
 	last_wrong_cols = -1
+	_log_event("cell_toggled", {
+		"row": r,
+		"col": c,
+		"value": int(grid_values[r][c]),
+		"moves_count": _moves_count,
+		"cell_toggle_count": _cell_toggle_count
+	})
 	_update_status()
 
 func _row_value(row_index: int) -> int:
@@ -710,15 +735,36 @@ func _mismatch_summary(wrong_rows: Array, wrong_cols: Array) -> String:
 	return _tr("decryptor.c.mismatch.some", "Mismatch: {items}", {"items": ", ".join(parts)})
 func _on_hint_pressed() -> void:
 	if _input_locked or _is_transition:
+		_log_event("hint_opened", {
+			"blocked": true,
+			"reason": "INPUT_LOCKED",
+			"hint_used_count": hint_used_count,
+			"hint_limit": hint_limit_per_stage
+		})
 		_set_hint_key("decryptor.c.hint.input_locked", "Input is locked.")
 		return
+	if _first_action_ms < 0:
+		_first_action_ms = _elapsed_task_ms()
 	if hint_used_count >= hint_limit_per_stage:
+		_log_event("hint_opened", {
+			"blocked": true,
+			"reason": "LIMIT_REACHED",
+			"hint_used_count": hint_used_count,
+			"hint_limit": hint_limit_per_stage
+		})
 		_set_hint_key("decryptor.c.hint.limit_reached", "Hint limit reached for this stage.")
 		_show_toast_key("decryptor.c.toast.hint_limit", "HINT LIMIT", COLOR_WARN)
 		return
 
 	var eval: Dictionary = _evaluate_stage()
 	if bool(eval.get("success", false)):
+		_log_event("hint_opened", {
+			"blocked": true,
+			"reason": "TARGETS_MATCH",
+			"hint_used_count": hint_used_count,
+			"wrong_rows": 0,
+			"wrong_cols": 0
+		})
 		_set_hint_key("decryptor.c.hint.targets_match", "Targets already match. Press CHECK.")
 		_show_toast_key("decryptor.c.toast.ready", "READY", COLOR_OK)
 		return
@@ -726,6 +772,11 @@ func _on_hint_pressed() -> void:
 	var wrong_rows: Array = eval.get("wrong_rows", []) as Array
 	var wrong_cols: Array = eval.get("wrong_cols", []) as Array
 	if wrong_rows.is_empty() and wrong_cols.is_empty():
+		_log_event("hint_opened", {
+			"blocked": true,
+			"reason": "NO_HINT_AVAILABLE",
+			"hint_used_count": hint_used_count
+		})
 		_set_hint_key("decryptor.c.hint.no_hint", "No hint available.")
 		return
 
@@ -750,6 +801,14 @@ func _on_hint_pressed() -> void:
 		})
 		_log(_tr("decryptor.c.log.hint_col", "Hint used: focus column C{col}.", {"col": col_index + 1}), COLOR_WARN)
 
+	_log_event("hint_opened", {
+		"blocked": false,
+		"hint_used_count": hint_used_count,
+		"hint_limit": hint_limit_per_stage,
+		"wrong_rows": wrong_rows.size(),
+		"wrong_cols": wrong_cols.size(),
+		"focus": "ROW" if choose_row else "COL"
+	})
 	_show_toast_key("decryptor.c.toast.hint", "HINT", COLOR_WARN)
 	_update_status()
 
@@ -770,28 +829,71 @@ func _on_check_pressed() -> void:
 	if _is_transition or _input_locked:
 		return
 
+	if _first_action_ms < 0:
+		_first_action_ms = _elapsed_task_ms()
+	_check_count += 1
+	var check_ms: int = _elapsed_task_ms()
+	if _first_check_ms < 0:
+		_first_check_ms = check_ms
+	_last_check_ms = check_ms
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec < check_blocked_until:
 		var cooldown: float = maxf(0.0, check_blocked_until - now_sec)
+		_safe_mode_open_count += 1
+		_log_event("check_pressed", {
+			"attempt": _check_count,
+			"blocked": true,
+			"cooldown_sec": cooldown,
+			"input_pattern": _build_input_pattern()
+		})
+		_log_event("safe_mode_enabled", {
+			"reason": "CHECK_COOLDOWN",
+			"safe_mode_open_count": _safe_mode_open_count,
+			"cooldown_sec": cooldown
+		})
+		_log_event("check_result", {
+			"success": false,
+			"error_code": "CHECK_COOLDOWN",
+			"penalty": 0.0,
+			"wrong_rows": 0,
+			"wrong_cols": 0,
+			"delta_sum": 0
+		})
 		_set_hint_key("decryptor.c.hint.check_cooldown", "CHECK COOLDOWN: {seconds}s", {"seconds": "%.2f" % cooldown})
 		_show_toast_key("decryptor.c.toast.check_cooldown", "SHIELD: COOLDOWN", COLOR_WARN)
 		_log(_tr("decryptor.c.log.check_cooldown", "Check blocked by cooldown {seconds}s.", {"seconds": "%.2f" % cooldown}), COLOR_WARN)
 		_register_result(false, "CHECK_COOLDOWN", 0.0, 0, [], [])
 		_update_status()
 		return
-
-	if _first_action_ms < 0:
-		_first_action_ms = Time.get_ticks_msec() - _task_started_ms
-
 	check_blocked_until = now_sec + check_cooldown_sec
-	_check_count += 1
 
 	var eval: Dictionary = _evaluate_stage()
 	var wrong_rows: Array = eval.get("wrong_rows", []) as Array
 	var wrong_cols: Array = eval.get("wrong_cols", []) as Array
 	var delta_sum: int = int(eval.get("delta_sum", 0))
+	_log_event("check_pressed", {
+		"attempt": _check_count,
+		"blocked": false,
+		"wrong_rows": wrong_rows.size(),
+		"wrong_cols": wrong_cols.size(),
+		"delta_sum": delta_sum,
+		"input_pattern": eval.get("row_values", [])
+	})
 
 	if bool(eval.get("success", false)):
+		if (stage_index + 1) < stages.size():
+			_log_event("continue_pressed", {
+				"auto": true,
+				"next_stage": stage_index + 2
+			})
+		_log_event("check_result", {
+			"success": true,
+			"error_code": "NONE",
+			"penalty": 0.0,
+			"wrong_rows": 0,
+			"wrong_cols": 0,
+			"delta_sum": 0
+		})
 		_register_result(true, "NONE", 0.0, 0, [], [])
 		await _stage_success()
 		return
@@ -809,6 +911,14 @@ func _on_check_pressed() -> void:
 	})
 	_log(_mismatch_summary(wrong_rows, wrong_cols), COLOR_BAD)
 	_show_toast_key("decryptor.c.toast.incorrect", "INCORRECT", COLOR_BAD)
+	_log_event("check_result", {
+		"success": false,
+		"error_code": "INCORRECT",
+		"penalty": penalty,
+		"wrong_rows": wrong_rows.size(),
+		"wrong_cols": wrong_cols.size(),
+		"delta_sum": delta_sum
+	})
 	_register_result(false, "INCORRECT", penalty, delta_sum, wrong_rows, wrong_cols)
 	_update_status()
 
@@ -852,6 +962,10 @@ func _on_reset_pressed() -> void:
 		return
 	AudioManager.play("click")
 	_reset_grid_state(false)
+	_log_event("retry_pressed", {"source": "reset_button"})
+	_log_event("reset_pressed", {
+		"input_pattern": _build_input_pattern()
+	})
 	_set_hint_key("decryptor.c.hint.stage_reset", "Stage reset.")
 	_log(_tr("decryptor.c.log.stage_reset", "Stage reset."), COLOR_WARN)
 	_show_toast_key("decryptor.c.toast.reset", "RESET", COLOR_WARN)
@@ -903,32 +1017,143 @@ func _set_input_enabled(enabled: bool) -> void:
 	btn_reset.disabled = not enabled
 	_refresh_grid()
 
+func _elapsed_task_ms() -> int:
+	return maxi(0, Time.get_ticks_msec() - _task_started_ms)
+
+func _analytics_mode_key() -> String:
+	return "CLASSIC" if mode == Mode.CLASSIC else "STAGES_RC"
+
+func _current_level_id() -> String:
+	return classic_level_id if mode == Mode.CLASSIC else level_id
+
+func _build_target_pattern() -> Array:
+	var pattern: Array = []
+	for i in range(stage_size):
+		pattern.append(int(row_targets_num[i]) if i < row_targets_num.size() else 0)
+	return pattern
+
+func _build_input_pattern() -> Array:
+	var pattern: Array = []
+	for i in range(stage_size):
+		pattern.append(_row_value(i))
+	return pattern
+
+func _derive_outcome_code(success: bool, error_type: String) -> String:
+	if success:
+		return "SUCCESS"
+	if error_type == "INCORRECT":
+		return "WRONG_VALUE"
+	if error_type == "CHECK_COOLDOWN":
+		return "SHIELD_ACTIVE"
+	if error_type.is_empty():
+		return "WRONG_VALUE"
+	return error_type
+
+func _derive_mastery_block_reason(outcome_code: String) -> String:
+	if outcome_code.begins_with("SHIELD"):
+		return "SHIELD_TRIGGERED"
+	if hint_used_count > 0:
+		return "USED_HINT"
+	if _check_count > 1:
+		return "MULTI_CHECK"
+	if _details_open_count > 0:
+		return "DETAILS_DEPENDENCY"
+	return "NONE"
+
+func _log_event(event_name: String, data: Dictionary = {}) -> void:
+	var events: Array = _task_session.get("events", [])
+	events.append({
+		"name": event_name,
+		"t_ms": _elapsed_task_ms(),
+		"payload": data.duplicate(true)
+	})
+	_task_session["events"] = events
+
 func _reset_trial_clock() -> void:
 	_task_started_ms = Time.get_ticks_msec()
 	_first_action_ms = -1
+	_first_check_ms = -1
+	_last_check_ms = -1
 	_check_count = 0
+	_moves_count = 0
+	_cell_toggle_count = 0
+	_cell_toggle_unique.clear()
+	_retoggle_count = 0
+	_details_open_count = 0
+	_details_close_count = 0
+	_safe_mode_open_count = 0
+	_trial_seq += 1
+	_task_session = {
+		"trial_seq": _trial_seq,
+		"events": [],
+		"level_id": _current_level_id(),
+		"mode": _analytics_mode_key(),
+		"stage_index": stage_index + 1
+	}
+	_log_event("trial_started", {
+		"trial_seq": _trial_seq,
+		"level_id": _current_level_id(),
+		"mode": _analytics_mode_key(),
+		"stage_index": stage_index + 1,
+		"matrix_size": stage_size,
+		"target_pattern": _build_target_pattern()
+	})
 
 func _register_result(success: bool, error_type: String, penalty: float, delta_sum: int, wrong_rows: Array, wrong_cols: Array) -> void:
-	var run_id: String = classic_level_id if mode == Mode.CLASSIC else level_id
-	var hash_key: String = str(hash("%s|%d|%s" % [run_id, stage_index, display_base]))
-	var mode_key: String = "MATRIX_CLASSIC" if mode == Mode.CLASSIC else "MATRIX_STAGES_RC"
+	var run_id: String = _current_level_id()
+	var mode_key: String = _analytics_mode_key()
+	var task_id: String = "%s_%02d" % [run_id, stage_index + 1]
+	var target_pattern: Array = _build_target_pattern()
+	var input_pattern: Array = _build_input_pattern()
+	var hash_key: String = str(hash("%s|%s|%d|%s|%s" % [run_id, mode_key, stage_size, str(target_pattern), display_base]))
 	var trial_v2: Node = get_node_or_null("/root/TrialV2")
 	if trial_v2 == null:
 		return
-	var payload_variant: Variant = trial_v2.call("build", "MATRIX_DECRYPTOR", "C", mode_key, "GRID_CHECK", hash_key)
+	var payload_variant: Variant = trial_v2.call("build", "decryptor", "C", task_id, "GRID_CHECK", hash_key)
 	if typeof(payload_variant) != TYPE_DICTIONARY:
 		return
 
 	var payload: Dictionary = payload_variant as Dictionary
-	var elapsed_ms: int = maxi(0, Time.get_ticks_msec() - _task_started_ms)
+	var elapsed_ms: int = _elapsed_task_ms()
+	var outcome_code: String = _derive_outcome_code(success, error_type)
+	var mastery_block_reason: String = _derive_mastery_block_reason(outcome_code)
+	_log_event("trial_finished", {
+		"success": success,
+		"error_type": error_type,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"check_attempt_count": _check_count
+	})
 	payload["elapsed_ms"] = elapsed_ms
 	payload["duration"] = float(elapsed_ms) / 1000.0
 	payload["time_to_first_action_ms"] = _first_action_ms if _first_action_ms >= 0 else elapsed_ms
+	payload["time_to_first_check_ms"] = _first_check_ms if _first_check_ms >= 0 else elapsed_ms
 	payload["is_correct"] = success
 	payload["is_fit"] = success
 	payload["stability_delta"] = -penalty if not success else 0.0
 	payload["error_type"] = error_type
+	payload["outcome_code"] = outcome_code
+	payload["mastery_block_reason"] = mastery_block_reason
 	payload["penalty_reported"] = penalty
+	payload["quest_id"] = "decryptor"
+	payload["stage_id"] = "C"
+	payload["task_id"] = task_id
+	payload["variant_hash"] = hash_key
+	payload["mode"] = mode_key
+	payload["level_id"] = run_id
+	payload["matrix_size"] = stage_size
+	payload["target_pattern"] = target_pattern
+	payload["input_pattern"] = input_pattern
+	payload["moves_count"] = _moves_count
+	payload["cell_toggle_count"] = _cell_toggle_count
+	payload["cell_toggle_unique_count"] = _cell_toggle_unique.size()
+	payload["retoggle_count"] = _retoggle_count
+	payload["check_attempt_count"] = _check_count
+	payload["hint_used"] = hint_used_count > 0
+	payload["details_open_count"] = _details_open_count
+	payload["safe_mode_used"] = _safe_mode_open_count > 0
+	payload["safe_mode_open_count"] = _safe_mode_open_count
+	payload["task_session"] = _task_session.duplicate(true)
 	payload["changed_cells_count"] = _changed.size()
 	payload["check_count"] = _check_count
 	payload["stage_index"] = stage_index + 1
@@ -968,10 +1193,21 @@ func _show_toast(msg: String, color: Color) -> void:
 	tw.tween_callback(func() -> void: toast_panel.visible = false)
 
 func _on_details_pressed() -> void:
+	if _first_action_ms < 0:
+		_first_action_ms = _elapsed_task_ms()
 	_set_details_open(not _details_open, false)
 
 func _set_details_open(open: bool, immediate: bool) -> void:
+	var was_open: bool = _details_open
+	var state_changed: bool = was_open != open
 	_details_open = open
+	if state_changed:
+		if open:
+			_details_open_count += 1
+			_log_event("details_opened", {"details_open_count": _details_open_count})
+		else:
+			_details_close_count += 1
+			_log_event("details_closed", {"details_close_count": _details_close_count})
 	if open:
 		details_sheet.visible = true
 

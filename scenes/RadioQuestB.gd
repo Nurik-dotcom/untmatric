@@ -121,6 +121,42 @@ var answer_in_bytes: bool = false
 var answer_unit_toggle: CheckButton
 var answer_unit_banner_label: Label
 var dependency_mode: String = "default_i"
+var trial_seq: int = 0
+var trial_event_log: Array = []
+
+var numpad_press_count: int = 0
+var digit_press_count: int = 0
+var clear_press_count: int = 0
+var enter_press_count: int = 0
+var submit_attempt_count: int = 0
+
+var plus_press_count: int = 0
+var minus_press_count: int = 0
+var plus_minus_count: int = 0
+
+var unit_toggle_count: int = 0
+var unit_toggle_before_submit: bool = false
+var unit_toggle_after_submit: bool = false
+var storage_select_count: int = 0
+var storage_reselect_count: int = 0
+var changed_choice_after_first_pick: bool = false
+
+var converter_open_count: int = 0
+var converter_before_submit: bool = false
+var converter_after_submit: bool = false
+var converter_cooldown_hit_count: int = 0
+
+var time_to_calc_submit_ms: int = -1
+var time_to_first_storage_select_ms: int = -1
+var time_from_select_to_capture_ms: int = -1
+var time_to_converter_ms: int = -1
+
+var first_selected_storage_tag: String = ""
+var final_selected_storage_tag: String = ""
+var calc_method: String = "unknown"
+
+var outcome_code: String = ""
+var mastery_block_reason: String = "NONE"
 
 var _pool_normal: Array[int] = []
 var _pool_anchor: Array[int] = []
@@ -383,24 +419,57 @@ func _on_answer_unit_toggled(pressed: bool) -> void:
 		answer_in_bytes = false
 		return
 	_register_action()
+	var previous_mode: String = "bytes" if answer_in_bytes else "bits"
 	answer_in_bytes = pressed
+	var current_mode: String = "bytes" if answer_in_bytes else "bits"
+	if previous_mode != current_mode:
+		unit_toggle_count += 1
+		if submit_attempt_count == 0:
+			unit_toggle_before_submit = true
+		else:
+			unit_toggle_after_submit = true
+		_log_trial_event("unit_toggled", {
+			"required_unit": answer_unit_mode,
+			"user_unit_mode": current_mode,
+			"before_submit": submit_attempt_count == 0,
+			"after_submit": submit_attempt_count > 0
+		})
 	_update_preview()
 	_update_details_text()
 
 func _on_numpad_pressed(key: String) -> void:
 	if phase != Phase.CALC or converter_lock_active:
 		return
+	numpad_press_count += 1
 	match key:
 		"C":
 			_register_action()
+			clear_press_count += 1
+			var buffer_before: String = input_buffer
+			_log_trial_event("input_cleared", {
+				"buffer_before": buffer_before,
+				"had_value": buffer_before.length() > 0
+			})
 			input_buffer = ""
 		"ENTER":
+			enter_press_count += 1
 			_on_check_calc_pressed()
 			return
 		_:
 			_register_action()
+			digit_press_count += 1
+			var buffer_before: String = input_buffer
+			if calc_method == "stepper":
+				calc_method = "mixed"
+			elif calc_method.is_empty() or calc_method == "unknown":
+				calc_method = "numpad"
 			if input_buffer.length() < 9:
 				input_buffer += key
+			_log_trial_event("digit_pressed", {
+				"digit": key,
+				"buffer_before": buffer_before,
+				"buffer_after_len": mini(buffer_before.length() + 1, 9)
+			})
 	_sync_input_buffer()
 
 func _sync_input_buffer() -> void:
@@ -429,6 +498,29 @@ func _reset_sample_strip() -> void:
 		bg.color = COLOR_IDLE
 		mark.visible = false
 	current_trial_idx = 0
+
+func _elapsed_trial_ms() -> int:
+	if start_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - start_ms)
+
+func _phase_to_string(value: Phase) -> String:
+	match value:
+		Phase.CALC:
+			return "CALC"
+		Phase.SELECT:
+			return "SELECT"
+		_:
+			return "RESULT"
+
+func _log_trial_event(event_type: String, meta: Dictionary = {}) -> void:
+	trial_event_log.append({
+		"t_ms": _elapsed_trial_ms(),
+		"type": event_type,
+		"phase": _phase_to_string(phase),
+		"input_value": i_bits_user,
+		"meta": meta.duplicate(true)
+	})
 
 func _resolve_i_bits_from_stage_a() -> Dictionary:
 	for idx in range(GlobalMetrics.session_history.size() - 1, -1, -1):
@@ -480,17 +572,46 @@ func _update_required_unit_ui() -> void:
 			answer_unit_toggle.visible = true
 
 func _start_trial() -> void:
+	trial_seq += 1
 	phase = Phase.CALC
 	calc_checked = false
 	selected_storage_idx = -1
 	_set_calc_panel_visible(true)
 	used_converter = false
 	converter_use_count = 0
+	converter_open_count = 0
+	converter_before_submit = false
+	converter_after_submit = false
+	converter_cooldown_hit_count = 0
 	input_buffer = ""
 	converter_lock_active = false
 	converter_lock_until = 0.0
 	converter_cooldown_until = 0.0
 	i_bits_user = 0
+	trial_event_log = []
+	numpad_press_count = 0
+	digit_press_count = 0
+	clear_press_count = 0
+	enter_press_count = 0
+	submit_attempt_count = 0
+	plus_press_count = 0
+	minus_press_count = 0
+	plus_minus_count = 0
+	unit_toggle_count = 0
+	unit_toggle_before_submit = false
+	unit_toggle_after_submit = false
+	storage_select_count = 0
+	storage_reselect_count = 0
+	changed_choice_after_first_pick = false
+	time_to_calc_submit_ms = -1
+	time_to_first_storage_select_ms = -1
+	time_from_select_to_capture_ms = -1
+	time_to_converter_ms = -1
+	first_selected_storage_tag = ""
+	final_selected_storage_tag = ""
+	calc_method = "numpad"
+	outcome_code = ""
+	mastery_block_reason = "NONE"
 	answer_unit_mode = _pick_answer_unit_mode()
 	answer_in_bytes = false
 	if answer_unit_toggle != null:
@@ -555,6 +676,15 @@ func _start_trial() -> void:
 	_update_preview()
 	_update_header_meta()
 	_update_details_text()
+	_log_trial_event("trial_started", {
+		"trial_seq": trial_seq,
+		"dependency_mode": dependency_mode,
+		"i_bits": i_bits,
+		"required_unit": answer_unit_mode,
+		"pool_type": pool_type,
+		"forced_sampling": forced_sampling,
+		"is_timed": is_timed
+	})
 
 func _generate_storage_options() -> void:
 	storage_options.clear()
@@ -682,8 +812,20 @@ func _on_minus_pressed() -> void:
 	if phase != Phase.CALC or converter_lock_active:
 		return
 	_register_action()
+	minus_press_count += 1
+	plus_minus_count += 1
+	var prev_value: int = i_bits_user
 	i_bits_user = maxi(0, i_bits_user - 8)
+	if digit_press_count > 0:
+		calc_method = "mixed"
+	elif calc_method != "mixed":
+		calc_method = "stepper"
 	input_buffer = str(i_bits_user)
+	_log_trial_event("step_adjust", {
+		"delta": i_bits_user - prev_value,
+		"value_before": prev_value,
+		"value_after": i_bits_user
+	})
 	i_bits_value_label.text = str(i_bits_user)
 	_update_preview()
 	_update_details_text()
@@ -692,8 +834,20 @@ func _on_plus_pressed() -> void:
 	if phase != Phase.CALC or converter_lock_active:
 		return
 	_register_action()
+	plus_press_count += 1
+	plus_minus_count += 1
+	var prev_value: int = i_bits_user
 	i_bits_user += 8
+	if digit_press_count > 0:
+		calc_method = "mixed"
+	elif calc_method != "mixed":
+		calc_method = "stepper"
 	input_buffer = str(i_bits_user)
+	_log_trial_event("step_adjust", {
+		"delta": i_bits_user - prev_value,
+		"value_before": prev_value,
+		"value_after": i_bits_user
+	})
 	i_bits_value_label.text = str(i_bits_user)
 	_update_preview()
 	_update_details_text()
@@ -701,18 +855,37 @@ func _on_plus_pressed() -> void:
 func _on_check_calc_pressed() -> void:
 	if phase != Phase.CALC or converter_lock_active:
 		return
+	_register_action()
+	submit_attempt_count += 1
+	if time_to_calc_submit_ms < 0:
+		time_to_calc_submit_ms = _elapsed_trial_ms()
+	var entered_value: int = 0
+	if not input_buffer.is_empty():
+		entered_value = input_buffer.to_int()
+	_log_trial_event("calc_submitted", {
+		"submit_attempt": submit_attempt_count,
+		"entered_value": entered_value,
+		"required_unit": answer_unit_mode,
+		"user_unit_mode": "bytes" if answer_in_bytes else "bits",
+		"calc_method": calc_method,
+		"buffer_empty": input_buffer.is_empty()
+	})
 	if input_buffer.is_empty():
 		_set_status_i18n("quest.radio.b.status.need_input", "STATUS: enter value I.", COLOR_WARN)
 		return
-	i_bits_user = input_buffer.to_int()
+	i_bits_user = entered_value
 	if i_bits_user <= 0:
 		_set_status_i18n("quest.radio.b.status.need_input", "STATUS: enter value I.", COLOR_WARN)
 		return
 	i_bits_value_label.text = str(i_bits_user)
-	_register_action()
 
 	calc_checked = true
+	var phase_before_submit: String = _phase_to_string(phase)
 	phase = Phase.SELECT
+	_log_trial_event("phase_changed", {
+		"from": phase_before_submit,
+		"to": _phase_to_string(phase)
+	})
 
 	_apply_phase_controls()
 	_set_status_i18n(
@@ -729,7 +902,30 @@ func _on_check_calc_pressed() -> void:
 func _on_storage_selected(idx: int) -> void:
 	if phase != Phase.SELECT or converter_lock_active:
 		return
+	var prev_idx: int = selected_storage_idx
 	_register_action()
+	storage_select_count += 1
+	if time_to_first_storage_select_ms < 0:
+		time_to_first_storage_select_ms = _elapsed_trial_ms()
+	var choice: Dictionary = {}
+	if idx >= 0 and idx < storage_options.size():
+		choice = storage_options[idx]
+	var choice_tag: String = str(choice.get("tag", ""))
+	if storage_select_count == 1:
+		first_selected_storage_tag = choice_tag
+	elif prev_idx >= 0 and prev_idx != idx:
+		storage_reselect_count += 1
+		changed_choice_after_first_pick = true
+	final_selected_storage_tag = choice_tag
+	_log_trial_event("storage_selected", {
+		"index": idx,
+		"tag": choice_tag,
+		"capacity_bits": int(choice.get("capacity_bits", 0)),
+		"display_size": int(choice.get("display_size", 0)),
+		"display_unit": str(choice.get("display_unit", "")),
+		"is_reselect": storage_select_count > 1,
+		"previous_index": prev_idx
+	})
 
 	selected_storage_idx = idx
 	for i in range(storage_btns.size()):
@@ -750,11 +946,19 @@ func _on_converter_pressed() -> void:
 	if phase == Phase.RESULT:
 		return
 	if converter_lock_active:
+		converter_cooldown_hit_count += 1
+		_log_trial_event("converter_locked_attempt", {
+			"lock_left_s": maxf(0.0, converter_lock_until - Time.get_ticks_msec() / 1000.0)
+		})
 		return
 	_register_action()
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec < converter_cooldown_until:
+		converter_cooldown_hit_count += 1
 		var left: float = converter_cooldown_until - now_sec
+		_log_trial_event("converter_cooldown_hit", {
+			"left_s": left
+		})
 		_set_status_i18n(
 			"quest.radio.b.status.converter_cooldown",
 			"Converter cooldown {left}s.",
@@ -764,6 +968,18 @@ func _on_converter_pressed() -> void:
 		return
 	used_converter = true
 	converter_use_count += 1
+	converter_open_count += 1
+	if time_to_converter_ms < 0:
+		time_to_converter_ms = _elapsed_trial_ms()
+	if submit_attempt_count == 0:
+		converter_before_submit = true
+	else:
+		converter_after_submit = true
+	_log_trial_event("converter_opened", {
+		"before_submit": submit_attempt_count == 0,
+		"after_submit": submit_attempt_count > 0,
+		"use_count": converter_use_count
+	})
 	converter_lock_active = true
 	converter_lock_until = now_sec + CONVERTER_LOCK_SECONDS
 	converter_cooldown_until = now_sec + CONVERTER_COOLDOWN_SECONDS
@@ -780,6 +996,14 @@ func _on_capture_pressed() -> void:
 	if phase != Phase.SELECT or selected_storage_idx < 0 or converter_lock_active:
 		return
 	_register_action()
+	if time_to_first_storage_select_ms >= 0:
+		time_from_select_to_capture_ms = maxi(0, _elapsed_trial_ms() - time_to_first_storage_select_ms)
+	if final_selected_storage_tag.is_empty() and selected_storage_idx >= 0 and selected_storage_idx < storage_options.size():
+		final_selected_storage_tag = str(storage_options[selected_storage_idx].get("tag", ""))
+	_log_trial_event("capture_pressed", {
+		"selected_index": selected_storage_idx,
+		"selected_tag": final_selected_storage_tag
+	})
 	_finish_trial()
 
 func _finish_trial() -> void:
@@ -790,6 +1014,8 @@ func _finish_trial() -> void:
 
 	var result: Dictionary = _evaluate_selection()
 	var choice: Dictionary = result.get("choice", {}) as Dictionary
+	var selected_index: int = int(result.get("selected_index", selected_storage_idx))
+	var choice_tag: String = str(result.get("choice_tag", ""))
 	var choice_cap: int = int(result.get("choice_cap", 0))
 	var user_bits: int = int(result.get("user_bits", 0))
 	var unit_mode_correct: bool = bool(result.get("unit_mode_correct", false))
@@ -800,9 +1026,43 @@ func _finish_trial() -> void:
 	var waste_ratio: float = float(result.get("waste_ratio", 0.0))
 	var unit_confusion: bool = bool(result.get("unit_confusion", false))
 	var error_type: String = str(result.get("error_type", "calc_wrong"))
+	var mastery_candidate: bool = bool(result.get("mastery_candidate", false))
+	var overprovision_margin_bits: int = int(result.get("overprovision_margin_bits", choice_cap - i_bits_true))
+	var selection_quality: String = str(result.get("selection_quality", error_type))
 	var selected_display: String = str(result.get("selected_display", "\u2014"))
 
 	var valid_mastery: bool = (error_type == "best_fit") and calc_correct and (not used_converter)
+	var mastery_soft: bool = (error_type == "best_fit") and calc_correct
+	if valid_mastery:
+		mastery_block_reason = "NONE"
+	elif mastery_soft and used_converter:
+		mastery_block_reason = "USED_CONVERTER"
+	elif error_type == "underfit":
+		mastery_block_reason = "UNDERFIT"
+	elif error_type == "calc_wrong":
+		mastery_block_reason = "CALC_WRONG"
+	elif error_type == "unit_confusion":
+		mastery_block_reason = "UNIT_CONFUSION"
+	elif error_type == "overkill":
+		mastery_block_reason = "OVERKILL"
+	else:
+		mastery_block_reason = "CALC_WRONG"
+
+	if error_type == "best_fit":
+		outcome_code = "BEST_FIT_ASSISTED" if used_converter else "BEST_FIT_CLEAN"
+	elif error_type == "underfit":
+		outcome_code = "UNDERFIT"
+	elif error_type == "calc_wrong":
+		outcome_code = "CALC_WRONG"
+	elif error_type == "unit_confusion":
+		outcome_code = "UNIT_CONFUSION"
+	else:
+		outcome_code = "OVERKILL"
+
+	if final_selected_storage_tag.is_empty():
+		final_selected_storage_tag = choice_tag
+	if first_selected_storage_tag.is_empty():
+		first_selected_storage_tag = choice_tag
 
 	if error_type == "best_fit":
 		_set_status_i18n("quest.radio.b.result.best_clean", "Result: optimal storage selected.", COLOR_GOOD)
@@ -824,10 +1084,20 @@ func _finish_trial() -> void:
 	var required_unit: String = answer_unit_mode
 	var user_unit_mode: String = "bytes" if answer_in_bytes else "bits"
 	var match_key: String = "RI_B_%s_K%d_i%d_unit%s_%s" % [mode_token, k_symbols, i_bits, required_unit, pool_type]
+	_log_trial_event("trial_finished", {
+		"error_type": error_type,
+		"outcome_code": outcome_code,
+		"is_fit": is_fit,
+		"is_best_fit": is_best_fit,
+		"used_converter": used_converter,
+		"selected_index": selected_index,
+		"selected_tag": choice_tag
+	})
 	var payload: Dictionary = {
 		"quest_id": "radio_intercept",
 		"stage_id": "B",
 		"match_key": match_key,
+		"trial_seq": trial_seq,
 		"pool_type": pool_type,
 		"dependency_mode": dependency_mode,
 		"K_symbols": k_symbols,
@@ -837,6 +1107,9 @@ func _finish_trial() -> void:
 		"I_user_entered": i_bits_user,
 		"user_unit_mode": user_unit_mode,
 		"calc_correct": calc_correct,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"selected_storage_index": selected_index,
 		"selected_storage_capacity_bits": choice_cap,
 		"selected_display": selected_display,
 		"is_fit": is_fit,
@@ -845,15 +1118,46 @@ func _finish_trial() -> void:
 		"is_overkill": is_overkill,
 		"waste_ratio": waste_ratio,
 		"error_type": error_type,
+		"selection_quality": selection_quality,
+		"overprovision_margin_bits": overprovision_margin_bits,
+		"mastery_candidate": mastery_candidate,
+		"mastery_soft": mastery_soft,
+		"mastery_strict": valid_mastery,
+		"first_selected_storage_tag": first_selected_storage_tag,
+		"final_selected_storage_tag": final_selected_storage_tag,
+		"changed_choice_after_first_pick": changed_choice_after_first_pick,
 		"valid_for_mastery": valid_mastery,
 		"valid_for_diagnostics": true,
 		"elapsed_ms": Time.get_ticks_msec() - start_ms,
 		"time_to_first_action_ms": (first_action_ms - start_ms) if first_action_ms > 0 else 0,
+		"time_to_calc_submit_ms": time_to_calc_submit_ms,
+		"time_to_first_storage_select_ms": time_to_first_storage_select_ms,
+		"time_from_select_to_capture_ms": time_from_select_to_capture_ms,
+		"time_to_converter_ms": time_to_converter_ms,
 		"is_timed": is_timed,
 		"forced_sampling": forced_sampling,
 		"used_converter": used_converter,
 		"converter_use_count": converter_use_count,
+		"converter_open_count": converter_open_count,
+		"converter_before_submit": converter_before_submit,
+		"converter_after_submit": converter_after_submit,
+		"converter_cooldown_hit_count": converter_cooldown_hit_count,
+		"calc_method": calc_method,
+		"submit_attempt_count": submit_attempt_count,
+		"numpad_press_count": numpad_press_count,
+		"digit_press_count": digit_press_count,
+		"clear_press_count": clear_press_count,
+		"enter_press_count": enter_press_count,
+		"plus_press_count": plus_press_count,
+		"minus_press_count": minus_press_count,
+		"plus_minus_count": plus_minus_count,
+		"unit_toggle_count": unit_toggle_count,
+		"unit_toggle_before_submit": unit_toggle_before_submit,
+		"unit_toggle_after_submit": unit_toggle_after_submit,
+		"storage_select_count": storage_select_count,
+		"storage_reselect_count": storage_reselect_count,
 		"unit_confusion": unit_confusion,
+		"event_log": trial_event_log.duplicate(true),
 
 		# Compatibility fields (legacy readers)
 		"I_bits_true": i_bits_true,
@@ -865,7 +1169,7 @@ func _finish_trial() -> void:
 		"choice_capacity_bits": choice_cap,
 		"choice_display_size": int(choice.get("display_size", 0)),
 		"choice_display_unit": str(choice.get("display_unit", "")),
-		"choice_tag": str(choice.get("tag", ""))
+		"choice_tag": choice_tag
 	}
 	var stability_delta: float = 0.0
 	if not is_fit:
@@ -913,6 +1217,8 @@ func _evaluate_selection() -> Dictionary:
 
 	return {
 		"choice": choice,
+		"selected_index": selected_storage_idx,
+		"choice_tag": tag,
 		"choice_cap": choice_cap,
 		"user_bits": user_bits,
 		"unit_mode_correct": unit_mode_correct,
@@ -923,7 +1229,10 @@ func _evaluate_selection() -> Dictionary:
 		"waste_ratio": waste_ratio,
 		"unit_confusion": unit_confusion,
 		"error_type": error_type,
-		"selected_display": _format_storage_option(choice)
+		"selected_display": _format_storage_option(choice),
+		"mastery_candidate": (error_type == "best_fit") and calc_correct,
+		"overprovision_margin_bits": choice_cap - i_bits_true,
+		"selection_quality": error_type
 	}
 
 func _update_sample_slot(color: Color) -> void:

@@ -104,6 +104,32 @@ var module_cards: Array[PipelineModuleCard] = []
 var attempts: Array[Dictionary] = []
 var task_session: Dictionary = {}
 var variant_hash: String = ""
+var trial_seq: int = 0
+
+var module_drag_start_count: int = 0
+var module_install_count: int = 0
+var module_replace_count: int = 0
+var module_remove_count: int = 0
+var unique_module_ids: Dictionary = {}
+
+var slot_select_count: int = 0
+var calc_run_count: int = 0
+var calc_without_full_pipeline_count: int = 0
+var answer_change_count: int = 0
+
+var diagnostics_open_count: int = 0
+var safe_mode_open_count: int = 0
+var changed_after_calc_fail: bool = false
+var changed_after_diagnostics: bool = false
+
+var time_to_first_module_ms: int = -1
+var time_to_first_calc_ms: int = -1
+var time_to_first_answer_ms: int = -1
+var time_from_last_edit_to_calc_ms: int = -1
+
+var last_edit_ms: int = -1
+var _pending_change_after_diagnostics: bool = false
+var _pending_change_after_calc_fail: bool = false
 
 func _ready() -> void:
 	_setup_runtime_controls()
@@ -301,6 +327,7 @@ func _show_boot_error(message: String) -> void:
 	timer_running = false
 
 func _start_level(index: int) -> void:
+	trial_seq += 1
 	if index >= levels.size():
 		index = 0
 	current_level_index = index
@@ -326,11 +353,31 @@ func _start_level(index: int) -> void:
 	selected_tray_module.clear()
 	_set_selected_module_card(null)
 	attempts.clear()
+	module_drag_start_count = 0
+	module_install_count = 0
+	module_replace_count = 0
+	module_remove_count = 0
+	unique_module_ids.clear()
+	slot_select_count = 0
+	calc_run_count = 0
+	calc_without_full_pipeline_count = 0
+	answer_change_count = 0
+	diagnostics_open_count = 0
+	safe_mode_open_count = 0
+	changed_after_calc_fail = false
+	changed_after_diagnostics = false
+	time_to_first_module_ms = -1
+	time_to_first_calc_ms = -1
+	time_to_first_answer_ms = -1
+	time_from_last_edit_to_calc_ms = -1
+	last_edit_ms = -1
+	_pending_change_after_diagnostics = false
+	_pending_change_after_calc_fail = false
 	level_started_ms = Time.get_ticks_msec()
 	first_action_ms = -1
 	time_left_sec = float(int(current_level.get("time_limit_sec", DEFAULT_TIME_LIMIT_SEC)))
 	timer_running = true
-	task_session = {"task_id": str(current_level.get("id", "NT_B_UNKNOWN")), "variant_hash": variant_hash, "started_at_ticks": level_started_ms, "ended_at_ticks": 0, "attempts": [], "events": []}
+	task_session = {"trial_seq": trial_seq, "task_id": str(current_level.get("id", "NT_B_UNKNOWN")), "variant_hash": variant_hash, "started_at_ticks": level_started_ms, "ended_at_ticks": 0, "attempts": [], "events": []}
 	btn_next.visible = false
 	btn_analyze.text = _tr("nt.common.analyze", "Diagnostics")
 	btn_analyze.disabled = false
@@ -338,12 +385,18 @@ func _start_level(index: int) -> void:
 	_render_terminal_panel()
 	_render_options()
 	_build_module_tray()
-	_reset_pipeline_state()
+	_reset_pipeline_state(false)
 	_update_preview_card()
 	lbl_status.text = _tr("nt.b.ui.status_assemble", "Assemble pipeline and press RUN CALC, then select answer.")
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.82, 0.82))
 	state = QuestState.PIPELINE_BUILD
 	_update_meta_label()
+	_log_event("trial_started", {
+		"level_id": str(current_level.get("id", "")),
+		"budget_limit": int(preview_metrics.get("budget_limit", 0)),
+		"expected_formula_slots": SLOT_TYPES.size(),
+		"mode": str(current_level.get("mode", "EXAM"))
+	})
 	_log_event("task_start", {"level": str(current_level.get("id", ""))})
 
 func _render_terminal_panel() -> void:
@@ -490,11 +543,19 @@ func _get_module_pool_for_level() -> Array[Dictionary]:
 			out.append(module_data.duplicate(true))
 	return out
 
-func _reset_pipeline_state() -> void:
+func _reset_pipeline_state(count_as_user_action: bool) -> void:
+	var removed_slots: int = 0
+	for slot in [slot_kilo, slot_bit, slot_time, slot_out]:
+		if slot.has_module():
+			removed_slots += 1
 	slot_kilo.clear_module()
 	slot_bit.clear_module()
 	slot_time.clear_module()
 	slot_out.clear_module()
+	if count_as_user_action and removed_slots > 0:
+		module_remove_count += removed_slots
+		_mark_pipeline_edited()
+		_log_event("pipeline_reset", {"removed_slots": removed_slots})
 	calc_done = false
 	benchmark_done = false
 	calc_bps = -1
@@ -525,6 +586,7 @@ func _on_module_drag_started(module_data: Dictionary) -> void:
 	if level_finished:
 		return
 	_register_first_action()
+	module_drag_start_count += 1
 	selected_tray_module = module_data.duplicate(true)
 	_set_selected_module_card(null)
 	_log_event("module_drag_started", {"module_id": str(module_data.get("module_id", ""))})
@@ -533,6 +595,8 @@ func _on_slot_tapped(slot_type: String) -> void:
 	if level_finished:
 		return
 	_register_first_action()
+	slot_select_count += 1
+	_log_event("slot_selected", {"slot_id": slot_type})
 	if selected_tray_module.is_empty():
 		lbl_status.text = _tr("nt.b.ui.status_select_module_first", "Select a module first.")
 		lbl_status.add_theme_color_override("font_color", Color(0.95, 0.86, 0.68))
@@ -568,6 +632,8 @@ func _on_slot_clear_pressed(slot_type: String) -> void:
 	var removed_id: String = slot.get_module_id()
 	slot.clear_module()
 	module_moves_count += 1
+	module_remove_count += 1
+	_mark_pipeline_edited()
 	_play_audio("click")
 	if calc_done:
 		calc_done = false
@@ -577,6 +643,7 @@ func _on_slot_clear_pressed(slot_type: String) -> void:
 		_enable_answer_buttons(false)
 	lbl_status.text = _tr("nt.b.ui.status_slot_cleared", "Slot cleared. Rebuild pipeline if needed.")
 	lbl_status.add_theme_color_override("font_color", Color(0.92, 0.88, 0.62))
+	_log_event("module_removed", {"slot_id": slot_type, "module_id": removed_id})
 	_log_event("pipeline_clear", {"slot": slot_type, "module_id": removed_id})
 	_update_pipeline_gate()
 
@@ -588,8 +655,20 @@ func _place_module_into_slot(slot_type: String, module_data: Dictionary, source:
 		target_slot.flash_bad_drop()
 		_on_slot_bad_drop(slot_type, module_data)
 		return
+	var had_module_before: bool = target_slot.has_module()
+	var previous_module_id: String = target_slot.get_module_id()
+	var module_id: String = str(module_data.get("module_id", ""))
 	target_slot.set_module(module_data)
 	module_moves_count += 1
+	if had_module_before:
+		module_replace_count += 1
+	else:
+		module_install_count += 1
+	if time_to_first_module_ms < 0:
+		time_to_first_module_ms = _elapsed_ms_now()
+	if not module_id.is_empty():
+		unique_module_ids[module_id] = true
+	_mark_pipeline_edited()
 	selected_tray_module.clear()
 	_set_selected_module_card(null)
 	_play_audio("click")
@@ -601,6 +680,14 @@ func _place_module_into_slot(slot_type: String, module_data: Dictionary, source:
 		_enable_answer_buttons(false)
 	lbl_status.text = _tr("nt.b.ui.status_module_installed", "Module installed. Continue assembly.")
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.92, 0.86))
+	_log_event("module_installed", {
+		"slot_id": slot_type,
+		"module_id": module_id,
+		"module_role": slot_type,
+		"source": source,
+		"replaced": had_module_before,
+		"previous_module_id": previous_module_id
+	})
 	_log_event("pipeline_set", {"slot": slot_type, "module_id": str(module_data.get("module_id", "")), "source": source})
 	_update_pipeline_gate()
 
@@ -641,11 +728,20 @@ func _on_run_calc_pressed() -> void:
 	if level_finished:
 		return
 	var now_ms: int = Time.get_ticks_msec()
+	calc_run_count += 1
+	if time_to_first_calc_ms < 0:
+		time_to_first_calc_ms = _elapsed_ms_now()
+	time_from_last_edit_to_calc_ms = -1 if last_edit_ms < 0 else maxi(0, _elapsed_ms_now() - last_edit_ms)
+	_log_event("calc_pressed", {
+		"pipeline_ready": _pipeline_ready(),
+		"time_from_last_edit_to_calc_ms": time_from_last_edit_to_calc_ms
+	})
 	if now_ms < run_calc_cooldown_until_ms:
 		spam_clicks += 1
 		_log_event("run_calc_spam", {})
 		return
 	if not _pipeline_ready():
+		calc_without_full_pipeline_count += 1
 		_record_pipeline_incomplete("run_calc_without_pipeline")
 		lbl_status.text = ERROR_MAP.get_error_tip("B_PIPELINE_INCOMPLETE")
 		lbl_status.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
@@ -663,13 +759,25 @@ func _on_run_calc_pressed() -> void:
 	calc_display_value = float(calc_bps) / 1000.0 if calc_display_unit == "kbps" else float(calc_bps)
 	calc_done = true
 	benchmark_done = true
+	var pipeline_error: String = _derive_pipeline_error_code()
+	var logic_consistent: bool = pipeline_error.is_empty()
+	if not logic_consistent:
+		_pending_change_after_calc_fail = true
 	_update_preview_card()
 	lbl_status.text = _tr("nt.b.ui.status_calc_done", "Calculation done. Select your final answer.")
 	lbl_status.add_theme_color_override("font_color", Color(0.68, 0.95, 0.72))
 	_enable_answer_buttons(true)
 	state = QuestState.ANSWERING
 	_log_event("BENCHMARK_RUN", {"lines": _get_benchmark_lines().size()})
-	_log_event("run_calc", {"calc_bps": calc_bps, "display_unit": calc_display_unit, "display_value": calc_display_value, "pipeline_correct": _is_pipeline_correct(), "pipeline_error": _derive_pipeline_error_code()})
+	_log_event("run_calc", {"calc_bps": calc_bps, "display_unit": calc_display_unit, "display_value": calc_display_value, "pipeline_correct": logic_consistent, "pipeline_error": pipeline_error})
+	_log_event("calc_result", {
+		"output_value": calc_display_value,
+		"gateway_pass": logic_consistent,
+		"logic_consistent": logic_consistent,
+		"budget_used": int(preview_metrics.get("budget_used", 0)),
+		"bottleneck": str(preview_metrics.get("bottleneck", "UNKNOWN")),
+		"error_code": pipeline_error
+	})
 	_update_pipeline_gate()
 
 func _play_benchmark_sequence() -> void:
@@ -739,6 +847,9 @@ func _on_answer_pressed(index: int) -> void:
 	selected_option_id = str(btn.get_meta("option_id", ""))
 	if selected_option_id.is_empty():
 		return
+	answer_change_count += 1
+	if time_to_first_answer_ms < 0:
+		time_to_first_answer_ms = _elapsed_ms_now()
 	_log_event("OPTION_SELECTED", {"option_id": selected_option_id})
 	_log_event("CONFIRM_PRESSED", {"option_id": selected_option_id})
 	_play_audio("click")
@@ -831,6 +942,10 @@ func _on_analyze_pressed() -> void:
 	_log_event("analyze_reveal", {})
 
 func _show_diagnostics(reason: String) -> void:
+	diagnostics_open_count += 1
+	if safe_mode_used:
+		safe_mode_open_count += 1
+	_pending_change_after_diagnostics = true
 	var lines: Array[String] = []
 	lines.append("Уровень: %s" % str(current_level.get("id", "")))
 	lines.append("Причина: %s" % reason)
@@ -860,7 +975,11 @@ func _show_diagnostics(reason: String) -> void:
 			if not explain_line.is_empty():
 				lines.append(explain_line)
 	if diagnostics_panel.has_method("setup"):
-		diagnostics_panel.call("setup", _tr("nt.common.safe_mode", "Safe Diagnostics"), lines)
+		diagnostics_panel.call("setup", {
+			"mode": "text_only",
+			"title": _tr("nt.common.safe_mode", "Safe Diagnostics"),
+			"reasoning_lines": lines
+		})
 	diagnostics_panel.visible = true
 	_log_event("diagnostics_open", {"reason": reason})
 
@@ -869,7 +988,7 @@ func _on_reset_pressed() -> void:
 		return
 	_register_first_action()
 	_play_audio("click")
-	_reset_pipeline_state()
+	_reset_pipeline_state(true)
 	lbl_status.text = _tr("nt.b.ui.status_pipeline_reset", "Pipeline reset. Reassemble and run calc.")
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.86, 0.96))
 	_log_event("reset_pressed", {})
@@ -975,6 +1094,11 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		stability_delta += HINT_STABILITY_DELTA
 	if pipeline_mismatch:
 		stability_delta += PIPELINE_MISMATCH_DELTA
+	var pipeline_correct_end: bool = _is_pipeline_correct()
+	var outcome_code: String = _outcome_code_for_b(is_correct, reason, pipeline_correct_end)
+	var mastery_block_reason: String = _mastery_block_reason_for_b(is_correct, outcome_code)
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var layout_mode: String = "portrait" if viewport_size.x < viewport_size.y else "landscape"
 	var payload: Dictionary = {
 		"quest": "network_trace",
 		"quest_id": "NETWORK_TRACE",
@@ -984,6 +1108,10 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"variant_hash": variant_hash,
 		"is_correct": is_correct,
 		"is_fit": is_correct,
+		"trial_seq": trial_seq,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"error_code": last_error_code,
 		"payload_value": int(current_level.get("payload_value", 0)),
 		"payload_unit": str(current_level.get("payload_unit", "KB")),
 		"time_sec": int(current_level.get("time_sec", 0)),
@@ -991,11 +1119,31 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"expected_bps": int(current_level.get("expected_bps", 0)),
 		"pipeline_slots_filled_at_ms": pipeline_slots_filled_at_ms,
 		"module_moves_count": module_moves_count,
+		"module_drag_start_count": module_drag_start_count,
+		"module_install_count": module_install_count,
+		"module_replace_count": module_replace_count,
+		"module_remove_count": module_remove_count,
+		"unique_module_count": unique_module_ids.size(),
+		"slot_select_count": slot_select_count,
+		"calc_run_count": calc_run_count,
+		"calc_without_full_pipeline_count": calc_without_full_pipeline_count,
+		"answer_change_count": answer_change_count,
+		"diagnostics_open_count": diagnostics_open_count,
+		"safe_mode_open_count": safe_mode_open_count,
+		"changed_after_calc_fail": changed_after_calc_fail,
+		"changed_after_diagnostics": changed_after_diagnostics,
+		"time_to_first_module_ms": time_to_first_module_ms,
+		"time_to_first_calc_ms": time_to_first_calc_ms,
+		"time_to_first_answer_ms": time_to_first_answer_ms,
+		"time_from_last_edit_to_calc_ms": time_from_last_edit_to_calc_ms,
 		"pipeline_selected": {"kilo_module_id": slot_kilo.get_module_id(), "bit_module_id": slot_bit.get_module_id(), "time_module_id": slot_time.get_module_id(), "out_module_id": slot_out.get_module_id()},
-		"pipeline_correct": _is_pipeline_correct(),
+		"pipeline_correct": pipeline_correct_end,
 		"pipeline_mismatch": pipeline_mismatch,
 		"benchmark_done": benchmark_done,
 		"preview_metrics": preview_metrics,
+		"budget_used": int(preview_metrics.get("budget_used", 0)),
+		"bottleneck": str(preview_metrics.get("bottleneck", "UNKNOWN")),
+		"logic_consistent": pipeline_correct_end,
 		"calc_bps": calc_bps,
 		"calc_display_value": calc_display_value,
 		"calc_display_unit": calc_display_unit,
@@ -1005,12 +1153,16 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 		"attempts_count": attempts.size(),
 		"elapsed_ms": elapsed_ms,
 		"duration": float(elapsed_ms) / 1000.0,
+		"safe_mode": safe_mode_used,
 		"safe_mode_used": safe_mode_used,
 		"time_to_first_action_ms": first_action_ms,
 		"spam_clicks": spam_clicks,
 		"hint_used": hint_used,
 		"timed_out": reason == "timeout",
 		"stability_delta": stability_delta,
+		"layout": layout_mode,
+		"ui_vw": int(viewport_size.x),
+		"ui_vh": int(viewport_size.y),
 		"task_session": task_session
 	}
 	GlobalMetrics.register_trial(payload)
@@ -1019,9 +1171,53 @@ func _enable_answer_buttons(enabled: bool) -> void:
 	for btn in action_buttons:
 		btn.disabled = not enabled or level_finished
 
-func _log_event(event_name: String, payload: Dictionary) -> void:
+func _outcome_code_for_b(is_correct: bool, finish_reason: String, logic_consistent: bool) -> String:
+	if is_correct and logic_consistent:
+		return "SUCCESS"
+	if finish_reason == "timeout" or last_error_code == "TIMEOUT":
+		return "TIMEOUT"
+	if safe_mode_used and not is_correct and finish_reason == "attempt_limit":
+		return "SAFE_MODE"
+	if not _pipeline_ready() or last_error_code == "B_PIPELINE_INCOMPLETE":
+		return "PIPELINE_INCOMPLETE"
+	if last_error_code == "B_UNIT_TRAP":
+		return "UNIT_CONFUSION"
+	if pipeline_mismatch or last_error_code == "B_PIPELINE_MISMATCH":
+		return "ANSWER_LOGIC_BAD"
+	return "FORMULA_WRONG"
+
+func _mastery_block_reason_for_b(is_correct: bool, outcome_code: String) -> String:
+	if outcome_code == "SAFE_MODE":
+		return "SAFE_MODE_TRIGGERED"
+	if diagnostics_open_count > 0:
+		return "DIAGNOSTICS_DEPENDENCY"
+	if calc_run_count >= 3:
+		return "MULTI_CALC_GUESSING"
+	if outcome_code == "UNIT_CONFUSION":
+		return "UNIT_CONVERSION_CONFUSION"
+	if not is_correct or outcome_code == "FORMULA_WRONG" or pipeline_mismatch:
+		return "FORMULA_UNSTABLE"
+	return "NONE"
+
+func _mark_pipeline_edited() -> void:
+	last_edit_ms = _elapsed_ms_now()
+	if _pending_change_after_diagnostics:
+		changed_after_diagnostics = true
+		_pending_change_after_diagnostics = false
+	if _pending_change_after_calc_fail:
+		changed_after_calc_fail = true
+		_pending_change_after_calc_fail = false
+
+func _elapsed_ms_now() -> int:
+	if level_started_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - level_started_ms)
+
+func _log_event(event_name: String, payload: Dictionary = {}) -> void:
+	if task_session.is_empty():
+		return
 	var events: Array = task_session.get("events", [])
-	events.append({"name": event_name, "t_ms": Time.get_ticks_msec() - level_started_ms, "payload": payload})
+	events.append({"name": event_name, "t_ms": _elapsed_ms_now(), "payload": payload.duplicate(true)})
 	task_session["events"] = events
 
 func _build_variant_key(level: Dictionary) -> String:

@@ -39,6 +39,27 @@ var trial_locked: bool = false
 var level_solved: bool = false
 var has_confirmed_once: bool = false
 var trace: Array = []
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+
+var card_drag_start_count: int = 0
+var card_move_count: int = 0
+var reorder_count: int = 0
+var slot_swap_count: int = 0
+var scan_run_count: int = 0
+var scan_glitch_count: int = 0
+var dependency_violation_seen_count: int = 0
+var reset_count_local: int = 0
+var confirm_attempt_count: int = 0
+var changed_after_scan: bool = false
+var changed_after_fail: bool = false
+var time_to_first_drag_ms: int = -1
+var time_to_first_scan_ms: int = -1
+var time_to_first_confirm_ms: int = -1
+var time_from_last_edit_to_confirm_ms: int = -1
+var last_edit_ms: int = -1
+var awaiting_change_after_fail: bool = false
+
 var dependency_lines: Array = []
 var stage_run_history_start: int = 0
 var stage_level_ids: Dictionary = {}
@@ -185,21 +206,12 @@ func _start_level(index: int) -> void:
 			current_order[1] = first_id
 
 	initial_order = current_order.duplicate()
-	swap_count = 0
-	reset_count = 0
-	start_time_ms = Time.get_ticks_msec()
-	time_to_first_action_ms = -1
-	has_confirmed_once = false
-	trace.clear()
+	_begin_trial_session()
 
 	level_label.text = _build_level_label()
 	_update_progress_ui()
 	briefing_label.text = I18n.resolve_field(level_data, "briefing")
 
-	_log_event("LEVEL_START", {
-		"level_id": str(level_data.get("id", "FR8-B")),
-		"index": current_level_index
-	})
 	_reset_attempt(true)
 	_update_stability_ui()
 	_apply_layout_mode()
@@ -228,17 +240,71 @@ func _expected_order() -> Array[String]:
 func _is_last_level() -> bool:
 	return current_level_index >= levels.size() - 1
 
+func _begin_trial_session() -> void:
+	trial_seq += 1
+	start_time_ms = Time.get_ticks_msec()
+	time_to_first_action_ms = -1
+	trace.clear()
+	swap_count = 0
+	reset_count = 0
+	has_confirmed_once = false
+
+	card_drag_start_count = 0
+	card_move_count = 0
+	reorder_count = 0
+	slot_swap_count = 0
+	scan_run_count = 0
+	scan_glitch_count = 0
+	dependency_violation_seen_count = 0
+	reset_count_local = 0
+	confirm_attempt_count = 0
+	changed_after_scan = false
+	changed_after_fail = false
+	time_to_first_drag_ms = -1
+	time_to_first_scan_ms = -1
+	time_to_first_confirm_ms = -1
+	time_from_last_edit_to_confirm_ms = -1
+	last_edit_ms = -1
+	awaiting_change_after_fail = false
+
+	var level_id: String = str(level_data.get("id", "FR8-B-00"))
+	task_session = {
+		"trial_seq": trial_seq,
+		"quest_id": "CASE_08_FINAL_REPORT",
+		"stage_id": "B",
+		"task_id": level_id,
+		"started_at_ticks": start_time_ms,
+		"ended_at_ticks": 0,
+		"events": []
+	}
+	_log_event("trial_started", {
+		"trial_seq": trial_seq,
+		"level_id": level_id,
+		"stage_count": current_order.size(),
+		"dependency_count": (level_data.get("dependencies", []) as Array).size(),
+		"axis": "past_future"
+	})
+
+func _elapsed_ms_now() -> int:
+	if start_time_ms <= 0:
+		return 0
+	return maxi(0, Time.get_ticks_msec() - start_time_ms)
+
 func _reset_attempt(is_level_start: bool = false) -> void:
 	current_order = initial_order.duplicate()
 	if not is_level_start:
 		_mark_first_action()
-		reset_count += 1
+		reset_count_local += 1
+		reset_count = reset_count_local
+		_log_event("reset_pressed", {"reset_count": reset_count_local})
+	_log_event("attempt_reset", {"level_start": is_level_start})
 
 	_log_event("СБРОС", {"level_start": is_level_start})
 
 	trial_locked = false
 	level_solved = false
 	has_confirmed_once = false
+	awaiting_change_after_fail = false
 	btn_confirm.disabled = false
 	btn_next.disabled = true
 	btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
@@ -287,18 +353,31 @@ func _on_card_move_requested(stage_id: String, dir: int) -> void:
 
 	_mark_first_action()
 	_clear_dependency_overlay()
+	card_drag_start_count += 1
+	card_move_count += 1
+	reorder_count += 1
+	slot_swap_count += 1
+	swap_count = slot_swap_count
+	if time_to_first_drag_ms < 0:
+		time_to_first_drag_ms = _elapsed_ms_now()
+	last_edit_ms = _elapsed_ms_now()
+	if scan_run_count > 0:
+		changed_after_scan = true
+	if awaiting_change_after_fail:
+		changed_after_fail = true
+		awaiting_change_after_fail = false
 
 	var other_stage: String = current_order[target_index]
 	current_order[target_index] = stage_id
 	current_order[index] = other_stage
-	swap_count += 1
 	_queue_dependency_overlay_redraw()
 
-	_log_event("MOVE_CARD", {
+	_log_event("card_reordered", {
 		"stage_id": stage_id,
 		"from_index": index,
 		"to_index": target_index,
-		"dir": dir
+		"dir": dir,
+		"current_order": current_order.duplicate()
 	})
 
 	_rebuild_cards()
@@ -328,8 +407,19 @@ func _on_confirm_pressed() -> void:
 		return
 
 	_mark_first_action()
-	_log_event("CONFIRM_PRESSED", {
-		"final_order": current_order.duplicate()
+	confirm_attempt_count += 1
+	if time_to_first_confirm_ms < 0:
+		time_to_first_confirm_ms = _elapsed_ms_now()
+	if time_to_first_scan_ms < 0:
+		time_to_first_scan_ms = _elapsed_ms_now()
+	if last_edit_ms >= 0:
+		time_from_last_edit_to_confirm_ms = maxi(0, _elapsed_ms_now() - last_edit_ms)
+	else:
+		time_from_last_edit_to_confirm_ms = -1
+	_log_event("confirm_pressed", {
+		"current_order": current_order.duplicate(),
+		"attempt": confirm_attempt_count,
+		"time_from_last_edit_to_confirm_ms": time_from_last_edit_to_confirm_ms
 	})
 	has_confirmed_once = true
 	trial_locked = true
@@ -339,16 +429,44 @@ func _on_confirm_pressed() -> void:
 	var evaluation: Dictionary = FR8BScoring.evaluate(level_data, current_order)
 	var score: Dictionary = FR8BScoring.resolve_score(level_data, evaluation)
 	var feedback_text: String = FR8BScoring.feedback_text(level_data, evaluation)
+	var violations: Array = (evaluation.get("violations", []) as Array).duplicate(true)
+	scan_run_count += 1
+	_log_event("logic_scan_started", {
+		"scan_run_count": scan_run_count,
+		"current_order": current_order.duplicate()
+	})
 	_build_dependency_overlay_lines(evaluation)
 	var scan_triggered_glitch: bool = await _run_logic_scan(evaluation)
+	if scan_triggered_glitch:
+		scan_glitch_count += 1
+	if not violations.is_empty():
+		dependency_violation_seen_count += 1
+		var top_violation: Dictionary = evaluation.get("top_violation", {}) as Dictionary
+		_log_event("dependency_violation_shown", {
+			"violating_stage_id": str(top_violation.get("a", "")),
+			"top_violation": top_violation.duplicate(true),
+			"broken_dependency_count": violations.size()
+		})
 	await _restore_cards_color()
 
-	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
+	var elapsed_ms: int = _elapsed_ms_now()
 	var tffa_ms: int = elapsed_ms if time_to_first_action_ms < 0 else time_to_first_action_ms
 	var level_id: String = str(level_data.get("id", "FR8-B-00"))
 	var verdict_code: String = str(score.get("verdict_code", "FAIL"))
 	var error_code: String = str(evaluation.get("error_code", "ORDER_MISMATCH"))
 	var match_key: String = "FR8_B|%s|%d" % [level_id, GlobalMetrics.session_history.size()]
+	var is_correct: bool = bool(score.get("is_correct", false))
+	var outcome_code: String = _outcome_code_for_b(is_correct, error_code, violations, scan_triggered_glitch)
+	var mastery_block_reason: String = _mastery_block_reason_for_b(is_correct, outcome_code)
+
+	_log_event("confirm_result", {
+		"is_correct": is_correct,
+		"error_type": error_code,
+		"violations": violations.duplicate(true),
+		"current_order": current_order.duplicate(),
+		"outcome_code": outcome_code
+	})
+	task_session["ended_at_ticks"] = Time.get_ticks_msec()
 
 	var payload: Dictionary = {
 		"quest_id": "CASE_08_FINAL_REPORT",
@@ -356,21 +474,40 @@ func _on_confirm_pressed() -> void:
 		"level_id": level_id,
 		"format": "TIMELINE_SORT",
 		"match_key": match_key,
+		"trial_seq": trial_seq,
 		"initial_order": initial_order.duplicate(),
 		"final_order": current_order.duplicate(),
-		"violations": (evaluation.get("violations", []) as Array).duplicate(true),
+		"current_order": current_order.duplicate(),
+		"violations": violations.duplicate(true),
 		"error_code": error_code,
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
 		"elapsed_ms": elapsed_ms,
 		"time_to_first_action_ms": tffa_ms,
+		"time_to_first_drag_ms": time_to_first_drag_ms,
+		"time_to_first_scan_ms": time_to_first_scan_ms,
+		"time_to_first_confirm_ms": time_to_first_confirm_ms,
+		"time_from_last_edit_to_confirm_ms": time_from_last_edit_to_confirm_ms,
 		"swap_count": swap_count,
-		"reset_count": reset_count,
+		"reset_count": reset_count_local,
+		"confirm_attempt_count": confirm_attempt_count,
+		"card_drag_start_count": card_drag_start_count,
+		"card_move_count": card_move_count,
+		"reorder_count": reorder_count,
+		"slot_swap_count": slot_swap_count,
+		"scan_run_count": scan_run_count,
+		"scan_glitch_count": scan_glitch_count,
+		"dependency_violation_seen_count": dependency_violation_seen_count,
+		"changed_after_scan": changed_after_scan,
+		"changed_after_fail": changed_after_fail,
 		"points": int(score.get("points", 0)),
 		"max_points": int(score.get("max_points", 2)),
 		"is_fit": bool(score.get("is_fit", false)),
-		"is_correct": bool(score.get("is_correct", false)),
+		"is_correct": is_correct,
 		"stability_delta": int(score.get("stability_delta", -25)),
 		"verdict_code": verdict_code,
-		"trace": trace.duplicate(true)
+		"trace": trace.duplicate(true),
+		"task_session": task_session.duplicate(true)
 	}
 	GlobalMetrics.register_trial(payload)
 	_update_stability_ui()
@@ -378,6 +515,7 @@ func _on_confirm_pressed() -> void:
 	if verdict_code == "PERFECT":
 		level_solved = true
 		trial_locked = true
+		awaiting_change_after_fail = false
 		btn_confirm.disabled = true
 		btn_next.disabled = false
 		btn_next.text = _tr("case08.common.finish", TEXT_FINISH) if _is_last_level() else _tr("case08.common.next", TEXT_NEXT)
@@ -388,6 +526,7 @@ func _on_confirm_pressed() -> void:
 	else:
 		level_solved = false
 		trial_locked = false
+		awaiting_change_after_fail = true
 		btn_confirm.disabled = false
 		btn_next.disabled = true
 		_set_status(feedback_text, COLOR_ERR)
@@ -518,7 +657,7 @@ func _apply_layout_mode() -> void:
 func _mark_first_action() -> void:
 	if time_to_first_action_ms >= 0:
 		return
-	time_to_first_action_ms = Time.get_ticks_msec() - start_time_ms
+	time_to_first_action_ms = _elapsed_ms_now()
 
 func _arrays_equal(a: Array[String], b: Array[String]) -> bool:
 	if a.size() != b.size():
@@ -686,6 +825,34 @@ func _shake_main_layout() -> void:
 		tween.tween_property(main_layout, "position", origin + Vector2(randf_range(-4.0, 4.0), randf_range(-4.0, 4.0)), 0.03)
 	tween.tween_property(main_layout, "position", origin, 0.04)
 
+func _outcome_code_for_b(is_correct: bool, error_code: String, violations: Array, scan_triggered_glitch: bool) -> String:
+	if is_correct:
+		return "SUCCESS"
+	var normalized_error: String = error_code.strip_edges().to_upper()
+	if normalized_error in ["LOGIC_GAP", "CAUSALITY_LOOP"]:
+		return "DEPENDENCY_VIOLATION"
+	if normalized_error == "ORDER_MISMATCH":
+		return "ORDER_WRONG"
+	if violations.is_empty():
+		return "TIMELINE_WRONG"
+	if not scan_triggered_glitch:
+		return "SCAN_FAIL"
+	return "DEPENDENCY_VIOLATION"
+
+func _mastery_block_reason_for_b(is_correct: bool, outcome_code: String) -> String:
+	if reset_count_local >= 3:
+		return "RESET_OVERUSE"
+	if confirm_attempt_count >= 3:
+		return "MULTI_CONFIRM_GUESSING"
+	if not is_correct:
+		if outcome_code == "DEPENDENCY_VIOLATION" and not changed_after_scan:
+			return "DEPENDENCY_IGNORED"
+		if scan_run_count > 0 and not changed_after_scan:
+			return "SCAN_DEPENDENCY"
+		if reorder_count >= 6:
+			return "TIMELINE_INSTABILITY"
+	return "NONE"
+
 func _show_error(message: String) -> void:
 	_set_status(message, COLOR_ERR)
 	btn_confirm.disabled = true
@@ -693,11 +860,25 @@ func _show_error(message: String) -> void:
 	btn_next.disabled = true
 
 func _log_event(event_name: String, data: Dictionary = {}) -> void:
-	trace.append({
-		"t_ms": Time.get_ticks_msec() - start_time_ms,
+	var t_ms: int = _elapsed_ms_now()
+	var event_payload: Dictionary = data.duplicate(true)
+	var event_row: Dictionary = {
+		"name": event_name,
 		"event": event_name,
-		"data": data.duplicate(true)
+		"t_ms": t_ms,
+		"payload": event_payload.duplicate(true),
+		"data": event_payload.duplicate(true)
+	}
+	trace.append(event_row)
+	if task_session.is_empty():
+		return
+	var events: Array = task_session.get("events", [])
+	events.append({
+		"name": event_name,
+		"t_ms": t_ms,
+		"payload": event_payload.duplicate(true)
 	})
+	task_session["events"] = events
 
 func _on_stability_changed(_new_value: float, _delta: float) -> void:
 	_update_stability_ui()
