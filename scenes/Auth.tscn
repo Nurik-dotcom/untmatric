@@ -1,9 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://bvxqy8r7n2k3p"]
+[gd_scene load_steps=5 format=3 uid="uid://bvxqy8r7n2k3p"]
 
 [ext_resource type="PackedScene" uid="uid://dqxk4l8m7n3o2" path="res://ui/overlays/NoirOverlay.tscn" id="1_0x8y9"]
 [ext_resource type="Theme" uid="uid://a1b2c3d4e5f6g" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="Shader" path="res://ui/shaders/monitor_crt.gdshader" id="3_shader"]
 [ext_resource type="Script" path="res://scenes/Auth.gd" id="4_script"]
+[ext_resource type="Script" path="res://scripts/MobileInputFix.gd" id="5_mobile_fix"]
 
 [node name="Auth" type="Control"]
 layout_mode = 3
@@ -49,10 +50,14 @@ horizontal_alignment = 1
 layout_mode = 2
 
 [node name="EmailInput" type="LineEdit" parent="CenterContainer/VBoxContainer"]
+script = ExtResource("5_mobile_fix")
+prompt_title = "Введите Email:"
 layout_mode = 2
 placeholder_text = "AGENT_EMAIL@DOMAIN.KZ"
 
 [node name="PasswordInput" type="LineEdit" parent="CenterContainer/VBoxContainer"]
+script = ExtResource("5_mobile_fix")
+prompt_title = "Введите пароль:"
 layout_mode = 2
 placeholder_text = "PASSWORD"
 secret = true

@@ -93,8 +93,30 @@ func _apply_ui() -> void:
 		row_index += 1
 
 func _on_item_selected(index: int, item_id: String, bucket_ids: Array[String]) -> void:
+	var previous_value: String = str(_selection.get(item_id, "PILE"))
 	if index < 0 or index >= bucket_ids.size():
 		_selection[item_id] = "PILE"
+		_notify_controller("step_selected", {
+			"item_id": item_id,
+			"bucket_id": "PILE",
+			"previous": previous_value
+		})
 		return
 	var bucket_id: String = bucket_ids[index]
 	_selection[item_id] = bucket_id if bucket_id != "" else "PILE"
+	var next_value: String = str(_selection.get(item_id, "PILE"))
+	_notify_controller("step_selected", {
+		"item_id": item_id,
+		"bucket_id": next_value,
+		"previous": previous_value
+	})
+	if previous_value != "" and previous_value != "PILE" and previous_value != next_value:
+		_notify_controller("step_reordered", {
+			"item_id": item_id,
+			"from": previous_value,
+			"to": next_value
+		})
+
+func _notify_controller(event_name: String, payload: Dictionary = {}) -> void:
+	if _controller != null and _controller.has_method("on_renderer_event"):
+		_controller.call("on_renderer_event", event_name, payload)

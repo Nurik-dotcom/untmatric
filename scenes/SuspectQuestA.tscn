@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://28drfgsf7i8h"]
+[gd_scene load_steps=5 format=3 uid="uid://28drfgsf7i8h"]
 
 [ext_resource type="Script" path="res://scripts/SuspectQuestA.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
+[ext_resource type="Script" path="res://scripts/MobileInputFix.gd" id="4_mobile_fix"]
 
 [node name="SuspectQuestA" type="Control"]
 layout_mode = 3
@@ -278,6 +279,8 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="AnswerInput" type="LineEdit" parent="SafeArea/MainVBox/SolvePanel/SolveMargin/SolveVBox/AnswerRow"]
+script = ExtResource("4_mobile_fix")
+prompt_title = "Введите итоговое значение:"
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "Введите целое число"

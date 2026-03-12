@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/CityMapQuestA.gd" id="1_script"]
 [ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="3_noir"]
 [ext_resource type="Script" path="res://ui/overlays/NoirOverlay.gd" id="4_gy7cs"]
+[ext_resource type="Script" path="res://scripts/MobileInputFix.gd" id="5_mobile_fix"]
 
 [node name="CityMapQuestA" type="Control"]
 layout_mode = 3
@@ -192,6 +193,8 @@ text = "ВВЕДИТЕ ИТОГОВУЮ СУММУ"
 
 [node name="SumInput" type="LineEdit" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 custom_minimum_size = Vector2(0, 44)
+script = ExtResource("5_mobile_fix")
+prompt_title = "Сумма маршрута:"
 layout_mode = 2
 placeholder_text = "0"
 max_length = 6

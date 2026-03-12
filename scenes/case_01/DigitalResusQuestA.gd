@@ -19,6 +19,8 @@ var current_level_index: int = 0
 var level_data: Dictionary = {}
 var start_time_ms: int = 0
 var attempt_index: int = 0
+var trial_seq: int = 0
+var task_session: Dictionary = {}
 var drag_count: int = 0
 var trace: Array = []
 var item_nodes: Dictionary = {}
@@ -38,6 +40,30 @@ var _last_payload: Dictionary = {}
 var _confirm_requires_force: bool = false
 var _table_renderer: Node = null
 var _table_renderer_scene: PackedScene = null
+
+var drag_start_count: int = 0
+var drop_count: int = 0
+var replace_count: int = 0
+var remove_count: int = 0
+var unique_item_ids: Dictionary = {}
+
+var bucket_switch_count: int = 0
+var wrong_bucket_try_count: int = 0
+var reset_count_local: int = 0
+var confirm_attempt_count: int = 0
+
+var changed_after_feedback: bool = false
+var changed_after_fail: bool = false
+
+var time_to_first_drag_ms: int = -1
+var time_to_first_drop_ms: int = -1
+var time_to_first_confirm_ms: int = -1
+var time_from_last_edit_to_confirm_ms: int = -1
+
+var last_edit_ms: int = -1
+var last_bucket_id: String = ""
+var _awaiting_edit_after_feedback: bool = false
+var _awaiting_edit_after_fail: bool = false
 
 @onready var noir_overlay: Node = $NoirOverlay
 @onready var safe_area: MarginContainer = $SafeArea
@@ -266,6 +292,59 @@ func _configure_zones() -> void:
 				bucket_label = _tr("resus.a.labels.cia_folder", "FOLDER {label}", {"label": bucket_label})
 			zone_node.call("setup", bucket_id, bucket_label, _accepted_item_ids_for_bucket(bucket_id))
 
+func _reset_trial_runtime() -> void:
+	drag_start_count = 0
+	drop_count = 0
+	replace_count = 0
+	remove_count = 0
+	unique_item_ids.clear()
+	bucket_switch_count = 0
+	wrong_bucket_try_count = 0
+	reset_count_local = 0
+	confirm_attempt_count = 0
+	changed_after_feedback = false
+	changed_after_fail = false
+	time_to_first_drag_ms = -1
+	time_to_first_drop_ms = -1
+	time_to_first_confirm_ms = -1
+	time_from_last_edit_to_confirm_ms = -1
+	last_edit_ms = -1
+	last_bucket_id = ""
+	_awaiting_edit_after_feedback = false
+	_awaiting_edit_after_fail = false
+
+func _mark_edit_action() -> void:
+	last_edit_ms = _elapsed_ms_now()
+	if _awaiting_edit_after_feedback:
+		changed_after_feedback = true
+		_awaiting_edit_after_feedback = false
+	if _awaiting_edit_after_fail:
+		changed_after_fail = true
+		_awaiting_edit_after_fail = false
+
+func _begin_trial_session() -> void:
+	trial_seq += 1
+	task_session = {
+		"events": [],
+		"trial_seq": trial_seq
+	}
+	_reset_trial_runtime()
+	var bucket_count: int = (level_data.get("buckets", []) as Array).size()
+	var item_count: int = (level_data.get("items", []) as Array).size()
+	if _is_table_level():
+		bucket_count = (level_data.get("configs", []) as Array).size()
+		item_count = (level_data.get("tasks", []) as Array).size()
+	if bucket_count <= 0:
+		bucket_count = bucket_to_zone.size()
+	if item_count <= 0:
+		item_count = item_contracts.size()
+	_log_event("trial_started", {
+		"level_id": str(level_data.get("id", "")),
+		"briefing": str(level_data.get("briefing", "")),
+		"bucket_count": bucket_count,
+		"item_count": item_count
+	})
+
 func _reset_attempt() -> void:
 	if _is_table_level():
 		_reset_attempt_table()
@@ -274,6 +353,7 @@ func _reset_attempt() -> void:
 	start_time_ms = Time.get_ticks_msec()
 	drag_count = 0
 	trace.clear()
+	_begin_trial_session()
 	item_nodes.clear()
 	input_locked = false
 	btn_confirm.disabled = false
@@ -301,6 +381,7 @@ func _reset_attempt_table() -> void:
 	start_time_ms = Time.get_ticks_msec()
 	drag_count = 0
 	trace.clear()
+	_begin_trial_session()
 	item_nodes.clear()
 	input_locked = false
 	btn_confirm.disabled = false
@@ -342,7 +423,15 @@ func _on_drag_started(item_id: String, from_zone: String) -> void:
 	if input_locked:
 		return
 	drag_count += 1
+	drag_start_count += 1
+	if time_to_first_drag_ms < 0:
+		time_to_first_drag_ms = _elapsed_ms_now()
 	_log_event("DRAG_START", {"item_id": item_id, "from_zone": from_zone})
+	_log_event("item_drag_started", {
+		"item_id": item_id,
+		"from_bucket": from_zone.to_upper(),
+		"drag_count": drag_count
+	})
 	_set_socket_targets_for_item(item_id)
 
 func _on_drag_cancelled(item_id: String, from_zone: String) -> void:
@@ -364,12 +453,17 @@ func _on_socket_drop_accepted(item_id: String, socket_id: String) -> void:
 func _on_socket_drop_rejected(item_id: String, socket_id: String) -> void:
 	if input_locked:
 		return
+	wrong_bucket_try_count += 1
+	_awaiting_edit_after_feedback = true
+	_awaiting_edit_after_fail = true
 	_log_event("DROP_BOUNCE", {"item_id": item_id, "attempted_socket": socket_id})
 
 func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> void:
 	if input_locked:
 		return
 	var item_id: String = str(payload.get("item_id", ""))
+	var to_bucket: String = socket_id.to_upper()
+	var from_bucket: String = str(payload.get("from_zone", "PILE")).to_upper()
 	var source_path: String = str(payload.get("node_path", ""))
 	if source_path == "":
 		return
@@ -382,10 +476,27 @@ func on_socket_drop(payload: Dictionary, socket_id: String, accepted: bool) -> v
 		var zone: Node = _zone_for_socket(socket_id)
 		if zone != null and zone.has_method("add_item_control"):
 			zone.call("add_item_control", item_control)
+		drop_count += 1
+		unique_item_ids[item_id] = true
+		if time_to_first_drop_ms < 0:
+			time_to_first_drop_ms = _elapsed_ms_now()
+		var replaced_existing: bool = from_bucket != "PILE" and from_bucket != to_bucket
+		if replaced_existing:
+			replace_count += 1
+		if last_bucket_id != "" and last_bucket_id != to_bucket:
+			bucket_switch_count += 1
+		last_bucket_id = to_bucket
+		_mark_edit_action()
 		_log_event("ITEM_PLACED", {
 			"item_id": item_id,
-			"to_bucket": socket_id.to_upper(),
-			"from_bucket": str(payload.get("from_zone", "PILE")).to_upper()
+			"to_bucket": to_bucket,
+			"from_bucket": from_bucket
+		})
+		_log_event("item_dropped", {
+			"item_id": item_id,
+			"bucket_id": to_bucket,
+			"replaced": replaced_existing,
+			"drag_count": drag_count
 		})
 		_reset_confirm_warning_state()
 		_refresh_system_state(_build_placements_snapshot())
@@ -418,10 +529,18 @@ func _restore_item_to_source(item_control: Control, source_bucket: String) -> vo
 func _on_pile_item_placed(item_id: String, _to_bucket: String, from_bucket: String) -> void:
 	if input_locked:
 		return
+	var normalized_from: String = from_bucket.to_upper()
+	if normalized_from != "PILE":
+		remove_count += 1
+		_mark_edit_action()
 	_log_event("ITEM_PLACED", {
 		"item_id": item_id,
 		"to_bucket": "PILE",
-		"from_bucket": from_bucket.to_upper()
+		"from_bucket": normalized_from
+	})
+	_log_event("item_removed", {
+		"item_id": item_id,
+		"from_bucket": normalized_from
 	})
 	_reset_confirm_warning_state()
 	_refresh_system_state(_build_placements_snapshot())
@@ -624,6 +743,15 @@ func _update_console(delta: float) -> void:
 func _on_confirm_pressed() -> void:
 	if input_locked:
 		return
+	confirm_attempt_count += 1
+	if time_to_first_confirm_ms < 0:
+		time_to_first_confirm_ms = _elapsed_ms_now()
+	if last_edit_ms >= 0:
+		time_from_last_edit_to_confirm_ms = maxi(0, _elapsed_ms_now() - last_edit_ms)
+	_log_event("confirm_pressed", {
+		"attempt": confirm_attempt_count,
+		"mode": "TABLE" if _is_table_level() else "MATCHING"
+	})
 	if _is_table_level():
 		_confirm_table()
 		return
@@ -643,6 +771,12 @@ func _show_incomplete_warning(placed: int, total: int) -> void:
 		{"placed": placed, "total": total})
 	status_label.modulate = COLOR_WARN
 	_play_sfx("error")
+	_awaiting_edit_after_feedback = true
+	_awaiting_edit_after_fail = false
+	_log_event("feedback_incomplete", {
+		"placed": placed,
+		"total": total
+	})
 	_confirm_requires_force = true
 	btn_confirm.text = _tr("resus.a.btn.force_confirm", "CONFIRM ANYWAY")
 
@@ -655,7 +789,26 @@ func _execute_confirm(placements: Dictionary, placed_count: int) -> void:
 	var errors: Array = _build_errors(placements)
 	var system_state: Dictionary = _evaluate_system_state(placements)
 	var hid_connected: bool = _input_devices_connected(placements)
-	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
+	var elapsed_ms: int = _elapsed_ms_now()
+	var total_items: int = int(result.get("total_items", item_contracts.size()))
+	var wrong_bucket_count: int = errors.size()
+	var unplaced_count: int = maxi(0, total_items - placed_count)
+	var outcome_code: String = _resolve_outcome_code_a(
+		bool(result.get("is_correct", false)),
+		wrong_bucket_count,
+		unplaced_count,
+		int(result.get("correct_count", 0))
+	)
+	var mastery_block_reason: String = _resolve_mastery_block_reason_a(outcome_code)
+	_log_event("confirm_result", {
+		"is_correct": bool(result.get("is_correct", false)),
+		"score": int(result.get("points", 0)),
+		"wrong_bucket_count": wrong_bucket_count,
+		"unplaced_count": unplaced_count,
+		"outcome_code": outcome_code
+	})
+	_awaiting_edit_after_feedback = true
+	_awaiting_edit_after_fail = not bool(result.get("is_correct", false))
 	var payload: Dictionary = TrialV2.build(
 		"CASE_01_DIGITAL_RESUS",
 		"A",
@@ -677,11 +830,29 @@ func _execute_confirm(placements: Dictionary, placed_count: int) -> void:
 		"placements": placements.duplicate(true),
 		"bucket_labels": bucket_labels_runtime.duplicate(true),
 		"trace": trace.duplicate(true),
+		"task_session": task_session.duplicate(true),
+		"trial_seq": trial_seq,
 		"elapsed_ms": elapsed_ms,
+		"time_to_first_action_ms": _resolve_time_to_first_action_ms(),
+		"time_to_first_drag_ms": time_to_first_drag_ms,
+		"time_to_first_drop_ms": time_to_first_drop_ms,
+		"time_to_first_confirm_ms": time_to_first_confirm_ms,
+		"time_from_last_edit_to_confirm_ms": time_from_last_edit_to_confirm_ms,
 		"drag_count": drag_count,
+		"drag_start_count": drag_start_count,
+		"drop_count": drop_count,
+		"replace_count": replace_count,
+		"remove_count": remove_count,
+		"unique_item_count": unique_item_ids.size(),
+		"bucket_switch_count": bucket_switch_count,
+		"wrong_bucket_try_count": wrong_bucket_try_count,
+		"reset_count": reset_count_local,
+		"confirm_attempt_count": confirm_attempt_count,
+		"changed_after_feedback": changed_after_feedback,
+		"changed_after_fail": changed_after_fail,
 		"placed_count": placed_count,
 		"correct_count": int(result.get("correct_count", 0)),
-		"total_items": int(result.get("total_items", 0)),
+		"total_items": total_items,
 		"points": int(result.get("points", 0)),
 		"max_points": int(result.get("max_points", 2)),
 		"is_fit": bool(result.get("is_fit", false)),
@@ -689,6 +860,8 @@ func _execute_confirm(placements: Dictionary, placed_count: int) -> void:
 		"stability_delta": int(result.get("stability_delta", 0)),
 		"verdict_code": str(result.get("verdict_code", "FAIL")),
 		"rule_code": str(result.get("rule_code", "SCORING_RULE")),
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
 		"errors": errors.duplicate(true),
 		"system_state": system_state.duplicate(true)
 	}, true)
@@ -722,7 +895,31 @@ func _confirm_table() -> void:
 	btn_confirm.disabled = true
 
 	var result: Dictionary = ResusScoring.calculate_matching_table_result(level_data, answers)
-	var elapsed_ms: int = Time.get_ticks_msec() - start_time_ms
+	var elapsed_ms: int = _elapsed_ms_now()
+	var details: Array = (result.get("details", []) as Array).duplicate(true)
+	var wrong_bucket_count: int = 0
+	for detail_v in details:
+		if typeof(detail_v) != TYPE_DICTIONARY:
+			continue
+		if not bool((detail_v as Dictionary).get("correct", false)):
+			wrong_bucket_count += 1
+	var unassigned_count: int = maxi(0, total_tasks - assigned_count)
+	var outcome_code: String = _resolve_outcome_code_a(
+		bool(result.get("is_correct", false)),
+		wrong_bucket_count,
+		unassigned_count,
+		int(result.get("correct_count", 0))
+	)
+	var mastery_block_reason: String = _resolve_mastery_block_reason_a(outcome_code)
+	_log_event("confirm_result", {
+		"is_correct": bool(result.get("is_correct", false)),
+		"score": int(result.get("points", 0)),
+		"wrong_bucket_count": wrong_bucket_count,
+		"unplaced_count": unassigned_count,
+		"outcome_code": outcome_code
+	})
+	_awaiting_edit_after_feedback = true
+	_awaiting_edit_after_fail = not bool(result.get("is_correct", false))
 	var payload: Dictionary = TrialV2.build(
 		"CASE_01_DIGITAL_RESUS",
 		"A",
@@ -736,8 +933,26 @@ func _confirm_table() -> void:
 		"format": str(level_data.get("format", "MATCHING_TABLE")),
 		"snapshot": answers.duplicate(true),
 		"trace": trace.duplicate(true),
+		"task_session": task_session.duplicate(true),
+		"trial_seq": trial_seq,
 		"elapsed_ms": elapsed_ms,
+		"time_to_first_action_ms": _resolve_time_to_first_action_ms(),
+		"time_to_first_drag_ms": time_to_first_drag_ms,
+		"time_to_first_drop_ms": time_to_first_drop_ms,
+		"time_to_first_confirm_ms": time_to_first_confirm_ms,
+		"time_from_last_edit_to_confirm_ms": time_from_last_edit_to_confirm_ms,
 		"drag_count": drag_count,
+		"drag_start_count": drag_start_count,
+		"drop_count": drop_count,
+		"replace_count": replace_count,
+		"remove_count": remove_count,
+		"unique_item_count": unique_item_ids.size(),
+		"bucket_switch_count": bucket_switch_count,
+		"wrong_bucket_try_count": wrong_bucket_try_count,
+		"reset_count": reset_count_local,
+		"confirm_attempt_count": confirm_attempt_count,
+		"changed_after_feedback": changed_after_feedback,
+		"changed_after_fail": changed_after_fail,
 		"correct_count": int(result.get("correct_count", 0)),
 		"total_items": int(result.get("total", 0)),
 		"points": int(result.get("points", 0)),
@@ -746,7 +961,9 @@ func _confirm_table() -> void:
 		"is_correct": bool(result.get("is_correct", false)),
 		"stability_delta": int(result.get("stability_delta", 0)),
 		"verdict_code": str(result.get("verdict_code", "FAIL")),
-		"details": (result.get("details", []) as Array).duplicate(true)
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"details": details
 	}, true)
 	GlobalMetrics.register_trial(payload)
 	_last_result = result.duplicate(true)
@@ -756,6 +973,65 @@ func _confirm_table() -> void:
 		_table_renderer.call("show_result", result)
 	_show_result(result, [])
 	_play_sfx("relay" if bool(result.get("is_correct", false)) else "error")
+
+func on_renderer_event(event_name: String, payload: Dictionary = {}) -> void:
+	match event_name:
+		"step_selected":
+			var item_id: String = str(payload.get("item_id", payload.get("task_id", ""))).strip_edges()
+			var previous_bucket: String = str(payload.get("previous", "PILE")).strip_edges().to_upper()
+			var bucket_id: String = str(payload.get("bucket_id", payload.get("config_id", "PILE"))).strip_edges().to_upper()
+			if bucket_id == "":
+				bucket_id = "PILE"
+			if previous_bucket == "":
+				previous_bucket = "PILE"
+			if bucket_id == "PILE":
+				if previous_bucket != "PILE":
+					remove_count += 1
+					_mark_edit_action()
+					_log_event("item_removed", {
+						"item_id": item_id,
+						"from_bucket": previous_bucket
+					})
+			else:
+				drop_count += 1
+				if time_to_first_drop_ms < 0:
+					time_to_first_drop_ms = _elapsed_ms_now()
+				if item_id != "":
+					unique_item_ids[item_id] = true
+				var replaced_existing: bool = previous_bucket != "PILE" and previous_bucket != bucket_id
+				if replaced_existing:
+					replace_count += 1
+				if previous_bucket != "PILE" and previous_bucket != bucket_id:
+					bucket_switch_count += 1
+				last_bucket_id = bucket_id
+				_mark_edit_action()
+				_log_event("item_dropped", {
+					"item_id": item_id,
+					"bucket_id": bucket_id,
+					"replaced": replaced_existing,
+					"drag_count": drag_count
+				})
+			_log_event("step_selected", payload)
+			_reset_confirm_warning_state()
+		"step_reordered":
+			var from_bucket: String = str(payload.get("from", "")).strip_edges().to_upper()
+			var to_bucket: String = str(payload.get("to", "")).strip_edges().to_upper()
+			if from_bucket != "" and to_bucket != "" and from_bucket != to_bucket:
+				bucket_switch_count += 1
+			_mark_edit_action()
+			_log_event("step_reordered", payload)
+			_reset_confirm_warning_state()
+		"toggle_changed":
+			_mark_edit_action()
+			_log_event("toggle_changed", payload)
+			_reset_confirm_warning_state()
+		"hint_opened":
+			_awaiting_edit_after_feedback = true
+			_log_event("hint_opened", payload)
+		"inspect_opened":
+			_log_event("inspect_opened", payload)
+		_:
+			_log_event(event_name, payload)
 
 func _show_result(result: Dictionary, errors: Array) -> void:
 	var verdict_code: String = str(result.get("verdict_code", "FAIL"))
@@ -799,7 +1075,9 @@ func _next_level_button_text() -> String:
 	return _tr("resus.a.btn.next_level", "NEXT LEVEL")
 
 func _on_reset_pressed() -> void:
+	reset_count_local += 1
 	_log_event("RESET_PRESSED", {"placed_count": _count_placed(_build_placements_snapshot())})
+	_log_event("reset_pressed", {"count": reset_count_local})
 	_apply_retry_floor()
 	_reset_attempt()
 	_play_sfx("click")
@@ -1090,12 +1368,65 @@ func _string_array(values: Variant) -> Array[String]:
 		out.append(str(value_v))
 	return out
 
+func _elapsed_ms_now() -> int:
+	return maxi(0, Time.get_ticks_msec() - start_time_ms)
+
+func _resolve_time_to_first_action_ms() -> int:
+	var candidates: Array[int] = []
+	if time_to_first_drag_ms >= 0:
+		candidates.append(time_to_first_drag_ms)
+	if time_to_first_drop_ms >= 0:
+		candidates.append(time_to_first_drop_ms)
+	if time_to_first_confirm_ms >= 0:
+		candidates.append(time_to_first_confirm_ms)
+	if candidates.is_empty():
+		return -1
+	var min_value: int = candidates[0]
+	for value in candidates:
+		min_value = mini(min_value, value)
+	return min_value
+
+func _resolve_outcome_code_a(is_correct: bool, wrong_bucket_count: int, unplaced_count: int, correct_count: int) -> String:
+	if is_correct:
+		return "SUCCESS"
+	if reset_count_local >= 3:
+		return "RESET_OVERUSE"
+	if unplaced_count > 0:
+		return "INCOMPLETE_SORT"
+	if wrong_bucket_count > 0 and correct_count > 0:
+		return "PARTIAL_MATCH"
+	if wrong_bucket_count > 0:
+		return "WRONG_BUCKET"
+	return "PARTIAL_MATCH"
+
+func _resolve_mastery_block_reason_a(outcome_code: String) -> String:
+	if outcome_code == "SUCCESS":
+		return "NONE"
+	if confirm_attempt_count >= 3:
+		return "MULTI_CONFIRM_GUESSING"
+	if changed_after_feedback:
+		return "FEEDBACK_DEPENDENCY"
+	if drag_start_count >= max(10, item_contracts.size() * 3):
+		return "EXCESSIVE_REDRAG"
+	if wrong_bucket_try_count > 0:
+		return "BUCKET_CONFUSION"
+	return "NONE"
+
 func _log_event(event_name: String, data: Dictionary = {}) -> void:
+	var elapsed: int = _elapsed_ms_now()
+	var safe_payload: Dictionary = data.duplicate(true)
 	trace.append({
-		"t_ms": Time.get_ticks_msec() - start_time_ms,
+		"t_ms": elapsed,
 		"event": event_name,
-		"data": data.duplicate(true)
+		"data": safe_payload
 	})
+	var events: Array = task_session.get("events", []) as Array
+	events.append({
+		"name": event_name,
+		"t_ms": elapsed,
+		"payload": safe_payload
+	})
+	task_session["events"] = events
 
 func _play_sfx(event_name: String) -> void:
 	if has_node("/root/AudioManager"):

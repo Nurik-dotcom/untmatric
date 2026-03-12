@@ -98,15 +98,27 @@ func _on_option_pressed(option_id: String) -> void:
 		return
 
 	var idx: int = clampi(_round_index, 0, _rounds.size() - 1)
+	var previous_id: String = str(_selected_by_round.get(idx, ""))
 	_selected_by_round[idx] = option_id
 	if _answers.size() <= idx:
 		_answers.resize(idx + 1)
 	_answers[idx] = option_id
+	_notify_controller("step_selected", {
+		"round": idx,
+		"option_id": option_id,
+		"previous": previous_id
+	})
+	_notify_controller("scan_started", {"round": idx})
 
 	var round_data: Dictionary = _rounds[idx] as Dictionary
 	var is_correct: bool = _check_answer(round_data, option_id)
 	_highlight_options(option_id, is_correct, round_data)
 	explain_label.text = _resolve_round_explain(round_data)
+	_notify_controller("round_checked", {
+		"round": idx,
+		"selected": option_id,
+		"round_ok": is_correct
+	})
 
 	_awaiting_next = true
 	_set_options_disabled(true)
@@ -180,3 +192,7 @@ func _resolve_round_explain(round_data: Dictionary) -> String:
 	if key != "":
 		return I18n.tr_key(key, {"default": fallback})
 	return fallback
+
+func _notify_controller(event_name: String, payload: Dictionary = {}) -> void:
+	if _controller != null and _controller.has_method("on_renderer_event"):
+		_controller.call("on_renderer_event", event_name, payload)

@@ -101,21 +101,33 @@ func _render_round() -> void:
 func _on_attack_selected(option_id: String, pressed_button: Button) -> void:
 	if _awaiting_next:
 		return
+	var previous_attack: String = _selected_attack
 	_selected_attack = option_id
 	for child in attack_grid.get_children():
 		if child is Button:
 			(child as Button).modulate = Color(1, 1, 1, 1)
 	pressed_button.modulate = Color(1.08, 1.08, 1.08, 1.0)
+	_notify_controller("attack_selected", {
+		"round": _round_index,
+		"option_id": option_id,
+		"previous": previous_attack
+	})
 	_update_confirm_state()
 
 func _on_defense_selected(option_id: String, pressed_button: Button) -> void:
 	if _awaiting_next:
 		return
+	var previous_defense: String = _selected_defense
 	_selected_defense = option_id
 	for child in defense_grid.get_children():
 		if child is Button:
 			(child as Button).modulate = Color(1, 1, 1, 1)
 	pressed_button.modulate = Color(1.08, 1.08, 1.08, 1.0)
+	_notify_controller("defense_selected", {
+		"round": _round_index,
+		"option_id": option_id,
+		"previous": previous_defense
+	})
 	_update_confirm_state()
 
 func _update_confirm_state() -> void:
@@ -146,11 +158,27 @@ func _on_confirm_pressed() -> void:
 	_answers[idx] = {"attack": _selected_attack, "defense": _selected_defense}
 
 	var round_data: Dictionary = _rounds[idx] as Dictionary
+	_notify_controller("scan_started", {"round": idx})
 	var attack_ok: bool = _is_option_correct(round_data.get("attack_options", []) as Array, _selected_attack)
 	var defense_ok: bool = _is_option_correct(round_data.get("defense_options", []) as Array, _selected_defense)
+	var round_ok: bool = attack_ok and defense_ok
+	var error_type: String = "SUCCESS"
+	if not defense_ok:
+		error_type = "WRONG_DEFENSE"
+	elif not attack_ok:
+		error_type = "THREAT_MISMATCH"
 	_highlight_grid(attack_grid, round_data.get("attack_options", []) as Array, _selected_attack, attack_ok)
 	_highlight_grid(defense_grid, round_data.get("defense_options", []) as Array, _selected_defense, defense_ok)
 	explain_label.text = _resolve_text(round_data, "explain")
+	_notify_controller("round_checked", {
+		"round": idx,
+		"attack": _selected_attack,
+		"defense": _selected_defense,
+		"attack_ok": attack_ok,
+		"defense_ok": defense_ok,
+		"round_ok": round_ok,
+		"error_type": error_type
+	})
 
 	_set_grids_disabled(true)
 	_awaiting_next = true
@@ -205,3 +233,7 @@ func _resolve_option(option_data: Dictionary) -> String:
 	if key != "":
 		return I18n.tr_key(key, {"default": fallback})
 	return fallback
+
+func _notify_controller(event_name: String, payload: Dictionary = {}) -> void:
+	if _controller != null and _controller.has_method("on_renderer_event"):
+		_controller.call("on_renderer_event", event_name, payload)

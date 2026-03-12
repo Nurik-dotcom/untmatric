@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/case_01/renderers/SubnetRenderer.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/MobileInputFix.gd" id="2"]
 
 [node name="SubnetRenderer" type="PanelContainer"]
 anchors_preset = 15
@@ -46,6 +47,8 @@ text = "Broadcast"
 text = "Hosts"
 
 [node name="HostsEdit" type="LineEdit" parent="VBox/HostsRow"]
+script = ExtResource("2")
+prompt_title = "Введите количество хостов:"
 size_flags_horizontal = 3
 
 [node name="BtnCheck" type="Button" parent="VBox"]

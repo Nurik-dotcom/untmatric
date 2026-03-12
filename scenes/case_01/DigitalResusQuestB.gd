@@ -22,11 +22,38 @@ var levels: Array = []
 var current_level_index: int = 0
 var level_data: Dictionary = {}
 var attempt_index: int = 0
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+var attempt_started_ms: int = 0
 var input_locked: bool = false
 var _renderer: Node = null
 var _last_result: Dictionary = {}
 var _last_payload: Dictionary = {}
 var _renderer_rounds_complete: bool = false
+
+var step_select_count: int = 0
+var step_reorder_count: int = 0
+var toggle_count: int = 0
+var inspect_open_count: int = 0
+var hint_open_count: int = 0
+var scan_run_count: int = 0
+
+var reset_count_local: int = 0
+var confirm_attempt_count: int = 0
+
+var changed_after_scan: bool = false
+var changed_after_hint: bool = false
+var changed_after_fail: bool = false
+
+var time_to_first_action_ms_local: int = -1
+var time_to_first_scan_ms: int = -1
+var time_to_first_confirm_ms: int = -1
+var time_from_last_edit_to_confirm_ms: int = -1
+
+var last_edit_ms: int = -1
+var _awaiting_edit_after_scan: bool = false
+var _awaiting_edit_after_hint: bool = false
+var _awaiting_edit_after_fail: bool = false
 
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var main_vbox: VBoxContainer = $SafeArea/MainVBox
@@ -91,6 +118,96 @@ func _apply_i18n() -> void:
 	btn_confirm.text = _tr("resus.btn.confirm", "CONFIRM")
 	btn_next.text = _next_button_text()
 
+func _elapsed_ms_now() -> int:
+	return maxi(0, Time.get_ticks_msec() - attempt_started_ms)
+
+func _log_event(event_name: String, data: Dictionary = {}) -> void:
+	var events: Array = task_session.get("events", []) as Array
+	events.append({
+		"name": event_name,
+		"t_ms": _elapsed_ms_now(),
+		"payload": data.duplicate(true)
+	})
+	task_session["events"] = events
+
+func _mark_first_action() -> void:
+	if time_to_first_action_ms_local < 0:
+		time_to_first_action_ms_local = _elapsed_ms_now()
+
+func _mark_edit() -> void:
+	last_edit_ms = _elapsed_ms_now()
+	_mark_first_action()
+	if _awaiting_edit_after_scan:
+		changed_after_scan = true
+		_awaiting_edit_after_scan = false
+	if _awaiting_edit_after_hint:
+		changed_after_hint = true
+		_awaiting_edit_after_hint = false
+	if _awaiting_edit_after_fail:
+		changed_after_fail = true
+		_awaiting_edit_after_fail = false
+
+func _begin_trial_session() -> void:
+	trial_seq += 1
+	attempt_started_ms = Time.get_ticks_msec()
+	task_session = {
+		"events": [],
+		"trial_seq": trial_seq
+	}
+	step_select_count = 0
+	step_reorder_count = 0
+	toggle_count = 0
+	inspect_open_count = 0
+	hint_open_count = 0
+	scan_run_count = 0
+	reset_count_local = 0
+	confirm_attempt_count = 0
+	changed_after_scan = false
+	changed_after_hint = false
+	changed_after_fail = false
+	time_to_first_action_ms_local = -1
+	time_to_first_scan_ms = -1
+	time_to_first_confirm_ms = -1
+	time_from_last_edit_to_confirm_ms = -1
+	last_edit_ms = -1
+	_awaiting_edit_after_scan = false
+	_awaiting_edit_after_hint = false
+	_awaiting_edit_after_fail = false
+	_log_event("trial_started", {
+		"level_id": str(level_data.get("id", "")),
+		"briefing": str(level_data.get("briefing", "")),
+		"mode": str(level_data.get("format", "DEFAULT"))
+	})
+
+func _resolve_outcome_code_b(result: Dictionary, answers: Variant) -> String:
+	if bool(result.get("is_correct", false)):
+		return "SUCCESS"
+	var format: String = str(level_data.get("format", "")).to_upper()
+	if format == "MATCHING_TABLE":
+		return "ORDER_ERROR"
+	if format == "MATCHING" or format == "MATCHING_CIA":
+		return "LOGIC_ERROR"
+	if format == "TOPOLOGY_MATCH" or format == "IP_QUIZ":
+		return "SCAN_FAIL" if scan_run_count > 0 else "LOGIC_ERROR"
+	if format == "ATTACK_MATCH" or format == "SUBNET_CALC":
+		return "SCAN_FAIL"
+	if typeof(answers) == TYPE_ARRAY and (answers as Array).is_empty():
+		return "INCOMPLETE"
+	return "INCOMPLETE" if not _renderer_rounds_complete else "LOGIC_ERROR"
+
+func _resolve_mastery_block_reason_b(outcome_code: String) -> String:
+	if outcome_code == "SUCCESS":
+		return "NONE"
+	if hint_open_count > 0:
+		return "HINT_DEPENDENCY"
+	if scan_run_count >= 2 or changed_after_scan:
+		return "SCAN_DEPENDENCY"
+	if confirm_attempt_count >= 3:
+		return "MULTI_CONFIRM_GUESSING"
+	if step_reorder_count >= 3:
+		return "ORDER_INSTABILITY"
+	return "NONE"
+
 func _load_current_level(index: int) -> void:
 	current_level_index = clampi(index, 0, max(0, levels.size() - 1))
 	level_data = (levels[current_level_index] as Dictionary).duplicate(true)
@@ -131,6 +248,7 @@ func _swap_renderer() -> void:
 
 func _begin_attempt() -> void:
 	input_locked = false
+	_begin_trial_session()
 	var format: String = str(level_data.get("format", "")).to_upper()
 	var is_quiz: bool = _is_quiz_format(format)
 	if _renderer != null and _renderer.has_signal("all_rounds_complete"):
@@ -153,8 +271,21 @@ func _on_confirm_pressed() -> void:
 	var format: String = str(level_data.get("format", "")).to_upper()
 	if _is_quiz_format(format) and not _renderer_rounds_complete:
 		return
+	confirm_attempt_count += 1
+	if time_to_first_confirm_ms < 0:
+		time_to_first_confirm_ms = _elapsed_ms_now()
+	if last_edit_ms >= 0:
+		time_from_last_edit_to_confirm_ms = maxi(0, _elapsed_ms_now() - last_edit_ms)
+	_log_event("confirm_pressed", {"attempt": confirm_attempt_count})
 	var answers: Variant = _renderer.call("get_answers")
 	var result: Dictionary = _score_level(answers)
+	var outcome_code: String = _resolve_outcome_code_b(result, answers)
+	_log_event("confirm_result", {
+		"is_correct": bool(result.get("is_correct", false)),
+		"score": int(result.get("points", 0)),
+		"outcome_code": outcome_code
+	})
+	_awaiting_edit_after_fail = not bool(result.get("is_correct", false))
 	_register_trial(answers, result)
 	input_locked = true
 	btn_confirm.disabled = true
@@ -171,6 +302,49 @@ func _on_confirm_pressed() -> void:
 	var can_advance: bool = bool(result.get("is_correct", false)) and (_has_next_level() or _is_flow_active())
 	btn_next.visible = can_advance
 	btn_next.disabled = not can_advance
+
+func on_renderer_event(event_name: String, payload: Dictionary = {}) -> void:
+	match event_name:
+		"step_selected":
+			step_select_count += 1
+			_log_event("step_selected", payload)
+			_mark_edit()
+		"step_reordered":
+			step_reorder_count += 1
+			_log_event("step_reordered", payload)
+			_mark_edit()
+		"toggle_changed":
+			toggle_count += 1
+			_log_event("toggle_changed", payload)
+			_mark_edit()
+		"inspect_opened":
+			inspect_open_count += 1
+			_log_event("inspect_opened", payload)
+		"hint_opened":
+			hint_open_count += 1
+			_awaiting_edit_after_hint = true
+			_log_event("hint_opened", payload)
+		"scan_started":
+			scan_run_count += 1
+			if time_to_first_scan_ms < 0:
+				time_to_first_scan_ms = _elapsed_ms_now()
+			_log_event("scan_started", payload)
+		"scan_result":
+			_awaiting_edit_after_scan = true
+			_log_event("scan_result", payload)
+		"attack_selected", "defense_selected", "network_answer_changed", "broadcast_answer_changed", "hosts_answer_changed":
+			step_select_count += 1
+			_log_event(event_name, payload)
+			_mark_edit()
+		"round_checked":
+			if scan_run_count == 0:
+				scan_run_count = 1
+				if time_to_first_scan_ms < 0:
+					time_to_first_scan_ms = _elapsed_ms_now()
+			_awaiting_edit_after_scan = true
+			_log_event("scan_result", payload)
+		_:
+			_log_event(event_name, payload)
 
 func _score_level(answers: Variant) -> Dictionary:
 	var format: String = str(level_data.get("format", "")).to_upper()
@@ -208,18 +382,41 @@ func _count_placed(snapshot: Dictionary) -> int:
 
 func _register_trial(answers: Variant, result: Dictionary) -> void:
 	var level_id: String = str(level_data.get("id", "CASE01_B"))
+	var elapsed_ms: int = _elapsed_ms_now()
+	var outcome_code: String = _resolve_outcome_code_b(result, answers)
+	var mastery_block_reason: String = _resolve_mastery_block_reason_b(outcome_code)
 	var payload: Dictionary = TrialV2.build(CASE_ID, STAGE_ID, level_id, "FORMAT_ROUTER", str(attempt_index))
 	payload.merge({
 		"case_run_id": _case_run_id(),
 		"level_id": level_id,
 		"format": str(level_data.get("format", "")),
 		"snapshot": answers,
+		"trial_seq": trial_seq,
+		"task_session": task_session.duplicate(true),
+		"elapsed_ms": elapsed_ms,
+		"time_to_first_action_ms": time_to_first_action_ms_local,
+		"time_to_first_scan_ms": time_to_first_scan_ms,
+		"time_to_first_confirm_ms": time_to_first_confirm_ms,
+		"time_from_last_edit_to_confirm_ms": time_from_last_edit_to_confirm_ms,
+		"step_select_count": step_select_count,
+		"step_reorder_count": step_reorder_count,
+		"toggle_count": toggle_count,
+		"inspect_open_count": inspect_open_count,
+		"hint_open_count": hint_open_count,
+		"scan_run_count": scan_run_count,
+		"reset_count": reset_count_local,
+		"confirm_attempt_count": confirm_attempt_count,
+		"changed_after_scan": changed_after_scan,
+		"changed_after_hint": changed_after_hint,
+		"changed_after_fail": changed_after_fail,
 		"points": int(result.get("points", 0)),
 		"max_points": int(result.get("max_points", 2)),
 		"is_correct": bool(result.get("is_correct", false)),
 		"is_fit": bool(result.get("is_fit", false)),
 		"stability_delta": int(result.get("stability_delta", 0)),
-		"verdict_code": str(result.get("verdict_code", "FAIL"))
+		"verdict_code": str(result.get("verdict_code", "FAIL")),
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason
 	}, true)
 	GlobalMetrics.register_trial(payload)
 	_last_result = result.duplicate(true)
@@ -228,11 +425,14 @@ func _register_trial(answers: Variant, result: Dictionary) -> void:
 	_update_stability_ui()
 
 func _on_reset_pressed() -> void:
+	reset_count_local += 1
+	_log_event("reset_pressed", {"count": reset_count_local})
 	_apply_retry_floor()
 	_begin_attempt()
 
 func _on_renderer_complete() -> void:
 	_renderer_rounds_complete = true
+	_log_event("scan_result", {"rounds_complete": true})
 	if input_locked:
 		return
 	btn_confirm.disabled = false

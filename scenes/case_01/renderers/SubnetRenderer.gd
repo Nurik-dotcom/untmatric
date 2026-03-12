@@ -10,6 +10,7 @@ var _rounds: Array = []
 var _answers: Array = []
 var _round_index: int = 0
 var _awaiting_next: bool = false
+var _suppress_change_events: bool = false
 
 @onready var progress_label: Label = $VBox/ProgressLabel
 @onready var info_label: Label = $VBox/InfoLabel
@@ -28,6 +29,7 @@ var _broadcast_input: Node = null
 
 func _ready() -> void:
 	btn_check.pressed.connect(_on_check_pressed)
+	hosts_edit.text_changed.connect(_on_hosts_text_changed)
 
 func setup(level_data: Dictionary, controller: Node) -> void:
 	_level_data = level_data.duplicate(true)
@@ -58,9 +60,13 @@ func _ensure_inputs() -> void:
 	if _network_input == null:
 		_network_input = IP_INPUT_SCENE.instantiate()
 		network_row.add_child(_network_input)
+	if _network_input != null and _network_input.has_signal("ip_entered") and not _network_input.is_connected("ip_entered", Callable(self, "_on_network_ip_entered")):
+		_network_input.connect("ip_entered", Callable(self, "_on_network_ip_entered"))
 	if _broadcast_input == null:
 		_broadcast_input = IP_INPUT_SCENE.instantiate()
 		broadcast_row.add_child(_broadcast_input)
+	if _broadcast_input != null and _broadcast_input.has_signal("ip_entered") and not _broadcast_input.is_connected("ip_entered", Callable(self, "_on_broadcast_ip_entered")):
+		_broadcast_input.connect("ip_entered", Callable(self, "_on_broadcast_ip_entered"))
 
 func _render_round() -> void:
 	if _rounds.is_empty():
@@ -80,6 +86,7 @@ func _render_round() -> void:
 	_apply_question_labels(round_data.get("questions", []) as Array)
 	btn_check.text = I18n.tr_key("resus.btn.confirm", {"default": "CONFIRM"})
 	btn_check.disabled = false
+	_suppress_change_events = true
 	hosts_edit.text = ""
 	explain_label.text = ""
 	_awaiting_next = false
@@ -89,6 +96,7 @@ func _render_round() -> void:
 		_network_input.call("clear")
 	if _broadcast_input != null and _broadcast_input.has_method("clear"):
 		_broadcast_input.call("clear")
+	_suppress_change_events = false
 
 func _on_check_pressed() -> void:
 	if _rounds.is_empty():
@@ -104,6 +112,7 @@ func _on_check_pressed() -> void:
 		return
 
 	var idx: int = clampi(_round_index, 0, _rounds.size() - 1)
+	_notify_controller("scan_started", {"round": idx})
 	var answer: Dictionary = {
 		"network": _network_input.call("get_ip") if _network_input != null else "",
 		"broadcast": _broadcast_input.call("get_ip") if _broadcast_input != null else "",
@@ -115,6 +124,22 @@ func _on_check_pressed() -> void:
 
 	var round_data: Dictionary = _rounds[idx] as Dictionary
 	var check: Dictionary = _check_round_answers(round_data, answer)
+	var round_ok: bool = bool(check.get("network_ok", false)) and bool(check.get("broadcast_ok", false)) and bool(check.get("hosts_ok", false))
+	var error_type: String = "SUCCESS"
+	if not bool(check.get("network_ok", false)):
+		error_type = "WRONG_NETWORK"
+	elif not bool(check.get("broadcast_ok", false)):
+		error_type = "WRONG_BROADCAST"
+	elif not bool(check.get("hosts_ok", false)):
+		error_type = "WRONG_HOSTS"
+	_notify_controller("round_checked", {
+		"round": idx,
+		"network_ok": bool(check.get("network_ok", false)),
+		"broadcast_ok": bool(check.get("broadcast_ok", false)),
+		"hosts_ok": bool(check.get("hosts_ok", false)),
+		"round_ok": round_ok,
+		"error_type": error_type
+	})
 	_apply_check_highlights(check)
 	explain_label.text = _build_round_explain(round_data)
 
@@ -261,3 +286,31 @@ func _to_binary_octet(value: int) -> String:
 	for shift in range(7, -1, -1):
 		bits.append(str((safe_value >> shift) & 1))
 	return "".join(bits)
+
+func _on_network_ip_entered(ip: String) -> void:
+	if _suppress_change_events or _awaiting_next:
+		return
+	_notify_controller("network_answer_changed", {
+		"round": _round_index,
+		"value": ip
+	})
+
+func _on_broadcast_ip_entered(ip: String) -> void:
+	if _suppress_change_events or _awaiting_next:
+		return
+	_notify_controller("broadcast_answer_changed", {
+		"round": _round_index,
+		"value": ip
+	})
+
+func _on_hosts_text_changed(new_text: String) -> void:
+	if _suppress_change_events or _awaiting_next:
+		return
+	_notify_controller("hosts_answer_changed", {
+		"round": _round_index,
+		"value": new_text.strip_edges()
+	})
+
+func _notify_controller(event_name: String, payload: Dictionary = {}) -> void:
+	if _controller != null and _controller.has_method("on_renderer_event"):
+		_controller.call("on_renderer_event", event_name, payload)

@@ -32,6 +32,9 @@ var slots: Array[String] = ["", "", ""]
 var trace: Array = []
 var stage_started_ms: int = 0
 var attempt_index: int = 0
+var trial_seq: int = 0
+var task_session: Dictionary = {}
+var format_id: String = ""
 var drag_count: int = 0
 var slot_change_count: int = 0
 var unique_used_set: Dictionary = {}
@@ -41,6 +44,35 @@ var _last_result: Dictionary = {}
 var _last_payload: Dictionary = {}
 var _renderer: Node = null
 var _renderer_rounds_complete: bool = false
+
+var selection_change_count: int = 0
+var drag_count_local: int = 0
+var drop_count_local: int = 0
+var confirm_attempt_count: int = 0
+var reset_count_local: int = 0
+var inspect_open_count: int = 0
+var hint_open_count: int = 0
+
+var changed_after_fail: bool = false
+var changed_after_hint: bool = false
+
+var time_to_first_select_ms: int = -1
+var time_to_first_confirm_ms: int = -1
+var time_from_last_edit_to_confirm_ms: int = -1
+
+var last_edit_ms: int = -1
+
+var defense_pick_count: int = 0
+var wrong_defense_try_count: int = 0
+
+var ip_input_change_count: int = 0
+var network_answer_change_count: int = 0
+var broadcast_answer_change_count: int = 0
+var hosts_answer_change_count: int = 0
+
+var _awaiting_edit_after_fail: bool = false
+var _awaiting_edit_after_hint: bool = false
+var _last_renderer_error_type: String = ""
 
 @onready var noir_overlay: Node = $NoirOverlay
 @onready var safe_area: MarginContainer = $SafeArea
@@ -151,9 +183,139 @@ func _apply_i18n() -> void:
 		else:
 			prompt_label.text = I18n.resolve_field(stage_c_data, "briefing", {"default": str(stage_c_data.get("briefing", ""))})
 
+func _elapsed_ms_now() -> int:
+	return maxi(0, Time.get_ticks_msec() - stage_started_ms)
+
+func _reset_trial_runtime() -> void:
+	drag_count = 0
+	slot_change_count = 0
+	unique_used_set.clear()
+	time_to_first_action_ms = -1
+	selection_change_count = 0
+	drag_count_local = 0
+	drop_count_local = 0
+	confirm_attempt_count = 0
+	reset_count_local = 0
+	inspect_open_count = 0
+	hint_open_count = 0
+	changed_after_fail = false
+	changed_after_hint = false
+	time_to_first_select_ms = -1
+	time_to_first_confirm_ms = -1
+	time_from_last_edit_to_confirm_ms = -1
+	last_edit_ms = -1
+	defense_pick_count = 0
+	wrong_defense_try_count = 0
+	ip_input_change_count = 0
+	network_answer_change_count = 0
+	broadcast_answer_change_count = 0
+	hosts_answer_change_count = 0
+	_awaiting_edit_after_fail = false
+	_awaiting_edit_after_hint = false
+	_last_renderer_error_type = ""
+
+func _begin_trial_session() -> void:
+	trial_seq += 1
+	format_id = str(stage_c_data.get("format", "")).to_upper()
+	stage_started_ms = Time.get_ticks_msec()
+	task_session = {
+		"events": [],
+		"trial_seq": trial_seq
+	}
+	_reset_trial_runtime()
+	_log_event("trial_started", {
+		"level_id": str(stage_c_data.get("id", "")),
+		"format_id": format_id,
+		"briefing": str(stage_c_data.get("briefing", "")),
+		"round_count": int((stage_c_data.get("rounds", []) as Array).size())
+	})
+
+func _mark_first_select() -> void:
+	if time_to_first_select_ms < 0:
+		time_to_first_select_ms = _elapsed_ms_now()
+	if time_to_first_action_ms < 0:
+		time_to_first_action_ms = time_to_first_select_ms
+
+func _mark_edit_action() -> void:
+	last_edit_ms = _elapsed_ms_now()
+	_mark_first_select()
+	if _awaiting_edit_after_fail:
+		changed_after_fail = true
+		_awaiting_edit_after_fail = false
+	if _awaiting_edit_after_hint:
+		changed_after_hint = true
+		_awaiting_edit_after_hint = false
+
+func _resolve_renderer_error_type(details: Array) -> String:
+	if format_id == "ATTACK_MATCH":
+		var has_defense_fail: bool = false
+		var has_attack_fail: bool = false
+		for detail_v in details:
+			if typeof(detail_v) != TYPE_DICTIONARY:
+				continue
+			var detail: Dictionary = detail_v as Dictionary
+			if not bool(detail.get("defense_ok", true)):
+				has_defense_fail = true
+			if not bool(detail.get("attack_ok", true)):
+				has_attack_fail = true
+		if has_defense_fail:
+			return "WRONG_DEFENSE"
+		if has_attack_fail:
+			return "THREAT_MISMATCH"
+		return "PARTIAL_FAIL"
+	if format_id == "SUBNET_CALC":
+		for detail_v in details:
+			if typeof(detail_v) != TYPE_DICTIONARY:
+				continue
+			var detail: Dictionary = detail_v as Dictionary
+			for sub_v in detail.get("sub", []) as Array:
+				if typeof(sub_v) != TYPE_DICTIONARY:
+					continue
+				var sub: Dictionary = sub_v as Dictionary
+				if bool(sub.get("ok", false)):
+					continue
+				var q_type: String = str(sub.get("type", "")).to_lower()
+				if q_type == "network" or q_type == "network_address":
+					return "WRONG_NETWORK"
+				if q_type == "broadcast":
+					return "WRONG_BROADCAST"
+				if q_type == "hosts" or q_type == "host_count":
+					return "WRONG_HOSTS"
+		return "SUBNET_CONCEPT_ERROR"
+	return "PARTIAL_FAIL"
+
+func _resolve_outcome_code_c(result: Dictionary) -> String:
+	if bool(result.get("is_correct", false)):
+		return "SUCCESS"
+	if format_id == "ATTACK_MATCH" or format_id == "SUBNET_CALC":
+		if _last_renderer_error_type != "":
+			return _last_renderer_error_type
+		return _resolve_renderer_error_type(result.get("details", []) as Array)
+	if format_id != "MULTI_CHOICE_SLOTS":
+		return "FORMAT_ERROR"
+	return "PARTIAL_FAIL"
+
+func _resolve_mastery_block_reason_c(outcome_code: String) -> String:
+	if outcome_code == "SUCCESS":
+		return "NONE"
+	if hint_open_count > 0 and changed_after_hint:
+		return "HINT_DEPENDENCY"
+	if confirm_attempt_count >= 3:
+		return "MULTI_CONFIRM_GUESSING"
+	if reset_count_local >= 3:
+		return "RESET_OVERUSE"
+	if format_id == "SUBNET_CALC" and outcome_code != "SUCCESS":
+		return "SUBNET_RULE_CONFUSION"
+	if format_id == "ATTACK_MATCH" and outcome_code != "SUCCESS":
+		return "THREAT_MODEL_CONFUSION"
+	if selection_change_count >= 8:
+		return "FORMAT_CONFUSION"
+	return "NONE"
+
 func _load_current_level(index: int) -> void:
 	current_level_index = clamp(index, 0, max(0, levels.size() - 1))
 	stage_c_data = (levels[current_level_index] as Dictionary).duplicate(true)
+	format_id = str(stage_c_data.get("format", "")).to_upper()
 	if _is_slots_level():
 		_setup_slots_level()
 		_begin_attempt()
@@ -223,11 +385,7 @@ func _clear_renderer() -> void:
 
 func _begin_renderer_attempt() -> void:
 	trace.clear()
-	drag_count = 0
-	slot_change_count = 0
-	unique_used_set.clear()
-	time_to_first_action_ms = -1
-	stage_started_ms = Time.get_ticks_msec()
+	_begin_trial_session()
 	input_locked = false
 	_last_result.clear()
 	_last_payload.clear()
@@ -248,8 +406,18 @@ func _analyze_renderer() -> void:
 		return
 	if not _renderer_rounds_complete:
 		return
+	confirm_attempt_count += 1
+	if time_to_first_confirm_ms < 0:
+		time_to_first_confirm_ms = _elapsed_ms_now()
+	if last_edit_ms >= 0:
+		time_from_last_edit_to_confirm_ms = maxi(0, _elapsed_ms_now() - last_edit_ms)
+	_log_event("confirm_pressed", {
+		"attempt": confirm_attempt_count,
+		"format_id": format_id
+	})
 	var answers: Variant = _renderer.call("get_answers")
 	var result: Dictionary = _score_renderer(answers)
+	_last_renderer_error_type = _resolve_renderer_error_type(result.get("details", []) as Array)
 	_register_renderer_trial(answers, result)
 	input_locked = true
 	btn_analyze.disabled = true
@@ -290,23 +458,64 @@ func _score_renderer(answers: Variant) -> Dictionary:
 			}
 
 func _register_renderer_trial(answers: Variant, result: Dictionary) -> void:
-	var elapsed_ms: int = Time.get_ticks_msec() - stage_started_ms
+	var elapsed_ms: int = _elapsed_ms_now()
 	var level_id: String = str(stage_c_data.get("id", "CASE01_C"))
+	var details: Array = (result.get("details", []) as Array).duplicate(true)
+	var outcome_code: String = _resolve_outcome_code_c(result)
+	var mastery_block_reason: String = _resolve_mastery_block_reason_c(outcome_code)
+	_log_event("confirm_result", {
+		"is_correct": bool(result.get("is_correct", false)),
+		"format_id": format_id,
+		"rounds_complete": _renderer_rounds_complete,
+		"score": int(result.get("points", 0)),
+		"error_type": outcome_code
+	})
 	var payload: Dictionary = TrialV2.build(CASE_ID, STAGE_ID, level_id, "FORMAT_ROUTER", str(attempt_index))
 	payload.merge({
 		"case_run_id": _case_run_id(),
 		"level_id": level_id,
 		"format": str(stage_c_data.get("format", "")),
+		"format_id": format_id,
 		"snapshot": answers,
+		"trial_seq": trial_seq,
+		"task_session": task_session.duplicate(true),
 		"elapsed_ms": elapsed_ms,
+		"time_to_first_action_ms": max(-1, time_to_first_action_ms),
+		"time_to_first_select_ms": time_to_first_select_ms,
+		"time_to_first_confirm_ms": time_to_first_confirm_ms,
+		"time_from_last_edit_to_confirm_ms": time_from_last_edit_to_confirm_ms,
+		"selection_change_count": selection_change_count,
+		"drag_count_local": drag_count_local,
+		"drop_count_local": drop_count_local,
+		"confirm_attempt_count": confirm_attempt_count,
+		"reset_count": reset_count_local,
+		"inspect_open_count": inspect_open_count,
+		"hint_open_count": hint_open_count,
+		"changed_after_fail": changed_after_fail,
+		"changed_after_hint": changed_after_hint,
 		"points": int(result.get("points", 0)),
 		"max_points": int(result.get("max_points", 2)),
 		"is_correct": bool(result.get("is_correct", false)),
 		"is_fit": bool(result.get("is_fit", false)),
 		"stability_delta": int(result.get("stability_delta", 0)),
 		"verdict_code": str(result.get("verdict_code", "FAIL")),
-		"details": (result.get("details", []) as Array).duplicate(true)
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
+		"details": details,
+		"trace": trace.duplicate(true)
 	}, true)
+	if format_id == "ATTACK_MATCH":
+		payload.merge({
+			"defense_pick_count": defense_pick_count,
+			"wrong_defense_try_count": wrong_defense_try_count
+		}, true)
+	elif format_id == "SUBNET_CALC":
+		payload.merge({
+			"ip_input_change_count": ip_input_change_count,
+			"network_answer_change_count": network_answer_change_count,
+			"broadcast_answer_change_count": broadcast_answer_change_count,
+			"hosts_answer_change_count": hosts_answer_change_count
+		}, true)
 	GlobalMetrics.register_trial(payload)
 	_last_result = result.duplicate(true)
 	_last_payload = payload.duplicate(true)
@@ -368,11 +577,7 @@ func _setup_slots() -> void:
 
 func _begin_attempt() -> void:
 	trace.clear()
-	drag_count = 0
-	slot_change_count = 0
-	unique_used_set.clear()
-	time_to_first_action_ms = -1
-	stage_started_ms = Time.get_ticks_msec()
+	_begin_trial_session()
 	input_locked = false
 	_last_result.clear()
 	_last_payload.clear()
@@ -468,9 +673,22 @@ func handle_drop_to_slot(slot_index: int, data: Dictionary) -> Dictionary:
 	slot_item_by_index[slot_index] = source_node
 
 	_mark_first_action()
+	_mark_edit_action()
 	slot_change_count += 1
+	selection_change_count += 1
+	drop_count_local += 1
 	unique_used_set[module_id] = true
 	_log_event("SLOT_CHANGED", {
+		"slot": slot_index,
+		"module_id": module_id,
+		"prev_module_id": prev_module_id
+	})
+	_log_event("slot_changed", {
+		"slot": slot_index,
+		"module_id": module_id,
+		"prev_module_id": prev_module_id
+	})
+	_log_event("item_dropped", {
 		"slot": slot_index,
 		"module_id": module_id,
 		"prev_module_id": prev_module_id
@@ -503,9 +721,16 @@ func handle_clear_slot(slot_index: int) -> Dictionary:
 
 	_clear_slot_state(slot_index)
 	_mark_first_action()
+	_mark_edit_action()
 	slot_change_count += 1
+	selection_change_count += 1
 	_log_event("SLOT_CLEARED", {
 		"slot": slot_index,
+		"prev_module_id": prev_module_id
+	})
+	_log_event("slot_changed", {
+		"slot": slot_index,
+		"module_id": "",
 		"prev_module_id": prev_module_id
 	})
 	_update_status_line("")
@@ -559,7 +784,13 @@ func _on_item_drag_started(module_id: String, source: String, from_slot: int) ->
 		return
 	_mark_first_action()
 	drag_count += 1
+	drag_count_local += 1
 	_log_event("DRAG_START", {
+		"module_id": module_id,
+		"from": source,
+		"from_slot": from_slot
+	})
+	_log_event("item_drag_started", {
 		"module_id": module_id,
 		"from": source,
 		"from_slot": from_slot
@@ -571,6 +802,16 @@ func _on_analyze_pressed() -> void:
 	if not _is_slots_level():
 		_analyze_renderer()
 		return
+
+	confirm_attempt_count += 1
+	if time_to_first_confirm_ms < 0:
+		time_to_first_confirm_ms = _elapsed_ms_now()
+	if last_edit_ms >= 0:
+		time_from_last_edit_to_confirm_ms = maxi(0, _elapsed_ms_now() - last_edit_ms)
+	_log_event("confirm_pressed", {
+		"attempt": confirm_attempt_count,
+		"format_id": format_id
+	})
 
 	var selected_ids: Array[String] = _collect_selected_ids()
 	var risk: Dictionary = _calculate_risk(slots)
@@ -586,6 +827,14 @@ func _on_analyze_pressed() -> void:
 	})
 
 	var result: Dictionary = ResusScoring.calculate_stage_c_result(stage_c_data, scoring_snapshot)
+	_last_renderer_error_type = _resolve_outcome_code_c(result)
+	_log_event("confirm_result", {
+		"is_correct": bool(result.get("is_correct", false)),
+		"format_id": format_id,
+		"rounds_complete": true,
+		"score": int(result.get("points", 0)),
+		"error_type": _last_renderer_error_type
+	})
 	if packets_layer != null and packets_layer.has_method("configure_from_verdict"):
 		packets_layer.call("configure_from_verdict", str(result.get("verdict_code", "FAIL")), stage_c_data.get("visual_sim", {}), risk)
 	_apply_attacker_visual(str(result.get("verdict_code", "FAIL")), risk)
@@ -613,9 +862,11 @@ func _on_analyze_pressed() -> void:
 		_play_sfx("error")
 
 func _on_reset_pressed() -> void:
+	reset_count_local += 1
 	_log_event("RESET_PRESSED", {
 		"prev_filled_slots": _filled_slots_count()
 	})
+	_log_event("reset_pressed", {"count": reset_count_local})
 	_apply_retry_floor()
 	if _is_slots_level():
 		_begin_attempt()
@@ -636,11 +887,58 @@ func _on_next_level_pressed() -> void:
 
 func _on_renderer_complete() -> void:
 	_renderer_rounds_complete = true
+	_log_event("scan_result", {"rounds_complete": true})
 	if input_locked:
 		return
 	btn_analyze.disabled = false
 	status_label.text = _tr("resus.status.quiz_done", "Quiz complete. Confirm to submit.")
 	status_label.modulate = COLOR_OK
+
+func on_renderer_event(event_name: String, payload: Dictionary = {}) -> void:
+	match event_name:
+		"attack_selected":
+			selection_change_count += 1
+			_mark_edit_action()
+			_log_event("attack_selected", payload)
+		"defense_selected":
+			defense_pick_count += 1
+			selection_change_count += 1
+			_mark_edit_action()
+			_log_event("defense_selected", payload)
+		"network_answer_changed":
+			ip_input_change_count += 1
+			network_answer_change_count += 1
+			selection_change_count += 1
+			_mark_edit_action()
+			_log_event("network_answer_changed", payload)
+		"broadcast_answer_changed":
+			ip_input_change_count += 1
+			broadcast_answer_change_count += 1
+			selection_change_count += 1
+			_mark_edit_action()
+			_log_event("broadcast_answer_changed", payload)
+		"hosts_answer_changed":
+			hosts_answer_change_count += 1
+			selection_change_count += 1
+			_mark_edit_action()
+			_log_event("hosts_answer_changed", payload)
+		"hint_opened":
+			hint_open_count += 1
+			_awaiting_edit_after_hint = true
+			_log_event("hint_opened", payload)
+		"inspect_opened":
+			inspect_open_count += 1
+			_log_event("inspect_opened", payload)
+		"round_checked":
+			var round_ok: bool = bool(payload.get("round_ok", false))
+			if format_id == "ATTACK_MATCH" and not bool(payload.get("defense_ok", true)):
+				wrong_defense_try_count += 1
+			_last_renderer_error_type = str(payload.get("error_type", ""))
+			if not round_ok:
+				_awaiting_edit_after_fail = true
+			_log_event("scan_result", payload)
+		_:
+			_log_event(event_name, payload)
 
 func _has_next_level() -> bool:
 	return current_level_index < levels.size() - 1
@@ -746,10 +1044,12 @@ func _apply_result_highlight(result: Dictionary) -> void:
 			(missing_node_v as Node).call("set_feedback_state", "missing")
 
 func _register_trial(result: Dictionary, risk: Dictionary) -> void:
-	var elapsed_ms: int = Time.get_ticks_msec() - stage_started_ms
+	var elapsed_ms: int = _elapsed_ms_now()
 	var selected_ids: Array[String] = _collect_selected_ids()
 	var strategy_flags: Array[String] = _to_string_array(result.get("strategy_flags", []))
 	var level_id: String = str(stage_c_data.get("id", "CASE01_C_01"))
+	var outcome_code: String = _resolve_outcome_code_c(result)
+	var mastery_block_reason: String = _resolve_mastery_block_reason_c(outcome_code)
 	var payload: Dictionary = TrialV2.build(
 		CASE_ID,
 		STAGE_ID,
@@ -768,23 +1068,40 @@ func _register_trial(result: Dictionary, risk: Dictionary) -> void:
 		"case_run_id": _case_run_id(),
 		"level_id": level_id,
 		"format": str(stage_c_data.get("format", "MULTI_CHOICE_SLOTS")),
+		"format_id": format_id,
 		"snapshot": snapshot,
 		"risk": risk.duplicate(true),
+		"trial_seq": trial_seq,
+		"task_session": task_session.duplicate(true),
 		"points": int(result.get("points", 0)),
 		"max_points": int(result.get("max_points", 2)),
 		"is_correct": bool(result.get("is_correct", false)),
 		"is_fit": bool(result.get("is_fit", false)),
 		"stability_delta": int(result.get("stability_delta", 0)),
 		"verdict_code": str(result.get("verdict_code", "FAIL")),
+		"outcome_code": outcome_code,
+		"mastery_block_reason": mastery_block_reason,
 		"selected_count": int(result.get("selected_count", selected_ids.size())),
 		"correct_selected": int(result.get("correct_selected", 0)),
 		"wrong_selected": int(result.get("wrong_selected", 0)),
 		"missing_required": _to_string_array(result.get("missing_required", [])),
 		"drag_count": drag_count,
 		"slot_change_count": slot_change_count,
+		"selection_change_count": selection_change_count,
+		"drag_count_local": drag_count_local,
+		"drop_count_local": drop_count_local,
+		"confirm_attempt_count": confirm_attempt_count,
+		"reset_count": reset_count_local,
+		"inspect_open_count": inspect_open_count,
+		"hint_open_count": hint_open_count,
+		"changed_after_fail": changed_after_fail,
+		"changed_after_hint": changed_after_hint,
 		"unique_used_count": unique_used_set.size(),
 		"strategy_flags": strategy_flags.duplicate(),
 		"time_to_first_action_ms": max(-1, time_to_first_action_ms),
+		"time_to_first_select_ms": time_to_first_select_ms,
+		"time_to_first_confirm_ms": time_to_first_confirm_ms,
+		"time_from_last_edit_to_confirm_ms": time_from_last_edit_to_confirm_ms,
 		"elapsed_ms": elapsed_ms,
 		"trace": trace.duplicate(true)
 	}, true)
@@ -985,14 +1302,23 @@ func _get_slot_node(slot_index: int) -> Node:
 
 func _mark_first_action() -> void:
 	if time_to_first_action_ms < 0:
-		time_to_first_action_ms = Time.get_ticks_msec() - stage_started_ms
+		time_to_first_action_ms = _elapsed_ms_now()
 
 func _log_event(event_name: String, data: Dictionary = {}) -> void:
+	var elapsed: int = _elapsed_ms_now()
+	var safe_payload: Dictionary = data.duplicate(true)
 	trace.append({
-		"t_ms": Time.get_ticks_msec() - stage_started_ms,
+		"t_ms": elapsed,
 		"event": event_name,
-		"data": data.duplicate(true)
+		"data": safe_payload
 	})
+	var events: Array = task_session.get("events", []) as Array
+	events.append({
+		"name": event_name,
+		"t_ms": elapsed,
+		"payload": safe_payload
+	})
+	task_session["events"] = events
 
 func _to_string_array(values: Variant) -> Array[String]:
 	var out: Array[String] = []

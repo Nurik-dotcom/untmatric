@@ -156,8 +156,29 @@ func _apply_ui() -> void:
 		_row_by_task[task_id] = task_label
 
 func _on_task_selected(index: int, task_id: String, config_ids: Array[String]) -> void:
+	var previous_value: String = str(_selection.get(task_id, ""))
 	if index < 0 or index >= config_ids.size():
 		_selection[task_id] = ""
+		_notify_controller("step_selected", {
+			"task_id": task_id,
+			"config_id": "",
+			"previous": previous_value
+		})
 		return
-	_selection[task_id] = config_ids[index]
+	var next_value: String = config_ids[index]
+	_selection[task_id] = next_value
+	_notify_controller("step_selected", {
+		"task_id": task_id,
+		"config_id": next_value,
+		"previous": previous_value
+	})
+	if previous_value != "" and previous_value != next_value:
+		_notify_controller("step_reordered", {
+			"task_id": task_id,
+			"from": previous_value,
+			"to": next_value
+		})
 
+func _notify_controller(event_name: String, payload: Dictionary = {}) -> void:
+	if _controller != null and _controller.has_method("on_renderer_event"):
+		_controller.call("on_renderer_event", event_name, payload)

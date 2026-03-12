@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/ui/IpInput.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/MobileInputFix.gd" id="2"]
 
 [node name="IpInput" type="HBoxContainer"]
 script = ExtResource("1")
@@ -9,6 +10,8 @@ theme_override_constants/separation = 4
 
 [node name="Octet1" type="LineEdit" parent="."]
 custom_minimum_size = Vector2(64, 0)
+script = ExtResource("2")
+prompt_title = "Введите октет (0-255):"
 size_flags_horizontal = 1
 
 [node name="Dot1" type="Label" parent="."]
@@ -16,6 +19,8 @@ text = "."
 
 [node name="Octet2" type="LineEdit" parent="."]
 custom_minimum_size = Vector2(64, 0)
+script = ExtResource("2")
+prompt_title = "Введите октет (0-255):"
 size_flags_horizontal = 1
 
 [node name="Dot2" type="Label" parent="."]
@@ -23,6 +28,8 @@ text = "."
 
 [node name="Octet3" type="LineEdit" parent="."]
 custom_minimum_size = Vector2(64, 0)
+script = ExtResource("2")
+prompt_title = "Введите октет (0-255):"
 size_flags_horizontal = 1
 
 [node name="Dot3" type="Label" parent="."]
@@ -30,4 +37,6 @@ text = "."
 
 [node name="Octet4" type="LineEdit" parent="."]
 custom_minimum_size = Vector2(64, 0)
+script = ExtResource("2")
+prompt_title = "Введите октет (0-255):"
 size_flags_horizontal = 1
