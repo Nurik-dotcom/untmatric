@@ -328,11 +328,11 @@ text = "ВВЕДИТЕ ИТОГОВУЮ СУММУ"
 
 [node name="SumInput" type="LineEdit" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox/InputCard/InputMargin/InputVBox"]
 custom_minimum_size = Vector2(0, 44)
-script = ExtResource("4_mobile_fix")
-prompt_title = "Сумма маршрута:"
 layout_mode = 2
 placeholder_text = "0"
 max_length = 6
+script = ExtResource("4_mobile_fix")
+prompt_title = "Сумма маршрута:"
 
 [node name="ReviewCard" type="PanelContainer" parent="SafeArea/MainVBox/ContentSplit/InfoPanel/InfoMargin/InfoVBox"]
 visible = false
