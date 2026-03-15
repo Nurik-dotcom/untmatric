@@ -1,5 +1,7 @@
 extends Control
 
+const TrialV2 = preload("res://scripts/TrialV2.gd")
+
 enum Mode { CLASSIC, STAGES_RC }
 
 const MATRIX_LIMIT := 6
@@ -63,6 +65,7 @@ const DEFAULT_CHECK_COOLDOWN := 0.35
 @onready var toast_label: Label = $UI/ToastLayer/Toast/ToastLabel
 @onready var details_sheet: PanelContainer = $UI/DetailsSheet
 @onready var details_title: Label = $UI/DetailsSheet/DetailsContent/DetailsHeader/DetailsTitle
+@onready var details_scroll: ScrollContainer = $UI/DetailsSheet/DetailsContent/DetailsScroll
 @onready var details_text: RichTextLabel = $UI/DetailsSheet/DetailsContent/DetailsScroll/DetailsText
 @onready var noir_overlay = $UI/NoirOverlay
 
@@ -113,6 +116,11 @@ var _details_sheet_height: float = DETAILS_SHEET_H
 var _hint_state_key: String = ""
 var _hint_state_default: String = ""
 var _hint_state_params: Dictionary = {}
+var _body_scroll_installed: bool = false
+var _body_scroll: ScrollContainer = null
+var _current_cell_px: float = 0.0
+var _quest_started: bool = false
+var _quest_finished: bool = false
 
 func _ready() -> void:
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
@@ -137,10 +145,13 @@ func _ready() -> void:
 	_set_details_open(false, true)
 	_start_run()
 	_on_viewport_size_changed()
+	_install_body_scroll()
+	_on_viewport_size_changed()
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
 
 func _exit_tree() -> void:
+	_finish_quest_once(false)
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 	if I18n.language_changed.is_connected(_on_language_changed):
@@ -190,10 +201,24 @@ func _prepare_layout() -> void:
 	shield_freq.modulate = Color(1, 1, 1, 0.25)
 	mode_chip_label.text = _mode_name()
 
+func _start_quest_tracking() -> void:
+	if _quest_started:
+		return
+	GlobalMetrics.start_quest("Decryptor_C")
+	_quest_started = true
+	_quest_finished = false
+
+func _finish_quest_once(success: bool) -> void:
+	if not _quest_started or _quest_finished:
+		return
+	GlobalMetrics.finish_quest("Decryptor_C", 100 if success else 0, success)
+	_quest_finished = true
+
 func _start_run() -> void:
 	_is_transition = false
 	_input_locked = false
 	_changed.clear()
+	_start_quest_tracking()
 	GlobalMetrics.stability = 100.0
 	GlobalMetrics.emit_signal("stability_changed", GlobalMetrics.stability, 0.0)
 
@@ -363,6 +388,10 @@ func _apply_stage(index: int) -> void:
 		solution_rows_num = row_targets_num
 
 	_rebuild_matrix_layout()
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var is_landscape: bool = viewport_size.x >= viewport_size.y
+	var phone_portrait: bool = (not is_landscape) and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
+	_apply_matrix_cell_size(_compute_matrix_cell_size(viewport_size, phone_portrait))
 	_reset_grid_state(true)
 	_update_headers()
 	_update_status()
@@ -511,6 +540,53 @@ func _cell_size_for_stage() -> float:
 
 func _label_size_for_stage() -> float:
 	return 64.0 if stage_size >= 6 else 72.0
+
+func _compute_matrix_cell_size(viewport_size: Vector2, phone_portrait: bool) -> float:
+	var matrix_area_height: float = viewport_size.y - 190.0
+	var matrix_area_width: float = viewport_size.x * 0.55 - 40.0
+	if phone_portrait:
+		matrix_area_width = viewport_size.x - 32.0
+		matrix_area_height = viewport_size.y * 0.5
+	var grid_size: int = maxi(stage_size, 2)
+	var cell_size: float = minf(
+		matrix_area_width / float(grid_size + 1),
+		matrix_area_height / float(grid_size + 1)
+	)
+	return clampf(cell_size, 28.0, 56.0)
+
+func _apply_matrix_cell_size(cell_px: float) -> void:
+	_current_cell_px = cell_px
+	if matrix_layout == null:
+		return
+	var button_font_size: int = int(clampf(cell_px * 0.4, 10.0, 20.0))
+	var constraint_font: int = int(clampf(cell_px * 0.35, 9.0, 16.0))
+	var row_label_width: float = clampf(cell_px * 1.1, 42.0, 72.0)
+	var col_label_height: float = clampf(cell_px * 0.6, 18.0, cell_px)
+	matrix_layout.add_theme_constant_override("h_separation", 4 if cell_px <= 32.0 else (6 if cell_px <= 44.0 else 8))
+	matrix_layout.add_theme_constant_override("v_separation", 4 if cell_px <= 32.0 else (6 if cell_px <= 44.0 else 8))
+
+	if matrix_layout.get_child_count() > 0 and matrix_layout.get_child(0) is Label:
+		var corner_label: Label = matrix_layout.get_child(0) as Label
+		corner_label.custom_minimum_size = Vector2(row_label_width, col_label_height)
+
+	for row_node_variant in row_target_nodes:
+		var row_label: Label = row_node_variant as Label
+		if row_label != null:
+			row_label.custom_minimum_size = Vector2(row_label_width, cell_px)
+			row_label.add_theme_font_size_override("font_size", constraint_font)
+	for col_node_variant in col_target_nodes:
+		var col_label: Label = col_node_variant as Label
+		if col_label != null:
+			col_label.custom_minimum_size = Vector2(cell_px, col_label_height)
+			col_label.add_theme_font_size_override("font_size", constraint_font)
+	for row_variant in cell_buttons:
+		var row: Array = row_variant as Array
+		for btn_variant in row:
+			var btn: Button = btn_variant as Button
+			if btn != null:
+				btn.custom_minimum_size = Vector2(cell_px, cell_px)
+				btn.add_theme_font_size_override("font_size", button_font_size)
+
 func _rebuild_matrix_layout() -> void:
 	row_target_nodes.clear()
 	col_target_nodes.clear()
@@ -862,6 +938,7 @@ func _on_check_pressed() -> void:
 		_set_hint_key("decryptor.c.hint.check_cooldown", "CHECK COOLDOWN: {seconds}s", {"seconds": "%.2f" % cooldown})
 		_show_toast_key("decryptor.c.toast.check_cooldown", "SHIELD: COOLDOWN", COLOR_WARN)
 		_log(_tr("decryptor.c.log.check_cooldown", "Check blocked by cooldown {seconds}s.", {"seconds": "%.2f" % cooldown}), COLOR_WARN)
+		GlobalMetrics.add_mistake("error=CHECK_COOLDOWN, level=%s, stage=%d, cooldown=%.2f" % [_current_level_id(), stage_index + 1, cooldown])
 		_register_result(false, "CHECK_COOLDOWN", 0.0, 0, [], [])
 		_update_status()
 		return
@@ -911,6 +988,13 @@ func _on_check_pressed() -> void:
 	})
 	_log(_mismatch_summary(wrong_rows, wrong_cols), COLOR_BAD)
 	_show_toast_key("decryptor.c.toast.incorrect", "INCORRECT", COLOR_BAD)
+	GlobalMetrics.add_mistake("error=INCORRECT, level=%s, stage=%d, wrong_rows=%d, wrong_cols=%d, delta_sum=%d" % [
+		_current_level_id(),
+		stage_index + 1,
+		wrong_rows.size(),
+		wrong_cols.size(),
+		delta_sum
+	])
 	_log_event("check_result", {
 		"success": false,
 		"error_code": "INCORRECT",
@@ -954,6 +1038,7 @@ func _complete_run() -> void:
 	_show_toast_key("decryptor.c.toast.level_complete", "LEVEL COMPLETE", COLOR_OK)
 	_set_hint_key("decryptor.c.hint.all_stages_complete", "All stages complete.")
 	_log(_tr("decryptor.c.log.run_complete", "Stage ladder complete."), COLOR_OK)
+	_finish_quest_once(true)
 	await get_tree().create_timer(1.1).timeout
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
@@ -1106,14 +1191,7 @@ func _register_result(success: bool, error_type: String, penalty: float, delta_s
 	var target_pattern: Array = _build_target_pattern()
 	var input_pattern: Array = _build_input_pattern()
 	var hash_key: String = str(hash("%s|%s|%d|%s|%s" % [run_id, mode_key, stage_size, str(target_pattern), display_base]))
-	var trial_v2: Node = get_node_or_null("/root/TrialV2")
-	if trial_v2 == null:
-		return
-	var payload_variant: Variant = trial_v2.call("build", "decryptor", "C", task_id, "GRID_CHECK", hash_key)
-	if typeof(payload_variant) != TYPE_DICTIONARY:
-		return
-
-	var payload: Dictionary = payload_variant as Dictionary
+	var payload: Dictionary = TrialV2.build("decryptor", "C", task_id, "GRID_CHECK", hash_key)
 	var elapsed_ms: int = _elapsed_task_ms()
 	var outcome_code: String = _derive_outcome_code(success, error_type)
 	var mastery_block_reason: String = _derive_mastery_block_reason(outcome_code)
@@ -1137,6 +1215,7 @@ func _register_result(success: bool, error_type: String, penalty: float, delta_s
 	payload["penalty_reported"] = penalty
 	payload["quest_id"] = "decryptor"
 	payload["stage_id"] = "C"
+	payload["match_key"] = "MAT_C_%s_S%d" % [run_id, stage_index + 1]
 	payload["task_id"] = task_id
 	payload["variant_hash"] = hash_key
 	payload["mode"] = mode_key
@@ -1232,6 +1311,7 @@ func _on_viewport_size_changed() -> void:
 	var phone_landscape: bool = is_landscape and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
 	var phone_portrait: bool = (not is_landscape) and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
 	var compact: bool = phone_landscape or phone_portrait
+	var very_compact: bool = is_landscape and viewport_size.y <= 400.0
 
 	_apply_safe_area_padding(compact)
 	main_root.add_theme_constant_override("separation", 8 if compact else 12)
@@ -1239,21 +1319,56 @@ func _on_viewport_size_changed() -> void:
 	content_split.add_theme_constant_override("separation", 8 if compact else 12)
 	bottom_actions.add_theme_constant_override("separation", 8 if compact else 10)
 	_set_content_mobile_mode(phone_portrait)
+	_apply_matrix_cell_size(_compute_matrix_cell_size(viewport_size, phone_portrait))
 
-	btn_back.custom_minimum_size = Vector2(56.0 if compact else 72.0, 56.0 if compact else 72.0)
-	btn_details.custom_minimum_size = Vector2(64.0 if compact else 72.0, 44.0 if compact else 48.0)
-	btn_hint.custom_minimum_size = Vector2(96.0 if compact else 120.0, 52.0 if compact else 56.0)
-	btn_check.custom_minimum_size = Vector2(132.0 if compact else 180.0, 52.0 if compact else 56.0)
-	btn_reset.custom_minimum_size = Vector2(96.0 if compact else 120.0, 52.0 if compact else 56.0)
+	btn_back.custom_minimum_size = Vector2(48.0 if very_compact else (56.0 if compact else 72.0), 40.0 if very_compact else (56.0 if compact else 72.0))
+	btn_details.custom_minimum_size = Vector2(56.0 if very_compact else (64.0 if compact else 72.0), 40.0 if very_compact else (44.0 if compact else 48.0))
+	if very_compact:
+		btn_hint.custom_minimum_size = Vector2(72.0, 40.0)
+		btn_check.custom_minimum_size = Vector2(100.0, 40.0)
+		btn_reset.custom_minimum_size = Vector2(72.0, 40.0)
+	elif compact:
+		btn_hint.custom_minimum_size = Vector2(96.0, 52.0)
+		btn_check.custom_minimum_size = Vector2(132.0, 52.0)
+		btn_reset.custom_minimum_size = Vector2(96.0, 52.0)
+	else:
+		btn_hint.custom_minimum_size = Vector2(120.0, 56.0)
+		btn_check.custom_minimum_size = Vector2(180.0, 56.0)
+		btn_reset.custom_minimum_size = Vector2(120.0, 56.0)
 	progress_stability.custom_minimum_size.x = 140.0 if compact else 170.0
 
-	_details_sheet_height = clampf(viewport_size.y * (0.62 if compact else 0.55), 220.0, DETAILS_SHEET_H)
+	_details_sheet_height = clampf(viewport_size.y * (0.5 if very_compact else (0.62 if compact else 0.55)), 150.0, DETAILS_SHEET_H)
+	details_scroll.custom_minimum_size.y = clampf(_details_sheet_height - 90.0, 80.0, 260.0)
 	if _details_open:
 		_set_details_open(true, true)
 
 	var toast_half_width: float = clampf(viewport_size.x * 0.34, 130.0, 240.0)
 	toast_panel.offset_left = -toast_half_width
 	toast_panel.offset_right = toast_half_width
+
+func _install_body_scroll() -> void:
+	if _body_scroll_installed and _body_scroll != null and is_instance_valid(_body_scroll):
+		return
+	_body_scroll = ScrollContainer.new()
+	_body_scroll.name = "BodyScroll"
+	_body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_body_scroll.follow_focus = true
+
+	var content_index: int = main_root.get_children().find(content_split)
+	if content_index < 0:
+		content_index = main_root.get_child_count() - 1
+	main_root.add_child(_body_scroll)
+	main_root.move_child(_body_scroll, content_index)
+
+	if content_split.get_parent() != _body_scroll:
+		content_split.reparent(_body_scroll)
+	if _content_mobile_layout != null and is_instance_valid(_content_mobile_layout) and _content_mobile_layout.get_parent() != _body_scroll:
+		_content_mobile_layout.reparent(_body_scroll)
+
+	_body_scroll_installed = true
 
 func _set_content_mobile_mode(use_mobile: bool) -> void:
 	var mobile_layout: VBoxContainer = _ensure_content_mobile_layout()
@@ -1283,8 +1398,13 @@ func _ensure_content_mobile_layout() -> VBoxContainer:
 	_content_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_mobile_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content_mobile_layout.add_theme_constant_override("separation", 8)
-	main_root.add_child(_content_mobile_layout)
-	main_root.move_child(_content_mobile_layout, main_root.get_children().find(content_split) + 1)
+	var parent_node: Node = _body_scroll if _body_scroll_installed and _body_scroll != null and is_instance_valid(_body_scroll) else main_root
+	parent_node.add_child(_content_mobile_layout)
+	var content_index: int = parent_node.get_children().find(content_split)
+	if content_index < 0:
+		content_index = parent_node.get_child_count() - 1
+	var target_index: int = mini(content_index + 1, parent_node.get_child_count() - 1)
+	parent_node.move_child(_content_mobile_layout, target_index)
 	return _content_mobile_layout
 
 func _apply_safe_area_padding(compact: bool) -> void:
@@ -1314,4 +1434,5 @@ func _mode_name() -> String:
 	return _tr("decryptor.c.mode.classic", "MATRIX CLASSIC") if mode == Mode.CLASSIC else _tr("decryptor.c.mode.stages_rc", "MATRIX STAGES RC")
 
 func _on_menu_pressed() -> void:
+	_finish_quest_once(false)
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")

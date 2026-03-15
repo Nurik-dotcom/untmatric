@@ -30,6 +30,9 @@ var _renderer: Node = null
 var _last_result: Dictionary = {}
 var _last_payload: Dictionary = {}
 var _renderer_rounds_complete: bool = false
+var _content_scroll_installed: bool = false
+var _content_scroll: ScrollContainer = null
+var _content_scroll_root: VBoxContainer = null
 
 var step_select_count: int = 0
 var step_reorder_count: int = 0
@@ -63,6 +66,7 @@ var _awaiting_edit_after_fail: bool = false
 @onready var stability_bar: ProgressBar = $SafeArea/MainVBox/Header/StabilityBar
 @onready var btn_back: Button = $SafeArea/MainVBox/Header/BtnBack
 @onready var content_area: Control = $SafeArea/MainVBox/ContentArea
+@onready var bottom_bar: VBoxContainer = $SafeArea/MainVBox/BottomBar
 @onready var status_label: Label = $SafeArea/MainVBox/BottomBar/StatusLabel
 @onready var btn_reset: Button = $SafeArea/MainVBox/BottomBar/Buttons/BtnReset
 @onready var btn_confirm: Button = $SafeArea/MainVBox/BottomBar/Buttons/BtnConfirm
@@ -86,6 +90,7 @@ func _ready() -> void:
 		I18n.language_changed.connect(_on_language_changed)
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	_install_content_scroll()
 
 	levels = ResusData.load_stage_levels(LEVELS_PATH, STAGE_ID)
 	if levels.is_empty():
@@ -238,13 +243,38 @@ func _swap_renderer() -> void:
 			return
 
 	_renderer = scene.instantiate()
-	content_area.add_child(_renderer)
+	var target_parent: Node = _content_scroll_root if _content_scroll_root != null else content_area
+	target_parent.add_child(_renderer)
+	if _renderer is Control:
+		var renderer_control: Control = _renderer as Control
+		renderer_control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		renderer_control.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if _renderer.has_method("setup"):
 		_renderer.call("setup", level_data, self)
 	if _renderer.has_signal("all_rounds_complete"):
 		_renderer.connect("all_rounds_complete", Callable(self, "_on_renderer_complete"))
 	else:
 		_renderer_rounds_complete = true
+
+func _install_content_scroll() -> void:
+	if _content_scroll_installed:
+		return
+	if content_area == null:
+		return
+	_content_scroll = ScrollContainer.new()
+	_content_scroll.name = "ContentScroll"
+	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_content_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_content_scroll.follow_focus = true
+	_content_scroll_root = VBoxContainer.new()
+	_content_scroll_root.name = "ContentRoot"
+	_content_scroll_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content_scroll_root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_content_scroll.add_child(_content_scroll_root)
+	content_area.add_child(_content_scroll)
+	_content_scroll_installed = true
 
 func _begin_attempt() -> void:
 	input_locked = false
@@ -486,11 +516,12 @@ func _on_viewport_size_changed() -> void:
 	main_vbox.add_theme_constant_override("separation", 8 if compact else 10)
 	header.add_theme_constant_override("separation", 6 if compact else 10)
 	stability_bar.custom_minimum_size.x = 140.0 if compact else 200.0
+	bottom_bar.custom_minimum_size.y = 72.0 if compact else 100.0
 	btn_back.custom_minimum_size = Vector2(48.0 if compact else 64.0, 48.0 if compact else 64.0)
-	btn_reset.custom_minimum_size = Vector2(0.0, 48.0 if compact else 64.0)
-	btn_confirm.custom_minimum_size = Vector2(0.0, 48.0 if compact else 64.0)
-	btn_next.custom_minimum_size = Vector2(0.0, 48.0 if compact else 64.0)
-	status_label.custom_minimum_size.y = 36.0 if compact else 48.0
+	btn_reset.custom_minimum_size = Vector2(0.0, 44.0 if compact else 52.0)
+	btn_confirm.custom_minimum_size = Vector2(0.0, 44.0 if compact else 52.0)
+	btn_next.custom_minimum_size = Vector2(0.0, 44.0 if compact else 52.0)
+	status_label.custom_minimum_size.y = 28.0 if compact else 40.0
 
 	var margin: int = 8 if compact else 14
 	safe_area.add_theme_constant_override("margin_left", margin)

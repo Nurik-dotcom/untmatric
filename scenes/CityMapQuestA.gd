@@ -1786,7 +1786,7 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"task_session": task_session.duplicate(true),
 		"is_correct": result_code == "OK",
 		"is_fit": result_code == "OK",
-		"stability_delta": 0,
+		"stability_delta": int(stability) - int(level_data.get("trust", {}).get("initial", 100)),
 		"elapsed_ms": t_elapsed_seconds * 1000,
 		"duration": float(t_elapsed_seconds),
 		"time_to_first_action_ms": first_action_ms if first_action_ms >= 0 else t_elapsed_seconds * 1000,

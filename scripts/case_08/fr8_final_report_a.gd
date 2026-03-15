@@ -72,6 +72,7 @@ var level_solved: bool = false
 var confirm_locked: bool = false
 var has_confirmed_once: bool = false
 var last_render_state: String = ""
+var _body_scroll_installed: bool = false
 
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
 @onready var body: BoxContainer = $SafeArea/MainLayout/Body
@@ -118,6 +119,7 @@ func _ready() -> void:
 	btn_confirm.text = TEXT_CONFIRM
 	btn_next.text = TEXT_NEXT
 	_apply_i18n()
+	_install_body_scroll()
 
 	var initial_index: int = clamp(GlobalMetrics.current_level_index, 0, max(0, levels.size() - 1))
 	_start_level(initial_index)
@@ -1141,25 +1143,50 @@ func _on_reset_pressed() -> void:
 func _on_viewport_size_changed() -> void:
 	_apply_layout_mode()
 
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	if main_layout == null or body == null:
+		return
+	var existing_scroll: ScrollContainer = main_layout.get_node_or_null("BodyScroll") as ScrollContainer
+	if existing_scroll != null and existing_scroll.get_node_or_null("Body") != null:
+		_body_scroll_installed = true
+		return
+	var scroll := ScrollContainer.new()
+	scroll.name = "BodyScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	var idx: int = body.get_index()
+	main_layout.add_child(scroll)
+	main_layout.move_child(scroll, idx)
+	body.reparent(scroll)
+	_body_scroll_installed = true
+
 func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var landscape: bool = viewport_size.x > viewport_size.y
+	var compact: bool = (landscape and viewport_size.y <= 420.0) or ((not landscape) and viewport_size.x <= 520.0)
 	body.vertical = not landscape
 
 	if landscape:
 		if body.get_child(0) != fragments_card:
 			body.move_child(fragments_card, 0)
 			body.move_child(editor_card, 1)
-		slots_grid.columns = 3 if slot_ids.size() >= 6 else 2
+		slots_grid.columns = 3 if compact else (3 if slot_ids.size() >= 6 else 2)
 		if pile_zone.has_method("set_grid_columns"):
 			pile_zone.call("set_grid_columns", 3 if viewport_size.x >= 1280.0 else 2)
 	else:
 		if body.get_child(0) != editor_card:
 			body.move_child(editor_card, 0)
 			body.move_child(fragments_card, 1)
-		slots_grid.columns = 2
+		slots_grid.columns = 3 if compact else 2
 		if pile_zone.has_method("set_grid_columns"):
-			pile_zone.call("set_grid_columns", 2)
+			pile_zone.call("set_grid_columns", 3 if compact and viewport_size.x > 600.0 else 2)
+	if pile_zone.has_method("set_item_height"):
+		pile_zone.call("set_item_height", 40.0 if compact else 52.0)
 
 func _outcome_code_for_a(is_correct: bool, error_code: String, render_state: String) -> String:
 	if is_correct:

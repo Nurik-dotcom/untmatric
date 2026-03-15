@@ -59,14 +59,18 @@ var hint_open_count: int = 0
 var _status_i18n_key: String = ""
 var _status_i18n_default: String = ""
 var _status_i18n_params: Dictionary = {}
+var _body_scroll_installed: bool = false
 
+@onready var root_layout: VBoxContainer = $SafeArea/Margin/Root
 @onready var title_label: Label = $SafeArea/Margin/Root/Header/HeaderVBox/Title
 @onready var btn_back: Button = $SafeArea/Margin/Root/BackRow/BtnBack
 @onready var stability_label: Label = $SafeArea/Margin/Root/Header/HeaderVBox/TimerRow/StabilityLabel
 @onready var timer_bar: ProgressBar = $SafeArea/Margin/Root/Header/HeaderVBox/TimerRow/TimerBar
 @onready var timer_label: Label = $SafeArea/Margin/Root/Header/HeaderVBox/TimerRow/TimerLabel
 @onready var prompt_label: RichTextLabel = $SafeArea/Margin/Root/Prompt
+@onready var code_panel: PanelContainer = $SafeArea/Margin/Root/CodePanel
 @onready var code_area: HFlowContainer = $SafeArea/Margin/Root/CodePanel/CodeArea
+@onready var repo_panel: PanelContainer = $SafeArea/Margin/Root/RepoPanel
 @onready var btn_undo: Button = $SafeArea/Margin/Root/ControlsRow/BtnUndo
 @onready var btn_clear: Button = $SafeArea/Margin/Root/ControlsRow/BtnClear
 @onready var btn_submit: Button = $SafeArea/Margin/Root/ControlsRow/BtnSubmit
@@ -133,6 +137,7 @@ func _ready() -> void:
 	btn_clear.pressed.connect(_on_clear_pressed)
 	btn_submit.pressed.connect(_on_submit_pressed)
 	btn_next.pressed.connect(_on_next_pressed)
+	_install_body_scroll()
 
 	_init_session()
 	_apply_i18n()
@@ -290,7 +295,7 @@ func _build_block_repository() -> void:
 			continue
 		block_by_id[block_id] = block_data
 		var btn: Button = Button.new()
-		btn.custom_minimum_size = Vector2(0, 56)
+		btn.custom_minimum_size = Vector2(0, 44 if _is_compact_phone() else 56)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.text = str(block_data.get("text", block_id))
 		btn.pressed.connect(_on_block_pressed.bind(block_id))
@@ -353,7 +358,7 @@ func _rebuild_code_area() -> void:
 
 		var btn_left: Button = Button.new()
 		btn_left.text = "<"
-		btn_left.custom_minimum_size = Vector2(36, 42)
+		btn_left.custom_minimum_size = Vector2(44, 44)
 		btn_left.disabled = idx == 0
 		btn_left.pressed.connect(_on_move_token.bind(idx, -1))
 		row.add_child(btn_left)
@@ -366,14 +371,14 @@ func _rebuild_code_area() -> void:
 
 		var btn_right: Button = Button.new()
 		btn_right.text = ">"
-		btn_right.custom_minimum_size = Vector2(36, 42)
+		btn_right.custom_minimum_size = Vector2(44, 44)
 		btn_right.disabled = idx >= selected_sequence_ids.size() - 1
 		btn_right.pressed.connect(_on_move_token.bind(idx, 1))
 		row.add_child(btn_right)
 
 		var btn_remove: Button = Button.new()
 		btn_remove.text = "X"
-		btn_remove.custom_minimum_size = Vector2(36, 42)
+		btn_remove.custom_minimum_size = Vector2(44, 44)
 		btn_remove.pressed.connect(_on_remove_token.bind(idx))
 		row.add_child(btn_remove)
 
@@ -814,6 +819,7 @@ func _log_trial(is_correct: bool, f_reason: Variant, eval_result: Dictionary, en
 		"anti_cheat": current_case.get("anti_cheat", {}) as Dictionary,
 		"task_session": task_session.duplicate(true)
 	}, true)
+	payload["stability_delta"] = -20.0 if not is_correct else 0.0
 	GlobalMetrics.register_trial(payload)
 
 func _outcome_code_for_c(is_correct: bool, f_reason: Variant, end_state: String) -> String:
@@ -921,11 +927,62 @@ func _on_stability_changed(_new_value: float, _delta: float) -> void:
 func _update_stability_ui() -> void:
 	stability_label.text = _tr("da7.common.stability", "STABILITY: {value}%", {"value": int(GlobalMetrics.stability)})
 
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	if root_layout == null:
+		return
+	var prompt_node: Control = prompt_label
+	if prompt_node == null or code_panel == null or repo_panel == null:
+		return
+	var existing_scroll: ScrollContainer = root_layout.get_node_or_null("BodyScroll") as ScrollContainer
+	if existing_scroll != null and existing_scroll.get_node_or_null("BodyInner") != null:
+		_body_scroll_installed = true
+		return
+	var scroll := ScrollContainer.new()
+	scroll.name = "BodyScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	var inner := VBoxContainer.new()
+	inner.name = "BodyInner"
+	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner.add_theme_constant_override("separation", 8)
+	scroll.add_child(inner)
+	var insert_index: int = prompt_node.get_index()
+	root_layout.add_child(scroll)
+	root_layout.move_child(scroll, insert_index)
+	for node in [prompt_label, code_panel, repo_panel]:
+		(node as Control).reparent(inner)
+	_body_scroll_installed = true
+
+func _is_compact_phone() -> bool:
+	var size: Vector2 = get_viewport_rect().size
+	return (size.x >= size.y and size.y <= 420.0) or (size.y > size.x and size.x <= 520.0)
+
+func _apply_compact_layout(compact: bool) -> void:
+	prompt_label.custom_minimum_size.y = 48.0 if compact else 84.0
+	code_panel.custom_minimum_size.y = 80.0 if compact else 140.0
+	repo_panel.custom_minimum_size.y = 140.0 if compact else 220.0
+	btn_undo.custom_minimum_size.y = 44.0 if compact else 56.0
+	btn_clear.custom_minimum_size.y = 44.0 if compact else 56.0
+	btn_submit.custom_minimum_size.y = 44.0 if compact else 56.0
+	btn_next.custom_minimum_size.y = 44.0 if compact else 56.0
+	status_label.custom_minimum_size.y = 28.0 if compact else 34.0
+	for child in block_repository.get_children():
+		if child is Button:
+			(child as Button).custom_minimum_size.y = 44.0 if compact else 56.0
+	block_repository.columns = 4 if (not compact and get_viewport_rect().size.x >= BREAKPOINT_PX) else (4 if get_viewport_rect().size.x > 600.0 else 3)
+
 func _on_viewport_size_changed() -> void:
 	var size: Vector2 = get_viewport_rect().size
+	var compact: bool = _is_compact_phone()
 	if size.x < BREAKPOINT_PX:
 		current_layout = LAYOUT_MOBILE
-		block_repository.columns = 3
+		block_repository.columns = 4 if size.x > 600.0 else 3
 	else:
 		current_layout = LAYOUT_DESKTOP
 		block_repository.columns = 4
+	_apply_compact_layout(compact)

@@ -1274,7 +1274,9 @@ func _finalize_task_result(is_correct: bool, reason: String) -> void:
 
 	var result_data: Dictionary = {
 		"quest": "suspect_script",
+		"quest_id": "SUSPECT_SCRIPT",
 		"stage": "A",
+		"stage_id": "A",
 		"match_key": "SUSPECT_A|%s" % level_id,
 		"task_id": level_id,
 		"bucket": bucket,
@@ -1315,7 +1317,8 @@ func _finalize_task_result(is_correct: bool, reason: String) -> void:
 		"concept_family": _concept_family_from_bucket(bucket),
 		"outcome_code": _build_outcome_code_for_a(is_correct),
 		"mastery_block_reason": _build_mastery_block_reason_for_a(is_correct),
-		"task_session": task_session
+		"task_session": task_session,
+		"stability_delta": -15.0 if not is_correct else 0.0
 	}
 
 	GlobalMetrics.register_trial(result_data)

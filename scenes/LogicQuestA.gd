@@ -139,6 +139,7 @@ var hints_used: int = 0
 var analyze_count: int = 0
 var start_time_msec: int = 0
 var first_action_ms: int = -1
+var _last_stability_penalty: float = 0.0
 var verdict_count: int = 0
 var trial_seq: int = 0
 var task_session: Dictionary = {}
@@ -245,6 +246,7 @@ func _apply_responsive_layout() -> void:
 	var landscape := viewport_size.x >= viewport_size.y
 	var mobile := viewport_size.x < 900.0
 	var very_narrow := viewport_size.x < 640.0
+	var compact: bool = (landscape and viewport_size.y <= 420.0) or ((not landscape) and viewport_size.x <= 500.0)
 	is_landscape_layout = landscape
 
 	content_split.vertical = not landscape
@@ -257,7 +259,6 @@ func _apply_responsive_layout() -> void:
 		interaction_row.columns = 4
 		interaction_row.add_theme_constant_override("h_separation", 12)
 		interaction_row.add_theme_constant_override("v_separation", 12)
-		terminal_text.add_theme_font_size_override("normal_font_size", 20)
 	else:
 		content_split.split_offset = int(viewport_size.y * 0.33)
 		left_pane.size_flags_stretch_ratio = 0.75
@@ -267,12 +268,18 @@ func _apply_responsive_layout() -> void:
 		interaction_row.columns = 2
 		interaction_row.add_theme_constant_override("h_separation", 10)
 		interaction_row.add_theme_constant_override("v_separation", 10)
+	if compact:
+		terminal_text.add_theme_font_size_override("normal_font_size", 14)
+	elif landscape:
+		terminal_text.add_theme_font_size_override("normal_font_size", 20)
+	else:
 		terminal_text.add_theme_font_size_override("normal_font_size", 17 if mobile else 19)
 
+	btn_back.custom_minimum_size = Vector2(44.0 if compact else (56.0 if mobile else 64.0), 44.0 if compact else (56.0 if mobile else 64.0))
 	for btn in gate_buttons.values():
-		(btn as Button).custom_minimum_size = Vector2(96 if mobile else 120, 56 if mobile else 64)
+		(btn as Button).custom_minimum_size = Vector2(96 if mobile else 120, 44 if compact else (56 if mobile else 64))
 	for btn_action in [btn_hint, btn_probe, btn_verdict, btn_next]:
-		btn_action.custom_minimum_size = Vector2(0, 56 if mobile else 60)
+		btn_action.custom_minimum_size = Vector2(0, 44 if compact else (56 if mobile else 60))
 
 	_update_ui_state()
 
@@ -995,7 +1002,8 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms
 	payload["is_correct"] = is_correct
 	payload["is_fit"] = is_correct
-	payload["stability_delta"] = 0
+	payload["stability_delta"] = 0.0 if is_correct else -_last_stability_penalty
+	_last_stability_penalty = 0.0
 	payload["verdict_code"] = verdict_code
 	payload["selected_gate_id"] = selected_gate_guess
 	payload["correct_gate_id"] = str(current_case.get("gate", ""))
@@ -1167,6 +1175,7 @@ func _lock_verdict(duration: float) -> void:
 	_update_ui_state()
 
 func _apply_penalty(amount: float) -> void:
+	_last_stability_penalty = amount
 	GlobalMetrics.stability = max(0.0, GlobalMetrics.stability - amount)
 	GlobalMetrics.stability_changed.emit(GlobalMetrics.stability, -amount)
 

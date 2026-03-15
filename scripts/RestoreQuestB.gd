@@ -124,6 +124,7 @@ var task_is_semantically_valid: bool = true
 var tap_selected_block_data: Dictionary = {}
 var block_buttons_by_id: Dictionary = {}
 var preview_opened_for_task: bool = false
+var _body_scroll_installed: bool = false
 
 func _ready() -> void:
 	_load_levels_from_json()
@@ -136,6 +137,7 @@ func _ready() -> void:
 
 	_apply_i18n()
 	_connect_signals()
+	_install_body_scroll()
 
 	diag_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	diagnostics_blocker.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -150,6 +152,28 @@ func _ready() -> void:
 	_on_viewport_size_changed()
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	if main_layout == null or body_split == null:
+		return
+	var existing_scroll: ScrollContainer = main_layout.get_node_or_null("BodyScroll") as ScrollContainer
+	if existing_scroll != null and existing_scroll.get_node_or_null("BodySplit") != null:
+		_body_scroll_installed = true
+		return
+	var scroll := ScrollContainer.new()
+	scroll.name = "BodyScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	var idx: int = body_split.get_index()
+	main_layout.add_child(scroll)
+	main_layout.move_child(scroll, idx)
+	body_split.reparent(scroll)
+	_body_scroll_installed = true
 
 func _exit_tree() -> void:
 	if I18n.language_changed.is_connected(_on_language_changed):
@@ -907,6 +931,8 @@ func _register_result(is_correct: bool, end_ticks: int, reason: String) -> void:
 	_log_event("task_end", {"reason": reason, "is_correct": is_correct})
 
 	var payload: Dictionary = {
+		"quest_id": "RESTORE_QUEST",
+		"stage_id": "B",
 		"match_key": "RESTORE_B|%s" % str(current_task.get("id", "B-00")),
 		"is_correct": is_correct,
 		"is_fit": is_correct,
@@ -931,7 +957,8 @@ func _register_result(is_correct: bool, end_ticks: int, reason: String) -> void:
 		"time_from_last_edit_to_test_ms": time_from_last_edit_to_test_ms,
 		"outcome_code": last_verdict_code,
 		"mastery_block_reason": _build_mastery_block_reason_for_b(last_verdict_code, is_correct),
-		"task_session": task_session
+		"task_session": task_session,
+		"stability_delta": -15.0 if not is_correct else 0.0
 	}
 	GlobalMetrics.register_trial(payload)
 

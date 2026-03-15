@@ -1030,6 +1030,7 @@ func _push_undo_snapshot() -> void:
 	})
 
 func _start_pack_run() -> void:
+	GlobalMetrics.start_quest("CITY_MAP_C")
 	run_started_unix = int(Time.get_unix_time_from_system())
 	run_id = "CITYMAP_%s_%d" % ["C", run_started_unix]
 	level_index = 0
@@ -2467,6 +2468,7 @@ func _on_submit_pressed() -> void:
 		_reveal_label.text = _build_review_text(verdict)
 
 	if verdict.result_code == "OK":
+		GlobalMetrics.finish_quest("CITY_MAP_C", 100, true)
 		_set_status_i18n(
 			"city_map.c.status.success",
 			"Route accepted. Dynamic constraints are respected.",
@@ -2492,6 +2494,8 @@ func _on_submit_pressed() -> void:
 		return
 
 	var result_code: String = str(verdict.result_code)
+	GlobalMetrics.add_mistake("level=%s, code=%s, path=%s, sum=%d" % [
+		str(level_data.get("level_id", "")), result_code, " -> ".join(path), path_sum])
 	var result_meta: Dictionary = _result_message_meta(result_code)
 	_set_status_i18n(
 		str(result_meta.get("key", "city_map.common.result.unhandled")),
@@ -2694,6 +2698,8 @@ func _recalculate_stability() -> void:
 	if stability <= fail_threshold and not is_game_over:
 		is_game_over = true
 		stage_completed = false
+		GlobalMetrics.add_mistake("game_over: stability=%d" % int(stability))
+		GlobalMetrics.finish_quest("CITY_MAP_C", 0, false)
 		_set_status_i18n(
 			"city_map.common.status.mission_failed",
 			"MISSION FAILED: CRITICAL STABILITY.",
@@ -2832,7 +2838,7 @@ func _log_attempt(verdict: Dictionary) -> void:
 		"task_session": task_session.duplicate(true),
 		"is_correct": result_code == "OK",
 		"is_fit": result_code == "OK",
-		"stability_delta": 0,
+		"stability_delta": int(stability) - int(level_data.get("trust", {}).get("initial", 100)),
 		"elapsed_ms": real_time_sec * 1000,
 		"duration": float(real_time_sec),
 		"time_to_first_action_ms": first_action_ms if first_action_ms >= 0 else real_time_sec * 1000,

@@ -218,6 +218,7 @@ var _boundary_offset_max: float = DEFAULT_BOUNDARY_OFFSET_MAX
 var sample_cursor: int = 0
 var sample_refs: Array = []
 var _ui_ready: bool = false
+var _left_scroll_installed: bool = false
 var _status_i18n_key: String = ""
 var _status_i18n_default: String = ""
 var _status_i18n_params: Dictionary = {}
@@ -236,6 +237,7 @@ func _ready() -> void:
 	sample_strip.visible = false
 	_apply_safe_area_padding()
 	_configure_layout()
+	_install_left_col_scroll()
 	_set_details_visible(false)
 
 	if not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
@@ -253,6 +255,7 @@ func _exit_tree() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and _ui_ready:
 		_apply_safe_area_padding()
+		_install_left_col_scroll()
 		_configure_layout()
 
 func _process(delta: float) -> void:
@@ -442,6 +445,32 @@ func _apply_safe_area_padding() -> void:
 	safe_area.add_theme_constant_override("margin_right", int(round(base_right)))
 	safe_area.add_theme_constant_override("margin_bottom", int(round(base_bottom)))
 
+func _install_left_col_scroll() -> void:
+	if _left_scroll_installed:
+		return
+	if body_split == null:
+		return
+	var left_col := body_split.get_node_or_null("LeftCol") as VBoxContainer
+	if left_col == null:
+		var existing_scroll: Node = body_split.get_node_or_null("LeftColScroll")
+		if existing_scroll is ScrollContainer and existing_scroll.get_node_or_null("LeftCol") != null:
+			_left_scroll_installed = true
+		return
+	var scroll := ScrollContainer.new()
+	scroll.name = "LeftColScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	var idx: int = left_col.get_index()
+	var parent: Node = left_col.get_parent()
+	parent.remove_child(left_col)
+	parent.add_child(scroll)
+	parent.move_child(scroll, idx)
+	scroll.add_child(left_col)
+	_left_scroll_installed = true
+
 func _configure_layout() -> void:
 	if body_split == null or time_knob == null:
 		return
@@ -451,6 +480,7 @@ func _configure_layout() -> void:
 
 	var size: Vector2 = get_viewport_rect().size
 	var is_landscape: bool = size.x > size.y
+	var ultra_tight: bool = is_landscape and size.y <= 420.0
 	var is_tight_landscape: bool = is_landscape and size.y <= TIGHT_LANDSCAPE_MAX_HEIGHT
 	var knob_min_side: float = 320.0
 	if size.y < 620.0:
@@ -458,7 +488,44 @@ func _configure_layout() -> void:
 	elif size.y < 700.0:
 		knob_min_side = 300.0
 
-	if is_tight_landscape:
+	mission_card.visible = true
+	task_line_2.visible = true
+	task_line_3.visible = true
+	micro_hint.visible = true
+	decision_rule_label.visible = true
+
+	if ultra_tight:
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 340, 340)
+		top_bar.custom_minimum_size.y = 48.0
+		mission_card.custom_minimum_size.y = 60.0
+		status_card.custom_minimum_size.y = 56.0
+		compare_card.custom_minimum_size.y = 64.0
+		actions_card.custom_minimum_size.y = 176.0
+		time_knob.custom_minimum_size = Vector2(180, 180)
+		task_line_2.visible = false
+		task_line_3.visible = false
+		micro_hint.visible = false
+		decision_rule_label.visible = false
+		title_label.add_theme_font_size_override("font_size", 18)
+		mode_chip.add_theme_font_size_override("font_size", 12)
+		stability_label.add_theme_font_size_override("font_size", 12)
+		estimate_value_label.add_theme_font_size_override("font_size", 20)
+		status_label.add_theme_font_size_override("font_size", 15)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1]:
+			btn.custom_minimum_size.y = 44.0
+		btn_analyze.custom_minimum_size.y = 52.0
+		btn_risk.custom_minimum_size.y = 56.0
+		btn_abort.custom_minimum_size.y = 56.0
+		btn_units.custom_minimum_size.y = 44.0
+		btn_details.custom_minimum_size.y = 44.0
+		btn_next.custom_minimum_size.y = 44.0
+		btn_close_details.custom_minimum_size.y = 44.0
+		sample_strip.visible = false
+		risk_card.size_flags_vertical = Control.SIZE_FILL
+		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		risk_card.size_flags_stretch_ratio = 0.8
+		actions_card.size_flags_stretch_ratio = 1.2
+	elif is_tight_landscape:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.58), 420, 420)
 		top_bar.custom_minimum_size.y = 52.0
 		mission_card.custom_minimum_size.y = 156.0
@@ -1625,6 +1692,17 @@ func _send_trial_payload(is_success: bool, decision_label: String) -> void:
 		"time_to_first_risk_or_abort_ms": time_to_first_risk_or_abort_ms,
 		"event_log": trial_event_log.duplicate(true)
 	}
+	var stab_delta: float = 0.0
+	match outcome:
+		Outcome.INTERCEPTED:
+			stab_delta = -25.0
+		Outcome.MISSED_WINDOW:
+			stab_delta = -15.0
+		Outcome.SAFE_ABORT:
+			stab_delta = -5.0
+		Outcome.SUCCESS_SEND:
+			stab_delta = 0.0
+	payload["stability_delta"] = stab_delta
 	GlobalMetrics.register_trial(payload)
 
 func _classify_error_type(time_to_decision_ms: int) -> String:

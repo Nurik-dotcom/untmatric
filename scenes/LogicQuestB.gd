@@ -176,6 +176,7 @@ var is_complete: bool = false
 var is_safe_mode: bool = false
 var case_started_ms: int = 0
 var first_action_ms: int = -1
+var _last_stability_penalty: float = 0.0
 var trial_seq: int = 0
 var task_session: Dictionary = {}
 
@@ -325,6 +326,7 @@ func _apply_responsive_layout() -> void:
 	var landscape := viewport_size.x >= viewport_size.y
 	var narrow := viewport_size.x < 980.0
 	var very_narrow := viewport_size.x < 700.0
+	var compact: bool = (landscape and viewport_size.y <= 420.0) or ((not landscape) and viewport_size.x <= 500.0)
 
 	is_landscape_layout = landscape
 	if landscape:
@@ -335,7 +337,6 @@ func _apply_responsive_layout() -> void:
 		actions_container.vertical = false
 		status_row.vertical = false
 		inventory_frame.size_flags_stretch_ratio = 0.45
-		terminal_text.add_theme_font_size_override("normal_font_size", 18 if narrow else 20)
 	else:
 		terminal_frame.custom_minimum_size = Vector2(0, 170)
 		terminal_frame.size_flags_vertical = 0
@@ -344,16 +345,28 @@ func _apply_responsive_layout() -> void:
 		actions_container.vertical = true
 		status_row.vertical = true
 		inventory_frame.size_flags_stretch_ratio = 0.65
+	if compact:
+		terminal_text.add_theme_font_size_override("normal_font_size", 14)
+	elif landscape:
+		terminal_text.add_theme_font_size_override("normal_font_size", 18 if narrow else 20)
+	else:
 		terminal_text.add_theme_font_size_override("normal_font_size", 17 if very_narrow else 18)
 
 	interaction_row.add_theme_constant_override("h_separation", 10 if narrow else 12)
 	interaction_row.add_theme_constant_override("v_separation", 10 if narrow else 12)
+	btn_back.custom_minimum_size = Vector2(44.0 if compact else 64.0, 44.0 if compact else 64.0)
 
 	for gate_btn in gate_buttons.values():
-		(gate_btn as Button).custom_minimum_size = Vector2(0, 54 if very_narrow else 60)
+		(gate_btn as Button).custom_minimum_size = Vector2(0, 44 if compact else (54 if very_narrow else 60))
 
 	for action_btn in [btn_hint, btn_test, btn_next]:
-		action_btn.custom_minimum_size = Vector2(0, 56 if very_narrow else 60)
+		action_btn.custom_minimum_size = Vector2(0, 44 if compact else (56 if very_narrow else 60))
+
+	slot1_btn.custom_minimum_size = Vector2(0, 44 if compact else 56)
+	slot2_btn.custom_minimum_size = Vector2(0, 44 if compact else 56)
+	input_a_btn.custom_minimum_size.y = 44.0 if compact else (56.0 if very_narrow else 60.0)
+	input_b_btn.custom_minimum_size.y = 44.0 if compact else (56.0 if very_narrow else 60.0)
+	input_c_btn.custom_minimum_size.y = 44.0 if compact else (56.0 if very_narrow else 60.0)
 
 func load_case(idx: int) -> void:
 	if idx < 0:
@@ -1447,6 +1460,7 @@ func _update_stats_ui() -> void:
 	]
 
 func _apply_penalty(amount: float) -> void:
+	_last_stability_penalty = amount
 	GlobalMetrics.stability = max(0.0, GlobalMetrics.stability - amount)
 	GlobalMetrics.stability_changed.emit(GlobalMetrics.stability, -amount)
 
@@ -1503,7 +1517,8 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms
 	payload["is_correct"] = is_correct
 	payload["is_fit"] = is_correct
-	payload["stability_delta"] = 0
+	payload["stability_delta"] = 0.0 if is_correct else -_last_stability_penalty
+	_last_stability_penalty = 0.0
 	payload["verdict_code"] = verdict_code
 
 	payload["attempts"] = attempts

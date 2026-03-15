@@ -68,10 +68,12 @@ var rel_invalid_pair_count := 0
 var rel_duplicate_pair_count := 0
 var rel_last_invalid_fk_col_id := ""
 var _transition_token := 0
+var _body_scroll_installed: bool = false
 
 var current_layout_mode := LAYOUT_DESKTOP
 var exit_btn: Button
 
+@onready var root_layout: VBoxContainer = $SafeArea/RootLayout
 @onready var filter_mode_root: HSplitContainer = $SafeArea/RootLayout/Body/FilterModeRoot
 @onready var relation_mode_root: VBoxContainer = $SafeArea/RootLayout/Body/RelationModeRoot
 @onready var body_container: VBoxContainer = $SafeArea/RootLayout/Body
@@ -165,6 +167,7 @@ func _set_relation_hint_i18n(key: String, default_text: String, params: Dictiona
 
 func _ready() -> void:
 	randomize()
+	_install_body_scroll()
 	_build_mobile_containers()
 	if not btn_submit.pressed.is_connected(_on_submit_pressed):
 		btn_submit.pressed.connect(_on_submit_pressed)
@@ -414,6 +417,7 @@ func _render_relation_ui() -> void:
 		btn.disabled = true
 		btn.pressed.connect(_on_relation_option_selected.bind(opt))
 		rel_options_row.add_child(btn)
+	_apply_compact_layout(_is_compact_phone(), current_layout_mode == LAYOUT_MOBILE)
 
 	if options.is_empty():
 		_set_relation_hint_i18n("da7.b.ui.rel.connect_hint", "Connect cable to submit")
@@ -1030,6 +1034,7 @@ func _log_trial(is_correct: bool, f_reason: Variant, extra_data: Dictionary) -> 
 			"time_to_first_drag_ms": time_to_first_drag_ms
 		}
 
+	payload["stability_delta"] = -15.0 if not is_correct else 0.0
 	GlobalMetrics.register_trial(payload)
 
 func _outcome_code_for_b(is_correct: bool, f_reason: Variant) -> String:
@@ -1167,13 +1172,57 @@ func _update_stability_ui() -> void:
 func _on_viewport_size_changed() -> void:
 	var win_size := get_viewport_rect().size
 	var is_mobile := win_size.x < BREAKPOINT_PX
+	var compact: bool = (win_size.x >= win_size.y and win_size.y <= 420.0) or (win_size.y > win_size.x and win_size.x <= 520.0)
 	current_layout_mode = LAYOUT_MOBILE if is_mobile else LAYOUT_DESKTOP
 	filter_mode_root.split_offset = int(win_size.x * 0.48)
 	filter_mode_root.dragger_visibility = SplitContainer.DRAGGER_HIDDEN if is_mobile else SplitContainer.DRAGGER_VISIBLE
 	_apply_filter_layout_mode(is_mobile)
 	_apply_relation_layout_mode(is_mobile)
+	_apply_compact_layout(compact, is_mobile)
 	if mode == MODE_FILTER:
 		call_deferred("_update_table_scroll_flag")
+
+func _is_compact_phone() -> bool:
+	var size: Vector2 = get_viewport_rect().size
+	return (size.x >= size.y and size.y <= 420.0) or (size.y > size.x and size.x <= 520.0)
+
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	if root_layout == null or body_container == null:
+		return
+	var existing_scroll: ScrollContainer = root_layout.get_node_or_null("BodyScroll") as ScrollContainer
+	if existing_scroll != null and existing_scroll.get_node_or_null("Body") != null:
+		_body_scroll_installed = true
+		return
+	var scroll := ScrollContainer.new()
+	scroll.name = "BodyScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	var idx: int = body_container.get_index()
+	root_layout.add_child(scroll)
+	root_layout.move_child(scroll, idx)
+	body_container.reparent(scroll)
+	_body_scroll_installed = true
+
+func _apply_compact_layout(compact: bool, is_mobile: bool) -> void:
+	btn_back.custom_minimum_size = Vector2(100.0 if compact else 120.0, 44.0 if compact else 48.0)
+	btn_clear.custom_minimum_size = Vector2(110.0 if compact else 140.0, 44.0 if compact else 56.0)
+	btn_submit.custom_minimum_size = Vector2(150.0 if compact else 180.0, 44.0 if compact else 56.0)
+	prompt_label.custom_minimum_size.y = 56.0 if compact else 100.0
+	rel_prompt.custom_minimum_size.y = 52.0 if compact else 80.0
+	var tree_min_height: float = 120.0 if compact else (160.0 if is_mobile else 200.0)
+	data_tree.custom_minimum_size.y = tree_min_height
+	rel_tree_l.custom_minimum_size.y = tree_min_height
+	rel_tree_r.custom_minimum_size.y = tree_min_height
+	if is_instance_valid(connector_overlay):
+		connector_overlay.custom_minimum_size.y = tree_min_height + 40.0
+	for child in rel_options_row.get_children():
+		if child is Button:
+			(child as Button).custom_minimum_size.y = 44.0 if compact else 56.0
 
 func _build_mobile_containers() -> void:
 	filter_mobile_layout = VBoxContainer.new()

@@ -90,6 +90,8 @@ func _send_trial_to_firebase(data: Dictionary) -> void:
 
 	if not payload.has("quest_id"):
 		payload["quest_id"] = "unknown_quest"
+	if not payload.has("stage_id") and payload.has("stage"):
+		payload["stage_id"] = payload["stage"]
 	if not payload.has("stage_id"):
 		payload["stage_id"] = "unknown_stage"
 
@@ -176,7 +178,6 @@ var blocked_until: float = 0.0
 const MAX_LEVELS = 30
 
 func _ready():
-	GlobalMetrics.start_quest("Network_Trace_A")
 	randomize()
 	reset_engine()
 
@@ -196,6 +197,8 @@ func reset_engine():
 	matrix_col_constraints.clear()
 	matrix_current.clear()
 	matrix_changed_cells.clear()
+	current_quest_start_time = 0.0
+	current_quest_mistakes.clear()
 
 func start_level(index: int):
 	current_level_index = index
@@ -769,9 +772,13 @@ func add_mistake(mistake_detail: String):
 # 3. Финиш квеста и отправка отчета в Firebase
 func finish_quest(quest_name: String, score: int, is_success: bool):
 	if user_id == "":
+		current_quest_start_time = 0.0
+		current_quest_mistakes.clear()
 		return
-		
-	var time_spent = Time.get_unix_time_from_system() - current_quest_start_time
+
+	var time_spent: float = 0.0
+	if current_quest_start_time > 0.0:
+		time_spent = maxf(0.0, Time.get_unix_time_from_system() - current_quest_start_time)
 	var url = _build_db_url("users/%s/quest_logs.json" % user_id)
 	
 	var data = {
@@ -788,3 +795,5 @@ func finish_quest(quest_name: String, score: int, is_success: bool):
 	add_child(http)
 	http.request(url, ["Content-Type: application/json"], HTTPClient.METHOD_POST, JSON.stringify(data))
 	http.request_completed.connect(func(r, c, h, b): http.queue_free())
+	current_quest_start_time = 0.0
+	current_quest_mistakes.clear()

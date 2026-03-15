@@ -140,10 +140,12 @@ const CASES := [
 @onready var clue_title_label: Label = $SafeArea/MainLayout/Header/LblClueTitle
 @onready var session_label: Label = $SafeArea/MainLayout/Header/LblSessionId
 @onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
+@onready var bars_row: HBoxContainer = $SafeArea/MainLayout/BarsRow
 @onready var facts_bar_label: Label = $SafeArea/MainLayout/BarsRow/FactsBarLabel
 @onready var facts_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/FactsBar
 @onready var energy_bar_label: Label = $SafeArea/MainLayout/BarsRow/EnergyBarLabel
 @onready var energy_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/EnergyBar
+@onready var target_display: PanelContainer = $SafeArea/MainLayout/TargetDisplay
 @onready var target_label: Label = $SafeArea/MainLayout/TargetDisplay/LblTarget
 @onready var workbench_row: BoxContainer = $SafeArea/MainLayout/WorkbenchRow
 @onready var source_title_label: Label = $SafeArea/MainLayout/WorkbenchRow/SourcePanel/SourceMargin/SourceVBox/SourceTitle
@@ -160,17 +162,25 @@ const CASES := [
 @onready var load_title_label: Label = $SafeArea/MainLayout/LoadDiagRow/LoadPanel/LoadMargin/LoadVBox/LoadTitle
 @onready var load_bar: ProgressBar = $SafeArea/MainLayout/LoadDiagRow/LoadPanel/LoadMargin/LoadVBox/LoadBar
 @onready var load_label: Label = $SafeArea/MainLayout/LoadDiagRow/LoadPanel/LoadMargin/LoadVBox/LoadLabel
+@onready var diag_summary_panel: PanelContainer = $SafeArea/MainLayout/LoadDiagRow/DiagnosticSummaryPanel
 @onready var summary_title_label: Label = $SafeArea/MainLayout/LoadDiagRow/DiagnosticSummaryPanel/SummaryMargin/SummaryVBox/SummaryTitle
 @onready var summary_label: RichTextLabel = $SafeArea/MainLayout/LoadDiagRow/DiagnosticSummaryPanel/SummaryMargin/SummaryVBox/SummaryText
+@onready var law_frame: PanelContainer = $SafeArea/MainLayout/LawFrame
 @onready var law_title_label: Label = $SafeArea/MainLayout/LawFrame/LawMargin/LawVBox/LawTitle
 @onready var law_description_label: Label = $SafeArea/MainLayout/LawFrame/LawMargin/LawVBox/LawDescription
 @onready var law_cards_grid: GridContainer = $SafeArea/MainLayout/LawFrame/LawMargin/LawVBox/LawCardsGrid
+@onready var patch_inventory_frame: PanelContainer = $SafeArea/MainLayout/PatchInventoryFrame
 @onready var patch_inventory_title_label: Label = $SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox/PatchInventoryTitle
 @onready var patch_inventory_desc_label: Label = $SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox/PatchInventoryDescription
 @onready var patch_cards_grid: GridContainer = $SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox/PatchCardsScroll/PatchCardsGrid
+@onready var source_panel: PanelContainer = $SafeArea/MainLayout/WorkbenchRow/SourcePanel
+@onready var patch_panel: PanelContainer = $SafeArea/MainLayout/WorkbenchRow/PatchPanel
+@onready var result_panel: PanelContainer = $SafeArea/MainLayout/WorkbenchRow/ResultPanel
+@onready var load_panel: PanelContainer = $SafeArea/MainLayout/LoadDiagRow/LoadPanel
 @onready var terminal_frame: PanelContainer = $SafeArea/MainLayout/TerminalFrame
 @onready var terminal_scroll: ScrollContainer = $SafeArea/MainLayout/TerminalFrame/TerminalMargin/TerminalScroll
 @onready var terminal_text: RichTextLabel = $SafeArea/MainLayout/TerminalFrame/TerminalMargin/TerminalScroll/TerminalRichText
+@onready var status_row: HBoxContainer = $SafeArea/MainLayout/StatusRow
 @onready var stats_label: Label = $SafeArea/MainLayout/StatusRow/StatsLabel
 @onready var feedback_label: Label = $SafeArea/MainLayout/StatusRow/FeedbackLabel
 @onready var actions_container: BoxContainer = $SafeArea/MainLayout/Actions
@@ -185,6 +195,10 @@ const CASES := [
 @onready var diagnostics_next_button: Button = $DiagnosticsPanelC/PopupMargin/PopupVBox/PopupBtnNext
 @onready var click_player: AudioStreamPlayer = $ClickPlayer
 
+var _body_scroll_installed: bool = false
+var _body_scroll: ScrollContainer = null
+var _body_content: VBoxContainer = null
+
 var current_case_idx: int = 0
 var current_case: Dictionary = {}
 var current_state: int = QuestState.STATE_REVIEW_SOURCE
@@ -195,6 +209,7 @@ var scan_count: int = 0
 var analyze_count: int = 0
 var patch_press_count: int = 0
 var trial_seq: int = 0
+var _last_stability_penalty: float = 0.0
 var task_session: Dictionary = {}
 
 var law_select_count: int = 0
@@ -285,15 +300,63 @@ func _ready() -> void:
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
 
 	_on_stability_changed(GlobalMetrics.stability, 0.0)
+	_install_body_scroll()
 	_apply_responsive_layout()
 	load_case(0)
 
 func _on_viewport_resized() -> void:
 	_apply_responsive_layout()
 
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+
+	var main_layout: VBoxContainer = $SafeArea/MainLayout
+	var header: HBoxContainer = $SafeArea/MainLayout/Header
+	var actions: BoxContainer = $SafeArea/MainLayout/Actions
+
+	var middle_nodes: Array[Node] = []
+	var collecting: bool = false
+	for child in main_layout.get_children():
+		if child == header:
+			collecting = true
+			continue
+		if child == actions:
+			collecting = false
+			continue
+		if collecting:
+			middle_nodes.append(child)
+
+	if middle_nodes.is_empty():
+		return
+
+	_body_scroll = ScrollContainer.new()
+	_body_scroll.name = "BodyScroll"
+	_body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_body_scroll.follow_focus = true
+
+	_body_content = VBoxContainer.new()
+	_body_content.name = "BodyContent"
+	_body_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body_content.add_theme_constant_override("separation", 6)
+
+	for node in middle_nodes:
+		node.reparent(_body_content)
+
+	_body_scroll.add_child(_body_content)
+	main_layout.add_child(_body_scroll)
+	main_layout.move_child(_body_scroll, 1)
+
+	_body_scroll_installed = true
+
 func _apply_responsive_layout() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var portrait: bool = viewport_size.y > viewport_size.x
+	var landscape: bool = not portrait
+	var compact: bool = (landscape and viewport_size.y <= 420.0) or (portrait and viewport_size.x <= 500.0)
 
 	workbench_row.vertical = portrait
 	load_diag_row.vertical = portrait
@@ -304,16 +367,90 @@ func _apply_responsive_layout() -> void:
 		patch_cards_grid.columns = 1 if viewport_size.x < 680.0 else 2
 		terminal_frame.custom_minimum_size = Vector2(0.0, 140.0)
 		terminal_frame.size_flags_stretch_ratio = 0.42
-		terminal_text.add_theme_font_size_override("normal_font_size", 16)
 	else:
 		law_cards_grid.columns = 3
 		patch_cards_grid.columns = 2
 		terminal_frame.custom_minimum_size = Vector2(0.0, 220.0)
 		terminal_frame.size_flags_stretch_ratio = 0.70
+	if compact:
+		terminal_text.add_theme_font_size_override("normal_font_size", 14)
+
+		bars_row.custom_minimum_size.y = 16.0
+		target_display.custom_minimum_size.y = 24.0
+		workbench_row.custom_minimum_size.y = 80.0
+		source_panel.custom_minimum_size = Vector2(0, 80)
+		patch_panel.custom_minimum_size = Vector2(0, 80)
+		result_panel.custom_minimum_size = Vector2(0, 80)
+		load_diag_row.custom_minimum_size.y = 56.0
+		load_panel.custom_minimum_size = Vector2(0, 56)
+		diag_summary_panel.custom_minimum_size = Vector2(0, 56)
+		law_frame.custom_minimum_size.y = 100.0
+		patch_inventory_frame.custom_minimum_size.y = 100.0
+		status_row.custom_minimum_size.y = 20.0
+
+		terminal_frame.custom_minimum_size = Vector2(0.0, 100.0)
+		terminal_frame.size_flags_stretch_ratio = 0.35
+
+		law_cards_grid.columns = 3
+		for child in law_cards_grid.get_children():
+			if child is Button:
+				(child as Button).custom_minimum_size.y = 48.0
+				(child as Button).add_theme_font_size_override("font_size", 12)
+
+		patch_cards_grid.columns = 2
+		for child in patch_cards_grid.get_children():
+			if child is Button:
+				(child as Button).custom_minimum_size.y = 44.0
+				(child as Button).add_theme_font_size_override("font_size", 12)
+
+		stats_label.add_theme_font_size_override("font_size", 12)
+		feedback_label.add_theme_font_size_override("font_size", 12)
+		facts_bar_label.visible = false
+		energy_bar_label.visible = false
+		target_label.add_theme_font_size_override("font_size", 13)
+		source_title_label.add_theme_font_size_override("font_size", 12)
+		patch_title_label.add_theme_font_size_override("font_size", 12)
+		result_title_label.add_theme_font_size_override("font_size", 12)
+		source_focus_label.add_theme_font_size_override("font_size", 11)
+		patch_law_label.add_theme_font_size_override("font_size", 11)
+		patch_value_label.add_theme_font_size_override("font_size", 11)
+		result_status_label.add_theme_font_size_override("font_size", 11)
+	elif portrait:
+		terminal_text.add_theme_font_size_override("normal_font_size", 16)
+	else:
 		terminal_text.add_theme_font_size_override("normal_font_size", 19)
+
+		bars_row.custom_minimum_size.y = 24.0
+		target_display.custom_minimum_size.y = 32.0
+		workbench_row.custom_minimum_size.y = 160.0
+		law_cards_grid.columns = 3
+		patch_cards_grid.columns = 2
+		terminal_frame.custom_minimum_size = Vector2(0.0, 220.0)
+		terminal_frame.size_flags_stretch_ratio = 0.70
+		source_panel.custom_minimum_size = Vector2(280, 160)
+		patch_panel.custom_minimum_size = Vector2(280, 160)
+		result_panel.custom_minimum_size = Vector2(280, 160)
+		load_diag_row.custom_minimum_size.y = 112.0
+		load_panel.custom_minimum_size = Vector2(280, 112)
+		diag_summary_panel.custom_minimum_size = Vector2(280, 112)
+		law_frame.custom_minimum_size.y = 120.0
+		patch_inventory_frame.custom_minimum_size.y = 120.0
+		status_row.custom_minimum_size.y = 24.0
+		facts_bar_label.visible = true
+		energy_bar_label.visible = true
 
 	terminal_text.fit_content = false
 	terminal_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	btn_back.custom_minimum_size = Vector2(44.0 if compact else 64.0, 44.0 if compact else 64.0)
+	for action_btn in [btn_hint, btn_apply_patch, btn_scan, btn_next]:
+		action_btn.custom_minimum_size.y = 44.0 if compact else 56.0
+	if not compact:
+		for child in law_cards_grid.get_children():
+			if child is Button:
+				(child as Button).custom_minimum_size.y = 48.0 if compact else 60.0
+		for child in patch_cards_grid.get_children():
+			if child is Button:
+				(child as Button).custom_minimum_size.y = 44.0 if compact else 56.0
 
 func _option(idx: int) -> Dictionary:
 	var options: Array = current_case.get("options", [])
@@ -1116,6 +1253,7 @@ func _show_feedback(msg: String, color: Color) -> void:
 	feedback_label.visible = true
 
 func _apply_penalty(amount: float) -> void:
+	_last_stability_penalty = amount
 	GlobalMetrics.stability = max(0.0, GlobalMetrics.stability - amount)
 	GlobalMetrics.stability_changed.emit(GlobalMetrics.stability, -amount)
 
@@ -1252,6 +1390,8 @@ func _register_trial(verdict_code: String, is_correct: bool) -> void:
 	payload["task_session"] = task_session.duplicate(true)
 	payload["outcome_code"] = verdict_code
 	payload["mastery_block_reason"] = _mastery_block_reason(verdict_code, is_correct)
+	payload["stability_delta"] = 0.0 if is_correct else -_last_stability_penalty
+	_last_stability_penalty = 0.0
 	GlobalMetrics.register_trial(payload)
 
 func _format_counterexample(counterexample: Dictionary) -> String:

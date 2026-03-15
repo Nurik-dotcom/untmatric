@@ -63,6 +63,7 @@ var awaiting_change_after_fail: bool = false
 var dependency_lines: Array = []
 var stage_run_history_start: int = 0
 var stage_level_ids: Dictionary = {}
+var _timeline_scroll_installed: bool = false
 
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
 @onready var btn_back: Button = $SafeArea/MainLayout/Header/BtnBack
@@ -71,6 +72,7 @@ var stage_level_ids: Dictionary = {}
 @onready var level_progress_bar: ProgressBar = $SafeArea/MainLayout/Header/LevelProgressBar
 @onready var stability_bar: ProgressBar = $SafeArea/MainLayout/Header/StabilityBar
 @onready var briefing_label: RichTextLabel = $SafeArea/MainLayout/BriefingCard/BriefingLabel
+@onready var timeline_card: PanelContainer = $SafeArea/MainLayout/TimelineCard
 @onready var axis_left_label: Label = $SafeArea/MainLayout/TimelineCard/CardVBox/AxisRow/AxisLeft
 @onready var axis_right_label: Label = $SafeArea/MainLayout/TimelineCard/CardVBox/AxisRow/AxisRight
 @onready var cards_row: HBoxContainer = $SafeArea/MainLayout/TimelineCard/CardVBox/CardsRow
@@ -95,6 +97,7 @@ func _ready() -> void:
 	if levels.is_empty():
 		_show_error(_tr("case08.fr8b.load_error", "Не удалось загрузить уровни финального отчёта B."))
 		return
+	_install_timeline_scroll()
 	stage_run_history_start = GlobalMetrics.session_history.size()
 
 	_apply_i18n()
@@ -102,6 +105,30 @@ func _ready() -> void:
 	var initial_index: int = clamp(GlobalMetrics.current_level_index, 0, max(0, levels.size() - 1))
 	_start_level(initial_index)
 	_apply_layout_mode()
+
+func _install_timeline_scroll() -> void:
+	if _timeline_scroll_installed:
+		return
+	if main_layout == null:
+		return
+	var existing_scroll: ScrollContainer = main_layout.get_node_or_null("TimelineScroll") as ScrollContainer
+	if existing_scroll != null and existing_scroll.get_node_or_null("TimelineCard") != null:
+		_timeline_scroll_installed = true
+		return
+	if timeline_card == null:
+		return
+	var scroll := ScrollContainer.new()
+	scroll.name = "TimelineScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	var idx: int = timeline_card.get_index()
+	main_layout.add_child(scroll)
+	main_layout.move_child(scroll, idx)
+	timeline_card.reparent(scroll)
+	_timeline_scroll_installed = true
 
 func _exit_tree() -> void:
 	if GlobalMetrics.stability_changed.is_connected(_on_stability_changed):

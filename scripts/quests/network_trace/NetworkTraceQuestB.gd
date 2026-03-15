@@ -27,6 +27,7 @@ const DEFAULT_MODULE_POOL: Array = [
 enum QuestState { INIT, PIPELINE_BUILD, PIPELINE_READY, CALC_DONE, ANSWERING, FEEDBACK_SUCCESS, FEEDBACK_FAIL, SAFE_MODE, DIAGNOSTIC, DONE }
 
 @onready var btn_back: Button = $SafeArea/Main/V/Header/BtnBack
+@onready var safe_area: MarginContainer = $SafeArea
 @onready var lbl_title: Label = $SafeArea/Main/V/Header/LblTitle
 @onready var lbl_meta: Label = $SafeArea/Main/V/Header/LblMeta
 @onready var stability_bar: ProgressBar = $SafeArea/Main/V/Header/StabilityBar
@@ -135,6 +136,7 @@ func _ready() -> void:
 	_setup_runtime_controls()
 	_connect_signals()
 	_apply_noir_theme()
+	_apply_safe_area_padding()
 	_apply_layout_mode()
 	if GlobalMetrics != null and not GlobalMetrics.stability_changed.is_connected(_on_stability_changed):
 		GlobalMetrics.stability_changed.connect(_on_stability_changed)
@@ -194,6 +196,7 @@ func _process(delta: float) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and is_node_ready():
+		_apply_safe_area_padding()
 		_apply_layout_mode()
 
 func _setup_runtime_controls() -> void:
@@ -1256,7 +1259,27 @@ func _sync_terminal_text_heights(mode: String) -> void:
 	lbl_briefing.custom_minimum_size.y = briefing_height
 	lbl_prompt.custom_minimum_size.y = prompt_height
 
+func _apply_safe_area_padding() -> void:
+	if safe_area == null:
+		return
+	var left: float = 8.0
+	var top: float = 8.0
+	var right: float = 8.0
+	var bottom: float = 8.0
+	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
+	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
+		var viewport_size: Vector2 = get_viewport_rect().size
+		left = maxf(left, float(safe_rect.position.x))
+		top = maxf(top, float(safe_rect.position.y))
+		right = maxf(right, viewport_size.x - float(safe_rect.position.x + safe_rect.size.x))
+		bottom = maxf(bottom, viewport_size.y - float(safe_rect.position.y + safe_rect.size.y))
+	safe_area.add_theme_constant_override("margin_left", int(round(left)))
+	safe_area.add_theme_constant_override("margin_top", int(round(top)))
+	safe_area.add_theme_constant_override("margin_right", int(round(right)))
+	safe_area.add_theme_constant_override("margin_bottom", int(round(bottom)))
+
 func _apply_layout_mode() -> void:
+	_apply_safe_area_padding()
 	var mode: String = _current_layout_mode()
 	var portrait: bool = mode == "portrait"
 	var dense_landscape: bool = mode == "landscape_dense"

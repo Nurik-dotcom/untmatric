@@ -1,5 +1,7 @@
 extends Control
 
+const TrialV2 = preload("res://scripts/TrialV2.gd")
+
 @onready var btn_back = $UI/SafeArea/Main/HeaderBar/HeaderContent/BtnBack
 @onready var mode_label = $UI/SafeArea/Main/HeaderBar/HeaderContent/ModeChip/ModeLabel
 @onready var level_label = $UI/SafeArea/Main/HeaderBar/HeaderContent/LevelLabel
@@ -30,6 +32,7 @@ extends Control
 
 @onready var upper_bits = $UI/SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/UpperNibble/UpperBits
 @onready var lower_bits = $UI/SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter/NibblesRow/LowerNibble/LowerBits
+@onready var nibbles_center = $UI/SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/NibblesCenter
 @onready var weights_row = $UI/SafeArea/Main/ContentSplit/LeftPanel/SwitchesPanel/SwitchesContent/WeightsRow
 
 @onready var rank_label = $UI/SafeArea/Main/ContentSplit/RightPanel/RankPanel/RankContent/RankLabel
@@ -56,6 +59,7 @@ extends Control
 
 @onready var details_sheet = $UI/DetailsSheet
 @onready var btn_close_details = $UI/DetailsSheet/DetailsContent/DetailsHeader/BtnCloseDetails
+@onready var details_scroll: ScrollContainer = $UI/DetailsSheet/DetailsContent/DetailsScroll
 @onready var details_text = $UI/DetailsSheet/DetailsContent/DetailsScroll/DetailsText
 @onready var details_title = $UI/DetailsSheet/DetailsContent/DetailsHeader/DetailsTitle
 
@@ -144,6 +148,12 @@ var _swipe_start_pos: Vector2 = Vector2.ZERO
 var _swipe_tracking: bool = false
 var _content_mobile_layout: VBoxContainer = null
 var _details_sheet_height: float = DETAILS_SHEET_H
+var _body_scroll_installed: bool = false
+var _body_scroll: ScrollContainer = null
+var _nibbles_grid_installed: bool = false
+var _nibbles_grid: GridContainer = null
+var _quest_started: bool = false
+var _quest_finished: bool = false
 
 func _ready():
 	_build_bit_buttons()
@@ -165,12 +175,16 @@ func _ready():
 	await get_tree().process_frame
 	_set_details_open(false, true)
 
+	_start_quest_tracking()
 	start_level(GlobalMetrics.current_level_index)
+	_on_viewport_size_changed()
+	_install_body_scroll()
 	_on_viewport_size_changed()
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
 
 func _exit_tree() -> void:
+	_finish_quest_once(false)
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.disconnect(_on_viewport_size_changed)
 	if I18n.language_changed.is_connected(_on_language_changed):
@@ -332,6 +346,19 @@ func _build_safe_bits() -> void:
 		lbl.text = "%d" % (7 - i)
 		safe_bits_row.add_child(lbl)
 		safe_bit_labels.append(lbl)
+
+func _start_quest_tracking() -> void:
+	if _quest_started:
+		return
+	GlobalMetrics.start_quest("Decryptor_AB")
+	_quest_started = true
+	_quest_finished = false
+
+func _finish_quest_once(success: bool) -> void:
+	if not _quest_started or _quest_finished:
+		return
+	GlobalMetrics.finish_quest("Decryptor_AB", 100 if success else 0, success)
+	_quest_finished = true
 
 func start_level(level_idx: int) -> void:
 	GlobalMetrics.start_level(level_idx)
@@ -539,6 +566,8 @@ func _on_check_pressed() -> void:
 	var result: Dictionary = GlobalMetrics.check_solution(current_target, current_input)
 	var error_code := str(result.get("error", ""))
 	var is_success: bool = bool(result.get("success", false))
+	if not is_success:
+		_record_mistake(result, submitted_input, error_code)
 	_last_check_failed = not is_success
 	if error_code.begins_with("SHIELD"):
 		_last_shield_code = error_code
@@ -588,6 +617,7 @@ func _on_check_pressed() -> void:
 			start_level(GlobalMetrics.current_level_index + 1)
 		else:
 			_log_message(_tr("decryptor.ab.log.all_levels_done", "ALL LEVELS COMPLETED."), COLOR_OK)
+			_finish_quest_once(true)
 	else:
 		AudioManager.play("error")
 		_pulse_panel(input_panel, COLOR_ERR)
@@ -752,6 +782,7 @@ func _on_continue_pressed() -> void:
 	})
 
 func _on_menu_pressed() -> void:
+	_finish_quest_once(false)
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func _on_details_pressed() -> void:
@@ -923,6 +954,9 @@ func _unhandled_input(event):
 				_swipe_tracking = false
 
 func _is_in_switches(pos: Vector2) -> bool:
+	if _nibbles_grid_installed and _nibbles_grid != null and is_instance_valid(_nibbles_grid):
+		if _nibbles_grid.get_global_rect().has_point(pos):
+			return true
 	return upper_bits.get_global_rect().has_point(pos) or lower_bits.get_global_rect().has_point(pos)
 
 func _is_shift_swipe_allowed() -> bool:
@@ -949,6 +983,8 @@ func _on_viewport_size_changed() -> void:
 	var phone_landscape: bool = is_landscape and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
 	var phone_portrait: bool = (not is_landscape) and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
 	var compact: bool = phone_landscape or phone_portrait
+	var very_compact: bool = is_landscape and viewport_size.y <= 400.0
+	var ultra_compact: bool = is_landscape and viewport_size.x <= 700.0
 
 	_apply_safe_area_padding(compact)
 	main_root.add_theme_constant_override("separation", 8 if compact else 12)
@@ -956,26 +992,124 @@ func _on_viewport_size_changed() -> void:
 	content_split.add_theme_constant_override("separation", 8 if compact else 12)
 	bottom_actions.add_theme_constant_override("separation", 8 if compact else 10)
 	_set_content_mobile_mode(phone_portrait)
+	_apply_nibbles_layout(very_compact)
 
-	btn_back.custom_minimum_size = Vector2(52.0 if compact else 64.0, 48.0 if compact else 52.0)
-	btn_details.custom_minimum_size = Vector2(64.0 if compact else 72.0, 44.0 if compact else 48.0)
-	btn_hint.custom_minimum_size = Vector2(96.0 if compact else 120.0, 52.0 if compact else 56.0)
-	btn_check.custom_minimum_size = Vector2(132.0 if compact else 180.0, 52.0 if compact else 56.0)
-	btn_reset.custom_minimum_size = Vector2(96.0 if compact else 120.0, 52.0 if compact else 56.0)
-	target_value.add_theme_font_size_override("font_size", 30 if compact else 36)
+	btn_back.custom_minimum_size = Vector2(48.0 if very_compact else (52.0 if compact else 64.0), 40.0 if very_compact else (48.0 if compact else 52.0))
+	btn_details.custom_minimum_size = Vector2(56.0 if very_compact else (64.0 if compact else 72.0), 40.0 if very_compact else (44.0 if compact else 48.0))
+	btn_details.visible = true
+	if very_compact:
+		btn_hint.custom_minimum_size = Vector2(72.0, 40.0)
+		btn_check.custom_minimum_size = Vector2(100.0, 40.0)
+		btn_reset.custom_minimum_size = Vector2(72.0, 40.0)
+	elif compact:
+		btn_hint.custom_minimum_size = Vector2(96.0, 52.0)
+		btn_check.custom_minimum_size = Vector2(132.0, 52.0)
+		btn_reset.custom_minimum_size = Vector2(96.0, 52.0)
+	else:
+		btn_hint.custom_minimum_size = Vector2(120.0, 56.0)
+		btn_check.custom_minimum_size = Vector2(180.0, 56.0)
+		btn_reset.custom_minimum_size = Vector2(120.0, 56.0)
+	target_value.add_theme_font_size_override("font_size", 24 if very_compact else (30 if compact else 36))
 
-	var bit_button_height: float = 52.0 if compact else 64.0
+	if ultra_compact and not phone_portrait:
+		right_panel.visible = false
+		left_panel.size_flags_stretch_ratio = 1.0
+	else:
+		right_panel.visible = true
+		left_panel.size_flags_stretch_ratio = 1.45
+
+	var bit_button_size: Vector2 = Vector2(44.0, 44.0) if very_compact else Vector2(0.0, 52.0 if compact else 64.0)
+	var bit_font_size: int = 14 if very_compact else (16 if compact else 18)
 	for button in bit_buttons:
 		if button != null:
-			button.custom_minimum_size.y = bit_button_height
+			button.custom_minimum_size = bit_button_size
+			button.add_theme_font_size_override("font_size", bit_font_size)
 
-	_details_sheet_height = clampf(viewport_size.y * (0.62 if compact else 0.55), 220.0, DETAILS_SHEET_H)
+	var weight_font_size: int = 10 if very_compact else (12 if compact else 14)
+	for label in weight_labels:
+		if label != null:
+			label.add_theme_font_size_override("font_size", weight_font_size)
+
+	_details_sheet_height = clampf(viewport_size.y * (0.5 if very_compact else (0.62 if compact else 0.55)), 150.0, DETAILS_SHEET_H)
+	details_scroll.custom_minimum_size.y = clampf(_details_sheet_height - 90.0, 80.0, 260.0)
 	if details_open:
 		_set_details_open(true, true)
 
 	var toast_half_width: float = clampf(viewport_size.x * 0.34, 130.0, 220.0)
 	toast_panel.offset_left = -toast_half_width
 	toast_panel.offset_right = toast_half_width
+
+func _install_body_scroll() -> void:
+	if _body_scroll_installed and _body_scroll != null and is_instance_valid(_body_scroll):
+		return
+	_body_scroll = ScrollContainer.new()
+	_body_scroll.name = "BodyScroll"
+	_body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_body_scroll.follow_focus = true
+
+	var content_index: int = main_root.get_children().find(content_split)
+	if content_index < 0:
+		content_index = main_root.get_child_count() - 1
+	main_root.add_child(_body_scroll)
+	main_root.move_child(_body_scroll, content_index)
+
+	if content_split.get_parent() != _body_scroll:
+		content_split.reparent(_body_scroll)
+	if _content_mobile_layout != null and is_instance_valid(_content_mobile_layout) and _content_mobile_layout.get_parent() != _body_scroll:
+		_content_mobile_layout.reparent(_body_scroll)
+
+	_body_scroll_installed = true
+
+func _apply_nibbles_layout(compact_landscape: bool) -> void:
+	if compact_landscape:
+		if _nibbles_grid_installed:
+			return
+		_nibbles_grid = GridContainer.new()
+		_nibbles_grid.name = "NibblesGrid"
+		_nibbles_grid.columns = 4
+		_nibbles_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_nibbles_grid.add_theme_constant_override("h_separation", 4)
+		_nibbles_grid.add_theme_constant_override("v_separation", 4)
+
+		var ordered_buttons: Array[Button] = []
+		for child in upper_bits.get_children():
+			if child is Button:
+				ordered_buttons.append(child as Button)
+		for child in lower_bits.get_children():
+			if child is Button:
+				ordered_buttons.append(child as Button)
+		for btn in ordered_buttons:
+			btn.reparent(_nibbles_grid)
+
+		var switches_content: VBoxContainer = nibbles_center.get_parent() as VBoxContainer
+		switches_content.add_child(_nibbles_grid)
+		switches_content.move_child(_nibbles_grid, switches_content.get_children().find(nibbles_center))
+		nibbles_center.visible = false
+		_nibbles_grid_installed = true
+		return
+
+	if not _nibbles_grid_installed:
+		return
+
+	var grid_buttons: Array[Button] = []
+	if _nibbles_grid != null and is_instance_valid(_nibbles_grid):
+		for child in _nibbles_grid.get_children():
+			if child is Button:
+				grid_buttons.append(child as Button)
+	for idx in range(grid_buttons.size()):
+		var btn: Button = grid_buttons[idx]
+		if idx < 4:
+			btn.reparent(upper_bits)
+		else:
+			btn.reparent(lower_bits)
+	nibbles_center.visible = true
+	if _nibbles_grid != null and is_instance_valid(_nibbles_grid):
+		_nibbles_grid.queue_free()
+	_nibbles_grid = null
+	_nibbles_grid_installed = false
 
 func _set_content_mobile_mode(use_mobile: bool) -> void:
 	var mobile_layout: VBoxContainer = _ensure_content_mobile_layout()
@@ -1005,8 +1139,13 @@ func _ensure_content_mobile_layout() -> VBoxContainer:
 	_content_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_mobile_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content_mobile_layout.add_theme_constant_override("separation", 8)
-	main_root.add_child(_content_mobile_layout)
-	main_root.move_child(_content_mobile_layout, main_root.get_children().find(content_split) + 1)
+	var parent_node: Node = _body_scroll if _body_scroll_installed and _body_scroll != null and is_instance_valid(_body_scroll) else main_root
+	parent_node.add_child(_content_mobile_layout)
+	var content_index: int = parent_node.get_children().find(content_split)
+	if content_index < 0:
+		content_index = parent_node.get_child_count() - 1
+	var target_index: int = mini(content_index + 1, parent_node.get_child_count() - 1)
+	parent_node.move_child(_content_mobile_layout, target_index)
 	return _content_mobile_layout
 
 func _apply_safe_area_padding(compact: bool) -> void:
@@ -1066,6 +1205,8 @@ func _log_event(event_name: String, data: Dictionary = {}) -> void:
 		"t_ms": _elapsed_level_ms(),
 		"payload": data.duplicate(true)
 	})
+	if events.size() > 500:
+		events = events.slice(events.size() - 500, events.size())
 	task_session["events"] = events
 
 func _derive_outcome_code(is_success: bool, error_code: String) -> String:
@@ -1080,6 +1221,16 @@ func _derive_outcome_code(is_success: bool, error_code: String) -> String:
 	if not error_code.is_empty():
 		return error_code
 	return "WRONG_VALUE"
+
+func _record_mistake(result: Dictionary, submitted_input: int, error_code: String) -> void:
+	var hamming_value: int = int(result.get("hamming", _calc_hamming(submitted_input, current_target)))
+	GlobalMetrics.add_mistake("error=%s, HD=%d, target=%d, input=%d, level=%d" % [
+		error_code,
+		hamming_value,
+		current_target,
+		submitted_input,
+		GlobalMetrics.current_level_index
+	])
 
 func _derive_mastery_block_reason(outcome_code: String) -> String:
 	if outcome_code.begins_with("SHIELD"):
@@ -1099,13 +1250,7 @@ func _register_trial(result: Dictionary, submitted_input: int) -> void:
 	var stage_id := "A" if GlobalMetrics.current_level_index < 15 else "B"
 	var task_id := "%s_%02d" % [stage_id, level_number]
 	var variant_source := "%s|%s|%d" % [GlobalMetrics.current_mode, stage_id, current_target]
-	var trial_v2: Node = get_node_or_null("/root/TrialV2")
-	if trial_v2 == null:
-		return
-	var payload_variant: Variant = trial_v2.call("build", "DECRYPTOR", stage_id, task_id, "NUMERIC_ENTRY", str(hash(variant_source)))
-	if typeof(payload_variant) != TYPE_DICTIONARY:
-		return
-	var payload: Dictionary = payload_variant as Dictionary
+	var payload: Dictionary = TrialV2.build("DECRYPTOR", stage_id, task_id, "NUMERIC_ENTRY", str(hash(variant_source)))
 	var elapsed_ms: int = maxi(0, Time.get_ticks_msec() - level_started_ms)
 	var is_success := bool(result.get("success", false))
 	var error_code := str(result.get("error", "NONE"))
@@ -1128,7 +1273,8 @@ func _register_trial(result: Dictionary, submitted_input: int) -> void:
 	payload["time_to_first_action_ms"] = first_action_ms if first_action_ms >= 0 else elapsed_ms
 	payload["is_correct"] = is_success
 	payload["is_fit"] = is_success
-	payload["stability_delta"] = 0
+	var reported_penalty: float = float(result.get("penalty", 0.0))
+	payload["stability_delta"] = 0.0 if is_success else -reported_penalty
 	payload["level_index"] = GlobalMetrics.current_level_index
 	payload["mode"] = GlobalMetrics.current_mode
 	payload["target_value"] = current_target
@@ -1136,7 +1282,9 @@ func _register_trial(result: Dictionary, submitted_input: int) -> void:
 	payload["check_attempt_count"] = check_attempt_count
 	payload["hint_used"] = hint_used
 	payload["error_type"] = error_code
-	payload["penalty_reported"] = float(result.get("penalty", 0.0))
+	payload["penalty_reported"] = reported_penalty
+	payload["stage_id"] = stage_id
+	payload["match_key"] = "DEC_%s_%02d_T%d" % [stage_id, GlobalMetrics.current_level_index + 1, current_target]
 	payload["trial_seq"] = trial_seq
 	payload["bit_toggle_count"] = bit_toggle_count
 	payload["bit_toggle_unique_count"] = bit_toggle_unique.size()

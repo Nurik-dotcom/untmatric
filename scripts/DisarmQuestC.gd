@@ -109,12 +109,16 @@ var cached_line_height := 26
 var last_scroll_vertical := -1
 var _body_mobile_layout: VBoxContainer = null
 var _monitor_mobile_layout: VBoxContainer = null
+var _body_scroll_installed: bool = false
+var _body_scroll: ScrollContainer = null
+var _body_scroll_content: VBoxContainer = null
 
 var semantic_evaluator = SEMANTIC_EVALUATOR_SCRIPT.new()
 
 func _ready() -> void:
 	_configure_code_view()
 	_connect_signals()
+	_install_body_scroll()
 	if not I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.connect(_on_language_changed)
 	_apply_localized_texts()
@@ -132,6 +136,38 @@ func _ready() -> void:
 	_on_viewport_size_changed()
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	if main_layout == null or body_row == null:
+		return
+	var existing_scroll: ScrollContainer = main_layout.get_node_or_null("BodyScroll") as ScrollContainer
+	if existing_scroll != null:
+		var existing_content: VBoxContainer = existing_scroll.get_node_or_null("BodyScrollContent") as VBoxContainer
+		if existing_content != null and existing_content.get_node_or_null("BodyRow") != null:
+			_body_scroll = existing_scroll
+			_body_scroll_content = existing_content
+			_body_scroll_installed = true
+			return
+	_body_scroll = ScrollContainer.new()
+	_body_scroll.name = "BodyScroll"
+	_body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_body_scroll.follow_focus = true
+	_body_scroll_content = VBoxContainer.new()
+	_body_scroll_content.name = "BodyScrollContent"
+	_body_scroll_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body_scroll_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_body_scroll_content.add_theme_constant_override("separation", 8)
+	_body_scroll.add_child(_body_scroll_content)
+	var idx: int = body_row.get_index()
+	main_layout.add_child(_body_scroll)
+	main_layout.move_child(_body_scroll, idx)
+	body_row.reparent(_body_scroll_content)
+	_body_scroll_installed = true
 
 func _on_language_changed(_code: String) -> void:
 	_apply_localized_texts()
@@ -342,6 +378,8 @@ func _register_semantic_warning(level_id: String, report: Dictionary) -> void:
 	push_warning("Disarm C semantic warning for %s: %s" % [level_id, str(report.get("status", "unknown"))])
 	if GlobalMetrics != null and GlobalMetrics.has_method("register_trial"):
 		GlobalMetrics.register_trial({
+			"quest_id": "DISARM_QUEST",
+			"stage_id": "C",
 			"match_key": "DISARM_C|SEMANTIC_WARNING|%s" % level_id,
 			"is_correct": true,
 			"is_fit": true,
@@ -349,7 +387,8 @@ func _register_semantic_warning(level_id: String, report: Dictionary) -> void:
 			"duration": 0.0,
 			"task_id": level_id,
 			"semantic_event": "semantic_level_warning",
-			"semantic_report": report
+			"semantic_report": report,
+			"stability_delta": 0.0
 		})
 
 func build_variant_key(level: Dictionary) -> String:
@@ -1092,6 +1131,8 @@ func _register_result(is_correct: bool) -> void:
 
 	var elapsed_ms := _effective_elapsed_ms(end_ticks)
 	var payload := {
+		"quest_id": "DISARM_QUEST",
+		"stage_id": "C",
 		"match_key": "DISARM_C|%s" % str(current_task.get("id", "C-00")),
 		"is_correct": is_correct,
 		"is_fit": is_correct,
@@ -1119,7 +1160,8 @@ func _register_result(is_correct: bool) -> void:
 		"time_from_patch_to_validation_ms": time_from_patch_to_validation_ms,
 		"outcome_code": last_verdict_code,
 		"mastery_block_reason": _build_mastery_block_reason_for_c(last_verdict_code),
-		"task_session": task_session
+		"task_session": task_session,
+		"stability_delta": -20.0 if not is_correct else 0.0
 	}
 	GlobalMetrics.register_trial(payload)
 
@@ -1242,6 +1284,9 @@ func _on_viewport_size_changed() -> void:
 
 	_set_monitor_mobile_mode(compact)
 	_set_body_mobile_mode(compact)
+	if not compact:
+		var body_box: BoxContainer = body_row
+		body_box.vertical = not is_landscape
 
 	btn_back.custom_minimum_size = Vector2(96.0 if compact else 120.0, 52.0 if compact else 56.0)
 	btn_analyze.custom_minimum_size.y = 52.0 if compact else 60.0
@@ -1319,8 +1364,9 @@ func _ensure_body_mobile_layout() -> VBoxContainer:
 	_body_mobile_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body_mobile_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_body_mobile_layout.add_theme_constant_override("separation", 8)
-	main_layout.add_child(_body_mobile_layout)
-	main_layout.move_child(_body_mobile_layout, main_layout.get_children().find(body_row) + 1)
+	var parent_container: Node = _body_scroll_content if _body_scroll_content != null else main_layout
+	parent_container.add_child(_body_mobile_layout)
+	parent_container.move_child(_body_mobile_layout, parent_container.get_children().find(body_row) + 1)
 	return _body_mobile_layout
 
 func _apply_safe_area_padding(compact: bool) -> void:

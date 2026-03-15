@@ -104,7 +104,7 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="SourcePanel" type="PanelContainer" parent="SafeArea/MainLayout/WorkbenchRow"]
-custom_minimum_size = Vector2(280, 160)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -137,7 +137,7 @@ autowrap_mode = 3
 text = "FOCUS"
 
 [node name="PatchPanel" type="PanelContainer" parent="SafeArea/MainLayout/WorkbenchRow"]
-custom_minimum_size = Vector2(280, 160)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -173,7 +173,7 @@ autowrap_mode = 3
 text = "NOTE"
 
 [node name="ResultPanel" type="PanelContainer" parent="SafeArea/MainLayout/WorkbenchRow"]
-custom_minimum_size = Vector2(280, 160)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -210,7 +210,7 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="LoadPanel" type="PanelContainer" parent="SafeArea/MainLayout/LoadDiagRow"]
-custom_minimum_size = Vector2(280, 112)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -242,7 +242,7 @@ autowrap_mode = 3
 text = "LOAD DATA"
 
 [node name="DiagnosticSummaryPanel" type="PanelContainer" parent="SafeArea/MainLayout/LoadDiagRow"]
-custom_minimum_size = Vector2(280, 112)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 

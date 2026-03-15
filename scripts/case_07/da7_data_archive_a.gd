@@ -100,9 +100,12 @@ var _press_start_pos := Vector2.ZERO
 var _press_moved := false
 var _press_hit: Dictionary = {}
 var _transition_token := 0
+var _body_scroll_installed: bool = false
 
 @onready var title_label: RichTextLabel = $SafeArea/RootLayout/Header/Margin/Title
 @onready var btn_back: Button = $SafeArea/RootLayout/BackRow/BtnBack
+@onready var root_layout: VBoxContainer = $SafeArea/RootLayout
+@onready var body_container: MarginContainer = $SafeArea/RootLayout/Body
 @onready var desktop_layout: HSplitContainer = $SafeArea/RootLayout/Body/DesktopLayout
 @onready var mobile_layout: VBoxContainer = $SafeArea/RootLayout/Body/MobileLayout
 @onready var table_section: VBoxContainer = $SafeArea/RootLayout/Body/DesktopLayout/TableSection
@@ -110,6 +113,7 @@ var _transition_token := 0
 @onready var data_tree: Tree = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/DataTree
 @onready var table_title: Label = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/TableTitle
 @onready var scanner_overlay: Control = get_node_or_null("SafeArea/RootLayout/Body/DesktopLayout/TableSection/ScannerOverlay") as Control
+@onready var inspect_panel: PanelContainer = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel
 @onready var btn_inspect: Button = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectToolbar/BtnInspect
 @onready var inspect_mode_label: Label = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectToolbar/InspectModeLabel
 @onready var inspect_label: RichTextLabel = $SafeArea/RootLayout/Body/DesktopLayout/TableSection/InspectPanel/InspectMargin/InspectVBox/InspectLabel
@@ -257,6 +261,7 @@ func _ready() -> void:
 	if is_instance_valid(scanner_overlay):
 		scanner_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+	_install_body_scroll()
 	options_grid.visible = false
 	if is_instance_valid(tutorial_overlay):
 		tutorial_overlay.visible = false
@@ -1312,6 +1317,7 @@ func _log_trial(is_correct: bool, f_reason: Variant, target: Dictionary, clicked
 		},
 		"task_session": task_session.duplicate(true)
 	}, true)
+	payload["stability_delta"] = -10.0 if not is_correct else 0.0
 	GlobalMetrics.register_trial(payload)
 
 func _outcome_code_for_a(is_correct: bool, f_reason: Variant) -> String:
@@ -1484,9 +1490,51 @@ func _update_stability_ui() -> void:
 		stability_bar.value = GlobalMetrics.stability
 	if is_instance_valid(stability_label):
 		stability_label.text = _tr("da7.common.stability", "STABILITY: {value}%", {"value": int(GlobalMetrics.stability)})
+
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	if root_layout == null or body_container == null:
+		return
+	var existing_scroll: ScrollContainer = root_layout.get_node_or_null("BodyScroll") as ScrollContainer
+	if existing_scroll != null and existing_scroll.get_node_or_null("Body") != null:
+		_body_scroll_installed = true
+		return
+	var scroll := ScrollContainer.new()
+	scroll.name = "BodyScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	var idx: int = body_container.get_index()
+	root_layout.add_child(scroll)
+	root_layout.move_child(scroll, idx)
+	body_container.reparent(scroll)
+	_body_scroll_installed = true
+
+func _apply_compact_layout(compact: bool, is_mobile: bool) -> void:
+	if is_instance_valid(inspect_panel):
+		inspect_panel.custom_minimum_size.y = 72.0 if compact else 108.0
+	if is_instance_valid(btn_inspect):
+		btn_inspect.custom_minimum_size = Vector2(96.0 if compact else 132.0, 44.0 if compact else 46.0)
+	if is_instance_valid(btn_confirm_answer):
+		btn_confirm_answer.custom_minimum_size.y = 44.0 if compact else 46.0
+	if is_instance_valid(data_tree):
+		if compact:
+			data_tree.custom_minimum_size.y = 120.0
+		elif is_mobile:
+			data_tree.custom_minimum_size.y = 360.0
+		else:
+			data_tree.custom_minimum_size.y = 200.0
+	if is_instance_valid(options_grid):
+		options_grid.add_theme_constant_override("v_separation", 8 if compact else 10)
+		options_grid.add_theme_constant_override("h_separation", 8 if compact else 10)
+
 func _on_viewport_size_changed() -> void:
 	var viewport_size := get_viewport_rect().size
 	var is_mobile := viewport_size.x < BREAKPOINT_PX
+	var compact: bool = (viewport_size.x >= viewport_size.y and viewport_size.y <= 420.0) or (viewport_size.y > viewport_size.x and viewport_size.x <= 520.0)
 	current_layout_mode = LAYOUT_MOBILE if is_mobile else LAYOUT_DESKTOP
 	mobile_layout_used = is_mobile
 	desktop_layout.split_offset = int(viewport_size.x * 0.48)
@@ -1502,7 +1550,7 @@ func _on_viewport_size_changed() -> void:
 		desktop_layout.visible = false
 		data_tree.custom_minimum_size = Vector2(0, 360)
 		data_tree.add_theme_constant_override("v_separation", 7)
-		data_tree.add_theme_font_size_override("font_size", 18)
+		data_tree.add_theme_font_size_override("font_size", 14 if compact else 18)
 	else:
 		if table_section.get_parent() != desktop_layout:
 			table_section.reparent(desktop_layout)
@@ -1512,9 +1560,10 @@ func _on_viewport_size_changed() -> void:
 		desktop_layout.move_child(task_section, 1)
 		desktop_layout.visible = true
 		mobile_layout.visible = false
-		data_tree.custom_minimum_size = Vector2.ZERO
+		data_tree.custom_minimum_size = Vector2(0, 200)
 		data_tree.add_theme_constant_override("v_separation", 4)
-		data_tree.add_theme_font_size_override("font_size", 16)
+		data_tree.add_theme_font_size_override("font_size", 14 if compact else 16)
+	_apply_compact_layout(compact, is_mobile)
 	call_deferred("_update_silent_reading_possible_flag")
 
 func _bump_transition_token() -> void:

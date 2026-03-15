@@ -66,6 +66,7 @@ var trial_locked: bool = false
 var trace: Array = []
 var stage_run_history_start: int = 0
 var stage_level_ids: Dictionary = {}
+var _body_scroll_installed: bool = false
 
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
 @onready var body: BoxContainer = $SafeArea/MainLayout/Body
@@ -112,6 +113,7 @@ func _ready() -> void:
 	stage_run_history_start = GlobalMetrics.session_history.size()
 
 	_apply_i18n()
+	_install_body_scroll()
 
 	var initial_index: int = clamp(GlobalMetrics.current_level_index, 0, max(0, levels.size() - 1))
 	_start_level(initial_index)
@@ -335,6 +337,7 @@ func _build_option_buttons() -> void:
 		option_buttons[option_id] = btn
 
 	_refresh_option_state()
+	_apply_compact_layout(_is_compact_phone())
 
 func _render_code_window() -> void:
 	var html_lines: Array[String] = []
@@ -775,9 +778,52 @@ func _on_viewport_size_changed() -> void:
 	if inspector_popup != null and inspector_popup.visible:
 		_position_inspector_popup(Vector2(inspector_popup.position))
 
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	if main_layout == null or body == null:
+		return
+	var existing_scroll: ScrollContainer = main_layout.get_node_or_null("BodyScroll") as ScrollContainer
+	if existing_scroll != null and existing_scroll.get_node_or_null("Body") != null:
+		_body_scroll_installed = true
+		return
+	var scroll := ScrollContainer.new()
+	scroll.name = "BodyScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	var idx: int = body.get_index()
+	main_layout.add_child(scroll)
+	main_layout.move_child(scroll, idx)
+	body.reparent(scroll)
+	_body_scroll_installed = true
+
+func _is_compact_phone() -> bool:
+	var size: Vector2 = get_viewport_rect().size
+	return (size.x >= size.y and size.y <= 420.0) or (size.y > size.x and size.x <= 520.0)
+
+func _apply_compact_layout(compact: bool) -> void:
+	code_card.custom_minimum_size.y = 120.0 if compact else 0.0
+	decrypt_card.custom_minimum_size.y = 120.0 if compact else 0.0
+	html_label.custom_minimum_size.y = 84.0 if compact else 120.0
+	css_label.custom_minimum_size.y = 110.0 if compact else 170.0
+	target_preview.custom_minimum_size.y = 44.0 if compact else 56.0
+	target_preview.add_theme_font_size_override("font_size", 22 if compact else 26)
+	explain_label.custom_minimum_size.y = 44.0 if compact else 58.0
+	btn_back.custom_minimum_size = Vector2(96.0 if compact else 116.0, 44.0 if compact else 56.0)
+	btn_reset.custom_minimum_size.y = 44.0 if compact else 56.0
+	btn_confirm.custom_minimum_size.y = 44.0 if compact else 56.0
+	btn_next.custom_minimum_size.y = 44.0 if compact else 56.0
+	for option_button in option_buttons.values():
+		if option_button is Button:
+			(option_button as Button).custom_minimum_size.y = 44.0 if compact else 52.0
+
 func _apply_layout_mode() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var landscape: bool = viewport_size.x > viewport_size.y
+	var compact: bool = _is_compact_phone()
 	body.vertical = not landscape
 
 	if landscape:
@@ -788,6 +834,7 @@ func _apply_layout_mode() -> void:
 		if body.get_child(0) != code_card:
 			body.move_child(code_card, 0)
 			body.move_child(decrypt_card, 1)
+	_apply_compact_layout(compact)
 
 func _set_status(text_value: String, color_value: Color) -> void:
 	status_label.text = text_value

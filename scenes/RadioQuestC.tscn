@@ -180,7 +180,7 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="TimeKnob" type="Control" parent="SafeArea/RootVBox/BodyHSplit/LeftCol/KnobCard/KnobMargin/KnobVBox/KnobCenter"]
-custom_minimum_size = Vector2(320, 320)
+custom_minimum_size = Vector2(180, 180)
 layout_mode = 2
 script = ExtResource("3_knob_script")
 min_value = 0.0
