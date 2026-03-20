@@ -170,6 +170,7 @@ const CASES := [
 @onready var law_description_label: Label = $SafeArea/MainLayout/LawFrame/LawMargin/LawVBox/LawDescription
 @onready var law_cards_grid: GridContainer = $SafeArea/MainLayout/LawFrame/LawMargin/LawVBox/LawCardsGrid
 @onready var patch_inventory_frame: PanelContainer = $SafeArea/MainLayout/PatchInventoryFrame
+@onready var patch_cards_scroll: ScrollContainer = $SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox/PatchCardsScroll
 @onready var patch_inventory_title_label: Label = $SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox/PatchInventoryTitle
 @onready var patch_inventory_desc_label: Label = $SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox/PatchInventoryDescription
 @onready var patch_cards_grid: GridContainer = $SafeArea/MainLayout/PatchInventoryFrame/PatchInventoryMargin/PatchInventoryVBox/PatchCardsScroll/PatchCardsGrid
@@ -386,7 +387,12 @@ func _apply_responsive_layout() -> void:
 		diag_summary_panel.custom_minimum_size = Vector2(0, 56)
 		law_frame.custom_minimum_size.y = 100.0
 		patch_inventory_frame.custom_minimum_size.y = 100.0
+		patch_cards_scroll.custom_minimum_size.y = 52.0
 		status_row.custom_minimum_size.y = 20.0
+		source_expr_label.custom_minimum_size.y = 24.0
+		source_expr_label.fit_content = true
+		result_value_label.custom_minimum_size.y = 24.0
+		result_value_label.fit_content = true
 
 		terminal_frame.custom_minimum_size = Vector2(0.0, 100.0)
 		terminal_frame.size_flags_stretch_ratio = 0.35
@@ -435,7 +441,12 @@ func _apply_responsive_layout() -> void:
 		diag_summary_panel.custom_minimum_size = Vector2(280, 112)
 		law_frame.custom_minimum_size.y = 120.0
 		patch_inventory_frame.custom_minimum_size.y = 120.0
+		patch_cards_scroll.custom_minimum_size.y = 80.0
 		status_row.custom_minimum_size.y = 24.0
+		source_expr_label.custom_minimum_size.y = 40.0
+		source_expr_label.fit_content = true
+		result_value_label.custom_minimum_size.y = 40.0
+		result_value_label.fit_content = true
 		facts_bar_label.visible = true
 		energy_bar_label.visible = true
 

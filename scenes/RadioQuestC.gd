@@ -339,12 +339,12 @@ func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 func _apply_i18n() -> void:
 	title_label.text = _tr("quest.radio.c.ui.title", "RADIO INTERCEPT | C")
 	mission_title.text = _tr("quest.radio.c.ui.mission", "URGENT TRANSMISSION")
-	micro_hint.text = _tr("quest.radio.c.ui.hint", "First estimate t. Then ANALYZE. Then compare with the intercept window.")
+	micro_hint.text = _tr("quest.radio.c.ui.hint", "Formula: t = I / v. Estimate transfer time, then ANALYZE, then compare with the intercept window.")
 	decision_rule_label.text = _tr(
 		"quest.radio.c.ui.decision_rule",
 		"Rule: if transfer estimate fits the intercept window, RISK is acceptable. If it does not fit, ABORT."
 	)
-	step_1_label.text = _tr("quest.radio.c.ui.step1", "STEP 1: Set time estimate")
+	step_1_label.text = _tr("quest.radio.c.ui.step1", "STEP 1: t = I / v — set estimate")
 	step_2_label.text = _tr("quest.radio.c.ui.step2", "STEP 2: Compare forecast with the window")
 	step_3_label.text = _tr("quest.radio.c.ui.step3", "STEP 3: Choose action based on comparison")
 	detection_title.text = _tr("quest.radio.c.ui.detection_title", "DETECTION")
@@ -469,6 +469,8 @@ func _install_left_col_scroll() -> void:
 	parent.add_child(scroll)
 	parent.move_child(scroll, idx)
 	scroll.add_child(left_col)
+	left_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_col.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_left_scroll_installed = true
 
 func _configure_layout() -> void:

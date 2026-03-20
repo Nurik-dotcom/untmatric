@@ -1,315 +1,264 @@
 extends "res://scenes/Tutorial/TutorialBase.gd"
-# TutorialMatrix.gd - Обучение матричным головоломкам
+# TutorialMatrix.gd — Матричные шифры
+# Готовит к: MatrixDecryptor (уровень C)
 
 class_name TutorialMatrix
 
 func _initialize_tutorial() -> void:
-	tutorial_id = "tutorial_matrix"
-	tutorial_title = "Обучение: Матричные головоломки"
-	
+	tutorial_id = "matrix"
+	tutorial_title = "Матричные шифры"
+	linked_quest_scene = "res://scenes/MatrixDecryptor.tscn"
+
 	tutorial_steps = [
-		# Шаг 1: Введение
 		{
-			"text": "🧩 МАТРИЧНЫЕ ГОЛОВОЛОМКИ - сложная логическая задача\n\nЗабыл: Матрица - это таблица чисел в строках и столбцах\n\n🎯 Задача: Найти СКРЫТЫЕ числа, зная СУММУ каждой строки и столбца\n\n✓ Это был одна из самых сложных категорий квестов!"
+			"text": "Матрица — таблица чисел, расположенных в строках и столбцах.\n\nЗапись: M[строка][столбец]\n\nПример матрицы 3×3:\n  [1] [2] [3]\n  [4] [5] [6]\n  [7] [8] [9]\n\nВ квесте матрица — это зашифрованный блок данных. Ты должен найти скрытые значения зная только суммы строк и столбцов.",
+			"render_func": "render_matrix_intro",
+			"values": [1, 2, 3, 4, 5, 6, 7, 8, 9],
 		},
-		
-		# Шаг 2: Структура матрицы
 		{
-			"text": "📐 СТРУКТУРА МАТРИЦЫ 3×3:\n\n[a] [b] [c]   → Сумма строки 1 = a + b + c\n[d] [e] [f]   → Сумма строки 2 = d + e + f\n[g] [h] [i]   → Сумма строки 3 = g + h + i\n↓   ↓   ↓\nC1  C2  C3 (суммы столбцов)\n\n✓ Каждое число влияет на строку И столбец",
-			"render_func": "render_matrix_structure"
+			"text": "У каждой строки и каждого столбца матрицы есть своя сумма.\n\n[1] [2] [3]  → сумма = 6\n[4] [5] [6]  → сумма = 15\n[7] [8] [9]  → сумма = 24\n ↓   ↓   ↓\n12  15  18  ← суммы столбцов\n\nСуммы строк и столбцов — это «зацепки» для решения.",
+			"render_func": "render_matrix_with_sums",
+			"values":   [1, 2, 3, 4, 5, 6, 7, 8, 9],
+			"row_sums": [6, 15, 24],
+			"col_sums": [12, 15, 18],
 		},
-		
-		# Шаг 3: Простой пример 2×2
 		{
-			"text": "📊 ПРОСТОЙ ПРИМЕР: Матрица 2×2\n\n[1] [2]  → Сумма = 3\n[3] [4]  → Сумма = 7\n↓   ↓\n4   6 (суммы столбцов)\n\n🎯 Убеди: 1+2=3 ✓ | 3+4=7 ✓ | 1+3=4 ✓ | 2+4=6 ✓",
-			"render_func": "render_matrix_example",
-			"matrix_data": {
-				"rows": 2,
-				"cols": 2,
-				"values": [1, 2, 3, 4],
-				"row_sums": [3, 7],
-				"col_sums": [4, 6]
-			}
+			"text": "Алгоритм решения — как в судоку:\n\n1. Найди строку или столбец с ОДНИМ неизвестным\n2. Вычисли: неизвестное = сумма − (остальные числа)\n3. Заполни найденное значение\n4. Повтори шаги 1–3\n\nГлавное правило: начинай с самого «заполненного» ряда.",
+			"render_func": "",
 		},
-		
-		# Шаг 4: Алгоритм решения
 		{
-			"text": "🔍 АЛГОРИТМ РЕШЕНИЯ:\n\n1️⃣ Найди строку/столбец с ОДНИМ неизвестным (?)\n2️⃣ Вычисли это число через сумму\n3️⃣ Заполни число и обнови суммы\n4️⃣ Повтори шаги 1-3 до разгадки\n5️⃣ ПРОВЕРЬ: все суммы должны совпадать!\n\n✓ Это как логическая головоломка Судоку!",
-			"render_func": ""
+			"text": "Разберём пример пошагово.\n\nМатрица 2×2 с одним неизвестным:\n  [3] [?]  → сумма строки = 8\n  [5] [2]  → сумма строки = 7\n   ↓   ↓\n   8   ?\n\nШаг 1: В первой строке одно неизвестное\nШаг 2: ? = 8 − 3 = 5\nПроверка: сумма столбца 2 = 5 + 2 = 7 ✓",
+			"render_func": "render_matrix_solve_demo",
 		},
-		
-		# Шаг 5: Матрица 3×3 - Практика 1
 		{
-			"text": "🎮 ПРАКТИКА 1: Матрица 3×3 - Найти ОДНО число\n\nДана полная матрица, кроме ОДНОГО неизвестного (?)\n\nСуммы строк и столбцов даны\n\n🎯 Найди скрытое число используя логику!",
+			"text": "Практика — найди неизвестные числа.",
 			"render_func": "render_matrix_puzzle",
-			"matrix_data": {
-				"rows": 3,
-				"cols": 3,
-				"values": [1, 2, 3, 4, 5, 6, 7, 8, -1],
-				"row_sums": [6, 15, -1],
-				"col_sums": [12, 15, 9],
-				"unknown_index": 8,
-				"solution": 24
-			}
+			"values":   [1, 2, 3, 4, -1, 6, -1, 8, 9],
+			"row_sums": [6, -1, -1],
+			"col_sums": [-1, 15, 18],
+			"hint": "Начни с первой строки — там одно неизвестное (позиция 4).\n4+?+6=15 → ?=5",
 		},
-		
-		# Шаг 6: Матрица с несколькими неизвестными
 		{
-			"text": "🎮 ПРАКТИКА 2: ТРУДНАЯ - Матрица с 3 НЕИЗВЕСТНЫМИ\n\nТеперь нужно найти ТРИ скрытых числа\n\nЭта матрица НАМНОГО сложнее:\n- Нужно логически вывести всё\n- Порядок решения важен!\n- Это как настоящий квест!\n\n🎯 Способ: Начни с простейшей строки/столбца",
-			"render_func": "render_matrix_puzzle",
-			"matrix_data": {
-				"rows": 3,
-				"cols": 3,
-				"values": [-1, 2, 3, 4, -1, 6, 7, 8, -1],
-				"row_sums": [6, 15, -1],
-				"col_sums": [12, 15, 9],
-				"unknown_indices": [0, 4, 8],
-				"solution": [1, 5, 12]
-			}
+			"text": "В квесте «Матрица-Дешифратор» (уровень C) каждое число в матрице — это зашифрованный символ.\n\nЧтобы раскрыть код:\n• Реши матрицу → найди все скрытые числа\n• Переведи числа в символы (через ASCII)\n• Прочитай скрытое сообщение\n\nЭто самый сложный уровень квеста. Готовься!",
+			"render_func": "render_matrix_quest_preview",
 		},
-		
-		# Шаг 7: Constraints - Ограничения
-		{
-			"text": "⚠️ ВАЖНЫЕ ОГРАНИЧЕНИЯ (Constraints):\n\n1️⃣ Все числа ЦЕЛЫЕ от 0 до 255\n2️⃣ Суммы строк ДОЛЖНЫ совпадать\n3️⃣ Суммы столбцов ДОЛЖНЫ совпадать\n4️⃣ Может быть несколько корректных решений!\n5️⃣ Нужно найти ВСЕ возможные варианты\n\n✓ Если находишь одно решение - выпей праздничный чай!",
-			"render_func": ""
-		},
-		
-		# Шаг 8: Стратегия решения
-		{
-			"text": "💡 ЛУЧШАЯ СТРАТЕГИЯ РЕШЕНИЯ:\n\n1️⃣ Ищи строки/столбцы с одним (?)\n2️⃣ Вычисли: СУММА - (известные числа)\n3️⃣ Заполни число\n4️⃣ Пересчитай суммы\n5️⃣ Повтори 1-4\n\n⚡ Почти как Судоку, но с суммами!\n\n🎓 Практика: Решение становится ОЧЕНЬ быстрым с опытом",
-			"render_func": "render_solving_strategy"
-		},
-		
-		# Шаг 9: Заключение
-		{
-			"text": "✓ УСПЕХ! ОВЛАДЕЛ МАТРИЧНЫМИ ГОЛОВОЛОМКАМИ!\n\n🏆 Теперь вы готовы:\n• Решать матрицы ЛЮБОГО размера\n• Применять логику на высочайшем уровне\n• Справляться с СЛОЖНЕЙШИМ уровнем C\n• Проходить последние квесты!\n\n🎊 ВЫПЕЙ ЧАЙ - ЗАСЛУЖИЛ!",
-			"render_func": ""
-		}
 	]
 
-func render_matrix_structure(area: Control, step: Dictionary) -> void:
-	"""Рендер структуры матрицы"""
-	var container = VBoxContainer.new()
-	container.add_theme_constant_override("separation", 20)
-	area.add_child(container)
-	
-	# Матрица
-	var matrix_box = VBoxContainer.new()
-	matrix_box.add_theme_constant_override("separation", 5)
-	container.add_child(matrix_box)
-	
-	var grid = GridContainer.new()
-	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
-	matrix_box.add_child(grid)
-	
-	for i in range(9):
-		var cell = Label.new()
-		cell.text = ["[a]", "[b]", "[c]", "[d]", "[e]", "[f]", "[g]", "[h]", "[i]"][i]
-		cell.custom_minimum_size = Vector2(50, 40)
-		cell.add_theme_font_size_override("font_size", 14)
-		cell.add_theme_color_override("font_color", Color.YELLOW)
-		cell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		grid.add_child(cell)
-	
-	# Ограничения
-	var constraints = Label.new()
-	constraints.text = "Суммы: Каждой строки и столбца должны совпадать"
-	constraints.add_theme_font_size_override("font_size", 12)
-	constraints.add_theme_color_override("font_color", Color.CYAN)
-	constraints.autowrap_mode = TextServer.AUTOWRAP_WORD
-	container.add_child(constraints)
 
-func render_matrix_example(area: Control, step: Dictionary) -> void:
-	"""Рендер простого примера матрицы"""
-	var container = VBoxContainer.new()
-	container.add_theme_constant_override("separation", 15)
-	area.add_child(container)
-	
-	var data = step.get("matrix_data", {})
-	var rows = data.get("rows", 2)
-	var cols = data.get("cols", 2)
-	var values = data.get("values", [])
-	var row_sums = data.get("row_sums", [])
-	var col_sums = data.get("col_sums", [])
-	
-	# Заголовок
-	var title = Label.new()
-	title.text = "Матрица " + str(rows) + "×" + str(cols) + " (простой пример)"
-	title.add_theme_font_size_override("font_size", 18)
-	title.add_theme_color_override("font_color", Color.WHITE)
-	container.add_child(title)
-	
-	# Матрица с суммами
-	var main_box = HBoxContainer.new()
-	main_box.add_theme_constant_override("separation", 20)
-	container.add_child(main_box)
-	
-	# Сама матрица
-	var matrix_box = VBoxContainer.new()
-	matrix_box.add_theme_constant_override("separation", 5)
-	main_box.add_child(matrix_box)
-	
+# ─── CELL HELPERS ─────────────────────────────────────────────────────────────
+
+const CELL_SIZE := Vector2(50, 44)
+const CELL_SEP  := 4
+
+func _make_cell(text: String, kind: String) -> PanelContainer:
+	var cell := PanelContainer.new()
+	cell.custom_minimum_size = CELL_SIZE
+	var cs := StyleBoxFlat.new()
+	cs.corner_radius_top_left    = 6; cs.corner_radius_top_right   = 6
+	cs.corner_radius_bottom_left = 6; cs.corner_radius_bottom_right = 6
+	cs.content_margin_left = 4; cs.content_margin_right = 4
+	cs.content_margin_top  = 4; cs.content_margin_bottom = 4
+	cs.set_border_width_all(1)
+	match kind:
+		"normal":
+			cs.bg_color     = Color(0.08, 0.10, 0.18, 1.0)
+			cs.border_color = Color(0.25, 0.35, 0.60, 0.7)
+		"unknown":
+			cs.bg_color     = Color(0.18, 0.06, 0.06, 1.0)
+			cs.border_color = Color(0.70, 0.20, 0.20, 0.9)
+		"sum":
+			cs.bg_color     = Color(0.06, 0.16, 0.24, 1.0)
+			cs.border_color = Color(0.20, 0.55, 0.85, 0.7)
+		"found":
+			cs.bg_color     = Color(0.05, 0.20, 0.10, 1.0)
+			cs.border_color = Color(0.20, 0.75, 0.42, 0.9)
+	cell.add_theme_stylebox_override("panel", cs)
+
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	match kind:
+		"normal":  lbl.add_theme_color_override("font_color", Color(0.75, 0.80, 1.00, 1.0))
+		"unknown": lbl.add_theme_color_override("font_color", Color(0.95, 0.40, 0.40, 1.0))
+		"sum":     lbl.add_theme_color_override("font_color", Color(0.35, 0.72, 1.00, 1.0))
+		"found":   lbl.add_theme_color_override("font_color", Color(0.25, 0.95, 0.55, 1.0))
+	cell.add_child(lbl)
+	return cell
+
+
+func _build_matrix_widget(values: Array, rows: int, cols: int,
+		row_sums: Array = [], col_sums: Array = []) -> VBoxContainer:
+	var wrapper := VBoxContainer.new()
+	wrapper.add_theme_constant_override("separation", CELL_SEP)
+	wrapper.alignment = BoxContainer.ALIGNMENT_CENTER
+
 	for r in range(rows):
-		var row_box = HBoxContainer.new()
-		row_box.add_theme_constant_override("separation", 5)
-		matrix_box.add_child(row_box)
-		
+		var row_hbox := HBoxContainer.new()
+		row_hbox.add_theme_constant_override("separation", CELL_SEP)
+		row_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		wrapper.add_child(row_hbox)
+
 		for c in range(cols):
-			var idx = r * cols + c
-			var cell = Label.new()
-			cell.text = str(values[idx])
-			cell.custom_minimum_size = Vector2(50, 40)
-			cell.add_theme_font_size_override("font_size", 16)
-			cell.add_theme_color_override("font_color", Color.YELLOW)
-			cell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			row_box.add_child(cell)
-		
-		# Сумма строки
+			var idx := r * cols + c
+			var val: int = values[idx] if idx < values.size() else 0
+			var kind: String = "unknown" if val == -1 else "normal"
+			var text: String = "?" if val == -1 else str(val)
+			row_hbox.add_child(_make_cell(text, kind))
+
 		if r < row_sums.size():
-			var sum_label = Label.new()
-			sum_label.text = "= " + str(row_sums[r])
-			sum_label.custom_minimum_size = Vector2(60, 40)
-			sum_label.add_theme_font_size_override("font_size", 14)
-			sum_label.add_theme_color_override("font_color", Color.CYAN)
-			row_box.add_child(sum_label)
-	
-	# Суммы столбцов
-	var col_sums_box = HBoxContainer.new()
-	col_sums_box.add_theme_constant_override("separation", 5)
-	matrix_box.add_child(col_sums_box)
-	
-	for c in range(cols):
-		var sum_label = Label.new()
-		sum_label.text = str(col_sums[c])
-		sum_label.custom_minimum_size = Vector2(50, 40)
-		sum_label.add_theme_font_size_override("font_size", 14)
-		sum_label.add_theme_color_override("font_color", Color.CYAN)
-		sum_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		col_sums_box.add_child(sum_label)
+			var sep := Label.new()
+			sep.text = "="
+			sep.add_theme_color_override("font_color", Color(0.45, 0.45, 0.60, 1.0))
+			sep.add_theme_font_size_override("font_size", 16)
+			sep.custom_minimum_size = Vector2(24, 0)
+			sep.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			sep.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+			row_hbox.add_child(sep)
+
+			var rs_val: int = row_sums[r]
+			var rs_kind: String = "unknown" if rs_val == -1 else "sum"
+			row_hbox.add_child(_make_cell("?" if rs_val == -1 else str(rs_val), rs_kind))
+
+	if col_sums.size() > 0:
+		var cs_row := HBoxContainer.new()
+		cs_row.add_theme_constant_override("separation", CELL_SEP)
+		cs_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		wrapper.add_child(cs_row)
+		for c in range(cols):
+			var cs_val: int = col_sums[c] if c < col_sums.size() else -1
+			cs_row.add_child(_make_cell("?" if cs_val == -1 else str(cs_val), "sum"))
+		cs_row.add_child(_make_cell("", "normal"))
+		cs_row.add_child(_make_cell("", "normal"))
+
+	return wrapper
+
+
+# ─── RENDER FUNCTIONS ─────────────────────────────────────────────────────────
+
+func render_matrix_intro(area: Control, step: Dictionary) -> void:
+	var values: Array = step.get("values", [1,2,3,4,5,6,7,8,9])
+	var widget := _build_matrix_widget(values, 3, 3)
+	widget.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	area.add_child(widget)
+
+
+func render_matrix_with_sums(area: Control, step: Dictionary) -> void:
+	var values:   Array = step.get("values",   [1,2,3,4,5,6,7,8,9])
+	var row_sums: Array = step.get("row_sums", [6,15,24])
+	var col_sums: Array = step.get("col_sums", [12,15,18])
+	var widget := _build_matrix_widget(values, 3, 3, row_sums, col_sums)
+	widget.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	area.add_child(widget)
+
+
+func render_matrix_solve_demo(area: Control, _step: Dictionary) -> void:
+	var container := VBoxContainer.new()
+	container.add_theme_constant_override("separation", 10)
+	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	area.add_child(container)
+
+	var before_lbl := Label.new()
+	before_lbl.text = "До решения:"
+	before_lbl.add_theme_font_size_override("font_size", 13)
+	before_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.65, 1.0))
+	container.add_child(before_lbl)
+
+	var before := _build_matrix_widget([3, -1, 5, 2], 2, 2, [8, 7], [8, -1])
+	before.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	container.add_child(before)
+
+	var arrow := Label.new()
+	arrow.text = "▼  ? = 8 − 3 = 5  ▼"
+	arrow.add_theme_color_override("font_color", Color(0.25, 0.90, 0.55, 1.0))
+	arrow.add_theme_font_size_override("font_size", 15)
+	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	container.add_child(arrow)
+
+	var after_lbl := Label.new()
+	after_lbl.text = "После решения:"
+	after_lbl.add_theme_font_size_override("font_size", 13)
+	after_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.65, 1.0))
+	container.add_child(after_lbl)
+
+	var after := _build_matrix_widget([3, 5, 5, 2], 2, 2, [8, 7], [8, 7])
+	after.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	container.add_child(after)
+
 
 func render_matrix_puzzle(area: Control, step: Dictionary) -> void:
-	"""Рендер матричной головоломки для практики"""
-	var container = VBoxContainer.new()
-	container.add_theme_constant_override("separation", 15)
-	area.add_child(container)
-	
-	var data = step.get("matrix_data", {})
-	var rows = data.get("rows", 3)
-	var cols = data.get("cols", 3)
-	var values = data.get("values", [])
-	var row_sums = data.get("row_sums", [])
-	var col_sums = data.get("col_sums", [])
-	
-	# Заголовок
-	var title = Label.new()
-	title.text = "Найти неизвестные значения (?)"
-	title.add_theme_font_size_override("font_size", 18)
-	title.add_theme_color_override("font_color", Color.WHITE)
-	container.add_child(title)
-	
-	# Матрица
-	var main_box = HBoxContainer.new()
-	main_box.add_theme_constant_override("separation", 20)
-	container.add_child(main_box)
-	
-	var matrix_box = VBoxContainer.new()
-	matrix_box.add_theme_constant_override("separation", 5)
-	main_box.add_child(matrix_box)
-	
-	for r in range(rows):
-		var row_box = HBoxContainer.new()
-		row_box.add_theme_constant_override("separation", 5)
-		matrix_box.add_child(row_box)
-		
-		for c in range(cols):
-			var idx = r * cols + c
-			var cell = Label.new()
-			
-			if values[idx] == -1:
-				cell.text = "?"
-				cell.add_theme_color_override("font_color", Color.RED)
-			else:
-				cell.text = str(values[idx])
-				cell.add_theme_color_override("font_color", Color.YELLOW)
-			
-			cell.custom_minimum_size = Vector2(50, 40)
-			cell.add_theme_font_size_override("font_size", 16)
-			cell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			row_box.add_child(cell)
-		
-		# Сумма строки
-		if r < row_sums.size():
-			var sum_label = Label.new()
-			if row_sums[r] == -1:
-				sum_label.text = "= ?"
-				sum_label.add_theme_color_override("font_color", Color.RED)
-			else:
-				sum_label.text = "= " + str(row_sums[r])
-				sum_label.add_theme_color_override("font_color", Color.CYAN)
-			sum_label.custom_minimum_size = Vector2(60, 40)
-			sum_label.add_theme_font_size_override("font_size", 14)
-			row_box.add_child(sum_label)
-	
-	# Суммы столбцов
-	var col_sums_box = HBoxContainer.new()
-	col_sums_box.add_theme_constant_override("separation", 5)
-	matrix_box.add_child(col_sums_box)
-	
-	for c in range(cols):
-		var sum_label = Label.new()
-		if col_sums[c] == -1:
-			sum_label.text = "?"
-			sum_label.add_theme_color_override("font_color", Color.RED)
-		else:
-			sum_label.text = str(col_sums[c])
-			sum_label.add_theme_color_override("font_color", Color.CYAN)
-		sum_label.custom_minimum_size = Vector2(50, 40)
-		sum_label.add_theme_font_size_override("font_size", 14)
-		sum_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		col_sums_box.add_child(sum_label)
-	
-	# Подсказка
-	var hint = Label.new()
-	hint.text = "Совет: Используйте логику! Если в строке только одно неизвестное, вы можете его вычислить."
-	hint.add_theme_font_size_override("font_size", 12)
-	hint.add_theme_color_override("font_color", Color.GRAY)
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD
-	container.add_child(hint)
+	var values:   Array  = step.get("values",   [])
+	var row_sums: Array  = step.get("row_sums", [])
+	var col_sums: Array  = step.get("col_sums", [])
+	var hint: String     = step.get("hint",     "")
 
-func render_solving_strategy(area: Control, step: Dictionary) -> void:
-	"""Рендер стратегии решения"""
-	var container = VBoxContainer.new()
-	container.add_theme_constant_override("separation", 15)
+	var container := VBoxContainer.new()
+	container.add_theme_constant_override("separation", 10)
+	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	area.add_child(container)
-	
-	var strategies = [
-		"1. ПОИСК: Найти строку/столбец с одним неизвестным",
-		"2. ВЫЧИСЛЕНИЕ: Решить это неизвестное",
-		"3. ОБНОВЛЕНИЕ: Обновить оставшиеся суммы",
-		"4. ПОВТОРЕНИЕ: Вернуться к шагу 1",
-		"5. ПРОВЕРКА: Все ли ограничения выполнены?"
-	]
-	
-	for strategy in strategies:
-		var label = Label.new()
-		label.text = strategy
-		label.add_theme_font_size_override("font_size", 14)
-		label.add_theme_color_override("font_color", Color.CYAN)
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD
-		container.add_child(label)
-	
-	# Пример
-	var example_title = Label.new()
-	example_title.text = "\nПример:"
-	example_title.add_theme_font_size_override("font_size", 12)
-	example_title.add_theme_color_override("font_color", Color.WHITE)
-	container.add_child(example_title)
-	
-	var example = Label.new()
-	example.text = "Если первая строка: [5] [?] [?] = 12\nВторая: [3] [4] [5] = 12\nТретья: [4] [?] [3] = ?\n\nВторая строка уже полная. Используйте её сумму 12 для проверки!"
-	example.add_theme_font_size_override("font_size", 12)
-	example.add_theme_color_override("font_color", Color.GRAY)
-	example.autowrap_mode = TextServer.AUTOWRAP_WORD
-	container.add_child(example)
+
+	var widget := _build_matrix_widget(values, 3, 3, row_sums, col_sums)
+	widget.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	container.add_child(widget)
+
+	if hint != "":
+		var hint_panel := PanelContainer.new()
+		var hp := StyleBoxFlat.new()
+		hp.bg_color = Color(0.08, 0.14, 0.08, 1.0)
+		hp.border_color = Color(0.25, 0.60, 0.30, 0.7)
+		hp.set_border_width_all(1)
+		hp.corner_radius_top_left    = 6; hp.corner_radius_top_right   = 6
+		hp.corner_radius_bottom_left = 6; hp.corner_radius_bottom_right = 6
+		hp.content_margin_left = 12; hp.content_margin_right = 12
+		hp.content_margin_top  = 8;  hp.content_margin_bottom = 8
+		hint_panel.add_theme_stylebox_override("panel", hp)
+		container.add_child(hint_panel)
+
+		var h_lbl := Label.new()
+		h_lbl.text = "💡 " + hint
+		h_lbl.add_theme_font_size_override("font_size", 13)
+		h_lbl.add_theme_color_override("font_color", Color(0.65, 0.90, 0.65, 1.0))
+		h_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+		hint_panel.add_child(h_lbl)
+
+
+func render_matrix_quest_preview(area: Control, _step: Dictionary) -> void:
+	var panel := PanelContainer.new()
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color(0.07, 0.10, 0.18, 1.0)
+	ps.border_color = Color(0.25, 0.45, 0.80, 0.6)
+	ps.set_border_width_all(1)
+	ps.corner_radius_top_left    = 10; ps.corner_radius_top_right   = 10
+	ps.corner_radius_bottom_left = 10; ps.corner_radius_bottom_right = 10
+	ps.content_margin_left = 14; ps.content_margin_right = 14
+	ps.content_margin_top  = 12; ps.content_margin_bottom = 12
+	panel.add_theme_stylebox_override("panel", ps)
+	area.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	panel.add_child(vbox)
+
+	var title_lbl := Label.new()
+	title_lbl.text = "🔢 МАТРИЦА-ДЕШИФРАТОР — Уровень C"
+	title_lbl.add_theme_font_size_override("font_size", 16)
+	title_lbl.add_theme_color_override("font_color", Color(0.40, 0.70, 1.00, 1.0))
+	vbox.add_child(title_lbl)
+
+	for hint in [
+		"🧩 Тебе дают матрицу со скрытыми числами",
+		"🧮 Решаешь матрицу через суммы строк и столбцов",
+		"🔡 Числа переводишь в символы ASCII",
+		"✅ Читаешь скрытое сообщение агента",
+	]:
+		var lbl := Label.new()
+		lbl.text = hint
+		lbl.add_theme_font_size_override("font_size", 13)
+		lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.85, 1.0))
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+		vbox.add_child(lbl)
+
+
+func _calculate_stars() -> int:
+	return 3 if current_step_index >= tutorial_steps.size() - 1 else 2

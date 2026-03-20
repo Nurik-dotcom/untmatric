@@ -128,6 +128,8 @@ func _install_timeline_scroll() -> void:
 	main_layout.add_child(scroll)
 	main_layout.move_child(scroll, idx)
 	timeline_card.reparent(scroll)
+	timeline_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	timeline_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_timeline_scroll_installed = true
 
 func _exit_tree() -> void:
@@ -802,8 +804,16 @@ func _on_dependency_overlay_draw() -> void:
 
 		var rect_a: Rect2 = card_a.get_global_rect()
 		var rect_b: Rect2 = card_b.get_global_rect()
-		var p1: Vector2 = dependency_overlay.to_local(rect_a.position + Vector2(rect_a.size.x * 0.5, rect_a.size.y * 0.18))
-		var p2: Vector2 = dependency_overlay.to_local(rect_b.position + Vector2(rect_b.size.x * 0.5, rect_b.size.y * 0.18))
+# 1. Считаем глобальные координаты центров (или нужных точек) карточек
+		var global_p1: Vector2 = rect_a.position + Vector2(rect_a.size.x * 0.5, rect_a.size.y * 0.18)
+		var global_p2: Vector2 = rect_b.position + Vector2(rect_b.size.x * 0.5, rect_b.size.y * 0.18)
+
+		# 2. Переводим их в локальную систему координат оверлея
+		var inv_transform = dependency_overlay.get_global_transform().affine_inverse()
+		var p1: Vector2 = inv_transform * global_p1
+		var p2: Vector2 = inv_transform * global_p2
+
+# 3. Дальше вы уже рисуете линию от p1 до p2...
 		var arc_y: float = min(p1.y, p2.y) - 18.0
 		var v1: Vector2 = Vector2(p1.x, arc_y)
 		var v2: Vector2 = Vector2(p2.x, arc_y)

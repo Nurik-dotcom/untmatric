@@ -169,7 +169,7 @@ func _on_language_changed(_code: String) -> void:
 
 func _apply_i18n() -> void:
 	btn_back.text = _tr("nt.common.back", "BACK")
-	btn_apply_and.text = _tr("nt.c.ui.btn_apply_and", "APPLY AND")
+	btn_apply_and.text = _tr("nt.c.ui.btn_apply_and", "IP \u2227 \u041c\u0410\u0421\u041a\u0410")
 	btn_reset.text = _tr("nt.common.reset", "RESET")
 	btn_next.text = _tr("nt.common.next", "NEXT")
 	btn_analyze.text = _tr("nt.common.analyze", "Diagnostics")
@@ -461,6 +461,13 @@ func _render_terminal() -> void:
 		_tr("nt.a.ui.lbl_objective", "OBJECTIVE"),
 		_tr("nt.c.level.%s.briefing" % level_id, str(current_level.get("briefing", "")))
 	])
+	lbl_briefing.append_text(_tr("nt.c.step_guide",
+		"\n\n[color=#8888aa]Шаги:[/color]\n" +
+		"[color=#aaaacc]1. Маска выставлена по CIDR — проверьте биты[/color]\n" +
+		"[color=#aaaacc]2. Нажмите «IP ∧ МАСКА» для побитового AND[/color]\n" +
+		"[color=#aaaacc]3. Результат = идентификатор сети[/color]\n" +
+		"[color=#aaaacc]4. Выберите правильный вариант из кандидатов[/color]"
+	))
 	lbl_prompt.clear()
 	lbl_prompt.append_text("[color=#9de6b3]%s[/color]\n%s" % [
 		_tr("nt.a.ui.lbl_task", "TASK"),

@@ -1511,6 +1511,8 @@ func _install_body_scroll() -> void:
 	root_layout.add_child(scroll)
 	root_layout.move_child(scroll, idx)
 	body_container.reparent(scroll)
+	body_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_body_scroll_installed = true
 
 func _apply_compact_layout(compact: bool, is_mobile: bool) -> void:

@@ -798,6 +798,8 @@ func _install_body_scroll() -> void:
 	main_layout.add_child(scroll)
 	main_layout.move_child(scroll, idx)
 	body.reparent(scroll)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_body_scroll_installed = true
 
 func _is_compact_phone() -> bool:

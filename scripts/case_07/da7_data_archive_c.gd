@@ -956,6 +956,7 @@ func _install_body_scroll() -> void:
 	root_layout.move_child(scroll, insert_index)
 	for node in [prompt_label, code_panel, repo_panel]:
 		(node as Control).reparent(inner)
+		(node as Control).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body_scroll_installed = true
 
 func _is_compact_phone() -> bool:

@@ -124,6 +124,7 @@ var _status_i18n_default: String = ""
 var _status_i18n_params: Dictionary = {}
 var _status_i18n_color: Color = Color(0.85, 0.85, 0.85, 1.0)
 var _mission_card_base_min_height: float = 160.0
+var _decoder_value_label: Label = null
 
 func _ready() -> void:
 	randomize()
@@ -139,6 +140,12 @@ func _ready() -> void:
 	_ensure_target_wave_line()
 	_reset_sample_strip()
 	_set_details_visible(false)
+	_decoder_value_label = Label.new()
+	_decoder_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_decoder_value_label.add_theme_font_size_override("font_size", 28)
+	_decoder_value_label.add_theme_color_override("font_color", Color(0.45, 1.0, 0.55))
+	right_vbox.add_child(_decoder_value_label)
+	right_vbox.move_child(_decoder_value_label, bit_knob.get_index() + 1)
 	_apply_safe_area_padding()
 	_configure_layout()
 
@@ -245,6 +252,8 @@ func _update_dynamic_texts() -> void:
 	if bits_value <= 0:
 		bits_value = _i_min
 	bits_value_label.text = _tr("quest.radio.a.bits_current", "CURRENT i: {bits} BIT", {"bits": bits_value})
+	if _decoder_value_label != null:
+		_decoder_value_label.text = "i = %d" % bits_value
 	_request_mission_card_refresh()
 
 func _request_mission_card_refresh() -> void:

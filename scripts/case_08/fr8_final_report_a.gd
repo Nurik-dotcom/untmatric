@@ -73,11 +73,15 @@ var confirm_locked: bool = false
 var has_confirmed_once: bool = false
 var last_render_state: String = ""
 var _body_scroll_installed: bool = false
+var _editor_scroll_installed: bool = false
 
 @onready var main_layout: VBoxContainer = $SafeArea/MainLayout
 @onready var body: BoxContainer = $SafeArea/MainLayout/Body
 @onready var fragments_card: PanelContainer = $SafeArea/MainLayout/Body/FragmentsCard
 @onready var editor_card: PanelContainer = $SafeArea/MainLayout/Body/EditorCard
+@onready var editor_card_vbox: VBoxContainer = $SafeArea/MainLayout/Body/EditorCard/CardVBox
+@onready var code_preview_card: PanelContainer = $SafeArea/MainLayout/Body/EditorCard/CardVBox/CodePreviewCard
+@onready var render_preview_card: PanelContainer = $SafeArea/MainLayout/Body/EditorCard/CardVBox/RenderPreviewCard
 @onready var fragments_title_label: Label = $SafeArea/MainLayout/Body/FragmentsCard/CardVBox/FragmentsTitle
 @onready var editor_title_label: Label = $SafeArea/MainLayout/Body/EditorCard/CardVBox/EditorTitle
 @onready var render_header_label: Label = $SafeArea/MainLayout/Body/EditorCard/CardVBox/RenderPreviewCard/RenderVBox/RenderHeader
@@ -120,6 +124,7 @@ func _ready() -> void:
 	btn_next.text = TEXT_NEXT
 	_apply_i18n()
 	_install_body_scroll()
+	_install_editor_scroll()
 
 	var initial_index: int = clamp(GlobalMetrics.current_level_index, 0, max(0, levels.size() - 1))
 	_start_level(initial_index)
@@ -1143,6 +1148,24 @@ func _on_reset_pressed() -> void:
 func _on_viewport_size_changed() -> void:
 	_apply_layout_mode()
 
+func _install_editor_scroll() -> void:
+	if _editor_scroll_installed:
+		return
+	if editor_card == null or editor_card_vbox == null:
+		return
+	var scroll := ScrollContainer.new()
+	scroll.name = "EditorScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	editor_card_vbox.reparent(scroll)
+	editor_card_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	editor_card_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	editor_card.add_child(scroll)
+	_editor_scroll_installed = true
+
 func _install_body_scroll() -> void:
 	if _body_scroll_installed:
 		return
@@ -1163,6 +1186,8 @@ func _install_body_scroll() -> void:
 	main_layout.add_child(scroll)
 	main_layout.move_child(scroll, idx)
 	body.reparent(scroll)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_body_scroll_installed = true
 
 func _apply_layout_mode() -> void:
@@ -1187,6 +1212,8 @@ func _apply_layout_mode() -> void:
 			pile_zone.call("set_grid_columns", 3 if compact and viewport_size.x > 600.0 else 2)
 	if pile_zone.has_method("set_item_height"):
 		pile_zone.call("set_item_height", 40.0 if compact else 52.0)
+	code_preview_card.custom_minimum_size.y = 80.0 if compact else 140.0
+	render_preview_card.custom_minimum_size.y = 72.0 if compact else 130.0
 
 func _outcome_code_for_a(is_correct: bool, error_code: String, render_state: String) -> String:
 	if is_correct:

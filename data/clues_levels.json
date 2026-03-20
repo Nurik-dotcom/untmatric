@@ -613,6 +613,7 @@
                 "type": "choose_for_scenario",
                 "prompt_key": "resus.b01.r2.prompt",
                 "prompt": "School network with one server and 20 PCs.",
+                "topology_visual": "star",
                 "options": [
                   {
                     "id": "star",

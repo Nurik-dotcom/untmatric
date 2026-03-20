@@ -173,6 +173,8 @@ func _install_body_scroll() -> void:
 	main_layout.add_child(scroll)
 	main_layout.move_child(scroll, idx)
 	body_split.reparent(scroll)
+	body_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_split.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_body_scroll_installed = true
 
 func _exit_tree() -> void:

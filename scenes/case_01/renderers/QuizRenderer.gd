@@ -73,10 +73,13 @@ func _render_round() -> void:
 	prompt_label.text = _resolve_round_text(round_data, "prompt")
 
 	if topology_visual != null and round_data.has("topology_visual"):
+		visual_host.visible = true
 		topology_visual.visible = true
 		topology_visual.call("set_topology", str(round_data.get("topology_visual", "")))
-	elif topology_visual != null:
-		topology_visual.visible = false
+	else:
+		visual_host.visible = false
+		if topology_visual != null:
+			topology_visual.visible = false
 
 	var selected_id: String = str(_selected_by_round.get(idx, ""))
 	for option_v in round_data.get("options", []) as Array:

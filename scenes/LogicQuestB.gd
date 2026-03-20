@@ -102,7 +102,9 @@ const CASES := [
 @onready var energy_bar: ProgressBar = $SafeArea/MainLayout/BarsRow/EnergyBar
 
 @onready var target_label: Label = $SafeArea/MainLayout/TargetDisplay/LblTarget
+@onready var scheme_panel: PanelContainer = $SafeArea/MainLayout/SchemePanel
 @onready var scheme_label: Label = $SafeArea/MainLayout/SchemePanel/LblScheme
+@onready var validation_panel: PanelContainer = $SafeArea/MainLayout/ValidationPanel
 @onready var validation_mode_label: Label = $SafeArea/MainLayout/ValidationPanel/LblValidationMode
 
 @onready var terminal_frame: PanelContainer = $SafeArea/MainLayout/TerminalFrame
@@ -177,6 +179,7 @@ var is_safe_mode: bool = false
 var case_started_ms: int = 0
 var first_action_ms: int = -1
 var _last_stability_penalty: float = 0.0
+var _body_scroll_installed: bool = false
 var trial_seq: int = 0
 var task_session: Dictionary = {}
 
@@ -232,6 +235,7 @@ func _ready() -> void:
 	add_child(analyze_timer)
 
 	_apply_i18n_static()
+	_install_body_scroll()
 	_apply_responsive_layout()
 	load_case(0)
 
@@ -321,6 +325,44 @@ func _apply_i18n_static() -> void:
 func _on_viewport_resized() -> void:
 	_apply_responsive_layout()
 
+func _install_body_scroll() -> void:
+	if _body_scroll_installed:
+		return
+	var main_layout: VBoxContainer = $SafeArea/MainLayout
+	var header: HBoxContainer = $SafeArea/MainLayout/Header
+	var actions: BoxContainer = $SafeArea/MainLayout/Actions
+	var middle_nodes: Array[Node] = []
+	var collecting: bool = false
+	for child in main_layout.get_children():
+		if child == header:
+			collecting = true
+			continue
+		if child == actions:
+			collecting = false
+			continue
+		if collecting:
+			middle_nodes.append(child)
+	if middle_nodes.is_empty():
+		return
+	var scroll := ScrollContainer.new()
+	scroll.name = "BodyScroll"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	var body_content := VBoxContainer.new()
+	body_content.name = "BodyContent"
+	body_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_content.add_theme_constant_override("separation", 6)
+	for node in middle_nodes:
+		node.reparent(body_content)
+		(node as Control).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(body_content)
+	main_layout.add_child(scroll)
+	main_layout.move_child(scroll, 1)
+	_body_scroll_installed = true
+
 func _apply_responsive_layout() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var landscape := viewport_size.x >= viewport_size.y
@@ -347,10 +389,28 @@ func _apply_responsive_layout() -> void:
 		inventory_frame.size_flags_stretch_ratio = 0.65
 	if compact:
 		terminal_text.add_theme_font_size_override("normal_font_size", 14)
+		terminal_frame.custom_minimum_size = Vector2(0, 120)
+		inventory_frame.custom_minimum_size = Vector2(0, 80)
+		scheme_panel.custom_minimum_size.y = 44.0
+		validation_panel.custom_minimum_size.y = 44.0
+		for frame in [input_a_frame, input_b_frame, input_c_frame, slot1_frame, slot2_frame, inter_frame, output_frame]:
+			(frame as PanelContainer).custom_minimum_size.y = 64.0
 	elif landscape:
 		terminal_text.add_theme_font_size_override("normal_font_size", 18 if narrow else 20)
+		terminal_frame.custom_minimum_size = Vector2(0, 260)
+		inventory_frame.custom_minimum_size = Vector2(0, 140)
+		scheme_panel.custom_minimum_size.y = 80.0
+		validation_panel.custom_minimum_size.y = 80.0
+		for frame in [input_a_frame, input_b_frame, input_c_frame, slot1_frame, slot2_frame, inter_frame, output_frame]:
+			(frame as PanelContainer).custom_minimum_size.y = 96.0
 	else:
 		terminal_text.add_theme_font_size_override("normal_font_size", 17 if very_narrow else 18)
+		terminal_frame.custom_minimum_size = Vector2(0, 170)
+		inventory_frame.custom_minimum_size = Vector2(0, 140)
+		scheme_panel.custom_minimum_size.y = 80.0
+		validation_panel.custom_minimum_size.y = 80.0
+		for frame in [input_a_frame, input_b_frame, input_c_frame, slot1_frame, slot2_frame, inter_frame, output_frame]:
+			(frame as PanelContainer).custom_minimum_size.y = 96.0
 
 	interaction_row.add_theme_constant_override("h_separation", 10 if narrow else 12)
 	interaction_row.add_theme_constant_override("v_separation", 10 if narrow else 12)
