@@ -165,6 +165,7 @@ const CASES := [
 
 var current_case_idx: int = 0
 var current_case: Dictionary = {}
+var _intro_briefing_shown: bool = false
 
 var inputs: Array[bool] = [false, false, false]
 var placed_gates: Array[String] = [GATE_NONE, GATE_NONE]
@@ -437,6 +438,10 @@ func load_case(idx: int) -> void:
 
 	current_case_idx = idx
 	current_case = CASES[idx]
+	if current_case_idx == 0:
+		_show_intro_briefing()
+	else:
+		_hide_intro_briefing()
 
 	inputs = [false, false, false]
 	placed_gates = [GATE_NONE, GATE_NONE]
@@ -1118,6 +1123,23 @@ func _append_trace(line: String) -> void:
 	if trace_lines.size() > 18:
 		trace_lines.remove_at(0)
 
+func _show_intro_briefing() -> void:
+	_intro_briefing_shown = true
+
+func _hide_intro_briefing() -> void:
+	_intro_briefing_shown = false
+
+func _intro_briefing_text() -> String:
+	return _tr(
+		"logic.b.intro",
+		"TASK: Assemble the logic circuit.\n\n"
+		+ "1. The scheme is shown above: (A, B) -> SLOT 1 -> INTER -> SLOT 2 + C -> F.\n"
+		+ "2. Select a SLOT, then place a gate from inventory.\n"
+		+ "3. Toggle sensors A/B/C to test behavior.\n"
+		+ "4. Press TEST for full validation.\n\n"
+		+ "Goal: build a circuit that produces correct F for all combinations."
+	)
+
 func _layout_scheme_text() -> String:
 	var labels: Array = current_case.get("labels", ["A", "B", "C"])
 	var a_label := str(labels[0])
@@ -1173,6 +1195,10 @@ func _confidence_label() -> String:
 
 func _update_terminal() -> void:
 	var lines: Array[String] = []
+	if _intro_briefing_shown:
+		lines.append("[b]%s[/b]" % _tr("logic.common.intro_title", "INSTRUCTION"))
+		lines.append(_intro_briefing_text())
+		lines.append("")
 	lines.append("[b]БРИФИНГ[/b]")
 	lines.append(str(current_case.get("story", "")))
 	lines.append("Кейс: %s | Тип каскада: %s" % [

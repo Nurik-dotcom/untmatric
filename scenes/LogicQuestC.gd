@@ -202,6 +202,7 @@ var _body_content: VBoxContainer = null
 
 var current_case_idx: int = 0
 var current_case: Dictionary = {}
+var _intro_briefing_shown: bool = false
 var current_state: int = QuestState.STATE_REVIEW_SOURCE
 
 var attempts: int = 0
@@ -481,6 +482,10 @@ func load_case(idx: int) -> void:
 
 	current_case_idx = idx
 	current_case = (CASES[idx] as Dictionary).duplicate(true)
+	if current_case_idx == 0:
+		_show_intro_briefing()
+	else:
+		_hide_intro_briefing()
 	_prepare_case_options()
 
 	current_state = QuestState.STATE_REVIEW_SOURCE
@@ -1176,6 +1181,10 @@ func _set_primary_action(action_id: String) -> void:
 
 func _update_terminal() -> void:
 	var lines: Array[String] = []
+	if _intro_briefing_shown:
+		lines.append("[b]%s[/b]" % _tr("logic.common.intro_title", "INSTRUCTION"))
+		lines.append(_intro_briefing_text())
+		lines.append("")
 	lines.append("[b]BRIEFING[/b]")
 	lines.append(str(current_case.get("title", "")))
 	lines.append(str(current_case.get("forensic_brief", "")))
@@ -1257,6 +1266,23 @@ func _append_trace(line: String) -> void:
 	trace_lines.append(line)
 	if trace_lines.size() > 20:
 		trace_lines.remove_at(0)
+
+func _show_intro_briefing() -> void:
+	_intro_briefing_shown = true
+
+func _hide_intro_briefing() -> void:
+	_intro_briefing_shown = false
+
+func _intro_briefing_text() -> String:
+	return _tr(
+		"logic.c.intro",
+		"TASK: Optimize the logic expression.\n\n"
+		+ "1. SOURCE PANEL shows the original expression.\n"
+		+ "2. Choose a law family (Distribution/Absorption/De Morgan).\n"
+		+ "3. Choose a patch option.\n"
+		+ "4. Press APPLY PATCH, then VALIDATE.\n\n"
+		+ "Goal: reduce LOAD to TARGET while preserving equivalence."
+	)
 
 func _show_feedback(msg: String, color: Color) -> void:
 	feedback_label.text = msg

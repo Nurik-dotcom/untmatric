@@ -310,6 +310,7 @@ func _build_bit_buttons() -> void:
 		var bit_index = 7 - i
 		var btn = Button.new()
 		btn.toggle_mode = true
+		btn.focus_mode = Control.FOCUS_NONE
 		btn.text = "0"
 		btn.custom_minimum_size = Vector2(0, 64)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -427,6 +428,13 @@ func start_level(level_idx: int) -> void:
 		"mode": mode,
 		"target_value": current_target
 	})
+	_release_gui_focus_next_frame()
+
+func _release_gui_focus_next_frame() -> void:
+	await get_tree().process_frame
+	var viewport: Viewport = get_viewport()
+	if viewport != null:
+		viewport.gui_release_focus()
 
 func _update_level_label(level_idx: int) -> void:
 	var protocol = "A" if level_idx < 15 else "B"
@@ -1048,7 +1056,7 @@ func _install_body_scroll() -> void:
 	_body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	_body_scroll.follow_focus = true
+	_body_scroll.follow_focus = false
 
 	var content_index: int = main_root.get_children().find(content_split)
 	if content_index < 0:
@@ -1322,6 +1330,11 @@ func _register_trial(result: Dictionary, submitted_input: int) -> void:
 	payload["task_session"] = task_session.duplicate(true)
 	if result.has("hamming"):
 		payload["hamming"] = int(result.get("hamming", 0))
+	print("[DECRYPTOR] register_trial: quest_id=%s, match_key=%s, user_id=%s" % [
+		str(payload.get("quest_id", "")),
+		str(payload.get("match_key", "")),
+		GlobalMetrics.user_id
+	])
 	GlobalMetrics.register_trial(payload)
 
 func _sync_switches_to_input() -> void:

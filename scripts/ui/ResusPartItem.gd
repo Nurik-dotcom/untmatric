@@ -12,6 +12,8 @@ var item_id: String = ""
 var item_label: String = ""
 var correct_bucket_id: String = ""
 var _drag_from_zone: String = "PILE"
+var _touch_selected: bool = false
+var _hovered: bool = false
 
 const COLOR_INPUT := Color(0.13, 0.59, 0.95, 1.0)
 const COLOR_OUTPUT := Color(0.3, 0.69, 0.31, 1.0)
@@ -23,6 +25,7 @@ func _ready() -> void:
 	_update_visuals()
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
+	_sync_glow_visibility()
 
 func setup(item_data: Dictionary) -> void:
 	item_id = str(item_data.get("item_id", ""))
@@ -56,6 +59,7 @@ func _update_visuals() -> void:
 		glow_overlay.color = Color(color.r, color.g, color.b, 0.2)
 	if type_icon:
 		type_icon.text = icon_text
+	_sync_glow_visibility()
 
 func reveal_correct_color() -> void:
 	var color := COLOR_UNKNOWN
@@ -80,13 +84,17 @@ func get_zone_id() -> String:
 func get_item_id() -> String:
 	return item_id
 
+func set_touch_selected(selected: bool) -> void:
+	_touch_selected = selected
+	_sync_glow_visibility()
+
 func _on_mouse_entered() -> void:
-	if glow_overlay:
-		glow_overlay.visible = true
+	_hovered = true
+	_sync_glow_visibility()
 
 func _on_mouse_exited() -> void:
-	if glow_overlay and drag_hint and not drag_hint.visible:
-		glow_overlay.visible = false
+	_hovered = false
+	_sync_glow_visibility()
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
 	var from_zone: String = get_zone_id()
@@ -95,6 +103,7 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 
 	if drag_hint:
 		drag_hint.visible = true
+	_sync_glow_visibility()
 
 	var data: Dictionary = {
 		"kind": "RESUS_PART",
@@ -119,3 +128,10 @@ func _notification(what: int) -> void:
 		drag_cancelled.emit(item_id, _drag_from_zone)
 		if drag_hint:
 			drag_hint.visible = false
+		_sync_glow_visibility()
+
+func _sync_glow_visibility() -> void:
+	if glow_overlay == null:
+		return
+	var drag_active: bool = drag_hint != null and drag_hint.visible
+	glow_overlay.visible = _touch_selected or _hovered or drag_active

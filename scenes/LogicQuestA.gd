@@ -134,6 +134,7 @@ var has_observation: bool = false
 
 var seen_combinations: Dictionary = {}
 var seen_trace_entries: Array[Dictionary] = []
+var _intro_briefing_shown: bool = false
 var case_attempts: int = 0
 var hints_used: int = 0
 var analyze_count: int = 0
@@ -323,6 +324,10 @@ func load_case(idx: int) -> void:
 
 	current_case_index = idx
 	current_case = CASES[idx]
+	if current_case_index == 0:
+		_show_intro_briefing()
+	else:
+		_hide_intro_briefing()
 
 	input_a = false
 	input_b = false
@@ -596,6 +601,23 @@ func _update_target_and_bars() -> void:
 func _render_trace() -> void:
 	_update_terminal_text()
 
+func _show_intro_briefing() -> void:
+	_intro_briefing_shown = true
+
+func _hide_intro_briefing() -> void:
+	_intro_briefing_shown = false
+
+func _intro_briefing_text() -> String:
+	return _tr(
+		"logic.a.intro",
+		"TASK: Identify the logic gate.\n\n"
+		+ "1. Inspect the truth table in the terminal.\n"
+		+ "2. Determine which gate (AND/OR/NOT/XOR/NAND/NOR) matches it.\n"
+		+ "3. Select the matching gate in inventory.\n"
+		+ "4. Press VERDICT to validate.\n\n"
+		+ "Hint: compare inputs (A,B) with output F."
+	)
+
 func _clear_gate_selection() -> void:
 	selected_gate_guess = ""
 	for btn in gate_buttons.values():
@@ -811,6 +833,10 @@ func _update_terminal_text() -> void:
 	var lines: Array[String] = []
 	var confidence_ratio := _confidence_ratio()
 	var confidence_text := _confidence_bucket_label(confidence_ratio)
+	if _intro_briefing_shown:
+		lines.append("[b]%s[/b]" % _tr("logic.common.intro_title", "INSTRUCTION"))
+		lines.append(_intro_briefing_text())
+		lines.append("")
 
 	lines.append("[b]%s[/b]" % _tr("logic.a.ui.briefing_title", "БРИФИНГ"))
 	lines.append(_case_text("witness", ""))

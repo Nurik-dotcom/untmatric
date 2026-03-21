@@ -64,6 +64,7 @@ var last_edit_ms: int = -1
 var last_bucket_id: String = ""
 var _awaiting_edit_after_feedback: bool = false
 var _awaiting_edit_after_fail: bool = false
+var _selected_item_id: String = ""
 
 @onready var noir_overlay: Node = $NoirOverlay
 @onready var safe_area: MarginContainer = $SafeArea
@@ -161,6 +162,11 @@ func _connect_zone_signals() -> void:
 			zone.connect("drop_accepted", Callable(self, "_on_socket_drop_accepted"))
 		if zone.has_signal("drop_rejected") and not zone.is_connected("drop_rejected", Callable(self, "_on_socket_drop_rejected")):
 			zone.connect("drop_rejected", Callable(self, "_on_socket_drop_rejected"))
+		if zone is Control:
+			var zone_control: Control = zone as Control
+			var zone_gui_input_cb: Callable = Callable(self, "_on_socket_zone_gui_input").bind(zone_control)
+			if not zone_control.gui_input.is_connected(zone_gui_input_cb):
+				zone_control.gui_input.connect(zone_gui_input_cb)
 
 func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
@@ -354,6 +360,7 @@ func _reset_attempt() -> void:
 	drag_count = 0
 	trace.clear()
 	_begin_trial_session()
+	_clear_selected_item(false)
 	item_nodes.clear()
 	input_locked = false
 	btn_confirm.disabled = false
@@ -382,6 +389,7 @@ func _reset_attempt_table() -> void:
 	drag_count = 0
 	trace.clear()
 	_begin_trial_session()
+	_clear_selected_item(false)
 	item_nodes.clear()
 	input_locked = false
 	btn_confirm.disabled = false
@@ -409,19 +417,26 @@ func _spawn_items() -> void:
 		var item_node: Control = item_node_v as Control
 		if item_node.has_method("setup"):
 			item_node.call("setup", item_data)
+		var item_id: String = str(item_data.get("item_id", ""))
 		if item_node.has_signal("drag_started"):
 			item_node.connect("drag_started", Callable(self, "_on_drag_started"))
 		if item_node.has_signal("drag_cancelled"):
 			item_node.connect("drag_cancelled", Callable(self, "_on_drag_cancelled"))
+		if item_node is BaseButton and item_id != "":
+			var item_button: BaseButton = item_node as BaseButton
+			var pressed_cb: Callable = Callable(self, "_on_item_pressed").bind(item_id)
+			if not item_button.pressed.is_connected(pressed_cb):
+				item_button.pressed.connect(pressed_cb)
 		if pile_zone.has_method("add_item_control"):
 			pile_zone.call("add_item_control", item_node)
-		var item_id: String = str(item_data.get("item_id", ""))
 		if item_id != "":
 			item_nodes[item_id] = item_node
 
 func _on_drag_started(item_id: String, from_zone: String) -> void:
 	if input_locked:
 		return
+	if not _selected_item_id.is_empty():
+		_clear_selected_item(false)
 	drag_count += 1
 	drag_start_count += 1
 	if time_to_first_drag_ms < 0:
@@ -439,6 +454,97 @@ func _on_drag_cancelled(item_id: String, from_zone: String) -> void:
 		return
 	_log_event("DRAG_CANCEL", {"item_id": item_id, "from_zone": from_zone})
 	_clear_socket_feedback()
+
+func _on_socket_zone_gui_input(event: InputEvent, zone_control: Control) -> void:
+	if not _is_bucket_tap_event(event):
+		return
+	if input_locked or _selected_item_id.is_empty():
+		return
+	var socket_id_v: Variant = zone_control.get("socket_id")
+	if socket_id_v == null:
+		return
+	var socket_id: String = str(socket_id_v).to_upper()
+	if socket_id == "":
+		return
+	_on_bucket_tapped(socket_id)
+
+func _is_bucket_tap_event(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch:
+		var touch_event: InputEventScreenTouch = event as InputEventScreenTouch
+		return touch_event.pressed
+	if event is InputEventMouseButton:
+		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+		return mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed
+	return false
+
+func _on_item_pressed(item_id: String) -> void:
+	if input_locked or item_id == "":
+		return
+	if _selected_item_id == item_id:
+		_clear_selected_item()
+		return
+	_set_selected_item(item_id)
+	status_label.text = _tr(
+		"resus.a.status.tap_bucket",
+		"Now tap a target socket to place the selected part (INPUT/OUTPUT/MEMORY)."
+	)
+	status_label.modulate = COLOR_OK
+
+func _on_bucket_tapped(bucket_id: String) -> void:
+	if input_locked or _selected_item_id.is_empty():
+		return
+	var normalized_bucket: String = bucket_id.to_upper()
+	if normalized_bucket == "":
+		return
+	var item_node_v: Variant = item_nodes.get(_selected_item_id, null)
+	if not (item_node_v is Node):
+		_clear_selected_item()
+		return
+	var item_node: Node = item_node_v as Node
+	if not is_instance_valid(item_node):
+		_clear_selected_item()
+		return
+	var payload: Dictionary = {
+		"kind": "RESUS_PART",
+		"item_id": _selected_item_id,
+		"node_path": str(item_node.get_path()),
+		"from_zone": str(item_node.get_meta("zone_id", "PILE")).to_upper()
+	}
+	var accepted: bool = _accepted_item_ids_for_bucket(normalized_bucket).has(_selected_item_id)
+	var zone: Node = _zone_for_socket(normalized_bucket)
+	if zone != null:
+		if accepted and zone.has_signal("drop_accepted"):
+			zone.emit_signal("drop_accepted", _selected_item_id, normalized_bucket)
+		elif not accepted and zone.has_signal("drop_rejected"):
+			zone.emit_signal("drop_rejected", _selected_item_id, normalized_bucket)
+	on_socket_drop(payload, normalized_bucket, accepted)
+	if accepted:
+		_clear_selected_item(false)
+
+func _set_selected_item(item_id: String) -> void:
+	_clear_selected_item(false)
+	_selected_item_id = item_id
+	_set_item_touch_selected(item_id, true)
+	_set_socket_targets_for_item(item_id)
+
+func _clear_selected_item(clear_feedback: bool = true) -> void:
+	if not _selected_item_id.is_empty():
+		_set_item_touch_selected(_selected_item_id, false)
+	_selected_item_id = ""
+	if clear_feedback:
+		_clear_socket_feedback()
+
+func _set_item_touch_selected(item_id: String, selected: bool) -> void:
+	if item_id == "":
+		return
+	var item_node_v: Variant = item_nodes.get(item_id, null)
+	if not (item_node_v is Node):
+		return
+	var item_node: Node = item_node_v as Node
+	if not is_instance_valid(item_node):
+		return
+	if item_node.has_method("set_touch_selected"):
+		item_node.call("set_touch_selected", selected)
 
 func _on_socket_hint_requested(item_id: String, socket_id: String) -> void:
 	if input_locked:

@@ -77,6 +77,7 @@ func _build_db_url(path: String) -> String:
 
 func _send_trial_to_firebase(data: Dictionary) -> void:
 	if user_id == "":
+		push_warning("Trial NOT sent: user_id is empty. Quest: %s" % str(data.get("quest_id", "unknown")))
 		return
 
 	_ensure_session_id()

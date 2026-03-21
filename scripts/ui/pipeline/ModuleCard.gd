@@ -69,11 +69,9 @@ func _gui_input(event: InputEvent) -> void:
 		var mouse_event: InputEventMouseButton = event
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
 			emit_signal("module_selected", module_data.duplicate(true), self)
-			accept_event()
 		return
 
 	if event is InputEventScreenTouch:
 		var touch_event: InputEventScreenTouch = event
 		if touch_event.pressed:
 			emit_signal("module_selected", module_data.duplicate(true), self)
-			accept_event()
