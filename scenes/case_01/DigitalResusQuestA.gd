@@ -65,6 +65,9 @@ var last_bucket_id: String = ""
 var _awaiting_edit_after_feedback: bool = false
 var _awaiting_edit_after_fail: bool = false
 var _selected_item_id: String = ""
+var _bucket_popup: PanelContainer = null
+var _bucket_popup_buttons: Dictionary = {}
+var _popup_item_id: String = ""
 
 @onready var noir_overlay: Node = $NoirOverlay
 @onready var safe_area: MarginContainer = $SafeArea
@@ -162,11 +165,6 @@ func _connect_zone_signals() -> void:
 			zone.connect("drop_accepted", Callable(self, "_on_socket_drop_accepted"))
 		if zone.has_signal("drop_rejected") and not zone.is_connected("drop_rejected", Callable(self, "_on_socket_drop_rejected")):
 			zone.connect("drop_rejected", Callable(self, "_on_socket_drop_rejected"))
-		if zone is Control:
-			var zone_control: Control = zone as Control
-			var zone_gui_input_cb: Callable = Callable(self, "_on_socket_zone_gui_input").bind(zone_control)
-			if not zone_control.gui_input.is_connected(zone_gui_input_cb):
-				zone_control.gui_input.connect(zone_gui_input_cb)
 
 func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
@@ -177,6 +175,7 @@ func _on_language_changed(_code: String) -> void:
 	briefing_label.text = _resolve_briefing_text(level_data)
 	if not _is_table_level():
 		_configure_zones()
+		_build_bucket_popup()
 		_refresh_spawned_item_localization()
 	_reset_confirm_warning_state()
 	_last_state_key = ""
@@ -216,9 +215,11 @@ func _start_level(index: int) -> void:
 	_apply_i18n()
 	if _is_table_level():
 		_enable_table_mode()
+		_hide_bucket_popup()
 	else:
 		_enable_matching_mode()
 		_configure_zones()
+		_build_bucket_popup()
 	_reset_attempt()
 
 func _enable_table_mode() -> void:
@@ -360,7 +361,7 @@ func _reset_attempt() -> void:
 	drag_count = 0
 	trace.clear()
 	_begin_trial_session()
-	_clear_selected_item(false)
+	_hide_bucket_popup()
 	item_nodes.clear()
 	input_locked = false
 	btn_confirm.disabled = false
@@ -389,7 +390,7 @@ func _reset_attempt_table() -> void:
 	drag_count = 0
 	trace.clear()
 	_begin_trial_session()
-	_clear_selected_item(false)
+	_hide_bucket_popup()
 	item_nodes.clear()
 	input_locked = false
 	btn_confirm.disabled = false
@@ -435,8 +436,8 @@ func _spawn_items() -> void:
 func _on_drag_started(item_id: String, from_zone: String) -> void:
 	if input_locked:
 		return
-	if not _selected_item_id.is_empty():
-		_clear_selected_item(false)
+	if not _selected_item_id.is_empty() or (_bucket_popup != null and _bucket_popup.visible):
+		_hide_bucket_popup()
 	drag_count += 1
 	drag_start_count += 1
 	if time_to_first_drag_ms < 0:
@@ -455,40 +456,142 @@ func _on_drag_cancelled(item_id: String, from_zone: String) -> void:
 	_log_event("DRAG_CANCEL", {"item_id": item_id, "from_zone": from_zone})
 	_clear_socket_feedback()
 
-func _on_socket_zone_gui_input(event: InputEvent, zone_control: Control) -> void:
-	if not _is_bucket_tap_event(event):
-		return
-	if input_locked or _selected_item_id.is_empty():
-		return
-	var socket_id_v: Variant = zone_control.get("socket_id")
-	if socket_id_v == null:
-		return
-	var socket_id: String = str(socket_id_v).to_upper()
-	if socket_id == "":
-		return
-	_on_bucket_tapped(socket_id)
-
-func _is_bucket_tap_event(event: InputEvent) -> bool:
-	if event is InputEventScreenTouch:
-		var touch_event: InputEventScreenTouch = event as InputEventScreenTouch
-		return touch_event.pressed
-	if event is InputEventMouseButton:
-		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
-		return mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed
-	return false
-
 func _on_item_pressed(item_id: String) -> void:
 	if input_locked or item_id == "":
 		return
-	if _selected_item_id == item_id:
-		_clear_selected_item()
+	if _bucket_popup != null and _bucket_popup.visible and _popup_item_id == item_id:
+		_hide_bucket_popup()
 		return
+	_popup_item_id = item_id
 	_set_selected_item(item_id)
-	status_label.text = _tr(
-		"resus.a.status.tap_bucket",
-		"Now tap a target socket to place the selected part (INPUT/OUTPUT/MEMORY)."
-	)
+	_show_bucket_popup(item_id)
+
+func _build_bucket_popup() -> void:
+	if _bucket_popup == null:
+		_bucket_popup = PanelContainer.new()
+		_bucket_popup.name = "BucketPopup"
+		_bucket_popup.visible = false
+		_bucket_popup.z_index = 100
+		_bucket_popup.mouse_filter = Control.MOUSE_FILTER_STOP
+
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.08, 0.09, 0.12, 0.95)
+		style.border_color = Color(0.3, 0.35, 0.4, 0.8)
+		style.border_width_left = 2
+		style.border_width_right = 2
+		style.border_width_top = 2
+		style.border_width_bottom = 2
+		style.corner_radius_top_left = 8
+		style.corner_radius_top_right = 8
+		style.corner_radius_bottom_left = 8
+		style.corner_radius_bottom_right = 8
+		_bucket_popup.add_theme_stylebox_override("panel", style)
+
+		var margin := MarginContainer.new()
+		margin.name = "PopupMargin"
+		margin.add_theme_constant_override("margin_left", 16)
+		margin.add_theme_constant_override("margin_right", 16)
+		margin.add_theme_constant_override("margin_top", 12)
+		margin.add_theme_constant_override("margin_bottom", 12)
+
+		var vbox := VBoxContainer.new()
+		vbox.name = "PopupVBox"
+		vbox.add_theme_constant_override("separation", 8)
+
+		var title := Label.new()
+		title.name = "PopupTitle"
+		title.text = _tr("resus.a.popup.title", "Куда разместить?")
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title.add_theme_font_size_override("font_size", 18)
+		vbox.add_child(title)
+
+		var cancel_btn := Button.new()
+		cancel_btn.name = "PopupBtnCancel"
+		cancel_btn.text = _tr("resus.a.popup.cancel", "Отмена")
+		cancel_btn.custom_minimum_size = Vector2(200.0, 44.0)
+		cancel_btn.pressed.connect(_hide_bucket_popup)
+		vbox.add_child(cancel_btn)
+
+		margin.add_child(vbox)
+		_bucket_popup.add_child(margin)
+		add_child(_bucket_popup)
+
+	_refresh_bucket_popup_buttons()
+
+func _refresh_bucket_popup_buttons() -> void:
+	if _bucket_popup == null:
+		return
+	var vbox_node: Variant = _bucket_popup.get_node_or_null("PopupMargin/PopupVBox")
+	if not (vbox_node is VBoxContainer):
+		return
+	var vbox: VBoxContainer = vbox_node as VBoxContainer
+	for old_btn_v in _bucket_popup_buttons.values():
+		if not (old_btn_v is Button):
+			continue
+		var old_btn: Button = old_btn_v as Button
+		if not is_instance_valid(old_btn):
+			continue
+		if old_btn.get_parent() == vbox:
+			vbox.remove_child(old_btn)
+		old_btn.queue_free()
+	_bucket_popup_buttons.clear()
+
+	for bucket_id in _bucket_ids(level_data.get("buckets", []) as Array):
+		if not bucket_to_zone.has(bucket_id):
+			continue
+		var btn := Button.new()
+		btn.name = "PopupBtn_%s" % bucket_id
+		btn.text = str(bucket_labels_runtime.get(bucket_id, bucket_id))
+		btn.custom_minimum_size = Vector2(200.0, 52.0)
+		btn.pressed.connect(_on_popup_bucket_selected.bind(bucket_id))
+		vbox.add_child(btn)
+		_bucket_popup_buttons[bucket_id] = btn
+
+	var cancel_btn_node: Variant = vbox.get_node_or_null("PopupBtnCancel")
+	if cancel_btn_node is Control:
+		vbox.move_child(cancel_btn_node as Control, vbox.get_child_count() - 1)
+
+func _show_bucket_popup(item_id: String) -> void:
+	if _bucket_popup == null:
+		_build_bucket_popup()
+	_popup_item_id = item_id
+	_refresh_bucket_popup_buttons()
+
+	var title_node_v: Variant = _bucket_popup.get_node_or_null("PopupMargin/PopupVBox/PopupTitle")
+	if title_node_v is Label:
+		var title_node: Label = title_node_v as Label
+		var item_label: String = ""
+		var item_node_v: Variant = item_nodes.get(item_id, null)
+		if item_node_v is BaseButton:
+			item_label = str((item_node_v as BaseButton).text)
+		if item_label.strip_edges() == "":
+			item_label = _item_display_name(item_id)
+		if item_label.strip_edges() == "":
+			item_label = item_id
+		title_node.text = _tr("resus.a.popup.title_with_item", "Куда разместить «{item}»?", {"item": item_label})
+
+	_bucket_popup.visible = true
+	await get_tree().process_frame
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var popup_size: Vector2 = _bucket_popup.size
+	_bucket_popup.position = (viewport_size - popup_size) * 0.5
+	status_label.text = _tr("resus.a.status.choose_bucket", "Выберите зону для размещения.")
 	status_label.modulate = COLOR_OK
+
+func _hide_bucket_popup() -> void:
+	if _bucket_popup != null:
+		_bucket_popup.visible = false
+	_popup_item_id = ""
+	_clear_selected_item()
+
+func _on_popup_bucket_selected(bucket_id: String) -> void:
+	if _popup_item_id.is_empty():
+		_hide_bucket_popup()
+		return
+	var saved_item_id: String = _popup_item_id
+	_hide_bucket_popup()
+	_set_selected_item(saved_item_id)
+	_on_bucket_tapped(bucket_id)
 
 func _on_bucket_tapped(bucket_id: String) -> void:
 	if input_locked or _selected_item_id.is_empty():
@@ -1618,6 +1721,8 @@ func _on_viewport_size_changed() -> void:
 	result_popup.offset_top = -popup_height * 0.5
 	result_popup.offset_right = popup_width * 0.5
 	result_popup.offset_bottom = popup_height * 0.5
+	if _bucket_popup != null and _bucket_popup.visible:
+		_bucket_popup.position = (viewport_size - _bucket_popup.size) * 0.5
 
 func _apply_safe_area_padding(compact: bool) -> void:
 	var left: float = 8.0 if compact else 16.0

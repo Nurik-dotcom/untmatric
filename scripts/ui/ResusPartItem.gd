@@ -97,6 +97,10 @@ func _on_mouse_exited() -> void:
 	_sync_glow_visibility()
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
+	# Touch/web flow uses popup placement in the parent controller.
+	if OS.has_feature("mobile") or OS.has_feature("web"):
+		return null
+
 	var from_zone: String = get_zone_id()
 	_drag_from_zone = from_zone
 	drag_started.emit(item_id, from_zone)
