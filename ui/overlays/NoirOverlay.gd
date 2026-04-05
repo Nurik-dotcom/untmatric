@@ -5,7 +5,7 @@ extends CanvasLayer
 @export var tint_color: Color = Color(0.93, 0.93, 0.93, 1.0)
 @export_enum("CRT", "PENCIL", "ENHANCED") var overlay_mode: String = "ENHANCED"
 
-@onready var crt_overlay: ColorRect = $CRT_Overlay
+@onready var crt_overlay: ColorRect = get_node_or_null("CRT_Overlay") as ColorRect
 
 var _shader_material: ShaderMaterial
 var _danger_tween: Tween
@@ -17,6 +17,14 @@ const ENHANCED_SHADER: Shader = preload("res://ui/shaders/noir_enhanced.gdshader
 
 func _ready() -> void:
 	add_to_group("noir_overlay")
+	crt_overlay = get_node_or_null("CRT_Overlay") as ColorRect
+	if crt_overlay == null:
+		crt_overlay = ColorRect.new()
+		crt_overlay.name = "CRT_Overlay"
+		crt_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		crt_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		crt_overlay.color = Color(1, 1, 1, 0)
+		add_child(crt_overlay)
 	_ensure_material_for_mode()
 	_apply_base_profile()
 	_base_glitch_strength = 0.0
@@ -95,6 +103,8 @@ func _ensure_material_for_mode() -> void:
 		_:
 			target_shader = CRT_SHADER
 	
+	if crt_overlay == null:
+		return
 	var current_material: ShaderMaterial = crt_overlay.material as ShaderMaterial
 	if current_material == null:
 		current_material = ShaderMaterial.new()

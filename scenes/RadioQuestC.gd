@@ -63,7 +63,7 @@ const COLOR_SAMPLE_FAIL: Color = Color(0.95, 0.25, 0.25, 1.0)
 const COLOR_SAMPLE_WARN: Color = Color(0.95, 0.75, 0.20, 1.0)
 
 @onready var safe_area: MarginContainer = $SafeArea
-@onready var body_split: HSplitContainer = $SafeArea/RootVBox/BodyHSplit
+@onready var body_split: SplitContainer = $SafeArea/RootVBox/BodyHSplit
 @onready var top_bar: PanelContainer = $SafeArea/RootVBox/TopBar
 @onready var mission_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftCol/MissionCard
 @onready var status_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftCol/StatusCard
@@ -482,6 +482,8 @@ func _configure_layout() -> void:
 
 	var size: Vector2 = get_viewport_rect().size
 	var is_landscape: bool = size.x > size.y
+	var is_portrait: bool = size.x <= size.y
+	var ultra_compact: bool = size.y <= 400.0 and is_landscape
 	var ultra_tight: bool = is_landscape and size.y <= 420.0
 	var is_tight_landscape: bool = is_landscape and size.y <= TIGHT_LANDSCAPE_MAX_HEIGHT
 	var knob_min_side: float = 320.0
@@ -489,6 +491,7 @@ func _configure_layout() -> void:
 		knob_min_side = 260.0
 	elif size.y < 700.0:
 		knob_min_side = 300.0
+	body_split.vertical = is_portrait
 
 	mission_card.visible = true
 	task_line_2.visible = true
@@ -496,7 +499,69 @@ func _configure_layout() -> void:
 	micro_hint.visible = true
 	decision_rule_label.visible = true
 
-	if ultra_tight:
+	if is_portrait:
+		body_split.split_offset = int(size.y * 0.4)
+		top_bar.custom_minimum_size.y = 48.0
+		mission_card.custom_minimum_size.y = 80.0
+		status_card.custom_minimum_size.y = 68.0
+		compare_card.custom_minimum_size.y = 68.0
+		actions_card.custom_minimum_size.y = 180.0
+		time_knob.custom_minimum_size = Vector2(160, 160)
+		task_line_2.visible = false
+		task_line_3.visible = false
+		micro_hint.visible = false
+		decision_rule_label.visible = false
+		title_label.add_theme_font_size_override("font_size", 18)
+		mode_chip.add_theme_font_size_override("font_size", 12)
+		stability_label.add_theme_font_size_override("font_size", 12)
+		estimate_value_label.add_theme_font_size_override("font_size", 20)
+		status_label.add_theme_font_size_override("font_size", 15)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1]:
+			btn.custom_minimum_size.y = 44.0
+		btn_analyze.custom_minimum_size.y = 52.0
+		btn_risk.custom_minimum_size.y = 56.0
+		btn_abort.custom_minimum_size.y = 56.0
+		btn_units.custom_minimum_size.y = 44.0
+		btn_details.custom_minimum_size.y = 44.0
+		btn_next.custom_minimum_size.y = 44.0
+		btn_close_details.custom_minimum_size.y = 44.0
+		sample_strip.visible = false
+		risk_card.size_flags_vertical = Control.SIZE_FILL
+		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		risk_card.size_flags_stretch_ratio = 0.8
+		actions_card.size_flags_stretch_ratio = 1.2
+	elif ultra_compact:
+		body_split.split_offset = _clamp_split_offset(int(size.x * 0.48), 300, 280)
+		top_bar.custom_minimum_size.y = 46.0
+		mission_card.custom_minimum_size.y = 100.0
+		status_card.custom_minimum_size.y = 64.0
+		compare_card.custom_minimum_size.y = 64.0
+		actions_card.custom_minimum_size.y = 170.0
+		time_knob.custom_minimum_size = Vector2(150, 150)
+		task_line_2.visible = false
+		task_line_3.visible = false
+		micro_hint.visible = false
+		decision_rule_label.visible = false
+		title_label.add_theme_font_size_override("font_size", 17)
+		mode_chip.add_theme_font_size_override("font_size", 12)
+		stability_label.add_theme_font_size_override("font_size", 12)
+		estimate_value_label.add_theme_font_size_override("font_size", 18)
+		status_label.add_theme_font_size_override("font_size", 15)
+		for btn in [btn_back, btn_minus_1, btn_minus_01, btn_plus_01, btn_plus_1]:
+			btn.custom_minimum_size.y = 40.0
+		btn_analyze.custom_minimum_size.y = 48.0
+		btn_risk.custom_minimum_size.y = 52.0
+		btn_abort.custom_minimum_size.y = 52.0
+		btn_units.custom_minimum_size.y = 40.0
+		btn_details.custom_minimum_size.y = 40.0
+		btn_next.custom_minimum_size.y = 42.0
+		btn_close_details.custom_minimum_size.y = 40.0
+		sample_strip.visible = false
+		risk_card.size_flags_vertical = Control.SIZE_FILL
+		actions_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		risk_card.size_flags_stretch_ratio = 0.8
+		actions_card.size_flags_stretch_ratio = 1.2
+	elif ultra_tight:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 340, 340)
 		top_bar.custom_minimum_size.y = 48.0
 		mission_card.custom_minimum_size.y = 60.0

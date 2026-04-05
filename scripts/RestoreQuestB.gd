@@ -125,6 +125,7 @@ var tap_selected_block_data: Dictionary = {}
 var block_buttons_by_id: Dictionary = {}
 var preview_opened_for_task: bool = false
 var _body_scroll_installed: bool = false
+var _partial_trial_sent: bool = false
 
 func _ready() -> void:
 	_load_levels_from_json()
@@ -178,6 +179,7 @@ func _install_body_scroll() -> void:
 	_body_scroll_installed = true
 
 func _exit_tree() -> void:
+	_register_partial_trial("EXIT_WITHOUT_SUBMIT")
 	if I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.disconnect(_on_language_changed)
 	if get_tree() != null and get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
@@ -285,6 +287,7 @@ func _connect_signals() -> void:
 	diag_panel.visibility_changed.connect(_on_diag_visibility_changed)
 
 func _on_back_pressed() -> void:
+	_register_partial_trial("BACK_PRESSED")
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
 
 func build_variant_key(task: Dictionary) -> String:
@@ -313,6 +316,7 @@ func _start_level(idx: int) -> void:
 	paused_total_ms = 0
 	pause_started_ticks = -1
 	level_result_sent = false
+	_partial_trial_sent = false
 	hint_total_ms = 0
 	hint_open_time = 0
 	switches_before_submit = 0
@@ -919,6 +923,44 @@ func _on_next_pressed() -> void:
 		diag_panel.visible = false
 	_log_event("next_pressed", {"from_task": str(current_task.get("id", "B-00"))})
 	_start_level(current_level_idx + 1)
+
+func _register_partial_trial(reason: String) -> void:
+	if _partial_trial_sent:
+		return
+	if level_result_sent:
+		return
+	if current_task.is_empty() or t_start_ticks <= 0:
+		return
+
+	_partial_trial_sent = true
+	var end_ticks: int = Time.get_ticks_msec()
+	var elapsed_ms: int = _effective_elapsed_ms(end_ticks)
+	var task_id: String = str(current_task.get("id", "B-00"))
+	task_session["ended_at_ticks"] = end_ticks
+	task_session["hint_total_ms"] = hint_total_ms
+	task_session["paused_total_ms"] = paused_total_ms
+	task_session["wrong_count"] = wrong_count
+	_log_event("task_end_partial", {"reason": reason})
+
+	var payload: Dictionary = {
+		"quest_id": "RESTORE_QUEST",
+		"stage_id": "B",
+		"match_key": "RESTORE_B|%s|PARTIAL" % task_id,
+		"is_correct": false,
+		"is_fit": false,
+		"elapsed_ms": elapsed_ms,
+		"duration": float(elapsed_ms) / 1000.0,
+		"task_id": task_id,
+		"variant_hash": variant_hash,
+		"trial_seq": trial_seq,
+		"slot_select_count": slot_select_count,
+		"gate_place_count": gate_place_count,
+		"outcome_code": reason,
+		"partial": true,
+		"stability_delta": 0.0,
+		"task_session": task_session
+	}
+	GlobalMetrics.register_trial(payload)
 
 func _register_result(is_correct: bool, end_ticks: int, reason: String) -> void:
 	if level_result_sent:

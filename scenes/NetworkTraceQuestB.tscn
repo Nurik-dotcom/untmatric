@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://bc7hh137v5i1q"]
+[gd_scene load_steps=6 format=3 uid="uid://bc7hh137v5i1q"]
 
 [ext_resource type="Script" path="res://scripts/quests/network_trace/NetworkTraceQuestB.gd" id="1_script"]
-[ext_resource type="Theme" path="res://ui/theme_noir_detective.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://ckh2j4fimo232" path="res://ui/theme_noir_detective.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://scenes/ui/DiagnosticsPanelC.tscn" id="3_diag_panel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pipeline/PipelineSlot.tscn" id="4_pipeline_slot"]
 [ext_resource type="PackedScene" path="res://ui/overlays/NoirOverlay.tscn" id="5_noir"]
@@ -40,16 +40,7 @@ theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 12
 
 [node name="Main" type="MarginContainer" parent="SafeArea"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 12.0
-offset_right = -16.0
-offset_bottom = -12.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
@@ -78,7 +69,7 @@ theme_override_font_sizes/font_size = 24
 text = "СЕТЕВОЙ СЛЕД | B"
 
 [node name="LblMeta" type="Label" parent="SafeArea/Main/V/Header"]
-custom_minimum_size = Vector2(340, 52)
+custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "ДЕЛО -- | ОШ 0/3 | T-02:00"
@@ -88,13 +79,12 @@ vertical_alignment = 1
 [node name="StabilityBar" type="ProgressBar" parent="SafeArea/Main/V/Header"]
 custom_minimum_size = Vector2(140, 38)
 layout_mode = 2
-max_value = 100.0
 value = 100.0
 show_percentage = false
 
 [node name="PaletteSelect" type="OptionButton" parent="SafeArea/Main/V/Header"]
-custom_minimum_size = Vector2(130, 52)
 visible = false
+custom_minimum_size = Vector2(130, 52)
 layout_mode = 2
 disabled = true
 
@@ -128,7 +118,6 @@ custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
-fit_content = false
 scroll_active = false
 
 [node name="LblPrompt" type="RichTextLabel" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
@@ -136,7 +125,6 @@ custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
-fit_content = false
 scroll_active = false
 
 [node name="InterceptBox" type="VBoxContainer" parent="SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV"]
@@ -171,9 +159,9 @@ custom_minimum_size = Vector2(0, 190)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-fit_content = false
-selection_enabled = true
+focus_mode = 2
 autowrap_mode = 2
+selection_enabled = true
 
 [node name="ConsolePane" type="PanelContainer" parent="SafeArea/Main/V/Body"]
 layout_mode = 2
@@ -258,7 +246,6 @@ show_percentage = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.0
 
 [node name="AnswersMargin" type="MarginContainer" parent="SafeArea/Main/V/Body/AnswersPane"]
 layout_mode = 2
@@ -284,44 +271,38 @@ columns = 2
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
-text = ""
 
 [node name="ActionBtn2" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
-text = ""
 
 [node name="ActionBtn3" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
-text = ""
 
 [node name="ActionBtn4" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
-text = ""
 
 [node name="ActionBtn5" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
-text = ""
 
 [node name="ActionBtn6" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/OptionsGrid"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
-text = ""
 
 [node name="LblStatus" type="Label" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-autowrap_mode = 2
 text = "Статус"
+autowrap_mode = 2
 
 [node name="BottomRow" type="HBoxContainer" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV"]
 custom_minimum_size = Vector2(0, 58)
@@ -335,14 +316,14 @@ size_flags_horizontal = 3
 text = "СБРОС"
 
 [node name="BtnNext" type="Button" parent="SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV/BottomRow"]
+visible = false
 custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 size_flags_horizontal = 3
-visible = false
 text = "ДАЛЕЕ"
 
 [node name="DiagnosticsPanel" parent="." instance=ExtResource("3_diag_panel")]
-layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.1
 anchor_top = 0.12
 anchor_right = 0.9

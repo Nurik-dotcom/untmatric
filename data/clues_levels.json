@@ -612,18 +612,18 @@
                 "round_id": "B01_R2",
                 "type": "choose_for_scenario",
                 "prompt_key": "resus.b01.r2.prompt",
-                "prompt": "School network with one server and 20 PCs.",
-                "topology_visual": "star",
+                "prompt": "Office corridor with one main cable and terminators on both ends.",
+                "topology_visual": "bus",
                 "options": [
                   {
                     "id": "star",
                     "label_key": "resus.b.topo.star",
-                    "is_correct": true
+                    "is_correct": false
                   },
                   {
                     "id": "bus",
                     "label_key": "resus.b.topo.bus",
-                    "is_correct": false
+                    "is_correct": true
                   },
                   {
                     "id": "ring",

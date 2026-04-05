@@ -135,6 +135,7 @@ var is_compact_layout: bool = false
 var task_started_at: int = 0
 var task_finished: bool = false
 var task_result_sent: bool = false
+var partial_trial_sent: bool = false
 var variant_hash: String = ""
 var task_session: Dictionary = {}
 var trial_seq: int = 0
@@ -180,6 +181,10 @@ func _ready() -> void:
 	_configure_overlay_shader()
 	_init_audio_player()
 	_connect_signals()
+	for btn in [btn_quest_back, btn_settings, primary_check_button, btn_next, step_analysis_button, hint_button, why_button, toggle_trace_button, step_prev_button, step_next_button, show_all_button, reset_trace_button, btn_close_overlay, btn_open_steps, btn_overlay_next, popup_close]:
+		if btn != null:
+			btn.focus_mode = Control.FOCUS_NONE
+	answer_input.focus_mode = Control.FOCUS_ALL
 	if not I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.connect(_on_language_changed)
 	_apply_i18n()
@@ -197,6 +202,7 @@ func _ready() -> void:
 	_load_case(0)
 
 func _exit_tree() -> void:
+	_register_partial_trial("EXIT_WITHOUT_ANSWER")
 	if I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.disconnect(_on_language_changed)
 
@@ -220,7 +226,8 @@ func _setup_runtime_controls() -> void:
 
 func _apply_i18n() -> void:
 	btn_quest_back.text = _tr("suspect.a.btn.back", "НАЗАД")
-	btn_settings.text = _tr("suspect.a.btn.settings", "НАСТР")
+	if btn_settings != null:
+		btn_settings.visible = false
 	code_title.text = _tr("suspect.a.ui.code_title", "КОД")
 	trace_title.text = _tr("suspect.a.ui.trace_title", "ЖУРНАЛ ВЫПОЛНЕНИЯ")
 	answer_label.text = _tr("suspect.a.ui.answer", "Итоговое значение s")
@@ -228,9 +235,9 @@ func _apply_i18n() -> void:
 	answer_hint_label.text = _tr("suspect.a.ui.answer_hint", "Сначала проследите ход выполнения, затем подтвердите итог.")
 	primary_check_button.text = _tr("suspect.a.btn.check", "Проверить")
 	btn_next.text = _tr("suspect.a.btn.next", "ДАЛЕЕ")
-	step_analysis_button.text = _tr("suspect.a.btn.step_analysis", "Пошаговый разбор")
-	hint_button.text = _tr("suspect.a.btn.hint", "Подсказка")
-	why_button.text = _tr("suspect.a.btn.why", "Почему так?")
+	step_analysis_button.text = _tr("suspect.a.btn.analyze", "АНАЛИЗ")
+	hint_button.text = _tr("suspect.a.btn.hint", "ПОДСКАЗКА")
+	why_button.text = _tr("suspect.a.btn.verify", "ПРОВЕРИТЬ")
 	toggle_trace_button.text = _tr("suspect.a.btn.trace_open", "Открыть")
 	step_prev_button.text = _tr("suspect.a.btn.prev", "Назад")
 	step_next_button.text = _tr("suspect.a.btn.next_step", "Следующий шаг")
@@ -404,6 +411,10 @@ func _apply_layout_mode() -> void:
 	briefing_title.add_theme_font_size_override("font_size", title_font)
 	briefing_text.add_theme_font_size_override("font_size", body_font)
 	topic_hint_badge.add_theme_font_size_override("font_size", body_font)
+	var compact_briefing: bool = viewport_size.y < 700.0 or (portrait and viewport_size.x < 500.0)
+	briefing_title.visible = not compact_briefing
+	topic_hint_badge.visible = not compact_briefing
+	briefing_text.max_lines_visible = 2 if compact_briefing else 0
 	answer_label.add_theme_font_size_override("font_size", body_font)
 	answer_hint_label.add_theme_font_size_override("font_size", 13 if compact else 14)
 
@@ -493,6 +504,7 @@ func _load_case(case_idx: int) -> void:
 	task_started_at = Time.get_ticks_msec()
 	task_finished = false
 	task_result_sent = false
+	partial_trial_sent = false
 	variant_hash = str(hash(JSON.stringify(current_level)))
 	var bucket: String = str(current_level.get("bucket", "unknown"))
 	task_session = {
@@ -970,7 +982,6 @@ func _reset_answer_ui() -> void:
 	answer_input.text = ""
 	_suppress_answer_change_signal = false
 	answer_input.editable = true
-	answer_input.grab_focus()
 	answer_locked = false
 	primary_check_button.disabled = false
 	btn_next.visible = false
@@ -1091,7 +1102,6 @@ func _handle_wrong_answer() -> void:
 		_offer_explanation_and_trace()
 
 	answer_input.select_all()
-	answer_input.grab_focus()
 
 func _offer_guided_trace() -> void:
 	if trace_mode == "collapsed":
@@ -1237,7 +1247,49 @@ func _on_next_pressed() -> void:
 	_load_case(current_level_idx + 1)
 
 func _on_back_pressed() -> void:
+	_register_partial_trial("BACK_PRESSED")
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+
+func _register_partial_trial(reason: String) -> void:
+	if partial_trial_sent:
+		return
+	if task_finished or task_result_sent:
+		return
+	if current_level.is_empty() or task_started_at <= 0:
+		return
+
+	partial_trial_sent = true
+	var ended: int = Time.get_ticks_msec()
+	var elapsed_ms: int = maxi(0, ended - task_started_at)
+	var level_id: String = str(current_level.get("id", "A-00"))
+	var bucket: String = str(current_level.get("bucket", "unknown"))
+	task_session["ended_at_ticks"] = ended
+	_log_event("task_end_partial", {"reason": reason})
+
+	var result_data: Dictionary = {
+		"quest": "suspect_script",
+		"quest_id": "SUSPECT_SCRIPT",
+		"stage": "A",
+		"stage_id": "A",
+		"match_key": "SUSPECT_A|%s|PARTIAL" % level_id,
+		"task_id": level_id,
+		"bucket": bucket,
+		"variant_hash": variant_hash,
+		"is_correct": false,
+		"is_fit": false,
+		"safe_mode": false,
+		"elapsed_ms": elapsed_ms,
+		"duration": float(elapsed_ms) / 1000.0,
+		"stability_delta": 0.0,
+		"outcome_code": reason,
+		"trial_seq": trial_seq,
+		"enter_press_count": enter_press_count,
+		"analyze_press_count": analyze_press_count,
+		"hint_open_count": guided_trace_open_count + full_trace_open_count + topic_hint_open_count,
+		"partial": true,
+		"task_session": task_session
+	}
+	GlobalMetrics.register_trial(result_data)
 
 func _set_state(new_state: int) -> void:
 	current_state = new_state

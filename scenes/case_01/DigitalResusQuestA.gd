@@ -68,6 +68,9 @@ var _selected_item_id: String = ""
 var _bucket_popup: PanelContainer = null
 var _bucket_popup_buttons: Dictionary = {}
 var _popup_item_id: String = ""
+var _monitor_frame_base_min_height: float = 0.0
+var _zones_card_base_min_height: float = 0.0
+var _parts_card_base_min_height: float = 0.0
 
 @onready var noir_overlay: Node = $NoirOverlay
 @onready var safe_area: MarginContainer = $SafeArea
@@ -86,6 +89,7 @@ var _popup_item_id: String = ""
 @onready var title_label: Label = $SafeArea/MainVBox/Header/TitleLabel
 @onready var stage_label: Label = $SafeArea/MainVBox/Header/StageLabel
 @onready var stability_bar: ProgressBar = $SafeArea/MainVBox/Header/StabilityBar
+@onready var monitor_frame: PanelContainer = $SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/MonitorFrame
 @onready var monitor_screen: ColorRect = $SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/MonitorFrame/MonitorScreen
 @onready var monitor_label: Label = $SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/MonitorFrame/MonitorLabel
 @onready var boot_console: RichTextLabel = $SafeArea/MainVBox/ContentScroll/Content/SystemCard/SystemVBox/BootConsole
@@ -130,6 +134,9 @@ func _ready() -> void:
 	result_retry_button.pressed.connect(_on_retry_pressed)
 	result_next_level_button.pressed.connect(_on_next_level_pressed)
 	result_back_button.pressed.connect(_on_back_pressed)
+	_monitor_frame_base_min_height = monitor_frame.custom_minimum_size.y
+	_zones_card_base_min_height = zones_card.custom_minimum_size.y
+	_parts_card_base_min_height = parts_card.custom_minimum_size.y
 
 	_setup_collapsible_briefing()
 	_connect_zone_signals()
@@ -211,7 +218,9 @@ func _start_level(index: int) -> void:
 	current_level_index = clamp(index, 0, max(0, levels.size() - 1))
 	level_data = (levels[current_level_index] as Dictionary).duplicate(true)
 	item_contracts = _item_contract_map(level_data.get("items", []) as Array)
+	_briefing_collapsed = true
 	briefing_label.text = _resolve_briefing_text(level_data)
+	_apply_briefing_state()
 	_apply_i18n()
 	if _is_table_level():
 		_enable_table_mode()
@@ -423,11 +432,10 @@ func _spawn_items() -> void:
 			item_node.connect("drag_started", Callable(self, "_on_drag_started"))
 		if item_node.has_signal("drag_cancelled"):
 			item_node.connect("drag_cancelled", Callable(self, "_on_drag_cancelled"))
-		if item_node is BaseButton and item_id != "":
-			var item_button: BaseButton = item_node as BaseButton
-			var pressed_cb: Callable = Callable(self, "_on_item_pressed").bind(item_id)
-			if not item_button.pressed.is_connected(pressed_cb):
-				item_button.pressed.connect(pressed_cb)
+		if item_id != "" and item_node.has_signal("item_tapped"):
+			var tap_cb: Callable = Callable(self, "_on_item_pressed").bind(item_id)
+			if not item_node.is_connected("item_tapped", tap_cb):
+				item_node.connect("item_tapped", tap_cb)
 		if pile_zone.has_method("add_item_control"):
 			pile_zone.call("add_item_control", item_node)
 		if item_id != "":
@@ -456,15 +464,16 @@ func _on_drag_cancelled(item_id: String, from_zone: String) -> void:
 	_log_event("DRAG_CANCEL", {"item_id": item_id, "from_zone": from_zone})
 	_clear_socket_feedback()
 
-func _on_item_pressed(item_id: String) -> void:
-	if input_locked or item_id == "":
+func _on_item_pressed(item_id: String, bound_item_id: String = "") -> void:
+	var resolved_item_id: String = bound_item_id if bound_item_id != "" else item_id
+	if input_locked or resolved_item_id == "":
 		return
-	if _bucket_popup != null and _bucket_popup.visible and _popup_item_id == item_id:
+	if _bucket_popup != null and _bucket_popup.visible and _popup_item_id == resolved_item_id:
 		_hide_bucket_popup()
 		return
-	_popup_item_id = item_id
-	_set_selected_item(item_id)
-	_show_bucket_popup(item_id)
+	_popup_item_id = resolved_item_id
+	_set_selected_item(resolved_item_id)
+	_show_bucket_popup(resolved_item_id)
 
 func _build_bucket_popup() -> void:
 	if _bucket_popup == null:
@@ -1692,7 +1701,8 @@ func _apply_briefing_state() -> void:
 	if briefing_label == null:
 		return
 	briefing_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	briefing_label.max_lines_visible = 2 if _briefing_collapsed else 0
+	briefing_label.visible = not _briefing_collapsed
+	briefing_label.max_lines_visible = 0
 	if _briefing_toggle_button != null:
 		_briefing_toggle_button.text = "?" if _briefing_collapsed else "x"
 
@@ -1702,6 +1712,7 @@ func _on_viewport_size_changed() -> void:
 	var phone_landscape: bool = is_landscape and viewport_size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
 	var phone_portrait: bool = (not is_landscape) and viewport_size.x <= PHONE_PORTRAIT_MAX_WIDTH
 	var compact: bool = phone_landscape or phone_portrait
+	var compact_mobile: bool = viewport_size.y < 700.0 or ((not is_landscape) and viewport_size.x < 500.0)
 
 	_apply_safe_area_padding(compact)
 	main_vbox.add_theme_constant_override("separation", 8 if compact else 10)
@@ -1713,7 +1724,23 @@ func _on_viewport_size_changed() -> void:
 	btn_reset.custom_minimum_size = Vector2(120.0 if compact else 160.0, 60.0 if compact else 72.0)
 	btn_confirm.custom_minimum_size = Vector2(140.0 if compact else 180.0, 60.0 if compact else 72.0)
 	status_label.custom_minimum_size.y = 56.0 if compact else 72.0
-	parts_grid.columns = 1 if phone_portrait else 2
+	parts_grid.columns = 2
+	if compact_mobile:
+		if monitor_frame != null:
+			monitor_frame.custom_minimum_size.y = 0.0
+			monitor_frame.visible = false
+		monitor_screen.visible = false
+		monitor_label.visible = false
+		zones_card.custom_minimum_size.y = 80.0
+		parts_card.custom_minimum_size.y = 120.0
+	else:
+		if monitor_frame != null:
+			monitor_frame.custom_minimum_size.y = _monitor_frame_base_min_height
+			monitor_frame.visible = true
+		monitor_screen.visible = true
+		monitor_label.visible = true
+		zones_card.custom_minimum_size.y = _zones_card_base_min_height
+		parts_card.custom_minimum_size.y = _parts_card_base_min_height
 
 	var popup_width: float = clampf(viewport_size.x - (24.0 if compact else 120.0), 320.0, 520.0)
 	var popup_height: float = clampf(viewport_size.y - (24.0 if compact else 120.0), 320.0, 620.0)

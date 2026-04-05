@@ -160,6 +160,10 @@ func _ready():
 	_build_weight_labels()
 	_build_safe_bits()
 	_wire_signals()
+	for btn in [btn_check, btn_hint, btn_reset, btn_details,
+			btn_close_details, btn_retry, btn_continue, btn_back]:
+		if btn != null:
+			btn.focus_mode = Control.FOCUS_NONE
 	_reset_shield_state()
 	_hide_overlays()
 
@@ -169,6 +173,8 @@ func _ready():
 		GlobalMetrics.shield_triggered.connect(_on_shield_triggered)
 	if not I18n.language_changed.is_connected(_on_language_changed):
 		I18n.language_changed.connect(_on_language_changed)
+	if not GlobalMetrics.trial_upload_failed.is_connected(_on_trial_upload_failed):
+		GlobalMetrics.trial_upload_failed.connect(_on_trial_upload_failed)
 
 	_apply_i18n()
 
@@ -182,6 +188,10 @@ func _ready():
 	_on_viewport_size_changed()
 	if not get_tree().root.size_changed.is_connected(_on_viewport_size_changed):
 		get_tree().root.size_changed.connect(_on_viewport_size_changed)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if get_viewport():
+		get_viewport().gui_release_focus()
 
 func _exit_tree() -> void:
 	_finish_quest_once(false)
@@ -192,6 +202,9 @@ func _exit_tree() -> void:
 
 func _on_language_changed(_code: String) -> void:
 	_apply_i18n()
+
+func _on_trial_upload_failed(_quest_id: String, reason: String) -> void:
+	_log_message("[ERROR] Метрики не отправлены: %s" % reason, COLOR_ERR)
 
 func _tr(key: String, default_text: String, params: Dictionary = {}) -> String:
 	var merged: Dictionary = params.duplicate(true)
@@ -362,6 +375,8 @@ func _finish_quest_once(success: bool) -> void:
 	_quest_finished = true
 
 func start_level(level_idx: int) -> void:
+	if GlobalMetrics.user_id == "":
+		_log_message("[WARN] Авторизация не пройдена — метрики НЕ сохраняются!", COLOR_WARN)
 	GlobalMetrics.start_level(level_idx)
 	is_level_active = true
 	current_target = GlobalMetrics.current_target_value

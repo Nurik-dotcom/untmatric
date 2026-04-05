@@ -172,7 +172,7 @@ func _apply_runtime_i18n() -> void:
 			_set_status(
 				_tr(
 					"case08.fr8c.status.attack_vs_defense",
-					"Ваш удар: {attack}, Щит: {defense}.",
+					"Your attack: {attack}, defense: {defense}.",
 					{
 						"attack": int(evaluation.get("attack_strength", 0)),
 						"defense": int(evaluation.get("defense_strength", 0))
@@ -382,7 +382,7 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 		reset_count = reset_count_local
 		_log_event("reset_pressed", {"reset_count": reset_count_local})
 	_log_event("attempt_reset", {"level_start": is_level_start})
-	_log_event("СБРОС", {"level_start": is_level_start})
+	_log_event(_tr("case08.fr8c.log.reset", "RESET"), {"level_start": is_level_start})
 
 	selected_option_id = ""
 	level_solved = false
@@ -660,7 +660,7 @@ func _on_confirm_pressed() -> void:
 				feedback_text,
 				_tr(
 					"case08.fr8c.status.attack_vs_defense",
-					"Ваш удар: {attack}, Щит: {defense}.",
+					"Your attack: {attack}, defense: {defense}.",
 					{
 						"attack": actual_attack,
 						"defense": actual_defense
@@ -707,9 +707,9 @@ func _show_session_summary() -> void:
 	level_solved = true
 	btn_confirm.disabled = true
 	btn_reset.disabled = true
-	btn_next.text = _tr("case08.common.exit", "ВЫХОД")
+	btn_next.text = _tr("case08.common.exit", "EXIT")
 	btn_next.disabled = false
-	level_label.text = "C | ИТОГИ"
+	level_label.text = _tr("case08.fr8c.summary.level_label", "C | COMPLETE")
 	if level_progress_bar != null:
 		level_progress_bar.value = 100.0
 
@@ -747,9 +747,19 @@ func _show_session_summary() -> void:
 	var pct: int = int((float(correct) / maxf(1.0, float(total))) * 100.0)
 	var avg_sec: float = (float(total_ms) / 1000.0) / maxf(1.0, float(total))
 
-	briefing_label.text = "СЕССИЯ ЗАВЕРШЕНА\n\nПравильно: %d / %d (%d%%)\nСреднее время: %.1f с\n" % [correct, total, pct, avg_sec]
+	briefing_label.text = _tr("case08.fr8c.summary.title", "SESSION COMPLETE") + "\n\n"
+	briefing_label.text += _tr(
+		"case08.fr8c.summary.correct",
+		"Correct: {c} / {t} ({p}%)",
+		{"c": correct, "t": total, "p": pct}
+	) + "\n"
+	briefing_label.text += _tr(
+		"case08.fr8c.summary.avg_time",
+		"Avg time: {s}s",
+		{"s": "%.1f" % avg_sec}
+	)
 	explain_label.text = ""
-	target_preview.text = "ИТОГ"
+	target_preview.text = _tr("case08.fr8c.summary.target", "TARGET")
 	target_preview.modulate = COLOR_INFO
 	attack_bar.value = 0.0
 	defense_bar.value = 0.0
@@ -758,11 +768,11 @@ func _show_session_summary() -> void:
 	css_label.text = "-"
 
 	if pct >= 90:
-		_set_status("Сессия пройдена успешно.", COLOR_OK)
+		_set_status(_tr("case08.fr8c.status.passed", "Session passed successfully."), COLOR_OK)
 	elif pct >= 60:
-		_set_status("Рекомендуется повторить.", COLOR_WARN)
+		_set_status(_tr("case08.fr8c.status.review", "Review recommended."), COLOR_WARN)
 	else:
-		_set_status("Нужно повторить материал.", COLOR_ERR)
+		_set_status(_tr("case08.fr8c.status.repeat", "Material needs to be repeated."), COLOR_ERR)
 
 func _on_back_pressed() -> void:
 	GlobalMetrics.current_level_index = 0

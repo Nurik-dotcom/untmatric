@@ -5,7 +5,7 @@ extends "res://scenes/Tutorial/TutorialBase.gd"
 class_name TutorialLogicGates
 
 func _initialize_tutorial() -> void:
-	tutorial_id = "logic_gates"
+	tutorial_id = "logic_basic"
 	tutorial_title = "Логические вентили"
 	linked_quest_scene = "res://scenes/LogicQuestA.tscn"
 

@@ -84,7 +84,7 @@ theme_override_font_sizes/font_size = 24
 text = "СЕТЕВОЙ СЛЕД | C"
 
 [node name="LblMeta" type="Label" parent="SafeArea/Main/V/Header"]
-custom_minimum_size = Vector2(330, 52)
+custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "ДЕЛО -- | ОШ 0/3 | T-02:00"

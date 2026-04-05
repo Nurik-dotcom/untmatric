@@ -722,18 +722,21 @@ func _show_safe_mode_diagnostics(trigger_reason: String) -> void:
 	diagnostics_open_count += 1
 	_pending_change_after_diagnostics = true
 	var lines: Array[String] = []
-	lines.append("Уровень: %s" % str(current_level.get("id", "UNKNOWN")))
-	lines.append("Причина: %s" % trigger_reason)
+	lines.append(_tr("nt.a.log.level", "Level: {id}", {"id": str(current_level.get("id", "UNKNOWN"))}))
+	lines.append(_tr("nt.a.log.reason", "Reason: {reason}", {"reason": trigger_reason}))
 	if not selected_error_code.is_empty():
-		lines.append("Последний код: %s" % selected_error_code)
+		lines.append(_tr("nt.a.log.last_code", "Last code: {code}", {"code": selected_error_code}))
 		lines.append(ERROR_MAP.get_error_tip(selected_error_code))
 
 	for idx in selected_evidence_indices:
 		if idx < 0 or idx >= evidence_data.size():
 			continue
 		var e: Dictionary = evidence_data[idx]
-		lines.append("[%s] %s" % [str(e.get("hint_layer", "L2")), str(e.get("log_line", ""))])
-		lines.append("-> %s" % str(e.get("meaning_short", "")))
+		lines.append(_tr("nt.a.log.evidence", "[{layer}] {line}", {
+			"layer": str(e.get("hint_layer", "L2")),
+			"line": str(e.get("log_line", ""))
+		}))
+		lines.append(_tr("nt.a.log.meaning", "-> {text}", {"text": str(e.get("meaning_short", ""))}))
 
 	var explain_full: String = str(current_level.get("explain_full", ""))
 	if not explain_full.is_empty():

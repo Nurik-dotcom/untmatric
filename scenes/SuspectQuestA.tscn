@@ -69,6 +69,7 @@ text = "СЕССИЯ 0000"
 horizontal_alignment = 2
 
 [node name="BtnSettings" type="Button" parent="SafeArea/MainVBox/HeaderBar"]
+visible = false
 custom_minimum_size = Vector2(64, 52)
 layout_mode = 2
 text = "НАСТР"

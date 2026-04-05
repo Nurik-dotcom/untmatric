@@ -18,7 +18,7 @@ const COLOR_BAD: Color = Color(0.95, 0.25, 0.25, 1.0)
 
 @onready var safe_area: MarginContainer = $SafeArea
 @onready var root_vbox: VBoxContainer = $SafeArea/RootVBox
-@onready var body_split: HSplitContainer = $SafeArea/RootVBox/BodyHSplit
+@onready var body_split: SplitContainer = $SafeArea/RootVBox/BodyHSplit
 @onready var mission_card: PanelContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard
 @onready var mission_margin: MarginContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin
 @onready var mission_vbox: VBoxContainer = $SafeArea/RootVBox/BodyHSplit/LeftPane/LeftMargin/LeftVBox/MissionCard/MissionMargin/MissionVBox
@@ -877,13 +877,18 @@ func _apply_safe_area_padding() -> void:
 
 func _configure_layout() -> void:
 	var size: Vector2 = get_viewport_rect().size
+	var is_portrait: bool = size.x <= size.y
 	var phone_landscape: bool = size.x > size.y and size.y <= PHONE_LANDSCAPE_MAX_HEIGHT
+	var ultra_compact: bool = size.y <= 400.0 and size.x > size.y
 	sample_strip.visible = false
+	body_split.vertical = is_portrait
 
 	mission_card.size_flags_vertical = 0
 	readout_card.size_flags_vertical = 0
 	scope_card.size_flags_vertical = 3
 	status_card.size_flags_vertical = 0
+	rule_label.visible = true
+	steps_label.visible = true
 
 	btn_hint.size_flags_stretch_ratio = 0.85
 	btn_analyze.size_flags_stretch_ratio = 1.45
@@ -891,7 +896,35 @@ func _configure_layout() -> void:
 	btn_next.size_flags_stretch_ratio = 1.0
 	btn_details.modulate = Color(0.86, 0.86, 0.90, 0.95)
 
-	if phone_landscape:
+	if is_portrait:
+		body_split.split_offset = int(size.y * 0.4)
+		root_vbox.add_theme_constant_override("separation", 6)
+		bit_knob.custom_minimum_size = Vector2(160, 160)
+		_mission_card_base_min_height = 80.0
+		mission_card.custom_minimum_size.y = _mission_card_base_min_height
+		readout_card.custom_minimum_size.y = 56
+		scope_card.custom_minimum_size.y = 108
+		status_card.custom_minimum_size.y = 72
+		rule_label.visible = false
+		steps_label.visible = false
+		target_label.add_theme_font_size_override("font_size", 20)
+		rule_label.add_theme_font_size_override("font_size", 14)
+		steps_label.add_theme_font_size_override("font_size", 13)
+		bits_value_label.add_theme_font_size_override("font_size", 24)
+		fit_value_label.add_theme_font_size_override("font_size", 17)
+		status_label.add_theme_font_size_override("font_size", 16)
+		btn_details.add_theme_font_size_override("font_size", 13)
+		btn_hint.add_theme_font_size_override("font_size", 16)
+		btn_analyze.add_theme_font_size_override("font_size", 19)
+		meta_label.add_theme_font_size_override("font_size", 15)
+		btn_back.custom_minimum_size.y = 48
+		btn_hint.custom_minimum_size.y = 42
+		btn_analyze.custom_minimum_size.y = 54
+		btn_capture.custom_minimum_size.y = 48
+		btn_next.custom_minimum_size.y = 48
+		btn_details.custom_minimum_size.y = 38
+		btn_close_details.custom_minimum_size.y = 48
+	elif phone_landscape:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 380, 360)
 		root_vbox.add_theme_constant_override("separation", 8)
 		bit_knob.custom_minimum_size = Vector2(200, 200)
@@ -917,6 +950,26 @@ func _configure_layout() -> void:
 		btn_next.custom_minimum_size.y = 54
 		btn_details.custom_minimum_size.y = 40
 		btn_close_details.custom_minimum_size.y = 52
+		if ultra_compact:
+			body_split.split_offset = _clamp_split_offset(int(size.x * 0.48), 300, 280)
+			root_vbox.add_theme_constant_override("separation", 4)
+			bit_knob.custom_minimum_size = Vector2(150, 150)
+			_mission_card_base_min_height = 100.0
+			mission_card.custom_minimum_size.y = _mission_card_base_min_height
+			readout_card.custom_minimum_size.y = 48
+			scope_card.custom_minimum_size.y = 90
+			status_card.custom_minimum_size.y = 64
+			target_label.add_theme_font_size_override("font_size", 18)
+			rule_label.add_theme_font_size_override("font_size", 14)
+			steps_label.add_theme_font_size_override("font_size", 13)
+			status_label.add_theme_font_size_override("font_size", 15)
+			btn_back.custom_minimum_size.y = 46
+			btn_hint.custom_minimum_size.y = 40
+			btn_analyze.custom_minimum_size.y = 52
+			btn_capture.custom_minimum_size.y = 46
+			btn_next.custom_minimum_size.y = 46
+			btn_details.custom_minimum_size.y = 36
+			btn_close_details.custom_minimum_size.y = 46
 	elif size.x < 1280.0:
 		body_split.split_offset = _clamp_split_offset(int(size.x * 0.56), 420, 380)
 		root_vbox.add_theme_constant_override("separation", 10)

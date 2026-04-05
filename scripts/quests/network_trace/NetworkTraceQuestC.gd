@@ -828,16 +828,16 @@ func _show_diagnostics(reason: String) -> void:
 	var range_end: int = mini(255, network_last + step - 1)
 
 	var lines: Array[String] = []
-	lines.append("Уровень: %s" % str(current_level.get("id", "")))
-	lines.append("Причина: %s" % reason)
-	lines.append("Последний IP: %d (%s)" % [ip_last, _byte_to_binary(ip_last)])
-	lines.append("Последняя МАСКА: %d (%s)" % [mask_last, _byte_to_binary(mask_last)])
-	lines.append("РЕЗУЛЬТАТ: %d (%s)" % [and_value, _byte_to_binary(and_value)])
-	lines.append("Шаг: %d" % step)
-	lines.append("СЕГМЕНТ: %d..%d" % [network_last, range_end])
-	lines.append("Ожидаемый сетевой идентификатор: %d" % int(current_level.get("expected_network_last", 0)))
+	lines.append(_tr("nt.c.log.level", "Level: {id}", {"id": str(current_level.get("id", ""))}))
+	lines.append(_tr("nt.c.log.reason", "Reason: {reason}", {"reason": reason}))
+	lines.append(_tr("nt.c.log.ip_last", "Last IP: {dec} ({bin})", {"dec": ip_last, "bin": _byte_to_binary(ip_last)}))
+	lines.append(_tr("nt.c.log.mask_last", "Last MASK: {dec} ({bin})", {"dec": mask_last, "bin": _byte_to_binary(mask_last)}))
+	lines.append(_tr("nt.c.log.and_result", "AND RESULT: {dec} ({bin})", {"dec": and_value, "bin": _byte_to_binary(and_value)}))
+	lines.append(_tr("nt.c.log.step", "Step: {value}", {"value": step}))
+	lines.append(_tr("nt.c.log.segment", "SEGMENT: {start}..{end}", {"start": network_last, "end": range_end}))
+	lines.append(_tr("nt.c.log.expected_network", "Expected network identifier: {value}", {"value": int(current_level.get("expected_network_last", 0))}))
 	if not last_error_code.is_empty():
-		lines.append("Последняя ошибка: %s" % last_error_code)
+		lines.append(_tr("nt.c.log.last_error", "Last error: {code}", {"code": last_error_code}))
 		lines.append(ERROR_MAP.get_error_tip(last_error_code))
 		for detail in ERROR_MAP.detail_messages(last_error_code):
 			lines.append(detail)
@@ -1235,7 +1235,7 @@ func _apply_safe_area_padding() -> void:
 	if safe_area == null:
 		return
 	var left: float = 8.0
-	var top: float = 8.0
+	var top: float = 44.0
 	var right: float = 8.0
 	var bottom: float = 8.0
 	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
@@ -1293,3 +1293,10 @@ func _apply_layout_mode() -> void:
 	for btn in action_buttons:
 		btn.custom_minimum_size.y = 72.0 if portrait else (60.0 if dense_landscape else 72.0)
 	_sync_terminal_text_heights(mode)
+	var vp_size: Vector2 = get_viewport_rect().size
+	var compact: bool = vp_size.x < 740.0 or vp_size.y < 420.0
+	btn_back.custom_minimum_size = Vector2(56.0 if compact else 118.0, 44.0 if compact else 58.0)
+	btn_back.text = "<" if compact else _tr("nt.common.back", "НАЗАД")
+	lbl_meta.custom_minimum_size.x = 0.0 if compact else lbl_meta.custom_minimum_size.x
+	lbl_meta.visible = not compact
+	palette_select.visible = false

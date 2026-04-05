@@ -25,6 +25,7 @@ const DEFAULT_MODULE_POOL: Array = [
 ]
 
 enum QuestState { INIT, PIPELINE_BUILD, PIPELINE_READY, CALC_DONE, ANSWERING, FEEDBACK_SUCCESS, FEEDBACK_FAIL, SAFE_MODE, DIAGNOSTIC, DONE }
+enum UIPhase { BUILD, ANSWER }
 
 @onready var btn_back: Button = $SafeArea/Main/V/Header/BtnBack
 @onready var safe_area: MarginContainer = $SafeArea
@@ -36,6 +37,7 @@ enum QuestState { INIT, PIPELINE_BUILD, PIPELINE_READY, CALC_DONE, ANSWERING, FE
 @onready var terminal_pane: PanelContainer = $SafeArea/Main/V/Body/TerminalPane
 @onready var console_pane: PanelContainer = $SafeArea/Main/V/Body/ConsolePane
 @onready var answers_pane: PanelContainer = $SafeArea/Main/V/Body/AnswersPane
+@onready var answers_vbox: VBoxContainer = $SafeArea/Main/V/Body/AnswersPane/AnswersMargin/AnswersV
 @onready var lbl_briefing: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblBriefing
 @onready var lbl_prompt: RichTextLabel = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/LblPrompt
 @onready var lbl_payload: Label = $SafeArea/Main/V/Body/TerminalPane/TerminalMargin/TerminalV/InterceptBox/LblPayload
@@ -131,6 +133,8 @@ var time_from_last_edit_to_calc_ms: int = -1
 var last_edit_ms: int = -1
 var _pending_change_after_diagnostics: bool = false
 var _pending_change_after_calc_fail: bool = false
+var _ui_phase: int = UIPhase.BUILD
+var btn_back_to_pipeline: Button = null
 
 func _ready() -> void:
 	_setup_runtime_controls()
@@ -168,6 +172,8 @@ func _apply_i18n() -> void:
 	btn_reset.text = _tr("nt.common.reset", "RESET")
 	btn_next.text = _tr("nt.common.next", "NEXT")
 	btn_analyze.text = _tr("nt.common.analyze", "Diagnostics")
+	if btn_back_to_pipeline != null:
+		btn_back_to_pipeline.text = _tr("nt.b.btn.edit_pipeline", "EDIT PIPELINE")
 	lbl_console_title.text = _tr("nt.b.ui.lbl_console_title", "Gateway Console")
 	lbl_module_tray.text = _tr("nt.b.ui.lbl_module_tray", "Module Tray")
 	lbl_title.text = _tr("nt.b.ui.title", "NETWORK TRACE | B")
@@ -211,6 +217,8 @@ func _setup_runtime_controls() -> void:
 	btn_next.visible = false
 	diagnostics_panel.visible = false
 	btn_run_calc.disabled = true
+	_ensure_back_to_pipeline_button()
+	_set_ui_phase(UIPhase.BUILD)
 
 func _connect_signals() -> void:
 	btn_back.pressed.connect(_on_back_pressed)
@@ -393,6 +401,7 @@ func _start_level(index: int) -> void:
 	lbl_status.text = _tr("nt.b.ui.status_assemble", "Assemble pipeline and press RUN CALC, then select answer.")
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.82, 0.82))
 	state = QuestState.PIPELINE_BUILD
+	_set_ui_phase(UIPhase.BUILD)
 	_update_meta_label()
 	_log_event("trial_started", {
 		"level_id": str(current_level.get("id", "")),
@@ -771,6 +780,7 @@ func _on_run_calc_pressed() -> void:
 	lbl_status.add_theme_color_override("font_color", Color(0.68, 0.95, 0.72))
 	_enable_answer_buttons(true)
 	state = QuestState.ANSWERING
+	_set_ui_phase(UIPhase.ANSWER)
 	_log_event("BENCHMARK_RUN", {"lines": _get_benchmark_lines().size()})
 	_log_event("run_calc", {"calc_bps": calc_bps, "display_unit": calc_display_unit, "display_value": calc_display_value, "pipeline_correct": logic_consistent, "pipeline_error": pipeline_error})
 	_log_event("calc_result", {
@@ -934,13 +944,13 @@ func _on_analyze_pressed() -> void:
 		state = QuestState.DIAGNOSTIC
 		return
 	if logs_expanded:
-		lbl_status.text = "Подробные примечания уже видны."
+		lbl_status.text = _tr("nt.b.status.notes_visible", "Detailed notes are already visible.")
 		lbl_status.add_theme_color_override("font_color", Color(0.9, 0.85, 0.65))
 		return
 	logs_expanded = true
 	hint_used = true
 	_render_log_text()
-	lbl_status.text = "Расширены подсказки по формулам."
+	lbl_status.text = _tr("nt.b.status.hints_expanded", "Formula hints expanded.")
 	lbl_status.add_theme_color_override("font_color", Color(0.72, 0.95, 0.86))
 	_log_event("analyze_reveal", {})
 
@@ -950,24 +960,25 @@ func _show_diagnostics(reason: String) -> void:
 		safe_mode_open_count += 1
 	_pending_change_after_diagnostics = true
 	var lines: Array[String] = []
-	lines.append("Уровень: %s" % str(current_level.get("id", "")))
-	lines.append("Причина: %s" % reason)
-	lines.append("Конвейер готов: %d мс" % pipeline_slots_filled_at_ms)
-	lines.append("Перемещений модулей: %d" % module_moves_count)
-	lines.append("Кило-база: %s" % slot_kilo.get_module_id())
-	lines.append("Бит: %s" % slot_bit.get_module_id())
-	lines.append("Время: %s" % slot_time.get_module_id())
-	lines.append("Выход: %s" % slot_out.get_module_id())
+	lines.append(_tr("nt.b.log.level", "Level: {id}", {"id": str(current_level.get("id", ""))}))
+	lines.append(_tr("nt.b.log.reason", "Reason: {reason}", {"reason": reason}))
+	lines.append(_tr("nt.b.log.pipeline_ready", "Pipeline ready: {ms} ms", {"ms": pipeline_slots_filled_at_ms}))
+	lines.append(_tr("nt.b.log.module_moves", "Module moves: {count}", {"count": module_moves_count}))
+	lines.append(_tr("nt.b.log.slot_kilo", "KILO-BAND: {id}", {"id": slot_kilo.get_module_id()}))
+	lines.append(_tr("nt.b.log.slot_bit", "BIT: {id}", {"id": slot_bit.get_module_id()}))
+	lines.append(_tr("nt.b.log.slot_time", "TIME: {id}", {"id": slot_time.get_module_id()}))
+	lines.append(_tr("nt.b.log.slot_out", "OUT: {id}", {"id": slot_out.get_module_id()}))
 	if calc_bps >= 0:
-		lines.append("Рассчитано: %s" % _format_rate(calc_bps, calc_display_unit))
-	lines.append("Ожидается: %d бит/с" % int(current_level.get("expected_bps", 0)))
-	lines.append("Конвейер корректен: %s" % ("да" if _is_pipeline_correct() else "нет"))
+		lines.append(_tr("nt.b.log.calculated", "Calculated: {value}", {"value": _format_rate(calc_bps, calc_display_unit)}))
+	lines.append(_tr("nt.b.log.expected", "Expected: {value} bits", {"value": int(current_level.get("expected_bps", 0))}))
+	var pipeline_ok: String = _tr("nt.b.log.yes", "yes") if _is_pipeline_correct() else _tr("nt.b.log.no", "no")
+	lines.append(_tr("nt.b.log.pipeline_correct", "Pipeline correct: {value}", {"value": pipeline_ok}))
 	var pipeline_error: String = _derive_pipeline_error_code()
 	if not pipeline_error.is_empty():
-		lines.append("Ошибка конвейера: %s" % pipeline_error)
+		lines.append(_tr("nt.b.log.pipeline_error", "Pipeline error: {code}", {"code": pipeline_error}))
 		lines.append(ERROR_MAP.get_error_tip(pipeline_error))
 	if not last_error_code.is_empty():
-		lines.append("Ошибка последнего ответа: %s" % last_error_code)
+		lines.append(_tr("nt.b.log.last_error", "Last answer error: {code}", {"code": last_error_code}))
 		lines.append(ERROR_MAP.get_error_tip(last_error_code))
 		for detail in ERROR_MAP.detail_messages(last_error_code):
 			lines.append(detail)
@@ -992,6 +1003,7 @@ func _on_reset_pressed() -> void:
 	_register_first_action()
 	_play_audio("click")
 	_reset_pipeline_state(true)
+	_set_ui_phase(UIPhase.BUILD)
 	lbl_status.text = _tr("nt.b.ui.status_pipeline_reset", "Pipeline reset. Reassemble and run calc.")
 	lbl_status.add_theme_color_override("font_color", Color(0.82, 0.86, 0.96))
 	_log_event("reset_pressed", {})
@@ -1005,6 +1017,15 @@ func _on_next_pressed() -> void:
 func _on_back_pressed() -> void:
 	_play_audio("click")
 	get_tree().change_scene_to_file("res://scenes/QuestSelect.tscn")
+
+func _on_back_to_pipeline_pressed() -> void:
+	if level_finished:
+		return
+	_register_first_action()
+	_play_audio("click")
+	_set_ui_phase(UIPhase.BUILD)
+	lbl_status.text = _tr("nt.b.ui.status_edit_pipeline", "Pipeline view restored. Edit modules and run calc again.")
+	lbl_status.add_theme_color_override("font_color", Color(0.86, 0.9, 0.96))
 
 func _apply_noir_theme() -> void:
 	theme = NOIR_THEME
@@ -1074,6 +1095,7 @@ func _finish_level(is_correct: bool, reason: String) -> void:
 	level_finished = true
 	timer_running = false
 	state = QuestState.DONE
+	_set_ui_phase(UIPhase.ANSWER)
 	btn_analyze.disabled = true
 	btn_run_calc.disabled = true
 	btn_reset.disabled = true
@@ -1174,6 +1196,47 @@ func _enable_answer_buttons(enabled: bool) -> void:
 	for btn in action_buttons:
 		btn.disabled = not enabled or level_finished
 
+func _ensure_back_to_pipeline_button() -> void:
+	if answers_vbox == null:
+		return
+	if btn_back_to_pipeline == null:
+		btn_back_to_pipeline = Button.new()
+		btn_back_to_pipeline.name = "BtnBackToPipeline"
+		btn_back_to_pipeline.custom_minimum_size = Vector2(0.0, 48.0)
+		btn_back_to_pipeline.pressed.connect(_on_back_to_pipeline_pressed)
+		answers_vbox.add_child(btn_back_to_pipeline)
+		answers_vbox.move_child(btn_back_to_pipeline, 0)
+	btn_back_to_pipeline.text = _tr("nt.b.btn.edit_pipeline", "EDIT PIPELINE")
+
+func _set_ui_phase(phase: int) -> void:
+	_ui_phase = phase
+	var is_portrait: bool = get_viewport_rect().size.x < get_viewport_rect().size.y
+	match _ui_phase:
+		UIPhase.BUILD:
+			terminal_pane.visible = true
+			console_pane.visible = true
+			answers_pane.visible = false
+			if is_portrait:
+				lbl_briefing.visible = false
+				lbl_prompt.visible = true
+				log_text.visible = false
+				terminal_pane.size_flags_stretch_ratio = 0.4
+				console_pane.size_flags_stretch_ratio = 1.6
+			else:
+				lbl_briefing.visible = true
+				lbl_prompt.visible = true
+				log_text.visible = true
+		UIPhase.ANSWER:
+			terminal_pane.visible = true
+			console_pane.visible = false
+			answers_pane.visible = true
+			lbl_briefing.visible = true
+			lbl_prompt.visible = true
+			log_text.visible = true
+			if is_portrait:
+				terminal_pane.size_flags_stretch_ratio = 1.4
+				answers_pane.size_flags_stretch_ratio = 1.0
+
 func _outcome_code_for_b(is_correct: bool, finish_reason: String, logic_consistent: bool) -> String:
 	if is_correct and logic_consistent:
 		return "SUCCESS"
@@ -1263,7 +1326,7 @@ func _apply_safe_area_padding() -> void:
 	if safe_area == null:
 		return
 	var left: float = 8.0
-	var top: float = 8.0
+	var top: float = 44.0
 	var right: float = 8.0
 	var bottom: float = 8.0
 	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
@@ -1286,18 +1349,18 @@ func _apply_layout_mode() -> void:
 	body.vertical = portrait
 	module_tray.columns = 4
 	options_grid.columns = 1 if portrait else 2
-	pipeline_board.columns = 1 if portrait else 2
+	pipeline_board.columns = 2
 	if portrait:
 		terminal_pane.size_flags_stretch_ratio = 1.4
 		console_pane.size_flags_stretch_ratio = 1.35
 		answers_pane.size_flags_stretch_ratio = 1.0
 		lbl_meta.custom_minimum_size.x = 330.0
 		log_text.custom_minimum_size.y = 150.0
-		btn_run_calc.custom_minimum_size.y = 72.0
-		btn_reset.custom_minimum_size.y = 72.0
-		btn_next.custom_minimum_size.y = 72.0
+		btn_run_calc.custom_minimum_size.y = 48.0
+		btn_reset.custom_minimum_size.y = 48.0
+		btn_next.custom_minimum_size.y = 48.0
 		lbl_status.custom_minimum_size.y = 78.0
-		module_tray_scroll.custom_minimum_size.y = 166.0
+		module_tray_scroll.custom_minimum_size.y = 100.0
 	elif dense_landscape:
 		terminal_pane.size_flags_stretch_ratio = 1.72
 		console_pane.size_flags_stretch_ratio = 1.26
@@ -1321,8 +1384,17 @@ func _apply_layout_mode() -> void:
 		lbl_status.custom_minimum_size.y = 72.0
 		module_tray_scroll.custom_minimum_size.y = 166.0
 	for btn in action_buttons:
-		btn.custom_minimum_size.y = 72.0 if portrait else (60.0 if dense_landscape else 72.0)
-	var slot_min_height: float = 104.0 if portrait else (92.0 if dense_landscape else 114.0)
+		btn.custom_minimum_size.y = 48.0 if portrait else (60.0 if dense_landscape else 72.0)
+	var slot_min_height: float = 64.0 if portrait else (92.0 if dense_landscape else 114.0)
 	for slot in [slot_kilo, slot_bit, slot_time, slot_out]:
 		slot.custom_minimum_size.y = slot_min_height
 	_sync_terminal_text_heights(mode)
+	var vp_size: Vector2 = get_viewport_rect().size
+	var compact: bool = vp_size.x < 740.0 or vp_size.y < 420.0
+	btn_back.custom_minimum_size = Vector2(56.0 if compact else 118.0, 44.0 if compact else 58.0)
+	btn_back.text = "<" if compact else _tr("nt.common.back", "НАЗАД")
+	lbl_meta.custom_minimum_size.x = 0.0 if compact else lbl_meta.custom_minimum_size.x
+	lbl_meta.visible = not compact
+	stability_bar.custom_minimum_size.x = 80.0 if compact else 140.0
+	palette_select.visible = false
+	_set_ui_phase(_ui_phase)

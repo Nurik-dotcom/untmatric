@@ -306,7 +306,7 @@ func _setup_noir_ui() -> void:
 	_btn_help = Button.new()
 	_btn_help.text = "?"
 	_btn_help.custom_minimum_size = Vector2(44, 44)
-	_btn_help.tooltip_text = "DOSSIER"
+	_btn_help.tooltip_text = _tr("city_map.common.tooltip.dossier", "DOSSIER")
 	_btn_help.pressed.connect(_on_help_pressed)
 	header.add_child(_btn_help)
 

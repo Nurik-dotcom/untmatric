@@ -508,6 +508,18 @@ func _set_state(next_state: State) -> void:
 	state = next_state
 	_update_inspector()
 
+func _refresh_terminal_preview() -> void:
+	_update_inspector()
+	if diagnostics_panel == null or not diagnostics_panel.visible:
+		return
+	if current_diagnostics_mode == "safe_review":
+		return
+	if not diagnostics_panel.has_method("setup"):
+		return
+	var payload := _build_diagnostics_payload()
+	diagnostics_panel.call("setup", payload)
+	current_diagnostics_mode = str(payload.get("mode", current_diagnostics_mode))
+
 func _render_code(caret_line: int = 0) -> void:
 	var base_lines: Array = current_task.get("code_lines", [])
 	_set_code_lines(base_lines, caret_line)
@@ -559,12 +571,18 @@ func _apply_fix_preview() -> void:
 		return
 	if current_variant_preview.is_empty():
 		current_variant_preview = _evaluate_current_selection_preview()
-	if bool(current_variant_preview.get("ok", false)):
-		var preview_lines: Array = current_variant_preview.get("rendered_code", [])
+	var preview_lines: Array = current_variant_preview.get("rendered_code", [])
+	if not preview_lines.is_empty():
 		_set_code_lines(preview_lines, selected_line_index)
 		_update_line_highlight()
-		return
-	_render_code(selected_line_index)
+	else:
+		_render_code(selected_line_index)
+
+func _has_staged_patch_preview() -> bool:
+	if selected_option_id.is_empty() or current_variant_preview.is_empty():
+		return false
+	var preview_lines: Array = current_variant_preview.get("rendered_code", [])
+	return not preview_lines.is_empty()
 
 func _reset_selection(keep_line: bool = false) -> void:
 	if not keep_line:
@@ -580,7 +598,7 @@ func _reset_selection(keep_line: bool = false) -> void:
 		_render_code(0)
 		line_highlight.visible = false
 		_set_state(State.LINE_SELECT)
-	_update_inspector()
+	_refresh_terminal_preview()
 
 func _on_code_caret_changed() -> void:
 	if suppress_caret_event:
@@ -643,16 +661,27 @@ func _focus_line(line_idx: int, open_menu: bool) -> void:
 			misclicks_before_correct += 1
 			_update_misclick_label()
 
-	_render_code(selected_line_index)
-	_update_line_highlight()
+	if _has_staged_patch_preview():
+		_apply_fix_preview()
+	else:
+		_render_code(selected_line_index)
+		_update_line_highlight()
 	_set_state(State.LINE_FOCUSED)
 	if open_menu:
 		_open_fix_menu()
+	_refresh_terminal_preview()
 
 func _update_line_highlight(restart_animation: bool = true) -> void:
 	if selected_line_index < 0:
 		line_highlight.visible = false
 		return
+
+	if current_variant_preview.is_empty():
+		line_highlight.color = Color(0.93, 0.93, 0.91, 0.14)
+	elif bool(current_variant_preview.get("ok", false)):
+		line_highlight.color = Color(0.2, 0.6, 0.3, 0.2)
+	else:
+		line_highlight.color = Color(0.8, 0.6, 0.1, 0.2)
 
 	var visible_line_index := selected_line_index - _get_scroll_vertical()
 	line_highlight.position = Vector2(6, 6 + (visible_line_index * cached_line_height))
@@ -725,7 +754,7 @@ func _on_fix_option_selected(option_id: String) -> void:
 	_apply_fix_preview()
 	_log_event("patch_selected", {"option_idx": selected_option_id, "line": selected_line_index})
 	_log_event("fix_selected", {"option_id": selected_option_id, "line": selected_line_index})
-	_update_inspector()
+	_refresh_terminal_preview()
 
 func _on_fix_apply_requested(option_id: String) -> void:
 	patch_apply_count += 1
@@ -740,7 +769,7 @@ func _on_fix_apply_requested(option_id: String) -> void:
 	_set_state(State.PATCH_STAGED)
 	_log_event("patch_applied", {"applied_option_idx": selected_option_id, "line": selected_line_index, "count": patch_apply_count})
 	_log_event("patch_staged", {"option_id": selected_option_id, "line": selected_line_index})
-	_update_inspector()
+	_refresh_terminal_preview()
 
 func _on_fix_menu_canceled() -> void:
 	if state == State.FEEDBACK_SUCCESS:
@@ -750,9 +779,15 @@ func _on_fix_menu_canceled() -> void:
 		_update_line_highlight()
 		_set_state(State.LINE_FOCUSED)
 	elif selected_line_index >= 0:
+		if _has_staged_patch_preview():
+			_apply_fix_preview()
+		else:
+			_render_code(selected_line_index)
+			_update_line_highlight()
 		_set_state(State.PATCH_STAGED)
 	else:
 		_set_state(State.LINE_SELECT)
+	_refresh_terminal_preview()
 
 func _on_verify_pressed() -> void:
 	if btn_verify.disabled:
@@ -863,7 +898,7 @@ func _handle_success(preview: Dictionary) -> void:
 	btn_next.visible = true
 	_set_actual_panel_error(false)
 	_register_result(true)
-	_update_inspector()
+	_refresh_terminal_preview()
 
 func _handle_wrong_line() -> void:
 	_set_state(State.FEEDBACK_WRONG_LINE)
@@ -875,7 +910,7 @@ func _handle_wrong_line() -> void:
 		"option_id": selected_option_id,
 		"fail_count": verify_fail_count
 	})
-	_update_inspector()
+	_refresh_terminal_preview()
 
 func _handle_wrong_patch(preview: Dictionary) -> void:
 	_set_state(State.FEEDBACK_WRONG_PATCH)
@@ -888,7 +923,7 @@ func _handle_wrong_patch(preview: Dictionary) -> void:
 		"result_s": preview.get("result_s", null),
 		"fail_count": verify_fail_count
 	})
-	_update_inspector()
+	_refresh_terminal_preview()
 
 func _maybe_enter_safe_review() -> void:
 	if verify_fail_count < 3:
@@ -962,6 +997,7 @@ func _build_diagnostics_payload() -> Dictionary:
 	var actual_buggy: Variant = current_task.get("actual_s", 0)
 	var selected_patch_line: String = _get_selected_patch_line()
 	var explain_lines: Array = _collect_explain_lines()
+	var state_for_payload: State = state_before_diagnostic if state == State.DIAGNOSTIC else state
 	var mode := "preverify"
 	var action_hint := "Focus a suspicious line, stage a patch, then verify."
 	var actual_for_panel: Variant = actual_buggy
@@ -969,7 +1005,7 @@ func _build_diagnostics_payload() -> Dictionary:
 	var trace: Array = []
 	var why_not: Array = []
 
-	match state:
+	match state_for_payload:
 		State.FEEDBACK_WRONG_LINE:
 			mode = "wrong_line"
 			action_hint = "Switch to another line that influences accumulator s."
@@ -1109,6 +1145,7 @@ func _on_reset_pressed() -> void:
 	_mark_edit_action()
 	_reset_selection(false)
 	lbl_hint.text = _tr("disarm.c.status.reset", "Selection cleared. Focus a line, stage a patch, then verify.")
+	_refresh_terminal_preview()
 	_log_event("selection_reset", {})
 
 func _on_next_pressed() -> void:
@@ -1215,17 +1252,21 @@ func _update_misclick_label() -> void:
 
 func _update_inspector() -> void:
 	var lines: Array[String] = []
+	var selected_patch_line: String = _get_selected_patch_line()
+	var state_for_inspector: State = state_before_diagnostic if state == State.DIAGNOSTIC else state
 	if selected_line_index < 0:
 		lines.append("Selected line: -")
 	else:
 		lines.append("Selected line: %d" % (selected_line_index + 1))
 	if selected_option_id.is_empty():
 		lines.append("Selected patch: -")
+		lines.append("Selected patch line: -")
 	else:
 		lines.append("Selected patch: %s" % selected_option_id)
+		lines.append("Selected patch line: %s" % selected_patch_line)
 
 	var debug_status := ""
-	match state:
+	match state_for_inspector:
 		State.LINE_SELECT:
 			debug_status = "Debug status: choose a suspicious line."
 		State.LINE_FOCUSED:
@@ -1246,6 +1287,13 @@ func _update_inspector() -> void:
 			debug_status = "Debug status: working."
 	lines.append(debug_status)
 
+	if selected_line_index >= 0 and not selected_option_id.is_empty():
+		lines.append("Staged hypothesis: line %d <- %s" % [selected_line_index + 1, selected_patch_line])
+	elif selected_line_index >= 0:
+		lines.append("Staged hypothesis: line selected, patch not staged.")
+	else:
+		lines.append("Staged hypothesis: none.")
+
 	if selected_line_index >= 0:
 		var correct_line := int(current_task.get("bug", {}).get("correct_line_index", -1))
 		if selected_line_index == correct_line:
@@ -1255,13 +1303,14 @@ func _update_inspector() -> void:
 	else:
 		lines.append("Why suspicious: inspect boundaries, operators, and branch conditions.")
 
-	if state == State.PATCH_STAGED:
+	if state_for_inspector == State.PATCH_STAGED:
+		lines.append("Patch status: staged (preverify, numeric result hidden).")
 		lines.append("Verify guidance: result remains hidden until VERIFY.")
-	elif state == State.FEEDBACK_WRONG_PATCH:
+	elif state_for_inspector == State.FEEDBACK_WRONG_PATCH:
 		lines.append("Verify guidance: keep this line and try another patch.")
-	elif state == State.FEEDBACK_WRONG_LINE:
+	elif state_for_inspector == State.FEEDBACK_WRONG_LINE:
 		lines.append("Verify guidance: choose another line first.")
-	elif state == State.FEEDBACK_SUCCESS:
+	elif state_for_inspector == State.FEEDBACK_SUCCESS:
 		lines.append("Verify guidance: proceed to NEXT.")
 	else:
 		lines.append("Verify guidance: stage one patch hypothesis before VERIFY.")

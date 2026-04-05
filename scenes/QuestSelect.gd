@@ -33,8 +33,67 @@ const COLOR_READY := Color(0.88, 0.88, 0.88, 1.0)
 const COLOR_LOCKED := Color(0.92, 0.36, 0.4, 1.0)
 
 enum QuestType { DECRYPTOR, LOGIC_GATE, RADIO, SUSPECT, CITY_MAP, DATA_ARCHIVE, FINAL_REPORT, NETWORK_TRACE, CLUES }
+const QUEST_BRIEFINGS: Dictionary = {
+	QuestType.CLUES: {
+		"title_key": "story.case1.title",
+		"title_default": "CASE #1: CRIME SCENE",
+		"briefing_key": "story.case1.briefing",
+		"briefing_default": "A server was found hacked at the city data center. Equipment fragments are scattered. Classify each device — input, output, memory — to reconstruct how the attack happened."
+	},
+	QuestType.RADIO: {
+		"title_key": "story.case2.title",
+		"title_default": "CASE #2: INTERCEPT",
+		"briefing_key": "story.case2.briefing",
+		"briefing_default": "We've detected Phantom's radio signal. Decode the frequency and intercept the data transmission before he switches channels."
+	},
+	QuestType.DECRYPTOR: {
+		"title_key": "story.case3.title",
+		"title_default": "CASE #3: CIPHER",
+		"briefing_key": "story.case3.briefing",
+		"briefing_default": "The intercepted message is encrypted. Toggle the bits to crack the key and read Phantom's orders."
+	},
+	QuestType.LOGIC_GATE: {
+		"title_key": "story.case4.title",
+		"title_default": "CASE #4: INTERROGATION",
+		"briefing_key": "story.case4.briefing",
+		"briefing_default": "Three suspects detained. Each answers through logic gates. Fill the interrogation protocol — figure out who's lying."
+	},
+	QuestType.SUSPECT: {
+		"title_key": "story.case5.title",
+		"title_default": "CASE #5: SERVER BREACH",
+		"briefing_key": "story.case5.briefing",
+		"briefing_default": "We've located Phantom's server, but it's protected by scripts. Analyze the code, restore the algorithm, and disarm the trap."
+	},
+	QuestType.CITY_MAP: {
+		"title_key": "story.case6.title",
+		"title_default": "CASE #6: PURSUIT",
+		"briefing_key": "story.case6.briefing",
+		"briefing_default": "Phantom is moving through the city. Find the shortest route between his waypoints — before he disappears."
+	},
+	QuestType.NETWORK_TRACE: {
+		"title_key": "story.case7.title",
+		"title_default": "CASE #7: DIGITAL TRACE",
+		"briefing_key": "story.case7.briefing",
+		"briefing_default": "Phantom left digital footprints. Identify the network topology, calculate throughput, and pinpoint his subnet."
+	},
+	QuestType.DATA_ARCHIVE: {
+		"title_key": "story.case8.title",
+		"title_default": "CASE #8: SHADOW ARCHIVE",
+		"briefing_key": "story.case8.briefing",
+		"briefing_default": "We've gained access to Phantom's database. Parse the structure, filter the records, and extract evidence with SQL."
+	},
+	QuestType.FINAL_REPORT: {
+		"title_key": "story.case9.title",
+		"title_default": "CASE #9: THE TRIAL",
+		"briefing_key": "story.case9.briefing",
+		"briefing_default": "All evidence collected. Prepare the final HTML report and submit the case to court."
+	}
+}
+
 var selected_quest_type := QuestType.DECRYPTOR
 var _scene_transition_in_progress := false
+var briefing_label: RichTextLabel = null
+var difficulty_label: Label = null
 
 const TITLE_TEXT := "Выбор квеста"
 const STATUS_READY := "Выберите модуль и уровень сложности."
@@ -59,6 +118,29 @@ const BTN_CLOSE_TEXT := "Закрыть"
 
 func _ready() -> void:
 	modal.visible = false
+
+	briefing_label = RichTextLabel.new()
+	briefing_label.name = "BriefingLabel"
+	briefing_label.fit_content = true
+	briefing_label.bbcode_enabled = true
+	briefing_label.scroll_active = false
+	briefing_label.custom_minimum_size = Vector2(0, 60)
+	briefing_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	briefing_label.add_theme_font_size_override("normal_font_size", 14)
+	briefing_label.add_theme_color_override("default_color", Color(0.72, 0.72, 0.75))
+	briefing_label.visible = false
+
+	difficulty_label = Label.new()
+	difficulty_label.name = "DifficultyLabel"
+	difficulty_label.add_theme_font_size_override("font_size", 13)
+	difficulty_label.add_theme_color_override("font_color", Color(0.45, 0.45, 0.48))
+	difficulty_label.visible = false
+
+	modal_box.add_child(briefing_label)
+	modal_box.move_child(briefing_label, 1)
+	modal_box.add_child(difficulty_label)
+	modal_box.move_child(difficulty_label, 2)
+
 	_apply_i18n()
 	_connect_buttons()
 	_disable_unready()
@@ -83,6 +165,8 @@ func _apply_i18n() -> void:
 	status_label.modulate = COLOR_READY
 	_set_button_labels()
 	_set_modal_labels()
+	if modal.visible:
+		_show_modal_for_quest(selected_quest_type)
 
 func _set_button_labels() -> void:
 	btn_clues.text = I18n.tr_key("ui.quest_select.btn_clues", {"default": BTN_CLUES_TEXT})
@@ -101,17 +185,21 @@ func _set_modal_labels() -> void:
 	btn_complexity_b.text = I18n.tr_key("ui.quest_select.complexity_b", {"default": COMPLEXITY_B_TEXT})
 	btn_complexity_c.text = I18n.tr_key("ui.quest_select.complexity_c", {"default": COMPLEXITY_C_TEXT})
 	btn_close.text = I18n.tr_key("ui.quest_select.modal_back", {"default": BTN_CLOSE_TEXT})
+	if difficulty_label != null:
+		var select_difficulty_text: String = I18n.tr_key("story.common.select_difficulty", {"default": "Select difficulty:"})
+		var divider: String = char(0x2500).repeat(3)
+		difficulty_label.text = "%s %s %s" % [divider, select_difficulty_text, divider]
 
 func _connect_buttons() -> void:
-	btn_decryptor.pressed.connect(_on_decryptor_pressed)
-	btn_lie.pressed.connect(_on_lie_detector_pressed)
-	btn_radio.pressed.connect(_on_radio_pressed)
-	btn_clues.pressed.connect(_on_clues_pressed)
-	btn_script.pressed.connect(_on_script_pressed)
-	btn_city.pressed.connect(_on_city_pressed)
-	btn_archive.pressed.connect(_on_archive_pressed)
-	btn_report.pressed.connect(_on_report_pressed)
-	btn_network_trace.pressed.connect(_on_network_trace_pressed)
+	btn_clues.pressed.connect(_show_modal_for_quest.bind(QuestType.CLUES))
+	btn_radio.pressed.connect(_show_modal_for_quest.bind(QuestType.RADIO))
+	btn_decryptor.pressed.connect(_show_modal_for_quest.bind(QuestType.DECRYPTOR))
+	btn_lie.pressed.connect(_show_modal_for_quest.bind(QuestType.LOGIC_GATE))
+	btn_script.pressed.connect(_show_modal_for_quest.bind(QuestType.SUSPECT))
+	btn_city.pressed.connect(_show_modal_for_quest.bind(QuestType.CITY_MAP))
+	btn_network_trace.pressed.connect(_show_modal_for_quest.bind(QuestType.NETWORK_TRACE))
+	btn_archive.pressed.connect(_show_modal_for_quest.bind(QuestType.DATA_ARCHIVE))
+	btn_report.pressed.connect(_show_modal_for_quest.bind(QuestType.FINAL_REPORT))
 
 	btn_complexity_a.pressed.connect(_on_complexity_a_pressed)
 	btn_complexity_b.pressed.connect(_on_complexity_b_pressed)
@@ -128,49 +216,34 @@ func _disable_unready() -> void:
 	btn_report.disabled = false
 	btn_network_trace.disabled = false
 
-func _on_decryptor_pressed() -> void:
-	selected_quest_type = QuestType.DECRYPTOR
+func _show_modal_for_quest(quest_type: QuestType) -> void:
+	selected_quest_type = quest_type
 	_set_complexity_enabled(true, true)
-	modal.visible = true
 
-func _on_lie_detector_pressed() -> void:
-	selected_quest_type = QuestType.LOGIC_GATE
-	_set_complexity_enabled(true, true)
-	modal.visible = true
+	var info: Dictionary = QUEST_BRIEFINGS.get(quest_type, {})
+	if not info.is_empty():
+		modal_title.text = I18n.tr_key(
+			str(info.get("title_key", "")),
+			{"default": str(info.get("title_default", "SELECT DIFFICULTY"))}
+		)
+		if briefing_label != null:
+			briefing_label.text = I18n.tr_key(
+				str(info.get("briefing_key", "")),
+				{"default": str(info.get("briefing_default", ""))}
+			)
+			briefing_label.visible = true
+		if difficulty_label != null:
+			var select_difficulty_text: String = I18n.tr_key("story.common.select_difficulty", {"default": "Select difficulty:"})
+			var divider: String = char(0x2500).repeat(3)
+			difficulty_label.text = "%s %s %s" % [divider, select_difficulty_text, divider]
+			difficulty_label.visible = true
+	else:
+		modal_title.text = I18n.tr_key("ui.quest_select.modal_title", {"default": "SELECT DIFFICULTY"})
+		if briefing_label != null:
+			briefing_label.visible = false
+		if difficulty_label != null:
+			difficulty_label.visible = false
 
-func _on_radio_pressed() -> void:
-	selected_quest_type = QuestType.RADIO
-	_set_complexity_enabled(true, true)
-	modal.visible = true
-
-func _on_clues_pressed() -> void:
-	selected_quest_type = QuestType.CLUES
-	_set_complexity_enabled(true, true)
-	modal.visible = true
-
-func _on_script_pressed() -> void:
-	selected_quest_type = QuestType.SUSPECT
-	_set_complexity_enabled(true, true)
-	modal.visible = true
-
-func _on_city_pressed() -> void:
-	selected_quest_type = QuestType.CITY_MAP
-	_set_complexity_enabled(true, true)
-	modal.visible = true
-
-func _on_archive_pressed() -> void:
-	selected_quest_type = QuestType.DATA_ARCHIVE
-	_set_complexity_enabled(true, true)
-	modal.visible = true
-
-func _on_report_pressed() -> void:
-	selected_quest_type = QuestType.FINAL_REPORT
-	_set_complexity_enabled(true, true)
-	modal.visible = true
-
-func _on_network_trace_pressed() -> void:
-	selected_quest_type = QuestType.NETWORK_TRACE
-	_set_complexity_enabled(true, true)
 	modal.visible = true
 
 func _on_complexity_a_pressed() -> void:
@@ -179,7 +252,7 @@ func _on_complexity_a_pressed() -> void:
 		QuestType.DECRYPTOR:
 			get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
 		QuestType.LOGIC_GATE:
-			get_tree().change_scene_to_file("res://scenes/LogicQuestA.tscn")
+			get_tree().change_scene_to_file("res://scenes/LogicQuestA_v2.tscn")
 		QuestType.RADIO:
 			get_tree().change_scene_to_file("res://scenes/RadioQuestA.tscn")
 		QuestType.SUSPECT:
@@ -204,7 +277,7 @@ func _on_complexity_b_pressed() -> void:
 		GlobalMetrics.current_level_index = 15
 		get_tree().change_scene_to_file("res://scenes/Decryptor.tscn")
 	elif selected_quest_type == QuestType.LOGIC_GATE:
-		get_tree().change_scene_to_file("res://scenes/LogicQuestB.tscn")
+		get_tree().change_scene_to_file("res://scenes/LogicQuestB_v3.tscn")
 	elif selected_quest_type == QuestType.RADIO:
 		get_tree().change_scene_to_file("res://scenes/RadioQuestB.tscn")
 	elif selected_quest_type == QuestType.SUSPECT:
@@ -226,7 +299,7 @@ func _on_complexity_c_pressed() -> void:
 	if selected_quest_type == QuestType.DECRYPTOR:
 		get_tree().change_scene_to_file("res://scenes/MatrixDecryptor.tscn")
 	elif selected_quest_type == QuestType.LOGIC_GATE:
-		call_deferred("_change_scene_safe", "res://scenes/LogicQuestC.tscn")
+		get_tree().change_scene_to_file("res://scenes/LogicQuestC_v3.tscn")
 	elif selected_quest_type == QuestType.RADIO:
 		get_tree().change_scene_to_file("res://scenes/RadioQuestC.tscn")
 	elif selected_quest_type == QuestType.SUSPECT:
@@ -236,7 +309,7 @@ func _on_complexity_c_pressed() -> void:
 	elif selected_quest_type == QuestType.DATA_ARCHIVE:
 		get_tree().change_scene_to_file("res://scenes/case_07/da7_data_archive_c.tscn")
 	elif selected_quest_type == QuestType.NETWORK_TRACE:
-		get_tree().change_scene_to_file("res://scenes/NetworkTraceQuestC.tscn")
+		get_tree().change_scene_to_file("res://scenes/NetworkTraceQuestC_v2.tscn")
 	elif selected_quest_type == QuestType.CLUES:
 		get_tree().change_scene_to_file("res://scenes/case_01/DigitalResusQuestC.tscn")
 

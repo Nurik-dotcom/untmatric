@@ -5,7 +5,7 @@ extends "res://scenes/Tutorial/TutorialBase.gd"
 class_name TutorialMatrix
 
 func _initialize_tutorial() -> void:
-	tutorial_id = "matrix"
+	tutorial_id = "matrix_cipher"
 	tutorial_title = "Матричные шифры"
 	linked_quest_scene = "res://scenes/MatrixDecryptor.tscn"
 

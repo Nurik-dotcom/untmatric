@@ -5,7 +5,7 @@ extends "res://scenes/Tutorial/TutorialBase.gd"
 class_name TutorialHexadecimal
 
 func _initialize_tutorial() -> void:
-	tutorial_id = "hexadecimal"
+	tutorial_id = "hex_basics"
 	tutorial_title = "Шестнадцатеричная система"
 	linked_quest_scene = "res://scenes/Decryptor.tscn"
 

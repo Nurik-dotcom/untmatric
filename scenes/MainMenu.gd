@@ -14,6 +14,7 @@ const LANGUAGE_CODES: Array[String] = ["ru", "kk", "en"]
 @onready var agent_label: Label = $ProfilePanel/AgentLabel
 
 var _syncing_lang_select: bool = false
+var case_line_label: Label = null
 
 func _ready() -> void:
 	start_btn.pressed.connect(_on_start_pressed)
@@ -24,7 +25,16 @@ func _ready() -> void:
 	
 	# Отображаем никнейм агента
 	_update_agent_label()
-	
+
+	case_line_label = Label.new()
+	case_line_label.name = "CaseLine"
+	case_line_label.add_theme_font_size_override("font_size", 13)
+	case_line_label.add_theme_color_override("font_color", Color(0.92, 0.2, 0.24, 0.8))
+	case_line_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	case_line_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_root.add_child(case_line_label)
+	menu_root.move_child(case_line_label, subtitle_label.get_index() + 1)
+
 	_apply_i18n()
 	_animate_intro()
 
@@ -51,6 +61,8 @@ func _on_language_changed(_code: String) -> void:
 func _apply_i18n() -> void:
 	title_label.text = I18n.tr_key("ui.main_menu.title", {"default": "UNTformatic"})
 	subtitle_label.text = I18n.tr_key("ui.main_menu.subtitle", {"default": "NOIR PROTOCOL"})
+	if case_line_label != null:
+		case_line_label.text = I18n.tr_key("story.main.case_line", {"default": "CASE #X-7734 | SUBJECT: PHANTOM | STATUS: WANTED"})
 	start_btn.text = I18n.tr_key("ui.main_menu.quests", {"default": "КВЕСТЫ"})
 	learn_btn.text = I18n.tr_key("ui.main_menu.learn", {"default": "ОБУЧЕНИЕ"})
 	lab_btn.text = I18n.tr_key("ui.main_menu.lab_soon", {"default": "ЛАБОРАТОРИЯ (СКОРО)"})

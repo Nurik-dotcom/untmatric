@@ -23,6 +23,17 @@ func run_all_tests() -> void:
 	test_fallback_en_to_ru()
 	test_resolve_field_key_and_legacy()
 	test_language_changed_emits_once()
+	test_logic_v2_keys_present_in_ru_kk_en()
+	test_logic_v2_alias_keys_present_in_ru_kk_en()
+	test_learn_select_keys_present_in_ru_kk_en()
+	test_learn_alias_keys_present_in_ru_kk_en()
+	test_case08_attack_vs_defense_key_present_in_en()
+	test_case08_render_alias_keys_present_in_ru_kk_en()
+	test_network_trace_keys_present_in_ru_kk_en()
+	test_fr8_summary_keys_present_in_ru_kk_en()
+	test_ru_only_key_absent_in_kk_en_dictionaries()
+	test_new_keys_placeholder_and_tag_parity()
+	test_target_groups_no_broken_templates()
 	test_case08_briefing_not_ru_for_kk_en()
 	test_en_contains_required_case08_keys()
 	test_decryptor_required_keys_in_en_kk()
@@ -308,6 +319,303 @@ func test_city_map_namespace_has_no_mojibake() -> void:
 			var has_bad: bool = bad_pattern.search(value) != null
 			assert_true(not has_bad, "%s city_map key has no mojibake marker: %s" % [str(lang).to_upper(), key])
 
+func test_logic_v2_keys_present_in_ru_kk_en() -> void:
+	var required_keys: Array[String] = [
+		"logic.v2.a.title",
+		"logic.v2.a.btn_back",
+		"logic.v2.a.btn_hint",
+		"logic.v2.a.btn_confirm",
+		"logic.v2.a.operation",
+		"logic.v2.a.intro",
+		"logic.v2.a.fill_all",
+		"logic.v2.a.correct",
+		"logic.v2.a.wrong",
+		"logic.v2.a.complete",
+		"logic.v2.b.title",
+		"logic.v2.b.btn_back",
+		"logic.v2.b.btn_hint",
+		"logic.v2.b.btn_confirm",
+		"logic.v2.b.expr_title",
+		"logic.v2.b.val_title",
+		"logic.v2.b.q_lbl",
+		"logic.v2.b.intro",
+		"logic.v2.b.select_err",
+		"logic.v2.b.correct",
+		"logic.v2.b.wrong",
+		"logic.v2.b.complete",
+		"logic.v2.c.title",
+		"logic.v2.c.btn_back",
+		"logic.v2.c.btn_hint",
+		"logic.v2.c.btn_confirm",
+		"logic.v2.c.orig_title",
+		"logic.v2.c.law_prefix",
+		"logic.v2.c.opts_header",
+		"logic.v2.c.intro",
+		"logic.v2.c.hint_prefix",
+		"logic.v2.c.no_selection",
+		"logic.v2.c.correct",
+		"logic.v2.c.wrong",
+		"logic.v2.c.complete"
+	]
+
+	for i in range(1, 11):
+		var a_id: String = "A_%02d" % i
+		var b_id: String = "B_%02d" % i
+		required_keys.append("logic.v2.a.%s.gate_label" % a_id)
+		required_keys.append("logic.v2.a.%s.story" % a_id)
+		required_keys.append("logic.v2.a.%s.explain" % a_id)
+		required_keys.append("logic.v2.b.%s.story" % b_id)
+	for i in range(1, 9):
+		var c_id: String = "C_%02d" % i
+		required_keys.append("logic.v2.c.%s.law" % c_id)
+		required_keys.append("logic.v2.c.%s.law_hint" % c_id)
+		required_keys.append("logic.v2.c.%s.explanation" % c_id)
+
+	for lang in ["ru", "kk", "en"]:
+		I18n.set_language(lang)
+		for key in required_keys:
+			var sentinel: String = "__missing_%s_%s__" % [lang, key]
+			var value: String = I18n.tr_key(key, {"default": sentinel})
+			assert_true(value != sentinel, "%s has logic v2 key %s" % [lang.to_upper(), key])
+
+func test_logic_v2_alias_keys_present_in_ru_kk_en() -> void:
+	var required_keys: Array[String] = [
+		"logic.v2.common.back",
+		"logic.v2.common.hint",
+		"logic.v2.common.confirm",
+		"logic.v2.b.expression",
+		"logic.v2.b.values",
+		"logic.v2.b.question",
+		"logic.v2.b.pick_answer",
+		"logic.v2.b.step",
+		"logic.v2.b.answer",
+		"logic.v2.c.original",
+		"logic.v2.c.choose",
+		"logic.v2.c.pick"
+	]
+
+	for lang in ["ru", "kk", "en"]:
+		I18n.set_language(lang)
+		for key in required_keys:
+			var sentinel: String = "__missing_%s_%s__" % [lang, key]
+			var value: String = I18n.tr_key(key, {"default": sentinel})
+			assert_true(value != sentinel, "%s has logic v2 alias key %s" % [lang.to_upper(), key])
+
+func test_learn_select_keys_present_in_ru_kk_en() -> void:
+	var lesson_ids: Array[String] = [
+		"bin_basics", "bin_convert", "hex_basics", "hex_convert", "xor_cipher",
+		"logic_basic", "logic_xor_nand", "logic_tables", "logic_circuits",
+		"net_osi", "net_ip", "net_mask", "net_diag",
+		"graph_basics", "graph_dijkstra", "algo_sort", "algo_complexity",
+		"encode_ascii", "encode_freq", "matrix_cipher", "file_systems", "sql_basics"
+	]
+	var required_keys: Array[String] = [
+		"ui.learn_select.title",
+		"ui.learn_select.back_to_menu",
+		"ui.learn_select.progress",
+		"ui.learn_select.group.number",
+		"ui.learn_select.group.logic",
+		"ui.learn_select.group.networks",
+		"ui.learn_select.group.algo",
+		"ui.learn_select.group.encoding"
+	]
+	for lesson_id in lesson_ids:
+		required_keys.append("ui.learn_select.lesson.%s.title" % lesson_id)
+		required_keys.append("ui.learn_select.lesson.%s.subtitle" % lesson_id)
+
+	for lang in ["ru", "kk", "en"]:
+		I18n.set_language(lang)
+		for key in required_keys:
+			var sentinel: String = "__missing_%s_%s__" % [lang, key]
+			var value: String = I18n.tr_key(key, {"default": sentinel})
+			assert_true(value != sentinel, "%s has learn_select key %s" % [lang.to_upper(), key])
+
+func test_learn_alias_keys_present_in_ru_kk_en() -> void:
+	var lesson_ids: Array[String] = [
+		"bin_basics", "bin_convert", "hex_basics", "hex_convert", "xor_cipher",
+		"logic_basic", "logic_xor_nand", "logic_tables", "logic_circuits",
+		"net_osi", "net_ip", "net_mask", "net_diag",
+		"graph_basics", "graph_dijkstra", "algo_sort", "algo_complexity",
+		"encode_ascii", "encode_freq", "matrix_cipher", "file_systems", "sql_basics"
+	]
+	var required_keys: Array[String] = [
+		"ui.learn.title",
+		"ui.learn.back_to_menu",
+		"ui.learn.progress",
+		"ui.learn.group.number_systems",
+		"ui.learn.group.logic",
+		"ui.learn.group.networks",
+		"ui.learn.group.algorithms",
+		"ui.learn.group.encoding"
+	]
+	for lesson_id in lesson_ids:
+		required_keys.append("ui.learn.%s.title" % lesson_id)
+		required_keys.append("ui.learn.%s.subtitle" % lesson_id)
+		required_keys.append("ui.learn.%s.quest_hint" % lesson_id)
+
+	for lang in ["ru", "kk", "en"]:
+		I18n.set_language(lang)
+		for key in required_keys:
+			var sentinel: String = "__missing_%s_%s__" % [lang, key]
+			var value: String = I18n.tr_key(key, {"default": sentinel})
+			assert_true(value != sentinel, "%s has learn alias key %s" % [lang.to_upper(), key])
+			assert_true(not value.strip_edges().is_empty(), "%s learn alias key is non-empty: %s" % [lang.to_upper(), key])
+
+func test_case08_attack_vs_defense_key_present_in_en() -> void:
+	I18n.set_language("en")
+	var sentinel: String = "__missing_case08_attack_vs_defense__"
+	var value: String = I18n.tr_key("case08.fr8c.status.attack_vs_defense", {"default": sentinel})
+	assert_true(value != sentinel, "EN has case08.fr8c.status.attack_vs_defense")
+	assert_true(not value.strip_edges().is_empty(), "EN case08.fr8c.status.attack_vs_defense is non-empty")
+
+func test_case08_render_alias_keys_present_in_ru_kk_en() -> void:
+	var required_keys: Array[String] = [
+		"case08.fr8a.render_warn",
+		"case08.fr8a.render_ok"
+	]
+	for lang in ["ru", "kk", "en"]:
+		I18n.set_language(lang)
+		for key in required_keys:
+			var sentinel: String = "__missing_%s_%s__" % [lang, key]
+			var value: String = I18n.tr_key(key, {"default": sentinel})
+			assert_true(value != sentinel, "%s has case08 render alias key %s" % [lang.to_upper(), key])
+			assert_true(not value.strip_edges().is_empty(), "%s case08 render alias key is non-empty: %s" % [lang.to_upper(), key])
+
+func test_network_trace_keys_present_in_ru_kk_en() -> void:
+	var required_keys: Array[String] = [
+		"nt.v2.c.btn_back",
+		"nt.v2.c.title",
+		"nt.v2.c.btn_hint",
+		"nt.v2.c.case_title",
+		"nt.v2.c.step1_title",
+		"nt.v2.c.step2_title",
+		"nt.v2.c.step3_title",
+		"nt.v2.c.step1_prompt",
+		"nt.v2.c.btn_check1",
+		"nt.v2.c.step2_desc",
+		"nt.v2.c.btn_check2",
+		"nt.v2.c.step3_prompt",
+		"nt.v2.c.btn_check3",
+		"nt.v2.c.mask_correct",
+		"nt.v2.c.net_correct",
+		"nt.v2.c.hosts_correct",
+		"nt.v2.c.hint_title",
+		"nt.v2.c.quest_done",
+		"nt.v2.c.btn_exit",
+		"nt.v2.c.hint_network",
+		"nt.v2.c.hint_hosts",
+		"nt.a.log.level",
+		"nt.a.log.reason",
+		"nt.b.log.level",
+		"nt.b.log.reason",
+		"nt.c.log.level",
+		"nt.c.log.reason"
+	]
+	for i in range(1, 11):
+		var cid: String = "C%02d" % i
+		required_keys.append("nt.v2.c.%s.briefing" % cid)
+		required_keys.append("nt.v2.c.%s.hint_mask" % cid)
+
+	for lang in ["ru", "kk", "en"]:
+		I18n.set_language(lang)
+		for key in required_keys:
+			var sentinel: String = "__missing_%s_%s__" % [lang, key]
+			var value: String = I18n.tr_key(key, {"default": sentinel})
+			assert_true(value != sentinel, "%s has network_trace key %s" % [lang.to_upper(), key])
+			assert_true(not value.strip_edges().is_empty(), "%s network_trace key is non-empty: %s" % [lang.to_upper(), key])
+
+func test_fr8_summary_keys_present_in_ru_kk_en() -> void:
+	var required_keys: Array[String] = [
+		"case08.fr8b.log.reset",
+		"case08.fr8b.summary.title",
+		"case08.fr8b.summary.correct",
+		"case08.fr8b.summary.avg_time",
+		"case08.fr8b.verdict.excellent",
+		"case08.fr8b.verdict.ok",
+		"case08.fr8b.verdict.fail",
+		"case08.fr8b.status.passed",
+		"case08.fr8b.status.review",
+		"case08.fr8b.status.repeat",
+		"case08.fr8c.log.reset",
+		"case08.fr8c.summary.title",
+		"case08.fr8c.summary.correct",
+		"case08.fr8c.summary.avg_time",
+		"case08.fr8c.summary.target",
+		"case08.fr8c.status.passed",
+		"case08.fr8c.status.review",
+		"case08.fr8c.status.repeat"
+	]
+	for lang in ["ru", "kk", "en"]:
+		I18n.set_language(lang)
+		for key in required_keys:
+			var sentinel: String = "__missing_%s_%s__" % [lang, key]
+			var value: String = I18n.tr_key(key, {"default": sentinel})
+			assert_true(value != sentinel, "%s has FR8 summary key %s" % [lang.to_upper(), key])
+			assert_true(not value.strip_edges().is_empty(), "%s FR8 summary key is non-empty: %s" % [lang.to_upper(), key])
+
+func test_ru_only_key_absent_in_kk_en_dictionaries() -> void:
+	var kk_dict: Dictionary = _load_dictionary("res://data/i18n/kk.json")
+	var en_dict: Dictionary = _load_dictionary("res://data/i18n/en.json")
+	assert_true(not kk_dict.has("test.i18n.ru_only"), "KK dictionary intentionally does not contain test.i18n.ru_only")
+	assert_true(not en_dict.has("test.i18n.ru_only"), "EN dictionary intentionally does not contain test.i18n.ru_only")
+
+func test_new_keys_placeholder_and_tag_parity() -> void:
+	var ru_dict: Dictionary = _load_dictionary("res://data/i18n/ru.json")
+	var kk_dict: Dictionary = _load_dictionary("res://data/i18n/kk.json")
+	var en_dict: Dictionary = _load_dictionary("res://data/i18n/en.json")
+	var payload: Dictionary = _load_dictionary("res://data/i18n/new_keys.json")
+
+	for key_var in payload.keys():
+		var key: String = str(key_var)
+		var ru_value: String = str(ru_dict.get(key, ""))
+		var kk_value: String = str(kk_dict.get(key, ""))
+		var en_value: String = str(en_dict.get(key, ""))
+
+		var ru_named: Array[String] = _extract_placeholders(ru_value)
+		var kk_named: Array[String] = _extract_placeholders(kk_value)
+		var en_named: Array[String] = _extract_placeholders(en_value)
+		assert_equal(ru_named, en_named, "RU named placeholder parity for %s" % key)
+		assert_equal(kk_named, en_named, "KK named placeholder parity for %s" % key)
+
+		var ru_printf: Array[String] = _extract_printf_placeholders(ru_value)
+		var kk_printf: Array[String] = _extract_printf_placeholders(kk_value)
+		var en_printf: Array[String] = _extract_printf_placeholders(en_value)
+		assert_equal(ru_printf, en_printf, "RU printf placeholder parity for %s" % key)
+		assert_equal(kk_printf, en_printf, "KK printf placeholder parity for %s" % key)
+
+		var ru_tags: Array[String] = _extract_tags(ru_value)
+		var kk_tags: Array[String] = _extract_tags(kk_value)
+		var en_tags: Array[String] = _extract_tags(en_value)
+		assert_equal(ru_tags, en_tags, "RU tag parity for %s" % key)
+		assert_equal(kk_tags, en_tags, "KK tag parity for %s" % key)
+
+func test_target_groups_no_broken_templates() -> void:
+	var dictionaries := {
+		"ru": _load_dictionary("res://data/i18n/ru.json"),
+		"kk": _load_dictionary("res://data/i18n/kk.json"),
+		"en": _load_dictionary("res://data/i18n/en.json")
+	}
+	var prefixes: Array[String] = ["case08.", "ui.inspector_popup.", "decryptor.", "da7.", "nt.b.", "nt.c."]
+	var bad_pattern := RegEx.new()
+	bad_pattern.compile("\\?{2,}")
+
+	for lang in dictionaries.keys():
+		var dict: Dictionary = dictionaries.get(lang, {})
+		for key_var in dict.keys():
+			var key: String = str(key_var)
+			var in_scope: bool = false
+			for prefix in prefixes:
+				if key.begins_with(prefix):
+					in_scope = true
+					break
+			if not in_scope:
+				continue
+
+			var value: String = str(dict.get(key, ""))
+			var has_bad: bool = bad_pattern.search(value) != null
+			assert_true(not has_bad, "%s target group has no broken template markers: %s" % [str(lang).to_upper(), key])
+			assert_true(value.count("{") == value.count("}"), "%s braces are balanced for %s" % [str(lang).to_upper(), key])
+
 func _extract_placeholders(value: String) -> Array[String]:
 	var pattern := RegEx.new()
 	pattern.compile("\\{[A-Za-z0-9_]+\\}")
@@ -318,6 +626,29 @@ func _extract_placeholders(value: String) -> Array[String]:
 	var result: Array[String] = []
 	for key_var in unique.keys():
 		result.append(str(key_var))
+	result.sort()
+	return result
+
+func _extract_printf_placeholders(value: String) -> Array[String]:
+	var pattern := RegEx.new()
+	pattern.compile("%(?:\\d+\\$)?[sdif]")
+	var matches: Array[RegExMatch] = pattern.search_all(value)
+	var unique: Dictionary = {}
+	for match in matches:
+		unique[match.get_string()] = true
+	var result: Array[String] = []
+	for key_var in unique.keys():
+		result.append(str(key_var))
+	result.sort()
+	return result
+
+func _extract_tags(value: String) -> Array[String]:
+	var pattern := RegEx.new()
+	pattern.compile("<[^>]+>")
+	var matches: Array[RegExMatch] = pattern.search_all(value)
+	var result: Array[String] = []
+	for match in matches:
+		result.append(match.get_string())
 	result.sort()
 	return result
 

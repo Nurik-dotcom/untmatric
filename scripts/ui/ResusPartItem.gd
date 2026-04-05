@@ -1,5 +1,6 @@
 extends Button
 
+signal item_tapped(item_id: String)
 signal drag_started(item_id: String, from_zone: String)
 signal drag_cancelled(item_id: String, from_zone: String)
 
@@ -14,6 +15,12 @@ var correct_bucket_id: String = ""
 var _drag_from_zone: String = "PILE"
 var _touch_selected: bool = false
 var _hovered: bool = false
+var _touch_start_pos: Vector2 = Vector2.ZERO
+var _touch_start_time: int = 0
+var _touch_tracking: bool = false
+
+const TAP_MAX_DISTANCE: float = 20.0
+const TAP_MAX_TIME_MS: int = 500
 
 const COLOR_INPUT := Color(0.13, 0.59, 0.95, 1.0)
 const COLOR_OUTPUT := Color(0.3, 0.69, 0.31, 1.0)
@@ -26,6 +33,8 @@ func _ready() -> void:
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 	_sync_glow_visibility()
+	focus_mode = Control.FOCUS_NONE
+	set_process_input(true)
 
 func setup(item_data: Dictionary) -> void:
 	item_id = str(item_data.get("item_id", ""))
@@ -96,40 +105,52 @@ func _on_mouse_exited() -> void:
 	_hovered = false
 	_sync_glow_visibility()
 
-func _get_drag_data(_at_position: Vector2) -> Variant:
-	# Touch/web flow uses popup placement in the parent controller.
+func _input(event: InputEvent) -> void:
+	if not visible or not is_visible_in_tree():
+		return
+	if disabled:
+		return
+
+	if event is InputEventScreenTouch:
+		var touch: InputEventScreenTouch = event as InputEventScreenTouch
+		if touch.pressed:
+			var local_pos: Vector2 = _local_event_position(event)
+			if Rect2(Vector2.ZERO, size).has_point(local_pos):
+				_touch_start_pos = touch.position
+				_touch_start_time = Time.get_ticks_msec()
+				_touch_tracking = true
+		elif _touch_tracking:
+			_touch_tracking = false
+			var dist: float = touch.position.distance_to(_touch_start_pos)
+			var elapsed: int = Time.get_ticks_msec() - _touch_start_time
+			if dist < TAP_MAX_DISTANCE and elapsed < TAP_MAX_TIME_MS:
+				var local_pos: Vector2 = _local_event_position(event)
+				if Rect2(Vector2.ZERO, size).has_point(local_pos):
+					item_tapped.emit(item_id)
+		return
+
+	if event is InputEventScreenDrag and _touch_tracking:
+		var drag: InputEventScreenDrag = event as InputEventScreenDrag
+		if drag.position.distance_to(_touch_start_pos) > TAP_MAX_DISTANCE:
+			_touch_tracking = false
+
+func _local_event_position(event: InputEvent) -> Vector2:
+	var local_event: InputEvent = make_input_local(event)
+	if local_event is InputEventScreenTouch:
+		return (local_event as InputEventScreenTouch).position
+	if local_event is InputEventScreenDrag:
+		return (local_event as InputEventScreenDrag).position
+	if local_event is InputEventMouseButton:
+		return (local_event as InputEventMouseButton).position
+	return Vector2(-100000.0, -100000.0)
+
+func _pressed() -> void:
 	if OS.has_feature("mobile") or OS.has_feature("web"):
-		return null
-
-	var from_zone: String = get_zone_id()
-	_drag_from_zone = from_zone
-	drag_started.emit(item_id, from_zone)
-
-	if drag_hint:
-		drag_hint.visible = true
-	_sync_glow_visibility()
-
-	var data: Dictionary = {
-		"kind": "RESUS_PART",
-		"item_id": item_id,
-		"label": item_label,
-		"node_path": str(get_path()),
-		"from_zone": from_zone
-	}
-
-	var preview: Button = duplicate() as Button
-	preview.modulate.a = 0.9
-	preview.modulate.v = 1.2
-	var holder: Control = Control.new()
-	holder.add_child(preview)
-	preview.position = -0.5 * preview.size
-	set_drag_preview(holder)
-
-	return data
+		return
+	item_tapped.emit(item_id)
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_DRAG_END and not is_drag_successful():
-		drag_cancelled.emit(item_id, _drag_from_zone)
+	if what == NOTIFICATION_DRAG_END:
 		if drag_hint:
 			drag_hint.visible = false
 		_sync_glow_visibility()
@@ -137,5 +158,4 @@ func _notification(what: int) -> void:
 func _sync_glow_visibility() -> void:
 	if glow_overlay == null:
 		return
-	var drag_active: bool = drag_hint != null and drag_hint.visible
-	glow_overlay.visible = _touch_selected or _hovered or drag_active
+	glow_overlay.visible = _touch_selected or _hovered

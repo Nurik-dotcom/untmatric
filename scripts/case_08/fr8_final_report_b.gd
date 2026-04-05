@@ -328,7 +328,7 @@ func _reset_attempt(is_level_start: bool = false) -> void:
 		_log_event("reset_pressed", {"reset_count": reset_count_local})
 	_log_event("attempt_reset", {"level_start": is_level_start})
 
-	_log_event("СБРОС", {"level_start": is_level_start})
+	_log_event(_tr("case08.fr8b.log.reset", "RESET"), {"level_start": is_level_start})
 
 	trial_locked = false
 	level_solved = false
@@ -593,9 +593,9 @@ func _show_session_summary() -> void:
 	level_solved = true
 	btn_confirm.disabled = true
 	btn_reset.disabled = true
-	btn_next.text = _tr("case08.common.exit", "ВЫХОД")
+	btn_next.text = _tr("case08.common.exit", "EXIT")
 	btn_next.disabled = false
-	level_label.text = "B | ИТОГИ"
+	level_label.text = _tr("case08.fr8b.summary.level_label", "B | COMPLETE")
 	_update_progress_ui()
 
 	var latest_by_level: Dictionary = {}
@@ -639,19 +639,27 @@ func _show_session_summary() -> void:
 		child.queue_free()
 	_clear_dependency_overlay()
 
-	var summary: String = "СЕССИЯ ЗАВЕРШЕНА\n\n"
-	summary += "Правильно: %d / %d (%d%%)\n" % [correct, total, pct]
-	summary += "Среднее время: %.1f с\n\n" % avg_sec
+	var summary: String = _tr("case08.fr8b.summary.title", "SESSION COMPLETE") + "\n\n"
+	summary += _tr(
+		"case08.fr8b.summary.correct",
+		"Correct: {c} / {t} ({p}%)",
+		{"c": correct, "t": total, "p": pct}
+	) + "\n"
+	summary += _tr(
+		"case08.fr8b.summary.avg_time",
+		"Avg time: {s}s",
+		{"s": "%.1f" % avg_sec}
+	) + "\n\n"
 
 	if pct >= 90:
-		summary += "Отличный результат. План утверждён."
-		_set_status("Сессия пройдена успешно.", COLOR_OK)
+		summary += _tr("case08.fr8b.verdict.excellent", "Excellent result. Plan approved.")
+		_set_status(_tr("case08.fr8b.status.passed", "Session passed successfully."), COLOR_OK)
 	elif pct >= 60:
-		summary += "Неплохо, но есть пробелы."
-		_set_status("Рекомендуется повторить.", COLOR_WARN)
+		summary += _tr("case08.fr8b.verdict.ok", "Not bad, but there are gaps.")
+		_set_status(_tr("case08.fr8b.status.review", "Review recommended."), COLOR_WARN)
 	else:
-		summary += "Требуется доработка."
-		_set_status("Нужно повторить материал.", COLOR_ERR)
+		summary += _tr("case08.fr8b.verdict.fail", "Needs improvement.")
+		_set_status(_tr("case08.fr8b.status.repeat", "Material needs to be repeated."), COLOR_ERR)
 
 	briefing_label.text = summary
 

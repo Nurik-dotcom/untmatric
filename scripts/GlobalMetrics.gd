@@ -6,6 +6,7 @@ signal stability_changed(new_value, change)
 signal shield_triggered(shield_name, penalty)
 signal hint_unlocked(level, text)
 signal game_over
+signal trial_upload_failed(quest_id: String, reason: String)
 # В самом верху скрипта GlobalMetrics.gd
 const DB_URL = "https://untma-f6333-default-rtdb.europe-west1.firebasedatabase.app/"
 # Core Resources
@@ -115,7 +116,9 @@ func _send_trial_to_firebase(data: Dictionary) -> void:
 
 	http.request_completed.connect(func(_result, response_code, _headers, body):
 		if response_code < 200 or response_code >= 300:
-			push_warning("Trial upload failed: HTTP %s | %s" % [str(response_code), body.get_string_from_utf8()])
+			var reason: String = "HTTP %s" % str(response_code)
+			push_warning("Trial upload failed: %s | %s" % [reason, body.get_string_from_utf8()])
+			trial_upload_failed.emit(str(data.get("quest_id", "")), reason)
 		http.queue_free()
 	)
 
